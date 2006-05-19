@@ -33,7 +33,7 @@ public class MercurialTeamProvider extends RepositoryProvider
 	//@Override
 	public void configureProject() throws CoreException 
 	{
-		System.out.println("MercurialTeamProvider.configureProject()");
+//		System.out.println("MercurialTeamProvider.configureProject()");
 	}
 
 	/* (non-Javadoc)
@@ -41,7 +41,7 @@ public class MercurialTeamProvider extends RepositoryProvider
 	 */
 	public void deconfigure() throws CoreException 
 	{
-		System.out.println("MercurialTeamProvider.deconfigure()");
+//		System.out.println("MercurialTeamProvider.deconfigure()");
 	}
 
 	/* (non-Javadoc)
@@ -96,14 +96,14 @@ public class MercurialTeamProvider extends RepositoryProvider
 					//We had no Reposetory Path in the property setting
 					// Something have been messing with the setting
 					// No problem we try to find it.
-					System.out.println("MercurialTeamProvider.getRepositoryPath() proj.getPersistentProperty() faild");
+//					System.out.println("MercurialTeamProvider.getRepositoryPath() proj.getPersistentProperty() faild");
 
 					RepositoryPath=MercurialUtilities.search4MercurialRoot(proj);
-					System.out.println("MercurialTeamProvider.getRepositoryPath() Serching for repository:" + RepositoryPath);
+//					System.out.println("MercurialTeamProvider.getRepositoryPath() Serching for repository:" + RepositoryPath);
 					if(RepositoryPath!=null)
 					{
 						//Write the found repository path into the property setting.
-						System.out.println("MercurialTeamProvider.getRepositoryPath() Writing repositorypath into PersitantProperty() :" + RepositoryPath);
+//						System.out.println("MercurialTeamProvider.getRepositoryPath() Writing repositorypath into PersitantProperty() :" + RepositoryPath);
 						setRepositoryPath(RepositoryPath);
 					}
 				}

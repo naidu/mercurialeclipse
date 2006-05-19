@@ -120,6 +120,17 @@
       </objectContribution>
 
    </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage"
+            name="Mercurial Eclipse"/>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer class="com.vectrace.MercurialEclipse.preferences.MercurialPreferenceInitializer"/>
+   </extension>
 
 
    <!-- extension
@@ -221,14 +232,14 @@
          point="org.eclipse.ui.preferencePages">
       <page
             name="Sample Preferences"
-            class="com.vectrace.MercurialEclipse.preferences.SamplePreferencePage"
-            id="com.vectrace.MercurialEclipse.preferences.SamplePreferencePage">
+            class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
+            id="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage">
       </page>
    </extension -->
    <!-- extension
          point="org.eclipse.core.runtime.preferences">
       <initializer
-            class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer">
+            class="com.vectrace.MercurialEclipse.preferences.MercurialPreferenceInitializer">
       </initializer>
    </extension -->
    <!-- extension

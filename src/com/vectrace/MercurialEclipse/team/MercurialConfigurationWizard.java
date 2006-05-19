@@ -13,24 +13,23 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.IConfigurationWizard;
@@ -84,7 +83,8 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 		    label = new Label( mainControl, SWT.CENTER);
 		    label.setText("Select Directory");
 
-		    directoryText = new Text(mainControl, SWT.CENTER | SWT.SINGLE);
+		    directoryText = new Text(mainControl, SWT.BORDER);
+		    directoryText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		    directoryText.setText(hgPath);
 		    directoryText.addSelectionListener(this);
 		    
@@ -206,7 +206,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 //		System.out.println("Path:" + hgPath);
 		if( (foundhgPath==null) ||  (! foundhgPath.equals(hgPath) ) )
 		{
-			String launchCmd[] = { "hg", "init", hgPath };
+			String launchCmd[] = { MercurialUtilities.getHGExecutable(true), "init", hgPath };
 			try 
 			{
 				String line;
@@ -254,6 +254,9 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	public void init(IWorkbench workbench, IProject project) {
 		//System.out.println("MercurialConfigurationWizard.init()");
 		this.project=project;
+		if(MercurialUtilities.isExecutableConfigured() == false) {
+			MercurialUtilities.configureExecutable();
+		}
 	}
 
 	

@@ -43,7 +43,7 @@ public class ActionStatus implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
 	public void init(IWorkbenchWindow window) {
-		System.out.println("ActionStatus:init(window)");
+//		System.out.println("ActionStatus:init(window)");
 //		this.window = window;
 	}
 
@@ -66,7 +66,7 @@ public class ActionStatus implements IWorkbenchWindowActionDelegate {
 		}
 		//Setup and run command
 //	    System.out.println("hg --cwd " + Repository + " status");
-		String launchCmd[] = { "hg","--cwd", Repository ,"status" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status" };
 		MercurialUtilities.ExecuteCommand(launchCmd);
 	}
 	

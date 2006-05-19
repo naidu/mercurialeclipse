@@ -73,7 +73,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 		Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-		String launchCmd[] = { "hg","--cwd", Repository ,"diff", "" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"diff", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {

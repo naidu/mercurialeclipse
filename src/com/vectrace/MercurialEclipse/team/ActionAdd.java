@@ -75,7 +75,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 		Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-		String launchCmd[] = { "hg","--cwd", Repository ,"add", "" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"add", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
