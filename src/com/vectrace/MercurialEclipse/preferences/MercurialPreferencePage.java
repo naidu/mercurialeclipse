@@ -28,7 +28,7 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
   {
     super(GRID);
     setPreferenceStore(MercurialEclipsePlugin.getDefault().getPreferenceStore());
-    setDescription("A demonstration of a preference page implementation");
+    setDescription("MercurialEclipse plugin for Mercurial(Hg) version controll system");
   }
 
   
@@ -41,7 +41,7 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
   public void createFieldEditors() 
   {
     addField(new FileFieldEditor(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, 
-        "&Mercurial Executable:", false ,getFieldEditorParent()));
+        "&Mercurial Executable:",getFieldEditorParent()));
 /*
     addField(
       new BooleanFieldEditor(

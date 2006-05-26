@@ -120,15 +120,12 @@
       </objectContribution>
 
    </extension>
-   <extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
+   <extension point="org.eclipse.ui.preferencePages">
+      <page class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
             name="Mercurial Eclipse"/>
    </extension>
-   <extension
-         point="org.eclipse.core.runtime.preferences">
+   <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer"/>
    </extension>
 
