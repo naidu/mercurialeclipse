@@ -45,7 +45,8 @@ public class MercurialUtilities {
 	/**
 	 * This class is full of utilities metods, useful allover the place
 	 */
-	public MercurialUtilities() {
+	public MercurialUtilities() 
+  {
 
 	}
 
@@ -54,10 +55,13 @@ public class MercurialUtilities {
 	 * @return
 	 */
 	public static boolean isExecutableConfigured() {
-		try {
+		try 
+    {
 			Runtime.getRuntime().exec(getHGExecutable());
 			return true;
-		} catch (IOException e) {
+		}
+    catch (IOException e) 
+    {
 			return false;
 		}
 	}
@@ -67,45 +71,50 @@ public class MercurialUtilities {
 	 * If it's not defined, false is returned
 	 * @return false if no hg is defined. True if hg executable is defined
 	 */
-	public static String getHGExecutable() {
+	public static String getHGExecutable() 
+  {
 		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
 				.getPreferenceStore();
 
 		// This returns "" if not defined
-		String executable = preferenceStore
-				.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
+		String executable = preferenceStore.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
 
 		return executable;
 	}
 
-	public static String getHGExecutable(boolean configureIfMissing) {
-		if(isExecutableConfigured()) {
+	public static String getHGExecutable(boolean configureIfMissing) 
+  {
+		if(isExecutableConfigured()) 
+    {
 			return getHGExecutable();
 		}
-		else {
-			if (configureIfMissing) {
+		else 
+    {
+			if (configureIfMissing) 
+      {
 				configureExecutable();
 				return getHGExecutable();
 			}
-			else {
+			else 
+      {
 				return "hg";
 			}
 		}
 	}
 
-	public static void configureExecutable() {
+	public static void configureExecutable() 
+  {
 		Shell shell = Display.getCurrent().getActiveShell();
 		String pageId = "com.vectrace.MercurialEclipse.prefspage";
 		String[] dsplIds = null;
 		Object data = null;
-		PreferenceDialog dlg = PreferencesUtil
-				.createPreferenceDialogOn(shell, pageId, dsplIds, data);
+		PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell, pageId, dsplIds, data);
 		dlg.open();
 	}
 
-	static String search4MercurialRoot(final IProject project) {
-		return MercurialUtilities.search4MercurialRoot(project.getLocation()
-				.toFile());
+	static String search4MercurialRoot(final IProject project) 
+  {
+		return MercurialUtilities.search4MercurialRoot(project.getLocation().toFile());
 	}
 
 	static String search4MercurialRoot(final File file) {
@@ -113,38 +122,48 @@ public class MercurialUtilities {
 		File parent = file;
 		File hgFolder = new File(parent, ".hg");
 		// System.out.println("pathcheck:" + parent.toString());
-		while ((parent != null)
-				&& !(hgFolder.exists() && hgFolder.isDirectory())) {
+		while ((parent != null)	&& !(hgFolder.exists() && hgFolder.isDirectory())) 
+    {
 			parent = parent.getParentFile();
-			if (parent != null) {
+			if (parent != null) 
+      {
 				// System.out.println("pathcheck:" + parent.toString());
 				hgFolder = new File(parent, ".hg");
 			}
 		}
-		if (parent != null) {
+		if (parent != null) 
+    {
 			path = hgFolder.getParentFile().toString();
-		} else {
+		}
+    else 
+    {
 			path = null;
 		}
 		// System.out.println("pathcheck: >" + path + "<");
 		return path;
 	}
 
-	static IProject getProject(IStructuredSelection selection) {
+	static IProject getProject(IStructuredSelection selection) 
+  {
 		Object obj;
 		obj = selection.getFirstElement();
-		if ((obj != null) && (obj instanceof IResource)) {
+		if ((obj != null) && (obj instanceof IResource)) 
+    {
 			return ((IResource) obj).getProject();
 		}
 		return null;
 	}
 
-	static String getRepositoryPath(IProject proj) {
+	static String getRepositoryPath(IProject proj) 
+  {
 		// Get Repository path
 		RepositoryProvider provider = RepositoryProvider.getProvider(proj);
-		if (provider instanceof MercurialTeamProvider) {
+		if (provider instanceof MercurialTeamProvider) 
+    {
 			return (((MercurialTeamProvider) provider).getRepositoryPath());
-		} else {
+		} 
+    else 
+    {
 			return null;
 		}
 	}
@@ -154,52 +173,63 @@ public class MercurialUtilities {
 	 * stuff ???
 	 */
 
-	static void ExecuteCommand(String cmd[]) {
+	static void ExecuteCommand(String cmd[]) 
+  {
 		// Setup and run command
 		// System.out.println("hg --cwd " + Repository + " status");
 		// String launchCmd[] = { "hg","--cwd", Repository ,"status" };
 		// System.out.println("ExecuteCommand:" + cmd.toString());
 
-		if (console == null) {
+		if (console == null) 
+    {
 			console = new IOConsole("Mercurial Console", null);
-			IConsoleManager manager = ConsolePlugin.getDefault()
-					.getConsoleManager();
+			IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
 			manager.addConsoles(new IConsole[] { console });
 		}
-		if (console_in == null) {
+		if (console_in == null) 
+    {
 			console_in = console.getInputStream();
 		}
-		if (console_out == null) {
+		if (console_out == null) 
+    {
 			console_out = console.newOutputStream();
-			if (console_out != null) {
+			if (console_out != null) 
+      {
 				console_out_printstream = new PrintStream(console_out);
 				// console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
 
 			}
 			// console_out_printstream.println("Hello word!");
 		}
-		try {
+		try 
+    {
 			int c;
 			Process process = Runtime.getRuntime().exec(cmd);
 			InputStream in = process.getInputStream();
 			// System.out.println("Output:");
-			while ((c = in.read()) != -1) {
+			while ((c = in.read()) != -1) 
+      {
 				// System.out.print((char)c);
 				console_out_printstream.print((char) c);
 			}
 			in.close();
 			// System.out.println("Error:");
 			InputStream err = process.getErrorStream();
-			while ((c = err.read()) != -1) {
+			while ((c = err.read()) != -1) 
+      {
 				// System.out.print((char)c);
 				console_out_printstream.print((char) c);
 			}
 			err.close();
 			process.waitFor();
 			// TODO put output in a window or something
-		} catch (IOException e) {
+		}
+    catch (IOException e) 
+    {
 			e.printStackTrace();
-		} catch (InterruptedException e) {
+		} 
+    catch (InterruptedException e) 
+    {
 			e.printStackTrace();
 		}
 	}

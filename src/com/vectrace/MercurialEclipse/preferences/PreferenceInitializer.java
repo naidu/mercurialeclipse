@@ -15,13 +15,15 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 * 
 	 * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#initializeDefaultPreferences()
 	 */
-	public void initializeDefaultPreferences() {
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault()
-				.getPreferenceStore();
-		store.setDefault(PreferenceConstants.P_BOOLEAN, true);
-		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
-		store.setDefault(PreferenceConstants.P_STRING,
-				"Default value");
-	}
+	public void initializeDefaultPreferences() 
+  {
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+/*
+ 
+ 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
+		store.setDefault(PreferenceConstants.P_STRING,"Default value");
+ */
+  }
 
 }
