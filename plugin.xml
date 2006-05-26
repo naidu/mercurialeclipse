@@ -66,6 +66,14 @@
                id="com.vectrace.MercurialEclipse.team.ActionAdd">
            </action>
            <action
+               label="&amp;hg remove"
+               icon="icons/sample.gif"
+               class="com.vectrace.MercurialEclipse.team.ActionRemove"
+               tooltip="hg remove"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionRemove">
+           </action>
+           <action
                label="&amp;hg diff"
                icon="icons/sample.gif"
                class="com.vectrace.MercurialEclipse.team.ActionDiff"
@@ -80,6 +88,14 @@
                tooltip="hg status"
                menubarPath="team.main/projectGroup"
                id="com.vectrace.MercurialEclipse.team.ActionStatus">
+           </action>
+           <action
+               label="&amp;hg view"
+               icon="icons/sample.gif"
+               class="com.vectrace.MercurialEclipse.team.ActionView"
+               tooltip="hg view"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionView">
            </action>
 
         <!-- action

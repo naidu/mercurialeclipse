@@ -22,13 +22,13 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
  *
  */
 
-public class ActionAdd implements IWorkbenchWindowActionDelegate {
+public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
 //	private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
-	public ActionAdd() {
+	public ActionRemove() {
 		super();
 	}
 
@@ -48,7 +48,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
 	public void init(IWorkbenchWindow window) {
-		System.out.println("ActionAdd:init(window)");
+		System.out.println("ActionRemove:init(window)");
 //		this.window = window;
 	}
 
@@ -75,7 +75,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 		Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"add", "" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"remove", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
