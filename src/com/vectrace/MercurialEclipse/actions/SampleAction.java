@@ -32,10 +32,10 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	public void run(IAction action) 
 	{
 		System.out.println("SampleAction.run()");
-//        if((window !=null) && (window.getShell() != null))
-//        {
-//        	MessageDialog.openInformation(window.getShell(),"MercurialEclipse",	"Hello, Eclipse world");
-//        }
+        if((window !=null) && (window.getShell() != null))
+        {
+        	MessageDialog.openInformation(window.getShell(),"MercurialEclipse",	"Hello, Eclipse world");
+        }
 	}
 
 	/**
@@ -63,5 +63,5 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	 */
 	public void init(IWorkbenchWindow window) {
 		this.window = window;
-	}
+    System.out.println("SampleAction.init()");	}
 }

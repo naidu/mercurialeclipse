@@ -97,6 +97,14 @@
                menubarPath="team.main/projectGroup"
                id="com.vectrace.MercurialEclipse.team.ActionView">
            </action>
+           <action
+               label="&amp;hg commit"
+               icon="icons/sample.gif"
+               class="com.vectrace.MercurialEclipse.team.ActionCommit"
+               tooltip="hg commit"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionCommit">
+           </action>
 
         <!-- action
               label="%IgnoreAction.label"
