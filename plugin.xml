@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <plugin>
-
    <extension point="org.eclipse.team.core.repository">
 	  <repository
     	 class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
@@ -18,7 +17,6 @@
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
 	   </wizard>
 	</extension>
-
 
    <extension
          point="org.eclipse.ui.popupMenus">
@@ -116,7 +114,6 @@
         </action -->
       </objectContribution>
       
-      
       <objectContribution
        	   id="org.eclipse.team.ui.ResourceContributions"
            objectClass="org.eclipse.core.resources.IResource" adaptable="true">
@@ -152,7 +149,6 @@
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer"/>
    </extension>
-
 
    <!-- extension
          point="org.eclipse.ui.actionSets">
