@@ -173,13 +173,16 @@ public class MercurialUtilities {
 	 * stuff ???
 	 */
 
-	static void ExecuteCommand(String cmd[]) 
+  static String ExecuteCommand(String cmd[]) 
   {
 		// Setup and run command
 		// System.out.println("hg --cwd " + Repository + " status");
 		// String launchCmd[] = { "hg","--cwd", Repository ,"status" };
 		// System.out.println("ExecuteCommand:" + cmd.toString());
 
+    String output;
+    output=new String("");
+    
 		if (console == null) 
     {
 			console = new IOConsole("Mercurial Console", null);
@@ -210,6 +213,7 @@ public class MercurialUtilities {
 			while ((c = in.read()) != -1) 
       {
 				// System.out.print((char)c);
+        output=output + String.valueOf((char)c);
 				console_out_printstream.print((char) c);
 			}
 			in.close();
@@ -218,6 +222,7 @@ public class MercurialUtilities {
 			while ((c = err.read()) != -1) 
       {
 				// System.out.print((char)c);
+        output=output + String.valueOf((char)c);
 				console_out_printstream.print((char) c);
 			}
 			err.close();
@@ -232,8 +237,11 @@ public class MercurialUtilities {
     {
 			e.printStackTrace();
 		}
-	}
+   return output;
+  }
 
+  
+  
 	/*
 	 * public void runTest(IOConsole console) { final Display display =
 	 * Display.getDefault();

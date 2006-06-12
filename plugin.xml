@@ -1,6 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.0"?>
 <plugin>
+<!-- extension point="org.eclipse.ui.decorators">
+<decorator
+    id="com.vectrace.MercurialEclipse.team.DecoratorStatus"
+    label="Decorator Example"
+    state="true"
+    class= "com.vectrace.MercurialEclipse.team.DecoratorStatus"
+  objectClass="org.eclipse.core.resources.IResource"
+    adaptable="true">
+    <description>
+      This is an example to illustrate the use of decorators
+    </description>
+  </decorator>
+</extension -->
+	<!-- extension point="org.eclipse.ui.decorators">
+		<decorator 
+  	    id="com.vectrace.MercurialEclipse.team.DecoratorStatus"
+        label="%DecoratorStandard.name"
+		state="false"
+        class="com.vectrace.MercurialEclipse.team.DecoratorStatus"
+		lightweight="true" >
+			<enablement>
+			  <objectClass name="org.eclipse.core.resources.IResource" />
+			</enablement>
+		</decorator>
+	</extension -->
+ 
+
    <extension point="org.eclipse.team.core.repository">
 	  <repository
     	 class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
@@ -17,6 +44,23 @@
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
 	   </wizard>
 	</extension>
+
+	<extension point="org.eclipse.ui.decorators">
+	    <decorator
+	            objectClass="org.eclipse.core.resources.IResource"
+	            adaptable="true"
+	            label="Mercirial Eclipse decorations"
+	            state="false"
+	            lightweight= "true"
+	            location= "BOTTOM_RIGHT"
+	            class="com.vectrace.MercurialEclipse.team.DecoratorStatus"
+	            id="com.vectrace.MercurialEclipse.team.DecoratorStatus">
+	         <description>
+	            Label decorations for Mercurial eclipse plugin.
+	         </description>
+	    </decorator>
+	</extension>
+
 
    <extension
          point="org.eclipse.ui.popupMenus">
@@ -141,11 +185,16 @@
       </objectContribution>
 
    </extension>
+
+
+
+
    <extension point="org.eclipse.ui.preferencePages">
       <page class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
             name="Mercurial Eclipse"/>
    </extension>
+
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer"/>
    </extension>
