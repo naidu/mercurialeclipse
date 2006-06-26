@@ -22,7 +22,7 @@
 	    <decorator
 	            objectClass="org.eclipse.core.resources.IResource"
 	            adaptable="true"
-	            label="Mercirial Eclipse decorations"
+	            label="Mercurial Eclipse decorations"
 	            state="false"
 	            lightweight= "true"
 	            location= "BOTTOM_RIGHT"
