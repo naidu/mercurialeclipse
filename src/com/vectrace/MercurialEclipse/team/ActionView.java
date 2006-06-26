@@ -67,7 +67,7 @@ public class ActionView implements IWorkbenchWindowActionDelegate {
 		//Setup and run command
 //	    System.out.println("hg --cwd " + Repository + " status");
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"view" };
-		MercurialUtilities.ExecuteCommand(launchCmd);
+		MercurialUtilities.ExecuteCommand(launchCmd,true);
 	}
 	
   

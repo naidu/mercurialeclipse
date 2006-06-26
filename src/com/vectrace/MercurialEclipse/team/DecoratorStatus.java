@@ -10,6 +10,8 @@ import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * @author zingo
@@ -24,9 +26,16 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   public DecoratorStatus()
   {
     super();
-    System.out.println("MercurialEclipsePlugin:DecoratorStatus.DecoratorStatus()");
+//    System.out.println("MercurialEclipsePlugin:DecoratorStatus.DecoratorStatus()");
   }
 
+  public static void refresh() {
+    IWorkbench workbench = PlatformUI.getWorkbench();
+    String decoratorId = DecoratorStatus.class.getName();
+    workbench.getDecoratorManager().update( decoratorId );
+  }
+
+  
   /* (non-Javadoc)
    * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object, org.eclipse.jface.viewers.IDecoration)
    */
@@ -39,19 +48,17 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     {
       return ;
     }
-    // Decorating a Project
-    
-    // The project should be decorated with DecoratorDemo text label. 
+    // Decorating a Project   
     if (objectResource.getType() == IResource.PROJECT)
     {
-        decoration.addSuffix( "{PROJECT}" );
+//        decoration.addSuffix( "{PROJECT}" );
     }
 
     // Decorating a Folder
     if (objectResource.getType() == IResource.FOLDER)
     {
       // Folders should not be decorated..
-      decoration.addSuffix( "{FOLDER}" );
+//      decoration.addSuffix( "{FOLDER}" );
     }
     
     if (objectResource.getType() == IResource.FILE)
@@ -74,12 +81,12 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
       FullPath=( objectResource.getLocation() ).toString();
       
       String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status", FullPath };
-      String output=MercurialUtilities.ExecuteCommand(launchCmd);
+      String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
       if(output!=null)
       {
         if(output.length()!=0)
         {
-          decoration.addSuffix( "{" + output.substring(0,1)  + "}" );
+//        decoration.addSuffix( "{" + output.substring(0,1)  + "}" );
           decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
         }
       }  
@@ -87,7 +94,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     
 //    System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", "+ decoration.toString() + ")");
   }
-
+  
+  
   /* (non-Javadoc)
    * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
    */

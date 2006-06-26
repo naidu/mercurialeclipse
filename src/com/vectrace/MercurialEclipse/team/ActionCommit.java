@@ -8,16 +8,12 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-//import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.swt.layout.RowLayout;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.jface.dialogs.InputDialog;
-import org.eclipse.jface.dialogs.MessageDialog;
 
 
 /**
@@ -96,12 +92,12 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
   { //OK wa pressed and not Cancel
     //System.out.println("InputDialog: <OK> " + commitDialog.getValue());
     String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "-m",commitDialog.getValue() };
-    MercurialUtilities.ExecuteCommand(launchCmd);
+    MercurialUtilities.ExecuteCommand(launchCmd,true);
   }
   
     
     
-    
+  DecoratorStatus.refresh();
 	}
 	
   

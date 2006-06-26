@@ -12,7 +12,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-//import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -86,9 +85,11 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 		    	FullPath=( ((IResource) obj).getLocation() ).toString();
 		    	launchCmd[4]=FullPath;
 //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-				MercurialUtilities.ExecuteCommand(launchCmd);
+				MercurialUtilities.ExecuteCommand(launchCmd,true);
 	    	}
 	    }
+      
+      DecoratorStatus.refresh();
 	}
 	
   

@@ -8,7 +8,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-//import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -67,8 +66,10 @@ public class ActionStatus implements IWorkbenchWindowActionDelegate {
 		//Setup and run command
 //	    System.out.println("hg --cwd " + Repository + " status");
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status" };
-		MercurialUtilities.ExecuteCommand(launchCmd);
-	}
+		MercurialUtilities.ExecuteCommand(launchCmd,false);
+
+    DecoratorStatus.refresh();
+  }
 	
   
 	/**

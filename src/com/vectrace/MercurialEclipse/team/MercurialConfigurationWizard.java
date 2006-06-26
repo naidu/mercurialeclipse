@@ -244,6 +244,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 			e.printStackTrace();
 			return false;
 		}
+    DecoratorStatus.refresh();
 		return true;
 	}
 	

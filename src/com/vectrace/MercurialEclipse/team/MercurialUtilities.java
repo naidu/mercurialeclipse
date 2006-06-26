@@ -173,7 +173,7 @@ public class MercurialUtilities {
 	 * stuff ???
 	 */
 
-  static String ExecuteCommand(String cmd[]) 
+  static String ExecuteCommand(String cmd[], boolean consoleOutput) 
   {
 		// Setup and run command
 		// System.out.println("hg --cwd " + Repository + " status");
@@ -182,18 +182,18 @@ public class MercurialUtilities {
 
     String output;
     output=new String("");
-    
-		if (console == null) 
+
+		if (consoleOutput && console == null) 
     {
 			console = new IOConsole("Mercurial Console", null);
 			IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
 			manager.addConsoles(new IConsole[] { console });
 		}
-		if (console_in == null) 
+		if (consoleOutput && console_in == null) 
     {
 			console_in = console.getInputStream();
 		}
-		if (console_out == null) 
+		if (consoleOutput && console_out == null) 
     {
 			console_out = console.newOutputStream();
 			if (console_out != null) 
@@ -204,6 +204,7 @@ public class MercurialUtilities {
 			}
 			// console_out_printstream.println("Hello word!");
 		}
+    
 		try 
     {
 			int c;
@@ -214,7 +215,10 @@ public class MercurialUtilities {
       {
 				// System.out.print((char)c);
         output=output + String.valueOf((char)c);
-				console_out_printstream.print((char) c);
+        if(consoleOutput && console_out_printstream != null )
+        {
+				  console_out_printstream.print((char) c);
+        }
 			}
 			in.close();
 			// System.out.println("Error:");
@@ -223,7 +227,10 @@ public class MercurialUtilities {
       {
 				// System.out.print((char)c);
         output=output + String.valueOf((char)c);
-				console_out_printstream.print((char) c);
+        if(consoleOutput && console_out_printstream != null )
+        {
+  				console_out_printstream.print((char) c);
+        }
 			}
 			err.close();
 			process.waitFor();
