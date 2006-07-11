@@ -24,7 +24,6 @@ import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.IOConsoleInputStream;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.dialogs.PreferencesUtil;
-import org.eclipse.ui.internal.dialogs.WorkbenchPreferenceDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;

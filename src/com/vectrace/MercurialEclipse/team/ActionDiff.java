@@ -12,9 +12,12 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 //import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.jface.dialogs.MessageDialog;
 
 /**
  * @author zingo
@@ -22,7 +25,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
  */
 public class ActionDiff implements IWorkbenchWindowActionDelegate {
 
-//	private IWorkbenchWindow window;
+	private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
@@ -47,7 +50,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 	 */
 	public void init(IWorkbenchWindow window) {
 		System.out.println("ActionDiff:init(window)");
-//		this.window = window;
+		this.window = window;
 	}
 
 	/**
@@ -63,15 +66,31 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 		IProject proj;
 		String Repository;
 		String FullPath;
-		proj=MercurialUtilities.getProject(selection);
+    Shell shell;
+    IWorkbench workbench;
+    
+    proj=MercurialUtilities.getProject(selection);
 		Repository=MercurialUtilities.getRepositoryPath(proj);
 		if(Repository==null)
 		{
 			Repository="."; //never leave this empty add a . to point to current path
 		}
 
+    //Get shell & workbench
+    if((window !=null) && (window.getShell() != null))
+    {
+      shell=window.getShell();
+    }
+    else
+    {
+      workbench = PlatformUI.getWorkbench();
+      shell = workbench.getActiveWorkbenchWindow().getShell();
+    }
+
+    
+    
 		Object obj;
-	    Iterator itr; 
+	  Iterator itr; 
 	    // the last argument will be replaced with a path
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"diff", "" };
 	    itr=selection.iterator();
@@ -84,8 +103,20 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 		    	FullPath=( ((IResource) obj).getLocation() ).toString();
 		    	launchCmd[4]=FullPath;
 //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-				MercurialUtilities.ExecuteCommand(launchCmd,true);
-	    	}
+ 				  String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
+          if(output!=null)
+          {
+            //output output in a window
+            if(output.length()!=0)
+            {
+              MessageDialog.openInformation(shell,"Mercurial Eclipse Diff",  launchCmd[4] + "\n" + output);
+            }
+            else
+            {
+              MessageDialog.openInformation(shell,"Mercurial Eclipse NoDiff" ,"No diff for " + launchCmd[4]);
+            }
+          }
+        }
 	    }
 	}
 

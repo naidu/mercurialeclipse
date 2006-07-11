@@ -10,10 +10,14 @@ import java.util.Iterator;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.eclipse.ui.PlatformUI;
 
 
 /**
@@ -23,7 +27,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
-//	private IWorkbenchWindow window;
+	private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
@@ -47,8 +51,8 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
 	public void init(IWorkbenchWindow window) {
-		System.out.println("ActionRemove:init(window)");
-//		this.window = window;
+//		System.out.println("ActionRemove:init(window)");
+		this.window = window;
 	}
 
 	/**
@@ -64,13 +68,29 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		IProject proj;
 		String Repository;
 		String FullPath;
-		proj=MercurialUtilities.getProject(selection);
+    Shell shell;
+    IWorkbench workbench;
+
+    
+    proj=MercurialUtilities.getProject(selection);
 		Repository=MercurialUtilities.getRepositoryPath(proj);
 		if(Repository==null)
 		{
 			Repository="."; //never leave this empty add a . to point to current path
 		}
 
+    //Get shell & workbench
+    if((window !=null) && (window.getShell() != null))
+    {
+      shell=window.getShell();
+    }
+    else
+    {
+      workbench = PlatformUI.getWorkbench();
+      shell = workbench.getActiveWorkbenchWindow().getShell();
+    }
+
+    
 		Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
@@ -85,10 +105,22 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		    	FullPath=( ((IResource) obj).getLocation() ).toString();
 		    	launchCmd[4]=FullPath;
 //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-				MercurialUtilities.ExecuteCommand(launchCmd,true);
+
+          if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[4] + "\nFrom the repository and filesystem?") )
+          {
+            String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
+            if(output!=null)
+            {
+              //output output in a window
+              if(output.length()!=0)
+              {
+                MessageDialog.openInformation(shell,"Mercurial Eclipse hg remove",  output);
+              }
+            }
+            DecoratorStatus.refresh();
+          }
 	    	}
 	    }
-    DecoratorStatus.refresh();
   }
 	
   

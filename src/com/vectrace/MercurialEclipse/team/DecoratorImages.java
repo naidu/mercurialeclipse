@@ -85,6 +85,14 @@ public class DecoratorImages
    */ 
   public static final ImageDescriptor getImageDescriptor(String imageKey)
   {
+    //Input is the output from the "hg status <file>" comamnd
+    if(imageKey==null)
+    {
+      //hg status <file> has no output in an a managed file
+      return managedDescriptor;
+    }
+
+    // Look at the first letter
     if (imageKey.startsWith("M"))
     {
       return modifiedDescriptor;
@@ -103,14 +111,13 @@ public class DecoratorImages
     }
     if (imageKey.startsWith("?"))
     {
-//      return notTrackedDescriptor;
-      return null;
+      return notTrackedDescriptor;
     }
     if (imageKey.startsWith("I"))
     {
       return ignoredDescriptor;
     }
-    return managedDescriptor;
+    return null;
   }
 
   // public ImageDescriptor 

@@ -72,16 +72,16 @@
               name="projectPersistentProperty"
               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
            </filter>
-           <action
-               label="&amp;hg add"
-               icon="icons/add.png"
-               class="com.vectrace.MercurialEclipse.team.ActionAdd"
-               tooltip="hg add"
+           <!-- action
+               label="&amp;hg status"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionStatus"
+               tooltip="hg status"
                menubarPath="team.main/projectGroup"
-               id="com.vectrace.MercurialEclipse.team.ActionAdd">
-           </action>
+               id="com.vectrace.MercurialEclipse.team.ActionStatus">
+           </action -->
            <action
-               label="&amp;hg remove"
+               label="hg &amp;remove"
                icon="icons/remove.png"
                class="com.vectrace.MercurialEclipse.team.ActionRemove"
                tooltip="hg remove"
@@ -89,7 +89,15 @@
                id="com.vectrace.MercurialEclipse.team.ActionRemove">
            </action>
            <action
-               label="&amp;hg diff"
+               label="hg &amp;add"
+               icon="icons/add.png"
+               class="com.vectrace.MercurialEclipse.team.ActionAdd"
+               tooltip="hg add"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionAdd">
+           </action>
+           <action
+               label="hg &amp;diff"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionDiff"
                tooltip="hg diff"
@@ -97,26 +105,18 @@
                id="com.vectrace.MercurialEclipse.team.ActionDiff">
            </action>
            <action
-               label="&amp;hg status"
-               icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.team.ActionStatus"
-               tooltip="hg status"
-               menubarPath="team.main/projectGroup"
-               id="com.vectrace.MercurialEclipse.team.ActionStatus">
-           </action>
-           <action
-               label="&amp;hg view"
+               label="hg &amp;view (All files)"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionView"
-               tooltip="hg view"
+               tooltip="View releases reflect all files (hg view)"
                menubarPath="team.main/projectGroup"
                id="com.vectrace.MercurialEclipse.team.ActionView">
            </action>
            <action
-               label="&amp;hg commit"
+               label="hg &amp;commit (All files)"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
-               tooltip="hg commit"
+               tooltip="Commit all files (hg commit)"
                menubarPath="team.main/projectGroup"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
            </action>
@@ -138,7 +138,7 @@
               name="projectPersistentProperty"
               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
         </filter>
-		<menu
+		<!-- menu
 			id="team.main"
 			path="additions"
 			label="Team (hg)">
@@ -154,7 +154,7 @@
 			<separator name="group10"/>
 			<separator name="targetGroup"/>
 			<separator name="projectGroup"/>
-		</menu>
+		</menu -->
       </objectContribution>
 
    </extension>

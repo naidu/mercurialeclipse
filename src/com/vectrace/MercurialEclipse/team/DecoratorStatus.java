@@ -10,6 +10,7 @@ import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
@@ -28,26 +29,40 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     super();
 //    System.out.println("MercurialEclipsePlugin:DecoratorStatus.DecoratorStatus()");
   }
-
+   
   public static void refresh() {
     IWorkbench workbench = PlatformUI.getWorkbench();
     String decoratorId = DecoratorStatus.class.getName();
     workbench.getDecoratorManager().update( decoratorId );
   }
-
   
   /* (non-Javadoc)
    * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object, org.eclipse.jface.viewers.IDecoration)
    */
   public void decorate(Object element, IDecoration decoration)
   {
-
     IResource objectResource;
+    IProject objectProject;
+    RepositoryProvider RepoProvider;
+    
     objectResource = (IResource) element;
     if (objectResource == null)
     {
       return ;
     }
+    
+    objectProject = objectResource.getProject();
+    if( RepositoryProvider.isShared( objectProject ) ) 
+    {
+      RepoProvider = RepositoryProvider.getProvider( objectProject );
+      if( ! (RepoProvider instanceof MercurialTeamProvider))
+      {
+        //Resource not unsing this plugin
+        return;
+      }
+    }
+
+    
     // Decorating a Project   
     if (objectResource.getType() == IResource.PROJECT)
     {
@@ -87,7 +102,14 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
         if(output.length()!=0)
         {
 //        decoration.addSuffix( "{" + output.substring(0,1)  + "}" );
+//          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", "+ output.substring(0,1) + ")");
           decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
+        }
+        else
+        {
+          //Managed and unchanged (No output from status)
+//          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", No output (managed?))");
+          decoration.addOverlay(DecoratorImages.managedDescriptor);      
         }
       }  
     }

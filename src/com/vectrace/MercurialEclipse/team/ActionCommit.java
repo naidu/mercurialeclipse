@@ -46,7 +46,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
 	public void init(IWorkbenchWindow window) {
-		System.out.println("ActionStatus:init(window)");
+//		System.out.println("ActionCommit:init(window)");
 		this.window = window;
 	}
 
