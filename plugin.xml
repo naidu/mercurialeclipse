@@ -12,7 +12,7 @@
 	      point="org.eclipse.team.ui.configurationWizards">
 	   <wizard
 	        name="Mercurial"
-	        icon="icons/sample.gif"
+	        icon="icons/mercurialeclipse.png"
 	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
 	   </wizard>
@@ -74,7 +74,7 @@
            </filter>
            <action
                label="&amp;hg add"
-               icon="icons/sample.gif"
+               icon="icons/add.png"
                class="com.vectrace.MercurialEclipse.team.ActionAdd"
                tooltip="hg add"
                menubarPath="team.main/projectGroup"
@@ -82,7 +82,7 @@
            </action>
            <action
                label="&amp;hg remove"
-               icon="icons/sample.gif"
+               icon="icons/remove.png"
                class="com.vectrace.MercurialEclipse.team.ActionRemove"
                tooltip="hg remove"
                menubarPath="team.main/projectGroup"
@@ -90,7 +90,7 @@
            </action>
            <action
                label="&amp;hg diff"
-               icon="icons/sample.gif"
+               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionDiff"
                tooltip="hg diff"
                menubarPath="team.main/projectGroup"
@@ -98,7 +98,7 @@
            </action>
            <action
                label="&amp;hg status"
-               icon="icons/sample.gif"
+               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionStatus"
                tooltip="hg status"
                menubarPath="team.main/projectGroup"
@@ -106,7 +106,7 @@
            </action>
            <action
                label="&amp;hg view"
-               icon="icons/sample.gif"
+               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionView"
                tooltip="hg view"
                menubarPath="team.main/projectGroup"
@@ -114,7 +114,7 @@
            </action>
            <action
                label="&amp;hg commit"
-               icon="icons/sample.gif"
+               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
                tooltip="hg commit"
                menubarPath="team.main/projectGroup"
@@ -187,7 +187,7 @@
          </menu>
          <action
                label="&amp;Sample Action"
-               icon="icons/sample.gif"
+               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.actions.SampleAction"
                tooltip="Hello, Eclipse world"
                menubarPath="sampleMenu/sampleGroup"
@@ -211,7 +211,7 @@
       <editor
             name="Sample XML Editor"
             extensions="xml"
-            icon="icons/sample.gif"
+            icon="icons/mercurialeclipse.png"
             contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
             class="com.vectrace.MercurialEclipse.editors.XMLEditor"
             id="com.vectrace.MercurialEclipse.editors.XMLEditor">
@@ -219,7 +219,7 @@
       <editor
             name="Sample Multi-page Editor"
             extensions="mpe"
-            icon="icons/sample.gif"
+            icon="icons/mercurialeclipse.png"
             contributorClass="com.vectrace.MercurialEclipse.editors.MultiPageEditorContributor"
             class="com.vectrace.MercurialEclipse.editors.MultiPageEditor"
             id="com.vectrace.MercurialEclipse.editors.MultiPageEditor">
@@ -233,7 +233,7 @@
       </category>
       <view
             name="Sample View"
-            icon="icons/sample.gif"
+            icon="icons/mercurialeclipse.png"
             category="com.vectrace.MercurialEclipse"
             class="com.vectrace.MercurialEclipse.views.SampleView"
             id="com.vectrace.MercurialEclipse.views.SampleView">
@@ -259,7 +259,7 @@
       </category>
       <wizard
             name="Multi-page Editor file"
-            icon="icons/sample.gif"
+            icon="icons/mercurialeclipse.png"
             category="com.vectrace.MercurialEclipse"
             class="com.vectrace.MercurialEclipse.wizards.SampleNewWizard"
             id="com.vectrace.MercurialEclipse.wizards.SampleNewWizard">

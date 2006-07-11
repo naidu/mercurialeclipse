@@ -16,32 +16,36 @@ public class DecoratorImages
   /**
    * Added Image Descriptor
    */ 
-  public static final ImageDescriptor addedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/added.gif");
+  public static final ImageDescriptor addedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/added.gif");
   
   /**
    * Deleted but still tracked Image Descriptor
    */ 
-  public static final ImageDescriptor deletedStillTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/deleted_still_tracked.gif");
+  public static final ImageDescriptor deletedStillTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/deleted_still_tracked.gif");
   
   /**
    * Ignored Image Descriptor
    */ 
-  public static final ImageDescriptor ignoredDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/ignored.gif");
+  public static final ImageDescriptor ignoredDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/ignored.gif");
     
   /**
    * Modified Image Descriptor
    */ 
-  public static final ImageDescriptor modifiedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/modified.gif");
+  public static final ImageDescriptor modifiedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/modified.gif");
 
   /**
    * Not tracked Image Descriptor
    */ 
-  public static final ImageDescriptor notTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/not_tracked.gif");
+  public static final ImageDescriptor notTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/not_tracked.gif");
   /**
    * Removed Image Descriptor
    */ 
-  public static final ImageDescriptor removedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/removed.gif");
+  public static final ImageDescriptor removedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/removed.gif");
 
+  /**
+   * Managed Image Descriptor
+   */ 
+  public static final ImageDescriptor managedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/mercury/managed.gif");
   
   
   /**
@@ -99,13 +103,14 @@ public class DecoratorImages
     }
     if (imageKey.startsWith("?"))
     {
-      return notTrackedDescriptor;
+//      return notTrackedDescriptor;
+      return null;
     }
     if (imageKey.startsWith("I"))
     {
       return ignoredDescriptor;
     }
-    return null;
+    return managedDescriptor;
   }
 
   // public ImageDescriptor 
