@@ -30,6 +30,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 //    System.out.println("MercurialEclipsePlugin:DecoratorStatus.DecoratorStatus()");
   }
    
+  
   public static void refresh() {
     IWorkbench workbench = PlatformUI.getWorkbench();
     String decoratorId = DecoratorStatus.class.getName();
@@ -39,6 +40,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   /* (non-Javadoc)
    * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object, org.eclipse.jface.viewers.IDecoration)
    */
+  
   public void decorate(Object element, IDecoration decoration)
   {
     IResource objectResource;

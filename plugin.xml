@@ -37,49 +37,15 @@
 
    <extension
          point="org.eclipse.ui.popupMenus">
-      <!-- objectContribution
-            objectClass="org.eclipse.core.resources.IFile"
-            nameFilter="plugin.xml"
-            id="com.vectrace.MercurialEclipse.contribution1">
-         <menu
-               label="New Submenu"
-               path="additions"
-               id="com.vectrace.MercurialEclipse.menu1">
-            <separator
-                  name="group1">
-            </separator>
-         </menu>
-         <action
-               label="New Action"
-               class="com.vectrace.MercurialEclipse.popup.actions.NewAction"
-               menubarPath="com.vectrace.MercurialEclipse.menu1/group1"
-               enablesFor="1"
-               id="com.vectrace.MercurialEclipse.newAction">
-         </action>
-      </objectContribution -->
-      
-       <objectContribution
-           adaptable="true"
-           objectClass="org.eclipse.core.resources.IResource"
-           id="com.vectrace.MercurialEclipse.IFileContributions">
-           <visibility>
-             <or>
-               <objectClass name="org.eclipse.core.resources.IFile"/>
-               <objectClass name="org.eclipse.core.resources.IFolder"/>
-             </or>
-           </visibility>             
-           <filter
-              name="projectPersistentProperty"
-              value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-           </filter>
-           <!-- action
-               label="&amp;hg status"
-               icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.team.ActionStatus"
-               tooltip="hg status"
-               menubarPath="team.main/projectGroup"
-               id="com.vectrace.MercurialEclipse.team.ActionStatus">
-           </action -->
+<!--            Project Team menu                     -->
+      <objectContribution
+            adaptable="true"
+            objectClass="org.eclipse.core.resources.IProject"
+            id="com.vectrace.MercurialEclipse.IProjectContributions">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+         </filter>
            <action
                label="hg &amp;remove"
                icon="icons/remove.png"
@@ -120,15 +86,65 @@
                menubarPath="team.main/projectGroup"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
            </action>
+           <!-- action
+               label="&amp;hg status"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionStatus"
+               tooltip="hg status"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionStatus">
+           </action -->
+      </objectContribution>
 
-        <!-- action
-              label="%IgnoreAction.label"
-              tooltip="%IgnoreAction.tooltip"
-              class="org.eclipse.team.internal.ccvs.ui.actions.IgnoreAction"
-              menubarPath="team.main/group3"
-              helpContextId="org.eclipse.team.cvs.ui.team_ignore_action_context"
-              id="org.eclipse.team.ccvs.ui.ignore">
-        </action -->
+
+<!--            File/Directory Team menu                     -->
+              
+       <objectContribution
+           adaptable="true"
+           objectClass="org.eclipse.core.resources.IResource"
+           id="com.vectrace.MercurialEclipse.IFileContributions">
+           <visibility>
+             <or>
+               <objectClass name="org.eclipse.core.resources.IFile"/>
+               <objectClass name="org.eclipse.core.resources.IFolder"/>
+             </or>
+           </visibility>             
+           <filter
+              name="projectPersistentProperty"
+              value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+           </filter>
+           <action
+               label="hg &amp;remove"
+               icon="icons/remove.png"
+               class="com.vectrace.MercurialEclipse.team.ActionRemove"
+               tooltip="hg remove"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionRemove">
+           </action>
+           <action
+               label="hg &amp;add"
+               icon="icons/add.png"
+               class="com.vectrace.MercurialEclipse.team.ActionAdd"
+               tooltip="hg add"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionAdd">
+           </action>
+           <action
+               label="hg &amp;diff"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionDiff"
+               tooltip="hg diff"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionDiff">
+           </action>
+           <action
+               label="hg &amp;commit (All files)"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionCommit"
+               tooltip="Commit all files (hg commit)"
+               menubarPath="team.main/projectGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionCommit">
+           </action>
       </objectContribution>
       
       <objectContribution
