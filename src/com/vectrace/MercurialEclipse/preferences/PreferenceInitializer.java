@@ -19,7 +19,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
   {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
-/*
+    store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, System.getProperty ( "user.name" ));
+
+    /*
  
  		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
 		store.setDefault(PreferenceConstants.P_STRING,"Default value");

@@ -14,6 +14,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.jface.dialogs.InputDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 
 
 /**
@@ -91,8 +92,17 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
   if(commitDialog.getValue() != null) 
   { //OK wa pressed and not Cancel
     //System.out.println("InputDialog: <OK> " + commitDialog.getValue());
-    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "-m",commitDialog.getValue() };
-    MercurialUtilities.ExecuteCommand(launchCmd,true);
+    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "--message",commitDialog.getValue(), "--user",MercurialUtilities.getHGUsername()};
+    String output = MercurialUtilities.ExecuteCommand(launchCmd,false);
+    if(output!=null)
+    {
+      //output output in a window
+      if(output.length()!=0)
+      {
+        MessageDialog.openInformation(shell,"Mercurial Eclipse Commit output",  output);
+      }
+    }
+
   }
   
     

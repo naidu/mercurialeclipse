@@ -40,7 +40,8 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
    */
   public void createFieldEditors() 
   {
-    addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "&Mercurial Executable:",false,getFieldEditorParent()));
+    addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "Mercurial &Executable:",getFieldEditorParent()));
+    addField(new StringFieldEditor( MercurialPreferenceConstants.MERCURIAL_USERNAME, "Mercurial &Username:",getFieldEditorParent()));
 /*
     addField(
       new BooleanFieldEditor(

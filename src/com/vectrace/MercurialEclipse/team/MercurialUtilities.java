@@ -49,11 +49,9 @@ public class MercurialUtilities {
 
 	}
 
-	/**
-	 * 
-	 * @return
-	 */
-	public static boolean isExecutableConfigured() {
+  /*************************** mercurial command ************************/
+
+  public static boolean isExecutableConfigured() {
 		try 
     {
 			Runtime.getRuntime().exec(getHGExecutable());
@@ -111,6 +109,69 @@ public class MercurialUtilities {
 		dlg.open();
 	}
 
+/*************************** Username ************************/
+  public static boolean isUsernameConfigured() {
+    try 
+    {
+      Runtime.getRuntime().exec(getHGUsername());
+      return true;
+    }
+    catch (IOException e) 
+    {
+      return false;
+    }
+  }
+
+  /**
+   * Returns the Username for hg.
+   * If it's not defined, false is returned
+   * @return false if no hg is defined. True if hg executable is defined
+   */
+  public static String getHGUsername() 
+  {
+    IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
+        .getPreferenceStore();
+
+    // This returns "" if not defined
+    String executable = preferenceStore.getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
+
+    return executable;
+  }
+
+  public static String getHGUsername(boolean configureIfMissing) 
+  {
+    if(isUsernameConfigured()) 
+    {
+      return getHGUsername();
+    }
+    else 
+    {
+      if (configureIfMissing) 
+      {
+        configureUsername();
+        return getHGUsername();
+      }
+      else 
+      {
+        return System.getProperty ( "user.name" );
+      }
+    }
+  }
+
+  public static void configureUsername() 
+  {
+    Shell shell = Display.getCurrent().getActiveShell();
+    String pageId = "com.vectrace.MercurialEclipse.prefspage";
+    String[] dsplIds = null;
+    Object data = null;
+    PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell, pageId, dsplIds, data);
+    dlg.open();
+  }
+
+  
+  /*************************** search for a mercurial repository  ************************/
+
+  
 	static String search4MercurialRoot(final IProject project) 
   {
 		return MercurialUtilities.search4MercurialRoot(project.getLocation().toFile());
@@ -167,7 +228,9 @@ public class MercurialUtilities {
 		}
 	}
 
-	/*
+  /*************************** Execute external command ************************/
+
+  /*
 	 * TODO IProcess, ILaunch? Is this what should be used insted of java.io
 	 * stuff ???
 	 */
