@@ -42,10 +42,11 @@
             adaptable="true"
             objectClass="org.eclipse.core.resources.IProject"
             id="com.vectrace.MercurialEclipse.IProjectContributions">
-         <filter
+           <filter
                name="projectPersistentProperty"
                value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-         </filter>
+           </filter>
+
            <action
                label="hg &amp;remove"
                icon="icons/remove.png"
@@ -103,12 +104,14 @@
            adaptable="true"
            objectClass="org.eclipse.core.resources.IResource"
            id="com.vectrace.MercurialEclipse.IFileContributions">
+<!--
            <visibility>
              <or>
                <objectClass name="org.eclipse.core.resources.IFile"/>
                <objectClass name="org.eclipse.core.resources.IFolder"/>
              </or>
            </visibility>             
+-->
            <filter
               name="projectPersistentProperty"
               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
