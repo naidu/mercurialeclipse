@@ -181,6 +181,7 @@
    <extension point="org.eclipse.ui.preferencePages">
       <page class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
+            category="org.eclipse.team.ui.TeamPreferences"
             name="Mercurial Eclipse"/>
    </extension>
 
