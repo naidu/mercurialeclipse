@@ -103,7 +103,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 		    	FullPath=( ((IResource) obj).getLocation() ).toString();
 		    	launchCmd[4]=FullPath;
 //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
- 				  String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
+ 				  String output=MercurialUtilities.ExecuteCommand(launchCmd,true);
           if(output!=null)
           {
             //output output in a window
