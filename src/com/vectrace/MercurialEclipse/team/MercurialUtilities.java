@@ -235,43 +235,85 @@ public class MercurialUtilities {
 	 * stuff ???
 	 */
 
+
+  /*
+   *  Execute commant and return output of it in an InputStream
+   *  Error output is sent to the Mercurial Eclipse consol thais is created if needed
+   */
+  
+  static InputStream ExecuteCommandToInputStream(String cmd[]) 
+  {
+    // Setup and run command
+    // System.out.println("hg --cwd " + Repository + " status");
+    // String launchCmd[] = { "hg","--cwd", Repository ,"status" };
+    // System.out.println("ExecuteCommand:" + cmd.toString());
+
+    String output;
+   // output=new String("");
+    InputStream in;
+
+    
+    try 
+    {
+      int c;
+      Process process = Runtime.getRuntime().exec(cmd);
+      in = process.getInputStream();
+      
+      // System.out.println("Error:");
+      InputStream err = process.getErrorStream();
+      while ((c = err.read()) != -1) 
+      {
+        // System.out.print((char)c);
+//        output=output + String.valueOf((char)c);
+        if(console_out_printstream == null)
+        {         
+          SetupMercurialConsole();
+        }
+        if(console_out_printstream != null )
+        {
+          console_out_printstream.print((char) c);
+        }
+      }
+      err.close();
+      process.waitFor();
+      
+      return in;
+      
+    }
+    catch (IOException e) 
+    {
+      e.printStackTrace();
+    } 
+    catch (InterruptedException e) 
+    {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  // Error end up in consol only
+  
   static String ExecuteCommand(String cmd[], boolean consoleOutput) 
   {
 		// Setup and run command
 		// System.out.println("hg --cwd " + Repository + " status");
 		// String launchCmd[] = { "hg","--cwd", Repository ,"status" };
-		// System.out.println("ExecuteCommand:" + cmd.toString());
-
+		// System.out.println("ExecuteCommand:" + cmd.toString()); 
+    
+    InputStream in;
     String output;
     output=new String("");
 
-		if (consoleOutput && console == null) 
+    if(consoleOutput)
     {
-			console = new IOConsole("Mercurial Console", null);
-			IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-			manager.addConsoles(new IConsole[] { console });
-		}
-		if (consoleOutput && console_in == null) 
-    {
-			console_in = console.getInputStream();
-		}
-		if (consoleOutput && console_out == null) 
-    {
-			console_out = console.newOutputStream();
-			if (console_out != null) 
-      {
-				console_out_printstream = new PrintStream(console_out);
-				// console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
-
-			}
-			// console_out_printstream.println("Hello word!");
-		}
-    
+      SetupMercurialConsole();
+    }
+        
 		try 
     {
 			int c;
-			Process process = Runtime.getRuntime().exec(cmd);
-			InputStream in = process.getInputStream();
+      in = ExecuteCommandToInputStream(cmd);
+
 			// System.out.println("Output:");
 			while ((c = in.read()) != -1) 
       {
@@ -283,33 +325,40 @@ public class MercurialUtilities {
         }
 			}
 			in.close();
-			// System.out.println("Error:");
-			InputStream err = process.getErrorStream();
-			while ((c = err.read()) != -1) 
-      {
-				// System.out.print((char)c);
-        output=output + String.valueOf((char)c);
-        if(consoleOutput && console_out_printstream != null )
-        {
-  				console_out_printstream.print((char) c);
-        }
-			}
-			err.close();
-			process.waitFor();
-			// TODO put output in a window or something
 		}
     catch (IOException e) 
     {
 			e.printStackTrace();
 		} 
-    catch (InterruptedException e) 
-    {
-			e.printStackTrace();
-		}
    return output;
   }
 
-  
+  static void SetupMercurialConsole()
+  {
+    
+    if (console == null) 
+    {
+      console = new IOConsole("Mercurial Console", null);
+      IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+      manager.addConsoles(new IConsole[] { console });
+    }
+    if (console_in == null) 
+    {
+      console_in = console.getInputStream();
+    }
+    if (console_out == null) 
+    {
+      console_out = console.newOutputStream();
+      if (console_out != null) 
+      {
+        console_out_printstream = new PrintStream(console_out);
+        // console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
+
+      }
+      // console_out_printstream.println("Hello word!");
+    }
+
+  }
   
 	/*
 	 * public void runTest(IOConsole console) { final Display display =

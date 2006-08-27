@@ -4,28 +4,276 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFileState;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 //import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.core.variants.IResourceVariant;
+import org.eclipse.team.core.variants.IResourceVariantComparator;
+import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.jface.dialogs.MessageDialog;
-
+import org.eclipse.compare.CompareUI;
 /**
  * @author zingo
  *
  */
 public class ActionDiff implements IWorkbenchWindowActionDelegate {
+/*
+ * try 2
 
-	private IWorkbenchWindow window;
+  public class TimestampVariantComparator implements IResourceVariantComparator { 
+    public boolean compare(IResourceVariant e1, IResourceVariant e2) {
+      if(e1.isContainer()) {
+        if(e2.isContainer()) {
+          return true;
+        }
+        return false;
+      }
+      if(e1 instanceof IFile && e2 instanceof IFile) {
+        IFile myE1 = (IFile)e1; 
+        IFile myE2 = (IFile)e2; 
+        return myE1.getLocation().equals(myE2.getLocation());
+      }
+      return false;
+    }
+    public boolean compare(IResource e1, IResourceVariant e2) {
+      return false;
+        
+    }
+    public boolean isThreeWay() {
+      return true;
+    }
+  }
+
+*/  
+  //try 3
+/*
+  public class LocalHistoryVariant implements IResourceVariant {
+    private final IFileState state;
+
+    public LocalHistoryVariant(IFileState state) {
+      this.state = state;
+    }
+
+    public String getName() {
+      return state.getName();
+    }
+
+    public boolean isContainer() {
+      return false;
+    }
+
+    public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
+      return state;
+    }
+
+    public String getContentIdentifier() {
+      return Long.toString(state.getModificationTime());
+    }
+
+    public byte[] asBytes() {
+      return null;
+    }
+  }
+ 
+  public class LocalHistorySyncInfo extends SyncInfo {
+    public LocalHistorySyncInfo(IResource local, IResourceVariant remote, IResourceVariantComparator comparator) {
+      super(local, null, remote, comparator);
+    }
+
+    protected int calculateKind() throws TeamException {
+      if (getRemote() == null)
+        return IN_SYNC;
+      else
+        return super.calculateKind();
+    }
+  }
+*/
+  
+
+  public class FileHistoryVariant implements IResourceVariant {
+    private final IStorage myIStorage;
+
+    public FileHistoryVariant(IStorage res) 
+    {
+     this.myIStorage = res;
+//     System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::FileHistoryVariant()" );
+    }
+
+    
+    public String getName() 
+    {
+//      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::getName()" );
+      return myIStorage.getName();
+    }
+
+    public boolean isContainer() 
+    {
+//      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::isContainer()" );
+      return false;
+    }
+
+    public IStorage getStorage(IProgressMonitor monitor) throws TeamException 
+    {
+//      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::getStorage()" );
+      return myIStorage;
+    }
+
+    public String getContentIdentifier() 
+    {
+//      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::getContentIdentifier()" );
+      return myIStorage.getFullPath().toString();
+    }
+
+    public byte[] asBytes() 
+    {
+      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::asBytes() what is this for?" );
+      return "Hej hopp Måns i lingon skogen!".getBytes();
+    }
+  }
+  
+   
+  public class MyRepositorySubscriber extends Subscriber 
+  {
+
+    public class LocalHistoryVariantComparator implements IResourceVariantComparator {
+      public boolean compare(IResource local, IResourceVariant remote) {
+        return false;
+      }
+
+      public boolean compare(IResourceVariant base, IResourceVariant remote) {
+        return false;
+      }
+
+      public boolean isThreeWay() {
+        return false;
+      }
+    }
+
+    
+    LocalHistoryVariantComparator comparatorObj; 
+    
+    public MyRepositorySubscriber()
+    {
+      comparatorObj = new LocalHistoryVariantComparator();
+    }
+    
+    public String getName()
+    {
+      // TODO Auto-generated method stub
+      return "MyRepositorySubscriber";
+    }
+
+    public boolean isSupervised(IResource resource) throws TeamException
+    {
+      // TODO Auto-generated method stub
+      return false;
+    }
+
+    public IResource[] members(IResource resource) throws TeamException {
+      try {
+        if(resource.getType() == IResource.FILE)
+          return new IResource[0];
+        IContainer container = (IContainer)resource;
+        List existingChildren = new ArrayList(Arrays.asList(container.members()));
+        existingChildren.addAll(
+          Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
+        return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
+      } catch (CoreException e) {
+        throw TeamException.asTeamException(e);
+      }
+    }
+
+    public IResource[] roots()
+    {
+      // TODO Auto-generated method stub
+      return null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.eclipse.team.core.subscribers.Subscriber#getSyncInfo(org.eclipse.core.resources.IResource)
+     */
+    public SyncInfo getSyncInfo(IResource resource) throws TeamException
+    {
+      // TODO Auto-generated method stub
+      return getSyncInfo(resource,null,null);
+    }
+
+    public SyncInfo getSyncInfo(IResource resource, IStorage r1, IStorage r2) throws TeamException {
+      try {
+  /*
+        IResourceVariant variant = null;
+        if(resource.getType() == IResource.FILE) {
+          IFile file = (IFile)resource;
+          IFileState[] states = file.getHistory(null);
+          if(states.length > 0) {
+            // last state only
+            variant = new LocalHistoryVariant(states[0]);
+          } 
+        }
+        */
+        FileHistoryVariant fileHist1=null;
+        FileHistoryVariant fileHist2=null;
+        if(r1 != null)
+        {
+          fileHist1 = new FileHistoryVariant(r1);
+        }
+        if(r2 != null)
+        {
+          fileHist2 = new FileHistoryVariant(r2);
+        }
+        
+        SyncInfo info = new SyncInfo(resource, fileHist1,fileHist2, comparatorObj);
+        info.init();
+        return info;
+      } catch (CoreException e) {
+        throw TeamException.asTeamException(e);
+      }
+    }
+
+    public IResourceVariantComparator getResourceComparator()
+    {
+      // TODO Auto-generated method stub
+      return comparatorObj;
+    }
+
+    public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException
+    {
+      // TODO Auto-generated method stub
+      
+    }
+
+  }
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
@@ -92,7 +340,6 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 		Object obj;
 	  Iterator itr; 
 	    // the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"diff", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
@@ -100,27 +347,23 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 	    	if (obj instanceof IResource)
 	    	{
 				//Setup and run command
-		    	FullPath=( ((IResource) obj).getLocation() ).toString();
-		    	launchCmd[4]=FullPath;
-//				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
- 				  String output=MercurialUtilities.ExecuteCommand(launchCmd,true);
-          if(output!=null)
+              
+          MyRepositorySubscriber subscriber = new MyRepositorySubscriber();
+          try
           {
-            //output output in a window
-            if(output.length()!=0)
-            {
-              MessageDialog.openInformation(shell,"Mercurial Eclipse Diff",  launchCmd[4] + "\n" + output);
-            }
-            else
-            {
-              MessageDialog.openInformation(shell,"Mercurial Eclipse NoDiff" ,"No diff for " + launchCmd[4]);
-            }
+            SyncInfo syncInfo = subscriber.getSyncInfo((IResource)obj,(IStorage)obj,new IStorageMercurialRevision(proj,(IResource)obj,"tip"));
+            SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff",syncInfo);
+            CompareUI.openCompareEditor( comparedialog );
           }
+          catch (TeamException e)
+          {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+          }  
         }
 	    }
 	}
-
-	
+  
   
 	/**
 	 * Selection in the workbench has been changed. We 
