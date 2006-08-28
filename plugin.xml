@@ -84,6 +84,22 @@
                id="com.vectrace.MercurialEclipse.team.ActionDiff">
            </action>
            <action
+               label="hg &amp;log"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
+               tooltip="hg log"
+               menubarPath="team.main/group2"
+               id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
+           </action>
+           <action
+               label="hg &amp;annotate"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
+               tooltip="hg annotate"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.ActionAnnotate">
+           </action>
+           <action
                label="hg &amp;commit (All files)"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"

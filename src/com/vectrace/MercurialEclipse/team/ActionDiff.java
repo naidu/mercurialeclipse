@@ -38,78 +38,7 @@ import org.eclipse.compare.CompareUI;
  *
  */
 public class ActionDiff implements IWorkbenchWindowActionDelegate {
-/*
- * try 2
-
-  public class TimestampVariantComparator implements IResourceVariantComparator { 
-    public boolean compare(IResourceVariant e1, IResourceVariant e2) {
-      if(e1.isContainer()) {
-        if(e2.isContainer()) {
-          return true;
-        }
-        return false;
-      }
-      if(e1 instanceof IFile && e2 instanceof IFile) {
-        IFile myE1 = (IFile)e1; 
-        IFile myE2 = (IFile)e2; 
-        return myE1.getLocation().equals(myE2.getLocation());
-      }
-      return false;
-    }
-    public boolean compare(IResource e1, IResourceVariant e2) {
-      return false;
-        
-    }
-    public boolean isThreeWay() {
-      return true;
-    }
-  }
-
-*/  
-  //try 3
-/*
-  public class LocalHistoryVariant implements IResourceVariant {
-    private final IFileState state;
-
-    public LocalHistoryVariant(IFileState state) {
-      this.state = state;
-    }
-
-    public String getName() {
-      return state.getName();
-    }
-
-    public boolean isContainer() {
-      return false;
-    }
-
-    public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-      return state;
-    }
-
-    public String getContentIdentifier() {
-      return Long.toString(state.getModificationTime());
-    }
-
-    public byte[] asBytes() {
-      return null;
-    }
-  }
  
-  public class LocalHistorySyncInfo extends SyncInfo {
-    public LocalHistorySyncInfo(IResource local, IResourceVariant remote, IResourceVariantComparator comparator) {
-      super(local, null, remote, comparator);
-    }
-
-    protected int calculateKind() throws TeamException {
-      if (getRemote() == null)
-        return IN_SYNC;
-      else
-        return super.calculateKind();
-    }
-  }
-*/
-  
 
   public class FileHistoryVariant implements IResourceVariant {
     private final IStorage myIStorage;
@@ -147,8 +76,8 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 
     public byte[] asBytes() 
     {
-      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::asBytes() what is this for?" );
-      return "Hej hopp Måns i lingon skogen!".getBytes();
+//      System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::asBytes() what is this for?" );
+      return null;
     }
   }
   
@@ -313,9 +242,6 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 	{
 		IProject proj;
 		String Repository;
-		String FullPath;
-    Shell shell;
-    IWorkbench workbench;
     
     proj=MercurialUtilities.getProject(selection);
 		Repository=MercurialUtilities.getRepositoryPath(proj);
@@ -324,44 +250,30 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 			Repository="."; //never leave this empty add a . to point to current path
 		}
 
-    //Get shell & workbench
-    if((window !=null) && (window.getShell() != null))
-    {
-      shell=window.getShell();
-    }
-    else
-    {
-      workbench = PlatformUI.getWorkbench();
-      shell = workbench.getActiveWorkbenchWindow().getShell();
-    }
-
-    
-    
 		Object obj;
 	  Iterator itr; 
-	    // the last argument will be replaced with a path
-	    itr=selection.iterator();
-	    while(itr.hasNext())
-	    {
-	    	obj=itr.next();
-	    	if (obj instanceof IResource)
-	    	{
-				//Setup and run command
-              
-          MyRepositorySubscriber subscriber = new MyRepositorySubscriber();
-          try
-          {
-            SyncInfo syncInfo = subscriber.getSyncInfo((IResource)obj,(IStorage)obj,new IStorageMercurialRevision(proj,(IResource)obj,"tip"));
-            SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff",syncInfo);
-            CompareUI.openCompareEditor( comparedialog );
-          }
-          catch (TeamException e)
-          {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-          }  
+    // the last argument will be replaced with a path
+    itr=selection.iterator();
+    while(itr.hasNext())
+    {
+    	obj=itr.next();
+    	if (obj instanceof IResource)
+    	{
+			//Setup and run command
+            
+        MyRepositorySubscriber subscriber = new MyRepositorySubscriber();
+        try
+        {
+          SyncInfo syncInfo = subscriber.getSyncInfo((IResource)obj,(IStorage)obj,new IStorageMercurialRevision(proj,(IResource)obj,"tip"));
+          SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff",syncInfo);
+          CompareUI.openCompareEditor( comparedialog );
         }
-	    }
+        catch (TeamException e)
+        {
+          e.printStackTrace();
+        }  
+      }
+    }
 	}
   
   
