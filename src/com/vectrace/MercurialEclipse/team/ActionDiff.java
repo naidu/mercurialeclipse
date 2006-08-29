@@ -10,7 +10,6 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFileState;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
@@ -19,19 +18,14 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-//import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.compare.CompareUI;
 /**
  * @author zingo
@@ -226,7 +220,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
 	public void init(IWorkbenchWindow window) {
-		System.out.println("ActionDiff:init(window)");
+//		System.out.println("ActionDiff:init(window)");
 		this.window = window;
 	}
 
@@ -259,12 +253,31 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
     	obj=itr.next();
     	if (obj instanceof IResource)
     	{
-			//Setup and run command
-            
+
+        //Setup and run command identify, this us used to get the base changeset to diff against
+        //tip cant be used since work can be done in older reviison ( hg up <old rev> )
+        //String FullPath = ( ((IResource) obj).getLocation() ).toString();
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"identify"};
+        String changeset = MercurialUtilities.ExecuteCommand(launchCmd,false);
+        // It consists of the revision id (hash), optionally a '+' sign
+        // if the working tree has been modified, followed by a list of tags.
+        //    => we need to strip it ...     
+
+        if(changeset.indexOf(" ") != -1) //is there a space?
+        {
+          changeset = changeset.substring(0,changeset.indexOf(" ")); //take the begining until the first space
+        }
+        if(changeset.indexOf("+") != -1) //is there a +?
+        {
+          changeset = changeset.substring(0,changeset.indexOf("+")); //take the begining until the first +
+        }
+
+        //Setup and run command diff
+        
         MyRepositorySubscriber subscriber = new MyRepositorySubscriber();
         try
         {
-          SyncInfo syncInfo = subscriber.getSyncInfo((IResource)obj,(IStorage)obj,new IStorageMercurialRevision(proj,(IResource)obj,"tip"));
+          SyncInfo syncInfo = subscriber.getSyncInfo((IResource)obj,(IStorage)obj,new IStorageMercurialRevision(proj,(IResource)obj,changeset));
           SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff",syncInfo);
           CompareUI.openCompareEditor( comparedialog );
         }
