@@ -56,12 +56,18 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     objectProject = objectResource.getProject();
     if( RepositoryProvider.isShared( objectProject ) ) 
     {
+      //A Shared Project
       RepoProvider = RepositoryProvider.getProvider( objectProject );
       if( ! (RepoProvider instanceof MercurialTeamProvider))
       {
         //Resource not unsing this plugin
         return;
       }
+    }
+    else
+    { 
+      //Not a Shared Project
+      return;
     }
 
     
