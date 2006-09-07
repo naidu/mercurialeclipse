@@ -8,7 +8,20 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.layout.FormAttachment;
+import org.eclipse.swt.layout.FormData;
+import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -21,8 +34,10 @@ import org.eclipse.jface.dialogs.MessageDialog;
  * @author zingo
  *
  */
-public class ActionCommit implements IWorkbenchWindowActionDelegate {
+public class ActionCommit implements IWorkbenchWindowActionDelegate
+{
 
+  
 	private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
@@ -64,7 +79,13 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
 		String Repository;
     InputDialog commitDialog;
     Shell shell;
+    final Shell CommitWindow;
+    final Button Ok,Cancel; 
+    final Text CommitTextBox;
     IWorkbench workbench;
+    final boolean [] ButtonOk = new boolean [1];
+    final String [] commitText = new String [1];
+    
     
 		proj=MercurialUtilities.getProject(selection);
 		Repository=MercurialUtilities.getRepositoryPath(proj);
@@ -84,15 +105,81 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate {
     shell = workbench.getActiveWorkbenchWindow().getShell();
   }
 
+  Display display=shell.getDisplay();
+  
+//  CommitWindow= new Shell(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL); 
+  CommitWindow= new Shell(shell, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.APPLICATION_MODAL); 
+  GridLayout gridLayout = new GridLayout(3,false);
+  CommitWindow.setLayout( gridLayout );
+  CommitWindow.setText("Mercurial Eclipse Commit");
 
-  commitDialog = new InputDialog(shell,"Mercurial Eclipse Commit","Enter commit message",null,null);
-  commitDialog.open();
+  Label textBoxLabel=new Label(CommitWindow , SWT.NONE);
+  textBoxLabel.setText("Enter Commit message");
+  GridData gridDataLabel = new GridData(GridData.FILL_BOTH);
+  gridDataLabel.horizontalSpan = 3;
+  gridDataLabel.verticalSpan = 1;
+  textBoxLabel.setLayoutData( gridDataLabel );
+  
+  CommitTextBox = new Text(CommitWindow,SWT.MULTI | SWT.BORDER );
+  CommitTextBox.setCapture(true);   
+//  CommitTextBox.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL | GridData.GRAB_HORIZONTAL));
+  GridData gridDataTextBox = new GridData(GridData.FILL_BOTH);
+  gridDataTextBox.horizontalSpan = 3;
+  gridDataTextBox.verticalSpan = 3;
+  gridDataTextBox.minimumWidth=100;
+  gridDataTextBox.minimumHeight=30;
+  gridDataTextBox.widthHint=300;
+  gridDataTextBox.heightHint=50;
+  CommitTextBox.setLayoutData( gridDataTextBox );
+  
+  Ok = new Button(CommitWindow,SWT.PUSH);
+  Ok.setText("Ok");
+  Cancel = new Button(CommitWindow,SWT.PUSH);
+  Cancel.setText("Cancel"); 
+  
 
+  
+  Listener buttonListener = new Listener () 
+  {
+    public void handleEvent (Event event) 
+    {
+      ButtonOk[0] = event.widget == Ok;
+      commitText[0]=CommitTextBox.getText();  
+      CommitWindow.close();
 
-  if(commitDialog.getValue() != null) 
+    }
+  };
+  Ok.addListener (SWT.Selection, buttonListener);
+  Cancel.addListener (SWT.Selection, buttonListener);
+
+  CommitWindow.setDefaultButton(Ok);
+  CommitWindow.pack();
+  CommitWindow.open();
+
+  while( !CommitWindow.isDisposed() ) 
+  {
+    if( !display.readAndDispatch() ) 
+    {
+      display.sleep ();
+    }
+  }
+  
+//  CommitWindow.dispose();
+  
+  
+  //commitDialog = new InputDialog(shell,"Mercurial Eclipse Commit","Enter commit message",null,null);
+  //commitDialog.open();
+//  if(commitDialog.getValue() != null) 
+//  {
+//    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "--message",commitDialog.getValue(), "--user",MercurialUtilities.getHGUsername()};
+
+ //System.out.println("Commit:" + commitText[0] );
+
+  
+  if( ButtonOk[0] == true && commitText[0] != null) 
   { //OK wa pressed and not Cancel
     //System.out.println("InputDialog: <OK> " + commitDialog.getValue());
-    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "--message",commitDialog.getValue(), "--user",MercurialUtilities.getHGUsername()};
+    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "--message",commitText[0], "--user",MercurialUtilities.getHGUsername()};
     String output = MercurialUtilities.ExecuteCommand(launchCmd,false);
     if(output!=null)
     {

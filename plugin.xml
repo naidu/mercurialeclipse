@@ -20,6 +20,27 @@
 	   </wizard>
 	</extension>
 
+	<extension point="org.eclipse.team.ui.synchronizeParticipants">
+	   <participant
+	        icon="icons/mercurialeclipse.png"
+	        id="com.vectrace.MercurialEclipse.team.MercurialSynchronizeParticipant"
+	        class="com.vectrace.MercurialEclipse.team.MercurialSynchronizeParticipant"
+	        name="Mercurial Syncronisation"
+	        persistent="true">
+	   </participant>
+	</extension>
+
+	<extension point= "org.eclipse.team.ui.synchronizeWizards" >
+	   <wizard
+	        name="Mercurial"
+			description="Mercurial synchronize wizard"
+	        icon="icons/mercurialeclipse.png"
+	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
+	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
+	   </wizard>
+	</extension>
+
+
 	<extension point="org.eclipse.ui.decorators">
 	    <decorator
 	            adaptable="true"

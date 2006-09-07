@@ -97,7 +97,7 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
       {
       //Setup and run command
         String FullPath = ( ((IResource) obj).getLocation() ).toString();
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"log" , FullPath};
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"log" ,"-v" , FullPath};
         String output = MercurialUtilities.ExecuteCommand(launchCmd,true);
         if(output!=null)
         {
