@@ -125,6 +125,14 @@
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
            <action
+               label="hg &amp;revert"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionRevert"
+               tooltip="hg revert"
+               menubarPath="team.main/group2"
+               id="com.vectrace.MercurialEclipse.team.ActionRevert">
+           </action>
+           <action
                label="hg &amp;annotate"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
