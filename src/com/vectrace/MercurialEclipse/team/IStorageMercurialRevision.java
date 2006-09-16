@@ -75,7 +75,7 @@ public class IStorageMercurialRevision implements IStorage
     }  
 
     String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"cat", "--rev" , revision, sourceFilename };
-    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd);
+    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,false);
   }
 
   /* (non-Javadoc)

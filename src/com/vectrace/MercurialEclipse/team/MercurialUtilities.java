@@ -4,10 +4,16 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.Writer;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -33,14 +39,16 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  * 
  */
 public class MercurialUtilities {
-	static IOConsole console;
 
-	static IOConsoleInputStream console_in;
+  static IOConsole console;
+  static IOConsoleInputStream console_in;
+  static IOConsoleOutputStream console_out;
+  static PrintStream console_out_printstream;  //migth be used by threads GetMercurialConsole should be used to get this, even internally GetMercurialConsole() in synchronized 
 
-	static IOConsoleOutputStream console_out;
 
-	static PrintStream console_out_printstream;
+  
 
+  
 	/**
 	 * This class is full of utilities metods, useful allover the place
 	 */
@@ -110,17 +118,6 @@ public class MercurialUtilities {
 	}
 
 /*************************** Username ************************/
-  public static boolean isUsernameConfigured() {
-    try 
-    {
-      Runtime.getRuntime().exec(getHGUsername());
-      return true;
-    }
-    catch (IOException e) 
-    {
-      return false;
-    }
-  }
 
   /**
    * Returns the Username for hg.
@@ -140,9 +137,11 @@ public class MercurialUtilities {
 
   public static String getHGUsername(boolean configureIfMissing) 
   {
-    if(isUsernameConfigured()) 
+    String uname = getHGUsername();
+    
+    if(uname != null ) 
     {
-      return getHGUsername();
+      return uname;
     }
     else 
     {
@@ -240,43 +239,77 @@ public class MercurialUtilities {
    *  Execute commant and return output of it in an InputStream
    *  Error output is sent to the Mercurial Eclipse consol thais is created if needed
    */
+//  static InputStream ExecuteCommandToInputStream(String cmd[]) 
   
-  static InputStream ExecuteCommandToInputStream(String cmd[]) 
+  static InputStream ExecuteCommandToInputStream(String cmd[],boolean consoleOutput) 
   {
+    class myIOThreadNoOutput extends Thread
+    {
+      Reader input;
+      boolean consoleOutput;
+      
+      public myIOThreadNoOutput(String aName, Reader instream, boolean consoleOutput_)
+      {
+        super(aName);
+        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+        input=instream;
+        consoleOutput = consoleOutput_;
+      }
+
+      
+      public void run()
+      {
+        int c;
+        PrintStream my_console;
+        //Thread.currentThread.sleep(100); //Delay 100 ms
+        // System.out.println("Error:");
+        try
+        {
+          if(consoleOutput)
+          {
+            my_console=GetMercurialConsole();
+          }
+          else
+          {
+            my_console = null;
+          }
+            
+          while ((c = input.read()) != -1) 
+          {
+            // System.out.print((char)c);
+            if(my_console != null )
+            {
+              my_console.print((char) c);
+            }
+          }
+        }
+        
+        catch (IOException e)
+        {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+                
+      }
+    }
+
     // Setup and run command
-    // System.out.println("hg --cwd " + Repository + " status");
-    // String launchCmd[] = { "hg","--cwd", Repository ,"status" };
-    // System.out.println("ExecuteCommand:" + cmd.toString());
-
-    String output;
-   // output=new String("");
     InputStream in;
-
-    
+    Reader err_unicode;
     try 
     {
-      int c;
       Process process = Runtime.getRuntime().exec(cmd);
+      
       in = process.getInputStream();
-      
-      // System.out.println("Error:");
-      InputStream err = process.getErrorStream();
-      while ((c = err.read()) != -1) 
-      {
-        // System.out.print((char)c);
-//        output=output + String.valueOf((char)c);
-        if(console_out_printstream == null)
-        {         
-          SetupMercurialConsole();
-        }
-        if(console_out_printstream != null )
-        {
-          console_out_printstream.print((char) c);
-        }
-      }
-      err.close();
+      err_unicode = new InputStreamReader(process.getErrorStream()); //InputStreamReader converts input to unicode
+
+      myIOThreadNoOutput errThread = new myIOThreadNoOutput("stderr",err_unicode,true);         //only to console
+      errThread.start();
+     
       process.waitFor();
-      
+
+//Let it continue      errThread.join(); //wait for the thread to terminate
+//      err_unicode.close();    
       return in;
       
     }
@@ -291,50 +324,134 @@ public class MercurialUtilities {
     return null;
   }
 
+  static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],boolean consoleOutput) 
+  {
+    class myIOThread extends Thread
+    {
+      Reader input;
+      ByteArrayOutputStream output;
+      boolean consoleOutput;
+      
+      public myIOThread(String aName, Reader instream, ByteArrayOutputStream outstream, boolean consoleOutput_)
+      {
+        super(aName);
+        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+        input=instream;
+        output=outstream;
+        consoleOutput = consoleOutput_;
+      }
+
+      
+      public void run()
+      {
+        int c;
+        PrintStream my_console;
+        //Thread.currentThread.sleep(100); //Delay 100 ms
+        // System.out.println("Error:");
+        try
+        {
+          if(consoleOutput)
+          {
+            my_console=GetMercurialConsole();
+          }
+          else
+          {
+            my_console = null;
+          }
+            
+          while ((c = input.read()) != -1) 
+          {
+            // System.out.print((char)c);
+//          output=output + String.valueOf((char)c);
+            if(output != null)
+            {
+              output.write(c);
+            }
+            if(my_console != null )
+            {
+              my_console.print((char) c);
+            }
+          }
+        }
+        
+        catch (IOException e)
+        {
+          // TODO Auto-generated catch block
+          e.printStackTrace();
+        }
+                
+      }
+    }
+
+    // Setup and run command
+    // System.out.println("hg --cwd " + Repository + " status");
+    // String launchCmd[] = { "hg","--cwd", Repository ,"status" };
+    // System.out.println("ExecuteCommand:" + cmd.toString());
+
+   // output=new String("");
+//    InputStream in;
+    ByteArrayOutputStream output;
+    Reader in_unicode;
+    Reader err_unicode;
+    try 
+    {
+      Process process = Runtime.getRuntime().exec(cmd);
+      
+//      in = process.getInputStream();
+      output = new ByteArrayOutputStream();
+      in_unicode = new InputStreamReader(process.getInputStream()); //InputStreamReader converts input to unicode
+      err_unicode = new InputStreamReader(process.getErrorStream()); //InputStreamReader converts input to unicode
+
+//      output = new StringWriter();
+      myIOThread inThread  = new myIOThread("stdin",in_unicode,output,consoleOutput);
+      myIOThread errThread = new myIOThread("stderr",err_unicode,null,true);         //only to console
+      inThread.start();
+      errThread.start();
+     
+      process.waitFor();
+
+      inThread.join(); //wait for the thread to terminate
+      errThread.join(); //wait for the thread to terminate
+
+      in_unicode.close();
+      err_unicode.close();
+      
+      return output;
+      
+    }
+    catch (IOException e) 
+    {
+      e.printStackTrace();
+    } 
+    catch (InterruptedException e) 
+    {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  
   // Error end up in consol only
   
   static String ExecuteCommand(String cmd[], boolean consoleOutput) 
   {
 		// Setup and run command
-		// System.out.println("hg --cwd " + Repository + " status");
-		// String launchCmd[] = { "hg","--cwd", Repository ,"status" };
 		// System.out.println("ExecuteCommand:" + cmd.toString()); 
     
-    InputStream in;
-    String output;
-    output=new String("");
+    ByteArrayOutputStream output;
+  
+    output = ExecuteCommandToByteArrayOutputStream(cmd,consoleOutput);
 
-    if(consoleOutput)
-    {
-      SetupMercurialConsole();
-    }
-        
-		try 
-    {
-			int c;
-      in = ExecuteCommandToInputStream(cmd);
-
-			// System.out.println("Output:");
-			while ((c = in.read()) != -1) 
-      {
-				// System.out.print((char)c);
-        output=output + String.valueOf((char)c);
-        if(consoleOutput && console_out_printstream != null )
-        {
-				  console_out_printstream.print((char) c);
-        }
-			}
-			in.close();
-		}
-    catch (IOException e) 
-    {
-			e.printStackTrace();
-		} 
-   return output;
+   return output.toString();
   }
 
-  static void SetupMercurialConsole()
+  static synchronized PrintStream GetMercurialConsole()
   {
+
+    if(console_out_printstream != null)
+    {
+      return console_out_printstream;
+    }
     
     if (console == null) 
     {
@@ -352,12 +469,13 @@ public class MercurialUtilities {
       if (console_out != null) 
       {
         console_out_printstream = new PrintStream(console_out);
+        return console_out_printstream;
         // console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
 
       }
       // console_out_printstream.println("Hello word!");
     }
-
+    return null; //Error
   }
   
 	/*
