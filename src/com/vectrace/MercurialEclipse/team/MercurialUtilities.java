@@ -243,19 +243,17 @@ public class MercurialUtilities {
   
   static InputStream ExecuteCommandToInputStream(String cmd[],boolean consoleOutput) 
   {
-    class myIOThreadNoOutput extends Thread
+    class myIOThreadNoOutput implements Runnable
     {
       Reader input;
       boolean consoleOutput;
       
       public myIOThreadNoOutput(String aName, Reader instream, boolean consoleOutput_)
       {
-        super(aName);
-        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+//        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
         input=instream;
         consoleOutput = consoleOutput_;
       }
-
       
       public void run()
       {
@@ -298,13 +296,21 @@ public class MercurialUtilities {
     Reader err_unicode;
     try 
     {
-      Process process = Runtime.getRuntime().exec(cmd);
+//    Process process = Runtime.getRuntime().exec(cmd);
+      ProcessBuilder pb = new ProcessBuilder(cmd);
+//      Map<String, String> env = pb.environment();
+//      env.put("VAR1", "myValue");
+//      env.remove("OTHERVAR");
+//      env.put("VAR2", env.get("VAR1") + "suffix");
+//      pb.directory("myDir");
+      Process process = pb.start();
       
       in = process.getInputStream();
       err_unicode = new InputStreamReader(process.getErrorStream()); //InputStreamReader converts input to unicode
 
       myIOThreadNoOutput errThread = new myIOThreadNoOutput("stderr",err_unicode,true);         //only to console
-      errThread.start();
+      Thread threadErr = new Thread(errThread);
+      threadErr.start();
      
       process.waitFor();
 
@@ -326,7 +332,7 @@ public class MercurialUtilities {
 
   static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],boolean consoleOutput) 
   {
-    class myIOThread extends Thread
+    class myIOThread implements Runnable
     {
       Reader input;
       ByteArrayOutputStream output;
@@ -334,8 +340,7 @@ public class MercurialUtilities {
       
       public myIOThread(String aName, Reader instream, ByteArrayOutputStream outstream, boolean consoleOutput_)
       {
-        super(aName);
-        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+//        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
         input=instream;
         output=outstream;
         consoleOutput = consoleOutput_;
@@ -395,7 +400,16 @@ public class MercurialUtilities {
     Reader err_unicode;
     try 
     {
-      Process process = Runtime.getRuntime().exec(cmd);
+//      Process process = Runtime.getRuntime().exec(cmd);
+      ProcessBuilder pb = new ProcessBuilder(cmd);
+//      Map<String, String> env = pb.environment();
+//      env.put("VAR1", "myValue");
+//      env.remove("OTHERVAR");
+//      env.put("VAR2", env.get("VAR1") + "suffix");
+//      pb.directory("myDir");
+      Process process = pb.start();
+      
+      
       
 //      in = process.getInputStream();
       output = new ByteArrayOutputStream();
@@ -405,14 +419,16 @@ public class MercurialUtilities {
 //      output = new StringWriter();
       myIOThread inThread  = new myIOThread("stdin",in_unicode,output,consoleOutput);
       myIOThread errThread = new myIOThread("stderr",err_unicode,null,true);         //only to console
-      inThread.start();
-      errThread.start();
+      Thread threadIn  = new Thread(inThread);
+      Thread threadErr = new Thread(errThread);
+      threadIn.start();
+      threadErr.start();
      
+      threadIn.join(); //wait for the thread to terminate
+      threadErr.join(); //wait for the thread to terminate
+
       process.waitFor();
-
-      inThread.join(); //wait for the thread to terminate
-      errThread.join(); //wait for the thread to terminate
-
+      
       in_unicode.close();
       err_unicode.close();
       

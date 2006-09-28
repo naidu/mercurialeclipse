@@ -9,6 +9,9 @@ import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -75,24 +78,44 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
       Iterator itr; 
       // the last argument will be replaced with a path
     String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"revert", "" };
-      itr=selection.iterator();
-      while(itr.hasNext())
+/*
+    
+    IWorkspaceRunnable myRunnable = new IWorkspaceRunnable() 
+    {
+      public void run(IProgressMonitor monitor) throws CoreException 
       {
-        obj=itr.next();
-        if (obj instanceof IResource)
+*/
+        //do the actual work in here
+        itr=selection.iterator();
+        while(itr.hasNext())
         {
-        //Setup and run command
-          FullPath=( ((IResource) obj).getLocation() ).toString();
-          launchCmd[4]=FullPath;
-//            System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-        MercurialUtilities.ExecuteCommand(launchCmd,true);
+          obj=itr.next();
+          if (obj instanceof IResource)
+          {
+            IResource resource=(IResource) obj;
+          //Setup and run command
+            FullPath=resource.getLocation().toString();
+            launchCmd[4]=FullPath;
+            MercurialUtilities.ExecuteCommand(launchCmd,true);          
+            try
+            {
+              resource.touch(null);
+            }
+            catch (CoreException e)
+            {
+              e.printStackTrace();
+            } 
+          }
         }
-      }
-      
-      DecoratorStatus.refresh();
+        DecoratorStatus.refresh();
+        
+        /*
+    }
   }
-  
-  
+  IWorkspace workspace = ResourcesPlugin.getWorkspace();
+  workspace.run(myRunnable, myProject, IWorkspace.AVOID_UPDATE, null);
+ */ 
+  }
   /**
    * Selection in the workbench has been changed. We 
    * can change the state of the 'real' action here
