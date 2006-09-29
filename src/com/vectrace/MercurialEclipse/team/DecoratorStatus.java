@@ -102,24 +102,26 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 //        System.out.println("hg --cwd " + Repository + " status");
 
       FullPath=( objectResource.getLocation() ).toString();
-      
-      String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status", FullPath };
-      String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
-      if(output!=null)
-      {
-        if(output.length()!=0)
+      if(FullPath.indexOf(".hg") == -1)  //Do not decorate the stuff inder .hg
+      {      
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status", FullPath };
+        String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
+        if(output!=null)
         {
-//        decoration.addSuffix( "{" + output.substring(0,1)  + "}" );
-//          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", "+ output.substring(0,1) + ")");
-          decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
+          if(output.length()!=0)
+          {
+  //        decoration.addSuffix( "{" + output.substring(0,1)  + "}" );
+  //          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", "+ output.substring(0,1) + ")");
+            decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
+          }
+          else
+          {
+            //Managed and unchanged (No output from status)
+  //          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", No output (managed?))");
+            decoration.addOverlay(DecoratorImages.managedDescriptor);      
+          }
         }
-        else
-        {
-          //Managed and unchanged (No output from status)
-//          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", No output (managed?))");
-          decoration.addOverlay(DecoratorImages.managedDescriptor);      
-        }
-      }  
+      }
     }
     
 //    System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", "+ decoration.toString() + ")");

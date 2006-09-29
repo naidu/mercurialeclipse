@@ -7,8 +7,11 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.util.Iterator;
 
+import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
@@ -96,6 +99,16 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
           //Setup and run command
             FullPath=resource.getLocation().toString();
             launchCmd[4]=FullPath;
+//            IResourceChangeEvent event = new IResourceChangeEvent();
+      
+            try
+            {
+              resource.touch(null);
+            }
+            catch (CoreException e)
+            {
+              e.printStackTrace();
+            } 
             MercurialUtilities.ExecuteCommand(launchCmd,true);          
             try
             {
