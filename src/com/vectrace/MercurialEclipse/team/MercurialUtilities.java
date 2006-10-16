@@ -45,9 +45,6 @@ public class MercurialUtilities {
   static IOConsoleOutputStream console_out;
   static PrintStream console_out_printstream;  //migth be used by threads GetMercurialConsole should be used to get this, even internally GetMercurialConsole() in synchronized 
 
-
-  
-
   
 	/**
 	 * This class is full of utilities metods, useful allover the place
@@ -311,6 +308,7 @@ public class MercurialUtilities {
       myIOThreadNoOutput errThread = new myIOThreadNoOutput("stderr",err_unicode,true);         //only to console
       Thread threadErr = new Thread(errThread);
       threadErr.start();
+      threadErr.setPriority(Thread.MAX_PRIORITY); //Set Priorety one above current pos (we want to take care of the input instead of waiting
      
       process.waitFor();
 
@@ -340,7 +338,7 @@ public class MercurialUtilities {
       
       public myIOThread(String aName, Reader instream, ByteArrayOutputStream outstream, boolean consoleOutput_)
       {
-//        setPriority(getPriority()+1); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+//        setPriority(Thread.MAX_PRIORITY); //getPriority()+1 //Set Priorety one above current pos (we want to take care of the input instead of waiting
         input=instream;
         output=outstream;
         consoleOutput = consoleOutput_;
@@ -421,6 +419,9 @@ public class MercurialUtilities {
       myIOThread errThread = new myIOThread("stderr",err_unicode,null,true);         //only to console
       Thread threadIn  = new Thread(inThread);
       Thread threadErr = new Thread(errThread);
+      threadIn.setPriority(Thread.MAX_PRIORITY); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+      threadErr.setPriority(Thread.MAX_PRIORITY); //Set Priorety one above current pos (we want to take care of the input instead of waiting
+
       threadIn.start();
       threadErr.start();
      

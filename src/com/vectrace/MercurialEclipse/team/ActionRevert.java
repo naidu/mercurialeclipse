@@ -13,8 +13,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -68,26 +70,32 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
   public void run(IAction action) 
   {
     IProject proj;
-    String Repository;
-    String FullPath;
     proj=MercurialUtilities.getProject(selection);
-    Repository=MercurialUtilities.getRepositoryPath(proj);
-    if(Repository==null)
-    {
-      Repository="."; //never leave this empty add a . to point to current path
-    }
-
-    Object obj;
-      Iterator itr; 
-      // the last argument will be replaced with a path
-    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"revert", "" };
-/*
     
-    IWorkspaceRunnable myRunnable = new IWorkspaceRunnable() 
+    System.out.println("Revert:");
+
+   
+//    IWorkspaceRunnable myRunnable = new IWorkspaceRunnable() 
     {
-      public void run(IProgressMonitor monitor) throws CoreException 
+//      public void run(IProgressMonitor monitor) throws CoreException 
       {
-*/
+        Object obj;
+        Iterator itr; 
+        String FullPath;
+        String Repository;
+//        IProject proj;
+        System.out.println("Revert in runnable");
+        proj=MercurialUtilities.getProject(selection);
+        Repository=MercurialUtilities.getRepositoryPath(proj);
+        if(Repository==null)
+        {
+          Repository="."; //never leave this empty add a . to point to current path
+        }
+
+        // the last argument will be replaced with a path
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"revert", "" };
+
+        
         //do the actual work in here
         itr=selection.iterator();
         while(itr.hasNext())
@@ -99,6 +107,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
           //Setup and run command
             FullPath=resource.getLocation().toString();
             launchCmd[4]=FullPath;
+            System.out.println("Revert = " + FullPath);
 //            IResourceChangeEvent event = new IResourceChangeEvent();
       
             try
@@ -120,14 +129,29 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             } 
           }
         }
+//        notify();
         DecoratorStatus.refresh();
         
-        /*
     }
-  }
-  IWorkspace workspace = ResourcesPlugin.getWorkspace();
-  workspace.run(myRunnable, myProject, IWorkspace.AVOID_UPDATE, null);
- */ 
+  } //;
+//  IWorkspace workspace = ResourcesPlugin.getWorkspace();
+//  try
+//  {
+//    workspace.run(myRunnable, proj, IWorkspace.AVOID_UPDATE, null);
+//    try
+//    {
+//      myRunnable.wait();
+//    }
+//    catch (InterruptedException e)
+//    {
+//      e.printStackTrace();
+//    }
+//  }
+//  catch (CoreException e)
+//  {
+//    e.printStackTrace();
+//  }
+
   }
   /**
    * Selection in the workbench has been changed. We 

@@ -115,7 +115,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
 //  CommitWindow.setLayout( gridLayout );
   CommitWindow.setText("Mercurial Eclipse Commit");
   CommitWindow.setMinimumSize(200,130);
-  CommitWindow.setSize(300,130);
+  CommitWindow.setSize(300,230);
   Label textBoxLabel=new Label(CommitWindow , SWT.NONE);
   textBoxLabel.setText("Enter Commit message");
 
