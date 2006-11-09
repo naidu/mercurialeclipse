@@ -15,6 +15,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import com.vectrace.MercurialEclipse.exception.HgException;
+
 
 /**
  * @author zingo
@@ -82,10 +84,17 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 	    	if (obj instanceof IResource)
 	    	{
 				//Setup and run command
-		    	FullPath=( ((IResource) obj).getLocation() ).toString();
-		    	launchCmd[4]=FullPath;
+		    	FullPath = ( ((IResource) obj).getLocation() ).toString();
+		    	launchCmd[4] = FullPath;
 //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-				MercurialUtilities.ExecuteCommand(launchCmd,true);
+          try
+          {
+            MercurialUtilities.ExecuteCommand(launchCmd,true);
+          }
+          catch(HgException e)
+          {
+            System.out.println( e.getMessage() );
+          }
 	    	}
 	    }
       

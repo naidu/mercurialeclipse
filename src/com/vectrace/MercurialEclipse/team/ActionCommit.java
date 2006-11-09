@@ -6,15 +6,14 @@ package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.InputDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
@@ -26,8 +25,8 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.jface.dialogs.InputDialog;
-import org.eclipse.jface.dialogs.MessageDialog;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 
 /**
@@ -210,16 +209,21 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
   { //OK wa pressed and not Cancel
     //System.out.println("InputDialog: <OK> " + commitDialog.getValue());
     String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"commit", "--message",commitText[0], "--user",MercurialUtilities.getHGUsername()};
-    String output = MercurialUtilities.ExecuteCommand(launchCmd,false);
-    if(output!=null)
+    try
     {
-      //output output in a window
-      if(output.length()!=0)
+      String output = MercurialUtilities.ExecuteCommand(launchCmd, false);
+      if (output != null)
       {
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Commit output",  output);
+        // output output in a window
+        if (output.length() != 0)
+        {
+          MessageDialog.openInformation(shell, "Mercurial Eclipse Commit output", output);
+        }
       }
+    } catch (HgException e)
+    {
+      System.out.println(e.getMessage());
     }
-
   }
   
     

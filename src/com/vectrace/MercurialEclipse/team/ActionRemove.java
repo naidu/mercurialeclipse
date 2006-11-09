@@ -19,6 +19,8 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.exception.HgException;
+
 
 /**
  * @author zingo
@@ -108,16 +110,22 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
           if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[4] + "\nFrom the repository and filesystem?") )
           {
-            String output=MercurialUtilities.ExecuteCommand(launchCmd,false);
-            if(output!=null)
+            try
             {
-              //output output in a window
-              if(output.length()!=0)
+              String output = MercurialUtilities.ExecuteCommand(launchCmd, false);
+              if (output != null)
               {
-                MessageDialog.openInformation(shell,"Mercurial Eclipse hg remove",  output);
+                // output output in a window
+                if (output.length() != 0)
+                {
+                  MessageDialog.openInformation(shell, "Mercurial Eclipse hg remove", output);
+                }
               }
+            } catch (HgException e)
+            {
+              System.out.println(e.getMessage());
             }
-            DecoratorStatus.refresh();
+          DecoratorStatus.refresh();
           }
 	    	}
 	    }

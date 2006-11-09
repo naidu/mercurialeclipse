@@ -4,12 +4,9 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.team.ui.synchronize.AbstractSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.part.IPageBookViewPage;
 
 /**
  * @author zingo

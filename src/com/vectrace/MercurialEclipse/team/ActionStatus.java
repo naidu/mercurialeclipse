@@ -11,6 +11,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import com.vectrace.MercurialEclipse.exception.HgException;
+
 
 /**
  * @author zingo
@@ -66,7 +68,13 @@ public class ActionStatus implements IWorkbenchWindowActionDelegate {
 		//Setup and run command
 //	    System.out.println("hg --cwd " + Repository + " status");
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status" };
-		MercurialUtilities.ExecuteCommand(launchCmd,false);
+		try
+		{
+		  MercurialUtilities.ExecuteCommand(launchCmd,false);
+		} catch (HgException e)
+		{
+		  System.out.println(e.getMessage());
+		}
 
     DecoratorStatus.refresh();
   }

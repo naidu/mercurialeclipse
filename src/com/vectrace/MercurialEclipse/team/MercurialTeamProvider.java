@@ -60,8 +60,8 @@ public class MercurialTeamProvider extends RepositoryProvider
 	 */
 	public void setRepositoryPath(String repo)
 	{
-		RepositoryPath=repo;
-		IProject proj= getProject();
+		RepositoryPath = repo;
+		IProject proj = getProject();
 //		System.out.println("MercurialTeamProvider.setRepositoryPath() ->" + repo);
 		if(proj!=null)
 		{
@@ -80,7 +80,7 @@ public class MercurialTeamProvider extends RepositoryProvider
 	{
 		if(RepositoryPath==null)
 		{
-			IProject proj= getProject();
+			IProject proj = getProject();
 			if(proj!=null)
 			{
 				try 

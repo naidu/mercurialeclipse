@@ -18,6 +18,8 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.jface.dialogs.MessageDialog;
 
+import com.vectrace.MercurialEclipse.exception.HgException;
+
 
 /**
  * @author zingo
@@ -98,15 +100,21 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
       //Setup and run command
         String FullPath = ( ((IResource) obj).getLocation() ).toString();
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"log" ,"-v" , FullPath};
-        String output = MercurialUtilities.ExecuteCommand(launchCmd,true);
-        if(output!=null)
+        try
         {
-          //output output in a window
-          if(output.length()!=0)
+          String output = MercurialUtilities.ExecuteCommand(launchCmd, true);
+          if (output != null)
           {
-            MessageDialog.openInformation(shell,"Mercurial Eclipse Log " + FullPath,  output);
+            // output output in a window
+            if (output.length() != 0)
+            {
+              MessageDialog.openInformation(shell, "Mercurial Eclipse Log " + FullPath, output);
+            }
           }
-        } 
+        } catch (HgException e)
+        {
+          System.out.println(e.getMessage());
+        }
       }
     }
     

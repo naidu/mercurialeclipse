@@ -7,21 +7,16 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.util.Iterator;
 
-import org.eclipse.core.resources.IMarkerDelta;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.IWorkspaceRunnable;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 
 /**
@@ -118,12 +113,15 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             {
               e.printStackTrace();
             } 
-            MercurialUtilities.ExecuteCommand(launchCmd,true);          
+
             try
             {
+              MercurialUtilities.ExecuteCommand(launchCmd,true);          
               resource.touch(null);
-            }
-            catch (CoreException e)
+            } catch (HgException e)
+            {
+              System.out.println(e.getMessage());
+            } catch (CoreException e)
             {
               e.printStackTrace();
             } 

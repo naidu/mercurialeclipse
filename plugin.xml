@@ -219,6 +219,36 @@
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer"/>
    </extension>
+   <extension
+         point="org.eclipse.ui.importWizards">
+      <category
+            id="com.vectrace.MercurialEclipse.wizards.sampleCategory"
+            name="Mercurial"/>
+      <wizard
+            category="com.vectrace.MercurialEclipse.wizards.sampleCategory"
+            class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.MercurialEclipse.wizards.ImportWizard"
+            name="Clone Repository using Mercurial">
+         <description>
+            Import a file from the local file system into the workspace.
+         </description>
+      </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="com.vectrace.MercurialEclipse"
+            name="Mercurial"/>
+      <wizard
+            canFinishEarly="false"
+            category="com.vectrace.MercurialEclipse"
+            class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.MercurialEclipse.wizards.NewHgProjectWizard"
+            name="Clone Repository using Mercurial"
+            project="true"/>
+   </extension>
 
    <!-- extension
          point="org.eclipse.ui.actionSets">
