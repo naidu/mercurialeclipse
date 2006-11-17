@@ -80,13 +80,13 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     }
 
     // Decorating a Folder
-    if (objectResource.getType() == IResource.FOLDER)
+    else if (objectResource.getType() == IResource.FOLDER)
     {
       // Folders should not be decorated..
 //      decoration.addSuffix( "{FOLDER}" );
     }
     
-    if (objectResource.getType() == IResource.FILE)
+    else if (objectResource.getType() == IResource.FILE)
     {
       // Only files are decorated
 //      decoration.addPrefix("{nofile->}" );

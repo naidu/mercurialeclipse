@@ -9,7 +9,6 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 
@@ -57,9 +56,6 @@ public class CloneRepositoryAction extends TeamOperation
     { MercurialUtilities.getHGExecutable(), "--cwd", workspace.getRoot().getLocation().toOSString(),
         "clone", cloneParameters != null ? cloneParameters : "", repo.getUrl(), projectName };
 
-    // TODO: Would be nice to have a failure code as I'm sure the hg command
-    // does return
-    // a proper failure code. I'm sure it can also throw something.
     try
     {
       MercurialUtilities.ExecuteCommand(launchCmd, true);
@@ -89,7 +85,4 @@ public class CloneRepositoryAction extends TeamOperation
     return name;
   }
 
-
-  
-  
 }

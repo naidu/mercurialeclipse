@@ -19,7 +19,6 @@ import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
@@ -208,18 +207,12 @@ public class MercurialUtilities {
 		return null;
 	}
 
-	static String getRepositoryPath(IProject proj) 
+  /*
+   * Convenience method to return the OS specific path to the repository.
+   */
+	static public String getRepositoryPath(IProject project) 
   {
-		// Get Repository path
-		RepositoryProvider provider = RepositoryProvider.getProvider(proj);
-		if (provider instanceof MercurialTeamProvider) 
-    {
-			return (((MercurialTeamProvider) provider).getRepositoryPath());
-		} 
-    else 
-    {
-			return null;
-		}
+		return project.getLocation().toOSString();
 	}
 
   /*************************** Execute external command ************************/
@@ -441,7 +434,7 @@ public class MercurialUtilities {
       // Should probably throw something or at least return the error.
       if( exit != 0 )
       {
-        throw new HgException(exit, "Clone operation failed: " + error);
+        throw new HgException(exit, "Mercurial operation failed: " + error);
       }
       else
       {

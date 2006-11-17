@@ -152,7 +152,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	}
 	
 	private IProject project;
-	private String hgPath;
+	private String hgPath; // TODO: Not sure if this is required.
 	private String hgPathOrginal;
 	private String foundhgPath;
 //	private String pathProject;
@@ -231,11 +231,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 		}
 		try 
 		{
-			RepositoryProvider.map( project, MercurialTeamProvider.class.getName() );
-			MercurialTeamProvider hgProvider; 
-			hgProvider = (MercurialTeamProvider) RepositoryProvider.getProvider( project );
-		    hgProvider.setRepositoryPath( hgPath );
-			
+			RepositoryProvider.map( project, MercurialTeamProvider.class.getName() );			
 		} 
 		catch (TeamException e) 
 		{
