@@ -26,7 +26,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   public MercurialEclipsePlugin()
   {
     plugin = this;
-    // System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
+    System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
   }
 
   /**

@@ -40,6 +40,7 @@ import org.eclipse.ui.IWorkbench;
  * @author zingo
  *
  */
+
 public class MercurialConfigurationWizard extends Wizard implements IConfigurationWizard 
 {
 	public class NewWizardPage extends WizardPage implements SelectionListener 
@@ -66,7 +67,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 		    
 		    //		    String imgKey = "icons/sample.gif";
 //		    setImageDescriptor( new ImageDescriptor( ( imgKey ) );
-		    setPageComplete(true); /* Thel that it has the needed info */
+		    setPageComplete(true); // Thel that it has the needed info
 		  } 
 		  
 		  // interface methods of CreateRepositoryPage
@@ -158,18 +159,15 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	private Text directoryText;
 	
 	
-	/**
-	 * 
-	 */
 	public MercurialConfigurationWizard() {
 		//super();
 	    setWindowTitle( "MercurialConfigurationWizard" );
-//		System.out.println("MercurialConfigurationWizard.MercurialConfigurationWizard()");
+		System.out.println("MercurialConfigurationWizard.MercurialConfigurationWizard()");
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.IWizard#addPages()
-	 */
+	// (non-Javadoc)
+	// @see org.eclipse.jface.wizard.IWizard#addPages()
+	//
 	public void addPages() {
 //		System.out.println("MercurialConfigurationWizard.addPages()");
 
@@ -194,9 +192,9 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	    }
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.IWizard#performFinish()
-	 */
+	// (non-Javadoc)
+	// @see org.eclipse.jface.wizard.IWizard#performFinish()
+	//
 	public boolean performFinish() {
 		if(directoryText!=null)
 		{
@@ -218,7 +216,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 		        	System.out.println(line);
 				}
 				input.close();
-				/*int exitVal =*/ process.waitFor();
+				process.waitFor();
 			} 
 			catch (IOException e) 
 			{
@@ -249,9 +247,9 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	}
 	
 	
-	/* (non-Javadoc)
-	 * @see org.eclipse.team.ui.IConfigurationWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.core.resources.IProject)
-	 */
+	// (non-Javadoc)
+	// @see org.eclipse.team.ui.IConfigurationWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.core.resources.IProject)
+	//
 	public void init(IWorkbench workbench, IProject project) {
 		//System.out.println("MercurialConfigurationWizard.init()");
 		this.project=project;
@@ -259,9 +257,5 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 			MercurialUtilities.configureExecutable();
 		}
 	}
-
-	
-
-	
 
 }

@@ -10,7 +10,6 @@
 		  metaFilePaths=".hg/">
  	  </repository>
    </extension>
-
 	<extension point="org.eclipse.team.ui.configurationWizards">
 	   <wizard
 	        name="Mercurial"
@@ -206,9 +205,6 @@
 
    </extension>
 
-
-
-
    <extension point="org.eclipse.ui.preferencePages">
       <page class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
@@ -219,8 +215,7 @@
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer"/>
    </extension>
-   <extension
-         point="org.eclipse.ui.importWizards">
+   <extension point="org.eclipse.ui.importWizards">
       <category
             id="com.vectrace.MercurialEclipse.wizards.sampleCategory"
             name="Mercurial"/>
@@ -235,8 +230,7 @@
          </description>
       </wizard>
    </extension>
-   <extension
-         point="org.eclipse.ui.newWizards">
+   <extension point="org.eclipse.ui.newWizards">
       <category
             id="com.vectrace.MercurialEclipse"
             name="Mercurial"/>

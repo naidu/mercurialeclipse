@@ -42,6 +42,7 @@ public class CloneRepoWizard extends Wizard implements IImportWizard, INewWizard
   
 	public CloneRepoWizard() {
 		super();
+    System.out.println( "new CloneRepoWizard()");
     setNeedsProgressMonitor(true);
 	}
 
@@ -141,6 +142,7 @@ public class CloneRepoWizard extends Wizard implements IImportWizard, INewWizard
 		createRepoLocationPage = new CloneRepoWizardCreateRepoLocationPage("CreateRepoPage","Create Repository Location",null);
 	}
 	
+  
 	public void dispose()
   {
     createRepoLocationPage.dispose();

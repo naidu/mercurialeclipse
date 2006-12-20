@@ -19,6 +19,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.wizards.CloneRepoWizard;
 
 
 /**
@@ -109,6 +110,11 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
             //output output in a window
             if(output.length()!=0)
             {
+
+              
+              new CloneRepoWizard();
+              
+              
               MessageDialog.openInformation(shell,"Mercurial Eclipse Annotate " + FullPath,  output);
             }
           } 
