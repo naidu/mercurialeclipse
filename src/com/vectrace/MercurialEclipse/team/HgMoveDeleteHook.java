@@ -28,6 +28,11 @@ import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
 public class HgMoveDeleteHook implements IMoveDeleteHook
 {
 
+  
+  public HgMoveDeleteHook()
+  {
+    System.out.println("new HgMoveDeleteHook()");
+  }
   /**
    * @returns <code>true</code> if this file under this under Mercurial control.
    */

@@ -101,8 +101,9 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
         Repository="."; //never leave this empty add a . to point to current path
       }
       //Setup and run command
-//        System.out.println("hg --cwd " + Repository + " status");
-
+//     System.out.println("hg --cwd " + Repository + " status");
+      
+     
       FullPath=( objectResource.getLocation() ).toString();
       if(FullPath.indexOf(".hg") == -1)  //Do not decorate the stuff inder .hg
       {      
