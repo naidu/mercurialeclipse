@@ -282,37 +282,39 @@ public class CommitDialog extends Dialog
     showUntrackedFilesLabel.setText("Show untracked files.");
 
     showUntrackedFilesButton.addSelectionListener( new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e)
-      {
-        if(showUntrackedFilesButton.getSelection())
+        public void widgetSelected(SelectionEvent e)
         {
-          commitFilesList.removeFilter(untrackedFilesFilter);
+          if(showUntrackedFilesButton.getSelection())
+          {
+            commitFilesList.removeFilter(untrackedFilesFilter);
+          }
+          else
+          {
+            commitFilesList.addFilter(untrackedFilesFilter);
+          }
+          commitFilesList.refresh(true);
         }
-        else
-        {
-          commitFilesList.addFilter(untrackedFilesFilter);
-        }
-        commitFilesList.refresh(true);
       }
-    });
+    );
     
-    selectAllButton = new Button(checkBoxContainer, SWT.CHECK);
+    selectAllButton = new Button(checkBoxContainer, SWT.CHECK );
     selectAllLabel  = new Label(checkBoxContainer, SWT.HORIZONTAL);
     selectAllLabel.setText("Check/Uncheck all.");
     selectAllButton.addSelectionListener( new SelectionAdapter() {
-      public void widgetSelected(SelectionEvent e)
-      {
-        if(selectAllButton.getSelection())
+        public void widgetSelected(SelectionEvent e)
         {
-          commitFilesList.setAllChecked(true);
+          if(selectAllButton.getSelection())
+          {
+            commitFilesList.setAllChecked(true);
+          }
+          else
+          {         
+            commitFilesList.setAllChecked(false);
+          }
         }
-        else
-        {         
-          commitFilesList.setAllChecked(false);
-        }
-      }
-    });
-
+      } 
+    );
+    selectAllButton.setSelection(true); //Start selected 
     
     return superComposite;
   }
@@ -465,7 +467,7 @@ public class CommitDialog extends Dialog
     commitFilesList.setInput(new AdaptableCommitList(fillFileList()));
     commitFilesList.addFilter(untrackedFilesFilter);
     commitFilesList.addFilter(committableFilesFilter);
-    commitFilesList.setAllChecked(false);
+    commitFilesList.setAllChecked(true);
   }
   
   private CommitResource[] fillFileList()
