@@ -5,28 +5,21 @@
 package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.dialogs.InputDialog;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.FormAttachment;
-import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.actions.AddFileAction;
+import com.vectrace.MercurialEclipse.actions.CommitAction;
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 
 /**
  * @author zingo
@@ -37,7 +30,6 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
 
   private IWorkbenchWindow window;
 
-  // private IWorkbenchPart targetPart;
   private IStructuredSelection selection;
 
   public ActionCommit()
@@ -77,25 +69,10 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
 
   public void run(IAction action)
   {
-    IProject proj;
-    String Repository;
-    InputDialog commitDialog;
     Shell shell;
-    final Shell CommitWindow;
-    final Button Ok, Cancel;
-    final Text CommitTextBox;
     IWorkbench workbench;
-    final boolean[] ButtonOk = new boolean[1];
-    final String[] commitText = new String[1];
 
-    proj = MercurialUtilities.getProject(selection);
-    Repository = MercurialUtilities.getRepositoryPath(proj);
-    if (Repository == null)
-    {
-      Repository = "."; // never leave this empty add a . to point to current
-      // path
-    }
-    // Setup and run command
+    IProject project = MercurialUtilities.getProject(selection);
 
     if (( window != null ) && ( window.getShell() != null ))
     {
@@ -106,130 +83,37 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
       shell = workbench.getActiveWorkbenchWindow().getShell();
     }
 
-    Display display = shell.getDisplay();
-
-    // CommitWindow= new Shell(shell, SWT.DIALOG_TRIM | SWT.APPLICATION_MODAL);
-    CommitWindow = new Shell(shell, SWT.DIALOG_TRIM | SWT.RESIZE | SWT.APPLICATION_MODAL);
-    FormLayout formLayout = new FormLayout();
-    CommitWindow.setLayout(formLayout);
-    // GridLayout gridLayout = new GridLayout(3,false);
-    // CommitWindow.setLayout( gridLayout );
-    CommitWindow.setText("Mercurial Eclipse Commit");
-    CommitWindow.setMinimumSize(200, 130);
-    CommitWindow.setSize(300, 230);
-    Label textBoxLabel = new Label(CommitWindow, SWT.NONE);
-    textBoxLabel.setText("Enter Commit message");
-
-    // GridData gridDataLabel = new GridData(GridData.FILL_BOTH);
-    // gridDataLabel.horizontalSpan = 3;
-    // gridDataLabel.verticalSpan = 1;
-    // textBoxLabel.setLayoutData( gridDataLabel );
-
-    CommitTextBox = new Text(CommitWindow, SWT.MULTI | SWT.BORDER);
-    CommitTextBox.setCapture(true);
-    // CommitTextBox.setLayoutData(new GridData(GridData.HORIZONTAL_ALIGN_FILL |
-    // GridData.GRAB_HORIZONTAL));
-    // GridData gridDataTextBox = new GridData(GridData.FILL_BOTH);
-    // gridDataTextBox.horizontalSpan = 3;
-    // gridDataTextBox.verticalSpan = 3;
-    // gridDataTextBox.minimumWidth=100;
-    // gridDataTextBox.minimumHeight=30;
-    // gridDataTextBox.widthHint=300;
-    // gridDataTextBox.heightHint=50;
-    // CommitTextBox.setLayoutData( gridDataTextBox );
-
-    Ok = new Button(CommitWindow, SWT.PUSH);
-    Ok.setText("Ok");
-    Cancel = new Button(CommitWindow, SWT.PUSH);
-    Cancel.setText("Cancel");
-
-    // FormData formLabel = new FormData();
-    FormData formTextBox = new FormData(100, 30);
-    FormData formOk = new FormData();
-    FormData formCancel = new FormData();
-
-    // formLabel.top = new FormAttachment(0,0);
-    // formLabel.left = new FormAttachment(0,0);
-    // formLabel.right = new FormAttachment(0,0);
-    // formLabel.bottom = new FormAttachment(0,0);
-    // textBoxLabel.setLayoutData(formLabel);
-
-    formTextBox.top = new FormAttachment(textBoxLabel, 8);
-    formTextBox.left = new FormAttachment(textBoxLabel, 3, SWT.LEFT);
-    formTextBox.right = new FormAttachment(100, -3);
-    formTextBox.bottom = new FormAttachment(100, -30); // this should be
-    // Cancle_size_y+3
-    // formTextBox.bottom = new FormAttachment(Cancel,-3,SWT.TOP);
-    CommitTextBox.setLayoutData(formTextBox);
-
-    formOk.top = new FormAttachment(CommitTextBox, 0, SWT.BOTTOM);
-    formOk.right = new FormAttachment(Cancel, -8, SWT.LEFT);
-    // formOk.bottom = new FormAttachment(100,-3);
-    Ok.setLayoutData(formOk);
-
-    formCancel.top = new FormAttachment(Ok, 0, SWT.TOP);
-    formCancel.right = new FormAttachment(CommitTextBox, 0, SWT.RIGHT);
-    // formCancel.bottom = new FormAttachment(100,-3);
-    Cancel.setLayoutData(formCancel);
-
-    Listener buttonListener = new Listener()
+    IProgressMonitor monitor = new NullProgressMonitor();
+    CommitDialog commitDialog = new CommitDialog(shell,project);
+    boolean ok = (commitDialog.open() == Window.OK);
+    if(ok)
     {
-      public void handleEvent(Event event)
+      String[] filesToAdd = commitDialog.getFilesToAdd();
+      for(int file=0; file < filesToAdd.length; file++)
       {
-        ButtonOk[0] = event.widget == Ok;
-        commitText[0] = CommitTextBox.getText();
-        CommitWindow.close();
-
+        AddFileAction addFilesAction = new AddFileAction(null,
+                                                         project,
+                                                         filesToAdd[file]);
+        try
+        {
+          addFilesAction.run(monitor);
+        } catch (Exception e)
+        {
+          System.out.println("Unable to finish add prior to commit: " + e.getMessage());
+        }
       }
-    };
-    Ok.addListener(SWT.Selection, buttonListener);
-    Cancel.addListener(SWT.Selection, buttonListener);
-
-    CommitWindow.setDefaultButton(Ok);
-    CommitWindow.pack();
-    CommitWindow.open();
-
-    while (!CommitWindow.isDisposed())
-    {
-      if (!display.readAndDispatch())
-      {
-        display.sleep();
-      }
-    }
-
-    // CommitWindow.dispose();
-
-    // commitDialog = new InputDialog(shell,"Mercurial Eclipse Commit","Enter
-    // commit message",null,null);
-    // commitDialog.open();
-    // if(commitDialog.getValue() != null)
-    // {
-    // String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd",
-    // Repository ,"commit", "--message",commitDialog.getValue(),
-    // "--user",MercurialUtilities.getHGUsername()};
-
-    // System.out.println("Commit:" + commitText[0] );
-
-    if (ButtonOk[0] == true && commitText[0] != null)
-    { // OK wa pressed and not Cancel
-      // System.out.println("InputDialog: <OK> " + commitDialog.getValue());
-      String launchCmd[] =
-      { MercurialUtilities.getHGExecutable(), "--cwd", Repository, "commit", "--message", commitText[0], "--user",
-          MercurialUtilities.getHGUsername() };
+      
+      CommitAction commitAction = new CommitAction(null,
+                                                   project,
+                                                   commitDialog.getFilesToCommit(),
+                                                   commitDialog.getCommitMessage());
+    
       try
       {
-        String output = MercurialUtilities.ExecuteCommand(launchCmd, false);
-        if (output != null)
-        {
-          // output output in a window
-          if (output.length() != 0)
-          {
-            MessageDialog.openInformation(shell, "Mercurial Eclipse Commit output", output);
-          }
-        }
-      } catch (HgException e)
+        commitAction.run(monitor);
+      } catch (Exception e)
       {
-        System.out.println(e.getMessage());
+        System.out.println("Unable to finish commit: " + e.getMessage());
       }
     }
 

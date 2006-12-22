@@ -104,7 +104,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 //     System.out.println("hg --cwd " + Repository + " status");
       
      
-      FullPath=( objectResource.getLocation() ).toString();
+      FullPath=( objectResource.getLocation() ).toOSString();
       if(FullPath.indexOf(".hg") == -1)  //Do not decorate the stuff inder .hg
       {      
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status", FullPath };

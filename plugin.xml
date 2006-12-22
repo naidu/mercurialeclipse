@@ -140,10 +140,10 @@
                id="com.vectrace.MercurialEclipse.team.ActionAnnotate">
            </action>
            <action
-               label="hg &amp;commit (All files)"
+               label="hg &amp;commit"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
-               tooltip="Commit all files (hg commit)"
+               tooltip="Commit files (hg commit)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
            </action>

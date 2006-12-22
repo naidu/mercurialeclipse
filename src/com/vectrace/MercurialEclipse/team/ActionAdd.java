@@ -73,6 +73,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 			Repository="."; //never leave this empty add a . to point to current path
 		}
 
+    // TODO: Refactor using ActionAdd
 		Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
