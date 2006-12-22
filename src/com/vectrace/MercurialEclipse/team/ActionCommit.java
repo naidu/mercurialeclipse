@@ -77,7 +77,8 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
     if (( window != null ) && ( window.getShell() != null ))
     {
       shell = window.getShell();
-    } else
+    } 
+    else
     {
       workbench = PlatformUI.getWorkbench();
       shell = workbench.getActiveWorkbenchWindow().getShell();
@@ -91,27 +92,24 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
       String[] filesToAdd = commitDialog.getFilesToAdd();
       for(int file=0; file < filesToAdd.length; file++)
       {
-        AddFileAction addFilesAction = new AddFileAction(null,
-                                                         project,
-                                                         filesToAdd[file]);
+        AddFileAction addFilesAction = new AddFileAction(null,project,filesToAdd[file]);
         try
         {
           addFilesAction.run(monitor);
-        } catch (Exception e)
+        } 
+        catch (Exception e)
         {
           System.out.println("Unable to finish add prior to commit: " + e.getMessage());
         }
       }
       
-      CommitAction commitAction = new CommitAction(null,
-                                                   project,
-                                                   commitDialog.getFilesToCommit(),
-                                                   commitDialog.getCommitMessage());
+      CommitAction commitAction = new CommitAction(null, project, commitDialog.getFilesToCommit(), commitDialog.getCommitMessage());
     
       try
       {
         commitAction.run(monitor);
-      } catch (Exception e)
+      } 
+      catch (Exception e)
       {
         System.out.println("Unable to finish commit: " + e.getMessage());
       }
