@@ -28,6 +28,7 @@ public class MoveFileAction extends TeamOperation
   public MoveFileAction(IRunnableContext context, IResource src, IResource dest)
   {
     super(context);
+    System.out.println("new MoveFileAction");
 
     this.src = src;
     this.dest = dest;
@@ -43,9 +44,9 @@ public class MoveFileAction extends TeamOperation
     monitor.beginTask("Mercurial move file operation", 1);
 
     final String launchCmd[] =
-    { MercurialUtilities.getHGExecutable(),
-        "--cwd", MercurialUtilities.getRepositoryPath(src.getProject()),
-        "rename", "--force", src.getLocation().toOSString(), dest.getLocation().toOSString() };
+    { 
+      MercurialUtilities.getHGExecutable(),"--cwd", MercurialUtilities.getRepositoryPath(src.getProject()), "rename", "--force", src.getLocation().toOSString(), dest.getLocation().toOSString() 
+    };
 
     try
     {
@@ -61,6 +62,7 @@ public class MoveFileAction extends TeamOperation
   // TODO: No background for now.
   protected boolean canRunAsJob()
   {
+    System.out.println("MoveFileAction.canRunAsJob() return false");
     return false;
   }
 

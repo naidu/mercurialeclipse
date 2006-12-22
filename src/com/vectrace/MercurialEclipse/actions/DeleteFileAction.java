@@ -44,9 +44,9 @@ public class DeleteFileAction extends TeamOperation
 
     // TODO: Should we consider making  --force optional?
     final String launchCmd[] =
-    { MercurialUtilities.getHGExecutable(),
-        "--cwd", MercurialUtilities.getRepositoryPath(resource.getProject()),
-        "remove", "--force", resource.getLocation().toOSString() };
+    { 
+      MercurialUtilities.getHGExecutable(),"--cwd", MercurialUtilities.getRepositoryPath(resource.getProject()), "remove", "--force", resource.getLocation().toOSString() 
+    };
 
     try
     {
