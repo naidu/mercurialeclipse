@@ -42,7 +42,7 @@ public class CloneRepoWizard extends Wizard implements IImportWizard, INewWizard
   
 	public CloneRepoWizard() {
 		super();
-    System.out.println( "new CloneRepoWizard()");
+//    System.out.println( "new CloneRepoWizard()");
     setNeedsProgressMonitor(true);
 	}
 
@@ -86,8 +86,7 @@ public class CloneRepoWizard extends Wizard implements IImportWizard, INewWizard
       return false;
     }
     
-    CloneRepositoryAction cloneRepoAction = 
-         new CloneRepositoryAction(null, workspace, repo, cloneParameters, projectName);
+    CloneRepositoryAction cloneRepoAction = new CloneRepositoryAction(null, workspace, repo, cloneParameters, projectName);
 
     try
     {

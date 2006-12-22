@@ -20,7 +20,7 @@ public class MercurialTeamProvider extends RepositoryProvider
 	public MercurialTeamProvider() 
 	{
 		super();
-		System.out.println("MercurialTeamProvider.MercurialTeamProvider()");
+//		System.out.println("MercurialTeamProvider.MercurialTeamProvider()");
 	}
 
 	/* (non-Javadoc)
@@ -54,7 +54,7 @@ public class MercurialTeamProvider extends RepositoryProvider
 
   public IMoveDeleteHook getMoveDeleteHook()
   {
-    System.out.println("MercurialTeamProvider.getMoveDeleteHook()");
+//    System.out.println("MercurialTeamProvider.getMoveDeleteHook()");
     return new HgMoveDeleteHook();
   }
 }

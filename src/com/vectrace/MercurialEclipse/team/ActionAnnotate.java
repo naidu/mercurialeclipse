@@ -110,11 +110,6 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
             //output output in a window
             if(output.length()!=0)
             {
-
-              
-              new CloneRepoWizard();
-              
-              
               MessageDialog.openInformation(shell,"Mercurial Eclipse Annotate " + FullPath,  output);
             }
           } 
