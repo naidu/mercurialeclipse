@@ -117,15 +117,19 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
     }
 
     public IResource[] members(IResource resource) throws TeamException {
-      try {
+      try 
+      {
         if(resource.getType() == IResource.FILE)
+        {
           return new IResource[0];
+        }
         IContainer container = (IContainer)resource;
         List existingChildren = new ArrayList(Arrays.asList(container.members()));
-        existingChildren.addAll(
-          Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
+        existingChildren.addAll(  Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
         return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
-      } catch (CoreException e) {
+      } 
+      catch (CoreException e) 
+      {
         throw TeamException.asTeamException(e);
       }
     }
@@ -146,7 +150,8 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
     }
 
     public SyncInfo getSyncInfo(IResource resource, IStorage r1, IStorage r2) throws TeamException {
-      try {
+      try 
+      {
   /*
         IResourceVariant variant = null;
         if(resource.getType() == IResource.FILE) {
@@ -190,14 +195,6 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
     }
 
   }
-  
-  
-  
-  
-  
-  
-  
-  
   
   private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
@@ -270,36 +267,25 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 
           if (changeset.indexOf(" ") != -1) // is there a space?
           {
-            changeset = changeset.substring(0, changeset.indexOf(" ")); // take
-                                                                        // the
-                                                                        // begining
-                                                                        // until
-                                                                        // the
-                                                                        // first
-                                                                        // space
+            changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
           }
           if (changeset.indexOf("+") != -1) // is there a +?
           {
-            changeset = changeset.substring(0, changeset.indexOf("+")); // take
-                                                                        // the
-                                                                        // begining
-                                                                        // until
-                                                                        // the
-                                                                        // first
-                                                                        // +
+            changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
           }
 
           // Setup and run command diff
 
           MyRepositorySubscriber subscriber = new MyRepositorySubscriber();
-            SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, (IStorage) obj, new IStorageMercurialRevision(
-                proj, (IResource) obj, changeset));
-            SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff", syncInfo);
-            CompareUI.openCompareEditor(comparedialog);
-        } catch (HgException e)
+          SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, (IStorage) obj, new IStorageMercurialRevision( proj, (IResource) obj, changeset));
+          SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff", syncInfo);
+          CompareUI.openCompareEditor(comparedialog);
+        } 
+        catch (HgException e)
         {
           System.out.println(e.getMessage());
-        } catch (TeamException e)
+        } 
+        catch (TeamException e)
         {
           e.printStackTrace();
         }
