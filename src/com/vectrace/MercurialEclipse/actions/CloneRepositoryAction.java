@@ -1,27 +1,33 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc.
  * 
- * TODO: LICENSE DETAILS
+ * This software is licensed under the zlib/libpng license.
+ * 
+ * This software is provided 'as-is', without any express or implied warranty. 
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose, 
+ * including commercial applications, and to alter it and redistribute it freely,
+ * subject to the following restrictions:
+ *
+ *  1. The origin of this software must not be misrepresented; you must not 
+ *            claim that you wrote the original software. If you use this 
+ *            software in a product, an acknowledgment in the product 
+ *            documentation would be appreciated but is not required.
+ *
+ *   2. Altered source versions must be plainly marked as such, and must not be
+ *            misrepresented as being the original software.
+ *
+ *   3. This notice may not be removed or altered from any source distribution.
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-
 import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.ui.TeamOperation;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.wizards.CloneRepoWizard;
 
 /*
  * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
@@ -29,7 +35,7 @@ import com.vectrace.MercurialEclipse.wizards.CloneRepoWizard;
  * This class encapsulates the hg clone command.
  * 
  */
-public class CloneRepositoryAction extends TeamOperation
+public class CloneRepositoryAction extends HgOperation
 {
   private HgRepositoryLocation repo;
   private IWorkspace workspace;
@@ -49,69 +55,20 @@ public class CloneRepositoryAction extends TeamOperation
     this.projectName = projectName;
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
-   */
-  public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException
+  protected String[] getHgCommand()
   {
-     //Setup and run command
-      Shell shell = null;
-    
-      IWorkbench workbench = PlatformUI.getWorkbench();
-      IWorkbenchWindow win = workbench.getActiveWorkbenchWindow();
-      //TODO win is always ńull we get no shell why why why?
-      if(win!=null)
-      {
-        shell = win.getShell();
-      }
-
-    
-    // TODO: Would be nice to have something that indicates progress
-    //       but that would require that functionality from the utilities.
-    monitor.beginTask("Mercurial clone operation", 1);
-
-    /*    
-    final String launchCmd[] =
+    String launchCmd[] =
     { 
-      MercurialUtilities.getHGExecutable(), "--cwd", workspace.getRoot().getLocation().toOSString(), "clone", cloneParameters != null ? cloneParameters : "", repo.getUrl(), projectName };
+      MercurialUtilities.getHGExecutable(),
+      "--cwd", workspace.getRoot().getLocation().toOSString(),
+      "clone", cloneParameters != null ? cloneParameters : "",
+      repo.getUrl(), projectName
     };
-*/
-
-    ArrayList launchCmd = new ArrayList();
     
-    // Shell command setup.
-    launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add( "clone" );
-    if(cloneParameters != null)
-    {
-      launchCmd.add(cloneParameters );
-    }
-    launchCmd.add(repo.getUrl() );
-    launchCmd.add(workspace.getRoot().getLocation().addTrailingSeparator().toOSString() + projectName );
-    
-    try
-    {
-      String output = MercurialUtilities.ExecuteCommand((String[])launchCmd.toArray(new String[0]), shell==null);
-
-      if(output != null && shell != null)
-      {
-        //output output in a window
-        if(output.length()!=0)
-        {
-          MessageDialog.openInformation(shell,"Mercurial Eclipse Clone from " + repo.getUrl(),  output);
-        }
-      }
-
-    } catch (HgException e)
-    {
-      System.out.println(e.getMessage());
-    }
-
-    monitor.done();
+    return launchCmd;
   }
 
   /*
-   * (non-Javadoc)
    * @see org.eclipse.team.ui.TeamOperation#canRunAsJob()
    * 
    * The CloneRepositoryAction is not allowed to run as a job as the CloneRepoWizard will attempt to continue on
@@ -122,10 +79,8 @@ public class CloneRepositoryAction extends TeamOperation
     return false;
   }
 
-  protected String getJobName()
+  protected String getActionDescription()
   {
-    String name = "Clone Mercurial Repository from " + repo.getUrl();
-    return name;
+	return new String("Mercurial clone repository " + repo.getUrl());
   }
-
 }
