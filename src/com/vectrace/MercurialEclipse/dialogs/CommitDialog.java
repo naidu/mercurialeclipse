@@ -296,6 +296,7 @@ public class CommitDialog extends Dialog
         }
       }
     );
+    showUntrackedFilesButton.setSelection(true); // Start selected.
     
     selectAllButton = new Button(checkBoxContainer, SWT.CHECK );
     selectAllLabel  = new Label(checkBoxContainer, SWT.HORIZONTAL);
@@ -465,7 +466,6 @@ public class CommitDialog extends Dialog
     });
 
     commitFilesList.setInput(new AdaptableCommitList(fillFileList()));
-    commitFilesList.addFilter(untrackedFilesFilter);
     commitFilesList.addFilter(committableFilesFilter);
     commitFilesList.setAllChecked(true);
   }
