@@ -169,7 +169,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
     }
 
     // Move the file in the Mercurial repository.
-    if( !moveHgFiles( source, destination, monitor) )
+    if(!moveHgFiles( source, destination, monitor))
     {
       return true;
     }
@@ -223,10 +223,10 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
     catch(Exception e)
     {
       System.out.println("Move failed: " + e.getMessage());
-      return true;
+      return false;
     }
     
-    return false;
+    return true;
   }
 
   public boolean moveProject(IResourceTree tree, IProject source, IProjectDescription description, int updateFlags,
