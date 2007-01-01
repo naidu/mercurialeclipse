@@ -74,27 +74,34 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 		}
 
     // TODO: Refactor using ActionAdd
-		Object obj;
+	  	Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"add", "" };
+  		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"add", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
 	    	obj=itr.next();
 	    	if (obj instanceof IResource)
 	    	{
-				//Setup and run command
-		    	FullPath = ( ((IResource) obj).getLocation() ).toString();
-		    	launchCmd[4] = FullPath;
-//				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-          try
+          IResource resource=(IResource) obj;
+          if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
           {
-            MercurialUtilities.ExecuteCommand(launchCmd,true);
-          }
-          catch(HgException e)
-          {
-            System.out.println( e.getMessage() );
+            //Resource could be inside a link or something do nothing
+            // in the future this could check is this is another repository
+
+            //Setup and run command
+  		    	FullPath = ( ((IResource) obj).getLocation() ).toString();
+  		    	launchCmd[4] = FullPath;
+  //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
+            try
+            {
+              MercurialUtilities.ExecuteCommand(launchCmd,true);
+            }
+            catch(HgException e)
+            {
+              System.out.println( e.getMessage() );
+            }
           }
 	    	}
 	    }

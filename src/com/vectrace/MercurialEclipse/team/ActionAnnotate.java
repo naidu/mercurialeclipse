@@ -97,26 +97,32 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
       obj=itr.next();
       if (obj instanceof IResource)
       {
-      //Setup and run command
-        String FullPath = ( ((IResource) obj).getLocation() ).toString();
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"annotate" , "--user", "--number","--changeset","--date",FullPath};
-        
-        try
+        IResource resource=(IResource) obj;
+        if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
         {
-          String output = MercurialUtilities.ExecuteCommand(launchCmd, true);
-          if(output!=null)
-          {
-            //output output in a window
-            if(output.length()!=0)
-            {
-              MessageDialog.openInformation(shell,"Mercurial Eclipse Annotate " + FullPath,  output);
-            }
-          } 
-        } catch (HgException e)
-        {
-          System.out.println(e.getMessage());
-        }
+          //Resource could be inside a link or something do nothing
+          // in the future this could check is this is another repository
 
+          //Setup and run command
+          String FullPath = ( ((IResource) obj).getLocation() ).toString();
+          String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"annotate" , "--user", "--number","--changeset","--date",FullPath};
+          
+          try
+          {
+            String output = MercurialUtilities.ExecuteCommand(launchCmd, true);
+            if(output!=null)
+            {
+              //output output in a window
+              if(output.length()!=0)
+              {
+                MessageDialog.openInformation(shell,"Mercurial Eclipse Annotate " + FullPath,  output);
+              }
+            } 
+          } catch (HgException e)
+          {
+            System.out.println(e.getMessage());
+          }
+        }
       }
     }
     

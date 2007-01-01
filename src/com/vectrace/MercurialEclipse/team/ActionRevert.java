@@ -50,7 +50,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
    * @see IWorkbenchWindowActionDelegate#init
    */
   public void init(IWorkbenchWindow window) {
-    System.out.println("ActionAdd:init(window)");
+//    System.out.println("ActionAdd:init(window)");
 //    this.window = window;
   }
 
@@ -96,35 +96,45 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         while(itr.hasNext())
         {
           obj=itr.next();
+          
+         
           if (obj instanceof IResource)
           {
             IResource resource=(IResource) obj;
-          //Setup and run command
-            FullPath=resource.getLocation().toString();
-            launchCmd[4]=FullPath;
-            System.out.println("Revert = " + FullPath);
-//            IResourceChangeEvent event = new IResourceChangeEvent();
-      
-            try
-            {
-              resource.touch(null);
-            }
-            catch (CoreException e)
-            {
-              e.printStackTrace();
-            } 
 
-            try
+            if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
             {
-              MercurialUtilities.ExecuteCommand(launchCmd,true);          
-              resource.touch(null);
-            } catch (HgException e)
-            {
-              System.out.println(e.getMessage());
-            } catch (CoreException e)
-            {
-              e.printStackTrace();
-            } 
+              //Resource could be inside a link or something do nothing
+              // in the future this could check is this is another repository
+
+              //Setup and run command
+              FullPath=resource.getLocation().toString();
+              launchCmd[4]=FullPath;
+              System.out.println("Revert = " + FullPath);
+  //            IResourceChangeEvent event = new IResourceChangeEvent();
+        
+              try
+              {
+                resource.touch(null);
+              }
+              catch (CoreException e)
+              {
+                e.printStackTrace();
+              } 
+  
+              try
+              {
+                MercurialUtilities.ExecuteCommand(launchCmd,true);          
+                resource.touch(null);
+              } catch (HgException e)
+              {
+                System.out.println(e.getMessage());
+              } catch (CoreException e)
+              {
+                e.printStackTrace();
+              } 
+            }
+
           }
         }
 //        notify();

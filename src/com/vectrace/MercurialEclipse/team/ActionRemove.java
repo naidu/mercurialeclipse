@@ -103,29 +103,36 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	    	obj=itr.next();
 	    	if (obj instanceof IResource)
 	    	{
-				//Setup and run command
-		    	FullPath=( ((IResource) obj).getLocation() ).toString();
-		    	launchCmd[4]=FullPath;
-//				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
-
-          if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[4] + "\nFrom the repository and filesystem?") )
+          IResource resource=(IResource) obj;
+          if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
           {
-            try
+            //Resource could be inside a link or something do nothing
+            // in the future this could check is this is another repository
+
+            //Setup and run command
+  		    	FullPath=( ((IResource) obj).getLocation() ).toString();
+  		    	launchCmd[4]=FullPath;
+  //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
+  
+            if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[4] + "\nFrom the repository and filesystem?") )
             {
-              String output = MercurialUtilities.ExecuteCommand(launchCmd, false);
-              if (output != null)
+              try
               {
-                // output output in a window
-                if (output.length() != 0)
+                String output = MercurialUtilities.ExecuteCommand(launchCmd, false);
+                if (output != null)
                 {
-                  MessageDialog.openInformation(shell, "Mercurial Eclipse hg remove", output);
+                  // output output in a window
+                  if (output.length() != 0)
+                  {
+                    MessageDialog.openInformation(shell, "Mercurial Eclipse hg remove", output);
+                  }
                 }
+              } catch (HgException e)
+              {
+                System.out.println(e.getMessage());
               }
-            } catch (HgException e)
-            {
-              System.out.println(e.getMessage());
+            DecoratorStatus.refresh();
             }
-          DecoratorStatus.refresh();
           }
 	    	}
 	    }

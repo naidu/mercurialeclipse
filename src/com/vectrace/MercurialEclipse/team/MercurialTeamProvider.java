@@ -57,4 +57,12 @@ public class MercurialTeamProvider extends RepositoryProvider
 //    System.out.println("MercurialTeamProvider.getMoveDeleteHook()");
     return new HgMoveDeleteHook();
   }
+
+  /* (non-Javadoc)
+   * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResources()
+   */
+  public boolean canHandleLinkedResources()
+  {
+    return true;
+  }
 }

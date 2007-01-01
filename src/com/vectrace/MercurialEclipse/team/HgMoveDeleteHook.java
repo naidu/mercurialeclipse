@@ -33,19 +33,26 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
   private boolean isInMercurialRepo(IFile file, IProgressMonitor monitor)
   {
     IResource[] fileArray = {file};
-    StatusContainerAction statusAction = 
-        new StatusContainerAction(null, fileArray);
+    StatusContainerAction statusAction = new StatusContainerAction(null, fileArray);
 
+    if(MercurialUtilities.isResourceInReposetory(file, false) != true)
+    {
+      //Resource could be inside a link or something do nothing
+      // in the future this could check is this is another repository
+      return false;
+    }
+
+    
     try
     {
       statusAction.run(monitor);
       final String result = statusAction.getResult();
-      if((result.length() != 0) &&
-         result.startsWith("?"))
+      if((result.length() != 0) && result.startsWith("?"))
       {
         return false;
       }     
-    } catch (Exception e)
+    } 
+    catch (Exception e)
     {
       System.out.println("Unable to get status " + e.getMessage());
     }
@@ -59,6 +66,14 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
    */
   private boolean folderHasMercurialFiles(IFolder folder, IProgressMonitor monitor)
   {
+    if(MercurialUtilities.isResourceInReposetory(folder, false) != true)
+    {
+      //Resource could be inside a link or something do nothing
+      // in the future this could check is this is another repository
+      return false;
+    }
+
+    
     try
     {
       IResource[] subtending = folder.members();
@@ -212,6 +227,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
   private boolean moveHgFiles(IResource source, IResource destination, IProgressMonitor monitor)
   {
     // Rename the file in the Mercurial repository.
+    
     MoveFileAction moveAction = new MoveFileAction(null, source, destination);
     
     // TODO: Decide if we should have different Hg behaviour based on the force flag provided in

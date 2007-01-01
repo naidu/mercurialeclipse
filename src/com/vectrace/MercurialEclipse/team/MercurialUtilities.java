@@ -11,14 +11,17 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.io.Reader;
-
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleManager;
@@ -110,6 +113,30 @@ public class MercurialUtilities {
 		PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell, pageId, dsplIds, data);
 		dlg.open();
 	}
+
+  /*************************** Should we handle resource ***********************
+   * @param dialog TODO*/
+
+  public static boolean isResourceInReposetory(IResource resource, boolean dialog)
+  {
+    //Check to se if resource is not in a link
+    String linkedParentName = resource.getProjectRelativePath().segment(0);
+    IFolder linkedParent = resource.getProject().getFolder(linkedParentName);
+    boolean isLinked = linkedParent.isLinked();
+
+    if(dialog && isLinked)
+    {
+      Shell shell;
+      IWorkbench workbench;
+  
+      workbench = PlatformUI.getWorkbench();
+      shell = workbench.getActiveWorkbenchWindow().getShell();
+  
+      MessageDialog.openInformation(shell,"Resource in link URI" ,"The Selected resource is in a link and can't be handled by this plugin sorry!");
+    }
+    
+    return !isLinked;
+  }  
 
 /*************************** Username ************************/
 

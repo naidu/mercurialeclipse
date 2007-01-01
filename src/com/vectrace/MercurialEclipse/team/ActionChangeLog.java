@@ -97,23 +97,30 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
       obj=itr.next();
       if (obj instanceof IResource)
       {
-      //Setup and run command
-        String FullPath = ( ((IResource) obj).getLocation() ).toString();
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"log" ,"-v" , FullPath};
-        try
+        IResource resource=(IResource) obj;
+        if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
         {
-          String output = MercurialUtilities.ExecuteCommand(launchCmd, true);
-          if (output != null)
+          //Resource could be inside a link or something do nothing
+          // in the future this could check is this is another repository
+
+          //Setup and run command
+          String FullPath = ( ((IResource) obj).getLocation() ).toString();
+          String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"log" ,"-v" , FullPath};
+          try
           {
-            // output output in a window
-            if (output.length() != 0)
+            String output = MercurialUtilities.ExecuteCommand(launchCmd, true);
+            if (output != null)
             {
-              MessageDialog.openInformation(shell, "Mercurial Eclipse Log " + FullPath, output);
+              // output output in a window
+              if (output.length() != 0)
+              {
+                MessageDialog.openInformation(shell, "Mercurial Eclipse Log " + FullPath, output);
+              }
             }
+          } catch (HgException e)
+          {
+            System.out.println(e.getMessage());
           }
-        } catch (HgException e)
-        {
-          System.out.println(e.getMessage());
         }
       }
     }
