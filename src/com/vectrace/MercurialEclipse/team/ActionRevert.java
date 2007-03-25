@@ -5,6 +5,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 
+import java.io.File;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
@@ -88,7 +89,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         }
 
         // the last argument will be replaced with a path
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"revert", "" };
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"revert", "" };
 
         
         //do the actual work in here
@@ -108,9 +109,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
               // in the future this could check is this is another repository
 
               //Setup and run command
-              FullPath=resource.getLocation().toString();
-              launchCmd[4]=FullPath;
-              System.out.println("Revert = " + FullPath);
+              File workingDir=MercurialUtilities.getWorkingDir(resource);
+              launchCmd[2] = MercurialUtilities.getResourceName(resource);
+//              System.out.println("Revert = " + FullPath);
   //            IResourceChangeEvent event = new IResourceChangeEvent();
         
               try
@@ -124,7 +125,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
   
               try
               {
-                MercurialUtilities.ExecuteCommand(launchCmd,true);          
+                MercurialUtilities.ExecuteCommand(launchCmd,workingDir,true);          
                 resource.touch(null);
               } catch (HgException e)
               {

@@ -21,7 +21,7 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant
   protected void initializeConfiguration(ISynchronizePageConfiguration configuration)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialSynchronizeParticipant::initializeConfiguration()" );
+//    System.out.println("MercurialSynchronizeParticipant::initializeConfiguration()" );
     super.initializeConfiguration(configuration);
   }
 
@@ -31,7 +31,7 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant
   public void saveState(IMemento memento)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialSynchronizeParticipant::saveState()" );
+//    System.out.println("MercurialSynchronizeParticipant::saveState()" );
     super.saveState(memento);
   }
 

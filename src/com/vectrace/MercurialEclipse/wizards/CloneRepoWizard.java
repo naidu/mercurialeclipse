@@ -104,7 +104,7 @@ public class CloneRepoWizard extends Wizard implements IImportWizard, INewWizard
       return false;
     }
     
-    CloneRepositoryAction cloneRepoAction = new CloneRepositoryAction(null, workspace, repo, cloneParameters, projectName);
+    CloneRepositoryAction cloneRepoAction = new CloneRepositoryAction(null, workspace, repo, cloneParameters, projectName,null);
 
     try
     {

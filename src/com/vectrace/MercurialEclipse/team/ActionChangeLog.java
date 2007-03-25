@@ -4,6 +4,7 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.File;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
@@ -104,11 +105,12 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
           // in the future this could check is this is another repository
 
           //Setup and run command
-          String FullPath = ( ((IResource) obj).getLocation() ).toString();
-          String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"log" ,"-v" , FullPath};
+          File workingDir=MercurialUtilities.getWorkingDir(resource);
+          String FullPath = MercurialUtilities.getResourceName(resource);
+          String launchCmd[] = { MercurialUtilities.getHGExecutable(),"log" ,"-v" , FullPath};
           try
           {
-            String output = MercurialUtilities.ExecuteCommand(launchCmd, true);
+            String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir,true);
             if (output != null)
             {
               // output output in a window

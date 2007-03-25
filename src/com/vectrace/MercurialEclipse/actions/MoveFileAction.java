@@ -23,6 +23,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableContext;
 
@@ -52,7 +54,6 @@ public class MoveFileAction extends HgOperation
     final String launchCmd[] =
     { 
       MercurialUtilities.getHGExecutable(),
-      "--cwd", MercurialUtilities.getRepositoryPath(src.getProject()),
       "rename",
       "--force",
       src.getLocation().toOSString(), dest.getLocation().toOSString() 
@@ -61,6 +62,12 @@ public class MoveFileAction extends HgOperation
     return launchCmd;
   }
 
+  protected File getHgWorkingDir()
+  {
+    return (((IResource) src).getLocation()).toFile();
+  }
+
+  
   protected String getActionDescription()
   {
     return new String("Move " + src.getLocation() + " to " + dest.getLocation());

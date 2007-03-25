@@ -23,6 +23,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.jface.operation.IRunnableContext;
 
@@ -41,11 +43,12 @@ public class CloneRepositoryAction extends HgOperation
   private IWorkspace workspace;
   private String cloneParameters;
   private String projectName;
+  private File workingDir;
 
   /**
    * @param context
    */
-  public CloneRepositoryAction(IRunnableContext context, IWorkspace workspace, HgRepositoryLocation repo, String cloneParameters, String projectName)
+  public CloneRepositoryAction(IRunnableContext context, IWorkspace workspace, HgRepositoryLocation repo, String cloneParameters, String projectName, File workingDir)
   {
     super(context);
 
@@ -53,6 +56,14 @@ public class CloneRepositoryAction extends HgOperation
     this.repo = repo;
     this.cloneParameters = cloneParameters;
     this.projectName = projectName;
+    if(workingDir != null)
+    {
+      this.workingDir = workingDir;
+    }
+    else
+    {
+      this.workingDir = workspace.getRoot().getLocation().toFile();
+    }
   }
 
   protected String[] getHgCommand()
@@ -60,12 +71,16 @@ public class CloneRepositoryAction extends HgOperation
     String launchCmd[] =
     { 
       MercurialUtilities.getHGExecutable(),
-      "--cwd", workspace.getRoot().getLocation().toOSString(),
       "clone", cloneParameters != null ? cloneParameters : "",
       repo.getUrl(), projectName
     };
     
     return launchCmd;
+  }
+
+  protected File getHgWorkingDir()
+  {
+    return workingDir;
   }
 
   /*

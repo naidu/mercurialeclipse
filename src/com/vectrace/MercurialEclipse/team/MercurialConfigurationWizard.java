@@ -162,7 +162,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	public MercurialConfigurationWizard() {
 		//super();
 	    setWindowTitle( "MercurialConfigurationWizard" );
-		System.out.println("MercurialConfigurationWizard.MercurialConfigurationWizard()");
+//		System.out.println("MercurialConfigurationWizard.MercurialConfigurationWizard()");
 	}
 
 	// (non-Javadoc)

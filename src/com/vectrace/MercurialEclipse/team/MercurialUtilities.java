@@ -119,13 +119,18 @@ public class MercurialUtilities {
 
   public static boolean isResourceInReposetory(IResource resource, boolean dialog)
   {
+    System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog)" );
     //Check to se if resource is not in a link
     String linkedParentName = resource.getProjectRelativePath().segment(0);
+    System.out.println("1 isResourceInReposetory(" + resource.toString() + ",dialog) linkedParentName=" + linkedParentName );
     IFolder linkedParent = resource.getProject().getFolder(linkedParentName);
+    System.out.println("2 isResourceInReposetory(" + resource.toString() + ",dialog)" );
     boolean isLinked = linkedParent.isLinked();
+    System.out.println("3 isResourceInReposetory(" + resource.toString() + ",dialog)" );
 
     if(dialog && isLinked)
     {
+      System.out.println("4 isResourceInReposetory(" + resource.toString() + ",dialog)" );
       Shell shell;
       IWorkbench workbench;
   
@@ -133,6 +138,16 @@ public class MercurialUtilities {
       shell = workbench.getActiveWorkbenchWindow().getShell();
   
       MessageDialog.openInformation(shell,"Resource in link URI" ,"The Selected resource is in a link and can't be handled by this plugin sorry!");
+    }
+
+    if(!isLinked)
+    {
+      System.out.println("5 isResourceInReposetory(" + resource.toString() + ",dialog) return:true ");
+    }
+    else
+    {
+      System.out.println("5 isResourceInReposetory(" + resource.toString() + ",dialog) return:false");
+    
     }
     
     return !isLinked;
@@ -349,7 +364,7 @@ public class MercurialUtilities {
   }
 
   // TODO: Should probably not return null in case of error.
-  static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[], boolean consoleOutput) throws HgException
+  static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],File working_dir, boolean consoleOutput) throws HgException
   {
     class myIOThread implements Runnable
     {
@@ -365,7 +380,6 @@ public class MercurialUtilities {
         consoleOutput = consoleOutput_;
       }
 
-      
       public void run()
       {
         int c;
@@ -414,6 +428,11 @@ public class MercurialUtilities {
 
    // output=new String("");
 //    InputStream in;
+
+    
+//    GetMercurialConsole().println("ExecuteCommandToByteArrayOutputStream() Enter");
+
+    
     ByteArrayOutputStream output;
     ByteArrayOutputStream error;
     Reader in_unicode;
@@ -426,7 +445,10 @@ public class MercurialUtilities {
 //      env.put("VAR1", "myValue");
 //      env.remove("OTHERVAR");
 //      env.put("VAR2", env.get("VAR1") + "suffix");
-//      pb.directory("myDir");
+      if(working_dir != null)
+      {
+        pb.directory(working_dir);
+      }
       Process process = pb.start();
       
       
@@ -445,12 +467,17 @@ public class MercurialUtilities {
       threadIn.setPriority(Thread.MAX_PRIORITY); //Set Priority one above current pos (we want to take care of the input instead of waiting
       threadErr.setPriority(Thread.MAX_PRIORITY); //Set Priority one above current pos (we want to take care of the input instead of waiting
 
+//      GetMercurialConsole().println("Time to start threads");
+
       threadIn.start();
       threadErr.start();
      
       threadIn.join(); //wait for the thread to terminate
       threadErr.join(); //wait for the thread to terminate
 
+//      GetMercurialConsole().println("process.waitFor()");
+
+      
       process.waitFor();
       
       int exit = process.exitValue();
@@ -491,23 +518,84 @@ public class MercurialUtilities {
    * TODO: Should log failure.
    * TODO: Should not return null for failure.
    */
-  static public String ExecuteCommand(String cmd[], boolean consoleOutput) throws HgException
+  static public String ExecuteCommand(String cmd[],File workingDir ,boolean consoleOutput) throws HgException
   {
 		// Setup and run command
-		System.out.print("ExecuteCommand: ");
-    for(int i = 0; i < cmd.length; i++)
+    
+    PrintStream my_console=GetMercurialConsole();
+
+    my_console.println("-----------------------");
+    if(my_console != null )
     {
-      System.out.print( cmd[i] + " " );
-    }
-    System.out.println();
+      my_console.print("ExecuteCommand: ");
+      for(int i = 0; i < cmd.length; i++)
+      {
+        my_console.print( cmd[i] + " " );
+      }
+      my_console.println();
+
+      my_console.print("workdir: ");
+      if(workingDir != null)
+      {
+        my_console.print(workingDir.toString());
+      }
+      else
+      {
+        my_console.print("<null>");        
+      }
+      my_console.println();
+    }    
     
     ByteArrayOutputStream output;
   
-    output = ExecuteCommandToByteArrayOutputStream(cmd, consoleOutput);
+//    GetMercurialConsole().println("ExecuteCommandToByteArrayOutputStream()");
+    
+    output = ExecuteCommandToByteArrayOutputStream(cmd ,workingDir ,consoleOutput);
+//    my_console.print("output: " + output);
 
+    my_console.println("-----------------------");
     return (output != null ) ? output.toString() : null;
   }
 
+  
+  /**
+   * @param obj
+   * @return Workingdir of object 
+   *     
+   */
+  static public File getWorkingDir(IResource obj) 
+  {
+
+    File workingDir;
+    if (obj.getType() == IResource.PROJECT)
+    {
+      workingDir=(obj.getLocation()).toFile();
+    }
+    else if (obj.getType() == IResource.FOLDER)
+    {
+      workingDir=(obj.getLocation()).toFile();
+    }        
+    else if (obj.getType() == IResource.FILE)
+    {
+      workingDir=(obj.getLocation()).removeLastSegments(1).toFile();
+    }      
+    else
+    {
+      workingDir=null;
+    }
+    
+    return workingDir;
+  }
+
+  
+  static public String getResourceName(IResource obj) 
+  {
+    return (obj.getLocation()).lastSegment();
+  }
+
+
+
+  
   static private synchronized PrintStream GetMercurialConsole()
   {
 

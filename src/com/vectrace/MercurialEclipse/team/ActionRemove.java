@@ -5,6 +5,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 
+import java.io.File;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
@@ -96,7 +97,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"remove", "" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"remove", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
@@ -110,15 +111,14 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             // in the future this could check is this is another repository
 
             //Setup and run command
-  		    	FullPath=( ((IResource) obj).getLocation() ).toString();
-  		    	launchCmd[4]=FullPath;
-  //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
+            File workingDir=MercurialUtilities.getWorkingDir(resource);
+            launchCmd[2] = MercurialUtilities.getResourceName(resource);
   
             if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[4] + "\nFrom the repository and filesystem?") )
             {
               try
               {
-                String output = MercurialUtilities.ExecuteCommand(launchCmd, false);
+                String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir,false);
                 if (output != null)
                 {
                   // output output in a window

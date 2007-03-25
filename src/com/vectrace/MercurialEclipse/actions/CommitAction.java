@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.eclipse.core.resources.IProject;
@@ -35,26 +36,51 @@ public class CommitAction extends HgOperation
   private String[] files;
   private String   commitMessage;
   private IProject project;
+  private File workingDir;
 
-  public CommitAction(IRunnableContext context, IProject project, String[] files, String commitMessage)
+  public CommitAction(IRunnableContext context, IProject project, String[] files, String commitMessage,File workingDir)
   {
     super(context);
     this.files = files;
     this.commitMessage = commitMessage;
     this.project = project;
+    if(workingDir != null)
+    {
+      this.workingDir = workingDir;
+    }
+    else
+    {
+      this.workingDir = project.getLocation().toFile();
+    }
   }
- 
-  protected String[] getHgCommand()
+
+  public CommitAction(IRunnableContext context, IProject project, String files, String commitMessage,File workingDir)
   {
+    super(context);
+
+    this.files = new String[1];
+    this.files[0] = files;
+    this.commitMessage = commitMessage;
+    this.project = project;
+    if(workingDir != null)
+    {
+      this.workingDir = workingDir;
+    }
+    else
+    {
+      this.workingDir = project.getLocation().toFile();
+    }
+  }
+
+  
+  protected String[] getHgCommand()
+  {   
     ArrayList launchCmd = new ArrayList();
-      
+
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add("--cwd");
-//    launchCmd.add("\"" + project.getLocation().toOSString() + "\"");
-    launchCmd.add( project.getLocation().toOSString() );
     launchCmd.add("commit");
-    
+
     // Commit message
     launchCmd.add("--message");
 //    launchCmd.add("\"" + commitMessage + "\"");
@@ -70,12 +96,17 @@ public class CommitAction extends HgOperation
 //      launchCmd.add("\"" + files[file] + "\"");
       launchCmd.add(files[file]);
     }
-    
     launchCmd.trimToSize();
-
+   
     return (String[])launchCmd.toArray(new String[0]);
   }
 
+  protected File getHgWorkingDir()
+  {
+    return workingDir;
+  }
+
+  
   protected String getActionDescription()
   {
     return new String("Mercurial commit files");

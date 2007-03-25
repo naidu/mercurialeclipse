@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -74,7 +75,7 @@ public abstract class HgOperation extends TeamOperation {
 
 	    try
 	    {
-	      result = MercurialUtilities.ExecuteCommand(getHgCommand(), true);
+	      result = MercurialUtilities.ExecuteCommand(getHgCommand(),getHgWorkingDir(), true);
 	    } catch (HgException e)
 	    {
 	      System.out.println(getActionDescription() + " failed: " + e.getMessage());
@@ -90,6 +91,10 @@ public abstract class HgOperation extends TeamOperation {
 		return null;
 	}
 	
+  protected File getHgWorkingDir()
+  {
+    return null;
+  }
 	  
     public String getResult()
     {

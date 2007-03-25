@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
@@ -128,7 +129,7 @@ public class CommitDialog extends Dialog
   private class CommitResource
   {
     private String status;
-    private String path;
+    private File path;
     
     private String convertStatus(String path)
     {
@@ -154,11 +155,11 @@ public class CommitDialog extends Dialog
       }
       else
       {
-        return "status error: " + path;
+        return "status error: " + path.toString();
       }
     }
 
-    public CommitResource(String status, String path)
+    public CommitResource(String status, File path)
     {
       this.status = convertStatus(status);
       this.path   = path;
@@ -169,7 +170,7 @@ public class CommitDialog extends Dialog
       return status;
     }
     
-    public String getPath()
+    public File getPath()
     {
       return path;
     }
@@ -227,11 +228,11 @@ public class CommitDialog extends Dialog
   private CommittableFilesFilter committableFilesFilter;
   
   private IProject project;
-  
+  private IResource[] inResources;
   private CommitResource[] commitResources;
   
-  private String[] filesToAdd;
-  private String[] filesToCommit;
+  private File[] filesToAdd;
+  private File[] filesToCommit;
   private String  commitMessage;
   
   private MouseListener commitMouseListener;
@@ -240,26 +241,28 @@ public class CommitDialog extends Dialog
   /**
    * @param shell
    */
-  public CommitDialog(Shell shell, IProject project)
+  public CommitDialog(Shell shell, IProject project, IResource[] inResources)
   {
     super(shell);
     
     this.project = project;
+    this.inResources=inResources;
     this.untrackedFilesFilter = new UntrackedFilesFilter();
     this.committableFilesFilter = new CommittableFilesFilter();
-  }
-  
-  public String[] getFilesToCommit()
-  {
-    return filesToCommit;
   }
   
   public String getCommitMessage()
   {
     return commitMessage;
   }
+ 
+  public File[] getFilesToCommit()
+  {
+    return filesToCommit;
+  }
+
   
-  public String[] getFilesToAdd()
+  public File[] getFilesToAdd()
   {
     return filesToAdd;
   }
@@ -454,7 +457,7 @@ public class CommitDialog extends Dialog
         }
         else if(columnIndex == 1)
         {
-          return resource.getPath();
+          return resource.getPath().toString();
         }
         else if(columnIndex == 2)
         {
@@ -493,18 +496,19 @@ public class CommitDialog extends Dialog
     // Get the path to the project go we can get everything underneath
     // that has changed. Once we get that, filter on the appropriate
     // items.
-    IResource[] projectArray = {project};
-    StatusContainerAction statusAction = 
-      new StatusContainerAction(null, projectArray);
+//    IResource[] projectArray = {project};
+//    StatusContainerAction statusAction = new StatusContainerAction(null, projectArray);
+  StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
 
     try
     {
       statusAction.run();
       String result = statusAction.getResult();
-
       return spliceList(result);
-    } catch (Exception e)
+    } 
+    catch (Exception e)
     {
+      System.out.println("CommitDialog::fillFileList() " + project.toString());
       System.out.println("Unable to get status " + e.getMessage());
       return null;
     }
@@ -522,14 +526,14 @@ public class CommitDialog extends Dialog
     while(st.hasMoreTokens())
     {
       String str = st.nextToken();
-      list.add(new CommitResource(str,st.nextToken()));
+      list.add(new CommitResource(str,new File(st.nextToken())));
     }
     
     commitResources = (CommitResource[])list.toArray(new CommitResource[0]);
     return commitResources;
   }
   
-  private String[] convertToFiles(Object[] objs)
+  private File[] convertToFiles(Object[] objs)
   {
     ArrayList list = new ArrayList();
 
@@ -544,10 +548,10 @@ public class CommitDialog extends Dialog
       list.add(resource.getPath());
     }
     
-    return (String[])list.toArray(new String[0]);
+    return (File[])list.toArray(new File[0]);
   }
   
-  private String[] getToAddList(Object[] objs)
+  private File[] getToAddList(Object[] objs)
   {
     ArrayList list = new ArrayList();
 
@@ -565,8 +569,10 @@ public class CommitDialog extends Dialog
       }
     }
     
-    return (String[])list.toArray(new String[0]);
+    return (File[])list.toArray(new File[0]);
   }
+
+  
   
   /**
    * Override the OK button pressed to capture the info we want first
@@ -575,6 +581,7 @@ public class CommitDialog extends Dialog
   protected void okPressed() {
     filesToAdd    = getToAddList(commitFilesList.getCheckedElements());
     filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
+   
     commitMessage = commitTextBox.getText();
 
     super.okPressed();

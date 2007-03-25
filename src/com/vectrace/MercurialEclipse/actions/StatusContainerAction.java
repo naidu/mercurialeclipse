@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
 import java.util.ArrayList;
 
 import org.eclipse.core.resources.IResource;
@@ -55,8 +56,6 @@ public class StatusContainerAction extends HgOperation
   {
     ArrayList launchCmd = new ArrayList(resources.length + 4);
     launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add("--cwd");
-    launchCmd.add(MercurialUtilities.getRepositoryPath(resources[0].getProject()));
     launchCmd.add("status");
     if( resources.length == 0 )
     {
@@ -69,13 +68,26 @@ public class StatusContainerAction extends HgOperation
       launchCmd.add(resources[res].getLocation().toOSString());
     }
     launchCmd.trimToSize();
-
+    
     return (String[])launchCmd.toArray(new String[0]);
   }
 
+  protected File getHgWorkingDir()
+  {
+    if (resources[0] instanceof IResource)
+    {
+//      return MercurialUtilities.getWorkingDir((IResource) resources[0]);
+//        return new File(resources[0].getLocation().toOSString());
+        return MercurialUtilities.getWorkingDir(resources[0]);
+
+    }
+    return null;
+  }
+
+  
   protected String getActionDescription()
   {
-    return new String("Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.");    
+    return new String("Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.");
   }
 
 }

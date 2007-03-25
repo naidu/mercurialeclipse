@@ -4,6 +4,7 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -196,7 +197,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 
   }
   
-  private IWorkbenchWindow window;
+//  private IWorkbenchWindow window;
 //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
@@ -221,7 +222,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
 	 */
 	public void init(IWorkbenchWindow window) {
 //		System.out.println("ActionDiff:init(window)");
-		this.window = window;
+//		this.window = window;
 	}
 
 	/**
@@ -257,10 +258,14 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
         //Setup and run command identify, this us used to get the base changeset to diff against
         //tip can't be used since work can be done in older reviison ( hg up <old rev> )
         //String FullPath = ( ((IResource) obj).getLocation() ).toString();
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"identify"};
+       
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"identify"};
+        File workingDir=MercurialUtilities.getWorkingDir((IResource) obj );
+
+        
         try
         {
-          String changeset = MercurialUtilities.ExecuteCommand(launchCmd, false);
+          String changeset = MercurialUtilities.ExecuteCommand(launchCmd,workingDir ,false);
           // It consists of the revision id (hash), optionally a '+' sign
           // if the working tree has been modified, followed by a list of tags.
           // => we need to strip it ...

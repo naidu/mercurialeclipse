@@ -23,6 +23,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableContext;
 
@@ -38,6 +40,7 @@ public class DeleteFileAction extends HgOperation
 {
   private IResource resource;
 
+
   /**
    * IResource should only be a file or folder as operations on a folder are implicitly on all
    * subtending files in Mercurial.
@@ -46,7 +49,7 @@ public class DeleteFileAction extends HgOperation
   {
     super(context);
 
-    this.resource = resource;
+    this.resource = resource;  
   }
 
   protected String[] getHgCommand()
@@ -55,8 +58,6 @@ public class DeleteFileAction extends HgOperation
     final String launchCmd[] =
     { 
       MercurialUtilities.getHGExecutable(),
-      "--cwd", MercurialUtilities.getRepositoryPath(resource.getProject()),
-      "remove",
       "--force",
       resource.getLocation().toOSString() 
     };
@@ -64,6 +65,12 @@ public class DeleteFileAction extends HgOperation
     return launchCmd;
   }
 
+  protected File getHgWorkingDir()
+  {
+    return (resource.getLocation()).toFile();
+  }
+
+  
   protected String getActionDescription()
   {
     return new String("Mercurial delete resource " + resource.getLocation() + " from the Mercurial repository");    

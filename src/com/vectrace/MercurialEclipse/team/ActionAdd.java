@@ -5,6 +5,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 
+import java.io.File;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
@@ -65,7 +66,6 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 	{
 		IProject proj;
 		String Repository;
-		String FullPath;
 		proj=MercurialUtilities.getProject(selection);
 		Repository=MercurialUtilities.getRepositoryPath(proj);
 		if(Repository==null)
@@ -77,7 +77,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 	  	Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-  		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"add", "" };
+  		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"add", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
@@ -91,12 +91,12 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
             // in the future this could check is this is another repository
 
             //Setup and run command
-  		    	FullPath = ( ((IResource) obj).getLocation() ).toString();
-  		    	launchCmd[4] = FullPath;
-  //				    System.out.println(">" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + " " + launchCmd[3] + " " + launchCmd[4]);
+            File workingDir=MercurialUtilities.getWorkingDir(resource);
+  		    	launchCmd[2] = MercurialUtilities.getResourceName(resource);
+//            System.out.println("Add>" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + "---->Workdir:" + workingDir.toString());
             try
             {
-              MercurialUtilities.ExecuteCommand(launchCmd,true);
+              MercurialUtilities.ExecuteCommand(launchCmd,workingDir,true);
             }
             catch(HgException e)
             {

@@ -4,7 +4,12 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
@@ -67,11 +72,25 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
    * @see IWorkbenchWindowActionDelegate#run
    */
 
+  /*
+   * 
+  static public File getWorkingDir(IResource obj) 
+  {
+    return (obj.getLocation()).removeLastSegments(1).toFile();
+  }
+
+
+   * 
+   * 
+   */
+  
   public void run(IAction action)
   {
     Shell shell;
     IWorkbench workbench;
-
+    Object obj;
+    IResource objectResource;
+    Iterator itr;
     IProject project = MercurialUtilities.getProject(selection);
 
     if (( window != null ) && ( window.getShell() != null ))
@@ -83,16 +102,40 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
       workbench = PlatformUI.getWorkbench();
       shell = workbench.getActiveWorkbenchWindow().getShell();
     }
+    
+    //Loop trough all selections and put in the resources in the selectedResourceArray
+    itr= selection.iterator();
+    ArrayList selectedResourceArrayList = new ArrayList(selection.size()); 
+    while(itr.hasNext())
+    {
+      obj=itr.next();
+      if (obj instanceof IResource)
+      {
+//      TODO convert the iterate to this array
+        selectedResourceArrayList.add((IResource)obj);
+      }
+    }        
+    selectedResourceArrayList.trimToSize();  
+    IResource[] selectedResourceArray = (IResource[])selectedResourceArrayList.toArray(new IResource[0]);
+    
+    // TODO have per file working dir 
+    //Get working dir (use first selected for now) 
+    File workingDir=MercurialUtilities.getWorkingDir((IResource)selectedResourceArray[0]);
 
     IProgressMonitor monitor = new NullProgressMonitor();
-    CommitDialog commitDialog = new CommitDialog(shell,project);
+    CommitDialog commitDialog = new CommitDialog(shell,project,selectedResourceArray);
     boolean ok = (commitDialog.open() == Window.OK);
     if(ok)
     {
-      String[] filesToAdd = commitDialog.getFilesToAdd();
+      File[] filesToAdd = commitDialog.getFilesToAdd();
+
+      //TODO switch to per file workingdir to allow for multiple repositoried in the same project     
+//      File workingDir=new File(MercurialUtilities.getRepositoryPath(project));
+
+            
       for(int file=0; file < filesToAdd.length; file++)
       {
-        AddFileAction addFilesAction = new AddFileAction(null,project,filesToAdd[file]);
+        AddFileAction addFilesAction = new AddFileAction(null,project,filesToAdd[file].toString(),workingDir);
         try
         {
           addFilesAction.run(monitor);
@@ -103,17 +146,32 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
         }
       }
       
-      CommitAction commitAction = new CommitAction(null, project, commitDialog.getFilesToCommit(), commitDialog.getCommitMessage());
-    
-      try
+      File[] filesToCommit = commitDialog.getFilesToCommit();
+      String messageToCommit = commitDialog.getCommitMessage();
+     
+      //TODO switch to per file workingdir to allow for multiple repositoried in the same project     
+//      workingDir=new File(MercurialUtilities.getRepositoryPath(project));
+
+
+      for(int file=0; file < filesToCommit.length; file++)
       {
-        commitAction.run(monitor);
-      } 
-      catch (Exception e)
-      {
-        System.out.println("Unable to finish commit: " + e.getMessage());
+//            System.out.println("1.Commiting[" + Integer.toString(file) + "]:" + filesToCommit[file].toString());
+        CommitAction commitAction = new CommitAction(null, project,filesToCommit[file].toString(), messageToCommit,workingDir );
+        try
+        {
+          commitAction.run(monitor);
+        } 
+        catch (Exception e)
+        {
+          System.out.println("Unable to finish commit: " + e.getMessage());
+        }
       }
     }
+
+    
+    
+
+
 
     DecoratorStatus.refresh();
   }

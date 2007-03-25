@@ -4,6 +4,8 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
@@ -66,11 +68,11 @@ public class ActionStatus implements IWorkbenchWindowActionDelegate {
 			Repository="."; //never leave this empty add a . to point to current path
 		}
 		//Setup and run command
-//	    System.out.println("hg --cwd " + Repository + " status");
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"status" };
+	    System.out.println("???? hg --cwd " + Repository + " status");
+		String launchCmd[] = { MercurialUtilities.getHGExecutable() ,"status" };
 		try
 		{
-		  MercurialUtilities.ExecuteCommand(launchCmd,false);
+		  MercurialUtilities.ExecuteCommand(launchCmd,new File(Repository),false);
 		} catch (HgException e)
 		{
 		  System.out.println(e.getMessage());

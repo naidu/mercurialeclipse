@@ -23,6 +23,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import java.io.File;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -37,16 +39,18 @@ public class AddFileAction extends HgOperation
 {
   private String resource;
   private IProject project;
+  private File workingDir;
 
   /**
    * @param context
    */
-  public AddFileAction(IRunnableContext context, IProject project, String resource)
+  public AddFileAction(IRunnableContext context, IProject project, String resource, File workingDir)
   {
     super(context);
 
     this.project = project;
     this.resource = resource;
+    this.workingDir = workingDir;
   }
 
   protected String[] getHgCommand()
@@ -54,12 +58,15 @@ public class AddFileAction extends HgOperation
 
     final String launchCmd[] =
     {  MercurialUtilities.getHGExecutable(), 
-        "--cwd", 
-        MercurialUtilities.getRepositoryPath(project),
         "add",
         resource  };
 
     return launchCmd;
+  }
+  
+  protected File getHgWorkingDir()
+  {
+    return workingDir;
   }
   
   protected String getActionDescription()
