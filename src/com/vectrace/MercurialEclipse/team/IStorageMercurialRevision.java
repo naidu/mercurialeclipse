@@ -4,6 +4,7 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.File;
 import java.io.InputStream;
 
 import org.eclipse.core.resources.IProject;
@@ -20,7 +21,7 @@ import org.eclipse.core.runtime.IPath;
  */
 public class IStorageMercurialRevision implements IStorage
 {
-  String sourceFilename;
+//  String sourceFilename;
   String revision;
   IProject project;
   IResource resource;
@@ -35,7 +36,7 @@ public class IStorageMercurialRevision implements IStorage
     project = proj;
     resource = res;
     revision=rev;
-    sourceFilename = ( res.getLocation() ).toString();
+//    sourceFilename = ( res.getLocation() ).toString();
   }
 
   public IStorageMercurialRevision(IProject proj,IResource res, int rev)
@@ -44,7 +45,7 @@ public class IStorageMercurialRevision implements IStorage
     project = proj;
     resource = res;
     revision=String.valueOf(rev);   
-    sourceFilename = ( res.getLocation() ).toString();
+//    sourceFilename = ( res.getLocation() ).toString();
   }
   
   /* (non-Javadoc)
@@ -65,17 +66,30 @@ public class IStorageMercurialRevision implements IStorage
    */
   public InputStream getContents() throws CoreException
   {
+//    System.out.println("IStorageMercurialRevision::getContents()");
+    
     //  Should generate data content of the so called "file" in this case a revision, e.g. a hg cat --rev "rev" <file>
-    String Repository;
+//    String Repository;
 //    System.out.println("IStorageMercurialRevision(" + sourceFilename + "," + revision + ")::getContent()" );
-    Repository=MercurialUtilities.getRepositoryPath(project);
-    if(Repository==null)
-    {
-      Repository="."; //never leave this empty add a . to point to current path
-    }  
+//    Repository=MercurialUtilities.getRepositoryPath(project);
+//    if(Repository==null)
+//    {
+//      Repository="."; //never leave this empty add a . to point to current path
+//    }  
+//    System.out.println("IStorageMercurialRevision::getContents() Repository=" + Repository);
 
-    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"--cwd", Repository ,"cat", "--rev" , revision, sourceFilename };
-    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,false);
+    //Setup and run command
+    String launchCmd[] = { MercurialUtilities.getHGExecutable(),
+                           "cat", 
+                           "--rev" , 
+                           revision, 
+                           MercurialUtilities.getResourceName(resource) 
+                           };
+    File workingDir=MercurialUtilities.getWorkingDir(resource);
+    
+    
+    //    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,false);
+    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,workingDir,true);
   }
 
   /* (non-Javadoc)

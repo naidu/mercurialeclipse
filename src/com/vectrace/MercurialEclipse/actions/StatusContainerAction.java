@@ -59,7 +59,7 @@ public class StatusContainerAction extends HgOperation
     launchCmd.add("status");
     if( resources.length == 0 )
     {
-    	System.out.println("FOOOOOOOOO!");
+    	System.out.println("StatusContainerAction::getHgCommand() resources.length == 0");
     }
     for(int res = 0; res < resources.length; res++)
     {

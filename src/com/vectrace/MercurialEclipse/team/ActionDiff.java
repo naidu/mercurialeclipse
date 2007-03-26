@@ -266,6 +266,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate {
         try
         {
           String changeset = MercurialUtilities.ExecuteCommand(launchCmd,workingDir ,false);
+
           // It consists of the revision id (hash), optionally a '+' sign
           // if the working tree has been modified, followed by a list of tags.
           // => we need to strip it ...

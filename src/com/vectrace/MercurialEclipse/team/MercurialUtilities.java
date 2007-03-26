@@ -119,18 +119,14 @@ public class MercurialUtilities {
 
   public static boolean isResourceInReposetory(IResource resource, boolean dialog)
   {
-    System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog)" );
+//    System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog)" );
     //Check to se if resource is not in a link
     String linkedParentName = resource.getProjectRelativePath().segment(0);
-    System.out.println("1 isResourceInReposetory(" + resource.toString() + ",dialog) linkedParentName=" + linkedParentName );
     IFolder linkedParent = resource.getProject().getFolder(linkedParentName);
-    System.out.println("2 isResourceInReposetory(" + resource.toString() + ",dialog)" );
     boolean isLinked = linkedParent.isLinked();
-    System.out.println("3 isResourceInReposetory(" + resource.toString() + ",dialog)" );
 
     if(dialog && isLinked)
     {
-      System.out.println("4 isResourceInReposetory(" + resource.toString() + ",dialog)" );
       Shell shell;
       IWorkbench workbench;
   
@@ -139,16 +135,8 @@ public class MercurialUtilities {
   
       MessageDialog.openInformation(shell,"Resource in link URI" ,"The Selected resource is in a link and can't be handled by this plugin sorry!");
     }
-
-    if(!isLinked)
-    {
-      System.out.println("5 isResourceInReposetory(" + resource.toString() + ",dialog) return:true ");
-    }
-    else
-    {
-      System.out.println("5 isResourceInReposetory(" + resource.toString() + ",dialog) return:false");
-    
-    }
+ 
+    //TODO Follow links and see if they point to another reposetory
     
     return !isLinked;
   }  
@@ -273,7 +261,7 @@ public class MercurialUtilities {
   
   // TODO: Combine this with the other execute command.
   // TODO: Proper error handling.
-  static InputStream ExecuteCommandToInputStream(String cmd[],boolean consoleOutput) 
+  static InputStream ExecuteCommandToInputStream(String cmd[],File workingDir ,boolean consoleOutput) 
   {
     class myIOThreadNoOutput implements Runnable
     {
@@ -323,6 +311,38 @@ public class MercurialUtilities {
       }
     }
 
+    if(false)
+    {
+      PrintStream my_console=GetMercurialConsole();
+  
+      if(my_console != null )
+      {
+        my_console.print("ExecuteCommand: ");
+        for(int i = 0; i < cmd.length; i++)
+        {
+          my_console.print( cmd[i] + " " );
+        }
+        my_console.println();
+  
+        my_console.print("workdir: ");
+        if(workingDir != null)
+        {
+          my_console.print(workingDir.toString());
+        }
+        else
+        {
+          my_console.print("<null>");        
+        }
+        my_console.println();
+      }    
+    }
+    
+    
+    
+    
+    
+    
+    
     // Setup and run command
     InputStream in;
     Reader err_unicode;
@@ -334,7 +354,10 @@ public class MercurialUtilities {
 //      env.put("VAR1", "myValue");
 //      env.remove("OTHERVAR");
 //      env.put("VAR2", env.get("VAR1") + "suffix");
-//      pb.directory("myDir");
+      if(workingDir != null)
+      {
+        pb.directory(workingDir);
+      }
       Process process = pb.start();
       
       in = process.getInputStream();
@@ -364,7 +387,7 @@ public class MercurialUtilities {
   }
 
   // TODO: Should probably not return null in case of error.
-  static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],File working_dir, boolean consoleOutput) throws HgException
+  static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],File workingDir, boolean consoleOutput) throws HgException
   {
     class myIOThread implements Runnable
     {
@@ -445,9 +468,9 @@ public class MercurialUtilities {
 //      env.put("VAR1", "myValue");
 //      env.remove("OTHERVAR");
 //      env.put("VAR2", env.get("VAR1") + "suffix");
-      if(working_dir != null)
+      if(workingDir != null)
       {
-        pb.directory(working_dir);
+        pb.directory(workingDir);
       }
       Process process = pb.start();
       

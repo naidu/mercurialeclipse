@@ -47,7 +47,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   
   public void decorate(Object element, IDecoration decoration)
   {
-    System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate()");
+//    System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate()");
     IResource objectResource;
     IProject objectProject;
     RepositoryProvider RepoProvider;
@@ -57,13 +57,13 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     {
       return ;
     }
-    System.out.println("1 MercurialEclipsePlugin:DecoratorStatus.decorate()");
+//    System.out.println("1 MercurialEclipsePlugin:DecoratorStatus.decorate()");
     
     objectProject = objectResource.getProject();
     if( RepositoryProvider.isShared( objectProject ) ) 
     {
       //A Shared Project
-      System.out.println("2 MercurialEclipsePlugin:DecoratorStatus.decorate()");
+//      System.out.println("2 MercurialEclipsePlugin:DecoratorStatus.decorate()");
       RepoProvider = RepositoryProvider.getProvider( objectProject );
       if( ! (RepoProvider instanceof MercurialTeamProvider))
       {
@@ -76,17 +76,17 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
       //Not a Shared Project
       return;
     }
-    System.out.println("3 MercurialEclipsePlugin:DecoratorStatus.decorate():" + objectResource.toString() );
+//    System.out.println("3 MercurialEclipsePlugin:DecoratorStatus.decorate():" + objectResource.toString() );
 
     if(MercurialUtilities.isResourceInReposetory(objectResource, true) != true)
     {
       //Resource could be inside a link or something do nothing
       // in the future this could check is this is another repository
-      System.out.println("4 MercurialEclipsePlugin:DecoratorStatus.decorate()");
+//      System.out.println("4 MercurialEclipsePlugin:DecoratorStatus.decorate()");
       return;
     }
 
-    System.out.println("5 MercurialEclipsePlugin:DecoratorStatus.decorate()");
+//    System.out.println("5 MercurialEclipsePlugin:DecoratorStatus.decorate()");
 
     
     // Decorating a Project   
@@ -168,7 +168,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
    */
   public void addListener(ILabelProviderListener listener)
   {
-    System.out.println("MercurialEclipsePlugin:DecoratorStatus.addListener()");
+//    System.out.println("MercurialEclipsePlugin:DecoratorStatus.addListener()");
 
   }
 
@@ -177,7 +177,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
    */
   public void dispose()
   {
-    System.out.println("MercurialEclipsePlugin:DecoratorStatus.dispose()");
+//    System.out.println("MercurialEclipsePlugin:DecoratorStatus.dispose()");
 
   }
 
@@ -186,7 +186,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
    */
   public boolean isLabelProperty(Object element, String property)
   {
-    System.out.println("MercurialEclipsePlugin:DecoratorStatus.isLabelProperty()");
+//    System.out.println("MercurialEclipsePlugin:DecoratorStatus.isLabelProperty()");
     return false;
   }
 
@@ -195,7 +195,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
    */
   public void removeListener(ILabelProviderListener listener)
   {
-    System.out.println("MercurialEclipsePlugin:DecoratorStatus.removeListener()");
+//    System.out.println("MercurialEclipsePlugin:DecoratorStatus.removeListener()");
 
   }
 
