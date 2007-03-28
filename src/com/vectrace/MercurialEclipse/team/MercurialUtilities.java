@@ -115,13 +115,27 @@ public class MercurialUtilities {
 	}
 
   /*************************** Should we handle resource ***********************
-   * @param dialog TODO*/
+   * @param dialog TODO
+   * 
+   * Return true if the resource is handled by mercurial.
+   * is it a link we do not folow the link (not now anyway mabe later versions will)
+   * 
+   * */
 
   public static boolean isResourceInReposetory(IResource resource, boolean dialog)
   {
 //    System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog)" );
     //Check to se if resource is not in a link
     String linkedParentName = resource.getProjectRelativePath().segment(0);
+    if(linkedParentName ==null)
+    {
+//      System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog) linkedParentName=null" );  
+      return false;
+    }
+//    else
+//    {
+//      System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog) linkedParentName=" + linkedParentName );         
+//    }
     IFolder linkedParent = resource.getProject().getFolder(linkedParentName);
     boolean isLinked = linkedParent.isLinked();
 
