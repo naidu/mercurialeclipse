@@ -81,8 +81,8 @@ public class IStorageMercurialRevision implements IStorage
     //Setup and run command
     String launchCmd[] = { MercurialUtilities.getHGExecutable(),
                            "cat", 
-                           "--rev" , 
-                           revision, 
+                           "--rev", 
+                           revision,
                            MercurialUtilities.getResourceName(resource) 
                            };
     File workingDir=MercurialUtilities.getWorkingDir(resource);
