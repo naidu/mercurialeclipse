@@ -18,7 +18,6 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-
 /**
  * @author zingo
  *
