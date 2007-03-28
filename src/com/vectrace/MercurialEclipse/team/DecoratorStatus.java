@@ -124,12 +124,12 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
       File workingDir=MercurialUtilities.getWorkingDir((IResource) objectResource);
       String fileName = MercurialUtilities.getResourceName((IResource) objectResource);
 
-      System.out.println("hg status?");
+//      System.out.println("hg status?");
       
       
       if(FullPath.indexOf(".hg") == -1)  //Do not decorate the stuff inder .hg
       {      
-        System.out.println("hg status :)");
+//        System.out.println("hg status :)");
 
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),"status", fileName };
         try
@@ -141,20 +141,22 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
             {
               //        decoration.addSuffix( "{" + output.substring(0,1)  + "}" );
               //          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", "+ output.substring(0,1) + ")");
-              System.out.println("hg status output=" + output);
+//              System.out.println("hg status output=" + output);
               decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
             }
             else
             {
               //Managed and unchanged (No output from status)
               //          System.out.println("MercurialEclipsePlugin:DecoratorStatus.decorate(" + element.toString() + ", No output (managed?))");
-              System.out.println("hg status managedDescriptor");
+//              System.out.println("hg status managedDescriptor");
               decoration.addOverlay(DecoratorImages.managedDescriptor);      
             }
           }
         } catch (HgException e)
         {
-          System.out.println(e.getMessage());
+          //Silently ignore decoration failure, they will not be decorated so why spamm the log about it?
+//          System.out.println("Error: MercurialEclipsePlugin:DecoratorStatus.decorate():" + objectResource.toString() );
+//          System.out.println(e.getMessage());
         }
       }
     }
