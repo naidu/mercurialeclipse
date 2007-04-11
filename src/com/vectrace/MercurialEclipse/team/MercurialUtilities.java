@@ -75,13 +75,11 @@ public class MercurialUtilities {
 	 */
 	public static String getHGExecutable() 
   {
-		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-				.getPreferenceStore();
-
+		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		// This returns "" if not defined
 		String executable = preferenceStore.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
-
 		return executable;
+		
 	}
 
 	public static String getHGExecutable(boolean configureIfMissing) 
@@ -164,13 +162,10 @@ public class MercurialUtilities {
    */
   public static String getHGUsername() 
   {
-    IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-        .getPreferenceStore();
-
+    IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
     // This returns "" if not defined
     String executable = preferenceStore.getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
-
-    return executable;
+    return executable;    
   }
 
   public static String getHGUsername(boolean configureIfMissing) 
@@ -239,8 +234,12 @@ public class MercurialUtilities {
 		// System.out.println("pathcheck: >" + path + "<");
 		return path;
 	}
-
-	static IProject getProject(IStructuredSelection selection) 
+	/**
+	 * Get the project for the selection (it use the first element)
+	 * @param selection
+	 * @return
+	 */
+   public static IProject getProject(IStructuredSelection selection) 
   {
 		Object obj;
 		obj = selection.getFirstElement();
@@ -275,7 +274,7 @@ public class MercurialUtilities {
   
   // TODO: Combine this with the other execute command.
   // TODO: Proper error handling.
-  static InputStream ExecuteCommandToInputStream(String cmd[],File workingDir ,boolean consoleOutput) 
+  public static InputStream ExecuteCommandToInputStream(String cmd[],File workingDir ,boolean consoleOutput) 
   {
     class myIOThreadNoOutput implements Runnable
     {
@@ -299,7 +298,7 @@ public class MercurialUtilities {
         {
           if(consoleOutput)
           {
-            my_console=GetMercurialConsole();
+            my_console=getMercurialConsoleOutPrintStream();
           }
           else
           {
@@ -327,7 +326,7 @@ public class MercurialUtilities {
 
     if(false)
     {
-      PrintStream my_console=GetMercurialConsole();
+      PrintStream my_console=getMercurialConsoleOutPrintStream();
   
       if(my_console != null )
       {
@@ -401,7 +400,7 @@ public class MercurialUtilities {
   }
 
   // TODO: Should probably not return null in case of error.
-  static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],File workingDir, boolean consoleOutput) throws HgException
+  public static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[],File workingDir, boolean consoleOutput) throws HgException
   {
     class myIOThread implements Runnable
     {
@@ -427,7 +426,7 @@ public class MercurialUtilities {
         {
           if(consoleOutput)
           {
-            my_console=GetMercurialConsole();
+            my_console=getMercurialConsoleOutPrintStream();
           }
           else
           {
@@ -471,7 +470,7 @@ public class MercurialUtilities {
 
     
     ByteArrayOutputStream output;
-    ByteArrayOutputStream error;
+//    ByteArrayOutputStream error;
     Reader in_unicode;
     Reader err_unicode;
     try 
@@ -492,13 +491,14 @@ public class MercurialUtilities {
       
 //      in = process.getInputStream();
       output = new ByteArrayOutputStream();
-      error = new ByteArrayOutputStream();
+//      error = new ByteArrayOutputStream();
       in_unicode = new InputStreamReader(process.getInputStream()); //InputStreamReader converts input to unicode
       err_unicode = new InputStreamReader(process.getErrorStream()); //InputStreamReader converts input to unicode
 
 //      output = new StringWriter();
       myIOThread inThread  = new myIOThread("stdin",in_unicode,output,consoleOutput);
-      myIOThread errThread = new myIOThread("stderr",err_unicode,error,true);         //only to console
+//      myIOThread errThread = new myIOThread("stderr",err_unicode,error,true);         //only to console
+      myIOThread errThread = new myIOThread("stderr",err_unicode, null, true);         //only to console
       Thread threadIn  = new Thread(inThread);
       Thread threadErr = new Thread(errThread);
       threadIn.setPriority(Thread.MAX_PRIORITY); //Set Priority one above current pos (we want to take care of the input instead of waiting
@@ -517,20 +517,20 @@ public class MercurialUtilities {
       
       process.waitFor();
       
-      int exit = process.exitValue();
+//      int exit = process.exitValue();
       
       in_unicode.close();
       err_unicode.close();
   
       // Should probably throw something or at least return the error.
-      if( exit != 0 )
-      {
-        throw new HgException(exit, "Mercurial operation failed: " + error);
-      }
-      else
-      {
+//      if( exit != 0 )
+//      {
+//        throw new HgException(exit, "Mercurial operation failed: " + error);
+//      }
+//      else
+//      {
         return output;
-      }
+//      }
       
     }
     catch (IOException e) 
@@ -559,7 +559,7 @@ public class MercurialUtilities {
   {
 		// Setup and run command
     
-    PrintStream my_console=GetMercurialConsole();
+    PrintStream my_console=getMercurialConsoleOutPrintStream();
 
     my_console.println("-----------------------");
     if(my_console != null )
@@ -632,21 +632,17 @@ public class MercurialUtilities {
 
 
 
-  
-  static private synchronized PrintStream GetMercurialConsole()
-  {
+  public static synchronized IOConsole getMercurialConsole()
+  {  
+    if (console != null) 
+    {
+      return console;
+    }
 
-    if(console_out_printstream != null)
-    {
-      return console_out_printstream;
-    }
+    console = new IOConsole("Mercurial Console", null);
+    IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+    manager.addConsoles(new IConsole[] { console });
     
-    if (console == null) 
-    {
-      console = new IOConsole("Mercurial Console", null);
-      IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-      manager.addConsoles(new IConsole[] { console });
-    }
     if (console_in == null) 
     {
       console_in = console.getInputStream();
@@ -654,17 +650,61 @@ public class MercurialUtilities {
     if (console_out == null) 
     {
       console_out = console.newOutputStream();
-      if (console_out != null) 
-      {
-        console_out_printstream = new PrintStream(console_out);
-        return console_out_printstream;
-        // console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
-
-      }
       // console_out_printstream.println("Hello word!");
     }
-    return null; //Error
+    return console;
   }
+
+  static synchronized PrintStream getMercurialConsoleOutPrintStream()
+  {
+    if(console_out_printstream != null)
+    {
+      return console_out_printstream;
+    }
+    if(console == null) 
+    {
+      console = getMercurialConsole();
+    }
+    if (console_out != null) 
+    {
+      console_out_printstream = new PrintStream(console_out);
+      // console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
+      return console_out_printstream;
+    }
+    return null;
+  }
+  /* 
+TODO
+ 	public static synchronized IOConsole getBazaarConsole() {
+
+		if (console == null) {
+			console = new IOConsole(UITexts.BazaarConsole_name, null);
+			IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
+			manager.addConsoles(new IConsole[] { console });
+		} else {
+			return console;
+		}
+		if (console_in == null) {
+			console_in = console.getInputStream();
+		}
+		if (console_out == null) {
+			console_out = console.newOutputStream();
+			// console_out_printstream.println("Hello word!");
+		}
+		return console; // Error
+	}
+	
+	static synchronized PrintStream getBazaarConsoleOutPrintStream(){
+		if(console == null) {
+			console = getBazaarConsole();
+		}
+		if (console_out != null) {
+			console_out_printstream = new PrintStream(console_out);
+			return console_out_printstream;
+		}
+		return null;
+	}
+*/	
   
 	/*
 	 * public void runTest(IOConsole console) { final Display display =
