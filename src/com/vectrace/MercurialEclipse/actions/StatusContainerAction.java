@@ -90,4 +90,10 @@ public class StatusContainerAction extends HgOperation
     return new String("Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.");
   }
 
+  public File getWorkingDir()
+  {
+    return getHgWorkingDir();
+  }
+
+  
 }
