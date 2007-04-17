@@ -27,9 +27,14 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
@@ -61,6 +66,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
 /**
@@ -130,6 +136,7 @@ public class CommitDialog extends Dialog
   {
     private String status;
     private File path;
+    private IResource resource;
     
     private String convertStatus(String path)
     {
@@ -159,9 +166,10 @@ public class CommitDialog extends Dialog
       }
     }
 
-    public CommitResource(String status, File path)
+    public CommitResource(String status,IResource resource, File path)
     {
       this.status = convertStatus(status);
+      this.resource = resource;
       this.path   = path;
     }
     
@@ -169,6 +177,12 @@ public class CommitDialog extends Dialog
     {
       return status;
     }
+
+    public IResource getResource()
+    {
+      return resource;
+    }
+
     
     public File getPath()
     {
@@ -233,6 +247,7 @@ public class CommitDialog extends Dialog
   
   private File[] filesToAdd;
   private File[] filesToCommit;
+  private IResource[] resourcesToCommit;
   private String  commitMessage;
   
   private MouseListener commitMouseListener;
@@ -261,6 +276,12 @@ public class CommitDialog extends Dialog
     return filesToCommit;
   }
 
+  public IResource[] getResourcesToCommit()
+  {
+    return resourcesToCommit;
+  }
+
+  
   
   public File[] getFilesToAdd()
   {
@@ -498,13 +519,13 @@ public class CommitDialog extends Dialog
     // items.
 //    IResource[] projectArray = {project};
 //    StatusContainerAction statusAction = new StatusContainerAction(null, projectArray);
-  StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
-
+    StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
+    File workingDir=statusAction.getWorkingDir();
     try
     {
       statusAction.run();
       String result = statusAction.getResult();
-      return spliceList(result);
+      return spliceList(result,workingDir);
     } 
     catch (Exception e)
     {
@@ -513,11 +534,81 @@ public class CommitDialog extends Dialog
       return null;
     }
   }
-  
-  private CommitResource[] spliceList(String string)
-  {
-    //System.out.println("Changed resources: " + string);
 
+  
+  /**
+   * Finds if there is a IFile that matches the fileName
+   * Warning Recursive!!!
+   * 
+   * @param string
+   * @param fileNameWithWorkingDir Use this to try to match the outpack to the IResource in the inResources array
+   * @param inResource the resourse to check if it is a IFolder we to a recursive search...
+   * @return matching IResource or null
+   */
+
+  
+  private IResource findIResource(String fileName,String fileNameWithWorkingDir, IResource inResource)
+  {
+    IResource thisResource = null;
+    if(inResource instanceof IFile )
+    {
+      IFile thisIFile = (IFile) inResource;
+//      System.out.println(" IFile:" + thisIFile.getLocation().toOSString());                  
+      if( thisIFile.getLocation().toOSString().compareTo( fileNameWithWorkingDir ) == 0 )
+      {
+        return thisIFile;  //Found a match
+      }
+    }
+    else if(inResource instanceof IFolder )
+    {
+      IFolder thisIFolder = (IFolder) inResource;
+//      System.out.println(" IFolder:" + thisIFolder.getLocation().toOSString());                  
+      IResource folderResources[];
+      try
+      {
+        folderResources = thisIFolder.members();
+        for(int res = 0; res < folderResources.length; res++)
+        {
+          // Mercurial doesn't control directories or projects and so will just return that they're
+          // untracked.
+
+          thisResource=findIResource(fileName,fileNameWithWorkingDir,folderResources[res]);
+          if(thisResource!=null)
+          {
+            return thisResource;  //Found a resource
+          }
+        }
+      }
+      catch (CoreException e)
+      {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
+    }
+    return thisResource;
+  }
+  
+  /**
+   * 
+   * @param string
+   * @param workingDir Use this to try to match the outpack to the IResource in the inResources array
+   * @return
+   */
+  
+  private CommitResource[] spliceList(String string,File workingDir)
+  {
+/*
+    System.out.println("Changed resources: ");
+    System.out.println(string);
+    System.out.println("workingDir:" + workingDir.toString());
+    System.out.println("  IResources:");
+    for(int res = 0; res < inResources.length; res++)
+    {
+      // Mercurial doesn't control directories or projects and so will just return that they're
+      // untracked.
+      System.out.println("             <" + inResources[res].getLocation().toOSString() + ">");
+    }
+*/    
     ArrayList list = new ArrayList();
     StringTokenizer st = new StringTokenizer(string);
     
@@ -525,8 +616,33 @@ public class CommitDialog extends Dialog
     // where the first token is the status and the 2nd is the path relative to the project.
     while(st.hasMoreTokens())
     {
-      String str = st.nextToken();
-      list.add(new CommitResource(str,new File(st.nextToken())));
+      String status = st.nextToken();
+      String fileName = st.nextToken();
+      IResource thisResource=null;
+      String fileNameWithWorkingDir = workingDir + File.separator + fileName; 
+  
+      for(int res = 0; res < inResources.length; res++)
+      {
+        // Mercurial doesn't control directories or projects and so will just return that they're
+        // untracked.
+
+        thisResource=findIResource(fileName,fileNameWithWorkingDir,inResources[res]);
+        if(thisResource==null)
+        {
+          continue;  //Found a resource
+        }        
+      }
+ /*     
+      if(thisResource!=null)
+      {
+        System.out.println("    Output <" + fileName + "> Resource <" + thisResource.toString() + ">");
+      }
+      else
+      {
+        System.out.println("    Output <" + fileName + "> Resource <?>");        
+      }
+*/          
+      list.add(new CommitResource(status,thisResource,new File(fileName)));
     }
     
     commitResources = (CommitResource[])list.toArray(new CommitResource[0]);
@@ -550,6 +666,30 @@ public class CommitDialog extends Dialog
     
     return (File[])list.toArray(new File[0]);
   }
+
+  
+  private IResource[] convertToResource(Object[] objs)
+  {
+    ArrayList list = new ArrayList();
+
+    for(int res=0; res < objs.length; res++)
+    {
+      if(objs[res] instanceof CommitResource != true)
+      {
+        return null;
+      }
+
+      CommitResource resource = (CommitResource)objs[res];
+      IResource thisResource = resource.getResource();
+      if(thisResource != null)
+      {
+        list.add(thisResource);
+      }
+    }
+    
+    return (IResource[])list.toArray(new IResource[0]);
+  }
+  
   
   private File[] getToAddList(Object[] objs)
   {
@@ -581,7 +721,7 @@ public class CommitDialog extends Dialog
   protected void okPressed() {
     filesToAdd    = getToAddList(commitFilesList.getCheckedElements());
     filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
-   
+    resourcesToCommit = convertToResource(commitFilesList.getCheckedElements());
     commitMessage = commitTextBox.getText();
 
     super.okPressed();
