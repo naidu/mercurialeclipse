@@ -25,6 +25,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.actions.AddFileAction;
 import com.vectrace.MercurialEclipse.actions.CommitAction;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author zingo
@@ -146,33 +147,96 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
         }
       }
       
-      File[] filesToCommit = commitDialog.getFilesToCommit();
+//      File[] filesToCommit = commitDialog.getFilesToCommit();
+      IResource[] resourcesToCommit = commitDialog.getResourcesToCommit();
       String messageToCommit = commitDialog.getCommitMessage();
-     
-      //TODO switch to per file workingdir to allow for multiple repositoried in the same project     
-//      workingDir=new File(MercurialUtilities.getRepositoryPath(project));
+      boolean notEmpty;
+      String getRootCmd[] = { MercurialUtilities.getHGExecutable(),"root"};                
 
-
-      for(int file=0; file < filesToCommit.length; file++)
+      if(resourcesToCommit.length > 0 )
       {
-//            System.out.println("1.Commiting[" + Integer.toString(file) + "]:" + filesToCommit[file].toString());
-        CommitAction commitAction = new CommitAction(null, project,filesToCommit[file].toString(), messageToCommit,workingDir );
-        try
+        do 
         {
-          commitAction.run(monitor);
-        } 
-        catch (Exception e)
-        {
-          System.out.println("Unable to finish commit: " + e.getMessage());
-        }
-      }
+          ArrayList list = new ArrayList();
+          String repository=null;
+          String this_repository;
+          notEmpty=false;
+          for(int res=0; res < resourcesToCommit.length; res++)
+          {
+            IResource oneFile = resourcesToCommit[res];
+            if(oneFile != null)
+            {
+              if(list.size() == 0 )
+              {
+                //Always add first free
+//                System.out.println("First:" + oneFile.toString());
+                
+                //Get Root (reposetory root)
+                File getRootWorkingDir=MercurialUtilities.getWorkingDir(oneFile);
+                try
+                {
+                  repository = MercurialUtilities.ExecuteCommand(getRootCmd,getRootWorkingDir,true);
+                  workingDir=new File(repository.substring(0,repository.length() - 1 ));
+                }
+                catch(HgException e)
+                {
+                  System.out.println( e.getMessage() );
+                  repository = null;
+                  workingDir=null;
+                }
+                String filename=MercurialUtilities.getResourceName(oneFile,workingDir);
+                list.add(filename);
+                resourcesToCommit[res]=null; //clear the one we take out            
+                notEmpty=true;
+//                System.out.println("Commit: Rep: " + repository + "file:" + filename);
+              }
+              else
+              {
+                //Get Root (reposetory root)
+//                System.out.println(" Next:" + oneFile.toString());
+                File getRootWorkingDir=MercurialUtilities.getWorkingDir(oneFile);
+                try
+                {
+                  this_repository = MercurialUtilities.ExecuteCommand(getRootCmd,getRootWorkingDir,true);
+                }
+                catch(HgException e)
+                {
+                  System.out.println( e.getMessage() );
+                  this_repository = null;
+                }
+                
+                if(this_repository.compareTo(repository) == 0) // Match? Is this file in the same reposetory?
+                {
+                  String filename=MercurialUtilities.getResourceName(oneFile,workingDir);
+                  list.add(filename);
+                  resourcesToCommit[res]=null; //clear the one we take out            
+                  notEmpty=true;
+//                  System.out.println("        Rep: " + this_repository + "file:" + filename);
+                }
+//                else
+//                {
+//                  System.out.println("  Not   Rep: " + this_repository + "file:" + oneFile.toString());                
+//                }
+              }
+            }            
+          }
+          
+          if(notEmpty)
+          {
+            String[] filesToCommit_per_repo= (String[])list.toArray(new String[0]);            
+            CommitAction commitAction = new CommitAction(null, project,filesToCommit_per_repo, messageToCommit,workingDir );
+            try
+            {
+              commitAction.run(monitor);
+            } 
+            catch (Exception e)
+            {
+              System.out.println("Unable to finish commit: " + e.getMessage());
+            }
+          }
+        } while(notEmpty); //Loop until we are empty.        
+      }         
     }
-
-    
-    
-
-
-
     DecoratorStatus.refresh();
   }
 
