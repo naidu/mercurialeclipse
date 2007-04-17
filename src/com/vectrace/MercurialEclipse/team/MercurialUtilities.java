@@ -14,6 +14,7 @@ import java.io.Reader;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -590,7 +591,7 @@ public class MercurialUtilities {
     output = ExecuteCommandToByteArrayOutputStream(cmd ,workingDir ,consoleOutput);
 //    my_console.print("output: " + output);
 
-    my_console.println("-----------------------");
+//    my_console.println("-----------------------");
     return (output != null ) ? output.toString() : null;
   }
 
@@ -624,14 +625,39 @@ public class MercurialUtilities {
     return workingDir;
   }
 
+  /**
+   * @param obj
+   * @return Workingdir of object 
+   *     
+   */
+  static public File getWorkingDir(File obj) 
+  {
+//    System.out.println("getWorkingDir( " + obj.toString() + ") = " + obj.getAbsolutePath());
+    return new File(obj.getPath());
+  }
   
   static public String getResourceName(IResource obj) 
   {
     return (obj.getLocation()).lastSegment();
   }
 
+  static public String getResourceName(IResource obj,File workingDir) 
+  {
 
-
+    String st = obj.getLocation().toOSString();
+//    System.out.println("getResourceName(<" + st + ">,<"+ workingDir.getAbsolutePath() + ">) =<" + st.substring(workingDir.getAbsolutePath().length()) + ">");
+    if(st.startsWith(workingDir.getAbsolutePath()))
+    {
+      st=st.substring(workingDir.getAbsolutePath().length());  //Cut of working dir
+      //it might start with a path separator char that we want to remove...
+      if(st.startsWith(File.separator) )
+      {
+        st=st.substring( File.separator.length() );  
+      }
+    }
+    return st;
+  }
+  
   public static synchronized IOConsole getMercurialConsole()
   {  
     if (console != null) 
