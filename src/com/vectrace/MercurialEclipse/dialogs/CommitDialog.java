@@ -1,5 +1,8 @@
 /*******************************************************************************
- * Copyright (c) 2006 Software Balm Consulting Inc.
+ * Copyright (c) 2006 Software Balm Consulting Inc. 
+ * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
+ * Edited by Zingo Andersen
+ * 
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -34,7 +37,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
@@ -122,6 +124,7 @@ public class CommitDialog extends Dialog
      */
     public boolean select(Viewer viewer, Object parentElement, Object element)
     {
+/* TODO should this be deleted from repository also?? */
       if (element instanceof CommitResource)
       {
         String str = ((CommitResource)element).getStatus();
@@ -138,31 +141,33 @@ public class CommitDialog extends Dialog
     private File path;
     private IResource resource;
     
-    private String convertStatus(String path)
+    private String convertStatus(String statusToken)
     {
-      if(path.startsWith("M"))
+      if(statusToken.startsWith("M"))
       {
+//        System.out.println("FILE_MODIFIED:path <" + statusToken.toString() + ">");
         return FILE_MODIFIED;
       }
-      else if(path.startsWith("A"))
+      else if(statusToken.startsWith("A"))
       {
         return FILE_ADDED;
       }
-      else if(path.startsWith("R"))
+      else if(statusToken.startsWith("R"))
       {
         return FILE_REMOVED;
       }
-      else if(path.startsWith("?"))
+      else if(statusToken.startsWith("?"))
       {
         return FILE_UNTRACKED;
       }
-      else if(path.startsWith("!"))
+      else if(statusToken.startsWith("!"))
       {
+//        System.out.println("FILE_DELETED:path <" + statusToken.toString() + ">");
         return FILE_DELETED;
       }
       else
       {
-        return "status error: " + path.toString();
+        return "status error: " + statusToken.toString();
       }
     }
 
@@ -182,7 +187,6 @@ public class CommitDialog extends Dialog
     {
       return resource;
     }
-
     
     public File getPath()
     {
@@ -529,7 +533,8 @@ public class CommitDialog extends Dialog
     } 
     catch (Exception e)
     {
-      System.out.println("CommitDialog::fillFileList() " + project.toString());
+      System.out.println("CommitDialog::fillFileList() Error:");
+      System.out.println("Project:" + project.toString());
       System.out.println("Unable to get status " + e.getMessage());
       return null;
     }
@@ -608,18 +613,30 @@ public class CommitDialog extends Dialog
       // untracked.
       System.out.println("             <" + inResources[res].getLocation().toOSString() + ">");
     }
-*/    
+*/
     ArrayList list = new ArrayList();
     StringTokenizer st = new StringTokenizer(string);
+    String status;
+    String fileName;
+    IResource thisResource;
+    String fileNameWithWorkingDir;
     
     // Tokens are always in pairs as lines are in the form "A TEST_FOLDER\test_file2.c"
     // where the first token is the status and the 2nd is the path relative to the project.
     while(st.hasMoreTokens())
     {
-      String status = st.nextToken();
-      String fileName = st.nextToken();
-      IResource thisResource=null;
-      String fileNameWithWorkingDir = workingDir + File.separator + fileName; 
+      status = st.nextToken(" ");
+      fileName = st.nextToken("\n");
+      if(status.startsWith("\n"))
+      {
+        status=status.substring(1);
+      }
+      if(fileName.startsWith(" "))
+      {
+        fileName=fileName.substring(1);
+      }
+      thisResource=null;
+      fileNameWithWorkingDir = workingDir + File.separator + fileName; 
   
       for(int res = 0; res < inResources.length; res++)
       {
@@ -632,16 +649,35 @@ public class CommitDialog extends Dialog
           continue;  //Found a resource
         }        
       }
- /*     
-      if(thisResource!=null)
+
+      if(thisResource==null)
+      {
+        //Create a resource could be a deleted file we want to commit
+        IPath projPath=project.getLocation();
+//        System.out.println("projPath.toOSString()  <" + projPath.toOSString() + ">");
+//        System.out.println("fileNameWithWorkingDir <" + fileNameWithWorkingDir + ">");
+        if(fileNameWithWorkingDir.startsWith(projPath.toOSString()))
+        { // Relative path from Project
+          String fileNameWithWorkingDirFromProject = fileNameWithWorkingDir.substring(projPath.toOSString().length());
+          IFile file = project.getFile(fileNameWithWorkingDirFromProject); 
+          thisResource =(IResource) file;
+        }
+        else
+        { //This is a full path
+          IFile file = project.getFile(fileNameWithWorkingDir); 
+          thisResource =(IResource) file;
+        }
+      }          
+/*      
+      if(thisResource.exists())
       {
         System.out.println("    Output <" + fileName + "> Resource <" + thisResource.toString() + ">");
       }
       else
       {
-        System.out.println("    Output <" + fileName + "> Resource <?>");        
+        System.out.println("    Output <" + fileName + "> Resource <" + thisResource.toString() + "> Fake resource!");
       }
-*/          
+*/
       list.add(new CommitResource(status,thisResource,new File(fileName)));
     }
     
