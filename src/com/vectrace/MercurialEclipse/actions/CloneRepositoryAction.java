@@ -1,5 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc.
+ * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
+ * Edited by Zingo Andersen
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -24,6 +26,7 @@
 package com.vectrace.MercurialEclipse.actions;
 
 import java.io.File;
+import java.util.ArrayList;
 
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -68,14 +71,20 @@ public class CloneRepositoryAction extends HgOperation
 
   protected String[] getHgCommand()
   {
-    String launchCmd[] =
-    { 
-      MercurialUtilities.getHGExecutable(),
-      "clone", cloneParameters != null ? cloneParameters : "",
-      repo.getUrl(), projectName
-    };
-    
-    return launchCmd;
+    ArrayList launchCmd = new ArrayList();
+
+    // clone command setup.
+    launchCmd.add(MercurialUtilities.getHGExecutable());
+    launchCmd.add("clone");
+    if(cloneParameters != null)
+    {
+      launchCmd.add(cloneParameters);      
+    }
+    launchCmd.add(repo.getUrl());
+    launchCmd.add(projectName);
+    launchCmd.trimToSize();
+   
+    return (String[])launchCmd.toArray(new String[0]);    
   }
 
   protected File getHgWorkingDir()
