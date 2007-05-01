@@ -123,9 +123,15 @@ public class MercurialUtilities {
   public static boolean isResourceInReposetory(IResource resource, boolean dialog)
   {
 //    System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog)" );
+    
+    if (resource instanceof IProject)
+    {
+      return true;      
+    }
+
     //Check to se if resource is not in a link
     String linkedParentName = resource.getProjectRelativePath().segment(0);
-    if(linkedParentName ==null)
+    if(linkedParentName == null)
     {
 //      System.out.println("isResourceInReposetory(" + resource.toString() + ",dialog) linkedParentName=null" );  
       return false;

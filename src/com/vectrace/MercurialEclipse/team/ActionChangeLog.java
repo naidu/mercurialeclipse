@@ -5,6 +5,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
@@ -96,21 +97,38 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
     while(itr.hasNext())
     {
       obj=itr.next();
+
       if (obj instanceof IResource)
       {
+//        System.out.println("log: if (obj instanceof IResource) == TRUE");
         IResource resource=(IResource) obj;
         if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
         {
+//          System.out.println("log: if(MercurialUtilities.isResourceInReposetory(resource, true) == true) == TRUE");
           //Resource could be inside a link or something do nothing
           // in the future this could check is this is another repository
 
           //Setup and run command
           File workingDir=MercurialUtilities.getWorkingDir(resource);
           String FullPath = MercurialUtilities.getResourceName(resource);
-          String launchCmd[] = { MercurialUtilities.getHGExecutable(),"log" ,"-v" , FullPath};
+
+          ArrayList launchCmd = new ArrayList();
+
+          // log command setup.
+          launchCmd.add(MercurialUtilities.getHGExecutable());
+          launchCmd.add("log");
+          launchCmd.add("-v");
+          if (!(obj instanceof IProject))
+          {
+            launchCmd.add(FullPath);
+          }
+          launchCmd.trimToSize();
+          String launchCmdStr[] = (String[])launchCmd.toArray(new String[0]);
+        
+//          System.out.println("log:" + MercurialUtilities.getHGExecutable() + " log -v " + FullPath + " Workingdir:" + workingDir);
           try
           {
-            String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir,true);
+            String output = MercurialUtilities.ExecuteCommand(launchCmdStr, workingDir,true);
             if (output != null)
             {
               // output output in a window
