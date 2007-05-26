@@ -31,10 +31,14 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -114,14 +118,14 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
   {
     Composite outerContainer = new Composite(parent,SWT.NONE);
     GridLayout layout = new GridLayout();
-    layout.numColumns = 1;
+    layout.numColumns = 3;
     outerContainer.setLayout(layout);
     outerContainer.setLayoutData(
     new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
 
     // Box to enter the repo location
     locationLabel = new Label(outerContainer, SWT.NONE);
-    locationLabel.setText("Repository Location");
+    locationLabel.setText("Repository Location:");
     locationData = new GridData();
     locationData.widthHint = 300;
     locationCombo = new Combo(outerContainer, SWT.DROP_DOWN);
@@ -143,16 +147,28 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
       HgRepositoryLocation loc = ((HgRepositoryLocation)locIter.next());
       locationCombo.add( loc.getUrl() );
     }
+	Button browseButton = new Button (outerContainer, SWT.PUSH);
+	browseButton.setText ("Browse...");
+	browseButton.addSelectionListener(new SelectionAdapter() {
+		public void widgetSelected(SelectionEvent e) {
+			DirectoryDialog dialog = new DirectoryDialog (getShell());
+			dialog.setMessage("Select a repository to clone");
+			String dir = dialog.open();
+			if (dir != null)
+				locationCombo.setText(dir);
+		}
+	});
 
     
     // Box to enter additional parameters for the clone command.
     // TODO: In the future this should go away and be replaced with something
     //       more graphical including, probably, a repo browser.
     cloneParametersLabel = new Label(outerContainer, SWT.NONE);
-    cloneParametersLabel.setText("Clone command additional parameters");
+    cloneParametersLabel.setText("Clone command additional parameters:");
     cloneParameters = new Text(outerContainer, SWT.BORDER);
     parameterData = new GridData();
-    parameterData.widthHint = 300;
+    parameterData.widthHint = 285;
+    parameterData.horizontalSpan = 2;
     cloneParameters.setLayoutData(parameterData);
     cloneParameters.addModifyListener(new ModifyListener() {
       public void modifyText(ModifyEvent e) {
@@ -164,10 +180,11 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
     // Box to enter additional parameters for the clone command.
     // TODO: In the future this should have some population smarts. Not sure what that might be right now.
     projectNameLabel = new Label(outerContainer, SWT.NONE);
-    projectNameLabel.setText("Name of project to create");
+    projectNameLabel.setText("Name of project to create:");
     projectNameCombo = new Combo(outerContainer, SWT.DROP_DOWN);
     projectNameData = new GridData();
     projectNameData.widthHint = 300;
+    projectNameData.horizontalSpan = 2;
     projectNameCombo.setLayoutData(projectNameData);
     projectNameCombo.addListener( SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
