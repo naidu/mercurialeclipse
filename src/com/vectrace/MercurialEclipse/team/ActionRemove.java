@@ -95,47 +95,57 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
     
 		Object obj;
-	    Iterator itr; 
-	    // the last argument will be replaced with a path
+    Iterator itr; 
+	  // the last argument will be replaced with a path
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"remove", "" };
-	    itr=selection.iterator();
-	    while(itr.hasNext())
-	    {
-	    	obj=itr.next();
-	    	if (obj instanceof IResource)
-	    	{
-          IResource resource=(IResource) obj;
-          if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
-          {
-            //Resource could be inside a link or something do nothing
-            // in the future this could check is this is another repository
+    itr=selection.iterator();
+    while(itr.hasNext())
+    {
+    	obj=itr.next();
+    	if (obj instanceof IResource)
+    	{
+        IResource resource=(IResource) obj;
+        if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
+        {
 
-            //Setup and run command
-            File workingDir=MercurialUtilities.getWorkingDir(resource);
-            launchCmd[2] = MercurialUtilities.getResourceName(resource);
-  
-            if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[4] + "\nFrom the repository and filesystem?") )
+          //Resource could be inside a link or something do nothing
+          // in the future this could check is this is another repository
+
+          //Setup and run command
+          File workingDir=MercurialUtilities.getWorkingDir(resource);
+          launchCmd[2] = MercurialUtilities.getResourceName(resource);
+
+          if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[2] + "\nFrom the repository and filesystem?") )
+          {
+            try
             {
-              try
+              String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir,false);
+              if (output != null)
               {
-                String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir,false);
-                if (output != null)
+                // output output in a window
+                if (output.length() != 0)
                 {
-                  // output output in a window
-                  if (output.length() != 0)
-                  {
-                    MessageDialog.openInformation(shell, "Mercurial Eclipse hg remove", output);
-                  }
+                  MessageDialog.openInformation(shell, "Mercurial Eclipse hg remove", output);
                 }
-              } catch (HgException e)
-              {
-                System.out.println(e.getMessage());
               }
-            DecoratorStatus.refresh();
+            } 
+            catch (HgException e)
+            {
+              System.out.println(e.getMessage());
             }
+          DecoratorStatus.refresh();
           }
-	    	}
-	    }
+        }
+//        else
+//        {
+//          System.out.println("hg remove: obj is not MercurialUtilities.isResourceInReposetory()");                
+//        }
+    	}
+//      else
+//      {
+//        System.out.println("hg remove: obj not IResource");      
+//      }
+    }
   }
 	
   
