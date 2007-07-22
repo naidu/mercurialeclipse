@@ -38,7 +38,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class AddFileAction extends HgOperation
 {
   private String resource;
-  private IProject project;
+//  private IProject project;
   private File workingDir;
 
   /**
@@ -48,7 +48,7 @@ public class AddFileAction extends HgOperation
   {
     super(context);
 
-    this.project = project;
+//    this.project = project;
     this.resource = resource;
     this.workingDir = workingDir;
   }
