@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: MercurialEclipse
 Bundle-SymbolicName: com.vectrace.MercurialEclipse; singleton:=true
-Bundle-Version: 0.1.102
+Bundle-Version: 0.1.106
 Bundle-Activator: com.vectrace.MercurialEclipse.MercurialEclipsePlugin
 Bundle-Vendor: VecTrace
 Bundle-Localization: plugin

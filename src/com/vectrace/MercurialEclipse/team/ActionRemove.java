@@ -70,7 +70,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	{
 		IProject proj;
 		String Repository;
-		String FullPath;
+//		String FullPath;
     Shell shell;
     IWorkbench workbench;
 

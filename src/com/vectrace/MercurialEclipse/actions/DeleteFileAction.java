@@ -58,6 +58,7 @@ public class DeleteFileAction extends HgOperation
     final String launchCmd[] =
     { 
       MercurialUtilities.getHGExecutable(),
+      "remove",
       "--force",
       resource.getLocation().toOSString() 
     };
@@ -67,7 +68,8 @@ public class DeleteFileAction extends HgOperation
 
   protected File getHgWorkingDir()
   {
-    return (resource.getLocation()).toFile();
+//    return (resource.getLocation()).toFile();
+    return MercurialUtilities.getWorkingDir(resource);
   }
 
   

@@ -76,8 +76,6 @@ public class StatusContainerAction extends HgOperation
   {
     if (resources[0] instanceof IResource)
     {
-//      return MercurialUtilities.getWorkingDir((IResource) resources[0]);
-//        return new File(resources[0].getLocation().toOSString());
         return MercurialUtilities.getWorkingDir(resources[0]);
 
     }

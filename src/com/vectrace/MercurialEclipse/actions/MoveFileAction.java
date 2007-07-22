@@ -43,7 +43,7 @@ public class MoveFileAction extends HgOperation
   public MoveFileAction(IRunnableContext context, IResource src, IResource dest)
   {
     super(context);
-    System.out.println("new MoveFileAction");
+//    System.out.println("new MoveFileAction");
 
     this.src = src;
     this.dest = dest;
@@ -64,7 +64,8 @@ public class MoveFileAction extends HgOperation
 
   protected File getHgWorkingDir()
   {
-    return (((IResource) src).getLocation()).toFile();
+//  return (((IResource) src).getLocation()).toFile();
+    return MercurialUtilities.getWorkingDir(src);
   }
 
   
