@@ -430,13 +430,13 @@ public class CommitDialog extends Dialog
     col.setText("");
     layout.addColumnData(new ColumnPixelData(20, false));
 
-    // File status
+    // File name
     col = new TableColumn(table, SWT.NONE);
-    col.setResizable(false);
+    col.setResizable(true);
     col.setText("File");
     layout.addColumnData(new ColumnPixelData(220, true));
     
-    // File name
+    // File status
     col = new TableColumn(table, SWT.NONE);
     col.setResizable(true);
     col.setText("Status");
@@ -513,7 +513,11 @@ public class CommitDialog extends Dialog
 
     commitFilesList.setInput(new AdaptableCommitList(fillFileList()));
     commitFilesList.addFilter(committableFilesFilter);
+//    commitFilesList.removeFilter(untrackedFilesFilter);
+
     commitFilesList.setAllChecked(true);
+//    commitFilesList.setAllChecked(false);
+//    commitFilesList.refresh(true);
   }
   
   private CommitResource[] fillFileList()
