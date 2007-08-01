@@ -12,7 +12,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 /**
  * This class represents a preference page that
  * is contributed to the Preferences dialog. By 
- * subclassing <samp>FieldEditorPreferencePage</samp>, we
+ * sub classing <samp>FieldEditorPreferencePage</samp>, we
  * can use the field support built into JFace that allows
  * us to create a page that is small and knows how to 
  * save, restore and apply itself.
@@ -31,7 +31,7 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
   {
     super(GRID);
     setPreferenceStore(MercurialEclipsePlugin.getDefault().getPreferenceStore());
-    setDescription("MercurialEclipse plugin for Mercurial(Hg) version controll system");
+    setDescription("MercurialEclipse plugin for Mercurial(Hg) version control system");
   }
 
   
