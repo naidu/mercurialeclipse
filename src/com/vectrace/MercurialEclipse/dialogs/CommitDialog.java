@@ -624,16 +624,17 @@ public class CommitDialog extends Dialog
     String fileName;
     IResource thisResource;
     String fileNameWithWorkingDir;
+    String eol = System.getProperty("line.separator");
     
     // Tokens are always in pairs as lines are in the form "A TEST_FOLDER\test_file2.c"
     // where the first token is the status and the 2nd is the path relative to the project.
     while(st.hasMoreTokens())
     {
       status = st.nextToken(" ");
-      fileName = st.nextToken("\n");
-      if(status.startsWith("\n"))
+      fileName = st.nextToken(eol);
+      if(status.startsWith(eol))
       {
-        status=status.substring(1);
+        status=status.substring(eol.length());
       }
       if(fileName.startsWith(" "))
       {
