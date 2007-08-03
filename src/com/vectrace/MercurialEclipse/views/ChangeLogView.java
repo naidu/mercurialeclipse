@@ -30,6 +30,8 @@ import org.eclipse.ui.part.ViewPart;
 
 
 /**
+ * ChangeLog view based on the view example for now
+ * 
  * This sample class demonstrates how to plug-in a new
  * workbench view. The view shows data obtained from the
  * model. The sample creates a dummy model on the fly,
@@ -47,11 +49,15 @@ import org.eclipse.ui.part.ViewPart;
  * <p>
  */
 
-public class SampleView extends ViewPart {
+public class ChangeLogView extends ViewPart 
+{
 	private TableViewer viewer;
+/*
 	private Action action1;
 	private Action action2;
 	private Action doubleClickAction;
+*/
+	private ChangeLogViewContentProvider changeLogViewContentProvider;
 
 	/*
 	 * The content provider class is responsible for
@@ -63,43 +69,75 @@ public class SampleView extends ViewPart {
 	 * (like Task List, for example).
 	 */
 	 
-	class ViewContentProvider implements IStructuredContentProvider {
-		public void inputChanged(Viewer v, Object oldInput, Object newInput) {
+	class ChangeLogViewContentProvider implements IStructuredContentProvider 
+	{
+    private String fullPath;
+	  private String changeLog;
+	  
+		public void inputChanged(Viewer v, Object oldInput, Object newInput) 
+		{
 		}
-		public void dispose() {
+		public void dispose() 
+		{
 		}
-		public Object[] getElements(Object parent) {
-			return new String[] { "One", "Two", "Three" };
+		public Object[] getElements(Object parent) 
+		{
+		  if(changeLog == null)
+		  {
+		    return new String[] { "Please select Team->hg log on a file" };
+		  }
+		  else
+		  {
+		    return new String[] { "ChangeLog for " + fullPath, changeLog };
+		  }
 		}
+
+    public void setChangeLog(String fullpath,String changelog)
+    {
+      this.fullPath=fullpath;
+      this.changeLog=changelog;
+    }
+
+	
 	}
-	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider {
-		public String getColumnText(Object obj, int index) {
+
+	class ViewLabelProvider extends LabelProvider implements ITableLabelProvider 
+	{
+		public String getColumnText(Object obj, int index) 
+		{
 			return getText(obj);
 		}
-		public Image getColumnImage(Object obj, int index) {
+		public Image getColumnImage(Object obj, int index) 
+		{
 			return getImage(obj);
 		}
-		public Image getImage(Object obj) {
-			return PlatformUI.getWorkbench().
-					getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
+		public Image getImage(Object obj) 
+		{
+			return PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
 		}
 	}
-	class NameSorter extends ViewerSorter {
+
+	class NameSorter extends ViewerSorter 
+	{
 	}
 
 	/**
 	 * The constructor.
 	 */
-	public SampleView() {
+	public ChangeLogView() 
+	{
 	}
 
 	/**
 	 * This is a callback that will allow us
 	 * to create the viewer and initialize it.
 	 */
-	public void createPartControl(Composite parent) {
+	public void createPartControl(Composite parent) 
+	{
+	  changeLogViewContentProvider = new ChangeLogViewContentProvider(); 
+	  
 		viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		viewer.setContentProvider(new ViewContentProvider());
+		viewer.setContentProvider(changeLogViewContentProvider);
 		viewer.setLabelProvider(new ViewLabelProvider());
 		viewer.setSorter(new NameSorter());
 		viewer.setInput(getViewSite());
@@ -109,90 +147,127 @@ public class SampleView extends ViewPart {
 		contributeToActionBars();
 	}
 
-	private void hookContextMenu() {
+	 public void showChangeLog(String fullpath,String changelog) 
+	 {
+	   changeLogViewContentProvider.setChangeLog(fullpath,changelog);
+	   viewer.refresh();
+	 }
+
+	
+	private void hookContextMenu() 
+	{
 		MenuManager menuMgr = new MenuManager("#PopupMenu");
 		menuMgr.setRemoveAllWhenShown(true);
-		menuMgr.addMenuListener(new IMenuListener() {
-			public void menuAboutToShow(IMenuManager manager) {
-				SampleView.this.fillContextMenu(manager);
-			}
-		});
+		menuMgr.addMenuListener(new IMenuListener() 
+  		{
+  			public void menuAboutToShow(IMenuManager manager) 
+  			{
+  				ChangeLogView.this.fillContextMenu(manager);
+  			}
+  		});
 		Menu menu = menuMgr.createContextMenu(viewer.getControl());
 		viewer.getControl().setMenu(menu);
 		getSite().registerContextMenu(menuMgr, viewer);
 	}
 
-	private void contributeToActionBars() {
+	private void contributeToActionBars() 
+	{
 		IActionBars bars = getViewSite().getActionBars();
 		fillLocalPullDown(bars.getMenuManager());
 		fillLocalToolBar(bars.getToolBarManager());
 	}
 
-	private void fillLocalPullDown(IMenuManager manager) {
-		manager.add(action1);
+	private void fillLocalPullDown(IMenuManager manager) 
+	{
+/*
+  
+ 		manager.add(action1);
 		manager.add(new Separator());
 		manager.add(action2);
+*/
 	}
 
-	private void fillContextMenu(IMenuManager manager) {
-		manager.add(action1);
+	private void fillContextMenu(IMenuManager manager) 
+	{
+/*
+	  manager.add(action1);
 		manager.add(action2);
+*/
 		// Other plug-ins can contribute there actions here
 		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+
 	}
 	
-	private void fillLocalToolBar(IToolBarManager manager) {
-		manager.add(action1);
+	private void fillLocalToolBar(IToolBarManager manager) 
+	{
+/*
+ 
+ 		manager.add(action1);
 		manager.add(action2);
+*/
 	}
 
-	private void makeActions() {
-		action1 = new Action() {
-			public void run() {
+	private void makeActions() 
+	{
+/*
+	  action1 = new Action() 
+		{
+			public void run() 
+			{
 				showMessage("Action 1 executed");
 			}
 		};
+		
 		action1.setText("Action 1");
 		action1.setToolTipText("Action 1 tooltip");
-		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-			getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		action1.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+
+    action2 = new Action() 
+    {
+      public void run() 
+      {
+        showMessage("Action 2 executed");
+      }
+    };
+
 		
-		action2 = new Action() {
-			public void run() {
-				showMessage("Action 2 executed");
-			}
-		};
 		action2.setText("Action 2");
 		action2.setToolTipText("Action 2 tooltip");
-		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-				getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
-		doubleClickAction = new Action() {
-			public void run() {
+		action2.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_OBJS_INFO_TSK));
+		doubleClickAction = new Action() 
+		{
+			public void run() 
+			{
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				showMessage("Double-click detected on "+obj.toString());
 			}
 		};
+*/
 	}
 
-	private void hookDoubleClickAction() {
-		viewer.addDoubleClickListener(new IDoubleClickListener() {
-			public void doubleClick(DoubleClickEvent event) {
-				doubleClickAction.run();
-			}
-		});
+	private void hookDoubleClickAction() 
+	{
+/*
+	  viewer.addDoubleClickListener(new IDoubleClickListener() 
+  		{
+  			public void doubleClick(DoubleClickEvent event) 
+  			{
+  				doubleClickAction.run();
+  			}
+  		});
+*/
 	}
-	private void showMessage(String message) {
-		MessageDialog.openInformation(
-			viewer.getControl().getShell(),
-			"Sample View",
-			message);
+	private void showMessage(String message) 
+	{
+		MessageDialog.openInformation(viewer.getControl().getShell(),"ChangLog View",	message);
 	}
 
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
-	public void setFocus() {
+	public void setFocus() 
+	{
 		viewer.getControl().setFocus();
 	}
 }

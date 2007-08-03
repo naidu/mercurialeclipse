@@ -15,12 +15,18 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.views.ChangeLogView;
+import com.vectrace.MercurialEclipse.*;
 
 
 /**
@@ -131,10 +137,24 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
             String output = MercurialUtilities.ExecuteCommand(launchCmdStr, workingDir,true);
             if (output != null)
             {
-              // output output in a window
               if (output.length() != 0)
               {
-                MessageDialog.openInformation(shell, "Mercurial Eclipse Log " + FullPath, output);
+                // send output to the ChangeLogView               
+                IWorkbenchPage activePage = MercurialEclipsePlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
+                try 
+                {
+                  //Show View
+                  IViewPart viewPart = null;
+                  viewPart = activePage.showView(MercurialEclipsePlugin.ID_ChangeLogView);
+                  ChangeLogView changeLogView = (ChangeLogView) viewPart;
+                  //Send out put to the view
+                  changeLogView.showChangeLog(FullPath,output);
+                } 
+                catch (PartInitException e) 
+                {
+                  System.out.println(e.getMessage());
+                  e.printStackTrace();
+                }            
               }
             }
           } catch (HgException e)

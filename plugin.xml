@@ -245,6 +245,25 @@
             name="Clone Repository using Mercurial"
             project="true"/>
    </extension>
+
+<!--            View:s                     -->
+
+
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            name="Team"
+            id="com.vectrace.MercurialEclipse">
+      </category>
+      <view
+            name="Mercurial ChangeLog"
+            icon="icons/mercurialeclipse.png"
+            category="com.vectrace.MercurialEclipse"
+            class="com.vectrace.MercurialEclipse.views.ChangeLogView"
+            id="com.vectrace.MercurialEclipse.views.ChangeLogView">
+      </view>
+   </extension>
+
    
    <!-- extension point="org.eclipse.core.resources.moveDeleteHook">
       <moveDeleteHook
@@ -304,20 +323,6 @@
             class="com.vectrace.MercurialEclipse.editors.MultiPageEditor"
             id="com.vectrace.MercurialEclipse.editors.MultiPageEditor">
       </editor>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.ui.views">
-      <category
-            name="Sample Category"
-            id="com.vectrace.MercurialEclipse">
-      </category>
-      <view
-            name="Sample View"
-            icon="icons/mercurialeclipse.png"
-            category="com.vectrace.MercurialEclipse"
-            class="com.vectrace.MercurialEclipse.views.SampleView"
-            id="com.vectrace.MercurialEclipse.views.SampleView">
-      </view>
    </extension -->
    <!-- extension
          point="org.eclipse.ui.perspectiveExtensions">
