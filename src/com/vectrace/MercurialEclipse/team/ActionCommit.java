@@ -155,6 +155,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
 
       if(resourcesToCommit.length > 0 )
       {
+        String eol = System.getProperty("line.separator");
         do 
         {
           ArrayList list = new ArrayList();
@@ -176,7 +177,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 try
                 {
                   repository = MercurialUtilities.ExecuteCommand(getRootCmd,getRootWorkingDir,true);
-                  workingDir=new File(repository.substring(0,repository.length() - 1 ));
+                  workingDir=new File(repository.substring(0,repository.length() - eol.length() ));
                 }
                 catch(HgException e)
                 {
