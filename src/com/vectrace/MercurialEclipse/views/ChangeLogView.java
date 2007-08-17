@@ -2,6 +2,7 @@ package com.vectrace.MercurialEclipse.views;
 
 
 import java.util.Arrays;
+import java.util.Vector;
 
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
@@ -10,13 +11,16 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -33,7 +37,6 @@ import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
-
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeLog;
 
@@ -59,16 +62,19 @@ import com.vectrace.MercurialEclipse.model.ChangeLog;
 
 public class ChangeLogView extends ViewPart 
 {
-	private TableViewer viewer;
+//	private TableViewer viewer;
   private ChangeLog changeLog;
-
+  private String fullPath;
+  private Table changeLogTable;
 	
 	/*
 	private Action action1;
 	private Action action2;
 	private Action doubleClickAction;
 */
-	private ChangeLogViewContentProvider changeLogViewContentProvider;
+
+  
+//  private ChangeLogViewContentProvider changeLogViewContentProvider;
 
 	/*
 	 * The content provider class is responsible for
@@ -79,7 +85,7 @@ public class ChangeLogView extends ViewPart
 	 * it and always show the same content 
 	 * (like Task List, for example).
 	 */
-	 
+/*	 
 	class ChangeLogViewContentProvider implements IStructuredContentProvider
 	{
     private String fullPath;
@@ -87,16 +93,47 @@ public class ChangeLogView extends ViewPart
 	  
 		public void inputChanged(Viewer v, Object oldInput, Object newInput) 
 		{
+
+		  if (newInput != null)
+	     {
+	      if((newInput instanceof ChangeSet) == true)
+	      {
+	        ChangeSet changeSet = (ChangeSet) newInput;
+//	        changeSet.addChangeListener(this);
+	      }	    
+	     }
+       if (oldInput != null)
+       {
+         if((oldInput instanceof ChangeSet) == true)
+         {
+           ChangeSet changeSet = (ChangeSet) oldInput;
+//           changeSet.removeChangeListener(this);
+         }     
+       }
 		}
 		public void dispose() 
 		{
+		  if(changeLog != null)
+		  {
+//  		  changeLog.removeChangeListener(this);
+		  }
 		}
+
+    public void updateTask(ChangeSet changeSet) 
+    {
+      viewer.update(changeSet, null); 
+    }
+    
+    public void addTask(ChangeSet changeSet) 
+    {
+      viewer.add(changeSet);
+  }
 		
 		public Object[] getElements(Object parent) 
 		{
 		  if(changeLog == null)
 		  {
-		    changeLog=new ChangeLog("nolog");
+		    changeLog=new ChangeLog(null);
 		  }
       System.out.println("ChangeLogViewContentProvider::getElements()");
       
@@ -105,6 +142,7 @@ public class ChangeLogView extends ViewPart
 
     public void setChangeLog(String fullpath,String changelog)
     {
+      System.out.println("ChangeLogViewContentProvider::setChangeLog()");
       this.fullPath=fullpath;
       changeLog=new ChangeLog(changelog);
     }
@@ -118,6 +156,12 @@ public class ChangeLogView extends ViewPart
 		public String getColumnText(Object obj, int index) 
 		{
 		  String ret;
+		  
+      if((obj instanceof ChangeSet) != true)
+      {
+        return "Type Error";
+      }
+	  
       ChangeSet changeSet = (ChangeSet) obj;
      
       switch (index)
@@ -143,7 +187,7 @@ public class ChangeLogView extends ViewPart
       }
       System.out.println("ViewLabelProvider::getColumnText(" + changeSet.getChangeset() +"," + index + ")=" + ret);
 
-      return ret;
+      return ret; //tableViewer.setInput(taskList);
 			//return getText(obj);
 		}
 		public Image getColumnImage(Object obj, int index) 
@@ -152,20 +196,29 @@ public class ChangeLogView extends ViewPart
 			return null; //getImage(obj);
 		}
 		
-		
-		
-    public String getText(Object obj)
-    {
-      ChangeSet changeSet = (ChangeSet) obj;
-      return changeSet.getChangeset();
-    }
-		
     public Image getImage(Object obj) 
 		{
-			return PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
+			return null;//PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_ELEMENT);
 		}
-	}
 
+    public void addListener(ILabelProviderListener listener)
+    {
+    }
+
+    public void dispose()
+    {
+    }
+
+    public boolean isLabelProperty(Object element, String property)
+    {
+      return false;
+    }
+
+    public void removeListener(ILabelProviderListener listener)
+    {
+    }
+	}
+*/
 	class NameSorter extends ViewerSorter 
 	{
 	}
@@ -183,9 +236,9 @@ public class ChangeLogView extends ViewPart
 	 */
 	public void createPartControl(Composite parent) 
 	{
-	  changeLogViewContentProvider = new ChangeLogViewContentProvider(); 
+//	  changeLogViewContentProvider = new ChangeLogViewContentProvider(); 
 	  
-    Table changeLogTable = new Table(parent,SWT.SINGLE | SWT.H_SCROLL| SWT.V_SCROLL | SWT.BORDER | SWT.FULL_SELECTION | SWT.HIDE_SELECTION);
+    changeLogTable = new Table(parent,SWT.SINGLE | SWT.H_SCROLL| SWT.V_SCROLL | SWT.BORDER | SWT.FULL_SELECTION | SWT.HIDE_SELECTION);
 
 //    GridData gridData = new GridData(GridData.FILL_BOTH);
 //    gridData.grabExcessVerticalSpace = true;
@@ -196,41 +249,59 @@ public class ChangeLogView extends ViewPart
     changeLogTable.setHeaderVisible(true);
 //    changeLogTable.setBounds(10, 340, 270, 200);
 
-    viewer = new TableViewer(changeLogTable, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-    viewer.setUseHashlookup(true);
-    viewer.setContentProvider(changeLogViewContentProvider);
-    viewer.setLabelProvider(new ViewLabelProvider());
-    viewer.setSorter(new NameSorter());
-    viewer.setInput(getViewSite());
+    TableLayout layout = new TableLayout();    
 
-    
+       
     TableColumn changesetTableColumn = new TableColumn(changeLogTable,SWT.LEFT);
 //    changesetTableColumn.setResizable(true);
     changesetTableColumn.setText("Changeset");
     changesetTableColumn.setWidth(80);
+    layout.addColumnData(new ColumnPixelData(80, true));
     TableColumn tagTableColumn = new TableColumn(changeLogTable,SWT.LEFT);
     tagTableColumn.setText("Tag");
     tagTableColumn.setWidth(80);
+    layout.addColumnData(new ColumnPixelData(80, true));
     TableColumn userTableColumn = new TableColumn(changeLogTable,SWT.LEFT);
     userTableColumn.setText("User");
     userTableColumn.setWidth(80);
+    layout.addColumnData(new ColumnPixelData(80, true));
     TableColumn dateTableColumn = new TableColumn(changeLogTable,SWT.LEFT);
     dateTableColumn.setText("Date");
     dateTableColumn.setWidth(80);
+    layout.addColumnData(new ColumnPixelData(80, true));
     TableColumn filesTableColumn = new TableColumn(changeLogTable,SWT.LEFT);
     filesTableColumn.setText("Files");
     filesTableColumn.setWidth(80);
+    layout.addColumnData(new ColumnPixelData(80, true));
     TableColumn descriptionTableColumn = new TableColumn(changeLogTable,SWT.LEFT);
     descriptionTableColumn.setText("Description");
     descriptionTableColumn.setWidth(80);
+    layout.addColumnData(new ColumnPixelData(80, true));
 
+    changeLogTable.setLayout(layout);
+    
+//    viewer = new TableViewer(changeLogTable, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+
+//    GridData commitFilesData = new GridData(GridData.FILL_BOTH);
+//    commitFilesData.widthHint = 280;
+//    commitFilesData.heightHint = 300;
+//    viewer.getTable().setLayoutData(commitFilesData);
+    
+//    viewer.setUseHashlookup(true);
+//    viewer.setContentProvider(changeLogViewContentProvider);
+//    viewer.setLabelProvider(new ViewLabelProvider());
+//    viewer.setSorter(new NameSorter());
+//    viewer.setInput(new ChangeLog(null));   // getViewSite());
+
+/*    
+    
     TableItem item1 = new TableItem(changeLogTable,SWT.NONE);
     item1.setText(new String[] {"Sarah","15","390 Sussex Ave"} );
     TableItem item2 = new TableItem(changeLogTable,SWT.NONE);
     item2.setText(new String[] {"Joseph","56","7 streeetelistreet"} );
     TableItem item3 = new TableItem(changeLogTable,SWT.NONE);
     item3.setText(new String[] {"Anders","34","8 gatan"} );
-
+*/
     
 		makeActions();
 		hookContextMenu();
@@ -238,10 +309,31 @@ public class ChangeLogView extends ViewPart
 		contributeToActionBars();
 	}
 
-	 public void showChangeLog(String fullpath,String changelog) 
+	 public void showChangeLog(String fullpath,String changelog_string) 
 	 {
-	   changeLogViewContentProvider.setChangeLog(fullpath,changelog);
-	   viewer.refresh();
+//	   changeLogViewContentProvider.setChangeLog(fullpath,changelog_string);
+//     viewer.setInput(new ChangeLog(changelog_string));   // getViewSite());
+//	   viewer.refresh();
+
+	   //System.out.println("showChangeLog()");
+
+     this.fullPath=fullpath;
+	   changeLog = new ChangeLog(changelog_string);
+	   Vector<ChangeSet> changeSets = changeLog.getChangeLog();
+	   ChangeSet changeSet;
+	   TableItem item;
+	   
+	   changeLogTable.removeAll();
+	   
+	   for(int index=0;index<changeSets.size();index++)
+	   {
+	     changeSet=changeSets.get(index);
+	     item = new TableItem(changeLogTable,SWT.NONE);
+	     item.setText(new String[] {changeSet.getChangeset(),changeSet.getTag(),changeSet.getUser(),changeSet.getDate(),changeSet.getFiles(),changeSet.getDescription()} );
+	   }
+	   
+
+	 
 	 }
 
 	private void hookContextMenu() 
@@ -255,9 +347,9 @@ public class ChangeLogView extends ViewPart
   				ChangeLogView.this.fillContextMenu(manager);
   			}
   		});
-		Menu menu = menuMgr.createContextMenu(viewer.getControl());
-		viewer.getControl().setMenu(menu);
-		getSite().registerContextMenu(menuMgr, viewer);
+//		Menu menu = menuMgr.createContextMenu(viewer.getControl());
+//		viewer.getControl().setMenu(menu);
+//		getSite().registerContextMenu(menuMgr, viewer);
 	}
 
 	private void contributeToActionBars() 
@@ -350,7 +442,7 @@ public class ChangeLogView extends ViewPart
 	}
 	private void showMessage(String message) 
 	{
-		MessageDialog.openInformation(viewer.getControl().getShell(),"ChangLog View",	message);
+//		MessageDialog.openInformation(viewer.getControl().getShell(),"ChangLog View",	message);
 	}
 
 	/**
@@ -358,6 +450,6 @@ public class ChangeLogView extends ViewPart
 	 */
 	public void setFocus() 
 	{
-		viewer.getControl().setFocus();
+//		viewer.getControl().setFocus();
 	}
 }

@@ -3,14 +3,16 @@ package com.vectrace.MercurialEclipse.model;
 public class ChangeSet
 {
   private String changeset;
+  private String tag;
   private String user;
   private String date;
   private String files;
   private String description;
   
-  public ChangeSet(String changeSet,String user, String date, String files, String description)
+  public ChangeSet(String changeSet,String tag,String user, String date, String files, String description)
   {
     this.changeset=changeSet;
+    this.tag = tag;
     this.user = user;
     this.date = date;
     this.files = files;
@@ -20,6 +22,11 @@ public class ChangeSet
   public String getChangeset()
   {
     return changeset;
+  }
+
+  public String getTag()
+  {
+    return tag;
   }
 
   public String getUser()

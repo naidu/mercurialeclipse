@@ -148,6 +148,8 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
                   viewPart = activePage.showView(MercurialEclipsePlugin.ID_ChangeLogView);
                   ChangeLogView changeLogView = (ChangeLogView) viewPart;
                   //Send out put to the view
+                  
+//                  System.out.println("changeLogView.showChangeLog(FullPath,output)");
                   changeLogView.showChangeLog(FullPath,output);
                 } 
                 catch (PartInitException e) 
