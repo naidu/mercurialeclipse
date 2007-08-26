@@ -2,6 +2,7 @@ package com.vectrace.MercurialEclipse.model;
 
 public class ChangeSet
 {
+  private int changesetIndex;
   private String changeset;
   private String tag;
   private String user;
@@ -9,14 +10,20 @@ public class ChangeSet
   private String files;
   private String description;
   
-  public ChangeSet(String changeSet,String tag,String user, String date, String files, String description)
+  public ChangeSet(int changesetIndex,String changeSet,String tag,String user, String date, String files, String description)
   {
+    this.changesetIndex=changesetIndex;
     this.changeset=changeSet;
     this.tag = tag;
     this.user = user;
     this.date = date;
     this.files = files;
     this.description = description;
+  }
+
+  public int getChangesetIndex()
+  {
+    return changesetIndex;
   }
 
   public String getChangeset()
@@ -48,4 +55,5 @@ public class ChangeSet
   {
     return description;
   }
+
 }

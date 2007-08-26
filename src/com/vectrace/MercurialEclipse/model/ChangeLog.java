@@ -9,16 +9,27 @@ public class ChangeLog
 {
   private Vector<ChangeSet> changeLog=new Vector<ChangeSet>();
 //  private Set changeListeners = new HashSet();
-  
-  public ChangeLog(String changeLog)
+
+  public ChangeLog()
   {
-    super();
+    
+  }
+
+  public ChangeLog(String changeLog_string)
+  {
+    ChangeChangeLog(changeLog_string);
+  }
+  
+  public void ChangeChangeLog(String changeLog)
+  {   
+    this.changeLog.clear();
     
     if(changeLog==null)
     {
       return;
     }
 
+    int changesetIndex;
     String changeset;
     String tag;
     String user;
@@ -168,7 +179,8 @@ Moved Prefs to team section fixes ticket #16
 //          System.out.println("date:        <" + date + ">");
 //          System.out.println("files:       <" + files + ">");
 //          System.out.println("description: <" + description + ">");
-          this.changeLog.add( new ChangeSet(changeset,tag,user,date,files,description));
+          changesetIndex= new Integer(changeset.split(":")[0]);
+          this.changeLog.add( new ChangeSet(changesetIndex,changeset,tag,user,date,files,description));
       }
     }        
 //    System.out.println("Done!!!");
