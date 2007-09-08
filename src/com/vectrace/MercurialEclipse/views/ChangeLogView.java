@@ -3,6 +3,10 @@ package com.vectrace.MercurialEclipse.views;
 
 import java.util.Vector;
 
+import org.eclipse.compare.CompareUI;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IStorage;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -29,13 +33,20 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeLog;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.MercurialRepositorySubscriber;
 
 /**
  * ChangeLog view based on the view example for now
@@ -61,15 +72,15 @@ public class ChangeLogView extends ViewPart
 {
 	private TableViewer viewer;
   private ChangeLog changeLog;
-  private String fullPath;
+  private IResource resource;
   private Table changeLogTable;
-	
+  
 	private Action action1;
 	private Action action2;
 	private Action doubleClickAction;
 
   
-  private ChangeLogViewContentProvider changeLogViewContentProvider;
+  private ChangeLogContentProvider changeLogViewContentProvider;
 
 	/*
 	 * The content provider class is responsible for
@@ -81,38 +92,15 @@ public class ChangeLogView extends ViewPart
 	 * (like Task List, for example).
 	 */
 	 
-	class ChangeLogViewContentProvider implements IStructuredContentProvider
-	{
-    private String fullPath;
-	  
-    
+	class ChangeLogContentProvider implements IStructuredContentProvider
+	{ 
     
 		public void inputChanged(Viewer v, Object oldInput, Object newInput) 
 		{
-
-		  if (newInput != null)
-	     {
-	      if((newInput instanceof ChangeSet) == true)
-	      {
-	        ChangeSet changeSet = (ChangeSet) newInput;
-//	        changeSet.addChangeListener(this);
-	      }	    
-	     }
-       if (oldInput != null)
-       {
-         if((oldInput instanceof ChangeSet) == true)
-         {
-           ChangeSet changeSet = (ChangeSet) oldInput;
-//           changeSet.removeChangeListener(this);
-         }     
-       }
 		}
+		
 		public void dispose() 
 		{
-		  if(changeLog != null)
-		  {
-//  		  changeLog.removeChangeListener(this);
-		  }
 		}
 
 		public Object[] getElements(Object parent) 
@@ -121,17 +109,12 @@ public class ChangeLogView extends ViewPart
       return changeLog.getChangeLog().toArray();
 		}
 
-    public void setChangeLog(String fullpath,String changelog)
+    public void setChangeLog(IResource in_resource)
     {
 //      System.out.println("ChangeLogViewContentProvider::setChangeLog()");
-      this.fullPath=fullpath;
-      
-      changeLog.ChangeChangeLog(changelog);
-
+      resource=in_resource;
+      changeLog.ChangeChangeLog(in_resource);
       viewer.refresh();
-      
-      Vector<ChangeSet> changeSets = changeLog.getChangeLog();
-      ChangeSet changeSet;    
     }
 
 	
@@ -216,7 +199,7 @@ public class ChangeLogView extends ViewPart
           
       int value1=((ChangeSet) e1).getChangesetIndex();
       int value2=((ChangeSet) e2).getChangesetIndex();
-// we want it reversed sorted
+// we want it reverse sorted
       if(value1<value2)
       {
         return 1;
@@ -281,7 +264,7 @@ public class ChangeLogView extends ViewPart
     viewer.setLabelProvider(new ChangeSetLabelProvider());
     
 
-    changeLogViewContentProvider = new ChangeLogViewContentProvider(); 
+    changeLogViewContentProvider = new ChangeLogContentProvider(); 
 
     viewer.setContentProvider(changeLogViewContentProvider);
     viewer.setSorter(new NameSorter());
@@ -294,10 +277,10 @@ public class ChangeLogView extends ViewPart
 		contributeToActionBars();
 	}
 
-	 public void showChangeLog(String fullpath,String changelog_string) 
+	 public void showChangeLog(IResource in_resource) 
 	 {
 //     System.out.println("ChangeLogView::showChangeLog()");
-	   changeLogViewContentProvider.setChangeLog(fullpath,changelog_string);	 
+	   changeLogViewContentProvider.setChangeLog(in_resource);	 
 	 }
 
 	private void hookContextMenu() 
@@ -382,11 +365,37 @@ public class ChangeLogView extends ViewPart
 
 	      if((obj instanceof ChangeSet) != true)
 	      {
-	        showMessage("Double-click detected on "+obj.toString());
+	        return; //Silently ignore unknown double clicks
 	      }
 	    
-	      ChangeSet changeSet = (ChangeSet) obj;
-        showMessage("Double-click detected on "+changeSet.getChangeset());
+	      ChangeSet changeSet = (ChangeSet) obj;      
+
+//        showMessage("Double-click detected on "+changesetHash);
+        
+        try
+        {
+          IProject proj=resource.getProject();
+ 
+          int rev1=changeSet.getChangesetIndex()-1;
+          if(rev1>0)
+          {
+            rev1=0;
+          }
+          int rev2=changeSet.getChangesetIndex();
+//          IStorage r1=(IStorage) resource;
+          IStorage r1=new IStorageMercurialRevision( proj, resource, rev1);
+          IStorage r2=new IStorageMercurialRevision( proj, resource, rev2);
+          MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
+          SyncInfo syncInfo = subscriber.getSyncInfo(resource,r1, r2);
+          SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diff:", syncInfo);
+          
+          CompareUI.openCompareEditor(comparedialog);            
+          
+			  }
+        catch (TeamException e)
+        {
+          e.printStackTrace();
+        }
 
 				
 				

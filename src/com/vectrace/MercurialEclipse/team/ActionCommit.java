@@ -17,6 +17,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -239,6 +240,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
       }         
     }
     DecoratorStatus.refresh();
+    //TODO Refresh history view TeamUI.getHistoryView().refresh();
   }
 
   /**

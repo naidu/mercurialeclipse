@@ -1,9 +1,13 @@
 package com.vectrace.MercurialEclipse.model;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.io.File;
+import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.Vector;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class ChangeLog
 {
@@ -15,12 +19,48 @@ public class ChangeLog
     
   }
 
-  public ChangeLog(String changeLog_string)
+  public ChangeLog(IResource changeLog_file)
   {
-    ChangeChangeLog(changeLog_string);
+    ChangeChangeLog(changeLog_file);
   }
+
+  public void ChangeChangeLog(IResource resource)
+  {
+    //Setup and run command
+    File workingDir=MercurialUtilities.getWorkingDir(resource);
+    String FullPath = MercurialUtilities.getResourceName(resource);
+
+    ArrayList<String> launchCmd = new ArrayList<String>();
+
+    // log command setup.
+    launchCmd.add(MercurialUtilities.getHGExecutable());
+    launchCmd.add("log");
+    launchCmd.add("-v");
+    if (!(resource instanceof IProject))
+    {
+      launchCmd.add(FullPath);
+    }
+    launchCmd.trimToSize();
+    String launchCmdStr[] = (String[])launchCmd.toArray(new String[0]);
   
-  public void ChangeChangeLog(String changeLog)
+//    System.out.println("log:" + MercurialUtilities.getHGExecutable() + " log -v " + FullPath + " Workingdir:" + workingDir);
+    try
+    {
+      String output = MercurialUtilities.ExecuteCommand(launchCmdStr, workingDir,true);
+      if (output != null)
+      {
+        if (output.length() != 0)
+        {
+          ChangeChangeLog(output);
+        }
+      }
+    } catch (HgException e)
+    {
+      System.out.println(e.getMessage());
+    }
+
+  }
+  private void ChangeChangeLog(String changeLog)
   {   
     this.changeLog.clear();
     

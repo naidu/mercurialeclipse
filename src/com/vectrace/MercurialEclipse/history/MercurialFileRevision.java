@@ -2,7 +2,7 @@
  * com.vectrace.MercurialEclipse (c) Vectrace 2007 maj 2
  * Created by zingo
  */
-package com.vectrace.MercurialEclipse.team;
+package com.vectrace.MercurialEclipse.history;
 
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
@@ -10,12 +10,29 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+
 /**
  * @author zingo
  *
  */
 public class MercurialFileRevision extends FileRevision
 {
+  
+  ChangeSet changeSet; 
+  
+  public MercurialFileRevision(ChangeSet changeSet)
+  {
+    super();
+    this.changeSet = changeSet;
+  }
+
+  
+  
+  public ChangeSet getChangeSet()
+  {
+    return changeSet;
+  }
 
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileRevision#getName()

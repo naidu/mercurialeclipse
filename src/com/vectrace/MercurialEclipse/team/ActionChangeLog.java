@@ -5,28 +5,28 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbench;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.views.ChangeLogView;
-import com.vectrace.MercurialEclipse.*;
 
 
 /**
@@ -73,6 +73,36 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
 
   public void run(IAction action) 
   {
+    final IWorkbenchPage activePage = MercurialEclipsePlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
+    final Shell shell = Display.getDefault().getActiveShell();
+    try 
+    {
+      new ProgressMonitorDialog(shell).run(true, true, new IRunnableWithProgress() 
+        {
+        public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException 
+          {
+            final IResource resource = (IResource) selection.getFirstElement();
+            Runnable r = new Runnable() 
+              {
+              public void run() 
+                {
+                  TeamUI.showHistoryFor(activePage, resource, null);
+                }
+              };
+              Display.getDefault().asyncExec(r);
+          }
+        });
+    } 
+    catch (InvocationTargetException e) 
+    {
+      System.out.println( e.getMessage() );
+    } 
+    catch (InterruptedException e) 
+    {
+      System.out.println( e.getMessage() );
+    }
+
+/*    
     IProject proj;
     String Repository;
     Shell shell;
@@ -98,6 +128,23 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
     
     Object obj;
     Iterator itr; 
+
+    
+    IWorkbenchPage activePage = MercurialEclipsePlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
+    //Show View
+    IViewPart viewPart = null;
+    try 
+    {
+      viewPart = activePage.showView(MercurialEclipsePlugin.ID_ChangeLogView);
+    } 
+    catch (PartInitException e) 
+    {
+      System.out.println(e.getMessage());
+      e.printStackTrace();
+    }            
+   
+    ChangeLogView changeLogView = (ChangeLogView) viewPart;
+
     // the last argument will be replaced with a path
     itr=selection.iterator();
     while(itr.hasNext())
@@ -110,64 +157,16 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
         IResource resource=(IResource) obj;
         if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
         {
-//          System.out.println("log: if(MercurialUtilities.isResourceInReposetory(resource, true) == true) == TRUE");
-          //Resource could be inside a link or something do nothing
-          // in the future this could check is this is another repository
-
-          //Setup and run command
-          File workingDir=MercurialUtilities.getWorkingDir(resource);
-          String FullPath = MercurialUtilities.getResourceName(resource);
-
-          ArrayList launchCmd = new ArrayList();
-
-          // log command setup.
-          launchCmd.add(MercurialUtilities.getHGExecutable());
-          launchCmd.add("log");
-          launchCmd.add("-v");
-          if (!(obj instanceof IProject))
-          {
-            launchCmd.add(FullPath);
-          }
-          launchCmd.trimToSize();
-          String launchCmdStr[] = (String[])launchCmd.toArray(new String[0]);
-        
-//          System.out.println("log:" + MercurialUtilities.getHGExecutable() + " log -v " + FullPath + " Workingdir:" + workingDir);
-          try
-          {
-            String output = MercurialUtilities.ExecuteCommand(launchCmdStr, workingDir,true);
-            if (output != null)
-            {
-              if (output.length() != 0)
-              {
-                // send output to the ChangeLogView               
-                IWorkbenchPage activePage = MercurialEclipsePlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
-                try 
-                {
-                  //Show View
-                  IViewPart viewPart = null;
-                  viewPart = activePage.showView(MercurialEclipsePlugin.ID_ChangeLogView);
-                  ChangeLogView changeLogView = (ChangeLogView) viewPart;
-                  //Send out put to the view
-                  
-//                  System.out.println("changeLogView.showChangeLog(FullPath,output)");
-                  changeLogView.showChangeLog(FullPath,output);
-                } 
-                catch (PartInitException e) 
-                {
-                  System.out.println(e.getMessage());
-                  e.printStackTrace();
-                }            
-              }
-            }
-          } catch (HgException e)
-          {
-            System.out.println(e.getMessage());
-          }
+          // send output to the ChangeLogView               
+            changeLogView.showChangeLog(resource);
+//            System.out.println("changeLogView.showChangeLog(FullPath,output)");
         }
       }
     }
     
 //  DecoratorStatus.refresh();
+ 
+ */
   }
   
   

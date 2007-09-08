@@ -264,6 +264,15 @@
       </view>
    </extension>
 
+<!--            Adapters                     -->
+   
+   <extension point="org.eclipse.core.runtime.adapters">
+     <factory
+       adaptableType="org.eclipse.team.core.history.provider.FileHistoryProvider"
+       class="com.vectrace.MercurialEclipse.AdapterFactory">
+       <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
+     </factory>
+   </extension>
    
    <!-- extension point="org.eclipse.core.resources.moveDeleteHook">
       <moveDeleteHook

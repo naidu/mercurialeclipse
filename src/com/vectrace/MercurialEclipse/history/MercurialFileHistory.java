@@ -2,10 +2,18 @@
  * com.vectrace.MercurialEclipse (c) Vectrace 2007 maj 2
  * Created by zingo
  */
-package com.vectrace.MercurialEclipse.team;
+package com.vectrace.MercurialEclipse.history;
 
+import java.util.Vector;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
+import com.vectrace.MercurialEclipse.model.ChangeLog;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author zingo
@@ -13,6 +21,16 @@ import org.eclipse.team.core.history.provider.FileHistory;
  */
 public class MercurialFileHistory extends FileHistory
 {
+  private IFile file;
+  protected IFileRevision[] revisions;
+  ChangeLog changeLog;
+
+
+  public MercurialFileHistory(IFile file)
+  {
+    super();
+    this.file = file;
+  }
 
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileHistory#getContributors(org.eclipse.team.core.history.IFileRevision)
@@ -39,9 +57,8 @@ public class MercurialFileHistory extends FileHistory
    */
   public IFileRevision[] getFileRevisions()
   {
-    // TODO Auto-generated method stub
-    System.out.println("MercurialFileHistory::getFileRevisions()");
-    return null;
+//    System.out.println("MercurialFileHistory::getFileRevisions()");
+    return revisions;
   }
 
   /* (non-Javadoc)
@@ -54,4 +71,25 @@ public class MercurialFileHistory extends FileHistory
     return null;
   }
 
+  public void refresh(IProgressMonitor monitor) throws CoreException 
+  {
+//    System.out.println("MercurialFileHistory::refresh() (home made)");
+    RepositoryProvider provider = RepositoryProvider.getProvider(file.getProject());
+    if (provider != null && provider instanceof MercurialTeamProvider) 
+    {
+      
+      changeLog = new ChangeLog(file);
+      
+//      changeLog.ChangeChangeLog(in_resource);
+      Vector<ChangeSet> chageSets = changeLog.getChangeLog();
+      
+      
+      revisions = new IFileRevision[chageSets.size()];
+      for(int i=0;i<chageSets.size();i++)
+      {
+        revisions[i]=new MercurialFileRevision(chageSets.get(i));
+      }
+    }
+  } 
+  
 }

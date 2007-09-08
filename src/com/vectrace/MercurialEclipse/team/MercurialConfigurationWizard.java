@@ -36,6 +36,7 @@ import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
 
+
 /**
  * @author zingo
  *
@@ -174,8 +175,6 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 //	    IPath projectLocation = project.getLocation();
 	    String MercurialRootDir;
 	    MercurialRootDir=MercurialUtilities.search4MercurialRoot(project);
-//	    MercurialRootDir=MercurialUtilities.search4MercurialRoot(projectLocation.toFile());
-//	    pathProject=project.getLocation().toString();
 	    if (MercurialRootDir == null)
 	    {   
 	    	foundhgPath=null;
