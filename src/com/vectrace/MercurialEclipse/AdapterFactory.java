@@ -6,7 +6,7 @@ package com.vectrace.MercurialEclipse;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.team.ui.history.IHistoryPageSource;
 
-import com.vectrace.MercurialEclipse.history.MercurialFileHistoryProvider;
+import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPageSource;
 /**
  * @author zingo
@@ -23,10 +23,10 @@ public class AdapterFactory implements IAdapterFactory
     // TODO Auto-generated method stub
 //    System.out.println("AdapterFactory::getAdapter()");
     
-    if((adaptableObject instanceof MercurialFileHistoryProvider) && adapterType == IHistoryPageSource.class) 
+    if((adaptableObject instanceof MercurialHistoryProvider) && adapterType == IHistoryPageSource.class) 
     {
 //      System.out.println("AdapterFactory::getAdapter() MercurialHistoryPageSource");
-      return new MercurialHistoryPageSource((MercurialFileHistoryProvider)adaptableObject);
+      return new MercurialHistoryPageSource((MercurialHistoryProvider)adaptableObject);
     }
     return null;
   }

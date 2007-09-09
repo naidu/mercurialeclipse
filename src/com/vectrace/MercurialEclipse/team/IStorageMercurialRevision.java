@@ -53,7 +53,7 @@ public class IStorageMercurialRevision implements IStorage
    */
   public Object getAdapter(Class adapter)
   {
-//    System.out.println("IStorageMercurialRevision(" + sourceFilename + "," + revision + ")::getAdapter()" );
+//    System.out.println("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::getAdapter()" );
     return null;
   }
 
@@ -66,11 +66,10 @@ public class IStorageMercurialRevision implements IStorage
    */
   public InputStream getContents() throws CoreException
   {
-//    System.out.println("IStorageMercurialRevision::getContents()");
+//    System.out.println("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::getContent()" );
     
     //  Should generate data content of the so called "file" in this case a revision, e.g. a hg cat --rev "rev" <file>
 //    String Repository;
-//    System.out.println("IStorageMercurialRevision(" + sourceFilename + "," + revision + ")::getContent()" );
 //    Repository=MercurialUtilities.getRepositoryPath(project);
 //    if(Repository==null)
 //    {
@@ -79,10 +78,17 @@ public class IStorageMercurialRevision implements IStorage
 //    System.out.println("IStorageMercurialRevision::getContents() Repository=" + Repository);
 
     //Setup and run command
+    String rev=revision;
+    /*convert <rev number>:<hash> to <hash>*/
+    int separator=rev.indexOf(':');
+    if(separator!=-1)
+    {
+      rev=rev.substring(separator+1);
+    }
     String launchCmd[] = { MercurialUtilities.getHGExecutable(),
                            "cat", 
                            "--rev", 
-                           revision,
+                           rev,
                            MercurialUtilities.getResourceName(resource) 
                            };
     File workingDir=MercurialUtilities.getWorkingDir(resource);
@@ -97,7 +103,7 @@ public class IStorageMercurialRevision implements IStorage
    */
   public IPath getFullPath()
   {
-//    System.out.println("IStorageMercurialRevision(" + sourceFilename + "," + revision + ")::getFullPath()" );
+//    System.out.println("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::getFullPath()" );
     return resource.getFullPath().append(revision);
   }
 
@@ -106,9 +112,11 @@ public class IStorageMercurialRevision implements IStorage
    */
   public String getName()
   {
-//    System.out.println("IStorageMercurialRevision(" + sourceFilename + "," + revision + ")::getName()" );
+//    System.out.print("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::getName()" );
     String name;
-    name = resource.getName() + "_rev_" + revision;
+    name = "[" + revision + "]" + resource.getName();
+//    System.out.println("=" + name );
+    
     return  name;
   }
 
@@ -120,7 +128,7 @@ public class IStorageMercurialRevision implements IStorage
    */
   public boolean isReadOnly()
   {
-//    System.out.println("IStorageMercurialRevision(" + sourceFilename + "," + revision + ")::isReadOnly()" );
+//    System.out.println("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::isReadOnly()" );
     return true;
   }
 

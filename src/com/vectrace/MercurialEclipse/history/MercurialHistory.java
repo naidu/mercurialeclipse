@@ -19,26 +19,25 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * @author zingo
  *
  */
-public class MercurialFileHistory extends FileHistory
+public class MercurialHistory extends FileHistory
 {
   private IFile file;
   protected IFileRevision[] revisions;
   ChangeLog changeLog;
 
 
-  public MercurialFileHistory(IFile file)
+  public MercurialHistory(IFile file)
   {
     super();
     this.file = file;
   }
-
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileHistory#getContributors(org.eclipse.team.core.history.IFileRevision)
    */
   public IFileRevision[] getContributors(IFileRevision revision)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialFileHistory::getContributors()");
+    System.out.println("MercurialHistory::getContributors()");
     return null;
   }
 
@@ -48,7 +47,7 @@ public class MercurialFileHistory extends FileHistory
   public IFileRevision getFileRevision(String id)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialFileHistory::getFileRevision(" + id + ")");
+    System.out.println("MercurialHistory::getFileRevision(" + id + ")");
     return null;
   }
 
@@ -57,7 +56,7 @@ public class MercurialFileHistory extends FileHistory
    */
   public IFileRevision[] getFileRevisions()
   {
-//    System.out.println("MercurialFileHistory::getFileRevisions()");
+//    System.out.println("MercurialHistory::getFileRevisions()");
     return revisions;
   }
 
@@ -67,13 +66,13 @@ public class MercurialFileHistory extends FileHistory
   public IFileRevision[] getTargets(IFileRevision revision)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialFileHistory::getTargets()");
+    System.out.println("MercurialHistory::getTargets()");
     return null;
   }
 
   public void refresh(IProgressMonitor monitor) throws CoreException 
   {
-//    System.out.println("MercurialFileHistory::refresh() (home made)");
+//    System.out.println("MercurialHistory::refresh() (home made)");
     RepositoryProvider provider = RepositoryProvider.getProvider(file.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
@@ -87,7 +86,7 @@ public class MercurialFileHistory extends FileHistory
       revisions = new IFileRevision[chageSets.size()];
       for(int i=0;i<chageSets.size();i++)
       {
-        revisions[i]=new MercurialFileRevision(chageSets.get(i));
+        revisions[i]=new MercurialRevision(chageSets.get(i),file);
       }
     }
   } 

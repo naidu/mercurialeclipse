@@ -5,7 +5,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 
-public class MercurialFileHistoryVariant implements IResourceVariant {
+public class MercurialFileHistoryVariant implements IResourceVariant 
+{
   private final IStorage myIStorage;
 
   public MercurialFileHistoryVariant(IStorage res) 

@@ -17,9 +17,9 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class MercurialHistoryPageSource extends HistoryPageSource
 {
-   MercurialFileHistoryProvider fileHistoryProvider;
+   MercurialHistoryProvider fileHistoryProvider;
    
-  public MercurialHistoryPageSource(MercurialFileHistoryProvider fileHistoryProvider)
+  public MercurialHistoryPageSource(MercurialHistoryProvider fileHistoryProvider)
   {
     super();
 //    System.out.println("MercurialHistoryPageSource::MercurialHistoryPageSource()");

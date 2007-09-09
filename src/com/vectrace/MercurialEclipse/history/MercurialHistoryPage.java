@@ -11,8 +11,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
@@ -20,11 +25,14 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.RepositoryProvider;
@@ -33,9 +41,11 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.team.ui.history.IHistoryPageSite;
+import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
 
+import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -52,32 +62,36 @@ public class MercurialHistoryPage extends HistoryPage
   private Table changeLogTable;
   private ChangeLogContentProvider changeLogViewContentProvider;
   private Composite composite;
-  MercurialFileHistory mercurialFileHistory;
+  MercurialHistory mercurialHistory;
   IFileRevision[] entries;
+  OpenMercurialRevisionAction openAction;
+  
+  private RefreshMercurialHistory refreshFileHistoryJob;
 
-  private RefreshMercurialFileHistory refreshFileHistoryJob;
-
-  private class RefreshMercurialFileHistory extends Job 
+  private class RefreshMercurialHistory extends Job 
   {
-    MercurialFileHistory mercurialFileHistory;
+    MercurialHistory mercurialHistory;
 
-    public RefreshMercurialFileHistory() {
+    public RefreshMercurialHistory() 
+    {
       super("Fetching Mercurial revisions...");  //$NON-NLS-1$
     }
 
-    public void setFileHistory(MercurialFileHistory fileHistory) {
-      this.mercurialFileHistory = fileHistory;
+    public void setFileHistory(MercurialHistory mercurialHistory) 
+    {
+      this.mercurialHistory = mercurialHistory;
     }
 
-    public IStatus run(IProgressMonitor monitor) {
+    public IStatus run(IProgressMonitor monitor) 
+    {
 
       IStatus status = Status.OK_STATUS;
 
-      if (mercurialFileHistory != null ) 
+      if (mercurialHistory != null ) 
       {
         try
         {
-          mercurialFileHistory.refresh(monitor);
+          mercurialHistory.refresh(monitor);
         }
         catch (CoreException e)
         {
@@ -90,7 +104,7 @@ public class MercurialHistoryPage extends HistoryPage
           {
             public void run() 
             {
-              viewer.setInput(mercurialFileHistory);
+              viewer.setInput(mercurialHistory);
 //              changeLogViewContentProvider.setChangeLog(mercurialFileHistory);
             }
           }, viewer);
@@ -149,12 +163,12 @@ public class MercurialHistoryPage extends HistoryPage
 
 //      System.out.println("ViewLabelProvider::getColumnText(obj," + index + ")");
 
-      if((obj instanceof MercurialFileRevision) != true)
+      if((obj instanceof MercurialRevision) != true)
       {
         return "Type Error";
       }
 
-      MercurialFileRevision mercurialFileRevision = (MercurialFileRevision) obj;         
+      MercurialRevision mercurialFileRevision = (MercurialRevision) obj;         
       ChangeSet changeSet = mercurialFileRevision.getChangeSet();
      
       switch (index)
@@ -213,13 +227,17 @@ public class MercurialHistoryPage extends HistoryPage
 
     public int compare(Viewer viewer, Object e1, Object e2)
     {
-      if( ((e1 instanceof ChangeSet) != true) || ((e2 instanceof ChangeSet) != true) )
+
+      if(((e1 instanceof MercurialRevision) != true) || ((e1 instanceof MercurialRevision) != true))
       {
         return super.compare(viewer, e1, e2);
       }
+
+      MercurialRevision mercurialFileRevision1 = (MercurialRevision) e1;         
+      MercurialRevision mercurialFileRevision2 = (MercurialRevision) e2;     
           
-      int value1=((ChangeSet) e1).getChangesetIndex();
-      int value2=((ChangeSet) e2).getChangesetIndex();
+      int value1=mercurialFileRevision1.getChangeSet().getChangesetIndex();
+      int value2=mercurialFileRevision2.getChangeSet().getChangesetIndex();
 // we want it reverse sorted
       if(value1<value2)
       {
@@ -258,7 +276,7 @@ public class MercurialHistoryPage extends HistoryPage
     
     if(isValidInput(resource))
     {
-      mercurialFileHistory = new MercurialFileHistory((IFile)resource);
+      mercurialHistory = new MercurialHistory((IFile)resource);
       refresh();
       return true;
     }
@@ -322,8 +340,38 @@ public class MercurialHistoryPage extends HistoryPage
     viewer.setSorter(new NameSorter());
 //    changeLog=new ChangeLog();
 //    viewer.setInput(changeLog);   // getViewSite());
+    
+    contributeActions();
   }
 
+
+  private void contributeActions() 
+  {
+    openAction = new OpenMercurialRevisionAction("Open");  //$NON-NLS-1$
+    viewer.getTable().addSelectionListener(new SelectionAdapter() 
+      {
+        public void widgetSelected(SelectionEvent e) 
+        {
+          openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
+        }
+      });
+    openAction.setPage(this);
+    //Contribute actions to popup menu
+    MenuManager menuMgr = new MenuManager();
+    Menu menu = menuMgr.createContextMenu(viewer.getTable());
+    menuMgr.addMenuListener(new IMenuListener() 
+    {
+      public void menuAboutToShow(IMenuManager menuMgr) 
+      {
+        menuMgr.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+        menuMgr.add(openAction);
+      }
+    });
+    menuMgr.setRemoveAllWhenShown(true);
+    viewer.getTable().setMenu(menu);
+  }
+  
+  
   /* (non-Javadoc)
    * @see org.eclipse.ui.part.Page#getControl()
    */
@@ -393,14 +441,14 @@ public class MercurialHistoryPage extends HistoryPage
 
       if (refreshFileHistoryJob == null)
       {
-        refreshFileHistoryJob = new RefreshMercurialFileHistory();
+        refreshFileHistoryJob = new RefreshMercurialHistory();
       }
 
       if (refreshFileHistoryJob.getState() != Job.NONE) 
       {
         refreshFileHistoryJob.cancel();
       }
-      refreshFileHistoryJob.setFileHistory(mercurialFileHistory);
+      refreshFileHistoryJob.setFileHistory(mercurialHistory);
       IHistoryPageSite parentSite = getHistoryPageSite();
       //Internal code used for convenience - you can use your own here
       IWorkbenchPart part = parentSite.getPart();

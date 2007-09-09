@@ -8,7 +8,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
-import com.vectrace.MercurialEclipse.history.MercurialFileHistoryProvider;
+import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 
 /**
  * @author zingo
@@ -18,7 +18,7 @@ public class MercurialTeamProvider extends RepositoryProvider
 {
 
   
-  MercurialFileHistoryProvider FileHistoryProvider; 
+  MercurialHistoryProvider FileHistoryProvider; 
 	/**
 	 * 
 	 */
@@ -73,7 +73,7 @@ public class MercurialTeamProvider extends RepositoryProvider
   {
     if( FileHistoryProvider == null)
     {
-      FileHistoryProvider = new MercurialFileHistoryProvider();
+      FileHistoryProvider = new MercurialHistoryProvider();
     }
 //    System.out.println("getFileHistoryProvider()");
     return FileHistoryProvider;
