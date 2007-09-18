@@ -15,7 +15,7 @@ Zingo Andersen - Creator of this nice piece of software.
      lately there has not been so much hacking after I come home from my day 
      job as a Realtime Consultant from Enea. 
      I live in Sweden in the town called Lund.
-     More info about me migth be found at http://www.zingo.org
+     More info about me might be found at http://www.zingo.org
 
 Gunnar Ahlberg - I'm a developer. Other than that, I'm generally
      outdoors playing in the woods and archipelago of sunny Stockholm, 
@@ -32,3 +32,10 @@ Peter Hunnisett - Peter Hunnisett is a bipedal mammal hailing from
      
 Indra Talip
      Zingo's Comment: Indra added a browse button to the clone wizard, this was very nice.
+
+Sebastian Herbszt - minor code changes and some testing on Windows
+     Zingo's Comment: Sebastian started out with a small changelog patch but have since 
+     then help with bug tracking and other patches 
+     
+StefanC
+     Zingo's Comment: StefanC helped me with not selecting ignored files in Commit dialog. 
