@@ -1,0 +1,41 @@
+Mercurial Eclipse Plugin
+
+Here is a list of people that has been contributing to this project
+if you supply a patch please dont forget to patch this file also add
+your name, a few lines about yourself and if you want an email.
+By adding your name here you indicate Your acceptance of the License
+and all of its terms and conditions.
+
+
+Contributors: (In order of apparence)
+
+Zingo Andersen - Creator of this nice piece of software. 
+     I'm an old Amiga fart, that likes hacking around. 
+     I have two kids and a wife, both take there share of my private Life so 
+     lately there has not been so much hacking after I come home from my day 
+     job as a Realtime Consultant from Enea. 
+     I live in Sweden in the town called Lund.
+     More info about me might be found at http://www.zingo.org
+
+Gunnar Ahlberg - I'm a developer. Other than that, I'm generally
+     outdoors playing in the woods and archipelago of sunny Stockholm, 
+     Sweden. Cheers!
+     Zingo's Comment: Gunnar is the first external contributor, he started the work on 
+     getting the plugin configurable, thanks for the help.
+     
+Peter Hunnisett - Peter Hunnisett is a bipedal mammal hailing from 
+     Canada who's wondering if you have to come from a northern country 
+     to contribute to this software.
+     Zingo's Comment: Peter insted of whising for feature just plain wrote them :) 
+     He is responsible for  the cloning,rename/move and selectable commit handling. 
+     He as also refacorated the messy code that I have wrote.
+     
+Indra Talip
+     Zingo's Comment: Indra added a browse button to the clone wizard, this was very nice.
+
+Sebastian Herbszt - minor code changes and some testing on Windows
+     Zingo's Comment: Sebastian started out with a small changelog patch but have since 
+     then help with bug tracking and other patches 
+     
+StefanC
+     Zingo's Comment: StefanC helped me with not selecting ignored files in Commit dialog. 
