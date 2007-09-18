@@ -29,7 +29,6 @@ package com.vectrace.MercurialEclipse.dialogs;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -65,10 +64,11 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.team.core.Team;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+//import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
 /**
@@ -327,21 +327,22 @@ public class CommitDialog extends Dialog
     showUntrackedFilesLabel  = new Label(checkBoxContainer,SWT.HORIZONTAL);
     showUntrackedFilesLabel.setText("Show untracked files.");
 
-    showUntrackedFilesButton.addSelectionListener( new SelectionAdapter() {
-        public void widgetSelected(SelectionEvent e)
+    showUntrackedFilesButton.addSelectionListener( new SelectionAdapter() 
         {
-          if(showUntrackedFilesButton.getSelection())
+          public void widgetSelected(SelectionEvent e)
           {
-            commitFilesList.removeFilter(untrackedFilesFilter);
+            if(showUntrackedFilesButton.getSelection())
+            {
+              commitFilesList.removeFilter(untrackedFilesFilter);
+            }
+            else
+            {
+              commitFilesList.addFilter(untrackedFilesFilter);
+            }
+            commitFilesList.refresh(true);
           }
-          else
-          {
-            commitFilesList.addFilter(untrackedFilesFilter);
-          }
-          commitFilesList.refresh(true);
         }
-      }
-    );
+      );
     showUntrackedFilesButton.setSelection(true); // Start selected.
     
     selectAllButton = new Button(checkBoxContainer, SWT.CHECK );
@@ -683,7 +684,10 @@ public class CommitDialog extends Dialog
         System.out.println("    Output <" + fileName + "> Resource <" + thisResource.toString() + "> Fake resource!");
       }
 */
-      list.add(new CommitResource(status,thisResource,new File(fileName)));
+      if(!Team.isIgnoredHint(thisResource))
+      {
+        list.add(new CommitResource(status,thisResource,new File(fileName)));
+      }
     }
     
     commitResources = (CommitResource[])list.toArray(new CommitResource[0]);
