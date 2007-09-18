@@ -38,4 +38,4 @@ Sebastian Herbszt - minor code changes and some testing on Windows
      then help with bug tracking and other patches 
      
 StefanC
-     Zingo's Comment: StefanC helped me with not selecting ignored files in Commit dialog. 
+     Zingo's Comment: StefanC helped me with not selecting ignored files in Commit dialog and making it resizable. 

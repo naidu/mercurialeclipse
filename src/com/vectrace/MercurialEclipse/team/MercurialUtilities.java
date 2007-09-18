@@ -240,6 +240,9 @@ public class MercurialUtilities {
 		// System.out.println("pathcheck: >" + path + "<");
 		return path;
 	}
+
+	
+	
 	/**
 	 * Get the project for the selection (it use the first element)
 	 * @param selection
@@ -735,7 +738,7 @@ TODO
 		}
 		return null;
 	}
-*/	
+*/
   
 	/*
 	 * public void runTest(IOConsole console) { final Display display =

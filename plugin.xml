@@ -249,7 +249,7 @@
 <!--            View:s                     -->
 
 
-   <extension
+   <!--extension
          point="org.eclipse.ui.views">
       <category
             name="Team"
@@ -262,7 +262,7 @@
             class="com.vectrace.MercurialEclipse.views.ChangeLogView"
             id="com.vectrace.MercurialEclipse.views.ChangeLogView">
       </view>
-   </extension>
+   </extension -->
 
 <!--            Adapters                     -->
    

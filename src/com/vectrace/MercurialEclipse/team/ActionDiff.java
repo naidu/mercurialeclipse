@@ -71,14 +71,14 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
 	public void run(IAction action) 
 	{
 		IProject proj;
-		String Repository;
+//		String Repository;
     
     proj=MercurialUtilities.getProject(selection);
-		Repository=MercurialUtilities.getRepositoryPath(proj);
-		if(Repository==null)
-		{
-			Repository="."; //never leave this empty add a . to point to current path
-		}
+//		Repository=MercurialUtilities.getRepositoryPath(proj);
+//		if(Repository==null)
+//		{
+//			Repository="."; //never leave this empty add a . to point to current path
+//		}
 
 		Object obj;
 	  Iterator itr; 
@@ -89,48 +89,13 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     	obj=itr.next();
     	if (obj instanceof IResource)
     	{
-
-        //Setup and run command identify, this us used to get the base changeset to diff against
-        //tip can't be used since work can be done in older reviison ( hg up <old rev> )
-        //String FullPath = ( ((IResource) obj).getLocation() ).toString();
-       
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(),"identify"};
-        File workingDir=MercurialUtilities.getWorkingDir((IResource) obj );
-
-        
-        try
-        {
-          String changeset = MercurialUtilities.ExecuteCommand(launchCmd,workingDir ,false);
-
-          // It consists of the revision id (hash), optionally a '+' sign
-          // if the working tree has been modified, followed by a list of tags.
-          // => we need to strip it ...
-
-          if (changeset.indexOf(" ") != -1) // is there a space?
-          {
-            changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
-          }
-          if (changeset.indexOf("+") != -1) // is there a +?
-          {
-            changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
-          }
-
-          // Setup and run command diff
-
-          MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
-          SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, (IStorage) obj, new IStorageMercurialRevision( proj, (IResource) obj, changeset));
-          SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff", syncInfo);
+    	  
+    	  SyncInfoCompareInput comparedialog = getCompareInput((IResource)obj);
+    	  if(comparedialog!=null)
+    	  {
           CompareUI.openCompareEditor(comparedialog);
-        } 
-        catch (HgException e)
-        {
-          System.out.println(e.getMessage());
-        } 
-        catch (TeamException e)
-        {
-          e.printStackTrace();
-        }
-      }
+    	  }
+    	}
     }
 	}
   
@@ -149,5 +114,52 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
 			selection = ( IStructuredSelection )in_selection;
 		}
 	}
+
+  public SyncInfoCompareInput getCompareInput(IResource obj)
+  {
+    //Setup and run command identify, this us used to get the base changeset to diff against
+    //tip can't be used since work can be done in older revison ( hg up <old rev> )
+    //String FullPath = ( ((IResource) obj).getLocation() ).toString();
+   
+    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"identify"};
+    File workingDir=MercurialUtilities.getWorkingDir( obj );
+
+    IProject proj= obj.getProject();
+
+    
+    try
+    {
+      String changeset = MercurialUtilities.ExecuteCommand(launchCmd,workingDir ,false);
+
+      // It consists of the revision id (hash), optionally a '+' sign
+      // if the working tree has been modified, followed by a list of tags.
+      // => we need to strip it ...
+
+      if (changeset.indexOf(" ") != -1) // is there a space?
+      {
+        changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
+      }
+      if (changeset.indexOf("+") != -1) // is there a +?
+      {
+        changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
+      }
+
+      // Setup and run command diff
+
+      MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
+      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, (IStorage) obj, new IStorageMercurialRevision( proj, (IResource) obj, changeset));
+      SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff", syncInfo);
+      return comparedialog;
+    } 
+    catch (HgException e)
+    {
+      System.out.println(e.getMessage());
+    } 
+    catch (TeamException e)
+    {
+      e.printStackTrace();
+    }
+    return null;
+  }
 	
 }

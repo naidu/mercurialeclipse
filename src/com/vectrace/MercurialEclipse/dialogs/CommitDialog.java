@@ -30,6 +30,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 
+import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -42,6 +43,9 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnPixelData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
@@ -68,9 +72,12 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.core.Team;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
+import com.vectrace.MercurialEclipse.team.ActionDiff;
 
 /**
  * @author
@@ -407,7 +414,25 @@ public class CommitDialog extends Dialog
               commitFilesList.setAllChecked(false);
           }
         }
-      });       
+      });    
+    commitFilesList.addDoubleClickListener(new IDoubleClickListener() 
+      {
+        public void doubleClick(DoubleClickEvent event) 
+        {
+          IStructuredSelection sel = (IStructuredSelection) commitFilesList.getSelection();
+          if (sel.getFirstElement() instanceof CommitResource) 
+          {
+            CommitResource resource = (CommitResource) sel.getFirstElement();
+            ActionDiff diff = new ActionDiff();            
+            SyncInfoCompareInput compareInput = diff.getCompareInput(resource.getResource());
+            if(compareInput!=null)
+            {
+              CompareUI.openCompareDialog(compareInput);
+            }
+          }
+        }
+      });
+
     setupDefaultCommitMessage();
   }
 
