@@ -65,6 +65,7 @@ public class MercurialHistoryPage extends HistoryPage
   MercurialHistory mercurialHistory;
   IFileRevision[] entries;
   OpenMercurialRevisionAction openAction;
+  //OpenMercurialRevisionAction diffAction;
   
   private RefreshMercurialHistory refreshFileHistoryJob;
 
@@ -356,6 +357,18 @@ public class MercurialHistoryPage extends HistoryPage
         }
       });
     openAction.setPage(this);
+/*
+    diffAction = new OpenMercurialRevisionAction("Diff");  //$NON-NLS-1$
+    viewer.getTable().addSelectionListener(new SelectionAdapter() 
+    {
+      public void widgetSelected(SelectionEvent e) 
+      {
+        diffAction.selectionChanged((IStructuredSelection) viewer.getSelection());
+      }
+    });
+    diffAction.setPage(this);
+*/
+    
     //Contribute actions to popup menu
     MenuManager menuMgr = new MenuManager();
     Menu menu = menuMgr.createContextMenu(viewer.getTable());
@@ -365,6 +378,7 @@ public class MercurialHistoryPage extends HistoryPage
       {
         menuMgr.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
         menuMgr.add(openAction);
+  //      menuMgr.add(diffAction);
       }
     });
     menuMgr.setRemoveAllWhenShown(true);

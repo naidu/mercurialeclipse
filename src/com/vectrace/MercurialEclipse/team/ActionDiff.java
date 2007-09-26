@@ -148,7 +148,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
 
       MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
       SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, (IStorage) obj, new IStorageMercurialRevision( proj, (IResource) obj, changeset));
-      SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diffelidiff", syncInfo);
+      SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diff", syncInfo);
       return comparedialog;
     } 
     catch (HgException e)

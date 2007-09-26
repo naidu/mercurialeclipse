@@ -1,7 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc. 
  * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
- * Edited by Zingo Andersen
+ * Edited by Zingo Andersen, StefanC
  * 
  * 
  * This software is licensed under the zlib/libpng license.
@@ -28,26 +28,17 @@ package com.vectrace.MercurialEclipse.dialogs;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.StringTokenizer;
 
 import org.eclipse.compare.CompareUI;
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.dialogs.Dialog;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
@@ -58,7 +49,6 @@ import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
@@ -71,12 +61,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.team.core.Team;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
-import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
 import com.vectrace.MercurialEclipse.team.ActionDiff;
 
 /**
@@ -89,65 +75,12 @@ import com.vectrace.MercurialEclipse.team.ActionDiff;
  */
 public class CommitDialog extends Dialog 
 {
-  private static String FILE_MODIFIED = "Modified";
-  private static String FILE_ADDED = "Added";
-  private static String FILE_REMOVED = "Removed";
-  private static String FILE_UNTRACKED = "Untracked";
-  private static String FILE_DELETED = "Already Deleted";
+  static String FILE_MODIFIED = "Modified";
+  static String FILE_ADDED = "Added";
+  static String FILE_REMOVED = "Removed";
+  static String FILE_UNTRACKED = "Untracked";
+  static String FILE_DELETED = "Already Deleted";
   private static String DEFAULT_COMMIT_MESSAGE = "(no commit message)";
-
-  private static final class CommitResourceLabelProvider extends LabelProvider implements ITableLabelProvider 
-  {
-    public Image getColumnImage(Object element, int columnIndex) 
-    {
-      // No images.
-      return null;
-    }
-
-    public String getColumnText(Object element, int columnIndex) 
-    {
-      if ((element instanceof CommitResource) != true) 
-      {
-        return "Type Error";
-      }
-      CommitResource resource = (CommitResource) element;
-
-      if (columnIndex == 0) 
-      {
-        return "";
-      } 
-      else if (columnIndex == 1) 
-      {
-        return resource.getPath().toString();
-      } 
-      else if (columnIndex == 2) 
-      {
-        return resource.getStatus();
-      }
-      return "Col Error";
-    }
-  }
-
-  private class UntrackedFilesFilter extends ViewerFilter 
-  {
-    public UntrackedFilesFilter() 
-    {
-      super();
-    }
-
-    /**
-     * Filter out untracked files.
-     */
-    public boolean select(Viewer viewer, Object parentElement,Object element) 
-    {
-      if (element instanceof CommitResource) 
-      {
-        String str = ((CommitResource) element).getStatus();
-        return str.startsWith(FILE_UNTRACKED) != true;
-      }
-      return true;
-    }
-  }
 
   class CommittableFilesFilter extends ViewerFilter 
   {
@@ -171,105 +104,6 @@ public class CommitDialog extends Dialog
     }
   }
 
-  private class CommitResource 
-  {
-    private String status;
-    private File path;
-    private IResource resource;
-    private String convertStatus(String statusToken) 
-    {
-      if (statusToken.startsWith("M")) 
-      {
-        // System.out.println("FILE_MODIFIED:path <" +
-        // statusToken.toString() + ">");
-        return FILE_MODIFIED;
-      } 
-      else if (statusToken.startsWith("A")) 
-      {
-        return FILE_ADDED;
-      } 
-      else if (statusToken.startsWith("R")) 
-      {
-        return FILE_REMOVED;
-      } 
-      else if (statusToken.startsWith("?")) 
-      {
-        return FILE_UNTRACKED;
-      }
-      else if (statusToken.startsWith("!")) 
-      {
-        // System.out.println("FILE_DELETED:path <" +
-        // statusToken.toString() + ">");
-        return FILE_DELETED;
-      }
-      else 
-      {
-        return "status error: " + statusToken.toString();
-      }
-    }
-
-    public CommitResource(String status, IResource resource, File path) 
-    {
-      this.status = convertStatus(status);
-      this.resource = resource;
-      this.path = path;
-    }
-
-    public String getStatus() 
-    {
-      return status;
-    }
-
-    public IResource getResource() 
-    {
-      return resource;
-    }
-
-    public File getPath() 
-    {
-      return path;
-    }
-  }
-
-  public class AdaptableCommitList implements IAdaptable, IWorkbenchAdapter 
-  {
-    private CommitResource[] resources;
-
-    public AdaptableCommitList(CommitResource[] resources) 
-    {
-      this.resources = resources;
-    }
-
-    public Object[] getChildren(Object o) 
-    {
-      return resources;
-    }
-
-    public ImageDescriptor getImageDescriptor(Object object) 
-    {
-      return null;
-    }
-
-    public String getLabel(Object o) 
-    {
-      return o == null ? "" : o.toString();//$NON-NLS-1$
-    }
-
-    public Object getParent(Object o) 
-    {
-      return null;
-    }
-
-    public Object getAdapter(Class adapter) 
-    {
-      if (adapter == IWorkbenchAdapter.class)
-      {
-        return this;
-      }
-      return null;
-    }
-  }
-
   private Text commitTextBox;
   private Label commitTextLabel;
   private Label commitFilesLabel;
@@ -279,14 +113,14 @@ public class CommitDialog extends Dialog
   private UntrackedFilesFilter untrackedFilesFilter;
   private CommittableFilesFilter committableFilesFilter;
   private IProject project;
-  private IResource[] inResources;
-  private CommitResource[] commitResources;
+//  CommitResource[] commitResources;
   private File[] filesToAdd;
   private File[] filesToCommit;
   private IResource[] resourcesToCommit;
   private String commitMessage;
   private MouseListener commitMouseListener;
   private KeyListener commitKeyListener;
+private IResource[] inResources;
 
   /**
    * @param shell
@@ -295,7 +129,7 @@ public class CommitDialog extends Dialog
   {
     super(shell);
     setShellStyle(getShellStyle() | SWT.RESIZE);
-    this.project = project;
+    this.setProject(project);
     this.inResources = inResources;
     this.untrackedFilesFilter = new UntrackedFilesFilter();
     this.committableFilesFilter = new CommittableFilesFilter();
@@ -517,7 +351,7 @@ public class CommitDialog extends Dialog
 
     commitFilesList.setLabelProvider(new CommitResourceLabelProvider());
 
-    commitFilesList.setInput(fillFileList());
+    commitFilesList.setInput(new CommitResourceUtil(getProject()).getCommitResources(inResources));
     commitFilesList.addFilter(committableFilesFilter);
     // commitFilesList.removeFilter(untrackedFilesFilter);
 
@@ -525,184 +359,6 @@ public class CommitDialog extends Dialog
     // commitFilesList.setAllChecked(false);
     // commitFilesList.refresh(true);
     return commitFilesList;
-  }
-
-  private CommitResource[] fillFileList() 
-  {
-    // Get the path to the project go we can get everything underneath
-    // that has changed. Once we get that, filter on the appropriate
-    // items.
-    // IResource[] projectArray = {project};
-    // StatusContainerAction statusAction = new StatusContainerAction(null,
-    // projectArray);
-    StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
-    File workingDir = statusAction.getWorkingDir();
-    try 
-    {
-      statusAction.run();
-      String result = statusAction.getResult();
-      return spliceList(result, workingDir);
-    }
-    catch (Exception e) 
-    {
-      System.out.println("CommitDialog::fillFileList() Error:");
-      System.out.println("Project:" + project.toString());
-      System.out.println("Unable to get status " + e.getMessage());
-      return null;
-    }
-  }
-
-  /**
-   * Finds if there is a IFile that matches the fileName Warning Recursive!!!
-   * 
-   * @param string
-   * @param fileNameWithWorkingDir
-   *                Use this to try to match the outpack to the IResource in
-   *                the inResources array
-   * @param inResource
-   *                the resourse to check if it is a IFolder we to a recursive
-   *                search...
-   * @return matching IResource or null
-   */
-
-  private IResource findIResource(String fileName, String fileNameWithWorkingDir, IResource inResource) 
-  {
-    IResource thisResource = null;
-    if (inResource instanceof IFile) 
-    {
-      IFile thisIFile = (IFile) inResource;
-      // System.out.println(" IFile:" +
-      // thisIFile.getLocation().toOSString());
-      if (thisIFile.getLocation().toOSString().compareTo(fileNameWithWorkingDir) == 0) 
-      {
-        return thisIFile; // Found a match
-      }
-    } 
-    else if (inResource instanceof IFolder) 
-    {
-      IFolder thisIFolder = (IFolder) inResource;
-      // System.out.println(" IFolder:" +
-      // thisIFolder.getLocation().toOSString());
-      IResource folderResources[];
-      try 
-      {
-        folderResources = thisIFolder.members();
-        for (int res = 0; res < folderResources.length; res++) 
-        {
-          // Mercurial doesn't control directories or projects and so
-          // will just return that they're
-          // untracked.
-
-          thisResource = findIResource(fileName, fileNameWithWorkingDir, folderResources[res]);
-          if (thisResource != null) 
-          {
-              return thisResource; // Found a resource
-          }
-        }
-      } 
-      catch (CoreException e) 
-      {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    }
-    return thisResource;
-  }
-
-  /**
-   * 
-   * @param string
-   * @param workingDir
-   *                Use this to try to match the outpack to the IResource in
-   *                the inResources array
-   * @return
-   */
-
-  private CommitResource[] spliceList(String string, File workingDir) 
-  {
-    /*
-     * System.out.println("Changed resources: ");
-     * System.out.println(string); System.out.println("workingDir:" +
-     * workingDir.toString()); System.out.println(" IResources:"); for(int
-     * res = 0; res < inResources.length; res++) { // Mercurial doesn't
-     * control directories or projects and so will just return that they're //
-     * untracked. System.out.println(" <" +
-     * inResources[res].getLocation().toOSString() + ">"); }
-     */
-    ArrayList list = new ArrayList();
-    StringTokenizer st = new StringTokenizer(string);
-    String status;
-    String fileName;
-    IResource thisResource;
-    String fileNameWithWorkingDir;
-    String eol = System.getProperty("line.separator");
-
-    // Tokens are always in pairs as lines are in the form "A
-    // TEST_FOLDER\test_file2.c"
-    // where the first token is the status and the 2nd is the path relative
-    // to the project.
-    while (st.hasMoreTokens()) 
-    {
-      status = st.nextToken(" ");
-      fileName = st.nextToken(eol);
-      if (status.startsWith(eol)) 
-      {
-        status = status.substring(eol.length());
-      }
-      if (fileName.startsWith(" ")) 
-      {
-        fileName = fileName.substring(1);
-      }
-      thisResource = null;
-      fileNameWithWorkingDir = workingDir + File.separator + fileName;
-
-      for (int res = 0; res < inResources.length; res++) 
-      {
-        // Mercurial doesn't control directories or projects and so will
-        // just return that they're
-        // untracked.
-
-        thisResource = findIResource(fileName, fileNameWithWorkingDir, inResources[res]);
-        if (thisResource == null) 
-        {
-          continue; // Found a resource
-        }
-      }
-
-      if (thisResource == null) 
-      {
-        // Create a resource could be a deleted file we want to commit
-        IPath projPath = project.getLocation();
-        // System.out.println("projPath.toOSString() <" +
-        // projPath.toOSString() + ">");
-        // System.out.println("fileNameWithWorkingDir <" +
-        // fileNameWithWorkingDir + ">");
-        if (fileNameWithWorkingDir.startsWith(projPath.toOSString())) 
-        { // Relative path from Project
-          String fileNameWithWorkingDirFromProject = fileNameWithWorkingDir.substring(projPath.toOSString().length());
-          IFile file = project.getFile(fileNameWithWorkingDirFromProject);
-          thisResource = (IResource) file;
-        } 
-        else 
-        { // This is a full path
-          IFile file = project.getFile(fileNameWithWorkingDir);
-          thisResource = (IResource) file;
-        }
-      }
-      /*
-       * if(thisResource.exists()) { System.out.println(" Output <" +
-       * fileName + "> Resource <" + thisResource.toString() + ">"); }
-       * else { System.out.println(" Output <" + fileName + "> Resource <" +
-       * thisResource.toString() + "> Fake resource!"); }
-       */
-      if (!Team.isIgnoredHint(thisResource)) 
-      {
-        list.add(new CommitResource(status, thisResource, new File(fileName)));
-      }
-    }
-
-    commitResources = (CommitResource[]) list.toArray(new CommitResource[0]);
-    return commitResources;
   }
 
   private File[] convertToFiles(Object[] objs) 
@@ -783,5 +439,13 @@ public class CommitDialog extends Dialog
   protected Point getInitialSize() 
   {
     return new Point(477, 562);
+  }
+
+  protected void setProject(IProject project) {
+    this.project = project;
+  }
+
+  protected IProject getProject() {
+    return project;
   }
 }

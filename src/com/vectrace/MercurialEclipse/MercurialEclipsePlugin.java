@@ -1,5 +1,10 @@
 package com.vectrace.MercurialEclipse;
 
+import javax.print.attribute.standard.Severity;
+
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
@@ -13,11 +18,12 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
 {
 
   public static final String ID = "com.vectrace.MercurialEclipse";
+
   public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView";
 
   // The shared instance.
   private static MercurialEclipsePlugin plugin;
-  
+
   // TODO: not quite sure this should be static
   private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
@@ -27,7 +33,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   public MercurialEclipsePlugin()
   {
     plugin = this;
-//    System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
+    // System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
   }
 
   /**
@@ -42,15 +48,16 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
     } catch (Exception e)
     {
       // TODO: handle exception
-      // System.out.println("MercurialEclipsePlugin.start() got execption");
+      // System.out.println("MercurialEclipsePlugin.start() got
+      // execption");
       throw e;
     }
 
     // TODO: Presumably this should be wrapped around some sort of timer to
-    //       ensure we don't tank eclipse if something goes wrong.
+    // ensure we don't tank eclipse if something goes wrong.
     repoManager.start();
   }
-  
+
   static public HgRepositoryLocationManager getRepoManager()
   {
     return repoManager;
@@ -65,7 +72,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
     plugin = null;
     super.stop(context);
   }
-  
+
   /**
    * Returns the shared instance.
    */
@@ -73,7 +80,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   {
     return plugin;
   }
-  
+
   /**
    * Returns an image descriptor for the image file at the given plug-in
    * relative path.
@@ -87,4 +94,22 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
     return AbstractUIPlugin.imageDescriptorFromPlugin("com.vectrace.MercurialEclipse", path);
   }
 
+  public static final void logError(String message, Throwable error)
+  {
+    getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
+  }
+
+  private static IStatus createStatus(String msg, int code, int severity,
+      Throwable ex)
+  {
+    return new Status(severity, ID, code, msg, ex);
+  }
+
+  /**
+   * @param ex
+   */
+  public final static void logError(Throwable ex)
+  {
+    logError(ex.getMessage(), ex);
+  }
 }
