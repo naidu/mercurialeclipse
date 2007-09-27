@@ -75,11 +75,11 @@ import com.vectrace.MercurialEclipse.team.ActionDiff;
  */
 public class CommitDialog extends Dialog 
 {
-  static String FILE_MODIFIED = "Modified";
-  static String FILE_ADDED = "Added";
-  static String FILE_REMOVED = "Removed";
-  static String FILE_UNTRACKED = "Untracked";
-  static String FILE_DELETED = "Already Deleted";
+  public static String FILE_MODIFIED = "Modified";
+  public static String FILE_ADDED = "Added";
+  public static String FILE_REMOVED = "Removed";
+  public static String FILE_UNTRACKED = "Untracked";
+  public static String FILE_DELETED = "Already Deleted";
   private static String DEFAULT_COMMIT_MESSAGE = "(no commit message)";
 
   class CommittableFilesFilter extends ViewerFilter 

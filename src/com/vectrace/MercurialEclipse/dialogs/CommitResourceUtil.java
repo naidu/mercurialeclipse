@@ -23,7 +23,6 @@ public final class CommitResourceUtil
 	public CommitResourceUtil(IProject project)
 	{
 		this.project = project;
-
 	}
 
 	public CommitResource[] getCommitResources(IResource[] inResources)
@@ -34,8 +33,7 @@ public final class CommitResourceUtil
 		// IResource[] projectArray = {project};
 		// StatusContainerAction statusAction = new StatusContainerAction(null,
 		// projectArray);
-		StatusContainerAction statusAction = new StatusContainerAction(null,
-				inResources);
+		StatusContainerAction statusAction = new StatusContainerAction(null,inResources);
 		File workingDir = statusAction.getWorkingDir();
 		try
 		{
@@ -63,8 +61,7 @@ public final class CommitResourceUtil
 	 *          search...
 	 * @return matching IResource or null
 	 */
-	private IResource findIResource(String fileName,
-			String fileNameWithWorkingDir, IResource inResource)
+	private IResource findIResource(String fileName,String fileNameWithWorkingDir, IResource inResource)
 	{
 		IResource thisResource = null;
 
@@ -152,11 +149,9 @@ public final class CommitResourceUtil
 			for (int res = 0; res < inResources.length; res++)
 			{
 				// Mercurial doesn't control directories or projects and so will
-				// just return that they're
-				// untracked.
+				// just return that they're untracked.
 
-				thisResource = findIResource(fileName, fileNameWithWorkingDir,
-						inResources[res]);
+				thisResource = findIResource(fileName, fileNameWithWorkingDir,inResources[res]);
 				if (thisResource == null)
 				{
 					continue; // Found a resource
@@ -176,11 +171,11 @@ public final class CommitResourceUtil
 					// path
 					// from
 					// Project
-					String fileNameWithWorkingDirFromProject = fileNameWithWorkingDir
-							.substring(projPath.toOSString().length());
+					String fileNameWithWorkingDirFromProject = fileNameWithWorkingDir.substring(projPath.toOSString().length());
 					IFile file = getProject().getFile(fileNameWithWorkingDirFromProject);
 					thisResource = (IResource) file;
-				} else
+				} 
+				else
 				{ // This is a full path
 					IFile file = getProject().getFile(fileNameWithWorkingDir);
 					thisResource = (IResource) file;
@@ -192,8 +187,10 @@ public final class CommitResourceUtil
 			 * System.out.println(" Output <" + fileName + "> Resource <" +
 			 * thisResource.toString() + "> Fake resource!"); }
 			 */
-			if (!Team.isIgnoredHint(thisResource))
+			if (!status.startsWith("?") || !Team.isIgnoredHint(thisResource))
 			{
+			  //file is allready managed
+			  //or file is not in "ignore list"
 				list.add(new CommitResource(status, thisResource, new File(fileName)));
 			}
 		}
