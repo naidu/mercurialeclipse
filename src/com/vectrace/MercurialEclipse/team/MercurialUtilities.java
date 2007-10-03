@@ -229,8 +229,14 @@ public class MercurialUtilities
 
   static String search4MercurialRoot(final IProject project)
   {
-    return MercurialUtilities.search4MercurialRoot(project.getLocation()
-        .toFile());
+    if(project!=null)
+    {
+      if(project.getLocation() != null)
+      {
+        return MercurialUtilities.search4MercurialRoot(project.getLocation().toFile());
+      } 
+    }
+    return null;
   }
 
   static String search4MercurialRoot(final File file)
@@ -251,7 +257,8 @@ public class MercurialUtilities
     if (parent != null)
     {
       path = hgFolder.getParentFile().toString();
-    } else
+    } 
+    else
     {
       path = null;
     }
