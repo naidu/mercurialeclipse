@@ -49,9 +49,45 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * 
  */
 
-public class CloneRepoWizard extends SyncRepoWizard
+public abstract class SyncRepoWizard extends Wizard implements IImportWizard, INewWizard
 {
-	
+  
+  WizardCreateRepoLocationPage createRepoLocationPage;
+  
+  String locationUrl;
+  String parameters;
+  String projectName;
+  
+  public SyncRepoWizard() {
+    super();
+//    System.out.println( "new SyncRepoWizard()");
+    setNeedsProgressMonitor(true);
+  }
+
+  public boolean canFinish()
+  {
+    return (locationUrl != null) && (projectName != null);
+  }
+
+  // TODO: This should become part of an interface
+  public void setLocationUrl( String url )
+  {
+    this.locationUrl = url;
+  }
+  
+  // TODO: This should become part of an interface
+  public void setParameters( String parms )
+  {
+    this.parameters = parms;
+  }
+  
+  // TODO: This should become part of an interface
+  public void setProjectName( String projectName )
+  {
+    this.projectName = projectName;
+  }
+
+   
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
@@ -60,70 +96,31 @@ public class CloneRepoWizard extends SyncRepoWizard
     setNeedsProgressMonitor(true);
     createRepoLocationPage = new WizardCreateRepoLocationPage("CreateRepoPage","Create Repository Location",null);
   }
-
+  
+  
+  public void dispose()
+  {
+    createRepoLocationPage.dispose();
+    
+    super.dispose();
+  }
 
   /* (non-Javadoc)
-	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
-	 */
-	public boolean performFinish()
+   * @see org.eclipse.jface.wizard.IWizard#addPages()
+   */
+  public void addPages()
   {
-    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-    final IProject project = workspace.getRoot().getProject(projectName);
-    final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
-    
-    // Check that this project doesn't exist.
-    if( project.getLocation() != null )
-    {
-      // TODO: Ask if user wants to torch everything there before the clone, otherwise fail.
-      System.out.println( "Project " + projectName + " already exists");
-      return false;
-    }
-    
-    RepositoryCloneAction cloneRepoAction = new RepositoryCloneAction(null, workspace, repo, parameters, projectName,null);
+    super.addPages();
+    addPage(createRepoLocationPage);
+  }
 
-    try
-    {
-      cloneRepoAction.run();
-    }
-    catch (Exception e)
-    {
-      System.out.println("Clone operation failed");
-      System.out.println(e.getMessage());
-    }
+  public IWizardPage getNextPage(IWizardPage page)
+  {
+    return null;
+  }
 
-    // FIXME: Project creation must be done after the clone otherwise the
-    // clone command will barf. Not quite sure why a destination directory isn't
-    // really allowed to exist with the hg clone command...
-    // At any rate we have a potential race condition on project creation if
-    // anything to do with project is done before the clone operation.
-    try
-    {
-      project.create(null);
-      project.open(null);
-    }
-    catch(CoreException e)
-    {
-      // TODO: Should kill the project if we could map everything
-      return false;      
-    }
-
-    try
-    {
-      // Register the project with Team. This will bring all the files that
-      // we cloned into the project.
-      RepositoryProvider.map(project, MercurialTeamProvider.class.getName());
-      RepositoryProvider.getProvider(project, MercurialTeamProvider.class.getName());
-    }
-    catch(TeamException e)
-    {
-      // TODO: Should kill the project if we could map everything
-      return false;
-    }
-
-    // It appears good. Stash the repo location.
-    MercurialEclipsePlugin.getRepoManager().addRepoLocation(repo);
-
-    return true;
-  }	
-  
+  public IWizardPage getPreviousPage(IWizardPage page)
+  {
+    return null;
+  }
 }

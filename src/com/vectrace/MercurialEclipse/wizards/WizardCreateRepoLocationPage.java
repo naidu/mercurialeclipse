@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc.
+ * Modified my Zingo 2008
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -56,7 +57,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 
 
-public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements IWizardPage
+public class WizardCreateRepoLocationPage extends WizardPage implements IWizardPage
 {
 
   private Label    locationLabel;
@@ -74,9 +75,8 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
   /**
    * @param pageName
    */
-  public CloneRepoWizardCreateRepoLocationPage( String pageName,
-                                                String title,
-                                                ImageDescriptor titleImage ) {
+  public WizardCreateRepoLocationPage( String pageName, String title, ImageDescriptor titleImage ) 
+  {
     super(pageName, title, titleImage);
     setDescription( "Create a repository location to clone");
   }
@@ -95,16 +95,15 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
   
   private boolean isPageComplete( String url, String repoName )
   {
-    return HgRepositoryLocation.validateLocation( url ) &&
-           repoName.trim().length() > 0;
+    return HgRepositoryLocation.validateLocation( url ) && repoName.trim().length() > 0;
   }
   
   private boolean validateAndSetComplete( String url, String repoName )
   {
     boolean validLocation = isPageComplete( url, repoName );
 
-    ((CloneRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
-    ((CloneRepoWizard)getWizard()).setProjectName(validLocation ? repoName : null);
+    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
+    ((SyncRepoWizard)getWizard()).setProjectName(validLocation ? repoName : null);
 
     setPageComplete( validLocation );
 
@@ -130,13 +129,17 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
     locationData.widthHint = 300;
     locationCombo = new Combo(outerContainer, SWT.DROP_DOWN);
     locationCombo.setLayoutData(locationData);
-    locationCombo.addListener( SWT.Selection, new Listener() {
-      public void handleEvent(Event event) {
+    locationCombo.addListener( SWT.Selection, new Listener() 
+    {
+      public void handleEvent(Event event) 
+      {
         validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
       }      
     });
-    locationCombo.addListener( SWT.Modify, new Listener() {
-      public void handleEvent(Event event) {
+    locationCombo.addListener( SWT.Modify, new Listener() 
+    {
+      public void handleEvent(Event event) 
+      {
         validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
       }      
     });
@@ -149,8 +152,10 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
     }
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
 	browseButton.setText ("Browse...");
-	browseButton.addSelectionListener(new SelectionAdapter() {
-		public void widgetSelected(SelectionEvent e) {
+	browseButton.addSelectionListener(new SelectionAdapter() 
+	{
+		public void widgetSelected(SelectionEvent e) 
+		{
 			DirectoryDialog dialog = new DirectoryDialog (getShell());
 			dialog.setMessage("Select a repository to clone");
 			String dir = dialog.open();
@@ -173,7 +178,7 @@ public class CloneRepoWizardCreateRepoLocationPage extends WizardPage implements
     cloneParameters.addModifyListener(new ModifyListener() {
       public void modifyText(ModifyEvent e) {
         // TODO: Should be interface not wizard class
-        ((CloneRepoWizard)getWizard()).setCloneParameters(cloneParameters.getText());
+        ((SyncRepoWizard)getWizard()).setParameters(cloneParameters.getText());
       }     
     });
 

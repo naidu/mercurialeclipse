@@ -140,6 +140,22 @@
                id="com.vectrace.MercurialEclipse.team.ActionAnnotate">
            </action>
            <action
+               label="hg &amp;pull"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionPull"
+               tooltip="pull changes from remote/local reposetory (hg pull)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.ActionPull">
+           </action>
+           <action
+               label="hg &amp;push"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.actions.PushAction"
+               tooltip="push changes to remote/local reposetory (hg push)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.actions.PushAction">
+           </action>
+           <action
                label="hg &amp;commit"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"

@@ -33,18 +33,14 @@ import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import com.vectrace.MercurialEclipse.team.ActionDiff;
 
 
-public class RevertDialog extends Dialog {
+public class RevertDialog extends Dialog 
+{
 
     private Table table;
-
     private List<CommitResource> resources;
-
     private List<CommitResource> selection;
-
     private CheckboxTableViewer selectFilesList;
-
     private Button selectAllButton;
-
     private Button deselectAllButton;
 
     /**
@@ -52,7 +48,8 @@ public class RevertDialog extends Dialog {
      * 
      * @param parentShell
      */
-    public RevertDialog(Shell parentShell) {
+    public RevertDialog(Shell parentShell) 
+    {
         super(parentShell);
         setShellStyle(getShellStyle() | SWT.RESIZE);
     }
@@ -62,7 +59,8 @@ public class RevertDialog extends Dialog {
      * 
      * @param parent
      */
-    protected Control createDialogArea(Composite parent) {
+    protected Control createDialogArea(Composite parent) 
+    {
         Composite container = (Composite) super.createDialogArea(parent);
         container.setLayout(new FormLayout());
 
@@ -103,7 +101,8 @@ public class RevertDialog extends Dialog {
         return container;
     }
 
-    private void createFilesList(Composite container) {
+    private void createFilesList(Composite container) 
+    {
         table = new Table(container, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.MULTI | SWT.CHECK | SWT.BORDER);
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
@@ -141,18 +140,22 @@ public class RevertDialog extends Dialog {
         selectFilesList.setAllChecked(true);
     }
 
-    private void makeActions() {
-        
-        deselectAllButton.addSelectionListener(new SelectionAdapter() {
+    private void makeActions() 
+    {        
+        deselectAllButton.addSelectionListener(new SelectionAdapter() 
+        {
            @Override
-            public void widgetSelected(SelectionEvent e) {
+            public void widgetSelected(SelectionEvent e) 
+            {
                 selectFilesList.setAllChecked(false);
             } 
         });
         
-        selectAllButton.addSelectionListener(new SelectionAdapter() {
+        selectAllButton.addSelectionListener(new SelectionAdapter() 
+        {
             @Override
-             public void widgetSelected(SelectionEvent e) {
+             public void widgetSelected(SelectionEvent e) 
+             {
                  selectFilesList.setAllChecked(true);
              } 
          });
@@ -182,37 +185,40 @@ public class RevertDialog extends Dialog {
      * 
      * @param parent
      */
-    protected void createButtonsForButtonBar(Composite parent) {
-        createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL,
-                true);
-        createButton(parent, IDialogConstants.CANCEL_ID,
-                IDialogConstants.CANCEL_LABEL, false);
+    protected void createButtonsForButtonBar(Composite parent) 
+    {
+        createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
+        createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
     }
 
     /**
      * Return the initial size of the dialog
      */
-    protected Point getInitialSize() {
+    protected Point getInitialSize() 
+    {
         return new Point(500, 375);
     }
 
-    public void setFiles(List<CommitResource> resources) {
+    public void setFiles(List<CommitResource> resources) 
+    {
         this.resources = resources;
 
     }
 
-    protected void okPressed() {
+    protected void okPressed() 
+    {
         this.selection = new ArrayList(Arrays.asList(selectFilesList.getCheckedElements()));
         super.okPressed();
 
     }
 
-    public List<CommitResource> getSelection() {
+    public List<CommitResource> getSelection() 
+    {
         return selection;
     }
 
-    public void setFiles(CommitResource[] commitResources) {
+    public void setFiles(CommitResource[] commitResources) 
+    {
         setFiles(Arrays.asList(commitResources));
     }
-
 }

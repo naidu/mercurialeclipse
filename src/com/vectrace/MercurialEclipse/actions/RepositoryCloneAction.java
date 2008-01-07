@@ -40,7 +40,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * This class encapsulates the hg clone command.
  * 
  */
-public class CloneRepositoryAction extends HgOperation
+public class RepositoryCloneAction extends HgOperation
 {
   private HgRepositoryLocation repo;
   private IWorkspace workspace;
@@ -51,7 +51,7 @@ public class CloneRepositoryAction extends HgOperation
   /**
    * @param context
    */
-  public CloneRepositoryAction(IRunnableContext context, IWorkspace workspace, HgRepositoryLocation repo, String cloneParameters, String projectName, File workingDir)
+  public RepositoryCloneAction(IRunnableContext context, IWorkspace workspace, HgRepositoryLocation repo, String cloneParameters, String projectName, File workingDir)
   {
     super(context);
 

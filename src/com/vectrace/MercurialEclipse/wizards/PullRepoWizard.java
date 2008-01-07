@@ -1,0 +1,74 @@
+/**
+ * 
+ */
+package com.vectrace.MercurialEclipse.wizards;
+
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.TeamException;
+import org.eclipse.ui.IWorkbench;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
+import com.vectrace.MercurialEclipse.actions.RepositoryPullAction;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+
+/**
+ * @author zingo
+ *
+ */
+public class PullRepoWizard extends SyncRepoWizard
+{  
+  /* (non-Javadoc)
+   * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
+   */
+  public void init(IWorkbench workbench, IStructuredSelection selection)
+  {
+    setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
+    setNeedsProgressMonitor(true);
+    super.createRepoLocationPage = new WizardCreateRepoLocationPage("CreateRepoPage","Create Repository Location",null);
+  }
+
+  /* (non-Javadoc)
+   * @see org.eclipse.jface.wizard.Wizard#performFinish()
+   */
+  public boolean performFinish()
+  {
+    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+    final IProject project = workspace.getRoot().getProject(projectName);
+    final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
+    
+    // Check that this project exist.
+    if( project.getLocation() == null )
+    {
+      System.out.println( "Project " + projectName + " don't exists why pull?");
+      return false;
+    }
+
+    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null);
+
+
+    try
+    {
+      repositoryPullAction.run();
+    }
+    catch (Exception e)
+    {
+      System.out.println("pull operation failed");
+      System.out.println(e.getMessage());
+    }
+
+    // It appears good. Stash the repo location.
+    MercurialEclipsePlugin.getRepoManager().addRepoLocation(repo);
+
+    return true;
+  }
+
+  
+
+}
