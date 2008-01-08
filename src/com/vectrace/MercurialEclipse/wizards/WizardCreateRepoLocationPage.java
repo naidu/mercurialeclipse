@@ -267,10 +267,18 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
   {
     locationLabel.dispose();
     locationCombo.dispose();
+    if(cloneParametersLabel != null)
+    {
+      cloneParametersLabel.dispose();
+    }
 
-    cloneParametersLabel.dispose();
-
-    projectNameLabel.dispose();
-    projectNameCombo.dispose();
+    if(projectNameLabel != null)
+    {
+      projectNameLabel.dispose();
+    }
+    if(projectNameCombo != null)
+    {
+      projectNameCombo.dispose();
+    }
   }
 }

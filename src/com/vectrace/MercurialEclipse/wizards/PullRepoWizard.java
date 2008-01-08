@@ -7,10 +7,13 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
@@ -62,6 +65,16 @@ public class PullRepoWizard extends SyncRepoWizard
     try
     {
       repositoryPullAction.run();
+      if(repositoryPullAction.getResult().length() != 0)
+      {
+        Shell shell;
+        IWorkbench workbench;
+
+        workbench = PlatformUI.getWorkbench();
+        shell = workbench.getActiveWorkbenchWindow().getShell();
+
+        MessageDialog.openInformation(shell,"Mercurial Eclipse Pull output",  repositoryPullAction.getResult());
+      }
     }
     catch (Exception e)
     {
