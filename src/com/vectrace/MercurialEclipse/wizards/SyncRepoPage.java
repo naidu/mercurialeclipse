@@ -57,7 +57,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 
 
-public class WizardCreateRepoLocationPage extends WizardPage implements IWizardPage
+public class SyncRepoPage extends WizardPage implements IWizardPage
 {
 
   private Label    locationLabel;
@@ -78,7 +78,7 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
   /**
    * @param pageName
    */
-  public WizardCreateRepoLocationPage( boolean clone,String pageName, String title, String description,String repoName, ImageDescriptor titleImage ) 
+  public SyncRepoPage( boolean clone,String pageName, String title, String description,String repoName, ImageDescriptor titleImage ) 
   {
     super(pageName, title, titleImage);
     this.clone=clone;

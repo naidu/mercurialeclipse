@@ -150,10 +150,10 @@
            <action
                label="hg &amp;push"
                icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.actions.PushAction"
+               class="com.vectrace.MercurialEclipse.team.ActionPush"
                tooltip="push changes to remote/local reposetory (hg push)"
                menubarPath="team.main/group1"
-               id="com.vectrace.MercurialEclipse.actions.PushAction">
+               id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
                label="hg &amp;commit"

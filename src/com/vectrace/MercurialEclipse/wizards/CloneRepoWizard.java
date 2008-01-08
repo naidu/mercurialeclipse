@@ -59,7 +59,7 @@ public class CloneRepoWizard extends SyncRepoWizard
   {
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    syncRepoLocationPage = new WizardCreateRepoLocationPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone","no repo name",null);
+    syncRepoLocationPage = new SyncRepoPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone","no repo name",null);
   }
 
 

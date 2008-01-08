@@ -52,7 +52,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 public abstract class SyncRepoWizard extends Wizard implements IImportWizard, INewWizard
 {
   
-  WizardCreateRepoLocationPage syncRepoLocationPage;
+  SyncRepoPage syncRepoLocationPage;
   
   String locationUrl;
   String parameters;
@@ -95,7 +95,7 @@ public abstract class SyncRepoWizard extends Wizard implements IImportWizard, IN
   {
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    syncRepoLocationPage = new WizardCreateRepoLocationPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone",null,null);
+    syncRepoLocationPage = new SyncRepoPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone",null,null);
   }
   
   

@@ -17,7 +17,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
-import com.vectrace.MercurialEclipse.actions.RepositoryPullAction;
+import com.vectrace.MercurialEclipse.actions.RepositoryPushAction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * @author zingo
  *
  */
-public class PullRepoWizard extends SyncRepoWizard
+public class PushRepoWizard extends SyncRepoWizard
 {  
   
   IProject project;
@@ -40,7 +40,7 @@ public class PullRepoWizard extends SyncRepoWizard
     projectName = project.getName();
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = new SyncRepoPage(false,"PullRepoPage","Pull changes from repository","Select a repository location to pull from",projectName,null);
+    super.syncRepoLocationPage = new SyncRepoPage(false,"PushRepoPage","Push changes to repository","Select a repository location to push to",projectName,null);
   }
 
   /* (non-Javadoc)
@@ -55,17 +55,16 @@ public class PullRepoWizard extends SyncRepoWizard
     // Check that this project exist.
     if( project.getLocation() == null )
     {
-      System.out.println( "Project " + projectName + " don't exists why pull?");
+      System.out.println( "Project " + projectName + " don't exists why push?");
       return false;
     }
 
-    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null);
-
+    RepositoryPushAction repositoryPushAction = new RepositoryPushAction(null, project, repo,null);
 
     try
     {
-      repositoryPullAction.run();
-      if(repositoryPullAction.getResult().length() != 0)
+      repositoryPushAction.run();
+      if(repositoryPushAction.getResult().length() != 0)
       {
         Shell shell;
         IWorkbench workbench;
@@ -73,12 +72,12 @@ public class PullRepoWizard extends SyncRepoWizard
         workbench = PlatformUI.getWorkbench();
         shell = workbench.getActiveWorkbenchWindow().getShell();
 
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Pull output",  repositoryPullAction.getResult());
+        MessageDialog.openInformation(shell,"Mercurial Eclipse Push output",  repositoryPushAction.getResult());
       }
     }
     catch (Exception e)
     {
-      System.out.println("pull operation failed");
+      System.out.println("push operation failed");
       System.out.println(e.getMessage());
     }
 
@@ -87,7 +86,4 @@ public class PullRepoWizard extends SyncRepoWizard
 
     return true;
   }
-
-  
-
 }
