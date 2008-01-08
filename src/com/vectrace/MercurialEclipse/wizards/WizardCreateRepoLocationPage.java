@@ -72,13 +72,18 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
   private Combo    projectNameCombo;
   private GridData projectNameData;
 
+
+  private boolean clone; //if true then clone if false push/pull
+  String repoName;
   /**
    * @param pageName
    */
-  public WizardCreateRepoLocationPage( String pageName, String title, ImageDescriptor titleImage ) 
+  public WizardCreateRepoLocationPage( boolean clone,String pageName, String title, String description,String repoName, ImageDescriptor titleImage ) 
   {
     super(pageName, title, titleImage);
-    setDescription( "Create a repository location to clone");
+    this.clone=clone;
+    this.repoName=repoName;
+    setDescription( description);
   }
 
   public boolean canFlipToNextPage()
@@ -90,13 +95,26 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
   {
     // This page has no smarts when it comes to parsing. As far as it is concerned
     /// having any text is grounds for completion.
-    return isPageComplete( locationCombo.getText(), projectNameCombo.getText());
+    if(clone)
+    {
+      return isPageComplete( locationCombo.getText(), projectNameCombo.getText());
+    }
+    else
+    {
+      return HgRepositoryLocation.validateLocation( locationCombo.getText() );
+    }
   }
   
   private boolean isPageComplete( String url, String repoName )
   {
     return HgRepositoryLocation.validateLocation( url ) && repoName.trim().length() > 0;
   }
+
+  private boolean isPageComplete( String url )
+  {
+    return HgRepositoryLocation.validateLocation( url );
+  }
+
   
   private boolean validateAndSetComplete( String url, String repoName )
   {
@@ -110,6 +128,18 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
     return validLocation;
   }
 
+  private boolean validateAndSetComplete( String url )
+  {
+    boolean validLocation = isPageComplete( url );
+
+    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
+
+    setPageComplete( validLocation );
+
+    return validLocation;
+  }
+
+  
   /* (non-Javadoc)
    * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
    */
@@ -133,14 +163,28 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
     {
       public void handleEvent(Event event) 
       {
-        validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
+        if(clone)
+        {
+          validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
+        }
+        else
+        {
+          validateAndSetComplete( locationCombo.getText());          
+        }
       }      
     });
     locationCombo.addListener( SWT.Modify, new Listener() 
     {
       public void handleEvent(Event event) 
       {
-        validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
+        if(clone)
+        {
+          validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
+        }
+        else
+        {
+          validateAndSetComplete( locationCombo.getText());          
+        }
       }      
     });
     // Add any previously existing URLs to the combo box for ease of use.
@@ -157,14 +201,22 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
 		public void widgetSelected(SelectionEvent e) 
 		{
 			DirectoryDialog dialog = new DirectoryDialog (getShell());
-			dialog.setMessage("Select a repository to clone");
+      if(clone)
+      {
+			  dialog.setMessage("Select a repository to clone");
+      }
+      else
+      {
+        dialog.setMessage("Select a repository to pull/push");     
+      }
 			String dir = dialog.open();
 			if (dir != null)
 				locationCombo.setText(dir);
 		}
 	});
 
-    
+  if(clone)
+  {    
     // Box to enter additional parameters for the clone command.
     // TODO: In the future this should go away and be replaced with something
     //       more graphical including, probably, a repo browser.
@@ -201,10 +253,14 @@ public class WizardCreateRepoLocationPage extends WizardPage implements IWizardP
         validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
       }      
     });
-
-    setControl(outerContainer);
-
-    setPageComplete(false);
+  } 
+  else //if(clone)
+  {
+    projectNameLabel = new Label(outerContainer, SWT.NONE);
+    projectNameLabel.setText("Name of project to pull to:" + repoName);
+  } //if(clone)
+  setControl(outerContainer);
+  setPageComplete(false);
   }
 
   public void dispose()

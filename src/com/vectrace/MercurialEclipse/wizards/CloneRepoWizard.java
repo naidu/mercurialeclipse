@@ -55,10 +55,11 @@ public class CloneRepoWizard extends SyncRepoWizard
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
-  public void init(IWorkbench workbench, IStructuredSelection selection) {
+  public void init(IWorkbench workbench, IStructuredSelection selection) 
+  {
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    createRepoLocationPage = new WizardCreateRepoLocationPage("CreateRepoPage","Create Repository Location",null);
+    syncRepoLocationPage = new WizardCreateRepoLocationPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone","no repo name",null);
   }
 
 

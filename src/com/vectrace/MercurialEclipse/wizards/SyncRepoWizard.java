@@ -52,7 +52,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 public abstract class SyncRepoWizard extends Wizard implements IImportWizard, INewWizard
 {
   
-  WizardCreateRepoLocationPage createRepoLocationPage;
+  WizardCreateRepoLocationPage syncRepoLocationPage;
   
   String locationUrl;
   String parameters;
@@ -91,16 +91,17 @@ public abstract class SyncRepoWizard extends Wizard implements IImportWizard, IN
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
-  public void init(IWorkbench workbench, IStructuredSelection selection) {
+  public void init(IWorkbench workbench, IStructuredSelection selection) 
+  {
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    createRepoLocationPage = new WizardCreateRepoLocationPage("CreateRepoPage","Create Repository Location",null);
+    syncRepoLocationPage = new WizardCreateRepoLocationPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone",null,null);
   }
   
   
   public void dispose()
   {
-    createRepoLocationPage.dispose();
+    syncRepoLocationPage.dispose();
     
     super.dispose();
   }
@@ -111,7 +112,7 @@ public abstract class SyncRepoWizard extends Wizard implements IImportWizard, IN
   public void addPages()
   {
     super.addPages();
-    addPage(createRepoLocationPage);
+    addPage(syncRepoLocationPage);
   }
 
   public IWizardPage getNextPage(IWizardPage page)
