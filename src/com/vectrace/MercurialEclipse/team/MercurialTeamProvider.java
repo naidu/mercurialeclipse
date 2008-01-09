@@ -17,7 +17,7 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 public class MercurialTeamProvider extends RepositoryProvider 
 {
 
-  
+   public static final String ID = "com.vectrace.MercurialEclipse.team.MercurialTeamProvider";
   MercurialHistoryProvider FileHistoryProvider; 
 	/**
 	 * 
