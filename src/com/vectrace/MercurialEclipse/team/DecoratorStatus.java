@@ -87,6 +87,12 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 
     IResource objectResource = (IResource) element;
     IProject objectProject = objectResource.getProject();
+
+    if(objectProject == null)
+    {
+      return;
+    }
+    
     if (null == RepositoryProvider.getProvider(objectProject,MercurialTeamProvider.ID)) 
     {
       return;
