@@ -557,11 +557,10 @@ public class MercurialUtilities
                                                                       // unicode
 
       // output = new StringWriter();
-      myIOThread inThread = new myIOThread("stdin", in_unicode, output,
-          consoleOutput);
+      myIOThread inThread = new myIOThread("stdin", in_unicode, output,consoleOutput);
       // myIOThread errThread = new myIOThread("stderr",err_unicode,error,true);
       // //only to console
-      myIOThread errThread = new myIOThread("stderr", err_unicode, null, true); // only
+      myIOThread errThread = new myIOThread("stderr", err_unicode, output, true); // only
                                                                                 // to
                                                                                 // console
       Thread threadIn = new Thread(inThread);
@@ -619,8 +618,7 @@ public class MercurialUtilities
    * 
    * TODO: Should log failure. TODO: Should not return null for failure.
    */
-  static public String ExecuteCommand(String cmd[], File workingDir,
-      boolean consoleOutput) throws HgException
+  static public String ExecuteCommand(String cmd[], File workingDir, boolean consoleOutput) throws HgException
   {
     // Setup and run command
 
@@ -651,10 +649,8 @@ public class MercurialUtilities
 
     // GetMercurialConsole().println("ExecuteCommandToByteArrayOutputStream()");
 
-    output = ExecuteCommandToByteArrayOutputStream(cmd, workingDir,
-        consoleOutput);
+    output = ExecuteCommandToByteArrayOutputStream(cmd, workingDir, consoleOutput);
     // my_console.print("output: " + output);
-
     // my_console.println("-----------------------");
     return (output != null) ? output.toString() : null;
   }

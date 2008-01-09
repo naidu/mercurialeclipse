@@ -125,7 +125,6 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     File workingDir=MercurialUtilities.getWorkingDir( obj );
 
     IProject proj= obj.getProject();
-
     
     try
     {

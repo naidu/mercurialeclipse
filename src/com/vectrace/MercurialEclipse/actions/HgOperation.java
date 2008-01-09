@@ -67,8 +67,8 @@ public abstract class HgOperation extends TeamOperation {
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
 	 */
-	public void run(IProgressMonitor monitor) throws InvocationTargetException,
-			InterruptedException {
+	public void run(IProgressMonitor monitor) throws InvocationTargetException,InterruptedException 
+	{
 	    // TODO: Would be nice to have something that indicates progress
 	    //       but that would require that functionality from the utilities.
 	    monitor.beginTask(getActionDescription(), 1);
@@ -76,7 +76,8 @@ public abstract class HgOperation extends TeamOperation {
 	    try
 	    {
 	      result = MercurialUtilities.ExecuteCommand(getHgCommand(),getHgWorkingDir(), true);
-	    } catch (HgException e)
+	    } 
+	    catch (HgException e)
 	    {
 	      System.out.println(getActionDescription() + " failed: " + e.getMessage());
 	    }
