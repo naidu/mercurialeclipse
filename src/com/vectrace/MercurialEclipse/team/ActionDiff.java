@@ -10,14 +10,19 @@ import java.util.Iterator;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.internal.Platform;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.compare.CompareUI;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -143,6 +148,57 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
         changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
       }
 
+//tmp testing
+/*
+      System.out.println("Hello");
+
+      
+      progressService.runInUI(
+          PlatformUI.getWorkbench().getProgressService(),
+          new IRunnableWithProgress() 
+          {
+             public void run(IProgressMonitor monitor) 
+             {
+                //do UI work
+               final int ticks = 6000;
+               monitor.beginTask("Doing some work", ticks);
+               try 
+               {
+                  for (int i = 0; i < ticks; i++) {
+                     if (monitor.isCanceled())
+                        return; //status.CANCEL_STATUS;
+                     monitor.subTask("Processing tick #" + i);
+                     //... do some work ...
+                     monitor.worked(1);
+                  }
+               } 
+               finally 
+               {
+                  monitor.done();
+               }
+               return;
+             }
+          },
+          Platform.getWorkspace().getRoot());      
+      
+          
+      // Create a file system subscriber and specify that the
+   // subscriber will synchronize with the provided file system location
+      MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
+
+   // Allow the subscriber to refresh its state
+   subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, null);
+
+   // Collect all the synchronization states and print
+   IResource[] children = subscriber.roots();
+   for(int i=0; i < children.length; i++) {
+     System.out.println("loop");
+     printSyncState(subscriber,children[i]);
+   }
+
+*/
+//tmp testing done
+      
       // Setup and run command diff
 
       MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
@@ -160,5 +216,31 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     }
     return null;
   }
-	
+
+  void printSyncState(MercurialRepositorySubscriber subscriber, IResource resource) 
+  {
+    IResource[] children;
+    try
+    {
+      System.out.println(subscriber.getSyncInfo(resource).toString());
+      children = subscriber.members(resource);
+      for(int i=0; i < children.length; i++) 
+      {
+        IResource child = children[i];
+        if(! child.exists()) 
+        {
+          System.out.println(resource.getFullPath() + " doesn't exist in the workspace");
+        }
+        printSyncState(subscriber, children[i]);
+      }
+    }
+    catch (TeamException e)
+    {
+      // TODO Auto-generated catch block
+      e.printStackTrace();
+    }
+
+  }
+
+  
 }
