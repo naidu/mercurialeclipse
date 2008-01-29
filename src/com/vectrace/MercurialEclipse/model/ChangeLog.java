@@ -36,6 +36,7 @@ public class ChangeLog
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("log");
     launchCmd.add("-v");
+    launchCmd.add("--follow");
     if (!(resource instanceof IProject))
     {
       launchCmd.add(FullPath);
