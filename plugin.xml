@@ -19,6 +19,7 @@
 	   </wizard>
 	</extension>
 
+<!-- TODO 
 	<extension point="org.eclipse.team.ui.synchronizeParticipants">
 	   <participant
 	        icon="icons/mercurialeclipse.png"
@@ -38,7 +39,7 @@
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
 	   </wizard>
 	</extension>
-
+-->
 
 	<extension point="org.eclipse.ui.decorators">
 	    <decorator

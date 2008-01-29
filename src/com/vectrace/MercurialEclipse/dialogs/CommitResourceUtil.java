@@ -40,12 +40,14 @@ public final class CommitResourceUtil
 			statusAction.run();
 			String result = statusAction.getResult();
 			return spliceList(result, workingDir, inResources);
-		} catch (Exception e)
+		}
+    catch (Exception e)
 		{
-			System.out.println("CommitDialog::fillFileList() Error:");
-			System.out.println("Project:" + getProject().toString());
-			System.out.println("Unable to get status " + e.getMessage());
-			return null;
+//			System.out.println("CommitDialog::fillFileList() Error:");
+//			System.out.println("Project:" + getProject().toString());
+//			System.out.println("Unable to get status " + e.getMessage());
+			String msg = "Project " + getProject().toString() + ": unable to get status " + e.getMessage();
+			MercurialEclipsePlugin.logError(msg,e);			return null;
 		}
 	}
 
@@ -72,7 +74,8 @@ public final class CommitResourceUtil
 			{
 				return thisIFile; // Found a match
 			}
-		} else if (inResource instanceof IFolder)
+		} 
+    else if (inResource instanceof IFolder)
 		{
 			try
 			{
@@ -91,7 +94,8 @@ public final class CommitResourceUtil
 						return thisResource; // Found a resource
 					}
 				}
-			} catch (CoreException e)
+			} 
+      catch (CoreException e)
 			{
 				MercurialEclipsePlugin.logError(e);
 			}

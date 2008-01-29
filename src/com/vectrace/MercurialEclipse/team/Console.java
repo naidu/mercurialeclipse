@@ -11,12 +11,8 @@ package com.vectrace.MercurialEclipse.team;
 public class Console
 {
 
-	/**
-	 * 
-	 */
 	public Console() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 }

@@ -20,11 +20,13 @@ public class MercurialRepositorySubscriber extends Subscriber
 
   public class LocalHistoryVariantComparator implements IResourceVariantComparator 
   {
+    /* Compare current with newer/older */
     public boolean compare(IResource local, IResourceVariant remote) 
     {
       return false;
     }
 
+    /* Compare newer/older with newer/older */
     public boolean compare(IResourceVariant base, IResourceVariant remote) 
     {
       return true;
@@ -107,7 +109,7 @@ public class MercurialRepositorySubscriber extends Subscriber
     return getSyncInfo(resource,null,null);
   }
 
-  public SyncInfo getSyncInfo(IResource resource, IStorage r1, IStorage r2) throws TeamException 
+  public SyncInfo getSyncInfo(IResource resourceLocal, IStorage storageBase, IStorage storageRemote) throws TeamException 
   {
     try 
     {
@@ -122,18 +124,18 @@ public class MercurialRepositorySubscriber extends Subscriber
         } 
       }
       */
-      MercurialFileHistoryVariant fileHist1=null;
-      MercurialFileHistoryVariant fileHist2=null;
-      if(r1 != null)
+      MercurialFileHistoryVariant fileHistBase=null;
+      MercurialFileHistoryVariant fileHistRemote=null;
+      if(storageBase != null)
       {
-        fileHist1 = new MercurialFileHistoryVariant(r1);
+        fileHistBase = new MercurialFileHistoryVariant(storageBase);
       }
-      if(r2 != null)
+      if(storageRemote != null)
       {
-        fileHist2 = new MercurialFileHistoryVariant(r2);
+        fileHistRemote = new MercurialFileHistoryVariant(storageRemote);
       }
       
-      SyncInfo info = new SyncInfo(resource, fileHist1,fileHist2, comparatorObj);
+      SyncInfo info = new SyncInfo(resourceLocal, fileHistBase,fileHistRemote, comparatorObj);
       info.init();
       return info;
     } 
