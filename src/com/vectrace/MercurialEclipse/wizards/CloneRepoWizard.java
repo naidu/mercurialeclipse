@@ -88,8 +88,9 @@ public class CloneRepoWizard extends SyncRepoWizard
     }
     catch (Exception e)
     {
-      System.out.println("Clone operation failed");
-      System.out.println(e.getMessage());
+    	MercurialEclipsePlugin.logError("Clone operation failed", e);
+//      System.out.println("Clone operation failed");
+//      System.out.println(e.getMessage());
     }
 
     // FIXME: Project creation must be done after the clone otherwise the

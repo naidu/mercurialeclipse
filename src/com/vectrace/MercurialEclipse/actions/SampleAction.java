@@ -63,5 +63,6 @@ public class SampleAction implements IWorkbenchWindowActionDelegate {
 	 */
 	public void init(IWorkbenchWindow window) {
 		this.window = window;
-    System.out.println("SampleAction.init()");	}
+//    System.out.println("SampleAction.init()");	
+		}
 }

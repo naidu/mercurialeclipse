@@ -23,6 +23,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.AddFileAction;
 import com.vectrace.MercurialEclipse.actions.CommitAction;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
@@ -182,7 +183,8 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 }
                 catch(HgException e)
                 {
-                  System.out.println( e.getMessage() );
+                	MercurialEclipsePlugin.logError(e);
+//                  System.out.println( e.getMessage() );
                   repository = null;
                   workingDir=null;
                 }
@@ -203,7 +205,8 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 }
                 catch(HgException e)
                 {
-                  System.out.println( e.getMessage() );
+                	MercurialEclipsePlugin.logError(e);
+//                  System.out.println( e.getMessage() );
                   this_repository = null;
                 }
                 
@@ -233,7 +236,8 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
             } 
             catch (Exception e)
             {
-              System.out.println("Unable to finish commit: " + e.getMessage());
+            	MercurialEclipsePlugin.logError("Unable to finish commit: ", e);
+//              System.out.println("Unable to finish commit: " + e.getMessage());
             }
           }
         } while(notEmpty); //Loop until we are empty.        

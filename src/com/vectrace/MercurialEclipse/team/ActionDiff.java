@@ -20,6 +20,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.compare.CompareUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
@@ -152,11 +153,13 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     } 
     catch (HgException e)
     {
-      System.out.println(e.getMessage());
+    	MercurialEclipsePlugin.logError(e);
+//      System.out.println(e.getMessage());
     } 
     catch (TeamException e)
     {
-      e.printStackTrace();
+    	MercurialEclipsePlugin.logError(e);
+//      e.printStackTrace();
     }
     return null;
   }

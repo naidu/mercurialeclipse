@@ -31,6 +31,9 @@ import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
+import sun.security.jgss.spi.MechanismFactory;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -79,7 +82,7 @@ public abstract class HgOperation extends TeamOperation {
 	    } 
 	    catch (HgException e)
 	    {
-	      System.out.println(getActionDescription() + " failed: " + e.getMessage());
+	    	MercurialEclipsePlugin.logError(getActionDescription() + " failed:" , e);
 	    }
 	    finally
 	    {

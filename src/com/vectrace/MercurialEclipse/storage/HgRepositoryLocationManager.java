@@ -63,6 +63,7 @@ public class HgRepositoryLocationManager
     }
     catch(IOException e)
     {
+    	MercurialEclipsePlugin.logError(e);
       // Expected exception when there are no more records.
     }
     finally

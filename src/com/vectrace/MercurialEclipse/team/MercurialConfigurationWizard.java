@@ -35,6 +35,8 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+
 
 
 /**
@@ -219,12 +221,14 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 			} 
 			catch (IOException e) 
 			{
-				e.printStackTrace();
+				MercurialEclipsePlugin.logError(e);
+//				e.printStackTrace();
 				return false;
 			} 
 			catch (InterruptedException e) 
 			{
-				e.printStackTrace();
+				MercurialEclipsePlugin.logError(e);
+//				e.printStackTrace();
 				return false;
 			}			
 		}
@@ -234,7 +238,8 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 		} 
 		catch (TeamException e) 
 		{
-			e.printStackTrace();
+			MercurialEclipsePlugin.logError(e);
+//			e.printStackTrace();
 			return false;
 		}
     DecoratorStatus.refresh();

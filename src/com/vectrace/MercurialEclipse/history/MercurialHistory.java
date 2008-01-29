@@ -37,7 +37,7 @@ public class MercurialHistory extends FileHistory
   public IFileRevision[] getContributors(IFileRevision revision)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialHistory::getContributors()");
+//    System.out.println("MercurialHistory::getContributors()");
     return null;
   }
 
@@ -47,7 +47,7 @@ public class MercurialHistory extends FileHistory
   public IFileRevision getFileRevision(String id)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialHistory::getFileRevision(" + id + ")");
+//    System.out.println("MercurialHistory::getFileRevision(" + id + ")");
     return null;
   }
 
@@ -66,7 +66,7 @@ public class MercurialHistory extends FileHistory
   public IFileRevision[] getTargets(IFileRevision revision)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialHistory::getTargets()");
+//    System.out.println("MercurialHistory::getTargets()");
     return null;
   }
 

@@ -55,7 +55,9 @@ public class PushRepoWizard extends SyncRepoWizard
     // Check that this project exist.
     if( project.getLocation() == null )
     {
-      System.out.println( "Project " + projectName + " don't exists why push?");
+      String msg = "Project " + projectName + " don't exists why push?";
+      MercurialEclipsePlugin.logError(msg, null);
+//	System.out.println( string);
       return false;
     }
 
@@ -77,8 +79,9 @@ public class PushRepoWizard extends SyncRepoWizard
     }
     catch (Exception e)
     {
-      System.out.println("push operation failed");
-      System.out.println(e.getMessage());
+//      System.out.println("push operation failed");
+//      System.out.println(e.getMessage());
+    	 MercurialEclipsePlugin.logError("push operation failed",e);
     }
 
     // It appears good. Stash the repo location.

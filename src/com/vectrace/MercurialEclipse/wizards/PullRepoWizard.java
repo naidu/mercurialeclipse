@@ -55,7 +55,7 @@ public class PullRepoWizard extends SyncRepoWizard
     // Check that this project exist.
     if( project.getLocation() == null )
     {
-      System.out.println( "Project " + projectName + " don't exists why pull?");
+//      System.out.println( "Project " + projectName + " don't exists why pull?");
       return false;
     }
 
@@ -78,8 +78,9 @@ public class PullRepoWizard extends SyncRepoWizard
     }
     catch (Exception e)
     {
-      System.out.println("pull operation failed");
-      System.out.println(e.getMessage());
+    	MercurialEclipsePlugin.logError("pull operation failed", e);
+//      System.out.println("pull operation failed");
+//      System.out.println(e.getMessage());
     }
 
     // It appears good. Stash the repo location.

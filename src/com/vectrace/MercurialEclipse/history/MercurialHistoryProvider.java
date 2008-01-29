@@ -32,7 +32,7 @@ public class MercurialHistoryProvider extends FileHistoryProvider
 
   public IFileHistory getFileHistoryFor(IResource resource, int flags, IProgressMonitor monitor)
   {
-    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + resource.toString() + ")");
+//    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + resource.toString() + ")");
     if (resource instanceof IResource && ((IResource) resource).getType() == IResource.FILE) 
     {
       RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) resource).getProject());
@@ -46,13 +46,13 @@ public class MercurialHistoryProvider extends FileHistoryProvider
    
   public IFileHistory getFileHistoryFor(IFileStore store, int flags, IProgressMonitor monitor)
   {
-    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + store.toString() + ")");
+//    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + store.toString() + ")");
     return null; //new MercurialFileHistory();
   }
 
   public IFileRevision getWorkspaceFileRevision(IResource resource)
   {
-    System.out.println("MercurialHistoryProvider::getWorkspaceFileRevision(" + resource.toString() + ")");
+//    System.out.println("MercurialHistoryProvider::getWorkspaceFileRevision(" + resource.toString() + ")");
     return null;
   }
 

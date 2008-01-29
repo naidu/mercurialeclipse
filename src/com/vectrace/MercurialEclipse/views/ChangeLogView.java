@@ -42,6 +42,8 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeLog;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
@@ -394,7 +396,8 @@ public class ChangeLogView extends ViewPart
 			  }
         catch (TeamException e)
         {
-          e.printStackTrace();
+        	MercurialEclipsePlugin.logError(e);
+//          e.printStackTrace();
         }
 
 				

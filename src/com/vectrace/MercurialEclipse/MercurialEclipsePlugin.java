@@ -47,6 +47,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
       super.start(context);
     } catch (Exception e)
     {
+    	logError("unable to startMercurialEclipsePlugin ", e);
       // TODO: handle exception
       // System.out.println("MercurialEclipsePlugin.start() got
       // execption");
@@ -97,6 +98,16 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   public static final void logError(String message, Throwable error)
   {
     getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
+  }
+  
+  public static final void logWarning(String message, Throwable error)
+  {
+    getDefault().getLog().log(createStatus(message, 0, IStatus.WARNING, error));
+  }
+  
+  public static final void logInfo(String message, Throwable error)
+  {
+    getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
   }
 
   private static IStatus createStatus(String msg, int code, int severity,

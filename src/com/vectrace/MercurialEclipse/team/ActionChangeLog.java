@@ -90,11 +90,13 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
     } 
     catch (InvocationTargetException e) 
     {
-      System.out.println( e.getMessage() );
+    	MercurialEclipsePlugin.logError(e);
+//      System.out.println( e.getMessage() );
     } 
     catch (InterruptedException e) 
     {
-      System.out.println( e.getMessage() );
+    	MercurialEclipsePlugin.logError(e);
+//      System.out.println( e.getMessage() );
     }
 
 /*    

@@ -40,6 +40,8 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.model.IWorkbenchAdapter;
 import org.eclipse.ui.progress.IProgressService;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
 {
@@ -61,24 +63,25 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
       } 
       catch (CoreException e) 
       {
+    	  MercurialEclipsePlugin.logError(e);
       }
     }
 
     public Object[] getChildren(Object o) 
     {
-      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getChildren()");
+//      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getChildren()");
       return new Object[0];
     }
 
     public ImageDescriptor getImageDescriptor(Object object) 
     {
-      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()");
+//      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()");
       return null;
     }
 
     public String getLabel(Object o) 
     {
-      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getLabel()");
+//      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getLabel()");
       if (storage != null) 
       {
         return storage.getName();
@@ -88,7 +91,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
 
     public Object getParent(Object o) 
     {
-      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getParent()");
+//      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getParent()");
       return null;
     }
 
@@ -100,7 +103,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
 
     public boolean exists() 
     {
-      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::exists()");
+//      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::exists()");
       return true;
     }
 
@@ -143,6 +146,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
         } 
         catch (CoreException e) 
         {
+        	MercurialEclipsePlugin.logError(e);
         }
       }
 
@@ -271,6 +275,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
       } 
       catch (IOException e) 
       {
+    	  MercurialEclipsePlugin.logError(e);
       }
     }
     if (type == null) 

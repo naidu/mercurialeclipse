@@ -13,6 +13,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 
@@ -75,7 +76,8 @@ public class ActionView implements IWorkbenchWindowActionDelegate {
       MercurialUtilities.ExecuteCommand(launchCmd,new File(Repository),true);
     } catch (HgException e)
     {
-      System.out.println(e.getMessage());
+    	MercurialEclipsePlugin.logError(e);
+//      System.out.println(e.getMessage());
     }
 
 	}

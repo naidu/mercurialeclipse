@@ -45,6 +45,7 @@ import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -96,8 +97,9 @@ public class MercurialHistoryPage extends HistoryPage
         }
         catch (CoreException e)
         {
+        	MercurialEclipsePlugin.logError(e);
           // TODO Auto-generated catch block
-          e.printStackTrace();
+//          e.printStackTrace();
         }
         //Internal code used for convenience - you can use 
         //your own here
@@ -488,7 +490,7 @@ public class MercurialHistoryPage extends HistoryPage
   public Object getAdapter(Class adapter)
   {
     // TODO Auto-generated method stub
-    System.out.println("MercurialHistoryPage::getAdapter()");
+//    System.out.println("MercurialHistoryPage::getAdapter()");
     return null;
   }
 }

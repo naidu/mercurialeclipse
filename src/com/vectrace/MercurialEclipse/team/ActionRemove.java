@@ -20,6 +20,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 
@@ -131,7 +132,8 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             } 
             catch (HgException e)
             {
-              System.out.println(e.getMessage());
+            	MercurialEclipsePlugin.logError(e);
+//              System.out.println(e.getMessage());
             }
           DecoratorStatus.refresh();
           }

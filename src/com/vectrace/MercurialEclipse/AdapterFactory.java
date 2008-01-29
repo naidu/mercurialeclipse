@@ -37,7 +37,7 @@ public class AdapterFactory implements IAdapterFactory
   public Class[] getAdapterList()
   {
     // TODO Auto-generated method stub
-    System.out.println("AdapterFactory::getAdapterList()");
+//    System.out.println("AdapterFactory::getAdapterList()");
     return new Class[] {IHistoryPageSource.class};
   }
 

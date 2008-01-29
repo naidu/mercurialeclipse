@@ -507,8 +507,9 @@ public class MercurialUtilities
 
         catch (IOException e)
         {
+        	MercurialEclipsePlugin.logError(e);        	
           // TODO Auto-generated catch block
-          e.printStackTrace();
+//          e.printStackTrace();
         }
 
       }
@@ -603,10 +604,12 @@ public class MercurialUtilities
 
     } catch (IOException e)
     {
-      e.printStackTrace();
+    	MercurialEclipsePlugin.logError(e);
+//      e.printStackTrace();
     } catch (InterruptedException e)
     {
-      e.printStackTrace();
+    	MercurialEclipsePlugin.logError(e);
+//      e.printStackTrace();
     }
     return null;
   }

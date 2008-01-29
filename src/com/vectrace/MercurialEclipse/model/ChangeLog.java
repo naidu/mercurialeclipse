@@ -6,6 +6,8 @@ import java.util.StringTokenizer;
 import java.util.Vector;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -56,7 +58,8 @@ public class ChangeLog
       }
     } catch (HgException e)
     {
-      System.out.println(e.getMessage());
+    	MercurialEclipsePlugin.logError(e);
+//      System.out.println(e.getMessage());
     }
 
   }
