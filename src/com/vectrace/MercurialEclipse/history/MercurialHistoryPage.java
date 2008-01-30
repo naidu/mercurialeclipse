@@ -274,16 +274,15 @@ public class MercurialHistoryPage extends HistoryPage
   @Override
   public boolean inputSet()
   {
-//    System.out.println("MercurialHistoryPage::inputSet()");
+//    System.out.println("MercurialHistoryPage::inputSet()");   
     
-    
-    if(isValidInput(resource))
-    {
-      mercurialHistory = new MercurialHistory((IFile)resource);
+//    if(isValidInput(resource))  //removed since it is over protective
+//    {
+      mercurialHistory = new MercurialHistory(resource);
       refresh();
       return true;
-    }
-    return false;
+//    }
+//    return false;
   }
 
   /* (non-Javadoc)
@@ -433,15 +432,15 @@ public class MercurialHistoryPage extends HistoryPage
   public boolean isValidInput(Object object)
   {
 //    System.out.println("MercurialHistoryPage::isValidInput()");
-    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
-    {
-      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) object).getProject());
-      if (provider instanceof MercurialTeamProvider)
-      {
+//    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
+//    {
+//      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) object).getProject());
+//      if (provider instanceof MercurialTeamProvider)
+//      {
         return true;
-      }
-    }
-    return false;
+//      }
+//    }
+//    return false;
   }
 
   /* (non-Javadoc)
@@ -451,8 +450,8 @@ public class MercurialHistoryPage extends HistoryPage
   {
     // TODO Auto-generated method stub
 //    System.out.println("MercurialHistoryPage::refresh()");
-    if(isValidInput(resource))
-    {
+//    if(isValidInput(resource))
+//    {
 //      changeLogViewContentProvider.setChangeLog(resource);
 
       if (refreshFileHistoryJob == null)
@@ -481,7 +480,7 @@ public class MercurialHistoryPage extends HistoryPage
       Utils.schedule(refreshFileHistoryJob, site);
     
     
-    }
+//    }
   }
 
   /* (non-Javadoc)

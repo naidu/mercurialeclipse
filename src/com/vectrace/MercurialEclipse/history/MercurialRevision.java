@@ -6,6 +6,7 @@ package com.vectrace.MercurialEclipse.history;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -21,15 +22,15 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
  */
 public class MercurialRevision extends FileRevision
 {
-  IFile file; 
+  IResource resource; 
   ChangeSet changeSet; 
   IStorageMercurialRevision iStorageMercurialRevision; //Cached data
   
-  public MercurialRevision(ChangeSet changeSet,IFile resource)
+  public MercurialRevision(ChangeSet changeSet,IResource resource)
   {
     super();
     this.changeSet = changeSet;
-    this.file=resource;
+    this.resource=resource;
   }
 
   
@@ -46,7 +47,7 @@ public class MercurialRevision extends FileRevision
   {
     // TODO Auto-generated method stub
 //    System.out.println("MercurialRevision::getName() = " + file.getName());
-    return file.getName();
+    return resource.getName();
   }
 
   public String getContentIdentifier() 
@@ -64,8 +65,8 @@ public class MercurialRevision extends FileRevision
 //    System.out.println("MercurialRevision::getStorage()");
     if(iStorageMercurialRevision==null)
     {
-      IProject proj=file.getProject();
-      iStorageMercurialRevision = new IStorageMercurialRevision(proj,file,changeSet.getChangeset());
+      IProject proj=resource.getProject();
+      iStorageMercurialRevision = new IStorageMercurialRevision(proj,resource,changeSet.getChangeset());
     }
     return iStorageMercurialRevision;
   }

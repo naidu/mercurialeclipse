@@ -6,6 +6,7 @@ package com.vectrace.MercurialEclipse.history;
 
 import java.util.Vector;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
@@ -21,15 +22,15 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class MercurialHistory extends FileHistory
 {
-  private IFile file;
+  private IResource resource;
   protected IFileRevision[] revisions;
   ChangeLog changeLog;
 
 
-  public MercurialHistory(IFile file)
+  public MercurialHistory(IResource resource)
   {
     super();
-    this.file = file;
+    this.resource = resource;
   }
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileHistory#getContributors(org.eclipse.team.core.history.IFileRevision)
@@ -73,11 +74,11 @@ public class MercurialHistory extends FileHistory
   public void refresh(IProgressMonitor monitor) throws CoreException 
   {
 //    System.out.println("MercurialHistory::refresh() (home made)");
-    RepositoryProvider provider = RepositoryProvider.getProvider(file.getProject());
+    RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
       
-      changeLog = new ChangeLog(file);
+      changeLog = new ChangeLog(resource);
       
 //      changeLog.ChangeChangeLog(in_resource);
       Vector<ChangeSet> chageSets = changeLog.getChangeLog();
@@ -86,7 +87,7 @@ public class MercurialHistory extends FileHistory
       revisions = new IFileRevision[chageSets.size()];
       for(int i=0;i<chageSets.size();i++)
       {
-        revisions[i]=new MercurialRevision(chageSets.get(i),file);
+        revisions[i]=new MercurialRevision(chageSets.get(i),resource);
       }
     }
   } 

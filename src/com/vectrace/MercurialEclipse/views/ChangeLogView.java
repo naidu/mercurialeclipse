@@ -281,7 +281,7 @@ public class ChangeLogView extends ViewPart
 
 	 public void showChangeLog(IResource in_resource) 
 	 {
-//     System.out.println("ChangeLogView::showChangeLog()");
+//     System.out.println("ChangeLogView::showChangeLog(" + in_resource.toString() + ")" );
 	   changeLogViewContentProvider.setChangeLog(in_resource);	 
 	 }
 

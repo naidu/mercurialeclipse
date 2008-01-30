@@ -33,14 +33,14 @@ public class MercurialHistoryProvider extends FileHistoryProvider
   public IFileHistory getFileHistoryFor(IResource resource, int flags, IProgressMonitor monitor)
   {
 //    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + resource.toString() + ")");
-    if (resource instanceof IResource && ((IResource) resource).getType() == IResource.FILE) 
-    {
+//    if (resource instanceof IResource && ((IResource) resource).getType() == IResource.FILE) 
+//    {
       RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) resource).getProject());
       if (provider instanceof MercurialTeamProvider)
       {
         return new MercurialHistory((IFile)resource);
       }
-    }
+//    }
     return null;
   }
    

@@ -34,15 +34,15 @@ public class MercurialHistoryPageSource extends HistoryPageSource
     // TODO Check if the file is in a Mercurial repository
 //    System.out.println("MercurialHistoryPageSource::canShowHistoryFor( " +object.toString() + ")");
 
-    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
-    {
-      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) object).getProject());
-      if (provider instanceof MercurialTeamProvider)
-      {
+//    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
+//    {
+//      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) object).getProject());
+//      if (provider instanceof MercurialTeamProvider)
+//      {
         return true;
-      }
-    }
-    return false;
+//      }
+//    }
+//    return false;
   }
 
   /* (non-Javadoc)
@@ -51,11 +51,11 @@ public class MercurialHistoryPageSource extends HistoryPageSource
   public Page createPage(Object object)
   {
 //    System.out.println("MercurialHistoryPageSource::createPage()");
-    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
-    {
+//    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
+//    {
       return new MercurialHistoryPage((IResource) object);
-    }
-    return null;
+//    }
+//    return null;
   }
 
 }

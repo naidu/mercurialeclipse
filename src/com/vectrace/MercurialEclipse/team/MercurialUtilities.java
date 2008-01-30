@@ -670,13 +670,17 @@ public class MercurialUtilities
     if (obj.getType() == IResource.PROJECT)
     {
       workingDir = (obj.getLocation()).toFile();
-    } else if (obj.getType() == IResource.FOLDER)
+    }
+    else if (obj.getType() == IResource.FOLDER)
     {
-      workingDir = (obj.getLocation()).toFile();
-    } else if (obj.getType() == IResource.FILE)
+//      workingDir = (obj.getLocation()).toFile();
+      workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
+    }
+    else if (obj.getType() == IResource.FILE)
     {
       workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
-    } else
+    } 
+    else
     {
       workingDir = null;
     }
