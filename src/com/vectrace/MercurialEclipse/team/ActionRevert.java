@@ -171,8 +171,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
     {
         
         // the last argument will be replaced with a path
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert",
-                "" };
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert","--","" };
         for (Iterator iter = resources.iterator(); iter.hasNext();) 
         {
             IResource resource = ((CommitResource) iter.next()).getResource();
@@ -181,7 +180,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
 
             // Setup and run command
             File workingDir = MercurialUtilities.getWorkingDir(resource);
-            launchCmd[2] = MercurialUtilities.getResourceName(resource);
+            launchCmd[3] = MercurialUtilities.getResourceName(resource);
             // System.out.println("Revert = " + FullPath);
             // IResourceChangeEvent event = new IResourceChangeEvent();
             try 

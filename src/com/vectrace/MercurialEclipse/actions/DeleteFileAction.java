@@ -1,5 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc.
+ * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
+ * Edited by Zingo Andersen
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -60,6 +62,7 @@ public class DeleteFileAction extends HgOperation
       MercurialUtilities.getHGExecutable(),
       "remove",
       "--force",
+      "--",
       resource.getLocation().toOSString() 
     };
 

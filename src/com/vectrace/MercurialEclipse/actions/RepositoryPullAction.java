@@ -60,6 +60,7 @@ public class RepositoryPullAction extends HgOperation
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("pull");
+    launchCmd.add("--");
     launchCmd.add(repo.getUrl());
     launchCmd.trimToSize();
    

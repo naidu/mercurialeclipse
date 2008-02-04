@@ -79,7 +79,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 	  	Object obj;
 	    Iterator itr; 
 	    // the last argument will be replaced with a path
-  		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"add", "" };
+  		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"add","--", "" };
 	    itr=selection.iterator();
 	    while(itr.hasNext())
 	    {
@@ -94,7 +94,7 @@ public class ActionAdd implements IWorkbenchWindowActionDelegate {
 
             //Setup and run command
             File workingDir=MercurialUtilities.getWorkingDir(resource);
-  		    	launchCmd[2] = MercurialUtilities.getResourceName(resource);
+  		    	launchCmd[3] = MercurialUtilities.getResourceName(resource);
 //            System.out.println("Add>" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + "---->Workdir:" + workingDir.toString());
             try
             {

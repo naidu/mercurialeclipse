@@ -81,6 +81,7 @@ public class RepositoryCloneAction extends HgOperation
       launchCmd.add(cloneParameters);      
     }
     launchCmd.add(repo.getUrl());
+    launchCmd.add("--");
     launchCmd.add(projectName);
     launchCmd.trimToSize();
    

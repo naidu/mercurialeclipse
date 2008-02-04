@@ -89,6 +89,7 @@ public class IStorageMercurialRevision implements IStorage
                            "cat", 
                            "--rev", 
                            rev,
+                           "--",
                            MercurialUtilities.getResourceName(resource) 
                            };
     File workingDir=MercurialUtilities.getWorkingDir(resource);

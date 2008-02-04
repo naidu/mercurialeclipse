@@ -108,7 +108,7 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
           //Setup and run command
           File workingDir=MercurialUtilities.getWorkingDir(resource);
           String FullPath = MercurialUtilities.getResourceName(resource);
-          String launchCmd[] = { MercurialUtilities.getHGExecutable(), "annotate" , "--user", "--number","--changeset","--date",FullPath};
+          String launchCmd[] = { MercurialUtilities.getHGExecutable(), "annotate" , "--user", "--number","--changeset","--date","--",FullPath};
 
 //          System.out.println("Annotate>" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + "---->Workdir:" + workingDir.toString());
           

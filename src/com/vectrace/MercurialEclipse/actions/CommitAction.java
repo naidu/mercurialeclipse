@@ -1,5 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc.
+ * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
+ * Edited by Zingo Andersen
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -89,6 +91,8 @@ public class CommitAction extends HgOperation
     // User name
     launchCmd.add("--user");
     launchCmd.add(MercurialUtilities.getHGUsername());
+
+    launchCmd.add("--");
     
     // All the files.
     for(int file=0; file < files.length; file++)

@@ -98,7 +98,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		Object obj;
     Iterator itr; 
 	  // the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"remove", "" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"remove","--", "" };
     itr=selection.iterator();
     while(itr.hasNext())
     {
@@ -114,9 +114,9 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
           //Setup and run command
           File workingDir=MercurialUtilities.getWorkingDir(resource);
-          launchCmd[2] = MercurialUtilities.getResourceName(resource);
+          launchCmd[3] = MercurialUtilities.getResourceName(resource);
 
-          if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[2] + "\nFrom the repository and filesystem?") )
+          if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[3] + "\nFrom the repository and filesystem?") )
           {
             try
             {

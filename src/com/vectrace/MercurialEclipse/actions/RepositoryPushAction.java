@@ -60,6 +60,7 @@ public class RepositoryPushAction extends HgOperation
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("push");
+    launchCmd.add("--");
     launchCmd.add(repo.getUrl());
     launchCmd.trimToSize();
    

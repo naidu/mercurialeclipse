@@ -43,6 +43,7 @@ public class ChangeLog
     {
       launchCmd.add("--follow");
     }
+    launchCmd.add("--");
     if (!(resource instanceof IProject))
     {
       launchCmd.add(FullPath);

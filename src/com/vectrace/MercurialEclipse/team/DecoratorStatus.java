@@ -175,6 +175,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     List<String> launchCmd = new ArrayList<String>();
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("status");
+    launchCmd.add("--");
     // skip -A flag, use null as managed instead
     //		launchCmd.add("-A");
 

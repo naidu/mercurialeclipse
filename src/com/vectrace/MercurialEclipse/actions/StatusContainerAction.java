@@ -1,5 +1,7 @@
 /*******************************************************************************
  * Copyright (c) 2006 Software Balm Consulting Inc.
+ * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
+ * Edited by Zingo Andersen
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -57,6 +59,7 @@ public class StatusContainerAction extends HgOperation
     ArrayList launchCmd = new ArrayList(resources.length + 4);
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("status");
+    launchCmd.add("--");
     if( resources.length == 0 )
     {
 //    	System.out.println("StatusContainerAction::getHgCommand() resources.length == 0");
