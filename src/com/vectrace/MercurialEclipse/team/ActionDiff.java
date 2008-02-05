@@ -1,10 +1,30 @@
-/**
- * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
- * Created by zingo
- */
+/*******************************************************************************
+ * Copyright (c) 2008 Vectrace (Zingo Andersen) 
+ * 
+ * This software is licensed under the zlib/libpng license.
+ * 
+ * This software is provided 'as-is', without any express or implied warranty. 
+ * In no event will the authors be held liable for any damages arising from the
+ * use of this software.
+ *
+ * Permission is granted to anyone to use this software for any purpose, 
+ * including commercial applications, and to alter it and redistribute it freely,
+ * subject to the following restrictions:
+ *
+ *  1. The origin of this software must not be misrepresented; you must not 
+ *            claim that you wrote the original software. If you use this 
+ *            software in a product, an acknowledgment in the product 
+ *            documentation would be appreciated but is not required.
+ *
+ *   2. Altered source versions must be plainly marked as such, and must not be
+ *            misrepresented as being the original software.
+ *
+ *   3. This notice may not be removed or altered from any source distribution.
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
@@ -150,38 +170,47 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
       }
 
 //tmp testing
-/*
-      System.out.println("Hello");
 
-      
-      progressService.runInUI(
-          PlatformUI.getWorkbench().getProgressService(),
-          new IRunnableWithProgress() 
+      System.out.println("Hello");
+/*     
+          try
           {
-             public void run(IProgressMonitor monitor) 
-             {
-                //do UI work
-               final int ticks = 6000;
-               monitor.beginTask("Doing some work", ticks);
-               try 
-               {
-                  for (int i = 0; i < ticks; i++) {
-                     if (monitor.isCanceled())
-                        return; //status.CANCEL_STATUS;
-                     monitor.subTask("Processing tick #" + i);
-                     //... do some work ...
-                     monitor.worked(1);
-                  }
-               } 
-               finally 
-               {
-                  monitor.done();
-               }
-               return;
-             }
-          },
-          Platform.getWorkspace().getRoot());      
-      
+            PlatformUI.getWorkbench().getProgressService().run(true, true,      
+              new IRunnableWithProgress() 
+              {
+                 public void run(IProgressMonitor monitor) 
+                 {
+                    //do UI work
+                   final int ticks = 600000;
+                   monitor.beginTask("Doing some work", ticks);
+                   try 
+                   {
+                      for (int i = 0; i < ticks; i++) {
+                         if (monitor.isCanceled())
+                            return; //status.CANCEL_STATUS;
+                         monitor.subTask("Processing tick #" + i);
+                         //... do some work ...
+                         monitor.worked(1);
+                         System.out.println("loop=" + i);
+                      }
+                   } 
+                   finally 
+                   {
+                      monitor.done();
+                   }
+                   return;
+                 }
+              }
+            );
+          }
+          catch (InvocationTargetException e)
+          {
+            MercurialEclipsePlugin.logError(e);
+          }
+          catch (InterruptedException e)
+          {
+            MercurialEclipsePlugin.logError(e);
+          }      
           
       // Create a file system subscriber and specify that the
    // subscriber will synchronize with the provided file system location
@@ -196,8 +225,8 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
      System.out.println("loop");
      printSyncState(subscriber,children[i]);
    }
+*/      
 
-*/
 //tmp testing done
       
       // Setup and run command diff
@@ -225,7 +254,15 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     IResource[] children;
     try
     {
-      System.out.println(subscriber.getSyncInfo(resource).toString());
+      if(resource != null)
+      {
+        System.out.println("printSyncState:" + resource.toString() + "::"+ subscriber.getSyncInfo(resource).toString());
+      }
+      else
+      {
+        System.out.println("printSyncState: resoure is null :(");
+        
+      }
       children = subscriber.members(resource);
       for(int i=0; i < children.length; i++) 
       {
@@ -239,8 +276,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     }
     catch (TeamException e)
     {
-      // TODO Auto-generated catch block
-      e.printStackTrace();
+      MercurialEclipsePlugin.logError(e);
     }
 
   }

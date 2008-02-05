@@ -57,7 +57,8 @@ public class MoveFileAction extends HgOperation
     { 
       MercurialUtilities.getHGExecutable(),
       "rename",
-      "--force",
+      "--force",  /* Rename even if changed */
+//      "--after",  /* Do not do the rename just record it Eclipse will do it */
       "--",
       src.getLocation().toOSString(), dest.getLocation().toOSString() 
     };

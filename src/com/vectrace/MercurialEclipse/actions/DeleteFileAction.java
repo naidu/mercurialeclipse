@@ -61,7 +61,8 @@ public class DeleteFileAction extends HgOperation
     { 
       MercurialUtilities.getHGExecutable(),
       "remove",
-      "--force",
+      "--force",  /* Remove even if changed */
+//      "--after",  /* Do not do the rename just record it Eclipse will do it */
       "--",
       resource.getLocation().toOSString() 
     };
