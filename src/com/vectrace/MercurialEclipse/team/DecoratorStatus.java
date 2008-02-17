@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,8 +26,6 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.viewers.IDecoration;
@@ -144,7 +141,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   */
   private void refresh(IProject project) throws HgException 
   {
-    String output = MercurialUtilities.ExecuteCommand(getHgCommand(project), new File(getAbsolutePath(project).toOSString()), false);
+    String output = MercurialUtilities.ExecuteCommand(getHgCommand(project), project.getLocation().toFile(), false);
     parseStatusCommand(project, output);
   }
 
@@ -170,37 +167,18 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     }
   }
 
-  private String[] getHgCommand(IProject project) 
+  private String[] getHgCommand(IResource... resources) 
   {
-    return getHgCommand(project, new IResource[0]);
-  }
-
-  private String[] getHgCommand(IProject project, IResource[] resources) 
-  {
-    Assert.isNotNull(project);
     List<String> launchCmd = new ArrayList<String>();
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("status");
     launchCmd.add("--");
     // skip -A flag, use null as managed instead
     //		launchCmd.add("-A");
-
-    for (IResource r : resources) 
-    {
-      launchCmd.add(r.getFullPath().toOSString());
+    for(IResource r : resources) {
+    	launchCmd.add(r.getLocation().toOSString());
     }
     return (String[]) launchCmd.toArray(new String[launchCmd.size()]);
-  }
-
-  /**
-  * @param resource
-  * @return
-  */
-  private IPath getAbsolutePath(final IResource resource) 
-  {
-    IPath root = resource.getWorkspace().getRoot().getRawLocation();
-    IPath projectPath = root.append(resource.getFullPath());
-    return projectPath;
   }
 
   /*
