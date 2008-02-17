@@ -403,4 +403,12 @@
       </toc>
    </extension -->
 
+   <extension
+         point="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider">
+      <referenceprovider
+            label="Hg Quick Diff"
+            class="com.vectrace.MercurialEclipse.annotatations.HgPristineCopyQuickDiffProvider"
+            id="com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider">
+      </referenceprovider>
+   </extension>
 </plugin>

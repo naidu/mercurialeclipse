@@ -1,5 +1,7 @@
 package com.vectrace.MercurialEclipse.model;
 
+import com.vectrace.MercurialEclipse.HgRevision;
+
 public class ChangeSet
 {
   private int changesetIndex;
@@ -54,6 +56,11 @@ public class ChangeSet
   public String getDescription()
   {
     return description;
+  }
+
+  public HgRevision getRevision()
+  {
+    return new HgRevision(changeset, changesetIndex);
   }
 
 }
