@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -94,8 +93,6 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
 
         //System.out.println("Revert:");
 
-        Object obj;
-        
         String repository;
         // IProject proj;
 //        System.out.println("Revert in runnable");
@@ -108,12 +105,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
         }
 
         // do the actual work in here
-        Iterator itr = selection.iterator();
         List<IResource> resources = new ArrayList<IResource>();
-        while (itr.hasNext()) 
+        for (Object obj : selection.toList())
         {
-            obj = itr.next();
-
             if (obj instanceof IResource) 
             {
                 IResource resource = (IResource) obj;
@@ -177,9 +171,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
         
         // the last argument will be replaced with a path
         String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert","--","" };
-        for (Iterator iter = resources.iterator(); iter.hasNext();) 
+        for (CommitResource commitResource : resources) 
         {
-            IResource resource = ((CommitResource) iter.next()).getResource();
+            IResource resource = commitResource.getResource();
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
 
@@ -197,12 +191,12 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
                MercurialEclipsePlugin.logError(e);
             } 
         }
-        for (Iterator iter = resources.iterator(); iter.hasNext();) 
+        for (CommitResource commitResource : resources) 
         {
-            IResource resource = ((CommitResource) iter.next()).getResource();
+            IResource resource = commitResource.getResource();
             try 
             {
-                resource.touch(monitor);
+                resource.refreshLocal(IResource.DEPTH_ONE, monitor);
             } 
             catch (CoreException e) 
             {
