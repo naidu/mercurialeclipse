@@ -67,6 +67,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   /** Used to store which projects have already been parsed */
   private static Set<IProject> knownStatus = new HashSet<IProject>();
 
+  private static Map<IProject, String> versions = new HashMap<IProject, String>();
+  
   /**
    * 
    */
@@ -147,6 +149,9 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     {
       decoration.addOverlay(DecoratorImages.managedDescriptor);
     }
+    if(versions.containsKey(element)) {
+    	decoration.addSuffix(" ["+versions.get(element)+"]");
+    }
   }
 
   /**
@@ -156,6 +161,16 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   private void refresh(IProject project) throws HgException 
   {
     String output = MercurialUtilities.ExecuteCommand(getHgCommand(project), new File(getAbsolutePath(project).toOSString()), false);
+    String version = MercurialUtilities.ExecuteCommand(
+    		new String[]{
+    				MercurialUtilities.getHGExecutable(),
+    				"ident",
+    				"-n",
+    				"-i"
+    		},
+    		new File(getAbsolutePath(project).toOSString()),
+    		true);
+    versions.put(project, version.trim());
     parseStatusCommand(project, output);
   }
 

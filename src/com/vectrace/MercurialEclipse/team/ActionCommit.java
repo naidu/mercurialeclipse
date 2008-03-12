@@ -198,7 +198,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 try
                 {
                   repository = MercurialUtilities.ExecuteCommand(getRootCmd,getRootWorkingDir,true);
-                  workingDir=new File(repository.substring(0,repository.length() - eol.length() ));
+                  workingDir=new File(repository.trim());
                 }
                 catch(HgException e)
                 {
