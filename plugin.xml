@@ -77,21 +77,11 @@
            adaptable="true"
            objectClass="org.eclipse.core.resources.IResource"
            id="com.vectrace.MercurialEclipse.IFileContributions">
-<!--
-           ...
-           objectClass="org.eclipse.core.resources.IResource"
-           ...
-           <visibility>
-             <or>
-               <objectClass name="org.eclipse.core.resources.IFile"/>
-               <objectClass name="org.eclipse.core.resources.IFolder"/>
-             </or>
-           </visibility>             
--->
            <filter
               name="projectPersistentProperty"
               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
            </filter>
+           <!-- Team -->
            <action
                label="Remove from Version Control"
                icon="icons/remove.png"
@@ -107,13 +97,6 @@
                tooltip="hg add"
                menubarPath="team.main/group10"
                id="com.vectrace.MercurialEclipse.team.ActionAdd">
-           </action>
-           <action
-               label="hg &amp;diff"
-               class="com.vectrace.MercurialEclipse.team.ActionDiff"
-               tooltip="hg diff"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionDiff">
            </action>
            <action
                label="hg &amp;log"
@@ -157,6 +140,14 @@
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
            </action>
+           <!-- Compare -->
+           <action
+               label="Parent Changeset"
+               class="com.vectrace.MercurialEclipse.team.ActionDiff"
+               tooltip="hg diff"
+               menubarPath="compareWithMenu/compareWithGroup"
+               id="com.vectrace.MercurialEclipse.team.ActionDiff">
+           </action>
       </objectContribution>
 
 <!--            Project Team menu                     -->
@@ -185,33 +176,6 @@
                id="com.vectrace.MercurialEclipse.team.ActionStatus">
            </action -->
       </objectContribution>
-      
-      <objectContribution
-       	   id="org.eclipse.team.ui.ResourceContributions"
-           objectClass="org.eclipse.core.resources.IResource" adaptable="true">
-        <filter
-              name="projectPersistentProperty"
-              value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-        </filter>
-		<menu
-			id="team.main"
-			path="additions"
-			label="Team (hg)">
-			<separator name="group1"/>
-			<separator name="group2"/>
-			<separator name="group3"/>
-			<separator name="group4"/>
-			<separator name="group5"/>
-			<separator name="group6"/>
-			<separator name="group7"/>
-			<separator name="group8"/>
-			<separator name="group9"/>
-			<separator name="group10"/>
-			<separator name="targetGroup"/>
-			<separator name="projectGroup"/>
-		</menu>
-      </objectContribution>
-
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
