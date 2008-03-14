@@ -113,7 +113,7 @@
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
            <action
-               label="hg &amp;annotate"
+               label="Show Annotation"
                class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
                tooltip="hg annotate"
                menubarPath="team.main/group3"

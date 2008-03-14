@@ -39,6 +39,7 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.dialogs.MultiLineDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 
@@ -141,7 +142,8 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
               //output output in a window
               if(output.length()!=0)
               {
-                MessageDialog.openInformation(shell,"Mercurial Eclipse Annotate " + FullPath,  output);
+                MultiLineDialog dialog = new MultiLineDialog(shell, "Mercurial Eclipse Annotate - " + FullPath,  output);
+                dialog.open();
               }
             } 
           } catch (HgException e)
