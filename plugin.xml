@@ -76,7 +76,7 @@
        <objectContribution
            adaptable="true"
            objectClass="org.eclipse.core.resources.IResource"
-           id="com.vectrace.MercurialEclipse.IFileContributions">
+           id="com.vectrace.MercurialEclipse.IResourceContributions">
            <filter
               name="projectPersistentProperty"
               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
@@ -140,14 +140,6 @@
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
            </action>
-           <!-- Compare -->
-           <action
-               label="Parent Changeset"
-               class="com.vectrace.MercurialEclipse.team.ActionDiff"
-               tooltip="hg diff"
-               menubarPath="compareWithMenu/compareWithGroup"
-               id="com.vectrace.MercurialEclipse.team.ActionDiff">
-           </action>
       </objectContribution>
 
 <!--            Project Team menu                     -->
@@ -175,6 +167,32 @@
                menubarPath="team.main/projectGroup"
                id="com.vectrace.MercurialEclipse.team.ActionStatus">
            </action -->
+      </objectContribution>
+      
+      <!-- File Team Menu -->
+      <objectContribution
+            adaptable="true"
+            objectClass="org.eclipse.core.resources.IFile"
+            id="com.vectrace.MercurialEclipse.IFileContributions">
+           <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+           </filter>
+                 <!-- Compare -->
+           <action
+               label="Another Changeset..."
+               class="com.vectrace.MercurialEclipse.team.CompareWithAction"
+               tooltip="hg diff"
+               menubarPath="compareWithMenu/compareWithGroup"
+               id="com.vectrace.MercurialEclipse.team.CompareWithAction">
+           </action>
+           <action
+               label="Parent Changeset"
+               class="com.vectrace.MercurialEclipse.team.CompareAction"
+               tooltip="hg diff"
+               menubarPath="compareWithMenu/compareWithGroup"
+               id="com.vectrace.MercurialEclipse.team.CompareAction">
+           </action>
       </objectContribution>
    </extension>
 
