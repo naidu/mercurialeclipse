@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,6 +15,7 @@ import org.eclipse.core.resources.IContainer;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * 
@@ -21,6 +23,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public class HgCommand {
 
+	private static PrintStream console = new PrintStream(MercurialUtilities.getMercurialConsole().newOutputStream());
+	
 	protected static class InputStreamConsumer extends Thread {
 		private final InputStream stream;
 		private byte[] output;
@@ -93,6 +97,7 @@ public class HgCommand {
 			result.add("--");
 		}
 		result.addAll(files);
+		console.println("Command: "+result);
 		return result;
 	}
 	
@@ -113,6 +118,7 @@ public class HgCommand {
 	 */
 	protected byte[] executeToBytes() throws HgException {
 		try {
+			long start = System.currentTimeMillis();
 			ProcessBuilder builder = new ProcessBuilder(getCommands());
 			builder.redirectErrorStream(true); // makes my life easier
 			builder.directory(workingDir);
@@ -122,6 +128,7 @@ public class HgCommand {
 			consumer.join(5000); // 5 seconds timeout
 			if(!consumer.isAlive()) {
 				if(process.exitValue() == 0) {
+					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
 					return consumer.getBytes();
 				} else {
 					throw new HgException("Process error, return code: "+process.exitValue());
