@@ -23,8 +23,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.util.Iterator;
-
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -35,8 +33,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.IWorkbenchWindowActionDelegate;
+import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -45,49 +42,33 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
  * 
  */
-public class CompareAction implements IWorkbenchWindowActionDelegate {
+public class CompareAction implements IActionDelegate {
 
-	private IStructuredSelection selection;
-	private IWorkbenchWindow window;
-	
-	public void dispose() {
-		// NOP
-	}
-
-	public void init(IWorkbenchWindow window) {
-		this.window = window;
-	}
+	private IFile selection;
 
 	public void selectionChanged(IAction action, ISelection selection) {
 		if (selection instanceof IStructuredSelection) {
-			this.selection = (IStructuredSelection) selection;
+			//the xml enables this action only for a selection of a single file
+			this.selection = (IFile)((IStructuredSelection) selection).getFirstElement();
 		}
 	}
 	
 	protected Shell getShell() {
-	    if (window != null) {
-			return window.getShell();
-		} else {
-			return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-		}
+		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+	}
+	
+	protected IFile getSelectedFile() {
+		return selection;
 	}
 
 	public void run(IAction action) {
-		openEditors(null);
+		openEditor(null);
 	}
 
-	protected void openEditors(String changeset) {
-		@SuppressWarnings("unchecked")
-		Iterator itr = selection.iterator();
-		Object obj;
-		while (itr.hasNext()) {
-			obj = itr.next();
-			if (obj instanceof IFile) {
-				SyncInfoCompareInput compareInput = getCompareInput((IFile) obj, changeset);
-				if (compareInput != null) {
-					CompareUI.openCompareEditor(compareInput);
-				}
-			}
+	protected void openEditor(String changeset) {
+		SyncInfoCompareInput compareInput = getCompareInput(selection, changeset);
+		if (compareInput != null) {
+			CompareUI.openCompareEditor(compareInput);
 		}
 	}
 

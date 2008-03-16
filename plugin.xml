@@ -184,14 +184,16 @@
                class="com.vectrace.MercurialEclipse.team.CompareWithAction"
                tooltip="hg diff"
                menubarPath="compareWithMenu/compareWithGroup"
-               id="com.vectrace.MercurialEclipse.team.CompareWithAction">
+               id="com.vectrace.MercurialEclipse.team.CompareWithAction"
+               enablesFor="1">
            </action>
            <action
                label="Parent Changeset"
                class="com.vectrace.MercurialEclipse.team.CompareAction"
                tooltip="hg diff"
                menubarPath="compareWithMenu/compareWithGroup"
-               id="com.vectrace.MercurialEclipse.team.CompareAction">
+               id="com.vectrace.MercurialEclipse.team.CompareAction"
+               enablesFor="1">
            </action>
       </objectContribution>
    </extension>
