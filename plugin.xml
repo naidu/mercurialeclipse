@@ -114,10 +114,11 @@
            </action>
            <action
                label="Show Annotation"
-               class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
+               class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
                tooltip="hg annotate"
                menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.ActionAnnotate">
+               id="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
+               enablesFor="1">
            </action>
            <action
                label="Pull..."

@@ -7,7 +7,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgStatusClient {
 
 	public static String getStatus(IContainer root) throws HgException {
-		HgCommand command = new HgCommand("status", root, true, true);
+		HgCommand command = new HgCommand("status", root, true);
 		return command.executeToString();
 	}
 }

@@ -6,11 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -59,23 +59,20 @@ public class HgCommand {
 	private final String command;
 	private final File workingDir;
 	private final boolean escapeFiles;
-	private final boolean forceEncoding;
 	private final List<String> options = new ArrayList<String>();
 	private final List<String> files = new ArrayList<String>();
 	
-	protected HgCommand(String command, File workingDir, boolean escapeFiles, boolean forceEncoding) {
+	protected HgCommand(String command, File workingDir, boolean escapeFiles) {
 		this.command = command;
 		this.workingDir = workingDir;
 		this.escapeFiles = escapeFiles;
-		this.forceEncoding = forceEncoding;
 	}
 	
-	protected HgCommand(String command, IContainer container, boolean escapeFiles, boolean forceEncoding) {
+	protected HgCommand(String command, IContainer container, boolean escapeFiles) {
 		this(
 				command,
 				container.getLocation().toFile(),
-				escapeFiles,
-				forceEncoding);
+				escapeFiles);
 	}
 	
 	protected String getHgExecutable() {
@@ -89,10 +86,6 @@ public class HgCommand {
 		result.add(getHgExecutable());
 		result.add(command);
 		result.addAll(options);
-		if(forceEncoding) {
-			result.add("--encoding");
-			result.add("UTF-8");
-		}
 		if(escapeFiles && !files.isEmpty()) {
 			result.add("--");
 		}
@@ -113,8 +106,14 @@ public class HgCommand {
 		}
 	}
 	
+	protected void addFiles(IFile... files) {
+		for(IFile file: files) {
+			this.files.add(file.getLocation().toOSString());
+		}
+	}
+	
 	/* TODO the timeout should be configurable, for instance a remote
-	 * pull will likely exceed the 5 seconds limit
+	 * pull will likely exceed the 10 seconds limit
 	 */
 	protected byte[] executeToBytes() throws HgException {
 		try {
@@ -125,7 +124,7 @@ public class HgCommand {
 			Process process = builder.start();
 			InputStreamConsumer consumer = new InputStreamConsumer(process.getInputStream());
 			consumer.start();
-			consumer.join(5000); // 5 seconds timeout
+			consumer.join(10000); // 10 seconds timeout
 			if(!consumer.isAlive()) {
 				if(process.exitValue() == 0) {
 					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
@@ -145,15 +144,6 @@ public class HgCommand {
 	}
 	
 	protected String executeToString() throws HgException {
-		if(forceEncoding) {
-			try {
-				return new String(executeToBytes(), "UTF-8");
-			} catch (UnsupportedEncodingException e) {
-				// will not happen, UTF-8 is mandatory
-				throw new HgException("The JVM does not handle UTF-8", e);
-			}
-		} else {
-			return new String(executeToBytes());
-		}
+		return new String(executeToBytes());
 	}
 }

@@ -1,6 +1,6 @@
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.jface.action.IAction;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -14,15 +14,16 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class CompareWithAction extends CompareAction {
 
-	public void run(IAction action) {
+	@Override
+	public void run(IFile file) {
 		try {
 			RevisionChooserDialog dialog = new RevisionChooserDialog(
 					getShell(),
 					"Compare With Revision...",
-					HgLogClient.getRevisions(getSelectedFile()));
+					HgLogClient.getRevisions(file));
 			int result = dialog.open();
 			if(result == IDialogConstants.OK_ID) {
-				openEditor(dialog.getRevision());
+				openEditor(file, dialog.getRevision());
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);

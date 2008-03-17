@@ -26,15 +26,9 @@ package com.vectrace.MercurialEclipse.team;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
-import org.eclipse.ui.IActionDelegate;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
@@ -42,31 +36,15 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
  * 
  */
-public class CompareAction implements IActionDelegate {
+public class CompareAction extends SingleFileAction {
 
-	private IFile selection;
-
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
-			//the xml enables this action only for a selection of a single file
-			this.selection = (IFile)((IStructuredSelection) selection).getFirstElement();
-		}
+	@Override
+	public void run(IFile file) {
+		openEditor(file, null);
 	}
 	
-	protected Shell getShell() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-	}
-	
-	protected IFile getSelectedFile() {
-		return selection;
-	}
-
-	public void run(IAction action) {
-		openEditor(null);
-	}
-
-	protected void openEditor(String changeset) {
-		SyncInfoCompareInput compareInput = getCompareInput(selection, changeset);
+	protected void openEditor(IFile file, String changeset) {
+		SyncInfoCompareInput compareInput = getCompareInput(file, changeset);
 		if (compareInput != null) {
 			CompareUI.openCompareEditor(compareInput);
 		}

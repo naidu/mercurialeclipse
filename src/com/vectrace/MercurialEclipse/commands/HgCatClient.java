@@ -7,7 +7,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgCatClient {
 
 	public static String getContent(IFile file, String revision) throws HgException {
-		HgCommand command = new HgCommand("cat", file.getParent(), true, true);
+		HgCommand command = new HgCommand("cat", file.getParent(), true);
 		if(revision != null && revision.length() != 0) {
 			command.addOptions(
 					"--rev",

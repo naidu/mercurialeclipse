@@ -8,7 +8,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgLogClient {
 
 	public static String[] getRevisions(IProject project) throws HgException {
-		HgCommand command = new HgCommand("log", project, true, true);
+		HgCommand command = new HgCommand("log", project, true);
 		command.addOptions(
 				"--template",
 				"{rev}:{node} {date|isodate} {author|person}\n");
@@ -17,7 +17,7 @@ public class HgLogClient {
 	}
 	
 	public static String[] getRevisions(IFile file) throws HgException {
-		HgCommand command = new HgCommand("log", file.getParent(), true, true);
+		HgCommand command = new HgCommand("log", file.getParent(), true);
 		command.addOptions(
 				"--template",
 				"{rev}:{node} {date|isodate} {author|person}\n");
