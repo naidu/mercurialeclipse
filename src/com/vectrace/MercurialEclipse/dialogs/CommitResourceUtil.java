@@ -137,16 +137,8 @@ public final class CommitResourceUtil
 		// to the project.
 		while (st.hasMoreTokens())
 		{
-			status = st.nextToken(" ");
-			fileName = st.nextToken(eol);
-			if (status.startsWith(eol))
-			{
-				status = status.substring(eol.length());
-			}
-			if (fileName.startsWith(" "))
-			{
-				fileName = fileName.substring(1);
-			}
+			status = st.nextToken(" ").trim();
+			fileName = st.nextToken(eol).trim();
 			thisResource = null;
 			fileNameWithWorkingDir = workingDir + File.separator + fileName;
 
