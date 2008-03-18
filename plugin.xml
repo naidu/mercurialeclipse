@@ -113,14 +113,6 @@
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
            <action
-               label="Show Annotation"
-               class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
-               tooltip="hg annotate"
-               menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
-               enablesFor="1">
-           </action>
-           <action
                label="Pull..."
                class="com.vectrace.MercurialEclipse.team.ActionPull"
                tooltip="pull changes from remote/local reposetory (hg pull)"
@@ -179,6 +171,15 @@
                name="projectPersistentProperty"
                value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
            </filter>
+                 <!-- Team -->
+            <action
+               label="Show Annotation"
+               class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
+               tooltip="hg annotate"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
+               enablesFor="1">
+           </action>
                  <!-- Compare -->
            <action
                label="Another Changeset..."
