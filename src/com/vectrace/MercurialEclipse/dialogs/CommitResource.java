@@ -14,6 +14,7 @@ public class CommitResource
     private IResource resource;
     private String convertStatus(String statusToken) 
     {
+      statusToken = statusToken.trim();
       if (statusToken.startsWith("M")) 
       {
         // System.out.println("FILE_MODIFIED:path <" +
