@@ -84,7 +84,6 @@
            <!-- Team -->
            <action
                label="Remove from Version Control"
-               icon="icons/remove.png"
                class="com.vectrace.MercurialEclipse.team.ActionRemove"
                tooltip="hg remove"
                menubarPath="team.main/group10"
@@ -92,11 +91,10 @@
            </action>
            <action
                label="Add to Version Control"
-               icon="icons/add.png"
-               class="com.vectrace.MercurialEclipse.team.ActionAdd"
+               class="com.vectrace.MercurialEclipse.team.AddAction"
                tooltip="hg add"
                menubarPath="team.main/group10"
-               id="com.vectrace.MercurialEclipse.team.ActionAdd">
+               id="com.vectrace.MercurialEclipse.team.AddAction">
            </action>
            <action
                label="hg &amp;log"

@@ -7,10 +7,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -74,6 +77,10 @@ public class HgCommand {
 				container.getLocation().toFile(),
 				escapeFiles);
 	}
+
+	protected HgCommand(String command, boolean escapeFiles) {
+		this(command, (File)null, escapeFiles);
+	}
 	
 	protected String getHgExecutable() {
 		return MercurialEclipsePlugin.getDefault()
@@ -112,6 +119,12 @@ public class HgCommand {
 		}
 	}
 	
+	protected void addFiles(List<IFile> files) {
+		for(IFile file: files) {
+			this.files.add(file.getLocation().toOSString());
+		}
+	}
+	
 	/* TODO the timeout should be configurable, for instance a remote
 	 * pull will likely exceed the 10 seconds limit
 	 */
@@ -120,7 +133,9 @@ public class HgCommand {
 			long start = System.currentTimeMillis();
 			ProcessBuilder builder = new ProcessBuilder(getCommands());
 			builder.redirectErrorStream(true); // makes my life easier
-			builder.directory(workingDir);
+			if(workingDir != null) {
+				builder.directory(workingDir);
+			}
 			Process process = builder.start();
 			InputStreamConsumer consumer = new InputStreamConsumer(process.getInputStream());
 			consumer.start();
@@ -130,7 +145,7 @@ public class HgCommand {
 					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
 					return consumer.getBytes();
 				} else {
-					throw new HgException("Process error, return code: "+process.exitValue());
+					throw new HgException("Process error, return code: "+process.exitValue()+", message: "+new String(consumer.getBytes()));
 				}
 			} else {
 				process.destroy();
@@ -145,5 +160,18 @@ public class HgCommand {
 	
 	protected String executeToString() throws HgException {
 		return new String(executeToBytes());
+	}
+	
+	protected static Map<IProject, List<IFile>> groupByProject(List<IFile> files) {
+		Map<IProject, List<IFile>> result = new HashMap<IProject, List<IFile>>();
+		for(IFile file : files) {
+			List<IFile> list = result.get(file.getProject());
+			if(list == null) {
+				list = new ArrayList<IFile>();
+				result.put(file.getProject(), list);
+			}
+			list.add(file);
+		}
+		return result;
 	}
 }

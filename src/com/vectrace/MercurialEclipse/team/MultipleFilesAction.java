@@ -1,6 +1,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
@@ -32,7 +33,9 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 	public void selectionChanged(IAction action, ISelection selection) {
 		if (selection instanceof IStructuredSelection) {
 			this.selection = new ArrayList<IFile>();
-			extractFiles(this.selection, (IResource[])((IStructuredSelection)selection).toArray());
+			extractFiles(
+					this.selection,
+					Arrays.asList(((IStructuredSelection)selection).toArray()).toArray(new IResource[0]));
 		}
 	}
 	
@@ -67,6 +70,6 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 			MercurialEclipsePlugin.logError(e);
 		}
 	}
-	
+		
 	protected abstract void run(List<IFile> files) throws Exception ;
 }
