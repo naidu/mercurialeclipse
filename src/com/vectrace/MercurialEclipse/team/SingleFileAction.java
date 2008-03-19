@@ -9,7 +9,6 @@ import org.eclipse.ui.IActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * 
@@ -42,10 +41,10 @@ public abstract class SingleFileAction implements IActionDelegate {
 	public void run(IAction action) {
 		try {
 			run(getSelectedFile());
-		} catch (HgException e) {
+		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}
 	}
 	
-	protected abstract void run(IFile file) throws HgException ;
+	protected abstract void run(IFile file) throws Exception ;
 }
