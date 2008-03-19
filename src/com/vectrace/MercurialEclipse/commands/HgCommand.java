@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -113,15 +113,15 @@ public class HgCommand {
 		}
 	}
 	
-	protected void addFiles(IFile... files) {
-		for(IFile file: files) {
-			this.files.add(file.getLocation().toOSString());
+	protected void addFiles(IResource... resources) {
+		for(IResource resource: resources) {
+			this.files.add(resource.getLocation().toOSString());
 		}
 	}
 	
-	protected void addFiles(List<IFile> files) {
-		for(IFile file: files) {
-			this.files.add(file.getLocation().toOSString());
+	protected void addFiles(List<? extends IResource> resources) {
+		for(IResource resource: resources) {
+			this.files.add(resource.getLocation().toOSString());
 		}
 	}
 	
@@ -162,15 +162,15 @@ public class HgCommand {
 		return new String(executeToBytes());
 	}
 	
-	protected static Map<IProject, List<IFile>> groupByProject(List<IFile> files) {
-		Map<IProject, List<IFile>> result = new HashMap<IProject, List<IFile>>();
-		for(IFile file : files) {
-			List<IFile> list = result.get(file.getProject());
+	protected static Map<IProject, List<IResource>> groupByProject(List<IResource> resources) {
+		Map<IProject, List<IResource>> result = new HashMap<IProject, List<IResource>>();
+		for(IResource resource : resources) {
+			List<IResource> list = result.get(resource.getProject());
 			if(list == null) {
-				list = new ArrayList<IFile>();
-				result.put(file.getProject(), list);
+				list = new ArrayList<IResource>();
+				result.put(resource.getProject(), list);
 			}
-			list.add(file);
+			list.add(resource);
 		}
 		return result;
 	}

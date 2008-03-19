@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -23,14 +24,14 @@ public class HgAddClient {
 		command.executeToBytes();
 	}
 
-	public static void addFiles(List<IFile> files, IProgressMonitor monitor) throws HgException {
-		Map<IProject, List<IFile>> filesByProject = HgCommand.groupByProject(files);
-		for(IProject project : filesByProject.keySet()) {
+	public static void addResources(List<IResource> resources, IProgressMonitor monitor) throws HgException {
+		Map<IProject, List<IResource>> resourcesByProject = HgCommand.groupByProject(resources);
+		for(IProject project : resourcesByProject.keySet()) {
 			if(monitor!=null) {
-				monitor.subTask("Adding files from "+project.getName());
+				monitor.subTask("Adding resources from "+project.getName());
 			}
 			HgCommand command = new HgCommand("add", project, true);
-			command.addFiles(filesByProject.get(project));
+			command.addFiles(resourcesByProject.get(project));
 			command.executeToBytes();
 		}
 	}
