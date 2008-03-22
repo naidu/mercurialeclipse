@@ -83,6 +83,14 @@
            </filter>
            <!-- Team -->
            <action
+               label="Add to .hgignore..."
+               class="com.vectrace.MercurialEclipse.team.HgIgnoreAction"
+               tooltip="hg add"
+               menubarPath="team.main/group10"
+               id="com.vectrace.MercurialEclipse.team.HgIgnoreAction"
+               enablesFor="1">
+           </action>
+           <action
                label="Remove from Version Control"
                class="com.vectrace.MercurialEclipse.team.ActionRemove"
                tooltip="hg remove"

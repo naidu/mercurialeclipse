@@ -142,10 +142,10 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     {
       decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
     } 
-    else 
+    /*else 
     {
       decoration.addOverlay(DecoratorImages.managedDescriptor);
-    }
+    }*/
     if(versions.containsKey(element)) {
     	decoration.addSuffix(" ["+versions.get(element)+"]");
     }
