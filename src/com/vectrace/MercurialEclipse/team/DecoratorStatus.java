@@ -142,10 +142,10 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     {
       decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
     } 
-    /*else 
+    else 
     {
       decoration.addOverlay(DecoratorImages.managedDescriptor);
-    }*/
+    }
     if(versions.containsKey(element)) {
     	decoration.addSuffix(" ["+versions.get(element)+"]");
     }
@@ -175,7 +175,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
       IResource member = ctr.getFile(localName.trim());
 
       statusMap.put(member, status);
-      if (!status.startsWith("C")) 
+      if (!status.startsWith("I")) 
       {
         for(IResource parent = member.getParent(); parent!=ctr; parent = parent.getParent())
         {

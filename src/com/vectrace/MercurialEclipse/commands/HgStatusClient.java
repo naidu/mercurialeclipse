@@ -11,6 +11,8 @@ public class HgStatusClient {
 
 	public static String getStatus(IContainer root) throws HgException {
 		HgCommand command = new HgCommand("status", root, true);
+		//modified, added, removed, deleted, unknown, ignored
+		command.addOptions("-mardui");
 		return command.executeToString();
 	}
 	
