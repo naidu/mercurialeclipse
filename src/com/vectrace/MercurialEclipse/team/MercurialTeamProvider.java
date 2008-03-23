@@ -23,6 +23,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.RepositoryProvider;
@@ -55,7 +56,8 @@ public class MercurialTeamProvider extends RepositoryProvider
 	//@Override
 	public void configureProject() throws CoreException 
 	{
-		// System.out.println("MercurialTeamProvider.configureProject()");
+		getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
+		getProject().getFolder(".hg").setTeamPrivateMember(true);
 	}
 
 	/* (non-Javadoc)

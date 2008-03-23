@@ -26,6 +26,11 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  */
 public class HgCommand {
 
+	//some OSes (windows...) are limited, use a hard-coded value
+	//to degrade gracefully
+	//TODO have an OS-dependent value
+	public static final int MAX_PARAMS = 120;
+	
 	private static PrintStream console = new PrintStream(MercurialUtilities.getMercurialConsole().newOutputStream());
 	
 	protected static class InputStreamConsumer extends Thread {
@@ -98,6 +103,7 @@ public class HgCommand {
 		}
 		result.addAll(files);
 		console.println("Command: ("+result.size()+") "+result);
+		//TODO check that length <= MAX_PARAMS
 		return result;
 	}
 	

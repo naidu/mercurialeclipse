@@ -16,6 +16,12 @@ public class HgStatusClient {
 		return command.executeToString();
 	}
 	
+	public static String[] getUntrackedFiles(IContainer root) throws HgException {
+		HgCommand command = new HgCommand("status", root, true);
+		command.addOptions("-u", "-n");
+		return command.executeToString().split("\n");
+	}
+
 	public static boolean isDirty(List<? extends IResource> resources) throws HgException {
 		HgCommand command = new HgCommand("status", true);
 		command.addOptions("-mard");//modified, added, removed, deleted
