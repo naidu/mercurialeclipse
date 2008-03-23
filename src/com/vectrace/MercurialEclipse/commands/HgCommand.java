@@ -97,7 +97,7 @@ public class HgCommand {
 			result.add("--");
 		}
 		result.addAll(files);
-		console.println("Command: "+result);
+		console.println("Command: ("+result.size()+") "+result);
 		return result;
 	}
 	
