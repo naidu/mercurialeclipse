@@ -21,15 +21,10 @@ import org.eclipse.swt.widgets.Text;
  */
 public class IgnoreDialog extends Dialog {
 
-	private enum Type {
-		FILE, FOLDER, NONE
-	}
-	
 	public enum ResultType {
 		FILE, FOLDER, EXTENSION, GLOB, REGEXP
 	}
 	
-	private Type type;
 	private ResultType resultType;
 	private IFile file;
 	private IFolder folder;
@@ -40,20 +35,17 @@ public class IgnoreDialog extends Dialog {
 	public IgnoreDialog(Shell parentShell) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.type = Type.NONE;
 	}
 
 	public IgnoreDialog(Shell parentShell, IFile file) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.type = Type.FILE;
 		this.file = file;
 	}
 
 	public IgnoreDialog(Shell parentShell, IFolder folder) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.type = Type.FOLDER;
 		this.folder = folder;
 	}
 
@@ -72,13 +64,14 @@ public class IgnoreDialog extends Dialog {
 		Label label = new Label(composite, SWT.NONE);
 		label.setText("Select what to ignore:");
 
-		switch(type) {
-		case FILE:
-			addButton(composite, "Only this file", false, ResultType.FILE);
-			addButton(composite, "All files with the same extension", false, ResultType.EXTENSION);
-			break;
-		case FOLDER:
-			addButton(composite, "Only this folder", false, ResultType.FOLDER);
+		if(this.file != null) {
+			addButton(composite, "Only this file ('"+this.file.getName()+"')", false, ResultType.FILE);
+			if(this.file.getFileExtension() != null) {
+				addButton(composite, "All files with the same extension ('*."+this.file.getFileExtension()+"')", false, ResultType.EXTENSION);
+			}
+		}
+		if(this.folder != null) {
+			addButton(composite, "Only this folder ('"+this.folder.getName()+"')", false, ResultType.FOLDER);
 		}
 		addButton(composite, "Custom regexp", true, ResultType.REGEXP);
 		addButton(composite, "Custom glob", true, ResultType.GLOB);
