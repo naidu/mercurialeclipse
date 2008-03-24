@@ -20,6 +20,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.model.Tag;
+
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
  * 
@@ -30,11 +32,11 @@ public class RevisionChooserDialog extends Dialog {
 	private Text text;
 	private String revision;
 	private String[] revisions;
-	private String[] tags;
+	private Tag[] tags;
 
 	//TODO revisions and tags should be fetched on demand
 	public RevisionChooserDialog(Shell parentShell, String title,
-			String[] revisions, String[] tags) {
+			String[] revisions, Tag[] tags) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 		this.title = title;
@@ -152,28 +154,20 @@ public class RevisionChooserDialog extends Dialog {
 			}
 		});
 		
-		String[] titles = {"Rev", "Global", "Tag"};
-		int[] widths = {50, 150, 300 };
+		String[] titles = {"Rev", "Global", "Tag", "Local"};
+		int[] widths = {50, 150, 300, 70 };
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
 			column.setWidth(widths[i]);
 		}
-		//FIXME should be somewhere around HgTagClient
-		Pattern pattern = Pattern
-				.compile("^(.*) ([0-9]*):([a-f0-9]*)$");
-		for (String tag : tags) {
+		
+		for (Tag tag : tags) {
 			TableItem row = new TableItem(table, SWT.NONE);
-			Matcher m = pattern.matcher(tag);
-			if (m.matches()) {
-				row.setText(0, m.group(2));
-				row.setText(1, m.group(3));
-				row.setText(2, m.group(1));
-			} else {
-				row.setText(0, "parse error");
-				row.setText(1, "parse error");
-				row.setText(2, "parse error");
-			}
+			row.setText(0, Integer.toString(tag.getRevision()));
+			row.setText(1, tag.getGlobalId());
+			row.setText(2, tag.getName());
+			row.setText(3, tag.isLocal()?"local":"");
 		}
 
 		item.setControl(table);

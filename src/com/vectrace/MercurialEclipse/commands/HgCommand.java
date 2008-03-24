@@ -93,6 +93,12 @@ public class HgCommand {
 			.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
 	}
 	
+	protected String getDefaultUserName() {
+		return MercurialEclipsePlugin.getDefault()
+			.getPreferenceStore()
+			.getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
+	}
+	
 	protected List<String> getCommands() {
 		ArrayList<String> result = new ArrayList<String>();
 		result.add(getHgExecutable());
@@ -111,6 +117,11 @@ public class HgCommand {
 		for(String option: options) {
 			this.options.add(option);
 		}
+	}
+	
+	protected void addUserName(String user) {
+		this.options.add("-u");
+		this.options.add(user!=null?user:getDefaultUserName());
 	}
 	
 	protected void addFiles(String... files) {
