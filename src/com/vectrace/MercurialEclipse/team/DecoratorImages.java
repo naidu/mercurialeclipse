@@ -27,7 +27,6 @@ package com.vectrace.MercurialEclipse.team;
 
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.graphics.ImageData;
 
 /**
  * Set of images that are used for decorating resources are maintained
@@ -79,71 +78,5 @@ public class DecoratorImages
   {
     super();
   }
-
-
-  
-  /**
-   * Get the image data depending on the key
-   * 
-   * @return image data 
-   * 
-   */ 
-  public ImageData getImageData(String imageKey)
-  {
-    ImageDescriptor imagedescriptor=getImageDescriptor(imageKey);
-    if(imagedescriptor!=null)
-    {
-      return imagedescriptor.getImageData();
-    }
-    else
-    {
-      return null;
-    }
-  }
-   
-  /**
-   * Get the image descriptor depending on the key
-   * 
-   * @return image descriptor 
-   * 
-   */ 
-  public static final ImageDescriptor getImageDescriptor(String imageKey)
-  {
-    //Input is the output from the "hg status <file>" comamnd
-    if(imageKey==null)
-    {
-      //hg status <file> has no output in an a managed file
-      return managedDescriptor;
-    }
-
-    // Look at the first letter
-    if (imageKey.startsWith("M"))
-    {
-      return modifiedDescriptor;
-    }
-    if (imageKey.startsWith("A"))
-    {
-      return addedDescriptor;
-    }
-    if (imageKey.startsWith("R"))
-    {
-      return removedDescriptor;
-    }
-    if (imageKey.startsWith("!"))
-    {
-      return deletedStillTrackedDescriptor;
-    }
-    if (imageKey.startsWith("?"))
-    {
-      return notTrackedDescriptor;
-    }
-    if (imageKey.startsWith("I"))
-    {
-      return ignoredDescriptor;
-    }
-    return null;
-  }
-
-  // public ImageDescriptor 
 
 }

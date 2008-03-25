@@ -23,12 +23,14 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -55,206 +57,215 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * @author zingo
  * 
  */
-public class DecoratorStatus extends LabelProvider implements ILightweightLabelDecorator, IResourceChangeListener 
-{
+public class DecoratorStatus extends LabelProvider implements ILightweightLabelDecorator, IResourceChangeListener {
 
-  /** Used to store the last known status of a resource */
-  private static Map<IResource, String> statusMap = new HashMap<IResource, String>();
+	//relative order for folders
+	private final static int BIT_DELETED = 0;
+	private final static int BIT_REMOVED = 1;
+	private final static int BIT_IGNORE  = 2;
+	private final static int BIT_CLEAN   = 3;
+	private final static int BIT_UNKNOWN = 4;
+	private final static int BIT_ADDED   = 5;
+	private final static int BIT_MODFIED = 6;
+	private final static int BIT_IMPOSSIBLE = 7;
+	
+	/** Used to store the last known status of a resource */
+	private static Map<IResource, BitSet> statusMap = new HashMap<IResource, BitSet>();
 
-  /** Used to store which projects have already been parsed */
-  private static Set<IProject> knownStatus = new HashSet<IProject>();
+	/** Used to store which projects have already been parsed */
+	private static Set<IProject> knownStatus = new HashSet<IProject>();
 
-  private static Map<IProject, String> versions = new HashMap<IProject, String>();
-  
-  /**
-   * 
-   */
-  public DecoratorStatus() 
-  {
-    super();
-    ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-  }
-  /** 
-   * Clears the known status of all resources and projects.
-   * and calls for a update of decoration
-   *  
-   */
-  public static void refresh() 
-  {
-    /* While this clearing of status is a "naive" implementation, it is simple. */
-    IWorkbench workbench = PlatformUI.getWorkbench();
-    String decoratorId = DecoratorStatus.class.getName();
-    workbench.getDecoratorManager().update(decoratorId);
-    statusMap.clear();
-    knownStatus.clear();
-  }
+	private static Map<IProject, String> versions = new HashMap<IProject, String>();
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.eclipse.jface.viewers.ILightweightLabelDecorator#decorate(java.lang.Object,
-   *      org.eclipse.jface.viewers.IDecoration)
-   */
+	/**
+	 * 
+	 */
+	public DecoratorStatus() {
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+	}
 
-  public void decorate(Object element, IDecoration decoration) 
-  {
-    if (!(element instanceof IResource)) 
-    {
-      return;
-    }
+	/** 
+	 * Clears the known status of all resources and projects.
+	 * and calls for a update of decoration
+	 *  
+	 */
+	public static void refresh() {
+		/* While this clearing of status is a "naive" implementation, it is simple. */
+		IWorkbench workbench = PlatformUI.getWorkbench();
+		String decoratorId = DecoratorStatus.class.getName();
+		workbench.getDecoratorManager().update(decoratorId);
+		statusMap.clear();
+		knownStatus.clear();
+	}
 
-    IResource objectResource = (IResource) element;
-    IProject objectProject = objectResource.getProject();
+	public void decorate(Object element, IDecoration decoration) {
+		IResource objectResource = (IResource) element;
+		IProject objectProject = objectResource.getProject();
 
-    if(objectProject == null)
-    {
-      return;
-    }
-    
-    if (null == RepositoryProvider.getProvider(objectProject,MercurialTeamProvider.ID)) 
-    {
-      return;
-    }
+		if (null == RepositoryProvider.getProvider(objectProject,
+				MercurialTeamProvider.ID)) {
+			return;
+		}
 
-    if (MercurialUtilities.isResourceInReposetory(objectResource, true) != true) 
-    {
-      // Resource could be inside a link or something do nothing
-      // in the future this could check is this is another repository
-      return;
-    }
+		if (MercurialUtilities.isResourceInReposetory(objectResource, true) != true) {
+			// Resource could be inside a link or something do nothing
+			// in the future this could check is this is another repository
+			return;
+		}
 
-    if (!knownStatus.contains(objectProject)) 
-    {
-       /* hg status on project (all files) instead of per file basis*/
-      try 
-      {
-        refresh(objectProject);
-      } 
-      catch (HgException ex) 
-      {
-        MercurialEclipsePlugin.logError(ex);
-        return;
-      }
-    }
+		if (!knownStatus.contains(objectProject)) {
+			/* hg status on project (all files) instead of per file basis*/
+			try {
+				refresh(objectProject);
+			} catch (HgException ex) {
+				MercurialEclipsePlugin.logError(ex);
+				return;
+			}
+		}
 
-    String output = statusMap.get(element);
-    if (output != null) 
-    {
-      decoration.addOverlay(DecoratorImages.getImageDescriptor(output));
-    } 
-    else 
-    {
-      decoration.addOverlay(DecoratorImages.managedDescriptor);
-    }
-    if(versions.containsKey(element)) {
-    	decoration.addSuffix(" ["+versions.get(element)+"]");
-    }
-  }
+		BitSet output = statusMap.get(element);
+		if(output!=null) {
+			if(output.get(BIT_MODFIED)) {
+				decoration.addOverlay(DecoratorImages.modifiedDescriptor);
+				decoration.addPrefix(">");
+			} else if(output.get(BIT_ADDED)) {
+				decoration.addOverlay(DecoratorImages.addedDescriptor);
+			} else if(output.get(BIT_UNKNOWN)) {
+				decoration.addOverlay(DecoratorImages.notTrackedDescriptor);
+			} else if(output.get(BIT_CLEAN)) {
+				decoration.addOverlay(DecoratorImages.managedDescriptor);
+			} else if(output.get(BIT_IGNORE)) {
+				//show nothing
+			} else if(output.get(BIT_REMOVED)) {
+				decoration.addOverlay(DecoratorImages.removedDescriptor);
+			} else if(output.get(BIT_DELETED)) {
+				decoration.addOverlay(DecoratorImages.deletedStillTrackedDescriptor);
+			}
+		}
+		if (versions.containsKey(element)) {
+			decoration.addSuffix(" [" + versions.get(element) + "]");
+		}
+	}
 
-  /**
-  * @param project
-  * @throws HgException
-  */
-  private void refresh(IProject project) throws HgException 
-  {
-    versions.put(project, HgIdentClient.getCurrentRevision(project));
-    parseStatusCommand(project, HgStatusClient.getStatus(project));
-  }
+	/**
+	 * @param project
+	 * @throws HgException
+	 */
+	private void refresh(IProject project) throws HgException {
+		versions.put(project, HgIdentClient.getCurrentRevision(project));
+		parseStatusCommand(project, HgStatusClient.getStatus(project));
+	}
 
-  /**
-  * @param output
-  */
-  private void parseStatusCommand(IProject ctr, String output) 
-  {
-    knownStatus.add(ctr);
-    Scanner scanner = new Scanner(output);
-    while (scanner.hasNext()) 
-    {
-      String status = scanner.next();
-      String localName = scanner.nextLine();
-      IResource member = ctr.getFile(localName.trim());
+	/**
+	 * @param output
+	 */
+	private void parseStatusCommand(IProject ctr, String output) {
+		IContainer ctrParent = ctr.getParent();
+		knownStatus.add(ctr);
+		Scanner scanner = new Scanner(output);
+		while (scanner.hasNext()) {
+			String status = scanner.next();
+			String localName = scanner.nextLine();
+			IResource member = ctr.getFile(localName.trim());
 
-      statusMap.put(member, status);
-      if (!status.startsWith("I")) 
-      {
-        for(IResource parent = member.getParent(); parent!=ctr; parent = parent.getParent())
-        {
-          statusMap.put(parent, "M");
-        }
-        statusMap.put(ctr, "M");
-      }
-    }
-  }
+			BitSet bitSet = new BitSet();
+			bitSet.set(getBitIndex(status.charAt(0)));
+			statusMap.put(member, bitSet);
+			
+			//ancestors
+			for (IResource parent = member.getParent(); parent != ctrParent; parent = parent.getParent()) {
+				BitSet parentBitSet = statusMap.get(parent);
+				if(parentBitSet!=null) {
+					bitSet = (BitSet)bitSet.clone();
+					bitSet.or(parentBitSet);
+				}
+				statusMap.put(parent, bitSet);
+			}
+		}
+	}
+	
+	private final int getBitIndex(char status) {
+		switch(status) {
+			case '!':
+				return BIT_DELETED;
+			case 'R':
+				return BIT_REMOVED;
+			case 'I':
+				return BIT_IGNORE;
+			case 'C':
+				return BIT_CLEAN;
+			case '?':
+				return BIT_UNKNOWN;
+			case 'A':
+				return BIT_ADDED;
+			case 'M':
+				return BIT_MODFIED;
+			default:
+				MercurialEclipsePlugin.logWarning("Unknown status: '"+status+"'", null);
+				return BIT_IMPOSSIBLE;
+		}
+	}
 
-  /*
-  * (non-Javadoc)
-  * 
-  * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
-  */
-  public void addListener(ILabelProviderListener listener) 
-  {
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
+	 */
+	public void addListener(ILabelProviderListener listener) {
+	}
 
-  /*
-  * (non-Javadoc)
-  * 
-  * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
-  */
-  public void dispose() 
-  {		
-  ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
+	 */
+	public void dispose() {
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+	}
 
-  /*
-  * (non-Javadoc)
-  * 
-  * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object,
-  *      java.lang.String)
-  */
-  public boolean isLabelProperty(Object element, String property) 
-  {
-    return false;
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object,
+	 *      java.lang.String)
+	 */
+	public boolean isLabelProperty(Object element, String property) {
+		return false;
+	}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
-   */
-  public void removeListener(ILabelProviderListener listener) 
-  {
-  }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
+	 */
+	public void removeListener(ILabelProviderListener listener) {
+	}
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
-   */
-  public void resourceChanged(final IResourceChangeEvent event) 
-  {
-    if (event.getType() == IResourceChangeEvent.POST_CHANGE) 
-    {
-      IResourceDelta[] children = event.getDelta().getAffectedChildren();
-      for (IResourceDelta delta : children) 
-      {
-        IResource res = delta.getResource();
-        if (null != RepositoryProvider.getProvider(res.getProject(),MercurialTeamProvider.ID)) 
-        {
-          // Atleast one resource in a project managed by MEP has
-          // changed, schedule a refresh();
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
+	 */
+	public void resourceChanged(final IResourceChangeEvent event) {
+		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
+			IResourceDelta[] children = event.getDelta().getAffectedChildren();
+			for (IResourceDelta delta : children) {
+				IResource res = delta.getResource();
+				if (null != RepositoryProvider.getProvider(res.getProject(),
+						MercurialTeamProvider.ID)) {
+					// Atleast one resource in a project managed by MEP has
+					// changed, schedule a refresh();
 
-          new SafeUiJob("Update Decorations")
-            {
-              @Override
-              protected IStatus runSafe(IProgressMonitor monitor) 
-              {
-                refresh();
-                return super.runSafe(monitor);
-              }
-            }.schedule();
-          return;
-        }
-      }
-    }
-  }
+					new SafeUiJob("Update Decorations") {
+						@Override
+						protected IStatus runSafe(IProgressMonitor monitor) {
+							refresh();
+							return super.runSafe(monitor);
+						}
+					}.schedule();
+					return;
+				}
+			}
+		}
+	}
 }
