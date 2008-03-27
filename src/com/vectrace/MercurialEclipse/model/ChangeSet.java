@@ -21,6 +21,11 @@ public class ChangeSet
     this.description = description;
   }
 
+  public ChangeSet(int changesetIndex,String changeSet,String user, String date)
+  {
+    this(changesetIndex,changeSet,null,user, date, null, null);
+  }
+
   public int getChangesetIndex()
   {
     return changesetIndex;

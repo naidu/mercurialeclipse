@@ -98,11 +98,19 @@
                id="com.vectrace.MercurialEclipse.team.ActionRemove">
            </action>
            <action
-               label="Add to Version Control"
+               label="Add to Version Control..."
                class="com.vectrace.MercurialEclipse.team.AddAction"
                tooltip="hg add"
                menubarPath="team.main/group10"
                id="com.vectrace.MercurialEclipse.team.AddAction">
+           </action>
+           <action
+               label="Tag as Version..."
+               class="com.vectrace.MercurialEclipse.team.TagAction"
+               tooltip="hg tag"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.TagAction"
+               enablesFor="1">
            </action>
            <action
                label="hg &amp;log"

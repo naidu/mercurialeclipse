@@ -1,8 +1,5 @@
 package com.vectrace.MercurialEclipse.dialogs;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -20,6 +17,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 /**
@@ -31,12 +29,12 @@ public class RevisionChooserDialog extends Dialog {
 	private final String title;
 	private Text text;
 	private String revision;
-	private String[] revisions;
+	private ChangeSet[] revisions;
 	private Tag[] tags;
 
 	//TODO revisions and tags should be fetched on demand
 	public RevisionChooserDialog(Shell parentShell, String title,
-			String[] revisions, Tag[] tags) {
+			ChangeSet[] revisions, Tag[] tags) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 		this.title = title;
@@ -111,23 +109,13 @@ public class RevisionChooserDialog extends Dialog {
 			column.setText(titles[i]);
 			column.setWidth(widths[i]);
 		}
-		//FIXME should be somewhere around HgLogClient
-		Pattern pattern = Pattern
-				.compile("^([0-9]*):([a-f0-9]*) ([^ ]* [^ ]* [^ ]*) (.*)$");
-		for (String rev : revisions) {
+
+		for (ChangeSet rev : revisions) {
 			TableItem row = new TableItem(table, SWT.NONE);
-			Matcher m = pattern.matcher(rev);
-			if (m.matches()) {
-				row.setText(0, m.group(1));
-				row.setText(1, m.group(2));
-				row.setText(2, m.group(3));
-				row.setText(3, m.group(4));
-			} else {
-				row.setText(0, "parse error");
-				row.setText(1, "parse error");
-				row.setText(2, "parse error");
-				row.setText(3, "parse error");
-			}
+			row.setText(0, Integer.toString(rev.getChangesetIndex()));
+			row.setText(1, rev.getChangeset());
+			row.setText(2, rev.getDate());
+			row.setText(3, rev.getUser());
 		}
 
 		item.setControl(table);
