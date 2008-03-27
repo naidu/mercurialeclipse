@@ -42,6 +42,7 @@ public class HgIgnoreAction extends SingleResourceAction {
 					HgIgnoreClient.addRegexp(resource.getProject(), dialog.getPattern());
 					break;
 			}
+			DecoratorStatus.refresh();
 		}
 	}
 
