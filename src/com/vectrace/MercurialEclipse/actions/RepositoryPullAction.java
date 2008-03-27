@@ -55,7 +55,7 @@ public class RepositoryPullAction extends HgOperation
   
   protected String[] getHgCommand()
   {
-    ArrayList launchCmd = new ArrayList();
+    ArrayList<String> launchCmd = new ArrayList<String>();
 
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());

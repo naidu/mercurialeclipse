@@ -1,7 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006 Software Balm Consulting Inc.
- * com.vectrace.MercurialEclipse (c) Vectrace Jan 31, 2006
- * Edited by Zingo Andersen
+ * Copyright (c) 2007 Zingo Andersen
  * 
  * This software is licensed under the zlib/libpng license.
  * 
@@ -28,64 +26,39 @@ package com.vectrace.MercurialEclipse.actions;
 import java.io.File;
 import java.util.ArrayList;
 
-import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
-/*
- * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
- * 
- * This class encapsulates the hg clone command.
- * 
- */
-public class RepositoryCloneAction extends HgOperation
+public class IdentifyAction extends HgOperation
 {
-  private HgRepositoryLocation repo;
-  private IWorkspace workspace;
-  private String cloneParameters;
-  private String projectName;
+  private IProject project;
   private File workingDir;
 
-  /**
-   * @param context
-   */
-  public RepositoryCloneAction(IRunnableContext context, IWorkspace workspace, HgRepositoryLocation repo, String cloneParameters, String projectName, File workingDir)
+  public IdentifyAction(IRunnableContext context, IProject project, File workingDir)
   {
     super(context);
-
-    this.workspace = workspace;
-    this.repo = repo;
-    this.cloneParameters = cloneParameters;
-    this.projectName = projectName;
+    this.project = project;
     if(workingDir != null)
     {
       this.workingDir = workingDir;
     }
     else
     {
-      this.workingDir = workspace.getRoot().getLocation().toFile();
+      this.workingDir = project.getLocation().toFile();
     }
   }
-
+  
   protected String[] getHgCommand()
   {
     ArrayList<String> launchCmd = new ArrayList<String>();
 
-    // clone command setup.
+    // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add("clone");
-    if(cloneParameters != null)
-    {
-      launchCmd.add(cloneParameters);      
-    }
-    launchCmd.add(repo.getUrl());
-    launchCmd.add("--");
-    launchCmd.add(projectName);
-    launchCmd.trimToSize();
-   
-    return (String[])launchCmd.toArray(new String[0]);    
+    launchCmd.add("identify");
+    return (String[])launchCmd.toArray(new String[0]);
   }
 
   protected File getHgWorkingDir()
@@ -93,19 +66,26 @@ public class RepositoryCloneAction extends HgOperation
     return workingDir;
   }
 
-  /*
-   * @see org.eclipse.team.ui.TeamOperation#canRunAsJob()
-   * 
-   * The CloneRepositoryAction is not allowed to run as a job as the CloneRepoWizard will attempt to continue on
-   * otherwise. TODO: Figure out how to make the clone repo wizard block. Presumably need a job monitor.
-   */
-  protected boolean canRunAsJob()
-  {
-    return false;
-  }
-
+  
   protected String getActionDescription()
   {
-	return new String("Mercurial clone repository " + repo.getUrl());
+    return new String("Mercurial identify to check where we currently work");
+  }
+
+  public String getChangeset()
+  {
+    // It consists of the revision id (hash), optionally a '+' sign
+    // if the working tree has been modified, followed by a list of tags.
+    // => we need to strip it ...
+    String changeset = getResult();
+    if (changeset.indexOf(" ") != -1) // is there a space?
+    {
+      changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
+    }
+    if (changeset.indexOf("+") != -1) // is there a +?
+    {
+      changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
+    }
+    return changeset;
   }
 }

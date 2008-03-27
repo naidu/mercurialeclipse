@@ -693,8 +693,8 @@ public class MercurialUtilities
     }
     else if (obj.getType() == IResource.FOLDER)
     {
-      workingDir = (obj.getLocation()).toFile();
-//      workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
+//      workingDir = (obj.getLocation()).toFile();
+      workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
     }
     else if (obj.getType() == IResource.FILE)
     {

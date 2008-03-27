@@ -127,7 +127,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
     
     //Loop trough all selections and put in the resources in the selectedResourceArray
     itr= selection.iterator();
-    ArrayList selectedResourceArrayList = new ArrayList(selection.size()); 
+    ArrayList<IResource> selectedResourceArrayList = new ArrayList<IResource>(selection.size()); 
     while(itr.hasNext())
     {
       obj=itr.next();
@@ -179,7 +179,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
         String eol = System.getProperty("line.separator");
         do 
         {
-          ArrayList list = new ArrayList();
+          ArrayList<String> list = new ArrayList<String>();
           String repository=null;
           String this_repository;
           notEmpty=false;

@@ -25,6 +25,7 @@ package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.ThreeWayRemoteTree;
@@ -50,6 +51,7 @@ public class MercurialRemoteTree extends ThreeWayRemoteTree
   @Override
   protected IResourceVariant[] fetchMembers(IResourceVariant variant, IProgressMonitor progress) throws TeamException
   {
+    System.out.println("MercurialRemoteTree.fetchMembers(" + variant.toString() + ",monitor)");
     if(variant instanceof MercurialFileHistoryVariant)
     {
       return ((MercurialFileHistoryVariant)variant).members();
@@ -63,7 +65,14 @@ public class MercurialRemoteTree extends ThreeWayRemoteTree
   @Override
   protected IResourceVariant fetchVariant(IResource resource, int depth, IProgressMonitor monitor) throws TeamException
   {
-    // TODO Auto-generated method stub
+    System.out.println("MercurialRemoteTree.fetchVariant(" + resource.toString() + "," + depth +",monitor)");
+/*
+    RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
+    if (provider != null && provider instanceof MercurialTeamProvider) 
+    {
+      return new MercurialFileHistoryVariant(new IStorageMercurialRevision(resource,0,depth));
+    }
+*/
     return null;
   }
 

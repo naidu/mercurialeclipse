@@ -56,7 +56,7 @@ public class StatusContainerAction extends HgOperation
 
   protected String[] getHgCommand()
   {
-    ArrayList launchCmd = new ArrayList(resources.length + 4);
+    ArrayList<String> launchCmd = new ArrayList<String>(resources.length + 4);
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("status");
     launchCmd.add("--");

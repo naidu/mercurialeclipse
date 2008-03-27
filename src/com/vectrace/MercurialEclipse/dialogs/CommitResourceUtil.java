@@ -123,7 +123,7 @@ public final class CommitResourceUtil
 		 * System.out.println(" <" + inResources[res].getLocation().toOSString() +
 		 * ">"); }
 		 */
-		ArrayList list = new ArrayList();
+		ArrayList<CommitResource> list = new ArrayList<CommitResource>();
 		StringTokenizer st = new StringTokenizer(string);
 		String status;
 		String fileName;

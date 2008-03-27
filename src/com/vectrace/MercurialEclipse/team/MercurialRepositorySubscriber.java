@@ -37,10 +37,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
-import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.core.variants.ThreeWayRemoteTree;
 import org.eclipse.team.core.variants.ThreeWaySubscriber;
 import org.eclipse.team.core.variants.ThreeWaySynchronizer;
@@ -48,52 +46,9 @@ import org.eclipse.team.core.variants.ThreeWaySynchronizer;
 public class MercurialRepositorySubscriber extends ThreeWaySubscriber 
 {
 
-  public class LocalHistoryVariantComparator implements IResourceVariantComparator 
-  {
-    /* Compare current with newer/older */
-    public boolean compare(IResource local, IResourceVariant remote) 
-    {
-      return false;
-    }
-
-    /* Compare newer/older with newer/older */
-    public boolean compare(IResourceVariant base, IResourceVariant remote) 
-    {
-      return true;
-    }
-
-    public boolean isThreeWay() 
-    {
-      return false;
-    }
-  }
-/*
-  public class LocalHistorySyncInfo extends SyncInfo 
-  {
-    
-    public LocalHistorySyncInfo(IResource local, IResourceVariant remote1, IResourceVariant remote2, IResourceVariantComparator comparator) 
-    {
-      super(local, remote1, remote2, comparator);
-    }
-
-    protected int calculateKind() throws TeamException 
-    {
-       if (getRemote() == null)
-        return IN_SYNC;
-      else
-        return super.calculateKind();
-    }
-  }
-
-*/
-  
-  
-  LocalHistoryVariantComparator comparatorObj; 
-  
   public MercurialRepositorySubscriber()
   {
     super(new ThreeWaySynchronizer(new QualifiedName(MercurialTeamProvider.ID,"MercurialEclipse-sync")));
-    comparatorObj = new LocalHistoryVariantComparator();
   }
   
   public String getName()
@@ -103,7 +58,6 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
 
   public boolean isSupervised(IResource resource) throws TeamException
   {
-    // TODO Auto-generated method stub
     RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
@@ -121,7 +75,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
         return new IResource[0];
       }
       IContainer container = (IContainer)resource;
-      List existingChildren = new ArrayList(Arrays.asList(container.members()));
+      ArrayList<IResource> existingChildren = new ArrayList<IResource>(Arrays.asList(container.members()));
       existingChildren.addAll(  Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
       return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
     } 
@@ -132,7 +86,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
   }
   public IResource[] roots() 
   {
-    List ret = new ArrayList();
+    ArrayList<IResource> ret = new ArrayList<IResource>();
     IProject[] allProjects;
     allProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
     for (int i = 0; i < allProjects.length; i++) 
@@ -149,15 +103,6 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
     }
     return (IProject[]) ret.toArray(new IProject[ret.size()]);
   }
-
-  /* (non-Javadoc)
-   * @see org.eclipse.team.core.subscribers.Subscriber#getSyncInfo(org.eclipse.core.resources.IResource)
-   */
-//  public SyncInfo getSyncInfo(IResource resource) throws TeamException
-//  {
-    // TODO Auto-generated method stub
-//    return getSyncInfo(resource,null,null);
-//  }
 
   public SyncInfo getSyncInfo(IResource resourceLocal, IStorage storageBase, IStorage storageRemote) throws TeamException 
   {
@@ -184,8 +129,8 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
       {
         fileHistRemote = new MercurialFileHistoryVariant(storageRemote);
       }
-      
-      SyncInfo info = new SyncInfo(resourceLocal, fileHistBase,fileHistRemote, comparatorObj);
+            
+      SyncInfo info = new SyncInfo(resourceLocal, fileHistBase,fileHistRemote, getResourceComparator());
       info.init();
       return info;
     } 
@@ -215,11 +160,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
   @Override
   public IResourceVariant getResourceVariant(IResource resource, byte[] bytes) throws TeamException
   {
-    if (bytes == null)
-    {
-      return null;
-    }
-    return new MercurialFileHistoryVariant(new IStorageMercurialRevision(resource.getProject(),resource,"tip"));
+    return new MercurialFileHistoryVariant(new IStorageMercurialRevision(resource));
   }
 
 }

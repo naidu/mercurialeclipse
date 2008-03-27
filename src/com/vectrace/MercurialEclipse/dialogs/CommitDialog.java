@@ -363,7 +363,7 @@ private IResource[] inResources;
 
   private File[] convertToFiles(Object[] objs) 
   {
-    ArrayList list = new ArrayList();
+    ArrayList<File> list = new ArrayList<File>();
 
     for (int res = 0; res < objs.length; res++) 
     {
@@ -381,7 +381,7 @@ private IResource[] inResources;
 
   private IResource[] convertToResource(Object[] objs) 
   {
-    ArrayList list = new ArrayList();
+    ArrayList<IResource> list = new ArrayList<IResource>();
 
     for (int res = 0; res < objs.length; res++) 
     {
@@ -403,7 +403,7 @@ private IResource[] inResources;
 
   private File[] getToAddList(Object[] objs) 
   {
-    ArrayList list = new ArrayList();
+    ArrayList<File> list = new ArrayList<File>();
 
     for (int res = 0; res < objs.length; res++) 
     {

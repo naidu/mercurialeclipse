@@ -376,8 +376,6 @@ public class ChangeLogView extends ViewPart
         
         try
         {
-          IProject proj=resource.getProject();
- 
           int rev1=changeSet.getChangesetIndex()-1;
           if(rev1>0)
           {
@@ -385,8 +383,8 @@ public class ChangeLogView extends ViewPart
           }
           int rev2=changeSet.getChangesetIndex();
 //          IStorage r1=(IStorage) resource;
-          IStorage r1=new IStorageMercurialRevision( proj, resource, rev1);
-          IStorage r2=new IStorageMercurialRevision( proj, resource, rev2);
+          IStorage r1=new IStorageMercurialRevision( resource, rev1);
+          IStorage r2=new IStorageMercurialRevision( resource, rev2);
           MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
           SyncInfo syncInfo = subscriber.getSyncInfo(resource,r1, r2);
           SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diff:", syncInfo);

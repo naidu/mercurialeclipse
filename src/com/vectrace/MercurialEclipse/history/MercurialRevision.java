@@ -65,8 +65,7 @@ public class MercurialRevision extends FileRevision
 //    System.out.println("MercurialRevision::getStorage()");
     if(iStorageMercurialRevision==null)
     {
-      IProject proj=resource.getProject();
-      iStorageMercurialRevision = new IStorageMercurialRevision(proj,resource,changeSet.getChangeset());
+      iStorageMercurialRevision = new IStorageMercurialRevision(resource,changeSet.getChangeset());
     }
     return iStorageMercurialRevision;
   }
