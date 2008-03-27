@@ -3,8 +3,6 @@ Mercurial Eclipse Plugin
 Here is a list of people that has been contributing to this project
 if you supply a patch please dont forget to patch this file also add
 your name, a few lines about yourself and if you want an email.
-By adding your name here you indicate Your acceptance of the License
-and all of its terms and conditions.
 
 
 Contributors: (In order of apparence)
@@ -45,4 +43,7 @@ StefanC
 
 StefanG
      Zingo's Comment: StefanG help me with better log output thanx for pointing this out.
+     
+Stefan Groschupf - 
+     Zingo's Comment: Stefan Groschupf help with logError (He could be the same person as StefanG But Im not sure)
      
