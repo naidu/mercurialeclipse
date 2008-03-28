@@ -39,6 +39,7 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
@@ -60,13 +61,13 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class DecoratorStatus extends LabelProvider implements ILightweightLabelDecorator, IResourceChangeListener {
 
 	//relative order for folders
-	private final static int BIT_DELETED = 0;
-	private final static int BIT_REMOVED = 1;
-	private final static int BIT_IGNORE  = 2;
-	private final static int BIT_CLEAN   = 3;
-	private final static int BIT_UNKNOWN = 4;
-	private final static int BIT_ADDED   = 5;
-	private final static int BIT_MODFIED = 6;
+	private final static int BIT_DELETED    = 0;
+	private final static int BIT_REMOVED    = 1;
+	private final static int BIT_IGNORE     = 2;
+	private final static int BIT_CLEAN      = 3;
+	private final static int BIT_UNKNOWN    = 4;
+	private final static int BIT_ADDED      = 5;
+	private final static int BIT_MODIFIED   = 6;
 	private final static int BIT_IMPOSSIBLE = 7;
 	
 	/** Used to store the last known status of a resource */
@@ -124,23 +125,40 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 		}
 
 		BitSet output = statusMap.get(element);
+		ImageDescriptor overlay = null;
+		String prefix = null;
 		if(output!=null) {
-			if(output.get(BIT_MODFIED)) {
-				decoration.addOverlay(DecoratorImages.modifiedDescriptor);
-				decoration.addPrefix(">");
-			} else if(output.get(BIT_ADDED)) {
-				decoration.addOverlay(DecoratorImages.addedDescriptor);
-			} else if(output.get(BIT_UNKNOWN)) {
-				decoration.addOverlay(DecoratorImages.notTrackedDescriptor);
-			} else if(output.get(BIT_CLEAN)) {
-				decoration.addOverlay(DecoratorImages.managedDescriptor);
-			} else if(output.get(BIT_IGNORE)) {
-				//show nothing
-			} else if(output.get(BIT_REMOVED)) {
-				decoration.addOverlay(DecoratorImages.removedDescriptor);
-			} else if(output.get(BIT_DELETED)) {
-				decoration.addOverlay(DecoratorImages.deletedStillTrackedDescriptor);
+			switch(output.length()-1) {
+				case BIT_MODIFIED:
+					overlay = DecoratorImages.modifiedDescriptor;
+					prefix = ">";
+					break;
+				case BIT_ADDED:
+					overlay = DecoratorImages.addedDescriptor;
+					break;
+				case BIT_UNKNOWN:
+					overlay = DecoratorImages.notTrackedDescriptor;
+					break;
+				case BIT_CLEAN:
+					overlay = DecoratorImages.managedDescriptor;
+					break;
+				//case BIT_IGNORE:
+				//do nothing
+				case BIT_REMOVED:
+					overlay = DecoratorImages.removedDescriptor;
+					break;
+				case BIT_DELETED:
+					overlay = DecoratorImages.deletedStillTrackedDescriptor;
+					break;
 			}
+		} else {
+			//empty folder, do nothing
+		}
+		if(overlay != null) {
+			decoration.addOverlay(overlay);
+		}
+		if(prefix != null) {
+			decoration.addPrefix(prefix);
 		}
 		if (versions.containsKey(element)) {
 			decoration.addSuffix(" [" + versions.get(element) + "]");
@@ -199,7 +217,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 			case 'A':
 				return BIT_ADDED;
 			case 'M':
-				return BIT_MODFIED;
+				return BIT_MODIFIED;
 			default:
 				MercurialEclipsePlugin.logWarning("Unknown status: '"+status+"'", null);
 				return BIT_IMPOSSIBLE;
