@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VecTrace (Zingo Andersen) - Implementation
+ *     VecTrace (Zingo Andersen) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -19,16 +19,14 @@ import org.eclipse.jface.operation.IRunnableContext;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
-public class RepositoryPullAction extends HgOperation
+public class IdentifyAction extends HgOperation
 {
-  private HgRepositoryLocation repo;
   private IProject project;
   private File workingDir;
 
-  public RepositoryPullAction(IRunnableContext context, IProject project, HgRepositoryLocation repo,File workingDir)
+  public IdentifyAction(IRunnableContext context, IProject project, File workingDir)
   {
     super(context);
-    this.repo = repo;
     this.project = project;
     if(workingDir != null)
     {
@@ -46,11 +44,7 @@ public class RepositoryPullAction extends HgOperation
 
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add("pull");
-    launchCmd.add("--");
-    launchCmd.add(repo.getUrl());
-    launchCmd.trimToSize();
-   
+    launchCmd.add("identify");
     return (String[])launchCmd.toArray(new String[0]);
   }
 
@@ -62,6 +56,23 @@ public class RepositoryPullAction extends HgOperation
   
   protected String getActionDescription()
   {
-    return new String("Mercurial pull changes from other reposetory");
+    return new String("Mercurial identify to check where we currently work");
+  }
+
+  public String getChangeset()
+  {
+    // It consists of the revision id (hash), optionally a '+' sign
+    // if the working tree has been modified, followed by a list of tags.
+    // => we need to strip it ...
+    String changeset = getResult();
+    if (changeset.indexOf(" ") != -1) // is there a space?
+    {
+      changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
+    }
+    if (changeset.indexOf("+") != -1) // is there a +?
+    {
+      changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
+    }
+    return changeset;
   }
 }

@@ -1,29 +1,19 @@
 /*******************************************************************************
- * Copyright (c) 2008 Vectrace (Zingo Andersen) 
- * 
- * This software is licensed under the zlib/libpng license.
- * 
- * This software is provided 'as-is', without any express or implied warranty. 
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
+ * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it freely,
- * subject to the following restrictions:
- *
- *  1. The origin of this software must not be misrepresented; you must not 
- *            claim that you wrote the original software. If you use this 
- *            software in a product, an acknowledgment in the product 
- *            documentation would be appreciated but is not required.
- *
- *   2. Altered source versions must be plainly marked as such, and must not be
- *            misrepresented as being the original software.
- *
- *   3. This notice may not be removed or altered from any source distribution.
+ * Contributors:
+ *     VecTrace (Zingo Andersen) - implementation
+ *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
+ *     StefanC                   - large contribution
+ *     Charles O'Farrell         - Fix for project outside workspace 
+ *     Michal Krause             - No changes but tried to also fix the above but I got Charles O'Farrell patch first.
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,8 +28,6 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.viewers.IDecoration;
@@ -155,7 +143,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   */
   private void refresh(IProject project) throws HgException 
   {
-    String output = MercurialUtilities.ExecuteCommand(getHgCommand(project), new File(getAbsolutePath(project).toOSString()), false);
+    String output = MercurialUtilities.ExecuteCommand(getHgCommand(project), project.getLocation().toFile(), false);
     parseStatusCommand(project, output);
   }
 
@@ -181,37 +169,18 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     }
   }
 
-  private String[] getHgCommand(IProject project) 
+  private String[] getHgCommand(IResource... resources) 
   {
-    return getHgCommand(project, new IResource[0]);
-  }
-
-  private String[] getHgCommand(IProject project, IResource[] resources) 
-  {
-    Assert.isNotNull(project);
     List<String> launchCmd = new ArrayList<String>();
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("status");
     launchCmd.add("--");
     // skip -A flag, use null as managed instead
-    //		launchCmd.add("-A");
-
-    for (IResource r : resources) 
-    {
-      launchCmd.add(r.getFullPath().toOSString());
+    //    launchCmd.add("-A");
+    for(IResource r : resources) {
+      launchCmd.add(r.getLocation().toOSString());
     }
     return (String[]) launchCmd.toArray(new String[launchCmd.size()]);
-  }
-
-  /**
-  * @param resource
-  * @return
-  */
-  private IPath getAbsolutePath(final IResource resource) 
-  {
-    IPath root = resource.getWorkspace().getRoot().getRawLocation();
-    IPath projectPath = root.append(resource.getFullPath());
-    return projectPath;
   }
 
   /*
@@ -229,7 +198,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
   */
   public void dispose() 
-  {		
+  {   
   ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
   }
 

@@ -1,25 +1,15 @@
 /*******************************************************************************
- * Copyright (c) 2008 Vectrace (Zingo Andersen) 
- * 
- * This software is licensed under the zlib/libpng license.
- * 
- * This software is provided 'as-is', without any express or implied warranty. 
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
+ * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it freely,
- * subject to the following restrictions:
- *
- *  1. The origin of this software must not be misrepresented; you must not 
- *            claim that you wrote the original software. If you use this 
- *            software in a product, an acknowledgment in the product 
- *            documentation would be appreciated but is not required.
- *
- *   2. Altered source versions must be plainly marked as such, and must not be
- *            misrepresented as being the original software.
- *
- *   3. This notice may not be removed or altered from any source distribution.
+ * Contributors:
+ *     VecTrace (Zingo Andersen) - implementation
+ *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
+ *     StefanC                   - many updates
+ *     Stefan Groschupf          - logError
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -33,25 +23,27 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.internal.Platform;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
+import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.compare.CompareUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.IdentifyAction;
+import com.vectrace.MercurialEclipse.actions.RepositoryPullAction;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-/**
- * @author zingo
- *
- */
+
 public class ActionDiff implements IWorkbenchWindowActionDelegate 
 {
    
@@ -146,32 +138,33 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     //Setup and run command identify, this us used to get the base changeset to diff against
     //tip can't be used since work can be done in older revison ( hg up <old rev> )
     //String FullPath = ( ((IResource) obj).getLocation() ).toString();
-   
-    String launchCmd[] = { MercurialUtilities.getHGExecutable(),"identify"};
+
+    String changeset;
     File workingDir=MercurialUtilities.getWorkingDir( obj );
 
-    IProject proj= obj.getProject();
+    IdentifyAction identifyAction = new IdentifyAction(null, obj.getProject(), workingDir);
+    try
+    {
+      identifyAction.run();
+      changeset = identifyAction.getChangeset(); 
+    }
+    catch (Exception e)
+    {
+      MercurialEclipsePlugin.logError("pull operation failed", e);
+//      System.out.println("pull operation failed");
+//      System.out.println(e.getMessage());
+      
+      IWorkbench workbench = PlatformUI.getWorkbench();
+      Shell shell = workbench.getActiveWorkbenchWindow().getShell();
+      MessageDialog.openInformation(shell,"Mercurial Eclipse couldn't identify hg revision of " + obj.getName().toString(),  identifyAction.getResult());
+      return null;
+    }
     
     try
     {
-      String changeset = MercurialUtilities.ExecuteCommand(launchCmd,workingDir ,false);
-
-      // It consists of the revision id (hash), optionally a '+' sign
-      // if the working tree has been modified, followed by a list of tags.
-      // => we need to strip it ...
-
-      if (changeset.indexOf(" ") != -1) // is there a space?
-      {
-        changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
-      }
-      if (changeset.indexOf("+") != -1) // is there a +?
-      {
-        changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
-      }
 
 //tmp testing
 
-      System.out.println("Hello");
 /*     
           try
           {
@@ -211,28 +204,34 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
           {
             MercurialEclipsePlugin.logError(e);
           }      
-          
+*/      
+/*          
       // Create a file system subscriber and specify that the
    // subscriber will synchronize with the provided file system location
       MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
 
    // Allow the subscriber to refresh its state
    subscriber.refresh(subscriber.roots(), IResource.DEPTH_INFINITE, null);
-
+*/
+/*
    // Collect all the synchronization states and print
    IResource[] children = subscriber.roots();
    for(int i=0; i < children.length; i++) {
-     System.out.println("loop");
      printSyncState(subscriber,children[i]);
    }
-*/      
-
+*/
 //tmp testing done
       
       // Setup and run command diff
 
       MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
-      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, (IStorage) obj, new IStorageMercurialRevision( proj, (IResource) obj, changeset));
+/*
+      System.out.println("diff(" + obj.toString() + ",...,...)");
+      printSyncState(subscriber,obj);
+*/
+//      IStorageMercurialRevision iStorage = new IStorageMercurialRevision( (IResource) obj, changeset);
+//      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, iStorage, iStorage);
+      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj);
       SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diff", syncInfo);
       return comparedialog;
     } 
@@ -256,7 +255,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     {
       if(resource != null)
       {
-        System.out.println("printSyncState:" + resource.toString() + "::"+ subscriber.getSyncInfo(resource).toString());
+        System.out.println(subscriber.getSyncInfo(resource).toString());
       }
       else
       {
