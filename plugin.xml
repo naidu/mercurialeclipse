@@ -13,6 +13,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - Some updates
+ *     Charles O'Farrell         - Annotation with color
  *******************************************************************************/
 -->
 
@@ -427,4 +428,12 @@
       </toc>
    </extension -->
 
+   <extension
+         point="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider">
+      <referenceprovider
+            label="Hg Quick Diff"
+            class="com.vectrace.MercurialEclipse.annotatations.HgPristineCopyQuickDiffProvider"
+            id="com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider">
+      </referenceprovider>
+   </extension>
 </plugin>

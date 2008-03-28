@@ -9,153 +9,95 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     Stefan Groschupf          - logError
+ *     Charles O'Farrell         - Annotation with color
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
-import java.util.Iterator;
-
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IObjectActionDelegate;
+import org.eclipse.ui.IViewActionDelegate;
+import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.actions.ActionDelegate;
 
+import com.vectrace.MercurialEclipse.HgFile;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
 
-public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
+public class ActionAnnotate extends ActionDelegate implements
+    IObjectActionDelegate, IViewActionDelegate
+{
+  private IStructuredSelection selection;
+  private IWorkbenchPart part;
 
-  private IWorkbenchWindow window;
-//    private IWorkbenchPart targetPart;
-    private IStructuredSelection selection;
-    
-  public ActionAnnotate() {
+  public ActionAnnotate()
+  {
     super();
   }
 
   /**
-   * We can use this method to dispose of any system
-   * resources we previously allocated.
+   * We can use this method to dispose of any system resources we previously
+   * allocated.
+   * 
    * @see IWorkbenchWindowActionDelegate#dispose
    */
-  public void dispose() {
+  public void dispose()
+  {
 
   }
 
-
   /**
-   * We will cache window object in order to
-   * be able to provide parent shell for the message dialog.
-   * @see IWorkbenchWindowActionDelegate#init
-   */
-  public void init(IWorkbenchWindow window) {
-//    System.out.println("ActionCommit:init(window)");
-    this.window = window;
-  }
-
-  /**
-   * The action has been activated. The argument of the
-   * method represents the 'real' action sitting
-   * in the workbench UI.
+   * The action has been activated. The argument of the method represents the
+   * 'real' action sitting in the workbench UI.
+   * 
    * @see IWorkbenchWindowActionDelegate#run
    */
-  
 
-  public void run(IAction action) 
+  public void run(IAction action)
   {
-    IProject proj;
-    String Repository;
-    Shell shell;
-    IWorkbench workbench;
-    
-    proj=MercurialUtilities.getProject(selection);
-    Repository=MercurialUtilities.getRepositoryPath(proj);
-    if(Repository==null)
+    for (Object obj : selection.toList())
     {
-      Repository="."; //never leave this empty add a . to point to current path
-    }
-    //Setup and run command
-    
-    if((window !=null) && (window.getShell() != null))
-    {
-      shell=window.getShell();
-    }
-    else
-    {
-      workbench = PlatformUI.getWorkbench();
-      shell = workbench.getActiveWorkbenchWindow().getShell();
-    }
-    
-    Object obj;
-    Iterator itr; 
-    // the last argument will be replaced with a path
-    itr=selection.iterator();
-    while(itr.hasNext())
-    {
-      obj=itr.next();
-      if (obj instanceof IResource)
+      if (!(obj instanceof IFile))
+        continue;
+      try
       {
-        IResource resource=(IResource) obj;
-        if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
-        {
-          //Resource could be inside a link or something do nothing
-          // in the future this could check is this is another repository
-
-          //Setup and run command
-          File workingDir=MercurialUtilities.getWorkingDir(resource);
-          String FullPath = MercurialUtilities.getResourceName(resource);
-          String launchCmd[] = { MercurialUtilities.getHGExecutable(), "annotate" , "--user", "--number","--changeset","--date","--",FullPath};
-
-//          System.out.println("Annotate>" + launchCmd[0] + " " + launchCmd[1] + " " + launchCmd[2 ] + "---->Workdir:" + workingDir.toString());
-          
-          
-          
-          try
-          {
-            String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir, true);
-            if(output!=null)
-            {
-              //output output in a window
-              if(output.length()!=0)
-              {
-                MessageDialog.openInformation(shell,"Mercurial Eclipse Annotate " + FullPath,  output);
-              }
-            } 
-          } catch (HgException e)
-          {
-        	  MercurialEclipsePlugin.logError(e);
-//            System.out.println(e.getMessage());
-          }
-        }
+        new ShowAnnotationOperation(part, new HgFile((IFile) obj)).run();
+      } catch (Exception e)
+      {
+        MercurialEclipsePlugin.logError(e);
       }
     }
-    
-//  DecoratorStatus.refresh();
   }
-  
-  
+
   /**
-   * Selection in the workbench has been changed. We 
-   * can change the state of the 'real' action here
-   * if we want, but this can only happen after 
-   * the delegate has been created.
+   * Selection in the workbench has been changed. We can change the state of the
+   * 'real' action here if we want, but this can only happen after the delegate
+   * has been created.
+   * 
    * @see IWorkbenchWindowActionDelegate#selectionChanged
    */
-  public void selectionChanged(IAction action, ISelection in_selection) 
+  public void selectionChanged(IAction action, ISelection in_selection)
   {
-    if( in_selection != null && in_selection instanceof IStructuredSelection )
+    if (in_selection != null && in_selection instanceof IStructuredSelection)
     {
-      selection = ( IStructuredSelection )in_selection;
+      selection = (IStructuredSelection) in_selection;
     }
   }
 
+  public void setActivePart(IAction action, IWorkbenchPart part)
+  {
+    this.part = part;
 
-  
+  }
+
+  public void init(IViewPart part)
+  {
+    this.part = part;
+  }
+
 }

@@ -7,9 +7,12 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
+ *     Charles O'Farrell         - HgRevision
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.model;
+
+import com.vectrace.MercurialEclipse.HgRevision;
 
 public class ChangeSet
 {
@@ -65,6 +68,11 @@ public class ChangeSet
   public String getDescription()
   {
     return description;
+  }
+
+  public HgRevision getRevision()
+  {
+    return new HgRevision(changeset, changesetIndex);
   }
 
 }
