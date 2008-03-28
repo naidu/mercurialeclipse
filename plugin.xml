@@ -157,6 +157,14 @@
                id="com.vectrace.MercurialEclipse.team.ActionAnnotate">
            </action>
            <action
+               label="hg &amp;import"
+               icon="icons/mercurialeclipse.png"
+               class="com.vectrace.MercurialEclipse.team.ActionImport"
+               tooltip="Import patch from file (hg import)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.ActionImport">
+           </action>
+           <action
                label="hg &amp;pull"
                icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionPull"

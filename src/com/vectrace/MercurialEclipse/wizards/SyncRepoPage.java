@@ -37,8 +37,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /*
- * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
- * 
  * This file implements a wizard page which will allow the user to create a repository
  * location.
  * 
@@ -74,6 +72,12 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
     setDescription( description);
   }
 
+  public SyncRepoPage( String pageName, String title, ImageDescriptor titleImage ) 
+  {
+    super(pageName, title, titleImage);
+  }
+
+  
   public boolean canFlipToNextPage()
   {
     return isPageComplete() && (getWizard().getNextPage(this) != null);
