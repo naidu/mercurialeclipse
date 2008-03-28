@@ -1,25 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2008 Vectrace (Zingo Andersen) 
- * 
- * This software is licensed under the zlib/libpng license.
- * 
- * This software is provided 'as-is', without any express or implied warranty. 
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
+ * Copyright (c) 2007-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it freely,
- * subject to the following restrictions:
- *
- *  1. The origin of this software must not be misrepresented; you must not 
- *            claim that you wrote the original software. If you use this 
- *            software in a product, an acknowledgment in the product 
- *            documentation would be appreciated but is not required.
- *
- *   2. Altered source versions must be plainly marked as such, and must not be
- *            misrepresented as being the original software.
- *
- *   3. This notice may not be removed or altered from any source distribution.
+ * Contributors:
+ *     VecTrace (Zingo Andersen) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -37,10 +24,8 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
-import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.core.variants.ThreeWayRemoteTree;
 import org.eclipse.team.core.variants.ThreeWaySubscriber;
 import org.eclipse.team.core.variants.ThreeWaySynchronizer;
@@ -48,52 +33,9 @@ import org.eclipse.team.core.variants.ThreeWaySynchronizer;
 public class MercurialRepositorySubscriber extends ThreeWaySubscriber 
 {
 
-  public class LocalHistoryVariantComparator implements IResourceVariantComparator 
-  {
-    /* Compare current with newer/older */
-    public boolean compare(IResource local, IResourceVariant remote) 
-    {
-      return false;
-    }
-
-    /* Compare newer/older with newer/older */
-    public boolean compare(IResourceVariant base, IResourceVariant remote) 
-    {
-      return true;
-    }
-
-    public boolean isThreeWay() 
-    {
-      return false;
-    }
-  }
-/*
-  public class LocalHistorySyncInfo extends SyncInfo 
-  {
-    
-    public LocalHistorySyncInfo(IResource local, IResourceVariant remote1, IResourceVariant remote2, IResourceVariantComparator comparator) 
-    {
-      super(local, remote1, remote2, comparator);
-    }
-
-    protected int calculateKind() throws TeamException 
-    {
-       if (getRemote() == null)
-        return IN_SYNC;
-      else
-        return super.calculateKind();
-    }
-  }
-
-*/
-  
-  
-  LocalHistoryVariantComparator comparatorObj; 
-  
   public MercurialRepositorySubscriber()
   {
     super(new ThreeWaySynchronizer(new QualifiedName(MercurialTeamProvider.ID,"MercurialEclipse-sync")));
-    comparatorObj = new LocalHistoryVariantComparator();
   }
   
   public String getName()
@@ -103,7 +45,6 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
 
   public boolean isSupervised(IResource resource) throws TeamException
   {
-    // TODO Auto-generated method stub
     RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
@@ -121,7 +62,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
         return new IResource[0];
       }
       IContainer container = (IContainer)resource;
-      List existingChildren = new ArrayList(Arrays.asList(container.members()));
+      ArrayList<IResource> existingChildren = new ArrayList<IResource>(Arrays.asList(container.members()));
       existingChildren.addAll(  Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
       return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
     } 
@@ -132,7 +73,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
   }
   public IResource[] roots() 
   {
-    List ret = new ArrayList();
+    ArrayList<IResource> ret = new ArrayList<IResource>();
     IProject[] allProjects;
     allProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
     for (int i = 0; i < allProjects.length; i++) 
@@ -149,15 +90,6 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
     }
     return (IProject[]) ret.toArray(new IProject[ret.size()]);
   }
-
-  /* (non-Javadoc)
-   * @see org.eclipse.team.core.subscribers.Subscriber#getSyncInfo(org.eclipse.core.resources.IResource)
-   */
-//  public SyncInfo getSyncInfo(IResource resource) throws TeamException
-//  {
-    // TODO Auto-generated method stub
-//    return getSyncInfo(resource,null,null);
-//  }
 
   public SyncInfo getSyncInfo(IResource resourceLocal, IStorage storageBase, IStorage storageRemote) throws TeamException 
   {
@@ -184,8 +116,8 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
       {
         fileHistRemote = new MercurialFileHistoryVariant(storageRemote);
       }
-      
-      SyncInfo info = new SyncInfo(resourceLocal, fileHistBase,fileHistRemote, comparatorObj);
+            
+      SyncInfo info = new SyncInfo(resourceLocal, fileHistBase,fileHistRemote, getResourceComparator());
       info.init();
       return info;
     } 
@@ -215,11 +147,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
   @Override
   public IResourceVariant getResourceVariant(IResource resource, byte[] bytes) throws TeamException
   {
-    if (bytes == null)
-    {
-      return null;
-    }
-    return new MercurialFileHistoryVariant(new IStorageMercurialRevision(resource.getProject(),resource,"tip"));
+    return new MercurialFileHistoryVariant(new IStorageMercurialRevision(resource));
   }
 
 }

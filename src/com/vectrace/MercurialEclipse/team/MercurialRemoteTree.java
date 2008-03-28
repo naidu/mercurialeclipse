@@ -1,39 +1,24 @@
 /*******************************************************************************
- * Copyright (c) 2008 Vectrace (Zingo Andersen) 
- * 
- * This software is licensed under the zlib/libpng license.
- * 
- * This software is provided 'as-is', without any express or implied warranty. 
- * In no event will the authors be held liable for any damages arising from the
- * use of this software.
+ * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * Permission is granted to anyone to use this software for any purpose, 
- * including commercial applications, and to alter it and redistribute it freely,
- * subject to the following restrictions:
- *
- *  1. The origin of this software must not be misrepresented; you must not 
- *            claim that you wrote the original software. If you use this 
- *            software in a product, an acknowledgment in the product 
- *            documentation would be appreciated but is not required.
- *
- *   2. Altered source versions must be plainly marked as such, and must not be
- *            misrepresented as being the original software.
- *
- *   3. This notice may not be removed or altered from any source distribution.
+ * Contributors:
+ *     VecTrace (Zingo Andersen) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.ThreeWayRemoteTree;
 import org.eclipse.team.core.variants.ThreeWaySubscriber;
 
-/**
- * @author zingo
- *
- */
+
 public class MercurialRemoteTree extends ThreeWayRemoteTree
 {
 
@@ -50,6 +35,7 @@ public class MercurialRemoteTree extends ThreeWayRemoteTree
   @Override
   protected IResourceVariant[] fetchMembers(IResourceVariant variant, IProgressMonitor progress) throws TeamException
   {
+    System.out.println("MercurialRemoteTree.fetchMembers(" + variant.toString() + ",monitor)");
     if(variant instanceof MercurialFileHistoryVariant)
     {
       return ((MercurialFileHistoryVariant)variant).members();
@@ -63,7 +49,14 @@ public class MercurialRemoteTree extends ThreeWayRemoteTree
   @Override
   protected IResourceVariant fetchVariant(IResource resource, int depth, IProgressMonitor monitor) throws TeamException
   {
-    // TODO Auto-generated method stub
+    System.out.println("MercurialRemoteTree.fetchVariant(" + resource.toString() + "," + depth +",monitor)");
+/*
+    RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
+    if (provider != null && provider instanceof MercurialTeamProvider) 
+    {
+      return new MercurialFileHistoryVariant(new IStorageMercurialRevision(resource,0,depth));
+    }
+*/
     return null;
   }
 
