@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
- *     Stefan Groschupf - logError 
+ *     Stefan Groschupf          - logError 
  *******************************************************************************/
 
 /*
