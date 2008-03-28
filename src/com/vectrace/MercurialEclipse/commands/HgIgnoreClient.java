@@ -43,11 +43,20 @@ public class HgIgnoreClient {
 		for(int i=0; i<len; i++) {
 			char c = string.charAt(i);
 			switch(c) {
-				//TODO a lot are missing
 				case '\\':
 				case '.':
+				case '*':
+				case '?':
+				case '+':
+				case '|':
 				case '^':
 				case '$':
+				case '(':
+				case ')':
+				case '[':
+				case ']':
+				case '{':
+				case '}':
 					result.append('\\');
 				default:
 					result.append(c);
