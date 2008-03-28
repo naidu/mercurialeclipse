@@ -9,6 +9,8 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - large contribution
+ *     Charles O'Farrell         - Fix for project outside workspace 
+ *     Michal Krause             - No changes but tried to also fix the above but I got Charles O'Farrell patch first.
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -174,9 +176,9 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     launchCmd.add("status");
     launchCmd.add("--");
     // skip -A flag, use null as managed instead
-    //		launchCmd.add("-A");
+    //    launchCmd.add("-A");
     for(IResource r : resources) {
-    	launchCmd.add(r.getLocation().toOSString());
+      launchCmd.add(r.getLocation().toOSString());
     }
     return (String[]) launchCmd.toArray(new String[launchCmd.size()]);
   }
@@ -196,7 +198,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
   */
   public void dispose() 
-  {		
+  {   
   ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
   }
 

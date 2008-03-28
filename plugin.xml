@@ -1,3 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+
 <!-- 
 /*******************************************************************************
  * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
@@ -12,8 +15,7 @@
  *     StefanC                   - Some updates
  *******************************************************************************/
 -->
-<?xml version="1.0" encoding="UTF-8"?>
-<?eclipse version="3.0"?>
+
 <plugin>
 
 <!--            Team exstension points                     -->
