@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?eclipse version="3.0"?>
+<?eclipse version="3.3"?>
 
 <!-- 
 /*******************************************************************************
@@ -14,6 +14,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - Some updates
  *     Charles O'Farrell         - Annotation with color
+ *     Jerome Negre              - Moving menus around
  *******************************************************************************/
 -->
 
@@ -93,49 +94,44 @@
        <objectContribution
            adaptable="true"
            objectClass="org.eclipse.core.resources.IResource"
-           id="com.vectrace.MercurialEclipse.IFileContributions">
-<!--
-           ...
-           objectClass="org.eclipse.core.resources.IResource"
-           ...
-           <visibility>
-             <or>
-               <objectClass name="org.eclipse.core.resources.IFile"/>
-               <objectClass name="org.eclipse.core.resources.IFolder"/>
-             </or>
-           </visibility>             
--->
+           id="com.vectrace.MercurialEclipse.IResourceContributions">
            <filter
               name="projectPersistentProperty"
               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
            </filter>
+           <!-- Team -->
            <action
-               label="hg &amp;remove"
-               icon="icons/remove.png"
+               label="Add to .hgignore..."
+               class="com.vectrace.MercurialEclipse.team.HgIgnoreAction"
+               tooltip="hg add"
+               menubarPath="team.main/group10"
+               id="com.vectrace.MercurialEclipse.team.HgIgnoreAction"
+               enablesFor="1">
+           </action>
+           <action
+               label="Remove from Version Control"
                class="com.vectrace.MercurialEclipse.team.ActionRemove"
                tooltip="hg remove"
                menubarPath="team.main/group10"
                id="com.vectrace.MercurialEclipse.team.ActionRemove">
            </action>
            <action
-               label="hg &amp;add"
-               icon="icons/add.png"
-               class="com.vectrace.MercurialEclipse.team.ActionAdd"
+               label="Add to Version Control..."
+               class="com.vectrace.MercurialEclipse.team.AddAction"
                tooltip="hg add"
                menubarPath="team.main/group10"
-               id="com.vectrace.MercurialEclipse.team.ActionAdd">
+               id="com.vectrace.MercurialEclipse.team.AddAction">
            </action>
            <action
-               label="hg &amp;diff"
-               icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.team.ActionDiff"
-               tooltip="hg diff"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionDiff">
+               label="Tag as Version..."
+               class="com.vectrace.MercurialEclipse.team.TagAction"
+               tooltip="hg tag"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.TagAction"
+               enablesFor="1">
            </action>
            <action
                label="hg &amp;log"
-               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
                tooltip="hg log"
                menubarPath="team.main/group2"
@@ -143,19 +139,10 @@
            </action>
            <action
                label="hg &amp;revert"
-               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionRevert"
                tooltip="hg revert"
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
-           </action>
-           <action
-               label="hg &amp;annotate"
-               icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
-               tooltip="hg annotate"
-               menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.ActionAnnotate">
            </action>
            <action
                label="hg &amp;import"
@@ -166,24 +153,21 @@
                id="com.vectrace.MercurialEclipse.team.ActionImport">
            </action>
            <action
-               label="hg &amp;pull"
-               icon="icons/mercurialeclipse.png"
+               label="Pull..."
                class="com.vectrace.MercurialEclipse.team.ActionPull"
                tooltip="pull changes from remote/local reposetory (hg pull)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPull">
            </action>
            <action
-               label="hg &amp;push"
-               icon="icons/mercurialeclipse.png"
+               label="Push..."
                class="com.vectrace.MercurialEclipse.team.ActionPush"
                tooltip="push changes to remote/local reposetory (hg push)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
-               label="hg &amp;commit"
-               icon="icons/mercurialeclipse.png"
+               label="Commit..."
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
                tooltip="Commit files (hg commit)"
                menubarPath="team.main/group1"
@@ -203,7 +187,6 @@
 
            <action
                label="hg &amp;view (All files)"
-               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionView"
                tooltip="View releases reflect all files (hg view)"
                menubarPath="team.main/group1"
@@ -219,32 +202,42 @@
            </action -->
       </objectContribution>
       
+      <!-- File Team Menu -->
       <objectContribution
-       	   id="org.eclipse.team.ui.ResourceContributions"
-           objectClass="org.eclipse.core.resources.IResource" adaptable="true">
-        <filter
-              name="projectPersistentProperty"
-              value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-        </filter>
-		<menu
-			id="team.main"
-			path="additions"
-			label="Team (hg)">
-			<separator name="group1"/>
-			<separator name="group2"/>
-			<separator name="group3"/>
-			<separator name="group4"/>
-			<separator name="group5"/>
-			<separator name="group6"/>
-			<separator name="group7"/>
-			<separator name="group8"/>
-			<separator name="group9"/>
-			<separator name="group10"/>
-			<separator name="targetGroup"/>
-			<separator name="projectGroup"/>
-		</menu>
+            adaptable="true"
+            objectClass="org.eclipse.core.resources.IFile"
+            id="com.vectrace.MercurialEclipse.IFileContributions">
+           <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+           </filter>
+                 <!-- Team -->
+            <action
+               label="Show Annotation"
+               class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
+               tooltip="hg annotate"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
+               enablesFor="1">
+           </action>
+                 <!-- Compare -->
+           <action
+               label="Another Changeset..."
+               class="com.vectrace.MercurialEclipse.team.CompareWithAction"
+               tooltip="hg diff"
+               menubarPath="compareWithMenu/compareWithGroup"
+               id="com.vectrace.MercurialEclipse.team.CompareWithAction"
+               enablesFor="1">
+           </action>
+           <action
+               label="Parent Changeset"
+               class="com.vectrace.MercurialEclipse.team.CompareAction"
+               tooltip="hg diff"
+               menubarPath="compareWithMenu/compareWithGroup"
+               id="com.vectrace.MercurialEclipse.team.CompareAction"
+               enablesFor="1">
+           </action>
       </objectContribution>
-
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
@@ -287,146 +280,6 @@
             name="Clone Repository using Mercurial"
             project="true"/>
    </extension>
-
-<!--            View:s                     -->
-
-
-   <!--extension
-         point="org.eclipse.ui.views">
-      <category
-            name="Team"
-            id="com.vectrace.MercurialEclipse">
-      </category>
-      <view
-            name="Mercurial ChangeLog"
-            icon="icons/mercurialeclipse.png"
-            category="com.vectrace.MercurialEclipse"
-            class="com.vectrace.MercurialEclipse.views.ChangeLogView"
-            id="com.vectrace.MercurialEclipse.views.ChangeLogView">
-      </view>
-   </extension -->
-
-<!--            Adapters                     -->
-   
-   <extension point="org.eclipse.core.runtime.adapters">
-     <factory
-       adaptableType="org.eclipse.team.core.history.provider.FileHistoryProvider"
-       class="com.vectrace.MercurialEclipse.AdapterFactory">
-       <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
-     </factory>
-   </extension>
-   
-   <!-- extension point="org.eclipse.core.resources.moveDeleteHook">
-      <moveDeleteHook
-            class="com.vectrace.MercurialEclipse.team.HgMoveDeleteHook">
-      </moveDeleteHook>
-   </extension -->
-
-   <!-- extension
-         point="org.eclipse.ui.actionSets">
-      <actionSet
-            label="Sample Action Set"
-            visible="true"
-            id="com.vectrace.MercurialEclipse.actionSet">
-         <menu
-               label="Sample &amp;Menu"
-               id="sampleMenu">
-            <separator
-                  name="sampleGroup">
-            </separator>
-         </menu>
-         <action
-               label="&amp;Sample Action"
-               icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.actions.SampleAction"
-               tooltip="Hello, Eclipse world"
-               menubarPath="sampleMenu/sampleGroup"
-               toolbarPath="sampleGroup"
-               id="com.vectrace.MercurialEclipse.actions.SampleAction">
-         </action>
-      </actionSet>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.ui.propertyPages">
-      <page
-            objectClass="org.eclipse.core.resources.IFile"
-            name="Sample Page"
-            nameFilter="*.*"
-            class="com.vectrace.MercurialEclipse.properties.SamplePropertyPage"
-            id="com.vectrace.MercurialEclipse.properties.samplePropertyPage">
-      </page>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.ui.editors">
-      <editor
-            name="Sample XML Editor"
-            extensions="xml"
-            icon="icons/mercurialeclipse.png"
-            contributorClass="org.eclipse.ui.texteditor.BasicTextEditorActionContributor"
-            class="com.vectrace.MercurialEclipse.editors.XMLEditor"
-            id="com.vectrace.MercurialEclipse.editors.XMLEditor">
-      </editor>
-      <editor
-            name="Sample Multi-page Editor"
-            extensions="mpe"
-            icon="icons/mercurialeclipse.png"
-            contributorClass="com.vectrace.MercurialEclipse.editors.MultiPageEditorContributor"
-            class="com.vectrace.MercurialEclipse.editors.MultiPageEditor"
-            id="com.vectrace.MercurialEclipse.editors.MultiPageEditor">
-      </editor>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.ui.perspectiveExtensions">
-      <perspectiveExtension
-            targetID="org.eclipse.ui.resourcePerspective">
-         <view
-               ratio="0.5"
-               relative="org.eclipse.ui.views.TaskList"
-               relationship="right"
-               id="com.vectrace.MercurialEclipse.views.SampleView">
-         </view>
-      </perspectiveExtension>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.ui.newWizards">
-      <category
-            name="Sample Wizards"
-            id="com.vectrace.MercurialEclipse">
-      </category>
-      <wizard
-            name="Multi-page Editor file"
-            icon="icons/mercurialeclipse.png"
-            category="com.vectrace.MercurialEclipse"
-            class="com.vectrace.MercurialEclipse.wizards.SampleNewWizard"
-            id="com.vectrace.MercurialEclipse.wizards.SampleNewWizard">
-      </wizard>
-   </extension -->
-
-
-   <!-- extension
-         point="org.eclipse.ui.preferencePages">
-      <page
-            name="Sample Preferences"
-            class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
-            id="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage">
-      </page>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.core.runtime.preferences">
-      <initializer
-            class="com.vectrace.MercurialEclipse.preferences.MercurialPreferenceInitializer">
-      </initializer>
-   </extension -->
-   <!-- extension
-         point="org.eclipse.help.toc">
-      <toc
-            file="toc.xml">
-      </toc>
-      <toc
-            file="testToc.xml"
-            primary="true">
-      </toc>
-   </extension -->
 
    <extension
          point="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider">
