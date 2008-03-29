@@ -55,8 +55,8 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
-import snippet.TableViewerSortingExample.TableColumnSorter;
 
+import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.team.ActionDiff;
 
 /**
