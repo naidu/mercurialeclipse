@@ -12,8 +12,6 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
@@ -39,7 +37,7 @@ public class ImportWizard extends SyncRepoWizard
     projectName = project.getName();
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = (SyncRepoPage) new ImportRepoPage("ImportPage","Import changes from patchfile","Select a patch file to Import from",projectName,null);
+    super.syncRepoLocationPage = (SyncRepoPage) new ImportPage("ImportPage","Import changes from patchfile","Select a patch file to Import from",projectName,null);
   }
 
   /* (non-Javadoc)

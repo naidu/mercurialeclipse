@@ -12,22 +12,15 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
 import com.vectrace.MercurialEclipse.actions.RepositoryPullAction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
@@ -45,7 +38,7 @@ public class PullRepoWizard extends SyncRepoWizard
     projectName = project.getName();
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = new SyncRepoPage(false,"PullRepoPage","Pull changes from repository","Select a repository location to pull from",projectName,null);
+    super.syncRepoLocationPage = (SyncRepoPage) new PullPage("PullRepoPage","Pull changes from repository","Select a repository location to pull from",projectName,null);
   }
 
   /* (non-Javadoc)
@@ -53,8 +46,6 @@ public class PullRepoWizard extends SyncRepoWizard
    */
   public boolean performFinish()
   {
-    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-//    final IProject project = workspace.getRoot().getProject(projectName);
     final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
     
     // Check that this project exist.

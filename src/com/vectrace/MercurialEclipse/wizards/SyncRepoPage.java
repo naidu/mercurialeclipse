@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
@@ -187,7 +188,7 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
       locationCombo.add( loc.getUrl() );
     }
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
-	browseButton.setText ("Browse...");
+	browseButton.setText ("Browse repos");
 	browseButton.addSelectionListener(new SelectionAdapter() 
 	{
 		public void widgetSelected(SelectionEvent e) 
@@ -206,7 +207,6 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
 				locationCombo.setText(dir);
 		}
 	});
-
   if(clone)
   {    
     // Box to enter additional parameters for the clone command.

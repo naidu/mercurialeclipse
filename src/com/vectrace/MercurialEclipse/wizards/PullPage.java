@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Iterator;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
@@ -45,7 +44,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 
 
-public class ImportRepoPage extends SyncRepoPage
+public class PullPage extends SyncRepoPage
 {
 
   private Label    locationLabel;
@@ -60,18 +59,23 @@ public class ImportRepoPage extends SyncRepoPage
   private Combo    projectNameCombo;
   private GridData projectNameData;
 
-
   String repoName;
   /**
    * @param pageName
    */
-  public ImportRepoPage(String pageName, String title, String description,String repoName, ImageDescriptor titleImage ) 
+  public PullPage( String pageName, String title, String description,String repoName, ImageDescriptor titleImage ) 
   {
     super(pageName, title, titleImage);
     this.repoName=repoName;
     setDescription( description);
   }
 
+  public PullPage( String pageName, String title, ImageDescriptor titleImage ) 
+  {
+    super(pageName, title, titleImage);
+  }
+
+  
   public boolean canFlipToNextPage()
   {
     return isPageComplete() && (getWizard().getNextPage(this) != null);
@@ -81,26 +85,37 @@ public class ImportRepoPage extends SyncRepoPage
   {
     // This page has no smarts when it comes to parsing. As far as it is concerned
     /// having any text is grounds for completion.
-    return ( locationCombo.getText() != null );
+    return HgRepositoryLocation.validateLocation( locationCombo.getText() );
   }
   
-  private boolean isPageComplete( String file )
+  private boolean isPageComplete( String url, String repoName )
   {
-    if(file != null)
-    {
-       return true;
-    }
-    else
-    {
-      return false;
-    }
+    return HgRepositoryLocation.validateLocation( url ) && repoName.trim().length() > 0;
   }
 
-  private boolean validateAndSetComplete( String file )
+  private boolean isPageComplete( String url )
   {
-    boolean validLocation = isPageComplete( file );
+    return HgRepositoryLocation.validateLocation( url );
+  }
 
-    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? file : null);
+  
+  private boolean validateAndSetComplete( String url, String repoName )
+  {
+    boolean validLocation = isPageComplete( url, repoName );
+
+    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
+    ((SyncRepoWizard)getWizard()).setProjectName(validLocation ? repoName : null);
+
+    setPageComplete( validLocation );
+
+    return validLocation;
+  }
+
+  private boolean validateAndSetComplete( String url )
+  {
+    boolean validLocation = isPageComplete( url );
+
+    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
 
     setPageComplete( validLocation );
 
@@ -115,14 +130,14 @@ public class ImportRepoPage extends SyncRepoPage
   {
     Composite outerContainer = new Composite(parent,SWT.NONE);
     GridLayout layout = new GridLayout();
-    layout.numColumns = 3;
+    layout.numColumns = 4;
     outerContainer.setLayout(layout);
     outerContainer.setLayoutData(
     new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
 
     // Box to enter the repo location
     locationLabel = new Label(outerContainer, SWT.NONE);
-    locationLabel.setText("Patch file:");
+    locationLabel.setText("Repository Location:");
     locationData = new GridData();
     locationData.widthHint = 300;
     locationCombo = new Combo(outerContainer, SWT.DROP_DOWN);
@@ -138,27 +153,49 @@ public class ImportRepoPage extends SyncRepoPage
     {
       public void handleEvent(Event event) 
       {
-        validateAndSetComplete( locationCombo.getText());          
+        validateAndSetComplete( locationCombo.getText());
       }      
     });
+    // Add any previously existing URLs to the combo box for ease of use.
+    Iterator locIter = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations().iterator();
+    while( locIter.hasNext() )
+    {
+      HgRepositoryLocation loc = ((HgRepositoryLocation)locIter.next());
+      locationCombo.add( loc.getUrl() );
+    }
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
-	browseButton.setText ("Browse...");
+	browseButton.setText ("Browse repos");
 	browseButton.addSelectionListener(new SelectionAdapter() 
 	{
 		public void widgetSelected(SelectionEvent e) 
 		{
-			FileDialog dialog = new FileDialog (getShell());
-      dialog.setText("Select a file to import from");     
-			String file = dialog.open();
-			if (file != null)
-				locationCombo.setText(file);
-		}
-	});
+			DirectoryDialog dialog = new DirectoryDialog (getShell());
+      dialog.setMessage("Select a repository to pull/push");     
+			String dir = dialog.open();
+			if (dir != null)
+				locationCombo.setText(dir);
+			}
+	 });
+  
+    Button browsefileButton = new Button (outerContainer, SWT.PUSH);
+    browsefileButton.setText ("Browse bundles");
+    browsefileButton.addSelectionListener(new SelectionAdapter() 
+    {
+      public void widgetSelected(SelectionEvent e) 
+      {
+        FileDialog dialog = new FileDialog (getShell());
+        dialog.setText("Select a bundle to pull/push from/to");     
+        String dir = dialog.open();
+        if (dir != null)
+          locationCombo.setText(dir);
+      }
+    });
+ 
+    projectNameLabel = new Label(outerContainer, SWT.NONE);
+    projectNameLabel.setText("Name of project to pull to:" + repoName);
 
-  projectNameLabel = new Label(outerContainer, SWT.NONE);
-  projectNameLabel.setText("Name of project to Import to:" + repoName);
-  setControl(outerContainer);
-  setPageComplete(false);
+    setControl(outerContainer);
+    setPageComplete(false);
   }
 
   public void dispose()
