@@ -64,6 +64,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgPristineCopyQuickDiffProvider implements
     IQuickDiffReferenceProvider
 {
+
+  public static final String HG_REFERENCE_PROVIDER = "com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider";
+  
   // The editor showing this quickdiff and provides access to the editor input
   // and
   // ultimatly the IFile.
@@ -116,6 +119,8 @@ public class HgPristineCopyQuickDiffProvider implements
     {
     }
   };
+
+
 
   /*
    * @see org.eclipse.test.quickdiff.DocumentLineDiffer.IQuickDifreferenceDocumentProvider#getReference()
