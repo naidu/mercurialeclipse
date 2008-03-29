@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - some updates
+ *     Charles O'Farrell         - fix revert open file
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
