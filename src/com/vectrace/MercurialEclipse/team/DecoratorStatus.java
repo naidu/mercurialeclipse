@@ -29,6 +29,7 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -43,6 +44,7 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author zingo
@@ -68,13 +70,25 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 
 	private static Map<IProject, String> versions = new HashMap<IProject, String>();
 
+	//set to true when having 2 different statuses in a folder flags it has modified
+	private static boolean folder_logic_2MM;
+	
 	/**
 	 * 
 	 */
 	public DecoratorStatus() {
+		configureFromPreferences();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
 	}
 
+	private static void configureFromPreferences() {
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore();
+		folder_logic_2MM = MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM
+				.equals(store
+						.getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
+	}
+	
 	/** 
 	 * Clears the known status of all resources and projects.
 	 * and calls for a update of decoration
@@ -84,6 +98,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 		/* While this clearing of status is a "naive" implementation, it is simple. */
 		IWorkbench workbench = PlatformUI.getWorkbench();
 		String decoratorId = DecoratorStatus.class.getName();
+		configureFromPreferences();
 		workbench.getDecoratorManager().update(decoratorId);
 		statusMap.clear();
 		knownStatus.clear();
@@ -118,28 +133,37 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 		ImageDescriptor overlay = null;
 		String prefix = null;
 		if(output!=null) {
-			switch(output.length()-1) {
-				case BIT_MODIFIED:
-					overlay = DecoratorImages.modifiedDescriptor;
-					prefix = ">";
-					break;
-				case BIT_ADDED:
-					overlay = DecoratorImages.addedDescriptor;
-					break;
-				case BIT_UNKNOWN:
-					overlay = DecoratorImages.notTrackedDescriptor;
-					break;
-				case BIT_CLEAN:
-					overlay = DecoratorImages.managedDescriptor;
-					break;
-				//case BIT_IGNORE:
-				//do nothing
-				case BIT_REMOVED:
-					overlay = DecoratorImages.removedDescriptor;
-					break;
-				case BIT_DELETED:
-					overlay = DecoratorImages.deletedStillTrackedDescriptor;
-					break;
+			if(folder_logic_2MM && output.cardinality()>1) {
+				overlay = DecoratorImages.modifiedDescriptor;
+				prefix = ">";
+			} else {
+				switch(output.length()-1) {
+					case BIT_MODIFIED:
+						overlay = DecoratorImages.modifiedDescriptor;
+						prefix = ">";
+						break;
+					case BIT_ADDED:
+						overlay = DecoratorImages.addedDescriptor;
+						prefix = ">";
+						break;
+					case BIT_UNKNOWN:
+						overlay = DecoratorImages.notTrackedDescriptor;
+						prefix = ">";
+						break;
+					case BIT_CLEAN:
+						overlay = DecoratorImages.managedDescriptor;
+						break;
+					//case BIT_IGNORE:
+					//do nothing
+					case BIT_REMOVED:
+						overlay = DecoratorImages.removedDescriptor;
+						prefix = ">";
+						break;
+					case BIT_DELETED:
+						overlay = DecoratorImages.deletedStillTrackedDescriptor;
+						prefix = ">";
+						break;
+				}
 			}
 		} else {
 			//empty folder, do nothing

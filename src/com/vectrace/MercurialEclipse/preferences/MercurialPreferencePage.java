@@ -8,6 +8,7 @@
  * Contributors:
  *     Gunnar Ahlberg - implementation
  *     VecTrace (Zingo Andersen) - updateing it
+ *     Jerome Negre - adding label decorator section 
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -15,11 +16,13 @@ package com.vectrace.MercurialEclipse.preferences;
 
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
+import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.team.DecoratorStatus;
 
 /**
  * This class represents a preference page that
@@ -57,22 +60,23 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
   {
     addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "Mercurial &Executable:",getFieldEditorParent()));
     addField(new StringFieldEditor( MercurialPreferenceConstants.MERCURIAL_USERNAME, "Mercurial &Username:",getFieldEditorParent()));
-/*
-    addField(
-      new BooleanFieldEditor(
-        PreferenceConstants.P_BOOLEAN,
-        "&An example of a boolean preference",
-        getFieldEditorParent()));
-
     addField(new RadioGroupFieldEditor(
-        PreferenceConstants.P_CHOICE,
-      "An example of a multiple-choice preference",
-      1,
-      new String[][] { { "&Choice 1", "choice1" }, {
-        "C&hoice 2", "choice2" }
-    }, getFieldEditorParent()));
-    addField( new StringFieldEditor(PreferenceConstants.P_STRING, "A &text preference:", getFieldEditorParent()));
-*/
+    		MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
+    		"When a folders contains files with different statuses, flag the folder:",
+    		1,
+    		new String[][]{
+    				{"as Modified",MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM},
+    				{"with the most important status",MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB}
+    		},
+    		getFieldEditorParent(),
+    		true
+    		) {
+    	@Override
+    	protected void doStore() {
+    		super.doStore();
+    		DecoratorStatus.refresh();
+    	}
+    });
   }
 
   /* (non-Javadoc)
