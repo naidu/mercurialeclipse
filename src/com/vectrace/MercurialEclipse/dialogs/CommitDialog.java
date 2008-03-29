@@ -13,7 +13,9 @@
 package com.vectrace.MercurialEclipse.dialogs;
 
 import java.io.File;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Locale;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
@@ -25,9 +27,12 @@ import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -46,14 +51,15 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
+
+import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.team.ActionDiff;
 
 /**
- * @author
- * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
  * 
  * A commit dialog box allowing choosing of what files to commit and a commit
  * message for those files. Untracked files may also be chosen.
@@ -254,7 +260,25 @@ private IResource[] inResources;
       });
 
     setupDefaultCommitMessage();
-  }
+    
+    final Table table = commitFilesList.getTable();
+        TableColumn[] columns = table.getColumns();
+        for (int ci = 0; ci < columns.length; ci++) {
+            TableColumn column = columns[ci];
+            final int colIdx = ci;
+            TableColumnSorter cSorter = new TableColumnSorter(commitFilesList,
+                    column) {
+                protected int doCompare(Viewer v, Object e1, Object e2) {
+                    StructuredViewer viewer = (StructuredViewer) v;
+                    ITableLabelProvider lp = ((ITableLabelProvider) viewer
+                            .getLabelProvider());
+                    String t1 = lp.getColumnText(e1, colIdx);
+                    String t2 = lp.getColumnText(e2, colIdx);
+                    return t1.compareTo(t2);
+                }
+            };
+        }
+    }
 
   private void setupDefaultCommitMessage() 
   {

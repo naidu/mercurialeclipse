@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
+ *     StefanC           - jobs framework
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.annotations;
@@ -21,6 +22,7 @@ import java.util.Map;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.IInformationControl;
@@ -48,6 +50,7 @@ import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 
 import com.vectrace.MercurialEclipse.HgFile;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 public class ShowAnnotationOperation extends TeamOperation
@@ -74,23 +77,25 @@ public class ShowAnnotationOperation extends TeamOperation
           annotateBlocks, monitor);
 
       // We aren't running from a UI thread
-      getShell().getDisplay().asyncExec(new Runnable()
+      new SafeUiJob("Hg Annotate") 
       {
-        public void run()
-        {
-
-          // is there an open editor for the given input? If yes, use live
-          // annotate
-          final AbstractDecoratedTextEditor editor = getEditor();
-          if (editor != null)
+          @Override
+          protected IStatus runSafe(IProgressMonitor monitor) 
           {
-            editor
-                .showRevisionInformation(information,
-                    "com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider"); //$NON-NLS-1$
-
+              monitor.beginTask("Applying Annotation", IProgressMonitor.UNKNOWN);
+              final AbstractDecoratedTextEditor editor = getEditor();
+              if (editor != null)
+              {
+                  editor
+                  .showRevisionInformation(information,
+                  HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER); //$NON-NLS-1$
+                  
+              }
+              monitor.done();
+              return super.runSafe(monitor);
           }
-        }
-      });
+      }.schedule();
+
     } catch(Exception e) {
       MercurialEclipsePlugin.logError(e);
     } finally

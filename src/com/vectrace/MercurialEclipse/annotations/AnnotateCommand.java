@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
+ *     StefanC           - remove empty lines
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.annotations;
@@ -89,6 +90,11 @@ public class AnnotateCommand
       int count = 0;
       for (line = reader.readLine(); line != null; line = reader.readLine())
       {
+        if(line.trim().length() == 0) {
+            // ignore empty lines
+            continue;
+        }
+        
         Matcher matcher = ANNOTATE.matcher(line);
         matcher.find();
         String author = matcher.group(1);
