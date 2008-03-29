@@ -53,10 +53,10 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class DecoratorStatus extends LabelProvider implements ILightweightLabelDecorator, IResourceChangeListener {
 
 	//relative order for folders
-	private final static int BIT_DELETED    = 0;
-	private final static int BIT_REMOVED    = 1;
-	private final static int BIT_IGNORE     = 2;
-	private final static int BIT_CLEAN      = 3;
+	private final static int BIT_IGNORE     = 0;
+	private final static int BIT_CLEAN      = 1;
+	private final static int BIT_DELETED    = 2;
+	private final static int BIT_REMOVED    = 3;
 	private final static int BIT_UNKNOWN    = 4;
 	private final static int BIT_ADDED      = 5;
 	private final static int BIT_MODIFIED   = 6;
@@ -133,7 +133,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 		ImageDescriptor overlay = null;
 		String prefix = null;
 		if(output!=null) {
-			if(folder_logic_2MM && output.cardinality()>1) {
+			//"ignore" does not really count as modified 
+			if(folder_logic_2MM && (output.cardinality()>2 || (output.cardinality()==2 && !output.get(BIT_IGNORE)))) {
 				overlay = DecoratorImages.modifiedDescriptor;
 				prefix = ">";
 			} else {
