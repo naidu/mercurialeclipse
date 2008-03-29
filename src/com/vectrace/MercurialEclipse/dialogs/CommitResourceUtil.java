@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
+ *     Sebastian                 - windows end of line fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -152,6 +153,14 @@ public final class CommitResourceUtil
 			if (status.startsWith(eol))
 			{
 				status = status.substring(eol.length());
+			}
+			if (status.startsWith("\n"))
+			{
+	      /* 
+	       * on windows versions of mercurial before 1.0 the line ending was \r\n
+	       * but since 1.0 it is only \n
+	       */
+			  status = status.substring(1);
 			}
 			if (fileName.startsWith(" "))
 			{

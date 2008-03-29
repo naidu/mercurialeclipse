@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     Stefan Groschupf          - logError
+ *     Sebastian                 - windows end of line fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -183,7 +184,19 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 try
                 {
                   repository = MercurialUtilities.ExecuteCommand(getRootCmd,getRootWorkingDir,true);
-                  workingDir=new File(repository.substring(0,repository.length() - eol.length() ));
+                  /* 
+                   * on windows versions of mercurial before 1.0 the line ending was \r\n
+                   * but since 1.0 it is only \n
+                   */
+                  if (repository.endsWith(eol)) 
+                  {
+                    workingDir=new File(repository.substring(0,repository.length() - eol.length() ));
+                  } 
+                  else 
+                  {
+                    // assume it ends with '\n'
+                    workingDir=new File(repository.substring(0,repository.length() - 1 ));
+                  }
                 }
                 catch(HgException e)
                 {
