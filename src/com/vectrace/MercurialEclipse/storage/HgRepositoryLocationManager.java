@@ -8,6 +8,7 @@
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     Stefan Groschupf          - logError
+ *     StefanC                   - fix a bug casing a startup exception.
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -61,7 +62,7 @@ public class HgRepositoryLocationManager
 
     try
     {
-      while(true)
+      while(0 < p.available())
       {
         String url = (String) p.readObject();
         addRepoLocation(new HgRepositoryLocation(url));
