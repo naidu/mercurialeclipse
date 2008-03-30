@@ -9,6 +9,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan Groschupf          - logError
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.wizards;
@@ -18,12 +19,8 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.wizard.IWizardPage;
-import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.ui.IImportWizard;
-import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -44,7 +41,8 @@ public class CloneRepoWizard extends SyncRepoWizard
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
-  public void init(IWorkbench workbench, IStructuredSelection selection) 
+  @Override
+public void init(IWorkbench workbench, IStructuredSelection selection) 
   {
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
@@ -55,7 +53,8 @@ public class CloneRepoWizard extends SyncRepoWizard
   /* (non-Javadoc)
 	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
 	 */
-	public boolean performFinish()
+	@Override
+    public boolean performFinish()
   {
     final IWorkspace workspace = ResourcesPlugin.getWorkspace();
     final IProject project = workspace.getRoot().getProject(projectName);

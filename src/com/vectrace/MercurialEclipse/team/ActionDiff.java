@@ -17,7 +17,6 @@ import java.io.File;
 import java.util.Iterator;
 
 import org.eclipse.compare.CompareUI;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -81,10 +80,10 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
 
 	public void run(IAction action) 
 	{
-		IProject proj;
+//		IProject proj;
 //		String Repository;
     
-    proj=MercurialUtilities.getProject(selection);
+//    proj=MercurialUtilities.getProject(selection);
 //		Repository=MercurialUtilities.getRepositoryPath(proj);
 //		if(Repository==null)
 //		{
@@ -132,14 +131,14 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
     //tip can't be used since work can be done in older revison ( hg up <old rev> )
     //String FullPath = ( ((IResource) obj).getLocation() ).toString();
 
-    String changeset;
+//    String changeset;
     File workingDir=MercurialUtilities.getWorkingDir( obj );
 
     IdentifyAction identifyAction = new IdentifyAction(null, obj.getProject(), workingDir);
     try
     {
       identifyAction.run();
-      changeset = identifyAction.getChangeset(); 
+//      changeset = identifyAction.getChangeset(); 
     }
     catch (Exception e)
     {
@@ -224,7 +223,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
 */
 //      IStorageMercurialRevision iStorage = new IStorageMercurialRevision( (IResource) obj, changeset);
 //      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, iStorage, iStorage);
-      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj);
+      SyncInfo syncInfo = subscriber.getSyncInfo(obj);
       SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diff", syncInfo);
       return comparedialog;
     } 

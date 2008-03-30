@@ -9,6 +9,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan Groschupf          - logError
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -22,7 +23,6 @@ import org.eclipse.core.resources.team.IResourceTree;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.DeleteFileAction;
 import com.vectrace.MercurialEclipse.actions.MoveFileAction;
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;

@@ -13,10 +13,7 @@
 package com.vectrace.MercurialEclipse.dialogs;
 
 import java.io.File;
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Locale;
-
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -32,7 +29,6 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -51,7 +47,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
@@ -84,6 +79,7 @@ public class CommitDialog extends Dialog
     /**
      * Filter out un commitable files (i.e. ! -> deleted but still tracked)
      */
+    @Override
     public boolean select(Viewer viewer, Object parentElement, Object element) 
     {
       /* TODO should this be deleted from repository also?? */
@@ -147,7 +143,8 @@ private IResource[] inResources;
     return filesToAdd;
   }
 
-  protected Control createDialogArea(Composite parent) 
+  @Override
+protected Control createDialogArea(Composite parent) 
   {
     Composite container = (Composite) super.createDialogArea(parent);
     container.setLayout(new FormLayout());
@@ -214,6 +211,7 @@ private IResource[] inResources;
 
     showUntrackedFilesButton.addSelectionListener(new SelectionAdapter() 
       {
+        @Override
         public void widgetSelected(SelectionEvent e) 
         {
           if (showUntrackedFilesButton.getSelection()) 
@@ -229,6 +227,7 @@ private IResource[] inResources;
       });
     selectAllButton.addSelectionListener(new SelectionAdapter() 
       {
+        @Override
         public void widgetSelected(SelectionEvent e) 
         {
           if (selectAllButton.getSelection()) 
@@ -266,8 +265,9 @@ private IResource[] inResources;
         for (int ci = 0; ci < columns.length; ci++) {
             TableColumn column = columns[ci];
             final int colIdx = ci;
-            TableColumnSorter cSorter = new TableColumnSorter(commitFilesList,
+            new TableColumnSorter(commitFilesList,
                     column) {
+                @Override
                 protected int doCompare(Viewer v, Object e1, Object e2) {
                     StructuredViewer viewer = (StructuredViewer) v;
                     ITableLabelProvider lp = ((ITableLabelProvider) viewer
@@ -386,7 +386,7 @@ private IResource[] inResources;
       list.add(resource.getPath());
     }
 
-    return (File[]) list.toArray(new File[0]);
+    return list.toArray(new File[0]);
   }
 
   private IResource[] convertToResource(Object[] objs) 
@@ -408,7 +408,7 @@ private IResource[] inResources;
       }
     }
 
-    return (IResource[]) list.toArray(new IResource[0]);
+    return list.toArray(new IResource[0]);
   }
 
   private File[] getToAddList(Object[] objs) 
@@ -429,14 +429,15 @@ private IResource[] inResources;
       }
     }
 
-    return (File[]) list.toArray(new File[0]);
+    return list.toArray(new File[0]);
   }
 
   /**
    * Override the OK button pressed to capture the info we want first and then
    * call super.
    */
-  protected void okPressed() 
+  @Override
+protected void okPressed() 
   {
     filesToAdd = getToAddList(commitFilesList.getCheckedElements());
     filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
@@ -446,7 +447,8 @@ private IResource[] inResources;
     super.okPressed();
   }
 
-  protected Point getInitialSize() 
+  @Override
+protected Point getInitialSize() 
   {
     return new Point(477, 562);
   }

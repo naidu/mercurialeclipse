@@ -7,26 +7,16 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
-import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
-
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /*
  * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
@@ -51,7 +41,8 @@ public abstract class SyncRepoWizard extends Wizard implements IImportWizard, IN
     setNeedsProgressMonitor(true);
   }
 
-  public boolean canFinish()
+  @Override
+public boolean canFinish()
   {
     return (locationUrl != null) && (projectName != null);
   }
@@ -86,7 +77,8 @@ public abstract class SyncRepoWizard extends Wizard implements IImportWizard, IN
   }
   
   
-  public void dispose()
+  @Override
+public void dispose()
   {
     syncRepoLocationPage.dispose();
     
@@ -96,18 +88,21 @@ public abstract class SyncRepoWizard extends Wizard implements IImportWizard, IN
   /* (non-Javadoc)
    * @see org.eclipse.jface.wizard.IWizard#addPages()
    */
-  public void addPages()
+  @Override
+public void addPages()
   {
     super.addPages();
     addPage(syncRepoLocationPage);
   }
 
-  public IWizardPage getNextPage(IWizardPage page)
+  @Override
+public IWizardPage getNextPage(IWizardPage page)
   {
     return null;
   }
 
-  public IWizardPage getPreviousPage(IWizardPage page)
+  @Override
+public IWizardPage getPreviousPage(IWizardPage page)
   {
     return null;
   }

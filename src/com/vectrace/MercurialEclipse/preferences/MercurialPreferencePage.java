@@ -6,9 +6,10 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Gunnar Ahlberg - implementation
+ *     Gunnar Ahlberg            - implementation
  *     VecTrace (Zingo Andersen) - updateing it
- *     Jerome Negre - adding label decorator section 
+ *     Jérôme Nègre              - adding label decorator section 
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -56,7 +57,8 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
    * of preferences. Each field editor knows how to save and
    * restore itself.
    */
-  public void createFieldEditors() 
+  @Override
+public void createFieldEditors() 
   {
     addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "Mercurial &Executable:",getFieldEditorParent()));
     addField(new StringFieldEditor( MercurialPreferenceConstants.MERCURIAL_USERNAME, "Mercurial &Username:",getFieldEditorParent()));

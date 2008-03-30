@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Gunnar Ahlberg - implementation
- *     Jerome Negre   - constants are now, well, constant
+ *     Jérôme Nègre   - constants are now, well, constant
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;

@@ -8,6 +8,7 @@
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     VecTrace (Zingo Andersen) - some updates
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -36,7 +37,8 @@ public class MoveFileAction extends HgOperation
     this.dest = dest;
   }
 
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
     final String launchCmd[] =
     { 
@@ -51,14 +53,16 @@ public class MoveFileAction extends HgOperation
     return launchCmd;
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
 //  return (((IResource) src).getLocation()).toFile();
     return MercurialUtilities.getWorkingDir(src);
   }
 
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Move " + src.getLocation() + " to " + dest.getLocation());
   }  

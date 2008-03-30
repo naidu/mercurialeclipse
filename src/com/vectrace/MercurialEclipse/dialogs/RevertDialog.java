@@ -69,6 +69,7 @@ public class RevertDialog extends Dialog
      * 
      * @param parent
      */
+    @Override
     protected Control createDialogArea(Composite parent) 
     {
         Composite container = (Composite) super.createDialogArea(parent);
@@ -195,6 +196,7 @@ public class RevertDialog extends Dialog
      * 
      * @param parent
      */
+    @Override
     protected void createButtonsForButtonBar(Composite parent) 
     {
         createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
@@ -204,6 +206,7 @@ public class RevertDialog extends Dialog
     /**
      * Return the initial size of the dialog
      */
+    @Override
     protected Point getInitialSize() 
     {
         return new Point(500, 375);
@@ -215,6 +218,7 @@ public class RevertDialog extends Dialog
 
     }
 
+    @Override
     protected void okPressed() 
     {
         this.selection = new ArrayList(Arrays.asList(selectFilesList.getCheckedElements()));

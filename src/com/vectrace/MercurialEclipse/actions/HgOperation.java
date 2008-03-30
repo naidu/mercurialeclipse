@@ -9,6 +9,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan Groschupf          - logError
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -19,8 +20,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
-
-import sun.security.jgss.spi.MechanismFactory;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -91,12 +90,14 @@ public abstract class HgOperation extends TeamOperation {
     }
 	
 	// TODO: No background for now.
-	protected boolean canRunAsJob()
+	@Override
+    protected boolean canRunAsJob()
 	{
 		return false;
 	}
 
-	protected String getJobName()
+	@Override
+    protected String getJobName()
 	{
 		return getActionDescription();
 	}

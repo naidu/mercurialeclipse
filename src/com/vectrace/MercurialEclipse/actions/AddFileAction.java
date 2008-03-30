@@ -8,13 +8,13 @@
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     VecTrace (Zingo Andersen) - some updates
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
 import java.io.File;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -37,7 +37,8 @@ public class AddFileAction extends HgOperation
     this.workingDir = workingDir;
   }
 
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
 
     final String launchCmd[] =
@@ -49,12 +50,14 @@ public class AddFileAction extends HgOperation
     return launchCmd;
   }
   
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
     return workingDir;
   }
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Mercurial add resource " + resource + " from the Mercurial repository");    
   }
