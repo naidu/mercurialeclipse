@@ -20,8 +20,6 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-
 /**
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
  * 
@@ -29,11 +27,11 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 public class CompareAction extends SingleFileAction {
 
 	@Override
-	public void run(IFile file) {
+	public void run(IFile file) throws TeamException {
 		openEditor(file, null);
 	}
 	
-	protected void openEditor(IFile file, String changeset) {
+	protected void openEditor(IFile file, String changeset) throws TeamException {
 		SyncInfoCompareInput compareInput = getCompareInput(file, changeset);
 		if (compareInput != null) {
 			CompareUI.openCompareEditor(compareInput);
@@ -45,21 +43,17 @@ public class CompareAction extends SingleFileAction {
 	 * @param file
 	 * @param changeset may be null
 	 * @return
+	 * @throws TeamException 
 	 */
-	private SyncInfoCompareInput getCompareInput(IFile file, String changeset) {
-		try {
-			MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
-			SyncInfo syncInfo = subscriber.getSyncInfo(
-					file,
-					file,
-					new IStorageMercurialRevision(file, changeset));
-			SyncInfoCompareInput compareInput = new SyncInfoCompareInput(
-					"diff", syncInfo);
-			return compareInput;
-		} catch (TeamException e) {
-			MercurialEclipsePlugin.logError(e);
-			return null;
-		}
+	private SyncInfoCompareInput getCompareInput(IFile file, String changeset) throws TeamException {
+		MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
+		SyncInfo syncInfo = subscriber.getSyncInfo(
+				file,
+				file,
+				new IStorageMercurialRevision(file, changeset));
+		SyncInfoCompareInput compareInput = new SyncInfoCompareInput(
+				"diff", syncInfo);
+		return compareInput;
 	}
 
 }
