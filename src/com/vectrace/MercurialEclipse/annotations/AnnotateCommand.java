@@ -21,6 +21,7 @@ import java.io.UnsupportedEncodingException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,9 +35,9 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class AnnotateCommand
 {
   private static final Pattern ANNOTATE = Pattern
-      .compile("^\\s*(\\w+)\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$");
+      .compile("^\\s*(.+[^ ])\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$");
   private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
-      "EEE MMM dd HH:mm:ss yyyy Z");
+      "EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH);
 
   private final HgFile file;
   private final AnnotateBlocks blocks = new AnnotateBlocks();
