@@ -12,10 +12,7 @@
 package com.vectrace.MercurialEclipse.views;
 
 
-import java.util.Vector;
-
 import org.eclipse.compare.CompareUI;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.jface.action.Action;
@@ -50,7 +47,6 @@ import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
@@ -58,7 +54,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeLog;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.MercurialRepositorySubscriber;
 
 /**
@@ -239,7 +234,8 @@ public class ChangeLogView extends ViewPart
 	 * This is a callback that will allow us
 	 * to create the viewer and initialize it.
 	 */
-	public void createPartControl(Composite parent) 
+	@Override
+    public void createPartControl(Composite parent) 
 	{
     viewer = new TableViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
     changeLogTable=viewer.getTable();
@@ -346,7 +342,8 @@ public class ChangeLogView extends ViewPart
 
 	  action1 = new Action() 
 		{
-			public void run() 
+			@Override
+            public void run() 
 			{
 				showMessage("Action 1 executed");
 			}
@@ -358,7 +355,8 @@ public class ChangeLogView extends ViewPart
 
     action2 = new Action() 
     {
-      public void run() 
+      @Override
+    public void run() 
       {
         showMessage("Action 2 executed");
       }
@@ -371,7 +369,8 @@ public class ChangeLogView extends ViewPart
 
 		doubleClickAction = new Action() 
 		{
-			public void run() 
+			@Override
+            public void run() 
 			{
 				ISelection selection = viewer.getSelection();
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
@@ -435,7 +434,8 @@ public class ChangeLogView extends ViewPart
 	/**
 	 * Passing the focus request to the viewer's control.
 	 */
-	public void setFocus() 
+	@Override
+    public void setFocus() 
 	{
 //		viewer.getControl().setFocus();
 	}

@@ -109,7 +109,8 @@ public class ShowAnnotationOperation extends TeamOperation
    * 
    * @see org.eclipse.team.ui.TeamOperation#getGotoAction()
    */
-  protected IAction getGotoAction()
+  @Override
+protected IAction getGotoAction()
   {
     return super.getGotoAction();
   }
@@ -121,8 +122,9 @@ public class ShowAnnotationOperation extends TeamOperation
     IEditorReference[] references = window.getActivePage()
         .getEditorReferences();
     IResource resource = remoteFile.getFile();
-    if (resource == null)
-      return null;
+    if (resource == null) {
+        return null;
+    }
 
     for (int i = 0; i < references.length; i++)
     {
@@ -134,19 +136,18 @@ public class ShowAnnotationOperation extends TeamOperation
                 IFile.class)))
         {
           IEditorPart editor = reference.getEditor(false);
-          if (editor instanceof AbstractDecoratedTextEditor)
+          if (editor instanceof AbstractDecoratedTextEditor) {
             return (AbstractDecoratedTextEditor) editor;
-          else
-          {
-            // editor opened is not a text editor - reopen file using the
-            // defualt text editor
-            IEditorPart part = getPart().getSite().getPage().openEditor(
-                new FileEditorInput((IFile) resource),
-                IDEWorkbenchPlugin.DEFAULT_TEXT_EDITOR_ID, true,
-                IWorkbenchPage.MATCH_NONE);
-            if (part != null && part instanceof AbstractDecoratedTextEditor)
-              return (AbstractDecoratedTextEditor) part;
-          }
+        }
+        // editor opened is not a text editor - reopen file using the
+        // defualt text editor
+        IEditorPart part = getPart().getSite().getPage().openEditor(
+            new FileEditorInput((IFile) resource),
+            IDEWorkbenchPlugin.DEFAULT_TEXT_EDITOR_ID, true,
+            IWorkbenchPage.MATCH_NONE);
+        if (part != null && part instanceof AbstractDecoratedTextEditor) {
+            return (AbstractDecoratedTextEditor) part;
+        }
         }
       } catch (PartInitException e)
       {
@@ -166,8 +167,9 @@ public class ShowAnnotationOperation extends TeamOperation
         {
           IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
               (IFile) resource);
-          if (part instanceof AbstractDecoratedTextEditor)
+          if (part instanceof AbstractDecoratedTextEditor) {
             return (AbstractDecoratedTextEditor) part;
+        }
 
           // editor opened is not a text editor - close it
           getPart().getSite().getPage().closeEditor(part, false);
@@ -175,8 +177,9 @@ public class ShowAnnotationOperation extends TeamOperation
         // open file in default text editor
         IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
             (IFile) resource, IDEWorkbenchPlugin.DEFAULT_TEXT_EDITOR_ID);
-        if (part != null && part instanceof AbstractDecoratedTextEditor)
-          return (AbstractDecoratedTextEditor) part;
+        if (part != null && part instanceof AbstractDecoratedTextEditor) {
+            return (AbstractDecoratedTextEditor) part;
+        }
 
       } catch (PartInitException e)
       {
@@ -245,29 +248,34 @@ public class ShowAnnotationOperation extends TeamOperation
       {
         revision = new Revision()
         {
-          public Object getHoverInfo()
+          @Override
+        public Object getHoverInfo()
           {
             return block.getUser()
                 + " " + revisionString + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 (logEntry != null ? logEntry.getDescription() : ""); //$NON-NLS-1$
           }
 
-          public String getAuthor()
+          @Override
+        public String getAuthor()
           {
             return block.getUser();
           }
 
-          public String getId()
+          @Override
+        public String getId()
           {
             return revisionString;
           }
 
-          public Date getDate()
+          @Override
+        public Date getDate()
           {
             return block.getDate();
           }
 
-          public RGB getColor()
+          @Override
+        public RGB getColor()
           {
             return colors.getCommitterRGB(getAuthor());
           }

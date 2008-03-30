@@ -22,7 +22,6 @@ import org.eclipse.core.resources.team.IResourceTree;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.DeleteFileAction;
 import com.vectrace.MercurialEclipse.actions.MoveFileAction;
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;

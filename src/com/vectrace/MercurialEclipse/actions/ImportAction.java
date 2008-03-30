@@ -16,20 +16,17 @@ import java.util.ArrayList;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.operation.IRunnableContext;
 
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class ImportAction extends HgOperation
 {
   private String importFile;
-  private IProject project;
   private File workingDir;
 
   public ImportAction(IRunnableContext context, IProject project, String importFile,File workingDir)
   {
     super(context);
     this.importFile = importFile;
-    this.project = project;
     if(workingDir != null)
     {
       this.workingDir = workingDir;
@@ -40,7 +37,8 @@ public class ImportAction extends HgOperation
     }
   }
   
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
     ArrayList<String> launchCmd = new ArrayList<String>();
 
@@ -51,16 +49,18 @@ public class ImportAction extends HgOperation
     launchCmd.add(importFile);
     launchCmd.trimToSize();
    
-    return (String[])launchCmd.toArray(new String[0]);
+    return launchCmd.toArray(new String[0]);
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
     return workingDir;
   }
 
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Mercurial Import changes from other patchfile");
   }

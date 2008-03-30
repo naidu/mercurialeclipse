@@ -53,7 +53,7 @@ public class ChangeLog
     launchCmd.add("log");
     launchCmd.add("-v");
 
-    if (resource instanceof IResource && ((IResource) resource).getType() == IResource.FILE) 
+    if (resource.getType() == IResource.FILE) 
     {
       launchCmd.add("--follow");
     }
@@ -63,7 +63,7 @@ public class ChangeLog
       launchCmd.add(FullPath);
     }
     launchCmd.trimToSize();
-    String launchCmdStr[] = (String[])launchCmd.toArray(new String[0]);
+    String launchCmdStr[] = launchCmd.toArray(new String[0]);
   
 //    System.out.println("log:" + MercurialUtilities.getHGExecutable() + " log -v " + FullPath + " Workingdir:" + workingDir);
     try

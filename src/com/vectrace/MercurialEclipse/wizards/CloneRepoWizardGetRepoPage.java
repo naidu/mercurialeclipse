@@ -43,7 +43,8 @@ public class CloneRepoWizardGetRepoPage extends WizardPage implements IWizardPag
     setPageComplete(false);
   }
 
-  public boolean canFlipToNextPage()
+  @Override
+public boolean canFlipToNextPage()
   {
     // There is a next page if creating a new repo location.
     // TODO: This should be implemented by wizard.
@@ -51,7 +52,8 @@ public class CloneRepoWizardGetRepoPage extends WizardPage implements IWizardPag
            (createNewRepoLocButton.getSelection()); 
   }
   
-  public boolean isPageComplete()
+  @Override
+public boolean isPageComplete()
   {
     // Finish may be invoked if an existing repo location is used.
     // TODO: Extend to requiring a repo to be chosen from a table.

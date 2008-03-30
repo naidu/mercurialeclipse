@@ -39,7 +39,8 @@ public class DeleteFileAction extends HgOperation
     this.resource = resource;  
   }
 
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
     // TODO: Should we consider making  --force optional?
     final String launchCmd[] =
@@ -55,14 +56,16 @@ public class DeleteFileAction extends HgOperation
     return launchCmd;
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
 //    return (resource.getLocation()).toFile();
     return MercurialUtilities.getWorkingDir(resource);
   }
 
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Mercurial delete resource " + resource.getLocation() + " from the Mercurial repository");    
   }

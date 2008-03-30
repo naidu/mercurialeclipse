@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -43,7 +42,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.internal.ui.Utils;
@@ -56,7 +54,6 @@ import org.eclipse.ui.IWorkbenchPartSite;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author zingo
@@ -92,6 +89,7 @@ public class MercurialHistoryPage extends HistoryPage
       this.mercurialHistory = mercurialHistory;
     }
 
+    @Override
     public IStatus run(IProgressMonitor monitor) 
     {
 
@@ -142,8 +140,9 @@ public class MercurialHistoryPage extends HistoryPage
     {
 //      System.out.println("Object[] ChangeLogViewContentProvider::getElements()");      
 //      return changeLog.getChangeLog().toArray();
-      if (entries != null)
+      if (entries != null) {
         return entries;
+    }
 
       final IFileHistory fileHistory = (IFileHistory) parent;
       entries = fileHistory.getFileRevisions();
@@ -360,6 +359,7 @@ public class MercurialHistoryPage extends HistoryPage
     openAction = new OpenMercurialRevisionAction("Open");  //$NON-NLS-1$
     viewer.getTable().addSelectionListener(new SelectionAdapter() 
       {
+        @Override
         public void widgetSelected(SelectionEvent e) 
         {
           openAction.selectionChanged((IStructuredSelection) viewer.getSelection());

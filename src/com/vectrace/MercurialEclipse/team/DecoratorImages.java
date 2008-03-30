@@ -82,10 +82,7 @@ public class DecoratorImages
     {
       return imagedescriptor.getImageData();
     }
-    else
-    {
-      return null;
-    }
+    return null;
   }
    
   /**

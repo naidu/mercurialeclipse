@@ -32,19 +32,21 @@ public class PullRepoWizard extends SyncRepoWizard
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
-  public void init(IWorkbench workbench, IStructuredSelection selection)
+  @Override
+public void init(IWorkbench workbench, IStructuredSelection selection)
   {
     project = MercurialUtilities.getProject(selection);
     projectName = project.getName();
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = (SyncRepoPage) new PullPage("PullRepoPage","Pull changes from repository","Select a repository location to pull from",projectName,null);
+    super.syncRepoLocationPage = new PullPage("PullRepoPage","Pull changes from repository","Select a repository location to pull from",projectName,null);
   }
 
   /* (non-Javadoc)
    * @see org.eclipse.jface.wizard.Wizard#performFinish()
    */
-  public boolean performFinish()
+  @Override
+public boolean performFinish()
   {
     final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
     

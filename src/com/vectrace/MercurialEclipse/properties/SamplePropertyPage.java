@@ -89,7 +89,8 @@ public class SamplePropertyPage extends PropertyPage {
 	/**
 	 * @see PreferencePage#createContents(Composite)
 	 */
-	protected Control createContents(Composite parent) {
+	@Override
+    protected Control createContents(Composite parent) {
 		Composite composite = new Composite(parent, SWT.NONE);
 		GridLayout layout = new GridLayout();
 		composite.setLayout(layout);
@@ -117,12 +118,14 @@ public class SamplePropertyPage extends PropertyPage {
 		return composite;
 	}
 
-	protected void performDefaults() {
+	@Override
+    protected void performDefaults() {
 		// Populate the owner text field with the default value
 		ownerText.setText(DEFAULT_OWNER);
 	}
 	
-	public boolean performOk() {
+	@Override
+    public boolean performOk() {
 		// store the value in the owner text field
 		try {
 			((IResource) getElement()).setPersistentProperty(

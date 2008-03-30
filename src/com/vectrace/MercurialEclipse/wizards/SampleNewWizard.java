@@ -66,7 +66,8 @@ public class SampleNewWizard extends Wizard implements INewWizard {
 	 * Adding the page to the wizard.
 	 */
 
-	public void addPages() {
+	@Override
+    public void addPages() {
 		page = new SampleNewWizardPage(selection);
 		addPage(page);
 	}
@@ -76,7 +77,8 @@ public class SampleNewWizard extends Wizard implements INewWizard {
 	 * the wizard. We will create an operation and run it
 	 * using wizard as execution context.
 	 */
-	public boolean performFinish() {
+	@Override
+    public boolean performFinish() {
 		final String containerName = page.getContainerName();
 		final String fileName = page.getFileName();
 		IRunnableWithProgress op = new IRunnableWithProgress() {

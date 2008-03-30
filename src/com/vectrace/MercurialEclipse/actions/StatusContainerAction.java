@@ -41,7 +41,8 @@ public class StatusContainerAction extends HgOperation
     this.resources = resources;
   }
 
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
     ArrayList<String> launchCmd = new ArrayList<String>(resources.length + 4);
     launchCmd.add(MercurialUtilities.getHGExecutable());
@@ -59,21 +60,18 @@ public class StatusContainerAction extends HgOperation
     }
     launchCmd.trimToSize();
     
-    return (String[])launchCmd.toArray(new String[0]);
+    return launchCmd.toArray(new String[0]);
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
-    if (resources[0] instanceof IResource)
-    {
-        return MercurialUtilities.getWorkingDir(resources[0]);
-
-    }
-    return null;
+    return MercurialUtilities.getWorkingDir(resources[0]);
   }
 
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.");
   }

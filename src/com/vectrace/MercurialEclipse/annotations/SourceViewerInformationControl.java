@@ -122,7 +122,8 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		// configure hyperlink detectors
 		// fViewer.configure(new SourceViewerConfiguration());
 		fViewer.configure(new TextSourceViewerConfiguration(EditorsUI.getPreferenceStore()) {
-      protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
+      @Override
+    protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
         return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", //$NON-NLS-1$
             null);
 //            new IAdaptable() {
@@ -144,8 +145,9 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		fText.addKeyListener(new KeyListener() {
 
 			public void keyPressed(KeyEvent e)  {
-				if (e.character == 0x1B) // ESC
-					fShell.dispose();
+				if (e.character == 0x1B) {
+                    fShell.dispose();
+                }
 			}
 
 			public void keyReleased(KeyEvent e) {}
@@ -163,8 +165,9 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 			fStatusField.setText(statusFieldText);
 			Font font= fStatusField.getFont();
 			FontData[] fontDatas= font.getFontData();
-			for (int i= 0; i < fontDatas.length; i++)
-				fontDatas[i].setHeight(fontDatas[i].getHeight() * 9 / 10);
+			for (int i= 0; i < fontDatas.length; i++) {
+                fontDatas[i].setHeight(fontDatas[i].getHeight() * 9 / 10);
+            }
 			fStatusTextFont= new Font(fStatusField.getDisplay(), fontDatas);
 			fStatusField.setFont(fStatusTextFont);
 			GridData gd2= new GridData(GridData.FILL_VERTICAL | GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_BEGINNING | GridData.VERTICAL_ALIGN_BEGINNING);
@@ -184,10 +187,11 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 	 * @param input the input object
 	 */
 	public void setInput(Object input) {
-		if (input instanceof String)
-			setInformation((String)input);
-		else
-			setInformation(null);
+		if (input instanceof String) {
+            setInformation((String)input);
+        } else {
+            setInformation(null);
+        }
 	}
 
 	/*
@@ -221,8 +225,9 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 	 * @see org.eclipse.swt.events.DisposeListener#widgetDisposed(org.eclipse.swt.events.DisposeEvent)
 	 */
 	public void widgetDisposed(DisposeEvent event) {
-		if (fStatusTextFont != null && !fStatusTextFont.isDisposed())
-			fStatusTextFont.dispose();
+		if (fStatusTextFont != null && !fStatusTextFont.isDisposed()) {
+            fStatusTextFont.dispose();
+        }
 
 		fStatusTextFont= null;
 		fShell= null;
@@ -233,10 +238,11 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 	 * @see org.eclipse.jface.text.IInformationControl#dispose()
 	 */
 	public final void dispose() {
-		if (fShell != null && !fShell.isDisposed())
-			fShell.dispose();
-		else
-			widgetDisposed(null);
+		if (fShell != null && !fShell.isDisposed()) {
+            fShell.dispose();
+        } else {
+            widgetDisposed(null);
+        }
 	}
 
 	/*
@@ -252,8 +258,9 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		}
 		fShell.setSize(width, height);
 
-		if (fStatusField != null)
-			fShell.pack(true);
+		if (fStatusField != null) {
+            fShell.pack(true);
+        }
 	}
 
 	/*
@@ -279,14 +286,17 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		int x= SWT.DEFAULT;
 		int y= SWT.DEFAULT;
 		Point size= fShell.computeSize(x, y);
-		if (size.x > fMaxWidth)
-			x= fMaxWidth;
-		if (size.y > fMaxHeight)
-			y= fMaxHeight;
+		if (size.x > fMaxWidth) {
+            x= fMaxWidth;
+        }
+		if (size.y > fMaxHeight) {
+            y= fMaxHeight;
+        }
 
 		// recompute using the constraints if the preferred size is larger than the constraints
-		if (x != SWT.DEFAULT || y != SWT.DEFAULT)
-			size= fShell.computeSize(x, y, false);
+		if (x != SWT.DEFAULT || y != SWT.DEFAULT) {
+            size= fShell.computeSize(x, y, false);
+        }
 
 		return size;
 	}

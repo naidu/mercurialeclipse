@@ -23,10 +23,6 @@ public class HgRepositoryLocation implements Comparable
     this.location = url;
   }
   
-  private HgRepositoryLocation()
-  {
-  }
-  
   public String getUrl()
   {
     return this.location;

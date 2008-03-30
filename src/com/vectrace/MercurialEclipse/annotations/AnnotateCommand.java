@@ -55,8 +55,9 @@ public class AnnotateCommand
   private void run() throws HgException
   {
     IFile resource = file.getFile();
-    if (!MercurialUtilities.isResourceInReposetory(resource, true))
-      return;
+    if (!MercurialUtilities.isResourceInReposetory(resource, true)) {
+        return;
+    }
     File workingDir = MercurialUtilities.getWorkingDir(resource);
     String FullPath = MercurialUtilities.getResourceName(resource);
     String launchCmd[] =
@@ -64,8 +65,9 @@ public class AnnotateCommand
         "--changeset", "--date", "--", FullPath };
 
     String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir, true);
-    if (output == null)
-      return;
+    if (output == null) {
+        return;
+    }
     try
     {
       createFromStdOut(output.getBytes("UTF-8"));

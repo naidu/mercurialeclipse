@@ -104,17 +104,13 @@ public class MercurialUtilities
     if (isExecutableConfigured())
     {
       return getHGExecutable();
-    } else
-    {
-      if (configureIfMissing)
+    }
+    if (configureIfMissing)
       {
         configureExecutable();
         return getHGExecutable();
-      } else
-      {
-        return "hg";
       }
-    }
+    return "hg";
   }
 
   public static void configureExecutable()
@@ -208,17 +204,13 @@ public class MercurialUtilities
     if (uname != null)
     {
       return uname;
-    } else
-    {
-      if (configureIfMissing)
+    }
+    if (configureIfMissing)
       {
         configureUsername();
         return getHGUsername();
-      } else
-      {
-        return System.getProperty("user.name");
       }
-    }
+    return System.getProperty("user.name");
   }
 
   public static void configureUsername()
@@ -268,10 +260,7 @@ public class MercurialUtilities
     {
       path = hgFolder.getParentFile().toString();
     } 
-    else
-    {
-      path = null;
-    }
+    
     // System.out.println("pathcheck: >" + path + "<");
     return path;
   }
@@ -637,9 +626,9 @@ public class MercurialUtilities
 
     PrintStream my_console = getMercurialConsoleOutPrintStream();
 
-    my_console.println("-----------------------");
     if (my_console != null)
     {
+      my_console.println("-----------------------");
       my_console.print("ExecuteCommand: ");
       for (int i = 0; i < cmd.length; i++)
       {

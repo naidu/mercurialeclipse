@@ -80,7 +80,8 @@ public class MercurialFileHistoryVariant extends CachedResourceVariant
     return new MercurialFileHistoryVariant[0];
   }
 
-  public IStorage getStorage(IProgressMonitor monitor) throws TeamException 
+  @Override
+public IStorage getStorage(IProgressMonitor monitor) throws TeamException 
   {
 //    System.out.println("FileHistoryVariant(" + myIStorage.getName() +")::getStorage()" );
     return myIStorage;

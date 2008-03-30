@@ -54,7 +54,9 @@ public class HgRepositoryLocationManager
     File locationFile = getLocationFile();
 
     // If the file doesn't exist, then there's nothing to do.
-    if( !locationFile.exists() ) return;
+    if( !locationFile.exists() ) {
+        return;
+    }
 
     FileInputStream istream = new FileInputStream(locationFile);
     ObjectInputStream p = new ObjectInputStream(istream);
@@ -85,7 +87,9 @@ public class HgRepositoryLocationManager
   public void stop() throws Exception
   {
     // Determine if there's anything that we need to save out to file.
-    if(getAllRepoLocations().size() == 0) return;
+    if(getAllRepoLocations().size() == 0) {
+        return;
+    }
 
     File locationFile = getLocationFile();
 

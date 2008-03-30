@@ -20,8 +20,6 @@ import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IWorkbenchPart;
 
-import sun.security.jgss.spi.MechanismFactory;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -91,12 +89,14 @@ public abstract class HgOperation extends TeamOperation {
     }
 	
 	// TODO: No background for now.
-	protected boolean canRunAsJob()
+	@Override
+    protected boolean canRunAsJob()
 	{
 		return false;
 	}
 
-	protected String getJobName()
+	@Override
+    protected String getJobName()
 	{
 		return getActionDescription();
 	}

@@ -13,10 +13,7 @@
 
 package com.vectrace.MercurialEclipse;
 
-import javax.print.attribute.standard.Severity;
-
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
@@ -52,7 +49,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   /**
    * This method is called upon plug-in activation
    */
-  public void start(BundleContext context) throws Exception
+  @Override
+public void start(BundleContext context) throws Exception
   {
     try
     {
@@ -80,7 +78,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   /**
    * This method is called when the plug-in is stopped
    */
-  public void stop(BundleContext context) throws Exception
+  @Override
+public void stop(BundleContext context) throws Exception
   {
     repoManager.stop();
     plugin = null;

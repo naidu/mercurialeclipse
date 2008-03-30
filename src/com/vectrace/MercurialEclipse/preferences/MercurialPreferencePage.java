@@ -53,7 +53,8 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
    * of preferences. Each field editor knows how to save and
    * restore itself.
    */
-  public void createFieldEditors() 
+  @Override
+public void createFieldEditors() 
   {
     addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "Mercurial &Executable:",getFieldEditorParent()));
     addField(new StringFieldEditor( MercurialPreferenceConstants.MERCURIAL_USERNAME, "Mercurial &Username:",getFieldEditorParent()));

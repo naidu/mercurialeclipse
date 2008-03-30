@@ -180,7 +180,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
     for(IResource r : resources) {
       launchCmd.add(r.getLocation().toOSString());
     }
-    return (String[]) launchCmd.toArray(new String[launchCmd.size()]);
+    return launchCmd.toArray(new String[launchCmd.size()]);
   }
 
   /*
@@ -188,7 +188,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   * 
   * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
   */
-  public void addListener(ILabelProviderListener listener) 
+  @Override
+public void addListener(ILabelProviderListener listener) 
   {
   }
 
@@ -197,7 +198,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   * 
   * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
   */
-  public void dispose() 
+  @Override
+public void dispose() 
   {   
   ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
   }
@@ -208,7 +210,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
   * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object,
   *      java.lang.String)
   */
-  public boolean isLabelProperty(Object element, String property) 
+  @Override
+public boolean isLabelProperty(Object element, String property) 
   {
     return false;
   }
@@ -218,7 +221,8 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
    * 
    * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
    */
-  public void removeListener(ILabelProviderListener listener) 
+  @Override
+public void removeListener(ILabelProviderListener listener) 
   {
   }
 

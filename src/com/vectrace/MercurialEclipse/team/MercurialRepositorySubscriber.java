@@ -12,8 +12,6 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -38,12 +36,14 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
     super(new ThreeWaySynchronizer(new QualifiedName(MercurialTeamProvider.ID,"MercurialEclipse-sync")));
   }
   
-  public String getName()
+  @Override
+public String getName()
   {
     return "MercurialRepositorySubscriber";
   }
 
-  public boolean isSupervised(IResource resource) throws TeamException
+  @Override
+public boolean isSupervised(IResource resource) throws TeamException
   {
     RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
@@ -53,7 +53,8 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
     return false;
   }
 
-  public IResource[] members(IResource resource) throws TeamException 
+  @Override
+public IResource[] members(IResource resource) throws TeamException 
   {
     try 
     {
@@ -64,14 +65,15 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
       IContainer container = (IContainer)resource;
       ArrayList<IResource> existingChildren = new ArrayList<IResource>(Arrays.asList(container.members()));
       existingChildren.addAll(  Arrays.asList(container.findDeletedMembersWithHistory(IResource.DEPTH_INFINITE, null)));
-      return (IResource[]) existingChildren.toArray(new IResource[existingChildren.size()]);
+      return existingChildren.toArray(new IResource[existingChildren.size()]);
     } 
     catch (CoreException e) 
     {
       throw TeamException.asTeamException(e);
     }
   }
-  public IResource[] roots() 
+  @Override
+public IResource[] roots() 
   {
     ArrayList<IResource> ret = new ArrayList<IResource>();
     IProject[] allProjects;
@@ -88,7 +90,7 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
         }
       }
     }
-    return (IProject[]) ret.toArray(new IProject[ret.size()]);
+    return ret.toArray(new IProject[ret.size()]);
   }
 
   public SyncInfo getSyncInfo(IResource resourceLocal, IStorage storageBase, IStorage storageRemote) throws TeamException 
@@ -132,7 +134,8 @@ public class MercurialRepositorySubscriber extends ThreeWaySubscriber
 //    return comparatorObj;
 //  }
 
-  public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException
+  @Override
+public void refresh(IResource[] resources, int depth, IProgressMonitor monitor) throws TeamException
   {
     // TODO Auto-generated method stub
     

@@ -27,7 +27,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 * 
 	 * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#initializeDefaultPreferences()
 	 */
-	public void initializeDefaultPreferences() 
+	@Override
+    public void initializeDefaultPreferences() 
   {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");

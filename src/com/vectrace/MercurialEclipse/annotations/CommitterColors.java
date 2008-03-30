@@ -36,8 +36,9 @@ final class CommitterColors {
 	 * @return the committer color singleton
 	 */
 	public static CommitterColors getDefault() {
-		if (fInstance == null)
-			fInstance= new CommitterColors();
+		if (fInstance == null) {
+            fInstance= new CommitterColors();
+        }
 		return fInstance;
 	}
 

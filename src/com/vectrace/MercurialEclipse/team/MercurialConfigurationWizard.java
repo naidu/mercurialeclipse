@@ -207,7 +207,8 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	// (non-Javadoc)
 	// @see org.eclipse.jface.wizard.IWizard#addPages()
 	//
-	public void addPages() {
+	@Override
+    public void addPages() {
 //		System.out.println("MercurialConfigurationWizard.addPages()");
 
 //	    IPath projectLocation = project.getLocation();
@@ -232,7 +233,8 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	// (non-Javadoc)
 	// @see org.eclipse.jface.wizard.IWizard#performFinish()
 	//
-	public boolean performFinish() {
+	@Override
+    public boolean performFinish() {
 		if(directoryText!=null)
 		{
 			hgPath=directoryText.getText();

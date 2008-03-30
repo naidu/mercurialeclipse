@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.io.InputStream;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
@@ -151,11 +150,7 @@ public class IStorageMercurialRevision implements IStorage
       //    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,false);
       return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,workingDir,true);
     }
-    else
-    {
-      
-      return null; // TODO  resource -> inputstream;
-    }
+    return null; // TODO  resource -> inputstream;
   }
 
   /* (non-Javadoc)setContents(
@@ -206,15 +201,12 @@ public class IStorageMercurialRevision implements IStorage
     {
       return true;
     }
-    else
-    {
-      // if no revision resource is the current one e.g. editable :)
+    // if no revision resource is the current one e.g. editable :)
       ResourceAttributes attributes = resource.getResourceAttributes();
       if (attributes != null) 
       {
         return attributes.isReadOnly();
       }
-    }
     return true;  /* unknown state marked as read only for safety */
   }
 

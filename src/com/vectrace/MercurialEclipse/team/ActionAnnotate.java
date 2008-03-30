@@ -45,7 +45,8 @@ public class ActionAnnotate extends ActionDelegate implements
    * 
    * @see IWorkbenchWindowActionDelegate#dispose
    */
-  public void dispose()
+  @Override
+public void dispose()
   {
 
   }
@@ -57,12 +58,14 @@ public class ActionAnnotate extends ActionDelegate implements
    * @see IWorkbenchWindowActionDelegate#run
    */
 
-  public void run(IAction action)
+  @Override
+public void run(IAction action)
   {
     for (Object obj : selection.toList())
     {
-      if (!(obj instanceof IFile))
+      if (!(obj instanceof IFile)) {
         continue;
+    }
       try
       {
         new ShowAnnotationOperation(part, new HgFile((IFile) obj)).run();
@@ -80,7 +83,8 @@ public class ActionAnnotate extends ActionDelegate implements
    * 
    * @see IWorkbenchWindowActionDelegate#selectionChanged
    */
-  public void selectionChanged(IAction action, ISelection in_selection)
+  @Override
+public void selectionChanged(IAction action, ISelection in_selection)
   {
     if (in_selection != null && in_selection instanceof IStructuredSelection)
     {

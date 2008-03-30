@@ -14,20 +14,15 @@ package com.vectrace.MercurialEclipse.wizards;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
 import com.vectrace.MercurialEclipse.actions.RepositoryPushAction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
@@ -42,7 +37,8 @@ public class PushRepoWizard extends SyncRepoWizard
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
-  public void init(IWorkbench workbench, IStructuredSelection selection)
+  @Override
+public void init(IWorkbench workbench, IStructuredSelection selection)
   {
     project = MercurialUtilities.getProject(selection);
     projectName = project.getName();
@@ -54,7 +50,8 @@ public class PushRepoWizard extends SyncRepoWizard
   /* (non-Javadoc)
    * @see org.eclipse.jface.wizard.Wizard#performFinish()
    */
-  public boolean performFinish()
+  @Override
+public boolean performFinish()
   {
     final IWorkspace workspace = ResourcesPlugin.getWorkspace();
 //    final IProject project = workspace.getRoot().getProject(projectName);

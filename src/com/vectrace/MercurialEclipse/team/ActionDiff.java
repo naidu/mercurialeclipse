@@ -14,20 +14,14 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.internal.Platform;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.synchronize.SyncInfo;
@@ -40,7 +34,6 @@ import org.eclipse.compare.CompareUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.IdentifyAction;
-import com.vectrace.MercurialEclipse.actions.RepositoryPullAction;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 
@@ -231,7 +224,7 @@ public class ActionDiff implements IWorkbenchWindowActionDelegate
 */
 //      IStorageMercurialRevision iStorage = new IStorageMercurialRevision( (IResource) obj, changeset);
 //      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj, iStorage, iStorage);
-      SyncInfo syncInfo = subscriber.getSyncInfo((IResource) obj);
+      SyncInfo syncInfo = subscriber.getSyncInfo(obj);
       SyncInfoCompareInput comparedialog = new SyncInfoCompareInput("diff", syncInfo);
       return comparedialog;
     } 

@@ -15,11 +15,7 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.util.Iterator;
 
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.wizard.IWizardPage;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -32,7 +28,6 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -52,13 +47,8 @@ public class PullPage extends SyncRepoPage
   private GridData locationData;
 
   private Label    cloneParametersLabel;
-  private Text     cloneParameters;
-  private GridData parameterData;
-
   private Label    projectNameLabel;
   private Combo    projectNameCombo;
-  private GridData projectNameData;
-
   String repoName;
   /**
    * @param pageName
@@ -76,12 +66,14 @@ public class PullPage extends SyncRepoPage
   }
 
   
-  public boolean canFlipToNextPage()
+  @Override
+public boolean canFlipToNextPage()
   {
     return isPageComplete() && (getWizard().getNextPage(this) != null);
   }
 
-  public boolean isPageComplete()
+  @Override
+public boolean isPageComplete()
   {
     // This page has no smarts when it comes to parsing. As far as it is concerned
     /// having any text is grounds for completion.
@@ -126,7 +118,8 @@ public class PullPage extends SyncRepoPage
   /* (non-Javadoc)
    * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
    */
-  public void createControl(Composite parent)
+  @Override
+public void createControl(Composite parent)
   {
     Composite outerContainer = new Composite(parent,SWT.NONE);
     GridLayout layout = new GridLayout();
@@ -167,13 +160,15 @@ public class PullPage extends SyncRepoPage
 	browseButton.setText ("Browse repos");
 	browseButton.addSelectionListener(new SelectionAdapter() 
 	{
-		public void widgetSelected(SelectionEvent e) 
+		@Override
+        public void widgetSelected(SelectionEvent e) 
 		{
 			DirectoryDialog dialog = new DirectoryDialog (getShell());
       dialog.setMessage("Select a repository to pull/push");     
 			String dir = dialog.open();
-			if (dir != null)
-				locationCombo.setText(dir);
+			if (dir != null) {
+                locationCombo.setText(dir);
+            }
 			}
 	 });
   
@@ -181,13 +176,15 @@ public class PullPage extends SyncRepoPage
     browsefileButton.setText ("Browse bundles");
     browsefileButton.addSelectionListener(new SelectionAdapter() 
     {
-      public void widgetSelected(SelectionEvent e) 
+      @Override
+    public void widgetSelected(SelectionEvent e) 
       {
         FileDialog dialog = new FileDialog (getShell());
         dialog.setText("Select a bundle to pull/push from/to");     
         String dir = dialog.open();
-        if (dir != null)
-          locationCombo.setText(dir);
+        if (dir != null) {
+            locationCombo.setText(dir);
+        }
       }
     });
  
@@ -198,7 +195,8 @@ public class PullPage extends SyncRepoPage
     setPageComplete(false);
   }
 
-  public void dispose()
+  @Override
+public void dispose()
   {
     locationLabel.dispose();
     locationCombo.dispose();

@@ -23,7 +23,6 @@ public class CommitAction extends HgOperation
 {
   private String[] files;
   private String   commitMessage;
-  private IProject project;
   private File workingDir;
 
   public CommitAction(IRunnableContext context, IProject project, String[] files, String commitMessage,File workingDir)
@@ -31,7 +30,6 @@ public class CommitAction extends HgOperation
     super(context);
     this.files = files;
     this.commitMessage = commitMessage;
-    this.project = project;
     if(workingDir != null)
     {
       this.workingDir = workingDir;
@@ -49,7 +47,6 @@ public class CommitAction extends HgOperation
     this.files = new String[1];
     this.files[0] = files;
     this.commitMessage = commitMessage;
-    this.project = project;
     if(workingDir != null)
     {
       this.workingDir = workingDir;
@@ -61,7 +58,8 @@ public class CommitAction extends HgOperation
   }
 
   
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {   
     ArrayList<String> launchCmd = new ArrayList<String>();
 
@@ -88,16 +86,18 @@ public class CommitAction extends HgOperation
     }
     launchCmd.trimToSize();
    
-    return (String[])launchCmd.toArray(new String[0]);
+    return launchCmd.toArray(new String[0]);
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
     return workingDir;
   }
 
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Mercurial commit files");
   }

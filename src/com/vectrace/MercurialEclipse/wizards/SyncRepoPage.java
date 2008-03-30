@@ -29,7 +29,6 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
@@ -79,12 +78,14 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
   }
 
   
-  public boolean canFlipToNextPage()
+  @Override
+public boolean canFlipToNextPage()
   {
     return isPageComplete() && (getWizard().getNextPage(this) != null);
   }
 
-  public boolean isPageComplete()
+  @Override
+public boolean isPageComplete()
   {
     // This page has no smarts when it comes to parsing. As far as it is concerned
     /// having any text is grounds for completion.
@@ -92,10 +93,7 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
     {
       return isPageComplete( locationCombo.getText(), projectNameCombo.getText());
     }
-    else
-    {
-      return HgRepositoryLocation.validateLocation( locationCombo.getText() );
-    }
+    return HgRepositoryLocation.validateLocation( locationCombo.getText() );
   }
   
   private boolean isPageComplete( String url, String repoName )
@@ -191,7 +189,8 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
 	browseButton.setText ("Browse repos");
 	browseButton.addSelectionListener(new SelectionAdapter() 
 	{
-		public void widgetSelected(SelectionEvent e) 
+		@Override
+        public void widgetSelected(SelectionEvent e) 
 		{
 			DirectoryDialog dialog = new DirectoryDialog (getShell());
       if(clone)
@@ -203,8 +202,9 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
         dialog.setMessage("Select a repository to pull/push");     
       }
 			String dir = dialog.open();
-			if (dir != null)
-				locationCombo.setText(dir);
+			if (dir != null) {
+                locationCombo.setText(dir);
+            }
 		}
 	});
   if(clone)
@@ -255,7 +255,8 @@ public class SyncRepoPage extends WizardPage implements IWizardPage
   setPageComplete(false);
   }
 
-  public void dispose()
+  @Override
+public void dispose()
   {
     locationLabel.dispose();
     locationCombo.dispose();

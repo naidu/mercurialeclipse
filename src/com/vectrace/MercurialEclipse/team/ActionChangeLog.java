@@ -33,8 +33,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
 
-  private IWorkbenchWindow window;
-//    private IWorkbenchPart targetPart;
+  //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
   public ActionChangeLog() {
@@ -57,8 +56,6 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
    * @see IWorkbenchWindowActionDelegate#init
    */
   public void init(IWorkbenchWindow window) {
-//    System.out.println("ActionCommit:init(window)");
-    this.window = window;
   }
 
   /**

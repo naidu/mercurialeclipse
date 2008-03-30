@@ -11,8 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
@@ -57,7 +55,8 @@ public class MercurialRevision extends FileRevision
     return resource.getName();
   }
 
-  public String getContentIdentifier() 
+  @Override
+public String getContentIdentifier() 
   {
 //    System.out.println("MercurialRevision::getContentIdentifier() = " + changeSet.getChangeset());
     return changeSet.getChangeset();

@@ -42,7 +42,8 @@ public class MercurialTeamProvider extends RepositoryProvider
 	 * @see org.eclipse.team.core.RepositoryProvider#configureProject()
 	 */
 	//@Override
-	public void configureProject() throws CoreException 
+	@Override
+    public void configureProject() throws CoreException 
 	{
 		// System.out.println("MercurialTeamProvider.configureProject()");
 	}
@@ -59,7 +60,8 @@ public class MercurialTeamProvider extends RepositoryProvider
 	 * @see org.eclipse.team.core.RepositoryProvider#getID()
 	 */
 	//@Override
-	public String getID() 
+	@Override
+    public String getID() 
 	{
 		String ID;
 	    ID=getClass().getName();
@@ -67,7 +69,8 @@ public class MercurialTeamProvider extends RepositoryProvider
 		return ID;
 	}
 
-  public IMoveDeleteHook getMoveDeleteHook()
+  @Override
+public IMoveDeleteHook getMoveDeleteHook()
   {
 //    System.out.println("MercurialTeamProvider.getMoveDeleteHook()");
     return new HgMoveDeleteHook();
@@ -78,7 +81,8 @@ public class MercurialTeamProvider extends RepositoryProvider
   /* (non-Javadoc)
    * @see org.eclipse.team.core.RepositoryProvider#getFileHistoryProvider()
    */
-  public IFileHistoryProvider getFileHistoryProvider()
+  @Override
+public IFileHistoryProvider getFileHistoryProvider()
   {
     if( FileHistoryProvider == null)
     {
@@ -91,7 +95,8 @@ public class MercurialTeamProvider extends RepositoryProvider
   /* (non-Javadoc)
    * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResources()
    */
-  public boolean canHandleLinkedResources()
+  @Override
+public boolean canHandleLinkedResources()
   {
     return true;
   }
