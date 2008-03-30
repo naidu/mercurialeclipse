@@ -7,7 +7,6 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
- *     Sebastian                 - windows end of line fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -140,7 +139,6 @@ public final class CommitResourceUtil
 		String fileName;
 		IResource thisResource;
 		String fileNameWithWorkingDir;
-		String eol = System.getProperty("line.separator");
 
 		// Tokens are always in pairs as lines are in the form "A
 		// TEST_FOLDER\test_file2.c"
@@ -149,15 +147,7 @@ public final class CommitResourceUtil
 		while (st.hasMoreTokens())
 		{
 			status = st.nextToken(" ").trim();
-			fileName = st.nextToken(eol).trim();
-			}
-			if (status.startsWith("\n"))
-			{
-	      /* 
-	       * on windows versions of mercurial before 1.0 the line ending was \r\n
-	       * but since 1.0 it is only \n
-	       */
-			  status = status.substring(1);
+			fileName = st.nextToken("\n").trim();
 			thisResource = null;
 			fileNameWithWorkingDir = workingDir + File.separator + fileName;
 
