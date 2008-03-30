@@ -167,11 +167,18 @@
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
-               label="Commit..."
+               label="Commit... (old and slow)"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
                tooltip="Commit files (hg commit)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
+           </action>
+           <action
+               label="Commit... (new and buggy)"
+               class="com.vectrace.MercurialEclipse.team.CommitAction"
+               tooltip="Commit files (hg commit)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.CommitAction">
            </action>
       </objectContribution>
 
@@ -285,8 +292,8 @@
          point="org.eclipse.ui.workbench.texteditor.quickDiffReferenceProvider">
       <referenceprovider
             label="Hg Quick Diff"
-            class="com.vectrace.MercurialEclipse.annotatations.HgPristineCopyQuickDiffProvider"
-            id="com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider">
+            class="com.vectrace.MercurialEclipse.annotations.HgPristineCopyQuickDiffProvider"
+            id="com.vectrace.MercurialEclipse.annotations.HgReferenceProvider">
       </referenceprovider>
    </extension>
 

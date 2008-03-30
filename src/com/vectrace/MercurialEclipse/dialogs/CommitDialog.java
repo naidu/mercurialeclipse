@@ -13,9 +13,8 @@
 package com.vectrace.MercurialEclipse.dialogs;
 
 import java.io.File;
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Locale;
+import java.util.List;
 
 import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IProject;
@@ -32,7 +31,6 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
@@ -51,10 +49,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
-
 
 import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.team.ActionDiff;
@@ -107,6 +103,7 @@ public class CommitDialog extends Dialog
   private IProject project;
 //  CommitResource[] commitResources;
   private File[] filesToAdd;
+  private List<IResource> resourcesToAdd;
   private File[] filesToCommit;
   private IResource[] resourcesToCommit;
   private String commitMessage;
@@ -145,6 +142,11 @@ private IResource[] inResources;
   public File[] getFilesToAdd() 
   {
     return filesToAdd;
+  }
+
+  public List<IResource> getResourcesToAdd() 
+  {
+    return resourcesToAdd;
   }
 
   protected Control createDialogArea(Composite parent) 
@@ -432,6 +434,27 @@ private IResource[] inResources;
     return (File[]) list.toArray(new File[0]);
   }
 
+  private List<IResource> getToAddResourceList(Object[] objs) 
+  {
+    ArrayList<IResource> list = new ArrayList<IResource>();
+
+    for (int res = 0; res < objs.length; res++) 
+    {
+      if (objs[res] instanceof CommitResource != true) 
+      {
+        return null;
+      }
+
+      CommitResource resource = (CommitResource) objs[res];
+      if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) 
+      {
+        list.add(resource.getResource());
+      }
+    }
+
+    return list;
+  }
+
   /**
    * Override the OK button pressed to capture the info we want first and then
    * call super.
@@ -439,6 +462,7 @@ private IResource[] inResources;
   protected void okPressed() 
   {
     filesToAdd = getToAddList(commitFilesList.getCheckedElements());
+    resourcesToAdd = getToAddResourceList(commitFilesList.getCheckedElements());
     filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
     resourcesToCommit = convertToResource(commitFilesList.getCheckedElements());
     commitMessage = commitTextBox.getText();
