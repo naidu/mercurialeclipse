@@ -148,11 +148,8 @@ public final class CommitResourceUtil
 		// to the project.
 		while (st.hasMoreTokens())
 		{
-			status = st.nextToken(" ");
-			fileName = st.nextToken(eol);
-			if (status.startsWith(eol))
-			{
-				status = status.substring(eol.length());
+			status = st.nextToken(" ").trim();
+			fileName = st.nextToken(eol).trim();
 			}
 			if (status.startsWith("\n"))
 			{
@@ -161,11 +158,6 @@ public final class CommitResourceUtil
 	       * but since 1.0 it is only \n
 	       */
 			  status = status.substring(1);
-			}
-			if (fileName.startsWith(" "))
-			{
-				fileName = fileName.substring(1);
-			}
 			thisResource = null;
 			fileNameWithWorkingDir = workingDir + File.separator + fileName;
 

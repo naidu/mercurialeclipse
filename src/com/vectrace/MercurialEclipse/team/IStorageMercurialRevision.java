@@ -10,10 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
@@ -116,21 +117,12 @@ public class IStorageMercurialRevision implements IStorage
    */
   public InputStream getContents() throws CoreException
   {
-//    System.out.println("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::getContent()" );
-    
-    //  Should generate data content of the so called "file" in this case a revision, e.g. a hg cat --rev "rev" <file>
-//    String Repository;
-//    Repository=MercurialUtilities.getRepositoryPath(project);
-//    if(Repository==null)
-//    {
-//      Repository="."; //never leave this empty add a . to point to current path
-//    }  
-//    System.out.println("IStorageMercurialRevision::getContents() Repository=" + Repository);
 
-    if(revision!=null)
-    {
+    //Setup and run command
+	String[] launchCmd;
+	if(revision!=null)
+	{
     
-      //Setup and run command
       String rev=revision;
       /*convert <rev number>:<hash> to <hash>*/
       int separator=rev.indexOf(':');
@@ -138,24 +130,28 @@ public class IStorageMercurialRevision implements IStorage
       {
         rev=rev.substring(separator+1);
       }
-      String launchCmd[] = { MercurialUtilities.getHGExecutable(),
+      launchCmd = new String[] { MercurialUtilities.getHGExecutable(),
                              "cat", 
                              "--rev", 
                              rev,
                              "--",
                              MercurialUtilities.getResourceName(resource) 
                              };
-      File workingDir=MercurialUtilities.getWorkingDir(resource);
+	} else {
+	      launchCmd = new String[] { MercurialUtilities.getHGExecutable(),
+                  "cat", 
+                  "--",
+                  MercurialUtilities.getResourceName(resource) 
+                  };
+	}
+    File workingDir=MercurialUtilities.getWorkingDir(resource);
       
-      
-      //    return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,false);
-      return MercurialUtilities.ExecuteCommandToInputStream(launchCmd,workingDir,true);
-    }
-    else
-    {
-      
-      return null; // TODO  resource -> inputstream;
-    }
+    /* TODO using MercurialUtilities.ExecuteCommandToInputStream looks buggy as hell
+     * and fail to diff files that are not really small (deadlock?) 
+     * (see the javadoc of java.lang.Process for a possible explanation) 
+     */
+    ByteArrayOutputStream resultStream = MercurialUtilities.ExecuteCommandToByteArrayOutputStream(launchCmd,workingDir,true);
+    return new ByteArrayInputStream(resultStream.toByteArray());
   }
 
   /* (non-Javadoc)setContents(
@@ -164,13 +160,7 @@ public class IStorageMercurialRevision implements IStorage
   public IPath getFullPath()
   {
 //    System.out.println("IStorageMercurialRevision(" + resource.toString() + "," + revision + ")::getFullPath()" );
-    if(revision!=null)
-    {
-      return resource.getFullPath().append(revision);
-    }
-    {
-      return resource.getFullPath();
-    }
+    return resource.getFullPath().append(revision!=null?(" ["+revision+"]"):" [parent changeset]");
   }
 
   /* (non-Javadoc)

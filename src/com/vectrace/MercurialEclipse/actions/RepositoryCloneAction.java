@@ -66,9 +66,10 @@ public class RepositoryCloneAction extends HgOperation
       launchCmd.add(cloneParameters);      
     }
     launchCmd.add(repo.getUrl());
-    launchCmd.add("--");
+    //JNE does not work (any more?)
+    //launchCmd.add("--");
     launchCmd.add(projectName);
-    launchCmd.trimToSize();
+    //launchCmd.trimToSize();
    
     return (String[])launchCmd.toArray(new String[0]);    
   }

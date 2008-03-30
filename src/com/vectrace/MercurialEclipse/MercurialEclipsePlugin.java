@@ -13,10 +13,8 @@
 
 package com.vectrace.MercurialEclipse;
 
-import javax.print.attribute.standard.Severity;
 
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
