@@ -158,8 +158,7 @@ public class HgCommand {
 			consumer.start();
 			consumer.join(10000); // 10 seconds timeout
 			if(!consumer.isAlive()) {
-				process.waitFor(); // wait until the process exits (needed with Linux, see ticket 184)
-				if(process.exitValue() == 0) {
+				if(process.waitFor() == 0) {
 					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
 					return consumer.getBytes();
 				} else {
