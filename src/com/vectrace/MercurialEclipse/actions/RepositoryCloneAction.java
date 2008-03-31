@@ -8,6 +8,8 @@
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     VecTrace (Zingo Andersen) - some updates
+ *     Jérôme Nègre              - some fixes
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -28,7 +30,6 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class RepositoryCloneAction extends HgOperation
 {
   private HgRepositoryLocation repo;
-  private IWorkspace workspace;
   private String cloneParameters;
   private String projectName;
   private File workingDir;
@@ -40,7 +41,6 @@ public class RepositoryCloneAction extends HgOperation
   {
     super(context);
 
-    this.workspace = workspace;
     this.repo = repo;
     this.cloneParameters = cloneParameters;
     this.projectName = projectName;
@@ -54,7 +54,8 @@ public class RepositoryCloneAction extends HgOperation
     }
   }
 
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
     ArrayList<String> launchCmd = new ArrayList<String>();
 
@@ -71,10 +72,11 @@ public class RepositoryCloneAction extends HgOperation
     launchCmd.add(projectName);
     //launchCmd.trimToSize();
    
-    return (String[])launchCmd.toArray(new String[0]);    
+    return launchCmd.toArray(new String[0]);    
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
     return workingDir;
   }
@@ -85,12 +87,14 @@ public class RepositoryCloneAction extends HgOperation
    * The CloneRepositoryAction is not allowed to run as a job as the CloneRepoWizard will attempt to continue on
    * otherwise. TODO: Figure out how to make the clone repo wizard block. Presumably need a job monitor.
    */
-  protected boolean canRunAsJob()
+  @Override
+protected boolean canRunAsJob()
   {
     return false;
   }
 
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
 	return new String("Mercurial clone repository " + repo.getUrl());
   }

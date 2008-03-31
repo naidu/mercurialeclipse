@@ -8,7 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
- *     StefanC                   - some updates
+ *     StefanC                   - some updates, code cleanup
  *     Stefan Groschupf          - logError
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
@@ -33,8 +33,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
 
-  private IWorkbenchWindow window;
-//    private IWorkbenchPart targetPart;
+  //    private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
     
   public ActionChangeLog() {
@@ -57,8 +56,6 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
    * @see IWorkbenchWindowActionDelegate#init
    */
   public void init(IWorkbenchWindow window) {
-//    System.out.println("ActionCommit:init(window)");
-    this.window = window;
   }
 
   /**

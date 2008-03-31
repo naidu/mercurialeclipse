@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
+ *     Jérôme Nègre              - some fixes
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -178,12 +180,12 @@ public final class CommitResourceUtil
 					// Project
 					String fileNameWithWorkingDirFromProject = fileNameWithWorkingDir.substring(projPath.toOSString().length());
 					IFile file = getProject().getFile(fileNameWithWorkingDirFromProject);
-					thisResource = (IResource) file;
+					thisResource = file;
 				} 
 				else
 				{ // This is a full path
 					IFile file = getProject().getFile(fileNameWithWorkingDir);
-					thisResource = (IResource) file;
+					thisResource = file;
 				}
 			}
 			/*
@@ -200,7 +202,7 @@ public final class CommitResourceUtil
 			}
 		}
 
-		return (CommitResource[]) list.toArray(new CommitResource[0]);
+		return list.toArray(new CommitResource[0]);
 	}
 
 	private IProject getProject()

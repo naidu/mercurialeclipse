@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     Stefan Groschupf          - logError
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -25,7 +26,6 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -96,7 +96,6 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
     Shell shell;
     IWorkbench workbench;
     Object obj;
-    IResource objectResource;
     Iterator itr;
     IProject project = MercurialUtilities.getProject(selection);
 
@@ -123,11 +122,11 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
       }
     }        
     selectedResourceArrayList.trimToSize();  
-    IResource[] selectedResourceArray = (IResource[])selectedResourceArrayList.toArray(new IResource[0]);
+    IResource[] selectedResourceArray = selectedResourceArrayList.toArray(new IResource[0]);
     
     // TODO have per file working dir 
     //Get working dir (use first selected for now) 
-    File workingDir=MercurialUtilities.getWorkingDir((IResource)selectedResourceArray[0]);
+    File workingDir=MercurialUtilities.getWorkingDir(selectedResourceArray[0]);
 
     IProgressMonitor monitor = new NullProgressMonitor();
     CommitDialog commitDialog = new CommitDialog(shell,project,selectedResourceArray);
@@ -161,7 +160,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
 
       if(resourcesToCommit.length > 0 )
       {
-        String eol = System.getProperty("line.separator");
+//        String eol = System.getProperty("line.separator");
         do 
         {
           ArrayList<String> list = new ArrayList<String>();
@@ -232,7 +231,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
           
           if(notEmpty)
           {
-            String[] filesToCommit_per_repo= (String[])list.toArray(new String[0]);            
+            String[] filesToCommit_per_repo= list.toArray(new String[0]);            
             CommitAction commitAction = new CommitAction(null, project,filesToCommit_per_repo, messageToCommit,workingDir );
             try
             {

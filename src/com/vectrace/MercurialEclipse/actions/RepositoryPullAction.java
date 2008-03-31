@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - Implementation
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -22,14 +23,12 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class RepositoryPullAction extends HgOperation
 {
   private HgRepositoryLocation repo;
-  private IProject project;
   private File workingDir;
 
   public RepositoryPullAction(IRunnableContext context, IProject project, HgRepositoryLocation repo,File workingDir)
   {
     super(context);
     this.repo = repo;
-    this.project = project;
     if(workingDir != null)
     {
       this.workingDir = workingDir;
@@ -40,7 +39,8 @@ public class RepositoryPullAction extends HgOperation
     }
   }
   
-  protected String[] getHgCommand()
+  @Override
+protected String[] getHgCommand()
   {
     ArrayList<String> launchCmd = new ArrayList<String>();
 
@@ -51,16 +51,18 @@ public class RepositoryPullAction extends HgOperation
     launchCmd.add(repo.getUrl());
     launchCmd.trimToSize();
    
-    return (String[])launchCmd.toArray(new String[0]);
+    return launchCmd.toArray(new String[0]);
   }
 
-  protected File getHgWorkingDir()
+  @Override
+protected File getHgWorkingDir()
   {
     return workingDir;
   }
 
   
-  protected String getActionDescription()
+  @Override
+protected String getActionDescription()
   {
     return new String("Mercurial pull changes from other reposetory");
   }

@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError 
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
 /*
@@ -170,6 +171,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
       return ""; //$NON-NLS-1$
     }
 
+    @Override
     public Object getAdapter(Class adapter) 
     {
 //      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getAdapter()");
@@ -204,7 +206,8 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
 //    System.out.println("OpenMercurialRevisionAction::OpenMercurialRevisionAction(" + text + ")");
   }
 
-  public void run() 
+  @Override
+public void run() 
   {
 //    System.out.println("OpenMercurialRevisionAction::run()");
 
@@ -308,7 +311,8 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
     return id;
   }
 
-  protected boolean updateSelection(IStructuredSelection selection) 
+  @Override
+protected boolean updateSelection(IStructuredSelection selection) 
   {
 //    System.out.println("OpenMercurialRevisionAction::updateSelection()");
     this.selection = selection;
@@ -327,15 +331,17 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
     IStructuredSelection structSel = selection;
     Object[] objArray = structSel.toArray();
 
-    if (objArray.length == 0)
-      return false;
+    if (objArray.length == 0) {
+        return false;
+    }
 
     for (int i = 0; i < objArray.length; i++) 
     {
       IFileRevision revision = (IFileRevision) objArray[i];
       //check to see if any of the selected revisions are deleted revisions
-      if (revision != null && !revision.exists())
+      if (revision != null && !revision.exists()) {
         return false;
+    }
     }
 
     return true;

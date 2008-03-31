@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.storage;
@@ -21,10 +22,6 @@ public class HgRepositoryLocation implements Comparable
   public HgRepositoryLocation(String url)
   {
     this.location = url;
-  }
-  
-  private HgRepositoryLocation()
-  {
   }
   
   public String getUrl()

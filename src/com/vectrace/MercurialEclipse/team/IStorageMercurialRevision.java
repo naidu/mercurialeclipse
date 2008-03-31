@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -196,15 +197,12 @@ public class IStorageMercurialRevision implements IStorage
     {
       return true;
     }
-    else
-    {
-      // if no revision resource is the current one e.g. editable :)
+    // if no revision resource is the current one e.g. editable :)
       ResourceAttributes attributes = resource.getResourceAttributes();
       if (attributes != null) 
       {
         return attributes.isReadOnly();
       }
-    }
     return true;  /* unknown state marked as read only for safety */
   }
 

@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.annotations;
@@ -33,7 +34,7 @@ public class AnnotateBlocks
       blocks.add(aBlock);
     } else
     {
-      AnnotateBlock lastBlock = (AnnotateBlock) blocks.get(size - 1);
+      AnnotateBlock lastBlock = blocks.get(size - 1);
       if (lastBlock.getRevision().equals(aBlock.getRevision()))
       {
         lastBlock.setEndLine(aBlock.getStartLine());

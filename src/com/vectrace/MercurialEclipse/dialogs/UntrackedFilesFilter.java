@@ -23,6 +23,7 @@ class UntrackedFilesFilter extends ViewerFilter
     /**
      * Filter out untracked files.
      */
+    @Override
     public boolean select(Viewer viewer, Object parentElement,Object element) 
     {
       if (element instanceof CommitResource) 

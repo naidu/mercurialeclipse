@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
- *     StefanC           - jobs framework
+ *     StefanC           - jobs framework code cleenup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
@@ -128,8 +128,9 @@ public class HgPristineCopyQuickDiffProvider implements
    */
   public IDocument getReference(IProgressMonitor monitor) throws CoreException
   {
-    if (!isReferenceInitialized)
-      return null;
+    if (!isReferenceInitialized) {
+        return null;
+    }
     if (referenceDocument == null)
     {
       readDocument(monitor);
@@ -144,14 +145,15 @@ public class HgPristineCopyQuickDiffProvider implements
    */
   public void setActiveEditor(ITextEditor targetEditor)
   {
-    if (!(targetEditor.getEditorInput() instanceof IFileEditorInput))
-      return;
+    if (!(targetEditor.getEditorInput() instanceof IFileEditorInput)) {
+        return;
+    }
     editor = targetEditor;
     documentProvider = editor.getDocumentProvider();
 
     if (documentProvider != null)
     {
-      ((IDocumentProvider) documentProvider)
+      (documentProvider)
           .addElementStateListener(documentListener);
     }
     isReferenceInitialized = true;
@@ -164,8 +166,9 @@ public class HgPristineCopyQuickDiffProvider implements
    */
   public boolean isEnabled()
   {
-    if (!isReferenceInitialized)
-      return false;
+    if (!isReferenceInitialized) {
+        return false;
+    }
     return getManagedHgFile() != null;
   }
 
@@ -230,10 +233,12 @@ public class HgPristineCopyQuickDiffProvider implements
    */
   private void readDocument(IProgressMonitor monitor) throws CoreException
   {
-    if (!isReferenceInitialized)
-      return;
-    if (referenceDocument == null)
-      referenceDocument = new Document();
+    if (!isReferenceInitialized) {
+        return;
+    }
+    if (referenceDocument == null) {
+        referenceDocument = new Document();
+    }
     if (computeChange(monitor))
     {
       IFile remoteFile = getFileFromEditor();
@@ -246,8 +251,9 @@ public class HgPristineCopyQuickDiffProvider implements
         {
           encoding = provider.getDefaultEncoding();
         }
-        if (monitor.isCanceled())
-          return;
+        if (monitor.isCanceled()) {
+            return;
+        }
         InputStream stream = remoteFile.getContents();
         if (stream == null || monitor.isCanceled() || !isReferenceInitialized)
         {
@@ -257,8 +263,9 @@ public class HgPristineCopyQuickDiffProvider implements
       } else
       {
         // the remote is null, so ensure that the document is null
-        if (monitor.isCanceled())
-          return;
+        if (monitor.isCanceled()) {
+            return;
+        }
         referenceDocument.set(""); //$NON-NLS-1$
       }
     }
@@ -358,14 +365,16 @@ public class HgPristineCopyQuickDiffProvider implements
    */
   private void fetchContentsInJob()
   {
-    if (!isReferenceInitialized)
-      return;
+    if (!isReferenceInitialized) {
+        return;
+    }
     if (fUpdateJob != null && fUpdateJob.getState() != Job.NONE)
     {
       fUpdateJob.cancel();
     }
     fUpdateJob = new Job("RemoteRevisionQuickDiffProvider.fetchingFile") { //$NON-NLS-1$
-      protected IStatus run(IProgressMonitor monitor)
+      @Override
+    protected IStatus run(IProgressMonitor monitor)
       {
         try
         {

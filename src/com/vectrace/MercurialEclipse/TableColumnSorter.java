@@ -1,4 +1,14 @@
 /*******************************************************************************
+ * Copyright (c) See next comment
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Stefan C - Copy code
+ *******************************************************************************/
+/*******************************************************************************
  * TableViewerSorting Example
  *
  * Adam Cabler
@@ -52,7 +62,8 @@ public abstract class TableColumnSorter extends ViewerComparator
     this.column.addSelectionListener(new SelectionAdapter() 
     {
 
-      public void widgetSelected(SelectionEvent e) 
+      @Override
+    public void widgetSelected(SelectionEvent e) 
       {
         if (TableColumnSorter.this.viewer.getComparator() != null) 
         {
@@ -115,7 +126,8 @@ public abstract class TableColumnSorter extends ViewerComparator
     }
   }
 
-  public int compare(Viewer viewer, Object e1, Object e2) 
+  @Override
+public int compare(Viewer viewer, Object e1, Object e2) 
   {
     return direction * doCompare(viewer, e1, e2);
   }

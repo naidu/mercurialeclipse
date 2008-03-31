@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError 
+ *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -45,7 +46,7 @@ public class MercurialHistoryProvider extends FileHistoryProvider
       RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) resource).getProject());
       if (provider instanceof MercurialTeamProvider)
       {
-        return new MercurialHistory((IFile)resource);
+        return new MercurialHistory(resource);
       }
 //    }
     return null;
