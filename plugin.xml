@@ -15,6 +15,7 @@
  *     StefanC                   - Some updates
  *     Charles O'Farrell         - Annotation with color
  *     Jerome Negre              - Moving menus around
+ *     Sebastian                 - Better naming
  *******************************************************************************/
 -->
 
@@ -133,6 +134,7 @@
            <action
                label="Show &amp;History"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
+               icon="icons/history.gif"
                tooltip="hg log"
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
@@ -146,7 +148,6 @@
            </action>
            <action
                label="hg &amp;import"
-               icon="icons/mercurialeclipse.png"
                class="com.vectrace.MercurialEclipse.team.ActionImport"
                tooltip="Import patch from file (hg import)"
                menubarPath="team.main/group1"
@@ -167,14 +168,14 @@
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
-               label="Commit... (old and slow)"
+               label="Commit... (Slow: repo everyware)"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
                tooltip="Commit files (hg commit)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionCommit">
            </action>
            <action
-               label="Commit... (new and buggy)"
+               label="Commit... (fast: repo at proj root)"
                class="com.vectrace.MercurialEclipse.team.CommitAction"
                tooltip="Commit files (hg commit)"
                menubarPath="team.main/group1"
@@ -221,6 +222,7 @@
                  <!-- Team -->
             <action
                label="Show Annotation"
+               icon="icons/annotate.gif"
                class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
                tooltip="hg annotate"
                menubarPath="team.main/group3"
