@@ -131,14 +131,14 @@
                enablesFor="1">
            </action>
            <action
-               label="hg &amp;log"
+               label="Show &amp;History"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
                tooltip="hg log"
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
            <action
-               label="hg &amp;revert"
+               label="&amp;Revert"
                class="com.vectrace.MercurialEclipse.team.ActionRevert"
                tooltip="hg revert"
                menubarPath="team.main/group2"
