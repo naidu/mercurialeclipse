@@ -32,6 +32,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class CommitAction extends MultipleResourcesAction {
 
+	@Override
 	public void run(final List<IResource> resources) throws HgException{
 		//FIXME let's pray that all resources are in the same project...
 		IProject project = resources.get(0).getProject();

@@ -161,13 +161,11 @@ public class HgCommand {
 				if(process.waitFor() == 0) {
 					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
 					return consumer.getBytes();
-				} else {
-					throw new HgException("Process error, return code: "+process.exitValue()+", message: "+new String(consumer.getBytes()));
 				}
-			} else {
-				process.destroy();
-				throw new HgException("Process timeout");
+				throw new HgException("Process error, return code: "+process.exitValue()+", message: "+new String(consumer.getBytes()));
 			}
+			process.destroy();
+			throw new HgException("Process timeout");
 		} catch (IOException e) {
 			throw new HgException(e.getMessage(), e);
 		} catch (InterruptedException e) {
