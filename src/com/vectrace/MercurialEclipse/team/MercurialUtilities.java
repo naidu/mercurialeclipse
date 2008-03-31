@@ -17,10 +17,9 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.Reader;
+import java.util.Arrays;
+
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -41,6 +40,7 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
@@ -290,327 +290,21 @@ public class MercurialUtilities
     return project.getLocation().toOSString();
   }
 
-  /** ************************* Execute external command *********************** */
-
-  /*
-   * TODO IProcess, ILaunch? Is this what should be used insted of java.io stuff
-   * ???
-   */
-
-  /*
-   * Execute command and return output of it in an InputStream Error output is
-   * sent to the Mercurial Eclipse console that is created if needed
-   */
-  // static InputStream ExecuteCommandToInputStream(String cmd[])
-  // TODO: Combine this with the other execute command.
-  // TODO: Proper error handling.
-  public static InputStream ExecuteCommandToInputStream(String cmd[],
-      File workingDir, boolean consoleOutput)
-  {
-    class myIOThreadNoOutput implements Runnable
-    {
-      Reader input;
-      boolean consoleOutput;
-
-      public myIOThreadNoOutput(String aName, Reader instream,
-          boolean consoleOutput_)
-      {
-        // setPriority(getPriority()+1); //Set Priorety one above current pos
-        // (we want to take care of the input instead of waiting
-        input = instream;
-        consoleOutput = consoleOutput_;
-      }
-
-      public void run()
-      {
-        int c;
-        PrintStream my_console;
-        // Thread.currentThread.sleep(100); //Delay 100 ms
-        // System.out.println("Error:");
-        try
-        {
-          if (consoleOutput)
-          {
-            my_console = getMercurialConsoleOutPrintStream();
-          } else
-          {
-            my_console = null;
-          }
-
-          while ((c = input.read()) != -1)
-          {
-            // System.out.print((char)c);
-            if (my_console != null)
-            {
-              my_console.print((char) c);
-            }
-          }
-        }
-
-        catch (IOException e)
-        {
-          // TODO Auto-generated catch block
-          e.printStackTrace();
-        }
-
-      }
-    }
-
-    if (false)
-    {
-      PrintStream my_console = getMercurialConsoleOutPrintStream();
-
-      if (my_console != null)
-      {
-        my_console.print("ExecuteCommand: ");
-        for (int i = 0; i < cmd.length; i++)
-        {
-          my_console.print(cmd[i] + " ");
-        }
-        my_console.println();
-
-        my_console.print("workdir: ");
-        if (workingDir != null)
-        {
-          my_console.print(workingDir.toString());
-        } else
-        {
-          my_console.print("<null>");
-        }
-        my_console.println();
-      }
-    }
-
-    // Setup and run command
-    InputStream in;
-    Reader err_unicode;
-    try
-    {
-      // Process process = Runtime.getRuntime().exec(cmd);
-      ProcessBuilder pb = new ProcessBuilder(cmd);
-      // Map<String, String> env = pb.environment();
-      // env.put("VAR1", "myValue");
-      // env.remove("OTHERVAR");
-      // env.put("VAR2", env.get("VAR1") + "suffix");
-      if (workingDir != null)
-      {
-        pb.directory(workingDir);
-      }
-      Process process = pb.start();
-
-      in = process.getInputStream();
-      err_unicode = new InputStreamReader(process.getErrorStream()); // InputStreamReader
-                                                                      // converts
-                                                                      // input
-                                                                      // to
-                                                                      // unicode
-
-      myIOThreadNoOutput errThread = new myIOThreadNoOutput("stderr",
-          err_unicode, true); // only to console
-      Thread threadErr = new Thread(errThread);
-      threadErr.start();
-      threadErr.setPriority(Thread.MAX_PRIORITY); // Set Priority one above
-                                                  // current pos (we want to
-                                                  // take care of the input
-                                                  // instead of waiting
-
-      waitFor(process);
-
-      // Let it continue errThread.join(); //wait for the thread to terminate
-      // err_unicode.close();
-      return in;
-
-    } 
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    } 
-    catch (InterruptedException e)
-    {
-      e.printStackTrace();
-    }
-    return null;
-  }
-
-  private static void waitFor(Process process) throws InterruptedException
-  {
-    int poll = 300;
-    int maxTries = 10000 / poll;
-    // Timeout 10 seconds, poll every 300 ms
-    for (int i = 0; i < maxTries; i++)
-    {
-      try
-      {
-        Thread.sleep(poll);
-        process.exitValue();
-        return;
-      } catch (IllegalThreadStateException ex)
-      {
-        // Expected if process hasn't exited yet
-      }
-    }
-    process.destroy();
-    throw new IllegalStateException("Mercurial process timeout occured");
-  }
-
   // TODO: Should probably not return null in case of error.
   public static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[], File workingDir, boolean consoleOutput) throws HgException
   {
-    class myIOThread implements Runnable
-    {
-      Reader input;
-      ByteArrayOutputStream output;
-      boolean consoleOutput;
-
-      public myIOThread(String aName, Reader instream,
-          ByteArrayOutputStream outstream, boolean consoleOutput_)
-      {
-        // setPriority(Thread.MAX_PRIORITY); //getPriority()+1 //Set Priority
-        // one above current pos (we want to take care of the input instead of
-        // waiting
-        input = instream;
-        output = outstream;
-        consoleOutput = consoleOutput_;
-      }
-
-      public void run()
-      {
-        int c;
-        PrintStream my_console;
-        // Thread.currentThread.sleep(100); //Delay 100 ms
-        // System.out.println("Error:");
-        try
-        {
-          if (consoleOutput)
-          {
-            my_console = getMercurialConsoleOutPrintStream();
-          } else
-          {
-            my_console = null;
-          }
-
-          while ((c = input.read()) != -1)
-          {
-            // System.out.print((char)c);
-            // output=output + String.valueOf((char)c);
-            if (output != null)
-            {
-              output.write(c);
-            }
-            if (my_console != null)
-            {
-              my_console.print((char) c);
-            }
-          }
-        }
-
-        catch (IOException e)
-        {
-        	MercurialEclipsePlugin.logError(e);        	
-          // TODO Auto-generated catch block
-//          e.printStackTrace();
-        }
-
-      }
+      LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
+      legacyAdaptor.args(Arrays.copyOfRange(cmd, 2, cmd.length));
+      byte[] bytes = legacyAdaptor.executeToBytes();
+      
+      ByteArrayOutputStream result = new ByteArrayOutputStream(bytes.length);
+      try {
+        result.write(bytes);
+    } catch (IOException e) {
+        // It is very unlikely this would ever happen
+        throw new RuntimeException(e);
     }
-
-    // Setup and run command
-    // System.out.println("hg --cwd " + Repository + " status");
-    // String launchCmd[] = { "hg","--cwd", Repository ,"status" };
-    // System.out.println("ExecuteCommand:" + cmd.toString());
-
-    // output=new String("");
-    // InputStream in;
-
-    // GetMercurialConsole().println("ExecuteCommandToByteArrayOutputStream()
-    // Enter");
-
-    ByteArrayOutputStream output;
-    // ByteArrayOutputStream error;
-    Reader in_unicode;
-    Reader err_unicode;
-    try
-    {
-      // Process process = Runtime.getRuntime().exec(cmd);
-      ProcessBuilder pb = new ProcessBuilder(cmd);
-      // Map<String, String> env = pb.environment();
-      // env.put("VAR1", "myValue");
-      // env.remove("OTHERVAR");
-      // env.put("VAR2", env.get("VAR1") + "suffix");
-      if (workingDir != null)
-      {
-        pb.directory(workingDir);
-      }
-      Process process = pb.start();
-
-      // in = process.getInputStream();
-      output = new ByteArrayOutputStream();
-      // error = new ByteArrayOutputStream();
-      in_unicode = new InputStreamReader(process.getInputStream()); // InputStreamReader
-                                                                    // converts
-                                                                    // input to
-                                                                    // unicode
-      err_unicode = new InputStreamReader(process.getErrorStream()); // InputStreamReader
-                                                                      // converts
-                                                                      // input
-                                                                      // to
-                                                                      // unicode
-
-      // output = new StringWriter();
-      myIOThread inThread = new myIOThread("stdin", in_unicode, output,consoleOutput);
-      // myIOThread errThread = new myIOThread("stderr",err_unicode,error,true);
-      // //only to console
-      myIOThread errThread = new myIOThread("stderr", err_unicode, output, true); // only
-                                                                                // to
-                                                                                // console
-      Thread threadIn = new Thread(inThread);
-      Thread threadErr = new Thread(errThread);
-      threadIn.setPriority(Thread.MAX_PRIORITY); // Set Priority one above
-                                                  // current pos (we want to
-                                                  // take care of the input
-                                                  // instead of waiting
-      threadErr.setPriority(Thread.MAX_PRIORITY); // Set Priority one above
-                                                  // current pos (we want to
-                                                  // take care of the input
-                                                  // instead of waiting
-
-      // GetMercurialConsole().println("Time to start threads");
-
-      threadIn.start();
-      threadErr.start();
-
-      threadIn.join(); // wait for the thread to terminate
-      threadErr.join(); // wait for the thread to terminate
-
-      // GetMercurialConsole().println("process.waitFor()");
-
-      waitFor(process);
-
-      // int exit = process.exitValue();
-
-      in_unicode.close();
-      err_unicode.close();
-
-      // Should probably throw something or at least return the error.
-      // if( exit != 0 )
-      // {
-      // throw new HgException(exit, "Mercurial operation failed: " + error);
-      // }
-      // else
-      // {
-      return output;
-      // }
-
-    } catch (IOException e)
-    {
-    	MercurialEclipsePlugin.logError(e);
-//      e.printStackTrace();
-    } catch (InterruptedException e)
-    {
-    	MercurialEclipsePlugin.logError(e);
-//      e.printStackTrace();
-    }
-    return null;
+      return result;
   }
 
   /*
@@ -622,39 +316,9 @@ public class MercurialUtilities
    */
   static public String ExecuteCommand(String cmd[], File workingDir, boolean consoleOutput) throws HgException
   {
-    // Setup and run command
-
-    PrintStream my_console = getMercurialConsoleOutPrintStream();
-
-    if (my_console != null)
-    {
-      my_console.println("-----------------------");
-      my_console.print("ExecuteCommand: ");
-      for (int i = 0; i < cmd.length; i++)
-      {
-        my_console.print(cmd[i] + " ");
-      }
-      my_console.println();
-
-      my_console.print("workdir: ");
-      if (workingDir != null)
-      {
-        my_console.print(workingDir.toString());
-      } else
-      {
-        my_console.print("<null>");
-      }
-      my_console.println();
-    }
-
-    ByteArrayOutputStream output;
-
-    // GetMercurialConsole().println("ExecuteCommandToByteArrayOutputStream()");
-
-    output = ExecuteCommandToByteArrayOutputStream(cmd, workingDir, consoleOutput);
-    // my_console.print("output: " + output);
-    // my_console.println("-----------------------");
-    return (output != null) ? output.toString() : null;
+      LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
+      legacyAdaptor.args(Arrays.copyOfRange(cmd, 2, cmd.length));
+      return legacyAdaptor.executeToString();
   }
 
   /**
@@ -805,4 +469,26 @@ public class MercurialUtilities
    * try { out.write(b, 0, bRead); ps.println(); } catch (IOException e) {
    * e.printStackTrace(); } } }
    */
+  
+  
+  private static class LegacyAdaptor extends HgCommand {
+
+    protected LegacyAdaptor(String command, File workingDir, boolean escapeFiles) {
+        super(command, workingDir, escapeFiles);
+    }
+    
+    LegacyAdaptor args(String... arguments) {
+        this.addOptions(arguments);
+        return this;
+    }
+    
+    @Override
+    protected String executeToString() throws HgException {
+        return super.executeToString();
+    }
+    @Override
+    protected byte[] executeToBytes() throws HgException {
+        return super.executeToBytes();
+    }
+  }
 }
