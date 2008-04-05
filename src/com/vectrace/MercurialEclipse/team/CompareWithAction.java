@@ -4,8 +4,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.team.core.TeamException;
 
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 
 /**
@@ -19,8 +17,7 @@ public class CompareWithAction extends CompareAction {
 		RevisionChooserDialog dialog = new RevisionChooserDialog(
 				getShell(),
 				"Compare With Revision...",
-				HgLogClient.getRevisions(file),
-				HgTagClient.getTags(file.getProject()));
+				file);
 		int result = dialog.open();
 		if(result == IDialogConstants.OK_ID) {
 			openEditor(file, dialog.getRevision());

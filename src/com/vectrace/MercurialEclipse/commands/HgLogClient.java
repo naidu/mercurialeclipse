@@ -26,6 +26,11 @@ public class HgLogClient {
 		return getRevisions(command);
 	}
 
+    public static ChangeSet[] getHeads(IProject project) throws HgException {
+        HgCommand command = new HgCommand("heads", project, true);
+        return getRevisions(command);
+    }
+    
 	/**
 	 * 
 	 * @param command a command with optionally its Files set
