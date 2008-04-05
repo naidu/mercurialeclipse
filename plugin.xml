@@ -168,6 +168,21 @@
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
+               label="Merge... (work in progress)"
+               class="com.vectrace.MercurialEclipse.team.MergeAction"
+               tooltip="Merge revisions"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.MergeAction">
+               <enablement>
+                   <not>
+	               	   <objectState
+	                       name="projectPersistentProperty"
+	                       value="com.vectrace.MercurialEclipse.merging">
+	                   </objectState>
+                   </not>
+               </enablement>
+           </action>
+           <action
                label="Commit... (Slow: repo everyware)"
                class="com.vectrace.MercurialEclipse.team.ActionCommit"
                tooltip="Commit files (hg commit)"
@@ -306,6 +321,16 @@
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
      </factory>
+   </extension>
+   
+   <!-- Views -->
+   
+   <extension point="org.eclipse.ui.views">
+      <view
+        class="com.vectrace.MercurialEclipse.views.MergeView"
+        id="com.vectrace.MercurialEclipse.views.MergeView"
+        name="Merge">
+      </view>
    </extension>
    
 </plugin>

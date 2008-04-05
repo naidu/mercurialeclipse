@@ -27,4 +27,13 @@ public class HgCommitClient {
 			command.executeToBytes();
 		}
 	}
+	
+	public static void commitProject(IProject project, String user, String message)
+            throws HgException {
+        HgCommand command = new HgCommand("commit", project, false);
+        command.addUserName(user);
+        command.addOptions("-m", message);
+        command.executeToBytes();
+    }
+	
 }
