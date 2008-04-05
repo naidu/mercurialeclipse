@@ -17,9 +17,11 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -38,6 +40,7 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -49,13 +52,25 @@ import com.vectrace.MercurialEclipse.model.Tag;
  */
 public class RevisionChooserDialog extends Dialog {
 
-    private static interface DataLoader {
-        ChangeSet[] getRevisions() throws HgException;
-        Tag[] getTags() throws HgException;
-        ChangeSet[] getHeads() throws HgException;
+    private static abstract class DataLoader {
+        abstract IProject getProject();
+        abstract ChangeSet[] getRevisions() throws HgException;
+        
+        public Tag[] getTags() throws HgException {
+            return HgTagClient.getTags(getProject());
+        }
+
+        public ChangeSet[] getHeads() throws HgException {
+            return HgLogClient.getHeads(getProject());
+        }
+        
+        public int[] getParents() throws HgException {
+            return HgParentClient.getParents(getProject());
+        }
+        
     }
     
-    private static class FileDataLoader implements DataLoader {
+    private static class FileDataLoader extends DataLoader {
         
         private IFile file;
         
@@ -63,20 +78,18 @@ public class RevisionChooserDialog extends Dialog {
             this.file = file;
         }
         
-        public ChangeSet[] getRevisions() throws HgException {
-            return HgLogClient.getRevisions(file);
+        @Override
+        IProject getProject() {
+            return file.getProject();
         }
         
-        public Tag[] getTags() throws HgException {
-            return HgTagClient.getTags(file.getProject());
-        }
-
-        public ChangeSet[] getHeads() throws HgException {
-            return HgLogClient.getHeads(file.getProject());
+        @Override
+        ChangeSet[] getRevisions() throws HgException {
+            return HgLogClient.getRevisions(file);
         }
     }
     
-    private static class ProjectDataLoader implements DataLoader {
+    private static class ProjectDataLoader extends DataLoader {
         
         private IProject project;
         
@@ -84,23 +97,25 @@ public class RevisionChooserDialog extends Dialog {
             this.project = project;
         }
         
-        public ChangeSet[] getRevisions() throws HgException {
-            return HgLogClient.getRevisions(project);
+        @Override
+        IProject getProject() {
+            return project;
         }
         
-        public Tag[] getTags() throws HgException {
-            return HgTagClient.getTags(project);
-        }
-
-        public ChangeSet[] getHeads() throws HgException {
-            return HgLogClient.getHeads(project);
+        @Override
+        ChangeSet[] getRevisions() throws HgException {
+            return HgLogClient.getRevisions(project);
         }
     }
+    
+    private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getItalic(JFaceResources.DIALOG_FONT);
     
     private final DataLoader dataLoader;
 	private final String title;
 	private Text text;
 	private String revision;
+	
+	private final int[] parents;
 
 	public RevisionChooserDialog(Shell parentShell, String title,
 	        IFile file) {
@@ -118,6 +133,13 @@ public class RevisionChooserDialog extends Dialog {
         setShellStyle(getShellStyle() | SWT.RESIZE);
         this.title = title;
         this.dataLoader = loader;
+        int[] p = {};
+        try {
+            p = loader.getParents();
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
+        this.parents = p;
     }
 
 	@Override
@@ -196,6 +218,9 @@ public class RevisionChooserDialog extends Dialog {
                     ChangeSet[] revisions = dataLoader.getRevisions();
                     for (ChangeSet rev : revisions) {
                         TableItem row = new TableItem(table, SWT.NONE);
+                        if(isParent(rev.getChangesetIndex())) {
+                            row.setFont(PARENT_FONT);
+                        }
                         row.setText(0, Integer.toString(rev.getChangesetIndex()));
                         row.setText(1, rev.getChangeset());
                         row.setText(2, rev.getDate());
@@ -249,7 +274,10 @@ public class RevisionChooserDialog extends Dialog {
                             Tag[] tags = dataLoader.getTags();
                             for (Tag tag : tags) {
                                 TableItem row = new TableItem(table, SWT.NONE);
-                                row.setText(0, Integer.toString(tag.getRevision()));
+                                if(isParent(tag.getRevision())) {
+                                    row.setFont(PARENT_FONT);
+                                }
+                               row.setText(0, Integer.toString(tag.getRevision()));
                                 row.setText(1, tag.getGlobalId());
                                 row.setText(2, tag.getName());
                                 row.setText(3, tag.isLocal()?"local":"");
@@ -304,6 +332,9 @@ public class RevisionChooserDialog extends Dialog {
                             ChangeSet[] revisions = dataLoader.getHeads();
                             for (ChangeSet rev : revisions) {
                                 TableItem row = new TableItem(table, SWT.NONE);
+                                if(isParent(rev.getChangesetIndex())) {
+                                    row.setFont(PARENT_FONT);
+                                }
                                 row.setText(0, Integer.toString(rev.getChangesetIndex()));
                                 row.setText(1, rev.getChangeset());
                                 row.setText(2, rev.getDate());
@@ -323,4 +354,19 @@ public class RevisionChooserDialog extends Dialog {
         return item;
     }
 
+    private boolean isParent(int r) {
+        switch(parents.length) {
+            case 2:
+                if(r == parents[1]) {
+                    return true;
+                }
+            case 1:
+                if(r == parents[0]) {
+                    return true;
+                }
+            default:
+                return false;
+        }
+    }
+    
 }
