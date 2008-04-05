@@ -43,8 +43,8 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
-import org.eclipse.ui.internal.ide.IDEWorkbenchPlugin;
 import org.eclipse.ui.part.FileEditorInput;
 import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 
@@ -55,6 +55,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 public class ShowAnnotationOperation extends TeamOperation
 {
+  private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
   private final HgFile remoteFile;
 
   public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
@@ -143,7 +144,7 @@ protected IAction getGotoAction()
         // defualt text editor
         IEditorPart part = getPart().getSite().getPage().openEditor(
             new FileEditorInput((IFile) resource),
-            IDEWorkbenchPlugin.DEFAULT_TEXT_EDITOR_ID, true,
+            DEFAULT_TEXT_EDITOR_ID, true,
             IWorkbenchPage.MATCH_NONE);
         if (part != null && part instanceof AbstractDecoratedTextEditor) {
             return (AbstractDecoratedTextEditor) part;
@@ -176,7 +177,7 @@ protected IAction getGotoAction()
         }
         // open file in default text editor
         IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
-            (IFile) resource, IDEWorkbenchPlugin.DEFAULT_TEXT_EDITOR_ID);
+            (IFile) resource, DEFAULT_TEXT_EDITOR_ID);
         if (part != null && part instanceof AbstractDecoratedTextEditor) {
             return (AbstractDecoratedTextEditor) part;
         }
