@@ -57,10 +57,9 @@ public class HgIgnoreClient {
 				case ']':
 				case '{':
 				case '}':
-					result.append('\\');
-				default:
-					result.append(c);
+					result.append('\\');	
 			}
+			result.append(c);
 		}
 		return result.toString();
 	}
