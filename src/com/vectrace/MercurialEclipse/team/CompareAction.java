@@ -14,11 +14,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
+import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.synchronize.SyncInfo;
-import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
+
+import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 
 /**
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
@@ -26,34 +33,54 @@ import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
  */
 public class CompareAction extends SingleFileAction {
 
-	@Override
+  private boolean dialog;
+  
+  public CompareAction() {
+    super();
+  }
+  
+  public CompareAction(boolean dialog) {
+    this.dialog = dialog;
+  }
+  
+  @Override
 	public void run(IFile file) throws TeamException {
-		openEditor(file, null);
+		openEditor(file);
 	}
 	
-	protected void openEditor(IFile file, String changeset) throws TeamException {
-		SyncInfoCompareInput compareInput = getCompareInput(file, changeset);
+  public void openEditor(IResource file) {
+    openEditor(null, new IStorageMercurialRevision(file));
+  }
+  
+	public void openEditor(IResource file, String changeset) {
+	  openEditor(null, new IStorageMercurialRevision(file, changeset)); 
+	}
+	
+	public void openEditor(IStorageMercurialRevision left, IStorageMercurialRevision right) {
+	  openEditor(getNode(left), getNode(right));
+	}
+
+	public void openEditor(ResourceNode left, ResourceNode right) {
+	  Assert.isNotNull(right);
+		CompareEditorInput compareInput = getCompareInput(left, right);
 		if (compareInput != null) {
-			CompareUI.openCompareEditor(compareInput);
+		  if(dialog) {
+		    CompareUI.openCompareDialog(compareInput);
+		  } else {
+		    CompareUI.openCompareEditor(compareInput);
+		  }
 		}
 	}
 
-	/**
-	 * 
-	 * @param file
-	 * @param changeset may be null
-	 * @return
-	 * @throws TeamException 
-	 */
-	private SyncInfoCompareInput getCompareInput(IFile file, String changeset) throws TeamException {
-		MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
-		SyncInfo syncInfo = subscriber.getSyncInfo(
-				file,
-				file,
-				new IStorageMercurialRevision(file, changeset));
-		SyncInfoCompareInput compareInput = new SyncInfoCompareInput(
-				"diff", syncInfo);
-		return compareInput;
+	private CompareEditorInput getCompareInput(ResourceNode left, ResourceNode right) {
+	  IResource resource = right.getResource();
+    return new HgCompareEditorInput(new CompareConfiguration(), resource,
+	      left != null ? left : right,
+	      left != null ? right : new ResourceNode(resource)
+	  );
 	}
-
+	
+	private RevisionNode getNode(IStorageMercurialRevision rev) {
+	  return rev == null ? null : new RevisionNode(rev);
+	}
 }
