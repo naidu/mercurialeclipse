@@ -14,6 +14,7 @@ public class ResourceLabelProvider extends LabelProvider {
 	
 	ISharedImages sharedImages = PlatformUI.getWorkbench().getSharedImages();
 	
+	@Override
 	public Image getImage(Object element) {
 		if(element instanceof IFile) {
 			return sharedImages.getImage(ISharedImages.IMG_OBJ_FILE);
@@ -26,6 +27,7 @@ public class ResourceLabelProvider extends LabelProvider {
 		}
 	}
 
+	@Override
 	public String getText(Object element) {
 		return ((IResource)element).getName();
 	}
