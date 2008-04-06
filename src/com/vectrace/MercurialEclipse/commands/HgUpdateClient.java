@@ -6,22 +6,15 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgUpdateClient {
 
-    //FIXME find a better name
-    public static void rollback(IProject project) throws HgException {
-        HgCommand command = new HgCommand("update", project, false);
-        command.addOptions("-C");
-        command.executeToBytes();
-    }
-    
     public static void update(IProject project, String revision, boolean clean) throws HgException {
         HgCommand command = new HgCommand("update", project, false);
-        if(revision != null) {
+        if (revision != null) {
             command.addOptions("-r", revision);
         }
-        if(clean) {
+        if (clean) {
             command.addOptions("-C");
         }
         command.executeToBytes();
     }
-    
+
 }

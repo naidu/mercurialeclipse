@@ -139,7 +139,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             public void run() {
                 try {
                     currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
-                    HgUpdateClient.rollback(currentProject);
+                    HgUpdateClient.update(currentProject, null, true);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
                     clearView();
                 } catch (Exception e) {
