@@ -133,6 +133,7 @@
            <action
                label="Merge... (work in progress)"
                class="com.vectrace.MercurialEclipse.team.MergeAction"
+               icon="icons/branches_rep.gif"
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.MergeAction">
                <enablement>
@@ -147,7 +148,7 @@
            <action
                label="Tag as Version..."
                class="com.vectrace.MercurialEclipse.team.TagAction"
-               tooltip="hg tag"
+               icon="icons/tags.gif"
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.TagAction"
                enablesFor="1">
