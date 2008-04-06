@@ -156,7 +156,7 @@ public class HgCommand {
 			Process process = builder.start();
 			InputStreamConsumer consumer = new InputStreamConsumer(process.getInputStream());
 			consumer.start();
-			consumer.join(10000); // 10 seconds timeout
+			consumer.join(30000); // 30 seconds timeout
 			if(!consumer.isAlive()) {
 				if(process.waitFor() == 0) {
 					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
