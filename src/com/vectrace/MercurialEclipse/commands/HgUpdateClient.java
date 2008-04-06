@@ -13,4 +13,15 @@ public class HgUpdateClient {
         command.executeToBytes();
     }
     
+    public static void update(IProject project, String revision, boolean clean) throws HgException {
+        HgCommand command = new HgCommand("update", project, false);
+        if(revision != null) {
+            command.addOptions("-r", revision);
+        }
+        if(clean) {
+            command.addOptions("-C");
+        }
+        command.executeToBytes();
+    }
+    
 }
