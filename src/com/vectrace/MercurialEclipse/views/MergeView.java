@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Jerome Negre - implementation
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
 import java.util.List;
@@ -7,7 +17,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ISelection;
@@ -40,7 +49,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialRepositorySubscriber;
-import com.vectrace.MercurialEclipse.team.MergeAction;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class MergeView extends ViewPart implements ISelectionListener {
 
@@ -114,7 +123,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             public void run() {
                 try {
                     HgCommitClient.commitProject(currentProject, null, "merge");
-                    currentProject.setPersistentProperty(new QualifiedName(MercurialEclipsePlugin.ID, MergeAction.MERGING_PROPERTY), null);
+                    currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
                     clearView();
                 } catch (Exception e) {
@@ -129,7 +138,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             @Override
             public void run() {
                 try {
-                    currentProject.setPersistentProperty(new QualifiedName(MercurialEclipsePlugin.ID, MergeAction.MERGING_PROPERTY), null);
+                    currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
                     HgUpdateClient.rollback(currentProject);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
                     clearView();
@@ -169,8 +178,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             if (this.currentProject != project) {
                 this.currentProject = project;
                 if (project != null
-                        && project.getPersistentProperty(new QualifiedName(
-                                MercurialEclipsePlugin.ID, MergeAction.MERGING_PROPERTY)) != null) {
+                        && project.getPersistentProperty(ResourceProperties.MERGING) != null) {
                     populateView();
                 } else {
                     clearView();
