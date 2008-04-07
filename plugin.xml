@@ -124,7 +124,7 @@
                id="com.vectrace.MercurialEclipse.team.AddAction">
            </action>
            <action
-               label="Swith to Another Changeset..."
+               label="Switch to Another Changeset..."
                class="com.vectrace.MercurialEclipse.team.SwitchAction"
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.SwitchAction"
