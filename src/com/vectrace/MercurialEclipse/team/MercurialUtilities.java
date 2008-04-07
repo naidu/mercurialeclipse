@@ -18,7 +18,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.util.Arrays;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -293,10 +292,7 @@ public class MercurialUtilities
   // TODO: Should probably not return null in case of error.
   public static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[], File workingDir, boolean consoleOutput) throws HgException
   {
-      LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
-      legacyAdaptor.args(Arrays.copyOfRange(cmd, 2, cmd.length));
-      byte[] bytes = legacyAdaptor.executeToBytes();
-      
+      byte[] bytes = execute(cmd, workingDir).executeToBytes();
       ByteArrayOutputStream result = new ByteArrayOutputStream(bytes.length);
       try {
         result.write(bytes);
@@ -314,13 +310,19 @@ public class MercurialUtilities
    * 
    * TODO: Should log failure. TODO: Should not return null for failure.
    */
-  static public String ExecuteCommand(String cmd[], File workingDir, boolean consoleOutput) throws HgException
-  {
-      LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
-      legacyAdaptor.args(Arrays.copyOfRange(cmd, 2, cmd.length));
-      return legacyAdaptor.executeToString();
+  public static String ExecuteCommand(String cmd[], File workingDir, boolean consoleOutput) throws HgException
+  {   
+      return execute(cmd, workingDir).executeToString();
   }
 
+  private static LegacyAdaptor execute(String cmd[], File workingDir) {
+    String[] copy = new String[cmd.length-2];
+    System.arraycopy(cmd, 2, copy, 0, cmd.length-2);
+    LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
+    legacyAdaptor.args(copy);
+    return legacyAdaptor;
+  }
+  
   /**
    * @param obj
    * @return Workingdir of object
