@@ -6,11 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VecTrace (Zingo Andersen) - implementation
- *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
- *     StefanC                   - many updates
- *     Stefan Groschupf          - logError
- *     Jerome Negre              - refactoring
+ *     Jerome Negre              - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
