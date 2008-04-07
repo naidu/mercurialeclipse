@@ -3,3 +3,5 @@ syntax: regexp
 ^bin$
 syntax: regexp
 ^@dot$
+syntax: regexp
+^javaCompiler\.\.\.args$
