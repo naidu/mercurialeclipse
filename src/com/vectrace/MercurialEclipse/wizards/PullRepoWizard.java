@@ -29,6 +29,8 @@ public class PullRepoWizard extends SyncRepoWizard
 {  
   
   IProject project;
+  boolean doUpdate = false;
+  
   
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
@@ -58,7 +60,7 @@ public boolean performFinish()
       return false;
     }
 
-    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null);
+    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null, doUpdate);
 
 
     try
@@ -87,6 +89,21 @@ public boolean performFinish()
 
     return true;
   }
+
+	/**
+	 * @return the doUpdate
+	 */
+	public boolean isDoUpdate() {
+		return doUpdate;
+	}
+
+	/**
+	 * @param doUpdate
+	 *            true if the pull should be followed by an update
+	 */
+	public void setDoUpdate(boolean doUpdate) {
+		this.doUpdate = doUpdate;
+	}
 
   
 
