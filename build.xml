@@ -6,7 +6,7 @@
 	<property name="basearch" value="${arch}"/>
 	<property name="basenl" value="${nl}"/>
 	<property name="bundleId" value="com.vectrace.MercurialEclipse"/>
-	<property name="bundleVersion" value="0.2.239"/>
+	<property name="bundleVersion" value="0.2.258"/>
 
 	<!-- Compiler settings. -->
 	<property name="javacFailOnError" value="false"/>
@@ -35,7 +35,7 @@
 			<isset property="buildTempFolder"/>
 		</condition>
 		<property name="pluginTemp" value="${basedir}"/>
-		<condition property="build.result.folder" value="${pluginTemp}/com.vectrace.MercurialEclipse_0.2.239">
+		<condition property="build.result.folder" value="${pluginTemp}/com.vectrace.MercurialEclipse_0.2.258">
 			<isset property="buildTempFolder"/>
 		</condition>
 		<property name="build.result.folder" value="${basedir}"/>
@@ -55,7 +55,7 @@
 		<antcall target="gather.bin.parts">
 			<param name="destination.temp.folder" value="${temp.folder}/"/>
 		</antcall>
-		<jar destfile="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.239.jar" basedir="${temp.folder}/com.vectrace.MercurialEclipse_0.2.239" filesetmanifest="merge"/>
+		<jar destfile="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.258.jar" basedir="${temp.folder}/com.vectrace.MercurialEclipse_0.2.258" filesetmanifest="merge"/>
 		<delete dir="${temp.folder}"/>
 	</target>
 
@@ -160,13 +160,13 @@
 	</target>
 
 	<target name="gather.bin.parts" depends="init" if="destination.temp.folder">
-		<mkdir dir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239"/>
-		<copy todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239" failonerror="true" overwrite="false">
+		<mkdir dir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258"/>
+		<copy todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258" failonerror="true" overwrite="false">
 			<fileset dir="${build.result.folder}/@dot">
 				<include name="**"/>
 			</fileset>
 		</copy>
-		<copy todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239" failonerror="true" overwrite="false">
+		<copy todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258" failonerror="true" overwrite="false">
 			<fileset dir="${basedir}">
 				<include name="plugin.xml"/>
 				<include name="META-INF/"/>
@@ -179,13 +179,13 @@
 	</target>
 
 	<target name="gather.sources" depends="init" if="destination.temp.folder">
-		<mkdir dir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239"/>
-		<copy file="${build.result.folder}/src.zip" todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239" failonerror="false" overwrite="false"/>
+		<mkdir dir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258"/>
+		<copy file="${build.result.folder}/src.zip" todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258" failonerror="false" overwrite="false"/>
 	</target>
 
 	<target name="gather.logs" depends="init" if="destination.temp.folder">
-		<mkdir dir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239"/>
-		<copy todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.239" failonerror="false" overwrite="false">
+		<mkdir dir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258"/>
+		<copy todir="${destination.temp.folder}/com.vectrace.MercurialEclipse_0.2.258" failonerror="false" overwrite="false">
 			<fileset dir="${temp.folder}">
 				<include name="@dot.bin${logExtension}"/>
 			</fileset>
@@ -195,8 +195,8 @@
 	<target name="clean" depends="init" description="Clean the plug-in: com.vectrace.MercurialEclipse of all the zips, jars and logs created.">
 		<delete dir="${build.result.folder}/@dot"/>
 		<delete file="${build.result.folder}/src.zip"/>
-		<delete file="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.239.jar"/>
-		<delete file="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.239.zip"/>
+		<delete file="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.258.jar"/>
+		<delete file="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.258.zip"/>
 		<delete dir="${temp.folder}"/>
 	</target>
 
@@ -221,7 +221,7 @@
 				<include name="**/*.bin${logExtension}"/>
 			</fileset>
 		</delete>
-		<zip destfile="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.239.zip" basedir="${temp.folder}" filesonly="true" whenempty="skip" update="false"/>
+		<zip destfile="${plugin.destination}/com.vectrace.MercurialEclipse_0.2.258.zip" basedir="${temp.folder}" filesonly="true" whenempty="skip" update="false"/>
 		<delete dir="${temp.folder}"/>
 	</target>
 
