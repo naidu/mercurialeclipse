@@ -16,6 +16,7 @@
  *     Charles O'Farrell         - Annotation with color
  *     Jerome Negre              - Moving menus around
  *     Sebastian                 - Better naming
+ *     Bastian Doetsch           - RepositoryProviderType for ProjectSets
  *******************************************************************************/
 -->
 
@@ -25,10 +26,12 @@
    <extension point="org.eclipse.team.core.repository">
 	  <repository
     	 class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
+    	 typeClass="com.vectrace.MercurialEclipse.team.MercurialTeamProviderType"
 		 id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-		  metaFilePaths=".hg/">
+		  metaFilePaths=".hg/">		  
  	  </repository>
    </extension>
+   
 	<extension point="org.eclipse.team.ui.configurationWizards">
 	   <wizard
 	        name="Mercurial"
@@ -37,7 +40,7 @@
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
 	   </wizard>
 	</extension>
-
+		
 <!-- TODO 
 	<extension point="org.eclipse.team.ui.synchronizeParticipants">
 	   <participant
