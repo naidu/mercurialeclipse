@@ -127,7 +127,7 @@
                id="com.vectrace.MercurialEclipse.team.AddAction">
            </action>
            <action
-               label="Swith to Another Changeset..."
+               label="Switch to Another Changeset..."
                class="com.vectrace.MercurialEclipse.team.SwitchAction"
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.SwitchAction"
@@ -191,8 +191,6 @@
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.UpdateAction"
                enablesFor="1">
-           </action>
-           <action
                label="Pull and Update..."
                class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
                tooltip="pull changes from remote/local repository and update (hg pull -u)"
@@ -202,7 +200,7 @@
            <action
                label="Push..."
                class="com.vectrace.MercurialEclipse.team.ActionPush"
-               tooltip="push changes to remote/local reposetory (hg push)"
+               tooltip="push changes to remote/local repository (hg push)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>

@@ -60,7 +60,9 @@ public boolean performFinish()
       return false;
     }
 
-    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null,doUpdate);
+
+    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null, doUpdate);
+
 
 
     try

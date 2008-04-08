@@ -4,4 +4,6 @@ syntax: regexp
 syntax: regexp
 ^@dot$
 syntax: regexp
-^\.settings/org\.eclipse\.jdt\.core\.prefs\.orig$
+<<<<<<< local
+^\.settings/org\.eclipse\.jdt\.core\.prefs\.orig$=======
+^javaCompiler\.\.\.args$>>>>>>> other

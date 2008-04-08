@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - Implementation
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch			 - Added option to update after pull 
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 

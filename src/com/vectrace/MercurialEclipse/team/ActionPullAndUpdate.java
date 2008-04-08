@@ -95,6 +95,7 @@ public class ActionPullAndUpdate implements IWorkbenchWindowActionDelegate
     
     //Setup and run command
     PullRepoWizard pullRepoWizard = new PullRepoWizard();
+    //Update the repo after the pull
     pullRepoWizard.setDoUpdate(true);
     pullRepoWizard.init(workbench, selection);
     
