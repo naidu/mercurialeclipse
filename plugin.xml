@@ -197,11 +197,14 @@
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.UpdateAction"
                enablesFor="1">
+          </action>
+          <action
                label="Pull and Update..."
                class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
                tooltip="pull changes from remote/local repository and update (hg pull -u)"
                menubarPath="team.main/group1"
-               id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate">
+               id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
+               enablesFor="1">
            </action>
            <action
                label="Push..."
