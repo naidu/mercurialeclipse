@@ -24,11 +24,13 @@ public class RepositoryPullAction extends HgOperation
 {
   private HgRepositoryLocation repo;
   private File workingDir;
+  private boolean doUpdate = false;
 
-  public RepositoryPullAction(IRunnableContext context, IProject project, HgRepositoryLocation repo,File workingDir)
+  public RepositoryPullAction(IRunnableContext context, IProject project, HgRepositoryLocation repo,File workingDir, boolean doUpdate)
   {
     super(context);
     this.repo = repo;
+    this.doUpdate = doUpdate;
     if(workingDir != null)
     {
       this.workingDir = workingDir;
@@ -39,6 +41,12 @@ public class RepositoryPullAction extends HgOperation
     }
   }
   
+  public RepositoryPullAction(IRunnableContext context, IProject project, HgRepositoryLocation repo,File workingDir)
+  {
+    this(context,project,repo,workingDir, false);
+  }
+  
+  
   @Override
 protected String[] getHgCommand()
   {
@@ -47,6 +55,9 @@ protected String[] getHgCommand()
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("pull");
+    if (doUpdate) {
+    	launchCmd.add("-u");
+    }
     launchCmd.add("--");
     launchCmd.add(repo.getUrl());
     launchCmd.trimToSize();
@@ -64,6 +75,6 @@ protected File getHgWorkingDir()
   @Override
 protected String getActionDescription()
   {
-    return new String("Mercurial pull changes from other reposetory");
+    return new String("Mercurial pull changes from other repository.");
   }
 }

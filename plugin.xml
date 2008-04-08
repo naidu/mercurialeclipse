@@ -181,16 +181,9 @@
            <action
                label="Pull..."
                class="com.vectrace.MercurialEclipse.team.ActionPull"
-               tooltip="pull changes from remote/local reposetory (hg pull)"
+               tooltip="pull changes from remote/local repository (hg pull)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPull">
-           </action>
-           <action
-               label="Push..."
-               class="com.vectrace.MercurialEclipse.team.ActionPush"
-               tooltip="push changes to remote/local reposetory (hg push)"
-               menubarPath="team.main/group1"
-               id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
                label="Update"
@@ -198,6 +191,20 @@
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.UpdateAction"
                enablesFor="1">
+           </action>
+           <action
+               label="Pull and Update..."
+               class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
+               tooltip="pull changes from remote/local repository and update (hg pull -u)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate">
+           </action>
+           <action
+               label="Push..."
+               class="com.vectrace.MercurialEclipse.team.ActionPush"
+               tooltip="push changes to remote/local reposetory (hg push)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
            <action
                label="Commit... (Slow: repo everyware)"
