@@ -8,16 +8,20 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     StefanC                   - some updates, code cleanup
- *     Stefan Groschupf          - logError 
+ *     Stefan Groschupf          - logError
+ *     Subclipse project committers - reference
+ *     Charles O'Farrell         - comparison diff
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
@@ -50,10 +54,14 @@ import org.eclipse.team.ui.history.IHistoryPageSite;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
+import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.CompareAction;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * @author zingo
@@ -63,15 +71,12 @@ public class MercurialHistoryPage extends HistoryPage
 {
 
   private TableViewer viewer;
-//  private ChangeLog changeLog;
   private IResource resource;
   private Table changeLogTable;
   private ChangeLogContentProvider changeLogViewContentProvider;
   private Composite composite;
   MercurialHistory mercurialHistory;
   IFileRevision[] entries;
-  OpenMercurialRevisionAction openAction;
-  //OpenMercurialRevisionAction diffAction;
   
   private RefreshMercurialHistory refreshFileHistoryJob;
 
@@ -104,8 +109,6 @@ public class MercurialHistoryPage extends HistoryPage
         catch (CoreException e)
         {
         	MercurialEclipsePlugin.logError(e);
-          // TODO Auto-generated catch block
-//          e.printStackTrace();
         }
         //Internal code used for convenience - you can use 
         //your own here
@@ -114,7 +117,6 @@ public class MercurialHistoryPage extends HistoryPage
             public void run() 
             {
               viewer.setInput(mercurialHistory);
-//              changeLogViewContentProvider.setChangeLog(mercurialFileHistory);
             }
           }, viewer);
       }
@@ -138,30 +140,15 @@ public class MercurialHistoryPage extends HistoryPage
 
     public Object[] getElements(Object parent) 
     {
-//      System.out.println("Object[] ChangeLogViewContentProvider::getElements()");      
-//      return changeLog.getChangeLog().toArray();
       if (entries != null) {
         return entries;
-    }
+      }
 
       final IFileHistory fileHistory = (IFileHistory) parent;
       entries = fileHistory.getFileRevisions();
 
       return entries;
     }
-/*
-    public void setChangeLog(IResource in_resource)
-    {
-//      System.out.println("ChangeLogViewContentProvider::setChangeLog()");
-
-      if(isValidInput(in_resource))
-      {
-        resource=in_resource;        
-        changeLog.ChangeChangeLog(in_resource);
-        viewer.refresh();
-      }      
-    }
-*/
   }
 
   class ChangeSetLabelProvider extends LabelProvider implements ITableLabelProvider
@@ -170,8 +157,6 @@ public class MercurialHistoryPage extends HistoryPage
     public String getColumnText(Object obj, int index) 
     {
       String ret;
-
-//      System.out.println("ViewLabelProvider::getColumnText(obj," + index + ")");
 
       if((obj instanceof MercurialRevision) != true)
       {
@@ -205,20 +190,16 @@ public class MercurialHistoryPage extends HistoryPage
           ret= null;
           break;
       }
-//      System.out.println("ViewLabelProvider::getColumnText(" + changeSet.getChangeset() +"," + index + ")=" + ret);
       return ret;
     }
     public Image getColumnImage(Object obj, int index) 
     {
-//      System.out.println("ViewLabelProvider::getColumnImage(obj," + index + ")");
       return null; 
     }
   }
   
   class NameSorter extends ViewerSorter 
   {
-
-
     /* 
       * @param viewer the viewer
       * @param e1 the first element
@@ -228,13 +209,7 @@ public class MercurialHistoryPage extends HistoryPage
       *  equal to the second element; and a positive number if the first
       *  element is greater than the second element
       */
-
-    
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.viewers.ViewerComparator#compare(org.eclipse.jface.viewers.Viewer, java.lang.Object, java.lang.Object)
-     */
     @Override
-
     public int compare(Viewer viewer, Object e1, Object e2)
     {
 
@@ -248,7 +223,8 @@ public class MercurialHistoryPage extends HistoryPage
           
       int value1=mercurialFileRevision1.getChangeSet().getChangesetIndex();
       int value2=mercurialFileRevision2.getChangeSet().getChangesetIndex();
-// we want it reverse sorted
+      
+      // we want it reverse sorted
       if(value1<value2)
       {
         return 1;
@@ -273,34 +249,17 @@ public class MercurialHistoryPage extends HistoryPage
     }
   }
 
-  
-  
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.HistoryPage#inputSet()
-   */
   @Override
   public boolean inputSet()
   {
-//    System.out.println("MercurialHistoryPage::inputSet()");   
-    
-//    if(isValidInput(resource))  //removed since it is over protective
-//    {
       mercurialHistory = new MercurialHistory(resource);
       refresh();
       return true;
-//    }
-//    return false;
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.ui.part.Page#createControl(org.eclipse.swt.widgets.Composite)
-   */
   @Override
   public void createControl(Composite parent)
   {
-//    System.out.println("MercurialHistoryPage::createControl()");
-
-    
     composite = new Composite(parent, SWT.NONE);
     GridLayout layout0 = new GridLayout();
     layout0.marginHeight = 0;
@@ -324,7 +283,6 @@ public class MercurialHistoryPage extends HistoryPage
     changeLogTable.setLayout(layout);    
     
     TableColumn column = new TableColumn(changeLogTable,SWT.LEFT);
-//    changesetTableColumn.setResizable(true);
     column.setText("Changeset");
     layout.addColumnData(new ColumnWeightData(15, true));
     column = new TableColumn(changeLogTable,SWT.LEFT);
@@ -347,8 +305,6 @@ public class MercurialHistoryPage extends HistoryPage
     changeLogViewContentProvider = new ChangeLogContentProvider(); 
     viewer.setContentProvider(changeLogViewContentProvider);
     viewer.setSorter(new NameSorter());
-//    changeLog=new ChangeLog();
-//    viewer.setInput(changeLog);   // getViewSite());
     
     contributeActions();
   }
@@ -356,30 +312,11 @@ public class MercurialHistoryPage extends HistoryPage
 
   private void contributeActions() 
   {
-    openAction = new OpenMercurialRevisionAction("Open");  //$NON-NLS-1$
-    viewer.getTable().addSelectionListener(new SelectionAdapter() 
-      {
-        @Override
-        public void widgetSelected(SelectionEvent e) 
-        {
-          openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
-        }
-      });
-    openAction.setPage(this);
-/*
-    diffAction = new OpenMercurialRevisionAction("Diff");  //$NON-NLS-1$
-    viewer.getTable().addSelectionListener(new SelectionAdapter() 
-    {
-      public void widgetSelected(SelectionEvent e) 
-      {
-        diffAction.selectionChanged((IStructuredSelection) viewer.getSelection());
-      }
-    });
-    diffAction.setPage(this);
-*/
+    final BaseSelectionListenerAction openAction = getOpenAction();
+    final Action compareAction = getCompareAction();
     
     //Contribute actions to popup menu
-    MenuManager menuMgr = new MenuManager();
+    final MenuManager menuMgr = new MenuManager();
     Menu menu = menuMgr.createContextMenu(viewer.getTable());
     menuMgr.addMenuListener(new IMenuListener() 
     {
@@ -387,81 +324,92 @@ public class MercurialHistoryPage extends HistoryPage
       {
         menuMgr.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
         menuMgr.add(openAction);
-  //      menuMgr.add(diffAction);
+        // TODO This is a HACK but I can't get the menu to update on selection :-(
+        compareAction.setEnabled(compareAction.isEnabled());
+        menuMgr.add(compareAction);
       }
     });
     menuMgr.setRemoveAllWhenShown(true);
     viewer.getTable().setMenu(menu);
   }
-  
-  
-  /* (non-Javadoc)
-   * @see org.eclipse.ui.part.Page#getControl()
-   */
+
+  private OpenMercurialRevisionAction getOpenAction()
+  {
+    final OpenMercurialRevisionAction openAction = new OpenMercurialRevisionAction("Open"); //$NON-NLS-1$
+    viewer.getTable().addSelectionListener(new SelectionAdapter() 
+    {
+      @Override
+      public void widgetSelected(SelectionEvent e) 
+      {
+        openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
+      }
+    });
+    openAction.setPage(this);
+    return openAction;
+  }
+
+  private Action getCompareAction()
+  {
+    return new Action(Messages.getString("CompareAction.label")){ //$NON-NLS-1$) {
+      @Override
+      public void run()
+      {
+        CompareAction compare = new CompareAction();
+        try
+        {
+          compare.openEditor(getStorage(1), getStorage(0));
+        } 
+        catch (Exception e)
+        {
+          MercurialEclipsePlugin.logError(e);
+        }
+      }
+      
+      @Override
+      public boolean isEnabled()
+      {
+        return getInput() instanceof IFile && ((IStructuredSelection)viewer.getSelection()).size() == 2;
+      }
+      
+      private IStorageMercurialRevision getStorage(int i) throws CoreException {
+        IStructuredSelection selection = (IStructuredSelection)viewer.getSelection();
+        Object[] revs = selection.toArray();
+        if(i >= revs.length) return null;
+        MercurialRevision rev = (MercurialRevision) revs[i];
+        return (IStorageMercurialRevision) rev.getStorage(null);
+      }
+    };
+  }
+
   @Override
   public Control getControl()
   {
-//    System.out.println("MercurialHistoryPage::getControl()");
     return composite;
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.ui.part.Page#setFocus()
-   */
   @Override
   public void setFocus()
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistoryPage::setFocus()");
-
+    // Nothing to see here
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.IHistoryPage#getDescription()
-   */
   public String getDescription()
   {
-//    System.out.println("MercurialHistoryPage::getDescription()");
     return resource.getFullPath().toOSString();
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.IHistoryPage#getName()
-   */
   public String getName()
   {
-//    System.out.println("MercurialHistoryPage::getName()");
     return resource.getFullPath().toOSString();
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.IHistoryPage#isValidInput(java.lang.Object)
-   */
   public boolean isValidInput(Object object)
   {
-//    System.out.println("MercurialHistoryPage::isValidInput()");
-//    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
-//    {
-//      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) object).getProject());
-//      if (provider instanceof MercurialTeamProvider)
-//      {
-        return true;
-//      }
-//    }
-//    return false;
+    return true;
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.IHistoryPage#refresh()
-   */
   public void refresh()
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistoryPage::refresh()");
-//    if(isValidInput(resource))
-//    {
-//      changeLogViewContentProvider.setChangeLog(resource);
-
       if (refreshFileHistoryJob == null)
       {
         refreshFileHistoryJob = new RefreshMercurialHistory();
@@ -486,18 +434,10 @@ public class MercurialHistoryPage extends HistoryPage
       }
 
       Utils.schedule(refreshFileHistoryJob, site);
-    
-    
-//    }
   }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-   */
   public Object getAdapter(Class adapter)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistoryPage::getAdapter()");
     return null;
   }
 }

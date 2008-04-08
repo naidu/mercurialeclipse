@@ -37,9 +37,8 @@ import com.vectrace.MercurialEclipse.actions.IdentifyAction;
  */
 public class IStorageMercurialRevision implements IStorage
 {
-  String revision;
-//  IProject project;
-  IResource resource;
+  private String revision;
+  private IResource resource;
 
   /**
    * 
@@ -206,5 +205,8 @@ public class IStorageMercurialRevision implements IStorage
     return true;  /* unknown state marked as read only for safety */
   }
 
-  
+  public IResource getResource()
+  {
+    return resource;
+  }
 }

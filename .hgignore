@@ -2,8 +2,11 @@
 syntax: regexp
 ^bin$
 syntax: regexp
+<<<<<<< local
 ^@dot$
 syntax: regexp
 <<<<<<< local
 ^\.settings/org\.eclipse\.jdt\.core\.prefs\.orig$=======
 ^javaCompiler\.\.\.args$>>>>>>> other
+=======
+^scratchpad\.txt$>>>>>>> other

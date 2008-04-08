@@ -31,6 +31,12 @@ public class HgLogClient {
         return getRevisions(command);
     }
     
+    public static String getGraphicalLog(IProject project) throws HgException {
+        HgCommand command = new HgCommand("glog", project, false);
+        command.addOptions("--config", "extensions.hgext.graphlog=");
+        return command.executeToString();
+    }
+    
 	/**
 	 * 
 	 * @param command a command with optionally its Files set
