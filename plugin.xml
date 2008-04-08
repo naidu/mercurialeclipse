@@ -175,7 +175,7 @@
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
            <action
-               label="hg &amp;import"
+               label="&amp;Import patch"
                class="com.vectrace.MercurialEclipse.team.ActionImport"
                tooltip="Import patch from file (hg import)"
                menubarPath="team.main/group1"

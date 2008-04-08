@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.compare.CompareUI;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -38,9 +37,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.team.ui.synchronize.SyncInfoCompareInput;
 
-import com.vectrace.MercurialEclipse.team.ActionDiff;
+import com.vectrace.MercurialEclipse.team.CompareAction;
 
 
 public class RevertDialog extends Dialog 
@@ -179,12 +177,7 @@ public class RevertDialog extends Dialog
             if (sel.getFirstElement() instanceof CommitResource) 
             {
               CommitResource resource = (CommitResource) sel.getFirstElement();
-              ActionDiff diff = new ActionDiff();            
-              SyncInfoCompareInput compareInput = diff.getCompareInput(resource.getResource());
-              if(compareInput!=null)
-              {
-                CompareUI.openCompareDialog(compareInput);
-              }
+              new CompareAction(true).openEditor(resource.getResource());
             }
           }
         });
