@@ -51,7 +51,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.TableColumnSorter;
-import com.vectrace.MercurialEclipse.team.CompareAction;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * 
@@ -252,7 +252,7 @@ private IResource[] inResources;
           if (sel.getFirstElement() instanceof CommitResource) 
           {
             CommitResource resource = (CommitResource) sel.getFirstElement();
-            new CompareAction(true).openEditor(resource.getResource());
+            CompareUtils.openEditor(resource.getResource(), true);
           }
         }
       });
