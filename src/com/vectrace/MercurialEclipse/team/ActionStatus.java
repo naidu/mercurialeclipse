@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 
@@ -88,7 +89,11 @@ public class ActionStatus implements IWorkbenchWindowActionDelegate {
 //		  System.out.println(e.getMessage());
 		}
 
-    DecoratorStatus.refresh();
+    try {
+		MercurialStatusCache.getInstance().refresh(proj);
+	} catch (TeamException e) {
+		MercurialEclipsePlugin.logError(e);
+	}
   }
 	
   

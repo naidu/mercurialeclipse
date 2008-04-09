@@ -15,7 +15,9 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -30,6 +32,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -192,38 +195,49 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
                MercurialEclipsePlugin.logError(e);
             } 
         }
+        
+        final Set<IProject> refreshedProjects = new HashSet<IProject>();  
         for (CommitResource commitResource : resources) 
         {
-            IResource resource = commitResource.getResource();
+            IResource resource = commitResource.getResource();            
             try 
             {
                 resource.refreshLocal(IResource.DEPTH_ONE, monitor);
+                
             } 
             catch (CoreException e) 
             {
                 MercurialEclipsePlugin.logError(e);
             }
-        }
-        
-        // notify();
-        new SafeUiJob("Updating status") 
-        {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) 
-            {
-                DecoratorStatus.refresh();
-                return super.runSafe(monitor);
-            }
-        }.schedule();
+         // notify();
+            
+            if (!refreshedProjects.contains(resource.getProject())) {
+            	final IProject proj = resource.getProject();
+				new SafeUiJob("Updating status") {
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						try {
+							MercurialStatusCache.getInstance().refresh(
+									proj);							
+						} catch (TeamException e) {
+							MercurialEclipsePlugin.logError(
+									"Unable to refresh project: ", e);
+						}
+						return super.runSafe(monitor);
+					}
+				}.schedule();
+				refreshedProjects.add(proj);
+			}
+        }                
     }
 
     /**
-     * Selection in the workbench has been changed. We can change the state of
-     * the 'real' action here if we want, but this can only happen after the
-     * delegate has been created.
-     * 
-     * @see IWorkbenchWindowActionDelegate#selectionChanged
-     */
+	 * Selection in the workbench has been changed. We can change the state of
+	 * the 'real' action here if we want, but this can only happen after the
+	 * delegate has been created.
+	 * 
+	 * @see IWorkbenchWindowActionDelegate#selectionChanged
+	 */
     public void selectionChanged(IAction action, ISelection in_selection) 
     {
         if (in_selection != null && in_selection instanceof IStructuredSelection) 

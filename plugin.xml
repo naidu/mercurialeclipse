@@ -41,13 +41,13 @@
 	   </wizard>
 	</extension>
 		
-<!-- TODO 
+     
 	<extension point="org.eclipse.team.ui.synchronizeParticipants">
 	   <participant
 	        icon="icons/mercurialeclipse.png"
-	        id="com.vectrace.MercurialEclipse.team.MercurialSynchronizeParticipant"
-	        class="com.vectrace.MercurialEclipse.team.MercurialSynchronizeParticipant"
-	        name="Mercurial Syncronisation"
+	        id="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
+	        class="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
+	        name="Mercurial Synchronization"
 	        persistent="true">
 	   </participant>
 	</extension>
@@ -57,11 +57,11 @@
 	        name="Mercurial"
 			description="Mercurial synchronize wizard"
 	        icon="icons/mercurialeclipse.png"
-	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
-	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
+	        class="com.vectrace.MercurialEclipse.wizard.MercurialParticipantSynchronizeWizard"
+	        id="com.vectrace.MercurialEclipse.wizard.MercurialParticipantSynchronizeWizard">
 	   </wizard>
 	</extension>
--->
+
 
 	<extension point="org.eclipse.ui.decorators">
 	    <decorator

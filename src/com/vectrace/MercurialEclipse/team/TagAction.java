@@ -3,7 +3,9 @@ package com.vectrace.MercurialEclipse.team;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.TagDialog;
@@ -31,7 +33,12 @@ import com.vectrace.MercurialEclipse.model.Tag;
 					null, //user
 					dialog.isLocal(),
 					dialog.isForced());
-			DecoratorStatus.refresh();
+			try {
+				MercurialStatusCache.getInstance().refresh(resource.getProject());
+			} catch (TeamException e) {
+				MercurialEclipsePlugin.logError("Unable to refresh project: ",
+						e);
+			}
 		}
 	}
 
