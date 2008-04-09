@@ -12,13 +12,14 @@ package com.vectrace.MercurialEclipse.views;
 
 import java.util.List;
 
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
@@ -31,6 +32,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
@@ -40,9 +42,13 @@ import org.eclipse.ui.part.ViewPart;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
+import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class MergeView extends ViewPart implements ISelectionListener {
@@ -75,27 +81,28 @@ public class MergeView extends ViewPart implements ISelectionListener {
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetDefaultSelected(SelectionEvent event) {
-                //FIXME must first fix what was broken by changeset 4f48319bfabe :(
-                MessageDialog.openWarning(parent.getShell(), "Sorry", "It doesn't work anymore.");
-//                try {
-//                    TableItem item = (TableItem) event.item;
-//                    FlaggedAdaptable flagged = (FlaggedAdaptable)item.getData();
-//                    IFile file = (IFile)flagged.getAdapter(IFile.class);
-//                    
-//                    int[] parents = HgParentClient.getParents(currentProject);
-//                    int ancestor = HgParentClient.findCommonAncestor(currentProject, parents[0], parents[1]);
-//                    
-//                    MercurialRepositorySubscriber subscriber = new MercurialRepositorySubscriber();
-//                    SyncInfo syncInfo = subscriber.getSyncInfo(
-//                            file,
-//                            new IStorageMercurialRevision(file, ancestor),
-//                            new IStorageMercurialRevision(file, parents[1]));
-//                    SyncInfoCompareInput compareInput = new SyncInfoCompareInput("Merge", syncInfo);
-//                    
-//                    CompareUI.openCompareEditor(compareInput);
-//                } catch (TeamException e) {
-//                    MercurialEclipsePlugin.logError(e);
-//                }
+                try {
+                    TableItem item = (TableItem) event.item;
+                    FlaggedAdaptable flagged = (FlaggedAdaptable)item.getData();
+                    IFile file = (IFile)flagged.getAdapter(IFile.class);
+                    
+                    int[] parents = HgParentClient.getParents(currentProject);
+                    int ancestor = HgParentClient.findCommonAncestor(currentProject, parents[0], parents[1]);
+                    
+                    RevisionNode parent1Node = new RevisionNode(new IStorageMercurialRevision(file, parents[1]));
+                    RevisionNode ancestorNode = new RevisionNode(new IStorageMercurialRevision(file, ancestor));
+                    
+                    HgCompareEditorInput compareInput = new HgCompareEditorInput(
+                            new CompareConfiguration(),
+                            file,
+                            ancestorNode,
+                            parent1Node,
+                            true);
+                    
+                    CompareUI.openCompareEditor(compareInput);
+                } catch (TeamException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
             }
         });
 
