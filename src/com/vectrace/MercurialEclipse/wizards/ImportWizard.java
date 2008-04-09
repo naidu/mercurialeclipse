@@ -20,7 +20,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.ImportAction;
+import com.vectrace.MercurialEclipse.commands.HgImportExportClient;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
@@ -59,13 +59,10 @@ public boolean performFinish()
       return false;
     }
 
-    ImportAction importAction = new ImportAction(null, project, importFile,null);
-
-
     try
     {
-      importAction.run();
-      if(importAction.getResult().length() != 0)
+      String result = HgImportExportClient.importPatch(project, importFile);
+      if(result.length() != 0)
       {
         Shell shell;
         IWorkbench workbench;
@@ -73,7 +70,7 @@ public boolean performFinish()
         workbench = PlatformUI.getWorkbench();
         shell = workbench.getActiveWorkbenchWindow().getShell();
 
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Import output",  importAction.getResult());
+        MessageDialog.openInformation(shell,"Mercurial Eclipse Import output",  result);
       }
     }
     catch (Exception e)
