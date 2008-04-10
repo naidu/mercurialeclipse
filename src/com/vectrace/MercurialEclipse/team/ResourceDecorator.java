@@ -64,7 +64,6 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
     }
 
     public void decorate(Object element, IDecoration decoration) {
-        System.out.println("decorate " + element);
         try {
             IResource resource = (IResource) element;
             IProject project = resource.getProject();
