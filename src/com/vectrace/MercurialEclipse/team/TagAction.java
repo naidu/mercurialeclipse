@@ -5,11 +5,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.TagDialog;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.Tag;
 
 /**
  * 
@@ -20,9 +17,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
 	@Override
 	protected void run(IResource resource) throws Exception {
 		IProject project = resource.getProject();
-		Tag[] tags = HgTagClient.getTags(project);
-		ChangeSet[] changeSets = HgLogClient.getRevisions(project);
-		TagDialog dialog = new TagDialog(getShell(), changeSets, tags);
+		TagDialog dialog = new TagDialog(getShell(), project);
 		
 		if(dialog.open() == IDialogConstants.OK_ID) {
 			HgTagClient.addTag(

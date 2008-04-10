@@ -6,11 +6,12 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Jérôme Nègre              - implementation
+ *     Jerome Negre              - implementation
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.dialogs;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -24,13 +25,17 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgTagClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -38,258 +43,224 @@ import com.vectrace.MercurialEclipse.model.Tag;
  */
 public class TagDialog extends Dialog {
 
-	ChangeSet[] revisions;
-	Tag[] tags;
-	
-	//main TabItem
-	Text nameText;
-	Button forceButton;
-	Button localButton;
-	
-	//output
-	String name;
-	String targetRevision;
-	boolean forced;
-	boolean local;
-	
+    boolean revisionsLoaded;
+    private final IProject project;
 
-	//TODO revisions and tags should be fetched on demand
-	public TagDialog(Shell parentShell,ChangeSet[] revisions, Tag[] tags) {
-		super(parentShell);
-		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.revisions = revisions;
-		this.tags = tags;
-	}
+    // main TabItem
+    Text nameText;
+    Button forceButton;
+    Button localButton;
 
-	@Override
-	protected void configureShell(Shell newShell) {
-		super.configureShell(newShell);
-		newShell.setText("Tag as Version...");
-	}
+    // output
+    String name;
+    String targetRevision;
+    boolean forced;
+    boolean local;
 
-	@Override
-	protected Control createDialogArea(Composite parent) {
-		Composite composite = (Composite) super.createDialogArea(parent);
-		GridLayout gridLayout = new GridLayout(2, false);
-		composite.setLayout(gridLayout);
+    public TagDialog(Shell parentShell, IProject project) {
+        super(parentShell);
+        setShellStyle(getShellStyle() | SWT.RESIZE);
+        this.project = project;
+    }
 
-		TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
-		tabFolder.setLayoutData(new GridData(GridData.FILL_HORIZONTAL
-				| GridData.FILL_VERTICAL));
+    @Override
+    protected void configureShell(Shell newShell) {
+        super.configureShell(newShell);
+        newShell.setText("Tag as Version...");
+    }
 
-		createMainTabItem(tabFolder);
-		//TODO createOptionsTabItem(tabFolder);
-		createTargetTabItem(tabFolder);
-		
-		return composite;
-	}
-	
-	private GridData createGridData(int colspan) {
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		data.horizontalSpan = colspan;
-		data.minimumWidth = SWT.DEFAULT;
-		return data;
-	}
+    @Override
+    protected Control createDialogArea(Composite parent) {
+        Composite composite = (Composite) super.createDialogArea(parent);
+        GridLayout gridLayout = new GridLayout(2, false);
+        composite.setLayout(gridLayout);
 
-	private GridData createGridData(int colspan, int width) {
-		GridData data = new GridData(GridData.FILL_HORIZONTAL);
-		data.horizontalSpan = colspan;
-		data.minimumWidth = width;
-		return data;
-	}
+        TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
+        tabFolder.setLayoutData(new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL));
 
-	protected TabItem createMainTabItem(TabFolder folder) {
-		TabItem item = new TabItem(folder, SWT.NONE);
-		item.setText("Main");
-	
-		Composite composite = new Composite(folder, SWT.NONE);
-		composite.setLayout(new GridLayout(1, true));
-		
-		//tag name
-		Label label = new Label(composite, SWT.NONE);
-		label.setText("Please enter a tag name:");
-		label.setLayoutData(createGridData(1));
-	
-		nameText = new Text(composite, SWT.BORDER);
-		nameText.setLayoutData(createGridData(1));
-		
-		forceButton = new Button(composite, SWT.CHECK);
-		forceButton.setText("Move tag if it already exists");
-		forceButton.setLayoutData(createGridData(1));
-		
-		localButton = new Button(composite, SWT.CHECK);
-		localButton.setText("Create local tag");
-		localButton.setLayoutData(createGridData(1));
-		
-		//List of existing tags
-		label = new Label(composite, SWT.NONE);
-		label.setText("Existing tags:");
-		label.setLayoutData(createGridData(1));
-		
-		
-		Table table = new Table(composite, SWT.SINGLE | SWT.BORDER
-				| SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
-		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-		data.heightHint = 150;
-		table.setLayoutData(data);
-		
-		table.addSelectionListener(new SelectionAdapter(){
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TableItem item = (TableItem)e.item;
-				nameText.setText(item.getText(2));
-				localButton.setSelection(item.getText(3).length()!=0);
-			}
-		});
-		
-		String[] titles = {"Rev", "Global", "Tag", "Local"};
-		int[] widths = {50, 150, 300, 70 };
-		for (int i = 0; i < titles.length; i++) {
-			TableColumn column = new TableColumn(table, SWT.NONE);
-			column.setText(titles[i]);
-			column.setWidth(widths[i]);
-		}
-		
-		for (Tag tag : tags) {
-			if(!"tip".equals(tag.getName())) {
-				TableItem row = new TableItem(table, SWT.NONE);
-				row.setText(0, Integer.toString(tag.getRevision()));
-				row.setText(1, tag.getGlobalId());
-				row.setText(2, tag.getName());
-				row.setText(3, tag.isLocal()?"local":"");
-			}
-		}
-	
-		item.setControl(composite);
-		return item;
-	}
+        createMainTabItem(tabFolder);
+        // TODO createOptionsTabItem(tabFolder);
+        createTargetTabItem(tabFolder);
 
-	protected TabItem createOptionsTabItem(TabFolder folder) {
-		TabItem item = new TabItem(folder, SWT.NONE);
-		item.setText("Options");
+        return composite;
+    }
 
-		Composite composite = new Composite(folder, SWT.NONE);
-		composite.setLayout(new GridLayout(1, true));
-		
-		//commit date
-		//TODO
-		
-		//user name
-		final Button customUserButton = new Button(composite, SWT.CHECK);
-		customUserButton.setText("Use custom user name");
-		
-		final Text userText = new Text(composite, SWT.BORDER);
-		userText.setLayoutData(createGridData(1, 250));
-		userText.setEnabled(false);
-		
-		customUserButton.addSelectionListener(new SelectionAdapter(){
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				userText.setEnabled(customUserButton.getSelection());
-			}
-		});
-		
-		//commit message
+    private GridData createGridData(int colspan) {
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.horizontalSpan = colspan;
+        data.minimumWidth = SWT.DEFAULT;
+        return data;
+    }
 
-		item.setControl(composite);
-		return item;
-	}
+    private GridData createGridData(int colspan, int width) {
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.horizontalSpan = colspan;
+        data.minimumWidth = width;
+        return data;
+    }
 
-	
-	protected TabItem createTargetTabItem(TabFolder folder) {
-		TabItem item = new TabItem(folder, SWT.NONE);
-		item.setText("Target");
+    protected TabItem createMainTabItem(TabFolder folder) {
+        TabItem item = new TabItem(folder, SWT.NONE);
+        item.setText("Main");
 
-		Composite composite = new Composite(folder, SWT.NONE);
-		composite.setLayout(new GridLayout(1, true));
-		
-		Button parentButton = new Button(composite, SWT.RADIO);
-		parentButton.setText("Tag parent changeset");
-		parentButton.setSelection(true);
+        Composite composite = new Composite(folder, SWT.NONE);
+        composite.setLayout(new GridLayout(1, true));
 
-		Button otherButton = new Button(composite, SWT.RADIO);
-		otherButton.setText("Tag another changeset");
-		
-		final Table table = new Table(composite, SWT.SINGLE | SWT.BORDER
-				| SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
-		table.setEnabled(false);
-		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-		data.heightHint = 200;
-		table.setLayoutData(data);
-		
-		table.addSelectionListener(new SelectionAdapter(){
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				TableItem item = (TableItem)e.item;
-				targetRevision = item.getText(0);
-			}
-		});
-		
-		String[] titles = { "Rev", "Global", "Date", "Author" };
-		int[] widths = { 50, 150, 150, 100 };
-		for (int i = 0; i < titles.length; i++) {
-			TableColumn column = new TableColumn(table, SWT.NONE);
-			column.setText(titles[i]);
-			column.setWidth(widths[i]);
-		}
+        // tag name
+        Label label = new Label(composite, SWT.NONE);
+        label.setText("Please enter a tag name:");
+        label.setLayoutData(createGridData(1));
 
-		for (ChangeSet rev : revisions) {
-			TableItem row = new TableItem(table, SWT.NONE);
-			row.setText(0, Integer.toString(rev.getChangesetIndex()));
-			row.setText(1, rev.getChangeset());
-			row.setText(2, rev.getDate());
-			row.setText(3, rev.getUser());
-		}
+        nameText = new Text(composite, SWT.BORDER);
+        nameText.setLayoutData(createGridData(1));
 
-		parentButton.addSelectionListener(new SelectionAdapter(){
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				table.setEnabled(false);
-				targetRevision = null;
-			}
-		});
+        forceButton = new Button(composite, SWT.CHECK);
+        forceButton.setText("Move tag if it already exists");
+        forceButton.setLayoutData(createGridData(1));
 
-		otherButton.addSelectionListener(new SelectionAdapter(){
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				table.setEnabled(true);
-				TableItem[] selection = table.getSelection();
-				if(selection.length != 0) {
-					targetRevision = selection[0].getText(0);
-				}
-			}
-		});
+        localButton = new Button(composite, SWT.CHECK);
+        localButton.setText("Create local tag");
+        localButton.setLayoutData(createGridData(1));
 
-		item.setControl(composite);
-		return item;
-	}
-	
-	
-	@Override
-	protected void okPressed() {
-		name = nameText.getText();
-		forced = forceButton.getSelection();
-		local = localButton.getSelection();
-		super.okPressed();
-	}
+        // List of existing tags
+        label = new Label(composite, SWT.NONE);
+        label.setText("Existing tags:");
+        label.setLayoutData(createGridData(1));
 
-	public String getName() {
-		return name;
-	}
+        final TagTable table = new TagTable(composite);
+        table.hideTip();
+        GridData data = new GridData(GridData.FILL_BOTH);
+        data.heightHint = 150;
+        table.setLayoutData(data);
 
-	public String getTargetRevision() {
-		return targetRevision;
-	}
+        table.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                Tag tag = table.getSelection();
+                nameText.setText(tag.getName());
+                localButton.setSelection(tag.isLocal());
+            }
+        });
 
-	public boolean isForced() {
-		return forced;
-	}
+        try {
+            table.setTags(HgTagClient.getTags(project));
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
 
-	public boolean isLocal() {
-		return local;
-	}
+        item.setControl(composite);
+        return item;
+    }
+
+    protected TabItem createOptionsTabItem(TabFolder folder) {
+        TabItem item = new TabItem(folder, SWT.NONE);
+        item.setText("Options");
+
+        Composite composite = new Composite(folder, SWT.NONE);
+        composite.setLayout(new GridLayout(1, true));
+
+        // commit date
+        // TODO
+
+        // user name
+        final Button customUserButton = new Button(composite, SWT.CHECK);
+        customUserButton.setText("Use custom user name");
+
+        final Text userText = new Text(composite, SWT.BORDER);
+        userText.setLayoutData(createGridData(1, 250));
+        userText.setEnabled(false);
+
+        customUserButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                userText.setEnabled(customUserButton.getSelection());
+            }
+        });
+
+        // commit message
+
+        item.setControl(composite);
+        return item;
+    }
+
+    protected TabItem createTargetTabItem(TabFolder folder) {
+        TabItem item = new TabItem(folder, SWT.NONE);
+        item.setText("Target");
+
+        Composite composite = new Composite(folder, SWT.NONE);
+        composite.setLayout(new GridLayout(1, true));
+
+        Button parentButton = new Button(composite, SWT.RADIO);
+        parentButton.setText("Tag parent changeset");
+        parentButton.setSelection(true);
+
+        Button otherButton = new Button(composite, SWT.RADIO);
+        otherButton.setText("Tag another changeset");
+
+        final ChangesetTable table = new ChangesetTable(composite);
+        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+        table.setEnabled(false);
+        table.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                targetRevision = Integer.toString(table.getSelection().getChangesetIndex());
+            }
+        });
+
+        parentButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                table.setEnabled(false);
+                targetRevision = null;
+            }
+        });
+
+        otherButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                try {
+                    table.setEnabled(true);
+                    if (!revisionsLoaded) {
+                        table.highlightParents(HgParentClient.getParents(project));
+                        table.setChangesets(HgLogClient.getRevisions(project));
+                        revisionsLoaded = true;
+                    } else {
+                        ChangeSet changeset = table.getSelection();
+                        if (changeset != null) {
+                            targetRevision = Integer.toString(changeset.getChangesetIndex());
+                        }
+                    }
+                } catch (HgException ex) {
+                    MercurialEclipsePlugin.logError(ex);
+                }
+            }
+        });
+
+        item.setControl(composite);
+        return item;
+    }
+
+    @Override
+    protected void okPressed() {
+        name = nameText.getText();
+        forced = forceButton.getSelection();
+        local = localButton.getSelection();
+        super.okPressed();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getTargetRevision() {
+        return targetRevision;
+    }
+
+    public boolean isForced() {
+        return forced;
+    }
+
+    public boolean isLocal() {
+        return local;
+    }
 }
