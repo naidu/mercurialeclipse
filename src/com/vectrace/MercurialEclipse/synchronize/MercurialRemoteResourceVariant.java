@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ * Bastian Doetsch	implementation
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
 import org.eclipse.core.resources.IStorage;
@@ -5,33 +15,31 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 
-public class MercurialRemoteResourceVariant implements IResourceVariant {
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
-	public MercurialRemoteResourceVariant() {
-		// TODO Auto-generated constructor stub
+public class MercurialRemoteResourceVariant implements IResourceVariant {
+	private IStorageMercurialRevision rev;
+	public MercurialRemoteResourceVariant(IStorageMercurialRevision rev) {
+		this.rev=rev;
 	}
 
 	public byte[] asBytes() {
-		// TODO Auto-generated method stub
-		return null;
+		return rev.getName().getBytes();
 	}
 
 	public String getContentIdentifier() {
-		return null;
+		return rev.getName();
 	}
 
 	public String getName() {
-		// TODO Auto-generated method stub
-		return null;
+		return rev.getName();
 	}
 
 	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-		// TODO Auto-generated method stub
-		return null;
+		return rev;
 	}
 
-	public boolean isContainer() {
-		// TODO Auto-generated method stub
+	public boolean isContainer() {		
 		return false;
 	}
 

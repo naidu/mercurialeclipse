@@ -57,8 +57,8 @@
 	        name="Mercurial"
 			description="Mercurial synchronize wizard"
 	        icon="icons/mercurialeclipse.png"
-	        class="com.vectrace.MercurialEclipse.wizard.MercurialParticipantSynchronizeWizard"
-	        id="com.vectrace.MercurialEclipse.wizard.MercurialParticipantSynchronizeWizard">
+	        class="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard"
+	        id="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard">
 	   </wizard>
 	</extension>
 
