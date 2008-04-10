@@ -5,6 +5,7 @@ import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
 
@@ -42,7 +43,7 @@ public class HgIgnoreAction extends SingleResourceAction {
 					HgIgnoreClient.addRegexp(resource.getProject(), dialog.getPattern());
 					break;
 			}
-			DecoratorStatus.refresh();
+			MercurialEclipsePlugin.refreshProjectFlags(resource.getProject());
 		}
 	}
 

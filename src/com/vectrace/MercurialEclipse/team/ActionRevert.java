@@ -15,7 +15,9 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -36,7 +38,6 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
@@ -206,15 +207,12 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
         }
         
         // notify();
-        new SafeUiJob("Updating status") 
-        {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) 
-            {
-                DecoratorStatus.refresh();
-                return super.runSafe(monitor);
-            }
-        }.schedule();
+        Set<IProject> projects = new HashSet<IProject>();
+        for(CommitResource commitResource : resources) {
+            projects.add(commitResource.getResource().getProject());
+        }
+        MercurialEclipsePlugin.refreshProjectsFlags(projects);
+        
     }
 
     /**

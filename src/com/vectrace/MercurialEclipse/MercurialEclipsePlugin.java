@@ -15,12 +15,20 @@
 
 package com.vectrace.MercurialEclipse;
 
+import java.util.Collection;
+import java.util.Collections;
+
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.FlagManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
@@ -38,6 +46,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
 
   // TODO: not quite sure this should be static
   private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
+  
+  private FlagManager flagManager;
 
   /**
    * The constructor.
@@ -70,7 +80,35 @@ public void start(BundleContext context) throws Exception
     // TODO: Presumably this should be wrapped around some sort of timer to
     // ensure we don't tank eclipse if something goes wrong.
     repoManager.start();
+    
+    flagManager = new FlagManager();
   }
+
+  public FlagManager getFlagManager() {
+      return flagManager;
+  }
+  
+  public static void refreshProjectFlags(final IProject project) {
+        refreshProjectsFlags(Collections.singleton(project));
+    }
+  
+  public static void refreshProjectsFlags(final Collection<IProject> projects) {
+        new SafeWorkspaceJob("Refresh project state") {
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                try {
+                    for (IProject project : projects) {
+                        getDefault().getFlagManager().refresh(project);
+                    }
+                } catch (HgException e) {
+                    logError(e);
+                } catch (CoreException e) {
+                    logError(e);
+                }
+                return Status.OK_STATUS;
+            }
+        }.schedule();
+    }
 
   static public HgRepositoryLocationManager getRepoManager()
   {
@@ -83,6 +121,7 @@ public void start(BundleContext context) throws Exception
   @Override
 public void stop(BundleContext context) throws Exception
   {
+    flagManager.dispose();
     repoManager.stop();
     plugin = null;
     super.stop(context);

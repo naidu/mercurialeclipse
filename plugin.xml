@@ -67,8 +67,8 @@
 	            state="false"
 	            lightweight= "true"
 	            location= "BOTTOM_RIGHT"
-	            class="com.vectrace.MercurialEclipse.team.DecoratorStatus"
-	            id="com.vectrace.MercurialEclipse.team.DecoratorStatus">
+	            class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
+	            id="com.vectrace.MercurialEclipse.team.ResourceDecorator">
 	         <description>
 	            Label decorations for Mercurial eclipse plugin.
 	         </description>
@@ -235,14 +235,6 @@
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionView">
            </action>
-           <!-- action
-               label="&amp;hg status"
-               icon="icons/mercurialeclipse.png"
-               class="com.vectrace.MercurialEclipse.team.ActionStatus"
-               tooltip="hg status"
-               menubarPath="team.main/projectGroup"
-               id="com.vectrace.MercurialEclipse.team.ActionStatus">
-           </action -->
       </objectContribution>
       
       <!-- File Team Menu -->
