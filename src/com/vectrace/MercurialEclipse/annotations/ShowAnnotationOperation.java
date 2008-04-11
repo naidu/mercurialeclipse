@@ -55,7 +55,55 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 public class ShowAnnotationOperation extends TeamOperation
 {
-  private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
+  private final class MercurialRevision extends Revision {
+		private final CommitterColors colors;
+
+		private final ChangeSet entry;
+
+		private final String string;
+
+		private final AnnotateBlock block;
+
+		private MercurialRevision(CommitterColors colors, ChangeSet entry, String string, AnnotateBlock block) {
+			this.colors = colors;
+			this.entry = entry;
+			this.string = string;
+			this.block = block;
+		}
+
+		@Override
+		public Object getHoverInfo()
+		  {
+		    return block.getUser()
+		        + " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		        (entry != null ? entry.getDescription() : ""); //$NON-NLS-1$
+		  }
+
+		public String getAuthor()
+		  {
+		    return block.getUser();
+		  }
+
+		@Override
+		public String getId()
+		  {
+		    return string;
+		  }
+
+		@Override
+		public Date getDate()
+		  {
+		    return block.getDate();
+		  }
+
+		@Override
+		public RGB getColor()
+		  {
+		    return colors.getCommitterRGB(getAuthor());
+		  }
+	}
+
+private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
   private final HgFile remoteFile;
 
   public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
@@ -247,41 +295,7 @@ protected IAction getGotoAction()
       Revision revision = sets.get(revisionString);
       if (revision == null)
       {
-        revision = new Revision()
-        {
-          @Override
-        public Object getHoverInfo()
-          {
-            return block.getUser()
-                + " " + revisionString + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                (logEntry != null ? logEntry.getDescription() : ""); //$NON-NLS-1$
-          }
-
-          @Override
-        public String getAuthor()
-          {
-            return block.getUser();
-          }
-
-          @Override
-        public String getId()
-          {
-            return revisionString;
-          }
-
-          @Override
-        public Date getDate()
-          {
-            return block.getDate();
-          }
-
-          @Override
-        public RGB getColor()
-          {
-            return colors.getCommitterRGB(getAuthor());
-          }
-
-        };
+        revision = new MercurialRevision(colors, logEntry, revisionString, block);
         sets.put(revisionString, revision);
         info.addRevision(revision);
       }
