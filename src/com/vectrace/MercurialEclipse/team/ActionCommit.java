@@ -210,7 +210,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 {
                 	MercurialEclipsePlugin.logError(e);
 //                  System.out.println( e.getMessage() );
-                  this_repository = null;
+                	return;
                 }
                 
                 if(this_repository.compareTo(repository) == 0) // Match? Is this file in the same reposetory?
