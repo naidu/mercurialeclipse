@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.annotations;
 import java.util.Collections;
 import java.util.Map;
 
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.text.*;
 import org.eclipse.jface.text.source.ISourceViewer;
@@ -40,6 +41,23 @@ import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
  * Several changes are made in order to handle hover for CVS annotations
  */
 class SourceViewerInformationControl implements IInformationControl, IInformationControlExtension, DisposeListener {
+
+	private final class HgTextSourceViewerConfiguration extends TextSourceViewerConfiguration {
+		private HgTextSourceViewerConfiguration(IPreferenceStore store) {
+			super(store);
+		}
+
+		    protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
+		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", //$NON-NLS-1$
+		            null);
+		//            new IAdaptable() {
+		//              public Object getAdapter(Class adapter) {
+		//                // return Platform.getAdapterManager().getAdapter(CVSHistoryPage.this, adapter);
+		//                return null;
+		//              }
+		//            });
+		      }
+	}
 
 	/** Border thickness in pixels. */
 	private static final int BORDER= 1;
@@ -123,19 +141,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		
 		// configure hyperlink detectors
 		// fViewer.configure(new SourceViewerConfiguration());
-		fViewer.configure(new TextSourceViewerConfiguration(EditorsUI.getPreferenceStore()) {
-      @Override
-    protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
-        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", //$NON-NLS-1$
-            null);
-//            new IAdaptable() {
-//              public Object getAdapter(Class adapter) {
-//                // return Platform.getAdapterManager().getAdapter(CVSHistoryPage.this, adapter);
-//                return null;
-//              }
-//            });
-      }
-    });
+		fViewer.configure(new HgTextSourceViewerConfiguration(EditorsUI.getPreferenceStore()));
 
 		fText= fViewer.getTextWidget();
 		gd= new GridData(GridData.BEGINNING | GridData.FILL_BOTH);
