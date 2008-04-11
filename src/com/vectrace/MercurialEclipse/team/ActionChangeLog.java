@@ -26,7 +26,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.ui.IWorkbenchPage;
+//import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -68,7 +68,7 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
 
   public void run(IAction action) 
   {
-    final IWorkbenchPage activePage = MercurialEclipsePlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
+//    final IWorkbenchPage activePage = MercurialEclipsePlugin.getDefault().getWorkbench().getActiveWorkbenchWindow().getActivePage();
     final Shell shell = Display.getDefault().getActiveShell();
     try 
     {
@@ -81,7 +81,8 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
               {
               public void run() 
                 {
-                  TeamUI.showHistoryFor(activePage, resource, null);
+                  TeamUI.getHistoryView().showHistoryFor(resource);
+//                  TeamUI.showHistoryFor(activePage, resource, null);
                 }
               };
               Display.getDefault().asyncExec(r);
