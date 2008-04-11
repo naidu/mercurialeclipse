@@ -80,12 +80,6 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
             FlaggedProject fp = flagManager.getFlaggedProject(project);
 
-            if (fp == null) {
-                //refresh will call onRefresh
-                flagManager.refresh(project);
-                return;
-            }
-
             FlaggedResource fr = fp.getFlaggedResource(resource);
             // TODO render fr.isConflict?
             ImageDescriptor overlay = null;

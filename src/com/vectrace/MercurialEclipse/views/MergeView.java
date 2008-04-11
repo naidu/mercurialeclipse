@@ -40,7 +40,6 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
@@ -58,7 +57,6 @@ public class MergeView extends ViewPart implements ISelectionListener {
     private Label statusLabel;
     private Table table;
     
-    private Action commitAction;
     private Action abortAction;
     
     private IProject currentProject;
@@ -121,22 +119,6 @@ public class MergeView extends ViewPart implements ISelectionListener {
     private void createToolBar() {
         IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
         
-        commitAction = new Action("Commit") {
-            @Override
-            public void run() {
-                try {
-                    HgCommitClient.commitProject(currentProject, null, "merge");
-                    currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
-                    currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
-                    clearView();
-                } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
-        };
-        commitAction.setEnabled(false);
-        mgr.add(commitAction);
-        
         abortAction = new Action("Abort") {
             @Override
             public void run() {
@@ -165,14 +147,12 @@ public class MergeView extends ViewPart implements ISelectionListener {
                 row.setText(1, ((IFile)flagged.getAdapter(IFile.class)).getProjectRelativePath().toString());
                 row.setData(flagged);
             }
-            commitAction.setEnabled(true);
             abortAction.setEnabled(true);
     }
 
     private void clearView() {
         statusLabel.setText("");
         table.removeAll();
-        commitAction.setEnabled(false);
         abortAction.setEnabled(false);
     }
 

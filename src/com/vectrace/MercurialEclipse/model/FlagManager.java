@@ -59,12 +59,19 @@ public class FlagManager implements IResourceChangeListener {
         listeners.remove(listener);
     }
 
-    public FlaggedProject getFlaggedProject(IProject project) throws HgException {
+    public FlaggedProject getFlaggedProject(IProject project) throws CoreException, HgException {
+        if (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
+            return null;
+        }
+        if (!projects.containsKey(project)) {
+            refresh(project);
+        }
         return projects.get(project);
     }
 
     // FIXME should be replaced byrefreshHgStatus and refreshMergeStatus
-    public void refresh(IProject project) throws CoreException, HgException {
+    // FIXME need synchronization
+    public FlaggedProject refresh(IProject project) throws CoreException, HgException {
         // status
         String statusOutput = HgStatusClient.getStatus(project);
         IContainer workspace = project.getParent();
@@ -101,9 +108,9 @@ public class FlagManager implements IResourceChangeListener {
         projects.put(project, fp);
         // notification
         for (FlagManagerListener listener : listeners) {
-            System.out.println("notifying " + listener);
             listener.onRefresh(project);
         }
+        return fp;
     }
 
     private final int getBitIndex(char status) {
@@ -129,7 +136,6 @@ public class FlagManager implements IResourceChangeListener {
     }
 
     public void resourceChanged(IResourceChangeEvent event) {
-        System.out.println("resourceChanged");
         Set<IProject> changedProjects = new HashSet<IProject>();
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             IResourceDelta[] children = event.getDelta().getAffectedChildren();
@@ -142,7 +148,6 @@ public class FlagManager implements IResourceChangeListener {
         }
         for (IProject project : changedProjects) {
             try {
-                System.out.println("refresh " + project);
                 refresh(project);
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
