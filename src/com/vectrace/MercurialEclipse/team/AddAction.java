@@ -17,7 +17,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.ui.dialogs.CheckedTreeSelectionDialog;
-import org.eclipse.ui.views.navigator.ResourceComparator;
+import org.eclipse.ui.views.navigator.ResourceSorter;
 
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -68,7 +68,7 @@ public class AddAction extends MultipleResourcesAction {
 		dialog.setMessage("Select the files to add to Mercurial");
 		dialog.setContainerMode(true);
 		dialog.setInitialElementSelections(resources);
-		dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
+		dialog.setSorter(new ResourceSorter(ResourceSorter.NAME));
 		dialog.addFilter(untrackedFilter);
 		if(dialog.open() ==  IDialogConstants.OK_ID) {
 			HgAddClient.addResources(filter(dialog.getResult()), null);
