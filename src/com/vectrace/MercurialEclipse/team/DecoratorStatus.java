@@ -83,11 +83,11 @@ public class DecoratorStatus extends LabelProvider implements
 		 * simple.
 		 */
 		configureFromPreferences();
-		try {
-			statusCache.refresh();
-		} catch (TeamException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		// try {
+		// statusCache.refresh();
+		// } catch (TeamException e) {
+		// MercurialEclipsePlugin.logError(e);
+		// }
 	}
 
 	public void decorate(Object element, IDecoration decoration) {
@@ -107,7 +107,7 @@ public class DecoratorStatus extends LabelProvider implements
 
 		if (!statusCache.isStatusKnown((objectProject))) {
 			try {
-				statusCache.refresh(objectProject);
+				statusCache.refreshStatus(objectProject);
 			} catch (TeamException ex) {
 				MercurialEclipsePlugin.logError(ex);
 				return;
@@ -159,6 +159,22 @@ public class DecoratorStatus extends LabelProvider implements
 		if (overlay != null) {
 			decoration.addOverlay(overlay);
 		}
+
+		ChangeSet cs = null;
+		try {
+			cs = statusCache.getIncomingVersion(objectResource);
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
+		}
+
+		if (cs != null) {
+			if (prefix == null) {
+				prefix = "<";
+			} else {
+				prefix = "<" + prefix;
+			}
+		}
+
 		if (prefix != null) {
 			decoration.addPrefix(prefix);
 		}
@@ -170,7 +186,15 @@ public class DecoratorStatus extends LabelProvider implements
 					hex = ":" + changeSet.getChangeset();
 				}
 
-				decoration.addSuffix(" [" + changeSet.getChangesetIndex() + hex + "]");
+				String suffix = " [" + changeSet.getChangesetIndex() + hex
+						+ "]";
+
+				if (cs != null) {
+					suffix += "[" + cs.getChangesetIndex() + ":"
+							+ cs.getChangesetIndex() + "(" + cs.getUser() + ")]";
+				}
+				decoration.addSuffix(suffix);
+
 			} catch (HgException e) {
 				MercurialEclipsePlugin
 						.logWarning("Couldn't get version of resource "
@@ -234,7 +258,8 @@ public class DecoratorStatus extends LabelProvider implements
 					// changed, schedule a refresh();
 
 					try {
-						MercurialStatusCache.getInstance().refresh(res.getProject());
+						MercurialStatusCache.getInstance().refresh(
+								res.getProject());
 					} catch (TeamException e) {
 						MercurialEclipsePlugin.logError(
 								"Couldn't refresh project:", e);

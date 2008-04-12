@@ -31,9 +31,12 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -88,6 +91,7 @@ public class MercurialStatusCache extends Observable {
 	private static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
 
 	private static Map<IResource, SortedMap<Integer, ChangeSet>> incomingVersions = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
+
 	/**
 	 * Clears the known status of all resources and projects. and calls for an
 	 * update of decoration
@@ -177,7 +181,7 @@ public class MercurialStatusCache extends Observable {
 		return incomingVersions.get(objectResource);
 	}
 
-	private SortedMap<Integer, ChangeSet> refreshChangeSets(
+	public SortedMap<Integer, ChangeSet> refreshChangeSets(
 			IResource objectResource) throws HgException {
 		SortedMap<Integer, ChangeSet> revisions;
 		BitSet bitSet = getStatus(objectResource);
@@ -256,28 +260,53 @@ public class MercurialStatusCache extends Observable {
 	 * @param project
 	 * @throws TeamException
 	 */
-	public void refresh(IProject project) throws TeamException {
+	public void refresh(final IProject project) throws TeamException {
 		/* hg status on project (all files) instead of per file basis */
 		try {
 			// set status
-			parseStatusCommand(project, HgStatusClient.getStatus(project));
-			setChanged();
-			notifyObservers(project);
+			refreshStatus(project);
 
-			// set version
-			refreshChangeSets(project);
+			
+			new SafeWorkspaceJob("Updating status and version cache..."){
+				@Override
+				protected IStatus runSafe(IProgressMonitor monitor) {
+					// set version
+					monitor.beginTask("Updating status and version cache...", 3);
+					try {
+						refreshChangeSets(project);
+					monitor.worked(1);
+					// incoming
+					refreshIncomingChangeSets(project);					
+					monitor.worked(1);
 
-			// incoming
-			refreshIncomingChangeSets(project);
-
-			setChanged();
-			notifyObservers();
+					setChanged();
+					notifyObservers();
+					monitor.worked(1);
+					
+					} catch (HgException e) {						
+						MercurialEclipsePlugin.logError(e);
+					}					
+					monitor.done();
+					return super.runSafe(monitor);					
+				}					
+			}.schedule();
 		} catch (HgException e) {
 			throw new TeamException(e.getMessage(), e);
 		}
 	}
 
-	private SortedMap<Integer, ChangeSet> refreshIncomingChangeSets(IProject project) throws HgException {
+	/**
+	 * @param project
+	 * @throws HgException
+	 */
+	public void refreshStatus(final IProject project) throws HgException {
+		parseStatusCommand(project, HgStatusClient.getStatus(project));
+		setChanged();
+		notifyObservers(project);
+	}
+
+	private SortedMap<Integer, ChangeSet> refreshIncomingChangeSets(
+			IProject project) throws HgException {
 		Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
 				.getRepoManager().getAllRepoLocations();
 
@@ -308,11 +337,11 @@ public class MercurialStatusCache extends Observable {
 										.getChangesetIndex()), changeSet);
 							}
 						}
-						incomingVersions.put(res, revisions);						
+						incomingVersions.put(res, revisions);
 					}
 				}
-			}			
-		}		
+			}
+		}
 		return incomingVersions.get(project);
 	}
 
@@ -467,14 +496,14 @@ public class MercurialStatusCache extends Observable {
 		if (bitSet != null) {
 			status = bitSet.length() - 1;
 		}
-
-		// only proceed if there were changes or we are at initial load.
+  	    // only proceed if there were changes or we are at initial load.
 		switch (status) {
 		case BIT_IGNORE:
-			return null;			
+			return null;
 		}
-						 
-		SortedMap<Integer, ChangeSet> revisions = incomingVersions.get(resource);
+
+		SortedMap<Integer, ChangeSet> revisions = incomingVersions
+				.get(resource);
 		if (revisions != null && revisions.size() > 0) {
 			return revisions.get(revisions.lastKey());
 		}

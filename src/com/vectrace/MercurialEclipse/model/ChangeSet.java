@@ -154,11 +154,14 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		if (o.getChangeset().equals(this.getChangeset())) {
 			return 0;
 		}
-		int dateCompare = this.getRealDate().compareTo(o.getRealDate());
-		if (dateCompare == 0) {
-			return this.getChangesetIndex() - o.getChangesetIndex();
+
+		if (realDate != null && o.getRealDate() != null) {
+			int dateCompare = this.getRealDate().compareTo(o.getRealDate());
+			if (dateCompare != 0) {
+				return dateCompare;
+			}
 		}
-		return dateCompare;
+		return this.getChangesetIndex() - o.getChangesetIndex();
 	}
 
 	@Override
