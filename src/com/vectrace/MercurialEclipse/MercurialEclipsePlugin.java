@@ -30,9 +30,11 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
 {
 
   public static final String ID = "com.vectrace.MercurialEclipse";
-
+  
   public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView";
 
+  public static final String BUNDLE_FILE_PREFIX = "bundlefile";
+  
   // The shared instance.
   private static MercurialEclipsePlugin plugin;
 

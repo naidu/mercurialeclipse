@@ -7,14 +7,14 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 
 public class MercurialSynchronizeParticipant extends SubscriberParticipant {
-	private ISynchronizeScope myScope;
 	private String secondaryId;
-	
+	private MercurialSynchronizeSubscriber subscriber = null;
+
 	public MercurialSynchronizeParticipant(ISynchronizeScope scope) {
-		super(scope);
-		this.myScope = scope;
-		setSubscriber(new MercurialSynchronizeSubscriber(scope));
-		this.secondaryId = getId() + " " + new Date(); 
+		super(scope);		
+		subscriber = new MercurialSynchronizeSubscriber(scope);		
+		setSubscriber(subscriber);
+		this.secondaryId = new Date().toString();
 	}
 
 	@Override
@@ -29,17 +29,17 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
 
 	@Override
 	public IResource[] getResources() {
-		return myScope.getRoots();
+		return subscriber.roots();
 	}
 
 	@Override
 	public String getName() {
-		return "Mercurial Synchronization Subscriber";
+		return "Mercurial Synchronization for " + getResources();
 	}
 
 	@Override
 	protected String getLongTaskName(IResource[] resources) {
-		return super.getLongTaskName(resources) + " (hg status)";
+		return "Mercurial: Refreshing resources for synchronization...";
 	}
 
 }

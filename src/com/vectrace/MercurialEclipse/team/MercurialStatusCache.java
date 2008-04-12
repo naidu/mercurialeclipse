@@ -23,6 +23,7 @@ import java.util.Observable;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
 
 import org.eclipse.core.resources.IContainer;
@@ -34,10 +35,12 @@ import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.FileDataLoader;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * Caches the Mercurial Status of each file and offers methods for retrieving,
@@ -84,8 +87,7 @@ public class MercurialStatusCache extends Observable {
 
 	private static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
 
-	private static Map<IResource, String> incomingVersions = new HashMap<IResource, String>();
-
+	private static Map<IResource, SortedMap<Integer, ChangeSet>> incomingVersions = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
 	/**
 	 * Clears the known status of all resources and projects. and calls for an
 	 * update of decoration
@@ -165,14 +167,44 @@ public class MercurialStatusCache extends Observable {
 		return revisions;
 	}
 
+	public SortedMap<Integer, ChangeSet> getIncomingChangeSets(
+			IResource objectResource) throws HgException {
+		SortedMap<Integer, ChangeSet> revisions = incomingVersions
+				.get(objectResource);
+		if (revisions == null) {
+			refreshIncomingChangeSets(objectResource.getProject());
+		}
+		return incomingVersions.get(objectResource);
+	}
+
 	private SortedMap<Integer, ChangeSet> refreshChangeSets(
 			IResource objectResource) throws HgException {
 		SortedMap<Integer, ChangeSet> revisions;
-		switch (getStatus(objectResource).length() - 1) {
+		BitSet bitSet = getStatus(objectResource);
+		int status = BIT_UNKNOWN;
+		if (bitSet != null) {
+			status = bitSet.length() - 1;
+		}
+
+		// only proceed if there were changes or we are at initial load.
+		switch (status) {
 		case BIT_UNKNOWN:
 		case BIT_IGNORE:
 			return null;
+		case BIT_CLEAN:
+			if (isVersionKnown(objectResource)) {
+				return null;
+			}
 		}
+
+		revisions = loadChangeSetInformation(objectResource);
+
+		return revisions;
+	}
+
+	private SortedMap<Integer, ChangeSet> loadChangeSetInformation(
+			IResource objectResource) throws HgException {
+		SortedMap<Integer, ChangeSet> revisions;
 		revisions = new TreeMap<Integer, ChangeSet>();
 		ChangeSet[] changeSets;
 		if (objectResource.getType() == IResource.PROJECT
@@ -215,7 +247,6 @@ public class MercurialStatusCache extends Observable {
 			}
 			versions.put(objectResource, revisions);
 		}
-
 		return revisions;
 	}
 
@@ -237,7 +268,8 @@ public class MercurialStatusCache extends Observable {
 			refreshChangeSets(project);
 
 			// incoming
-			incomingVersions.put(project, getRemoteRepositoryVersion(project));
+			refreshIncomingChangeSets(project);
+
 			setChanged();
 			notifyObservers();
 		} catch (HgException e) {
@@ -245,9 +277,43 @@ public class MercurialStatusCache extends Observable {
 		}
 	}
 
-	private String getRemoteRepositoryVersion(IProject project) {
+	private SortedMap<Integer, ChangeSet> refreshIncomingChangeSets(IProject project) throws HgException {
+		Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
+				.getRepoManager().getAllRepoLocations();
 
-		return null;
+		if (repositories == null) {
+			return null;
+		}
+
+		for (HgRepositoryLocation hgRepositoryLocation : repositories) {
+
+			Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
+					.getHgIncoming(project, hgRepositoryLocation);
+
+			if (incomingResources != null && incomingResources.size() > 0) {
+
+				for (Iterator<IResource> iter = incomingResources.keySet()
+						.iterator(); iter.hasNext();) {
+					IResource res = iter.next();
+					SortedSet<ChangeSet> changes = incomingResources.get(res);
+
+					if (changes != null && changes.size() > 0) {
+						SortedMap<Integer, ChangeSet> revisions = new TreeMap<Integer, ChangeSet>();
+						ChangeSet[] changeSets = changes
+								.toArray(new ChangeSet[changes.size()]);
+
+						if (changeSets != null) {
+							for (ChangeSet changeSet : changeSets) {
+								revisions.put(Integer.valueOf(changeSet
+										.getChangesetIndex()), changeSet);
+							}
+						}
+						incomingVersions.put(res, revisions);						
+					}
+				}
+			}			
+		}		
+		return incomingVersions.get(project);
 	}
 
 	/**
@@ -391,12 +457,27 @@ public class MercurialStatusCache extends Observable {
 	}
 
 	public IResource[] getIncomingMembers(IResource resource) {
-		// TODO extract members not known from incoming that are members of
-		// resource
-		return new IResource[0];
+		return incomingVersions.keySet().toArray(
+				new IResource[incomingVersions.keySet().size()]);
 	}
 
-	public String getIncomingVersion(IResource resource) {
+	public ChangeSet getIncomingVersion(IResource resource) throws HgException {
+		BitSet bitSet = getStatus(resource);
+		int status = BIT_UNKNOWN;
+		if (bitSet != null) {
+			status = bitSet.length() - 1;
+		}
+
+		// only proceed if there were changes or we are at initial load.
+		switch (status) {
+		case BIT_IGNORE:
+			return null;			
+		}
+						 
+		SortedMap<Integer, ChangeSet> revisions = incomingVersions.get(resource);
+		if (revisions != null && revisions.size() > 0) {
+			return revisions.get(revisions.lastKey());
+		}
 		return null;
 	}
 }

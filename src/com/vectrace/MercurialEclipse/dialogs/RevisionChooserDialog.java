@@ -120,8 +120,12 @@ public class RevisionChooserDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		revision = text.getText().split(":")[0].trim();
-		changeSet = this.dataLoader.getChangeSetByRevision(Integer.parseInt(revision));
+		revision = text.getText().split(":")[0].trim();		
+		try {
+			changeSet = this.dataLoader.getChangeSetByRevision(Integer.parseInt(revision));
+		} catch (NumberFormatException e) {
+			changeSet = this.dataLoader.searchChangeSet(revision);
+		}
 		if (revision.length() == 0) {
 			revision = null;
 		}

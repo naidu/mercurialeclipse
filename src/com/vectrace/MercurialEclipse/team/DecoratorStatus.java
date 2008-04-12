@@ -234,7 +234,7 @@ public class DecoratorStatus extends LabelProvider implements
 					// changed, schedule a refresh();
 
 					try {
-						statusCache.refresh(res.getProject());
+						MercurialStatusCache.getInstance().refresh(res.getProject());
 					} catch (TeamException e) {
 						MercurialEclipsePlugin.logError(
 								"Couldn't refresh project:", e);

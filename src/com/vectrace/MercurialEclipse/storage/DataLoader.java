@@ -56,4 +56,23 @@ public abstract class DataLoader {
 		return null;
 	}
 
+	/**
+	 * Searches for the complete changeset associated with the given string
+	 * in tag, node, and node short entries. This
+	 * method must be called after getRevisions().
+	 * 
+	 * @param tagOrNode
+	 * @return
+	 */
+	public ChangeSet searchChangeSet(String tagOrNode) {
+		for (ChangeSet changeSet : changeSets) {
+			if (changeSet.getTag().equals(tagOrNode)
+					|| changeSet.getChangeset().equals(tagOrNode)
+					|| changeSet.getNodeShort().equals(tagOrNode)) {
+				return changeSet;
+			}
+		}
+		return null;
+	}
+
 }

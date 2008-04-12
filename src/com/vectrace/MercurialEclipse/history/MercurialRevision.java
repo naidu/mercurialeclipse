@@ -43,8 +43,6 @@ public class MercurialRevision extends FileRevision
 	this.hash = changeSetParts[1];
     this.resource=resource;
   }
-
-  
   
   public ChangeSet getChangeSet()
   {

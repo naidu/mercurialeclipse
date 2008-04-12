@@ -16,6 +16,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -33,6 +34,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	private static MercurialStatusCache statusCache = MercurialStatusCache
 			.getInstance();
 	private ISynchronizeScope myScope;
+	private IResource[] myRoots;
 
 	public MercurialSynchronizeSubscriber(ISynchronizeScope scope) {
 		this.myScope = scope;
@@ -50,21 +52,30 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-		ChangeSet cs = statusCache.getVersion(resource);
-
+		ChangeSet csBase = statusCache.getVersion(resource);
+		ChangeSet csRemote = statusCache.getIncomingVersion(resource);
 		IResourceVariant base;
 		IResourceVariant remote;
-		if (cs != null) {
-			HgRevision rv = cs.getRevision();
+		if (csBase != null) {
+			HgRevision rv = csBase.getRevision();
 
 			IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
 					resource, rv.getRevision() + "", rv.getChangeset());
 
 			base = new MercurialResourceVariant(baseIStorage);
 
-			// FIXME
-			IStorageMercurialRevision remoteIStorage = new IStorageMercurialRevision(
-					resource, rv.getRevision() + "", rv.getChangeset());
+			HgRevision rvRemote ;
+			IStorageMercurialRevision remoteIStorage;
+			if (csRemote != null) {
+				 rvRemote = csRemote.getRevision();
+				 remoteIStorage = new IStorageMercurialRevision(
+							resource, rvRemote + "", rvRemote.getChangeset());
+			} else {
+				remoteIStorage = baseIStorage;
+			}
+			
+
+			
 
 			remote = new MercurialResourceVariant(remoteIStorage);
 
@@ -98,9 +109,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	@Override
 	public void refresh(IResource[] resources, int depth,
 			IProgressMonitor monitor) throws TeamException {
-		Set<IProject> refreshed = new HashSet<IProject>(resources.length);
-		monitor.beginTask("Refreshing resources...", resources.length);
-		for (IResource resource : resources) {
+		IResource[] toRefresh = resources;
+		if (toRefresh == null) {
+			toRefresh = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		}
+		Set<IProject> refreshed = new HashSet<IProject>(toRefresh.length);
+		monitor.beginTask("Refreshing resources...", toRefresh.length);
+		for (IResource resource : toRefresh) {
 			if (monitor.isCanceled()) {
 				return;
 			}
@@ -118,7 +133,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public IResource[] roots() {
-		return myScope.getRoots();
+		if (myRoots == null) {
+			if (myScope.getRoots() != null) {
+				myRoots = myScope.getRoots();
+			} else {
+				myRoots = ResourcesPlugin.getWorkspace().getRoot()
+						.getProjects();
+			}
+		}
+		return myRoots;
 	}
 
 }
