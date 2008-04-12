@@ -39,6 +39,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -184,8 +185,8 @@ public class MercurialStatusCache extends Observable {
 	public SortedMap<Integer, ChangeSet> refreshChangeSets(
 			IResource objectResource) throws HgException {
 		SortedMap<Integer, ChangeSet> revisions;
-		BitSet bitSet = getStatus(objectResource);
 		int status = BIT_UNKNOWN;
+		BitSet bitSet = getStatus(objectResource);
 		if (bitSet != null) {
 			status = bitSet.length() - 1;
 		}
@@ -197,7 +198,7 @@ public class MercurialStatusCache extends Observable {
 			return null;
 		case BIT_CLEAN:
 			if (isVersionKnown(objectResource)) {
-				return null;
+				return versions.get(objectResource);
 			}
 		}
 
@@ -264,31 +265,33 @@ public class MercurialStatusCache extends Observable {
 		/* hg status on project (all files) instead of per file basis */
 		try {
 			// set status
-			refreshStatus(project);
+			refreshStatus(project);			
 
-			
-			new SafeWorkspaceJob("Updating status and version cache..."){
+			new SafeWorkspaceJob("Updating status and version cache...") {
 				@Override
 				protected IStatus runSafe(IProgressMonitor monitor) {
 					// set version
-					monitor.beginTask("Updating status and version cache...", 3);
+					monitor
+							.beginTask("Updating status and version cache...",
+									3);
 					try {
-						refreshChangeSets(project);
-					monitor.worked(1);
-					// incoming
-					refreshIncomingChangeSets(project);					
-					monitor.worked(1);
-
-					setChanged();
-					notifyObservers();
-					monitor.worked(1);
-					
-					} catch (HgException e) {						
+						monitor.subTask("Loading local revisions...");
+						refreshAllLocalRevisions(project);
+						monitor.worked(1);
+						// incoming
+						monitor.subTask("Loading remote revisions from repositories...");
+						refreshIncomingChangeSets(project);
+						monitor.worked(1);					
+						setChanged();
+						notifyObservers();
+						monitor.worked(1);
+					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
-					}					
+					}
 					monitor.done();
-					return super.runSafe(monitor);					
-				}					
+					return super.runSafe(monitor);
+				}
+
 			}.schedule();
 		} catch (HgException e) {
 			throw new TeamException(e.getMessage(), e);
@@ -360,6 +363,7 @@ public class MercurialStatusCache extends Observable {
 			BitSet bitSet = new BitSet();
 			bitSet.set(getBitIndex(status.charAt(0)));
 			statusMap.put(member, bitSet);
+			
 			addToProjectResources(member);
 
 			// ancestors
@@ -371,6 +375,7 @@ public class MercurialStatusCache extends Observable {
 					bitSet.or(parentBitSet);
 				}
 				statusMap.put(parent, bitSet);
+				//addToProjectResources(parent);
 			}
 		}
 	}
@@ -467,14 +472,7 @@ public class MercurialStatusCache extends Observable {
 				if (member.equals(resource)) {
 					continue;
 				}
-				// IResource currParent = member.getParent();
-				// while (currParent != null) {
-				// if (currParent.equals(resource)) {
-				// members.add(member);
-				// break;
-				// }
-				// currParent = currParent.getParent();
-				// }
+
 				IResource foundMember = container.findMember(member.getName());
 				if (foundMember != null && foundMember.equals(member)) {
 					members.add(member);
@@ -496,7 +494,7 @@ public class MercurialStatusCache extends Observable {
 		if (bitSet != null) {
 			status = bitSet.length() - 1;
 		}
-  	    // only proceed if there were changes or we are at initial load.
+		// only proceed if there were changes or we are at initial load.
 		switch (status) {
 		case BIT_IGNORE:
 			return null;
@@ -508,5 +506,40 @@ public class MercurialStatusCache extends Observable {
 			return revisions.get(revisions.lastKey());
 		}
 		return null;
+	}
+
+	public void refreshAllLocalRevisions(IProject project) throws HgException {
+		Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
+				.getCompleteProjectLog(project);
+		for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
+				.hasNext();) {
+			IResource res = iter.next();
+			SortedSet<ChangeSet> changes = revisions.get(res);
+			if (changes != null && changes.size() > 0) {
+				SortedMap<Integer, ChangeSet> mercRevisions = new TreeMap<Integer, ChangeSet>();
+				ChangeSet[] changeSets = changes.toArray(new ChangeSet[changes
+						.size()]);
+
+				if (changeSets != null) {
+					for (ChangeSet changeSet : changeSets) {
+						mercRevisions.put(Integer.valueOf(changeSet
+								.getChangesetIndex()), changeSet);
+					}
+				}
+				BitSet bitSet = getStatus(res);
+				int status = BIT_UNKNOWN;
+				if (bitSet != null) {
+					status = bitSet.length() - 1;
+				}
+				// only proceed if there were changes or we are at initial load.
+				switch (status) {
+				case BIT_IGNORE:
+				case BIT_UNKNOWN:
+					continue;
+				}
+				versions.put(res, mercRevisions);				
+			}
+		}
+
 	}
 }

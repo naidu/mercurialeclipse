@@ -17,7 +17,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgIncomingClient {
 
-	private static String template = "{tags};;{rev};;{node|short};;{node};;{date|isodate};;{date|age};;{author|person};;{description};;{files};;!!";
+	public static String template = "{tags};;{rev};;{node|short};;{node};;{date|isodate};;{date|age};;{author|person};;{description};;{files};;!!";
 
 	/**
 	 * Gets all File Revisions that are incoming and saves them in a bundle
@@ -34,7 +34,7 @@ public class HgIncomingClient {
 			IProject proj, HgRepositoryLocation repository) throws HgException {
 		HgCommand command = new HgCommand("incoming", proj, false);
 		File bundleFile = getBundleFile(proj);
-		File temp = new File(proj.getLocation()+"bundle.temp");
+		File temp = new File(proj.getLocation() + "bundle.temp");
 		try {
 			command.addOptions("--template", template, "--bundle", temp
 					.getCanonicalPath(), repository.getUrl());
@@ -55,7 +55,6 @@ public class HgIncomingClient {
 		} catch (IOException e) {
 			throw new HgException(e.getMessage(), e);
 		}
-
 	}
 
 	public static File getBundleFile(IProject proj) {
@@ -74,14 +73,17 @@ public class HgIncomingClient {
 		for (String changeSet : changeSetStrings) {
 			ChangeSet cs = getChangeSet(changeSet, templ,
 					templateElementSeparator);
-			for (String file : cs.getChangedFiles()) {
-				IResource res = proj.getFile(file);
-				SortedSet<ChangeSet> incomingFileRevs = fileRevisions.get(res);
-				if (incomingFileRevs == null) {
-					incomingFileRevs = new TreeSet<ChangeSet>();
+			if (cs.getChangedFiles() != null) {
+				for (String file : cs.getChangedFiles()) {
+					IResource res = proj.getFile(file);
+					SortedSet<ChangeSet> incomingFileRevs = fileRevisions
+							.get(res);
+					if (incomingFileRevs == null) {
+						incomingFileRevs = new TreeSet<ChangeSet>();
+					}
+					incomingFileRevs.add(cs);
+					fileRevisions.put(res, incomingFileRevs);
 				}
-				incomingFileRevs.add(cs);
-				fileRevisions.put(res, incomingFileRevs);
 			}
 		}
 		return fileRevisions;
@@ -117,13 +119,20 @@ public class HgIncomingClient {
 				.get("{date|age}").intValue()];
 		String author = changeSetComponents[templatePositions.get(
 				"{author|person}").intValue()];
-		String description = changeSetComponents[templatePositions.get(
-				"{description}").intValue()];
-		String filesString = changeSetComponents[templatePositions.get(
-				"{files}").intValue()];
+		String description = "";
+		if (changeSetComponents.length - 1 > templatePositions
+				.get("{description}")) {
+			description = changeSetComponents[templatePositions.get(
+					"{description}").intValue()];
+		}
 
-		String[] files = filesString.split(" ");
+		String[] files = null;
+		if (changeSetComponents.length - 1 >= templatePositions.get("{files}")) {
+			String filesString = changeSetComponents[templatePositions.get(
+					"{files}").intValue()];
 
+			files = filesString.split(" ");
+		}
 		ChangeSet cs = new ChangeSet(Integer.parseInt(revision), nodeShort,
 				node, tag, author, date, ageDate, files, description);
 		return cs;

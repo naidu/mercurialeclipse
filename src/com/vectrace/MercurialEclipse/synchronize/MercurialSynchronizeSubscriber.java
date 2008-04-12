@@ -64,18 +64,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 			base = new MercurialResourceVariant(baseIStorage);
 
-			HgRevision rvRemote ;
+			HgRevision rvRemote;
 			IStorageMercurialRevision remoteIStorage;
 			if (csRemote != null) {
-				 rvRemote = csRemote.getRevision();
-				 remoteIStorage = new IStorageMercurialRevision(
-							resource, rvRemote + "", rvRemote.getChangeset());
+				rvRemote = csRemote.getRevision();
+				remoteIStorage = new IStorageMercurialRevision(resource,
+						rvRemote + "", rvRemote.getChangeset());
 			} else {
 				remoteIStorage = baseIStorage;
 			}
-			
-
-			
 
 			remote = new MercurialResourceVariant(remoteIStorage);
 

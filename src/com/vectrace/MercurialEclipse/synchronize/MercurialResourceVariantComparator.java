@@ -46,7 +46,7 @@ public class MercurialResourceVariantComparator implements
 				if (cs == null) {
 					return false;
 				}
-				localVersion = cs.toString();
+				localVersion = cs.getChangeset();
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}

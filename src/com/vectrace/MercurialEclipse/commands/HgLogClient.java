@@ -1,10 +1,13 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.util.Map;
+import java.util.SortedSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -53,7 +56,10 @@ public class HgLogClient {
 		try {
 			lines = command.executeToString().split("\n");
 		} catch (HgException e) {
-			if (!e.getMessage().contains("abort: can only follow copies/renames for explicit file names")) {
+			if (!e
+					.getMessage()
+					.contains(
+							"abort: can only follow copies/renames for explicit file names")) {
 				throw new HgException(e);
 			}
 			return null;
@@ -74,5 +80,21 @@ public class HgLogClient {
 		}
 
 		return changeSets;
+	}
+
+	public static Map<IResource, SortedSet<ChangeSet>> getCompleteProjectLog(
+			IProject proj) throws HgException {
+		HgCommand command = new HgCommand("log", proj, false);
+
+		command.addOptions("--template", HgIncomingClient.template);
+		String result = command.executeToString();
+		result = result.substring(result.lastIndexOf("\n") + 1);
+		if (result.contains("no changes found")) {
+			return null;
+		}
+		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
+				.createMercurialRevisions(result, proj, "!!",
+						HgIncomingClient.template, ";;");
+		return revisions;
 	}
 }

@@ -178,9 +178,10 @@ public class DecoratorStatus extends LabelProvider implements
 		if (prefix != null) {
 			decoration.addPrefix(prefix);
 		}
-		if (statusCache.isVersionKnown(objectResource)) {
-			try {
-				ChangeSet changeSet = statusCache.getVersion(objectResource);
+
+		try {
+			ChangeSet changeSet = statusCache.getVersion(objectResource);
+			if (changeSet != null) {
 				String hex = "";
 				if (objectResource.getType() == IResource.PROJECT) {
 					hex = ":" + changeSet.getChangeset();
@@ -190,17 +191,17 @@ public class DecoratorStatus extends LabelProvider implements
 						+ "]";
 
 				if (cs != null) {
-					suffix += "[" + cs.getChangesetIndex() + ":"
-							+ cs.getChangesetIndex() + "(" + cs.getUser() + ")]";
+					suffix += " < [" + cs.getChangesetIndex() + "] " + "("
+							+ cs.getUser() + ")";
 				}
 				decoration.addSuffix(suffix);
-
-			} catch (HgException e) {
-				MercurialEclipsePlugin
-						.logWarning("Couldn't get version of resource "
-								+ objectResource, e);
 			}
+
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logWarning(
+					"Couldn't get version of resource " + objectResource, e);
 		}
+
 	}
 
 	/*
