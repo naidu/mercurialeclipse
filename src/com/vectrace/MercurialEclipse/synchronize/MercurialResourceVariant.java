@@ -17,10 +17,11 @@ import org.eclipse.team.core.variants.IResourceVariant;
 
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
-public class MercurialRemoteResourceVariant implements IResourceVariant {
+public class MercurialResourceVariant implements IResourceVariant {
 	private IStorageMercurialRevision rev;
-	public MercurialRemoteResourceVariant(IStorageMercurialRevision rev) {
-		this.rev=rev;
+
+	public MercurialResourceVariant(IStorageMercurialRevision rev) {
+		this.rev = rev;
 	}
 
 	public byte[] asBytes() {
@@ -28,7 +29,7 @@ public class MercurialRemoteResourceVariant implements IResourceVariant {
 	}
 
 	public String getContentIdentifier() {
-		return rev.getName();
+		return rev.getRevision() + ":" + rev.getGlobal();
 	}
 
 	public String getName() {
@@ -39,7 +40,7 @@ public class MercurialRemoteResourceVariant implements IResourceVariant {
 		return rev;
 	}
 
-	public boolean isContainer() {		
+	public boolean isContainer() {
 		return false;
 	}
 

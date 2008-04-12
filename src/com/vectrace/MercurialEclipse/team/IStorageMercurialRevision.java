@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch			 - additions for sync
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -21,13 +22,10 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.IdentifyAction;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 /**
  * @author zingo
@@ -37,56 +35,87 @@ import com.vectrace.MercurialEclipse.actions.IdentifyAction;
  */
 public class IStorageMercurialRevision implements IStorage {
 	private String revision;
+	private String global;
 	private IResource resource;
+	private ChangeSet changeSet;
 
-	/**
-	 * 
-	 */
-
+	@Deprecated
 	public IStorageMercurialRevision(IResource res, String rev) {
 		super();
-		// project = proj;
 		resource = res;
 		revision = rev;
+		try {
+			changeSet = MercurialStatusCache.getInstance().getChangeSets(res)
+					.get(new Integer(rev));
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		} catch (NumberFormatException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
+
+	public IStorageMercurialRevision(IResource res, String rev, String global) {
+		super();
+		this.revision = rev;
+		this.global = global;
+		this.resource = res;
 	}
 
 	public IStorageMercurialRevision(IResource res, int rev) {
-		super();
-		// project = proj;
-		resource = res;
-		revision = String.valueOf(rev);
+		this(res, String.valueOf(rev));
 	}
 
-	public IStorageMercurialRevision(IResource res)
-  {
-    super();
-// project = proj;
-    resource = res;
-    revision=null;  // should be fetched from id
-    
-    File workingDir=MercurialUtilities.getWorkingDir( res );
-    IdentifyAction identifyAction = new IdentifyAction(null, res.getProject(), workingDir);
-    try
-    {
-      identifyAction.run();
-      revision = identifyAction.getChangeset(); 
-    }
-    catch (Exception e)
-    {
-      MercurialEclipsePlugin.logError("pull operation failed", e);
-// System.out.println("pull operation failed");
-// System.out.println(e.getMessage());
-      
-      IWorkbench workbench = PlatformUI.getWorkbench();
-      if (workbench.getActiveWorkbenchWindow()!=null){
-      Shell shell = workbench.getActiveWorkbenchWindow().getShell();
-      MessageDialog.openInformation(shell,"Mercurial Eclipse couldn't identify hg revision of \n" + res.getName().toString() + "\nusing tip",  identifyAction.getResult());
-      revision = "tip";
-      }
-    }
+	public IStorageMercurialRevision(IResource res) {
+		super();
 
-    
-  }
+		ChangeSet cs = null;
+		try {
+			cs = MercurialStatusCache.getInstance().getVersion(res);
+
+			this.resource = res;
+			this.revision = cs.getChangesetIndex() + ""; // should be fetched
+			// from id
+			this.global = cs.getChangeset();
+			this.changeSet = cs;
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		//
+		// // File workingDir = MercurialUtilities.getWorkingDir(res);
+		// // IdentifyAction identifyAction = new IdentifyAction(null, res
+		// // .getProject(), workingDir);
+		// String ident = "unknown 0";
+		// try {
+		// ident = HgIdentClient.getCurrentRevision((IContainer) res);
+		// // identifyAction.run();
+		// // FIXME What happens if more than one changeset is found by
+		// // identify? Currently just saving them and using the first.
+		// String[] results = HgIdentClient.getChangeSets(ident);
+		// changeSets = new ChangeSet[results.length];
+		// for (int i = 0; i < results.length; i++) {
+		// String[] parts = results[i].split(":");
+		// changeSets[i] = new ChangeSet(Integer.parseInt(parts[0]),
+		// parts[1], null, null);
+		// this.revision = parts[0];
+		// this.global = parts[1];
+		// }
+		//
+		// } catch (Exception e) {
+		// MercurialEclipsePlugin.logError("pull operation failed", e);
+		// // System.out.println("pull operation failed");
+		// // System.out.println(e.getMessage());
+		//
+		// IWorkbench workbench = PlatformUI.getWorkbench();
+		// if (workbench.getActiveWorkbenchWindow() != null) {
+		// Shell shell = workbench.getActiveWorkbenchWindow().getShell();
+		// MessageDialog.openInformation(shell,
+		// "Mercurial Eclipse couldn't identify hg revision of \n"
+		// + res.getName().toString() + "\nusing tip",
+		// ident);
+		// revision = "tip";
+		// }
+		// }
+	}
 
 	public IStorageMercurialRevision(IResource res, int rev, int depth) {
 		super();
@@ -122,11 +151,11 @@ public class IStorageMercurialRevision implements IStorage {
 		if (revision != null) {
 
 			String rev = revision;
-			/* convert <rev number>:<hash> to <hash> */
-			int separator = rev.indexOf(':');
-			if (separator != -1) {
-				rev = rev.substring(separator + 1);
-			}
+			/* convert <rev number>:<global> to <global> */
+			// int separator = rev.indexOf(':');
+			// if (separator != -1) {
+			// rev = rev.substring(separator + 1);
+			// }
 			launchCmd = new String[] { MercurialUtilities.getHGExecutable(),
 					"cat", "--rev", rev, "--",
 					MercurialUtilities.getResourceName(resource) };
@@ -170,13 +199,18 @@ public class IStorageMercurialRevision implements IStorage {
 		// "," + revision + ")::getName()" );
 		String name;
 		if (revision != null) {
-			name = "[" + revision + "]" + resource.getName();
+
+			name = "[" + getRevision() + "] " + resource.getName();
 		} else {
 			name = resource.getName();
 		}
 		// System.out.println("=" + name );
 
 		return name;
+	}
+
+	public String getRevision() {
+		return revision;
 	}
 
 	/*
@@ -204,5 +238,28 @@ public class IStorageMercurialRevision implements IStorage {
 
 	public IResource getResource() {
 		return resource;
+	}
+
+	public String getGlobal() {
+		return global;
+	}
+
+	public void setGlobal(String hash) {
+		this.global = hash;
+	}
+
+	/**
+	 * @return the changeSet
+	 */
+	public ChangeSet getChangeSet() {
+		return changeSet;
+	}
+
+	/**
+	 * @param changeSet
+	 *            the changeSet to set
+	 */
+	public void setChangeSet(ChangeSet changeSet) {
+		this.changeSet = changeSet;
 	}
 }

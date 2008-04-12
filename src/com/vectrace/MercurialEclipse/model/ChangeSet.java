@@ -80,4 +80,8 @@ public class ChangeSet
     return new HgRevision(changeset, changesetIndex);
   }
 
+  @Override
+public String toString() {
+	return this.changesetIndex+":"+this.changeset;
+}
 }

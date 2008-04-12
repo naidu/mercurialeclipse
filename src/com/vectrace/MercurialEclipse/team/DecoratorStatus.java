@@ -38,6 +38,8 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
@@ -51,8 +53,7 @@ public class DecoratorStatus extends LabelProvider implements
 	// modified
 	private static boolean folder_logic_2MM;
 	private static MercurialStatusCache statusCache;
-	
-	
+
 	/**
 	 * 
 	 */
@@ -162,8 +163,19 @@ public class DecoratorStatus extends LabelProvider implements
 			decoration.addPrefix(prefix);
 		}
 		if (statusCache.isVersionKnown(objectResource)) {
-			decoration.addSuffix(" [" + statusCache.getVersion(objectResource)
-					+ "]");
+			try {
+				ChangeSet changeSet = statusCache.getVersion(objectResource);
+				String hex = "";
+				if (objectResource.getType() == IResource.PROJECT) {
+					hex = ":" + changeSet.getChangeset();
+				}
+
+				decoration.addSuffix(" [" + changeSet.getChangesetIndex() + hex + "]");
+			} catch (HgException e) {
+				MercurialEclipsePlugin
+						.logWarning("Couldn't get version of resource "
+								+ objectResource, e);
+			}
 		}
 	}
 

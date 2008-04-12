@@ -24,6 +24,8 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
+import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
@@ -48,10 +50,32 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-		IResourceVariant remote = new MercurialRemoteResourceVariant(
-				new IStorageMercurialRevision(resource, statusCache.getVersion(resource)));
-		return new SyncInfo(resource, null, remote,
-				MercurialResourceVariantComparator.getInstance());
+		ChangeSet cs = statusCache.getVersion(resource);
+
+		IResourceVariant base;
+		IResourceVariant remote;
+		if (cs != null) {
+			HgRevision rv = cs.getRevision();
+
+			IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
+					resource, rv.getRevision() + "", rv.getChangeset());
+
+			base = new MercurialResourceVariant(baseIStorage);
+
+			// FIXME
+			IStorageMercurialRevision remoteIStorage = new IStorageMercurialRevision(
+					resource, rv.getRevision() + "", rv.getChangeset());
+
+			remote = new MercurialResourceVariant(remoteIStorage);
+
+			SyncInfo info = new MercurialSyncInfo(resource, base, remote,
+					MercurialResourceVariantComparator.getInstance());
+
+			info.init();
+			return info;
+		}
+		return null;
+
 	}
 
 	@Override

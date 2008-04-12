@@ -44,6 +44,8 @@ protected String[] getHgCommand()
     // Shell command setup.
     launchCmd.add(MercurialUtilities.getHGExecutable());
     launchCmd.add("identify");
+    launchCmd.add("-n");
+    launchCmd.add("-i");
     return launchCmd.toArray(new String[0]);
   }
 
@@ -58,22 +60,5 @@ protected File getHgWorkingDir()
 protected String getActionDescription()
   {
     return new String("Mercurial identify to check where we currently work");
-  }
-
-  public String getChangeset()
-  {
-    // It consists of the revision id (hash), optionally a '+' sign
-    // if the working tree has been modified, followed by a list of tags.
-    // => we need to strip it ...
-    String changeset = getResult();
-    if (changeset.indexOf(" ") != -1) // is there a space?
-    {
-      changeset = changeset.substring(0, changeset.indexOf(" ")); // take the begining until the first space
-    }
-    if (changeset.indexOf("+") != -1) // is there a +?
-    {
-      changeset = changeset.substring(0, changeset.indexOf("+")); // take the begining until the first +
-    }
-    return changeset;
-  }
+  }  
 }

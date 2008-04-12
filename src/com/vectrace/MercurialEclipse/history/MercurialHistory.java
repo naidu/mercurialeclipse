@@ -88,13 +88,13 @@ public class MercurialHistory extends FileHistory
       changeLog = new ChangeLog(resource);
       
 //      changeLog.ChangeChangeLog(in_resource);
-      Vector<ChangeSet> chageSets = changeLog.getChangeLog();
+      Vector<ChangeSet> changeSets = changeLog.getChangeLog();
       
       
-      revisions = new IFileRevision[chageSets.size()];
-      for(int i=0;i<chageSets.size();i++)
+      revisions = new IFileRevision[changeSets.size()];
+      for(int i=0;i<changeSets.size();i++)
       {
-        revisions[i]=new MercurialRevision(chageSets.get(i),resource);
+        revisions[i]=new MercurialRevision(changeSets.get(i),resource);
       }
     }
   } 

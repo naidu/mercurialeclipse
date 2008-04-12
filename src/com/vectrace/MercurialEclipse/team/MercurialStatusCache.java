@@ -22,8 +22,11 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -33,6 +36,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.storage.FileDataLoader;
 
 /**
  * Caches the Mercurial Status of each file and offers methods for retrieving,
@@ -55,7 +60,11 @@ public class MercurialStatusCache extends Observable {
 	private static MercurialStatusCache instance;
 
 	private MercurialStatusCache() {
-
+		try {
+			refresh();
+		} catch (TeamException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	public static MercurialStatusCache getInstance() {
@@ -71,9 +80,11 @@ public class MercurialStatusCache extends Observable {
 	/** Used to store which projects have already been parsed */
 	private static Set<IProject> knownStatus = new HashSet<IProject>();
 
-	private static Map<IProject, String> versions = new HashMap<IProject, String>();
+	private static Map<IResource, SortedMap<Integer, ChangeSet>> versions = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
 
 	private static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
+
+	private static Map<IResource, String> incomingVersions = new HashMap<IResource, String>();
 
 	/**
 	 * Clears the known status of all resources and projects. and calls for an
@@ -87,6 +98,8 @@ public class MercurialStatusCache extends Observable {
 		statusMap.clear();
 		knownStatus.clear();
 		projectResources.clear();
+		incomingVersions.clear();
+		versions.clear();
 		setChanged();
 		notifyObservers(knownStatus.toArray(new IProject[knownStatus.size()]));
 	}
@@ -133,9 +146,77 @@ public class MercurialStatusCache extends Observable {
 	 * @param objectResource
 	 *            the resource to get status for.
 	 * @return a String with version information.
+	 * @throws HgException
 	 */
-	public String getVersion(IResource objectResource) {
-		return versions.get(objectResource);
+	public ChangeSet getVersion(IResource objectResource) throws HgException {
+		SortedMap<Integer, ChangeSet> revisions = getChangeSets(objectResource);
+		if (revisions != null && revisions.size() > 0) {
+			return revisions.get(revisions.lastKey());
+		}
+		return null;
+	}
+
+	public SortedMap<Integer, ChangeSet> getChangeSets(IResource objectResource)
+			throws HgException {
+		SortedMap<Integer, ChangeSet> revisions = versions.get(objectResource);
+		if (revisions == null) {
+			revisions = refreshChangeSets(objectResource);
+		}
+		return revisions;
+	}
+
+	private SortedMap<Integer, ChangeSet> refreshChangeSets(
+			IResource objectResource) throws HgException {
+		SortedMap<Integer, ChangeSet> revisions;
+		switch (getStatus(objectResource).length() - 1) {
+		case BIT_UNKNOWN:
+		case BIT_IGNORE:
+			return null;
+		}
+		revisions = new TreeMap<Integer, ChangeSet>();
+		ChangeSet[] changeSets;
+		if (objectResource.getType() == IResource.PROJECT
+				|| objectResource.getType() == IResource.FOLDER) {
+
+			String projectChangeSet = HgIdentClient
+					.getCurrentRevision((IContainer) objectResource);
+
+			String[] changeSetStrings = HgIdentClient
+					.getChangeSets(projectChangeSet);
+
+			changeSets = new ChangeSet[changeSetStrings.length];
+
+			for (int i = 0; i < changeSets.length; i++) {
+				String[] parts = changeSetStrings[i].trim().split(":");
+				String rev = parts[0];
+				String hex = parts[1];
+
+				if (rev.endsWith("+")) {
+					rev = rev.substring(0, rev.length() - 1);
+				}
+
+				if (hex.endsWith("+")) {
+					hex = hex.substring(0, hex.length() - 1);
+				}
+
+				changeSets[i] = new ChangeSet(Integer.parseInt(rev), hex, null,
+						null);
+			}
+
+		} else {
+			changeSets = new FileDataLoader((IFile) objectResource)
+					.getRevisions();
+		}
+
+		if (changeSets != null) {
+			for (ChangeSet changeSet : changeSets) {
+				revisions.put(Integer.valueOf(changeSet.getChangesetIndex()),
+						changeSet);
+			}
+			versions.put(objectResource, revisions);
+		}
+
+		return revisions;
 	}
 
 	/**
@@ -147,16 +228,26 @@ public class MercurialStatusCache extends Observable {
 	public void refresh(IProject project) throws TeamException {
 		/* hg status on project (all files) instead of per file basis */
 		try {
-			// set version
-			versions.put(project, HgIdentClient.getCurrentRevision(project));
-
 			// set status
 			parseStatusCommand(project, HgStatusClient.getStatus(project));
 			setChanged();
 			notifyObservers(project);
+
+			// set version
+			refreshChangeSets(project);
+
+			// incoming
+			incomingVersions.put(project, getRemoteRepositoryVersion(project));
+			setChanged();
+			notifyObservers();
 		} catch (HgException e) {
 			throw new TeamException(e.getMessage(), e);
 		}
+	}
+
+	private String getRemoteRepositoryVersion(IProject project) {
+
+		return null;
 	}
 
 	/**
@@ -264,7 +355,7 @@ public class MercurialStatusCache extends Observable {
 	 */
 	public IResource[] getLocalMembers(IResource resource) {
 		IContainer container = (IContainer) resource;
-		
+
 		Set<IResource> members = new HashSet<IResource>();
 
 		switch (resource.getType()) {
@@ -281,26 +372,31 @@ public class MercurialStatusCache extends Observable {
 				if (member.equals(resource)) {
 					continue;
 				}
-//				IResource currParent = member.getParent();
-//				while (currParent != null) {
-//					if (currParent.equals(resource)) {
-//						members.add(member);
-//						break;
-//					}
-//					currParent = currParent.getParent();
-//				}
+				// IResource currParent = member.getParent();
+				// while (currParent != null) {
+				// if (currParent.equals(resource)) {
+				// members.add(member);
+				// break;
+				// }
+				// currParent = currParent.getParent();
+				// }
 				IResource foundMember = container.findMember(member.getName());
-				if (foundMember != null && foundMember.equals(member)){
+				if (foundMember != null && foundMember.equals(member)) {
 					members.add(member);
 				}
 			}
 		}
-		
+
 		return members.toArray(new IResource[members.size()]);
 	}
 
 	public IResource[] getIncomingMembers(IResource resource) {
-		// TODO
+		// TODO extract members not known from incoming that are members of
+		// resource
 		return new IResource[0];
+	}
+
+	public String getIncomingVersion(IResource resource) {
+		return null;
 	}
 }

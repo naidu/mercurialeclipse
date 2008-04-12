@@ -18,7 +18,7 @@ public class HgLogClient {
 		HgCommand command = new HgCommand("log", project, true);
 		return getRevisions(command);
 	}
-	
+
 	public static ChangeSet[] getRevisions(IFile file) throws HgException {
 		HgCommand command = new HgCommand("log", file.getParent(), true);
 		command.addOptions("-f");
@@ -26,46 +26,53 @@ public class HgLogClient {
 		return getRevisions(command);
 	}
 
-    public static ChangeSet[] getHeads(IProject project) throws HgException {
-        HgCommand command = new HgCommand("heads", project, true);
-        return getRevisions(command);
-    }
-    
-    public static String getGraphicalLog(IProject project) throws HgException {
-        HgCommand command = new HgCommand("glog", project, false);
-        command.addOptions("--config", "extensions.hgext.graphlog=");
-        return command.executeToString();
-    }
-    
+	public static ChangeSet[] getHeads(IProject project) throws HgException {
+		HgCommand command = new HgCommand("heads", project, true);
+		return getRevisions(command);
+	}
+
+	public static String getGraphicalLog(IProject project) throws HgException {
+		HgCommand command = new HgCommand("glog", project, false);
+		command.addOptions("--config", "extensions.hgext.graphlog=");
+		return command.executeToString();
+	}
+
 	/**
 	 * 
-	 * @param command a command with optionally its Files set
+	 * @param command
+	 *            a command with optionally its Files set
 	 * @return
 	 * @throws HgException
 	 */
-	private static ChangeSet[] getRevisions(HgCommand command) throws HgException {
-		command.addOptions(
-				"--template",
+	private static ChangeSet[] getRevisions(HgCommand command)
+			throws HgException {
+		command.addOptions("--template",
 				"{rev}:{node} {date|isodate} {author|person}\n");
 
-		String[] lines = command.executeToString().split("\n");
+		String[] lines = null;
+		try {
+			lines = command.executeToString().split("\n");
+		} catch (HgException e) {
+			if (!e.getMessage().contains("abort: can only follow copies/renames for explicit file names")) {
+				throw new HgException(e);
+			}
+			return null;
+		}
 		int length = lines.length;
 		ChangeSet[] changeSets = new ChangeSet[length];
-		for(int i=0; i<length; i++) {
+		for (int i = 0; i < length; i++) {
 			Matcher m = GET_REVISIONS_PATTERN.matcher(lines[i]);
 			if (m.matches()) {
-				ChangeSet changeSet = new ChangeSet(
-						Integer.parseInt(m.group(1)),
-						m.group(2),
-						m.group(4),
-						m.group(3)
-						);
+				ChangeSet changeSet = new ChangeSet(Integer
+						.parseInt(m.group(1)), m.group(2), m.group(4), m
+						.group(3));
 				changeSets[i] = changeSet;
 			} else {
-				throw new HgException("Parse exception: '"+lines[i]+"'");
+				throw new HgException("Parse exception: '" + lines[i] + "'");
 			}
+
 		}
-		
+
 		return changeSets;
 	}
 }

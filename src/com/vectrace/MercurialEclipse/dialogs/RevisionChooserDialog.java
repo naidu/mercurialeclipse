@@ -39,12 +39,12 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.storage.DataLoader;
+import com.vectrace.MercurialEclipse.storage.FileDataLoader;
+import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -52,62 +52,6 @@ import com.vectrace.MercurialEclipse.model.Tag;
  */
 public class RevisionChooserDialog extends Dialog {
 
-    private static abstract class DataLoader {
-        abstract IProject getProject();
-        abstract ChangeSet[] getRevisions() throws HgException;
-        
-        public Tag[] getTags() throws HgException {
-            return HgTagClient.getTags(getProject());
-        }
-
-        public ChangeSet[] getHeads() throws HgException {
-            return HgLogClient.getHeads(getProject());
-        }
-        
-        public int[] getParents() throws HgException {
-            return HgParentClient.getParents(getProject());
-        }
-        
-    }
-    
-    private static class FileDataLoader extends DataLoader {
-        
-        private IFile file;
-        
-        FileDataLoader(IFile file) {
-            this.file = file;
-        }
-        
-        @Override
-        IProject getProject() {
-            return file.getProject();
-        }
-        
-        @Override
-        ChangeSet[] getRevisions() throws HgException {
-            return HgLogClient.getRevisions(file);
-        }
-    }
-    
-    private static class ProjectDataLoader extends DataLoader {
-        
-        private IProject project;
-        
-        ProjectDataLoader(IProject project) {
-            this.project = project;
-        }
-        
-        @Override
-        IProject getProject() {
-            return project;
-        }
-        
-        @Override
-        ChangeSet[] getRevisions() throws HgException {
-            return HgLogClient.getRevisions(project);
-        }
-    }
-    
     private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getItalic(JFaceResources.DIALOG_FONT);
     
     private final DataLoader dataLoader;
@@ -116,6 +60,8 @@ public class RevisionChooserDialog extends Dialog {
 	private String revision;
 	
 	private final int[] parents;
+
+	private ChangeSet changeSet;
 
 	public RevisionChooserDialog(Shell parentShell, String title,
 	        IFile file) {
@@ -175,6 +121,7 @@ public class RevisionChooserDialog extends Dialog {
 	@Override
 	protected void okPressed() {
 		revision = text.getText().split(":")[0].trim();
+		changeSet = this.dataLoader.getChangeSetByRevision(Integer.parseInt(revision));
 		if (revision.length() == 0) {
 			revision = null;
 		}
@@ -199,7 +146,8 @@ public class RevisionChooserDialog extends Dialog {
 		table.addSelectionListener(new SelectionAdapter(){
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				text.setText(((TableItem)e.item).getText(0));
+				TableItem tableItem = ((TableItem)e.item);
+				text.setText(tableItem.getText(0));
 			}
 		});
 		
@@ -368,5 +316,9 @@ public class RevisionChooserDialog extends Dialog {
                 return false;
         }
     }
+
+	public ChangeSet getChangeSet() {
+		return changeSet;
+	}
     
 }

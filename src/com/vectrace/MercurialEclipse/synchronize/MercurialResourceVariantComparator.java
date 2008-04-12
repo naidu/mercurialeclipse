@@ -14,11 +14,17 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 public class MercurialResourceVariantComparator implements
 		IResourceVariantComparator {
+
 	private static MercurialResourceVariantComparator instance;
+	private static MercurialStatusCache statusCache = MercurialStatusCache
+			.getInstance();
 
 	private MercurialResourceVariantComparator() {
 	}
@@ -31,8 +37,24 @@ public class MercurialResourceVariantComparator implements
 	}
 
 	public boolean compare(IResource local, IResourceVariant remote) {
-		return new IStorageMercurialRevision(local).getName().equals(remote
-				.getContentIdentifier());
+		if (statusCache.getStatus(local).length() - 1 == MercurialStatusCache.BIT_CLEAN) {
+			String localVersion = "0:unknown";
+			String remoteVersion = "0:unknown";
+			try {
+				ChangeSet cs = statusCache.getVersion(local);
+				
+				if (cs == null) {
+					return false;
+				}
+				localVersion = cs.toString();
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+			remoteVersion = remote.getContentIdentifier();
+			return localVersion.equals(remoteVersion);
+		}
+		return false;
+
 	}
 
 	public boolean compare(IResourceVariant base, IResourceVariant remote) {
@@ -41,7 +63,7 @@ public class MercurialResourceVariantComparator implements
 	}
 
 	public boolean isThreeWay() {
-		return false;
+		return true;
 	}
 
 }

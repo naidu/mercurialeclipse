@@ -26,13 +26,11 @@ public class CompareWithAction extends CompareAction {
 
 	@Override
 	public void run(IFile file) throws TeamException {
-		RevisionChooserDialog dialog = new RevisionChooserDialog(
-				getShell(),
-				"Compare With Revision...",
-				file);
+		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
+				"Compare With Revision...", file);
 		int result = dialog.open();
-		if(result == IDialogConstants.OK_ID) {
-			CompareUtils.openEditor(file, dialog.getRevision());
+		if (result == IDialogConstants.OK_ID) {
+			CompareUtils.openEditor(file, dialog.getChangeSet());
 		}
 	}
 
