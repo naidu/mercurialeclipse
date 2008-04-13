@@ -12,13 +12,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.SortedMap;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 public class FileDataLoader extends DataLoader {
 
@@ -35,10 +38,18 @@ public class FileDataLoader extends DataLoader {
 
 	@Override
 	public ChangeSet[] getRevisions() throws HgException {
-		if (file.getType() == IResource.FILE) {
-			super.changeSets = HgLogClient.getRevisions(file);
-			return changeSets;
-		}
-		return null;
+		// if (file.getType() == IResource.FILE) {
+		// super.changeSets = HgLogClient.getRevisions(file);
+		// return changeSets;
+		// }
+		// return null;
+		
+		SortedMap<Integer, ChangeSet> changeSetMap = MercurialStatusCache
+				.getInstance().getLocalChangeSets(file);
+		ChangeSet[] changes = changeSetMap.values().toArray(
+				new ChangeSet[changeSetMap.values().size()]);
+		Collections.reverse(Arrays.asList(changes));
+		super.changeSets = changes;
+		return changes;
 	}
 }

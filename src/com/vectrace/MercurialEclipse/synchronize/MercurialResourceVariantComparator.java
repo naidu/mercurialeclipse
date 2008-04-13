@@ -37,22 +37,35 @@ public class MercurialResourceVariantComparator implements
 	}
 
 	public boolean compare(IResource local, IResourceVariant remote) {
-		if (statusCache.getStatus(local).length() - 1 == MercurialStatusCache.BIT_CLEAN) {
-			String localVersion = "0:unknown";
-			String remoteVersion = "0:unknown";
-			try {
-				ChangeSet cs = statusCache.getNewestLocalChangeSet(local);
-				
-				if (cs == null) {
-					return false;
+		if (statusCache.getStatus(local) != null) {
+			int status = statusCache.getStatus(local).length() - 1;
+			if (status == MercurialStatusCache.BIT_CLEAN) {
+				String localVersion = "0:unknown";
+				String remoteVersion = "0:unknown";
+				try {
+					ChangeSet cs = statusCache.getNewestLocalChangeSet(local);
+
+					if (cs == null) {
+						return false;
+					}
+					localVersion = cs.getChangeset();
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
 				}
-				localVersion = cs.getChangeset();
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+				remoteVersion = remote.getContentIdentifier();
+				boolean equal = localVersion.equals(remoteVersion);
+				return equal;
 			}
-			remoteVersion = remote.getContentIdentifier();
-			return localVersion.equals(remoteVersion);
 		}
+//		try {
+//			System.out.println("Local differs from remote:"
+//					+ local.getName() +","
+//					+ statusCache.getStatus(local) + ","
+//					+ statusCache.getNewestLocalChangeSet(local).getChangeset() + ","
+//					+ remote.getContentIdentifier());
+//		} catch (HgException e) {
+//			MercurialEclipsePlugin.logError(e);
+//		}
 		return false;
 
 	}

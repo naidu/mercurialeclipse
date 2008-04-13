@@ -89,11 +89,11 @@ public abstract class HgOperation extends TeamOperation {
     	return result;
     }
 	
-	// TODO: No background for now. Why not? I changed it...
+	// TODO: No background for now. 
 	@Override
     protected boolean canRunAsJob()
 	{
-		return true;
+		return false;
 	}
 
 	@Override

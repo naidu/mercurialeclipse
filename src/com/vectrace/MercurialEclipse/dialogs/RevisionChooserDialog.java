@@ -8,6 +8,7 @@
  * Contributors:
  *     Jérôme Nègre              - implementation
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch			 - small changes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 

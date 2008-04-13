@@ -70,7 +70,6 @@ public class CommitAction extends MultipleResourcesAction {
 				MercurialEclipsePlugin.logError("Unable to refresh project: ",
 						e);
 			}
-			// TODO Refresh history view TeamUI.getHistoryView().refresh();
 		}
 	}
 

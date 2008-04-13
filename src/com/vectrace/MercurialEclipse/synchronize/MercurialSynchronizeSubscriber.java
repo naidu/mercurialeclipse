@@ -39,6 +39,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	public MercurialSynchronizeSubscriber(ISynchronizeScope scope) {
 		this.myScope = scope;
 	}
+		
 
 	@Override
 	public String getName() {
@@ -133,7 +134,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	@Override
 	public IResource[] roots() {
 		if (myRoots == null) {
-			if (myScope.getRoots() != null) {
+			if (myScope != null && myScope.getRoots() != null) {
 				myRoots = myScope.getRoots();
 			} else {
 				myRoots = ResourcesPlugin.getWorkspace().getRoot()

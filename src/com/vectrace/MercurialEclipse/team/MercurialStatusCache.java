@@ -76,6 +76,7 @@ public class MercurialStatusCache extends Observable {
 	private static Map<IResource, SortedMap<Integer, ChangeSet>> incomingChangeSets;
 	private boolean localUpdateInProgress = false;
 	private boolean remoteUpdateInProgress = false;
+	private boolean statusUpdateInProgress;
 
 	private MercurialStatusCache() {
 		try {
@@ -122,6 +123,11 @@ public class MercurialStatusCache extends Observable {
 	 * @return true if known, false if not.
 	 */
 	public boolean isStatusKnown(IProject project) {
+		if (statusUpdateInProgress) {
+			synchronized (statusMap) {
+				// wait...
+			}
+		}
 		return knownStatus.contains(project);
 	}
 
@@ -136,6 +142,11 @@ public class MercurialStatusCache extends Observable {
 	 * @return the BitSet with status flags.
 	 */
 	public BitSet getStatus(IResource objectResource) {
+		if (statusUpdateInProgress) {
+			synchronized (statusMap) {
+				// wait...
+			}
+		}
 		return statusMap.get(objectResource);
 	}
 
@@ -147,6 +158,11 @@ public class MercurialStatusCache extends Observable {
 	 * @return true if known, false if not.
 	 */
 	public boolean isLocallyKnown(IResource objectResource) {
+		if (localUpdateInProgress) {
+			synchronized (localChangeSets) {
+				// wait...
+			}
+		}
 		return localChangeSets.containsKey(objectResource);
 	}
 
@@ -214,37 +230,6 @@ public class MercurialStatusCache extends Observable {
 		return incomingChangeSets.get(objectResource);
 	}
 
-	/*
-	 * public SortedMap<Integer, ChangeSet> refreshChangedLocalChangeSets(
-	 * IResource objectResource) throws HgException { int status = BIT_UNKNOWN;
-	 * BitSet bitSet = getStatus(objectResource); if (bitSet != null) { status =
-	 * bitSet.length() - 1; } // only proceed if there were changes or we are at
-	 * initial load. switch (status) { case BIT_UNKNOWN: case BIT_IGNORE: return
-	 * null; case BIT_CLEAN: if (isLocallyKnown(objectResource)) { return
-	 * localChangeSets.get(objectResource); } } // revisions =
-	 * loadLocalChangeSetInformation(objectResource);
-	 * refreshAllLocalRevisions(objectResource.getProject()); return
-	 * localChangeSets.get(objectResource); }
-	 */
-
-	/*
-	 * private SortedMap<Integer, ChangeSet> loadLocalChangeSetInformation(
-	 * IResource objectResource) throws HgException { SortedMap<Integer,
-	 * ChangeSet> revisions; revisions = new TreeMap<Integer, ChangeSet>();
-	 * ChangeSet[] changeSets;
-	 * 
-	 * if (objectResource.getType() == IResource.PROJECT ||
-	 * objectResource.getType() == IResource.FOLDER) {
-	 * 
-	 * changeSets = new ProjectDataLoader(objectResource.getProject())
-	 * .getRevisions(); } else { changeSets = new FileDataLoader((IFile)
-	 * objectResource) .getRevisions(); }
-	 * 
-	 * if (changeSets != null) { for (ChangeSet changeSet : changeSets) {
-	 * revisions.put(Integer.valueOf(changeSet.getChangesetIndex()), changeSet); }
-	 * localChangeSets.put(objectResource, revisions); } return revisions; }
-	 */
-
 	/**
 	 * Refreshes sync status of given project by questioning Mercurial.
 	 * 
@@ -294,8 +279,18 @@ public class MercurialStatusCache extends Observable {
 	 * @throws HgException
 	 */
 	public void refreshStatus(final IProject project) throws HgException {
-		synchronized (statusMap) {
-			parseStatusCommand(project, HgStatusClient.getStatus(project));
+		try {
+			synchronized (statusMap) {
+				statusUpdateInProgress = true;
+				IResource[] resources = getLocalMembers(project);
+				for (IResource resource : resources) {
+					statusMap.remove(resource);
+				}
+				String output = HgStatusClient.getStatus(project);
+				parseStatusCommand(project, output);
+			}
+		} finally {
+			statusUpdateInProgress = false;
 		}
 		setChanged();
 		notifyObservers(project);
@@ -305,44 +300,50 @@ public class MercurialStatusCache extends Observable {
 	private SortedMap<Integer, ChangeSet> refreshIncomingChangeSets(
 			IProject project) throws HgException {
 		synchronized (incomingChangeSets) {
-			remoteUpdateInProgress = true;
-			Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
-					.getRepoManager().getAllRepoLocations();
+			try {
+				remoteUpdateInProgress = true;
 
-			if (repositories == null) {
-				return null;
-			}
+				Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
+						.getRepoManager().getAllRepoLocations();
 
-			for (HgRepositoryLocation hgRepositoryLocation : repositories) {
+				if (repositories == null) {
+					return null;
+				}
 
-				Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
-						.getHgIncoming(project, hgRepositoryLocation);
+				for (HgRepositoryLocation hgRepositoryLocation : repositories) {
 
-				if (incomingResources != null && incomingResources.size() > 0) {
+					Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
+							.getHgIncoming(project, hgRepositoryLocation);
 
-					for (Iterator<IResource> iter = incomingResources.keySet()
-							.iterator(); iter.hasNext();) {
-						IResource res = iter.next();
-						SortedSet<ChangeSet> changes = incomingResources
-								.get(res);
+					if (incomingResources != null
+							&& incomingResources.size() > 0) {
 
-						if (changes != null && changes.size() > 0) {
-							SortedMap<Integer, ChangeSet> revisions = new TreeMap<Integer, ChangeSet>();
-							ChangeSet[] changeSets = changes
-									.toArray(new ChangeSet[changes.size()]);
+						for (Iterator<IResource> iter = incomingResources
+								.keySet().iterator(); iter.hasNext();) {
+							IResource res = iter.next();
+							SortedSet<ChangeSet> changes = incomingResources
+									.get(res);
 
-							if (changeSets != null) {
-								for (ChangeSet changeSet : changeSets) {
-									revisions.put(Integer.valueOf(changeSet
-											.getChangesetIndex()), changeSet);
+							if (changes != null && changes.size() > 0) {
+								SortedMap<Integer, ChangeSet> revisions = new TreeMap<Integer, ChangeSet>();
+								ChangeSet[] changeSets = changes
+										.toArray(new ChangeSet[changes.size()]);
+
+								if (changeSets != null) {
+									for (ChangeSet changeSet : changeSets) {
+										revisions.put(Integer.valueOf(changeSet
+												.getChangesetIndex()),
+												changeSet);
+									}
 								}
+								incomingChangeSets.put(res, revisions);
 							}
-							incomingChangeSets.put(res, revisions);
 						}
 					}
 				}
+			} finally {
+				remoteUpdateInProgress = false;
 			}
-			remoteUpdateInProgress = false;
 			return incomingChangeSets.get(project);
 		}
 	}
@@ -465,7 +466,9 @@ public class MercurialStatusCache extends Observable {
 			break;
 		case IResource.PROJECT:
 			Set<IResource> resources = projectResources.get(resource);
-			members.addAll(resources);
+			if (resources != null) {
+				members.addAll(resources);
+			}
 			break;
 		case IResource.FOLDER:
 			for (Iterator<IResource> iterator = statusMap.keySet().iterator(); iterator
@@ -509,40 +512,44 @@ public class MercurialStatusCache extends Observable {
 
 	public void refreshAllLocalRevisions(IProject project) throws HgException {
 		synchronized (localChangeSets) {
-			localUpdateInProgress = true;
-			Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
-					.getCompleteProjectLog(project);
-			for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
-					.hasNext();) {
-				IResource res = iter.next();
-				SortedSet<ChangeSet> changes = revisions.get(res);
-				if (changes != null && changes.size() > 0) {
-					SortedMap<Integer, ChangeSet> mercRevisions = new TreeMap<Integer, ChangeSet>();
-					ChangeSet[] changeSets = changes
-							.toArray(new ChangeSet[changes.size()]);
+			try {
+				localUpdateInProgress = true;
+				Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
+						.getCompleteProjectLog(project);
+				for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
+						.hasNext();) {
+					IResource res = iter.next();
+					SortedSet<ChangeSet> changes = revisions.get(res);
+					if (changes != null && changes.size() > 0) {
+						SortedMap<Integer, ChangeSet> mercRevisions = new TreeMap<Integer, ChangeSet>();
+						ChangeSet[] changeSets = changes
+								.toArray(new ChangeSet[changes.size()]);
 
-					if (changeSets != null) {
-						for (ChangeSet changeSet : changeSets) {
-							mercRevisions.put(Integer.valueOf(changeSet
-									.getChangesetIndex()), changeSet);
+						if (changeSets != null) {
+							for (ChangeSet changeSet : changeSets) {
+								mercRevisions.put(Integer.valueOf(changeSet
+										.getChangesetIndex()), changeSet);
+							}
 						}
+						BitSet bitSet = getStatus(res);
+						int status = BIT_UNKNOWN;
+						if (bitSet != null) {
+							status = bitSet.length() - 1;
+						}
+						// only proceed if there were changes or we are at
+						// initial
+						// load.
+						switch (status) {
+						case BIT_IGNORE:
+						case BIT_UNKNOWN:
+							continue;
+						}
+						localChangeSets.put(res, mercRevisions);
 					}
-					BitSet bitSet = getStatus(res);
-					int status = BIT_UNKNOWN;
-					if (bitSet != null) {
-						status = bitSet.length() - 1;
-					}
-					// only proceed if there were changes or we are at initial
-					// load.
-					switch (status) {
-					case BIT_IGNORE:
-					case BIT_UNKNOWN:
-						continue;
-					}
-					localChangeSets.put(res, mercRevisions);
 				}
+			} finally {
+				localUpdateInProgress = false;
 			}
-			localUpdateInProgress = false;
 		}
 	}
 }
