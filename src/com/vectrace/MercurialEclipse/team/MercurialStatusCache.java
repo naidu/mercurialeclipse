@@ -101,7 +101,7 @@ public class MercurialStatusCache extends Observable {
 	 * Clears the known status of all resources and projects. and calls for an
 	 * update of decoration
 	 */
-	public void clear() {
+	public synchronized void clear() {
 		/*
 		 * While this clearing of status is a "naive" implementation, it is
 		 * simple.
@@ -301,8 +301,8 @@ public class MercurialStatusCache extends Observable {
 			IProject project) throws HgException {
 		synchronized (incomingChangeSets) {
 			try {
-				remoteUpdateInProgress = true;
-
+				remoteUpdateInProgress = true;			
+				
 				Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
 						.getRepoManager().getAllRepoLocations();
 
@@ -310,11 +310,16 @@ public class MercurialStatusCache extends Observable {
 					return null;
 				}
 
+				IResource[] resources = getLocalMembers(project);
+				for (IResource resource : resources) {
+					incomingChangeSets.remove(resource);
+				}
+				
 				for (HgRepositoryLocation hgRepositoryLocation : repositories) {
 
 					Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
-							.getHgIncoming(project, hgRepositoryLocation);
-
+							.getHgIncoming(project, hgRepositoryLocation);					
+					
 					if (incomingResources != null
 							&& incomingResources.size() > 0) {
 
@@ -335,7 +340,7 @@ public class MercurialStatusCache extends Observable {
 												.getChangesetIndex()),
 												changeSet);
 									}
-								}
+								}								
 								incomingChangeSets.put(res, revisions);
 							}
 						}
@@ -513,9 +518,16 @@ public class MercurialStatusCache extends Observable {
 	public void refreshAllLocalRevisions(IProject project) throws HgException {
 		synchronized (localChangeSets) {
 			try {
-				localUpdateInProgress = true;
+				localUpdateInProgress = true;								
+				
 				Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
 						.getCompleteProjectLog(project);
+				
+				IResource[] resources = getLocalMembers(project);
+				for (IResource resource : resources) {
+					localChangeSets.remove(resource);
+				}
+				
 				for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
 						.hasNext();) {
 					IResource res = iter.next();
