@@ -98,7 +98,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 		if (remoteMembers.length > 0) {
 			members.addAll(Arrays.asList(remoteMembers));
 		}
-		// if somehow we added ourself (happens quite often for me...)
+		// we don't want ourself or the project as our member
+		members.remove(resource.getProject());
 		members.remove(resource);
 		return members.toArray(new IResource[members.size()]);
 	}

@@ -301,8 +301,8 @@ public class MercurialStatusCache extends Observable {
 			IProject project) throws HgException {
 		synchronized (incomingChangeSets) {
 			try {
-				remoteUpdateInProgress = true;			
-				
+				remoteUpdateInProgress = true;
+
 				Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
 						.getRepoManager().getAllRepoLocations();
 
@@ -310,16 +310,16 @@ public class MercurialStatusCache extends Observable {
 					return null;
 				}
 
-				IResource[] resources = getLocalMembers(project);
+				IResource[] resources = getIncomingMembers(project);
 				for (IResource resource : resources) {
 					incomingChangeSets.remove(resource);
 				}
-				
+
 				for (HgRepositoryLocation hgRepositoryLocation : repositories) {
 
 					Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
-							.getHgIncoming(project, hgRepositoryLocation);					
-					
+							.getHgIncoming(project, hgRepositoryLocation);
+
 					if (incomingResources != null
 							&& incomingResources.size() > 0) {
 
@@ -340,8 +340,10 @@ public class MercurialStatusCache extends Observable {
 												.getChangesetIndex()),
 												changeSet);
 									}
-								}								
-								incomingChangeSets.put(res, revisions);
+								}
+								if (res.getType() == IResource.FILE) {
+									incomingChangeSets.put(res, revisions);
+								}
 							}
 						}
 					}
@@ -369,7 +371,10 @@ public class MercurialStatusCache extends Observable {
 			bitSet.set(getBitIndex(status.charAt(0)));
 			statusMap.put(member, bitSet);
 
-			addToProjectResources(member);
+			if (member.getType() == IResource.FILE
+					&& getBitIndex(status.charAt(0)) != BIT_IGNORE) {
+				addToProjectResources(member);
+			}
 
 			// ancestors
 			for (IResource parent = member.getParent(); parent != ctrParent; parent = parent
@@ -473,6 +478,7 @@ public class MercurialStatusCache extends Observable {
 			Set<IResource> resources = projectResources.get(resource);
 			if (resources != null) {
 				members.addAll(resources);
+				members.remove(resource);
 			}
 			break;
 		case IResource.FOLDER:
@@ -518,16 +524,16 @@ public class MercurialStatusCache extends Observable {
 	public void refreshAllLocalRevisions(IProject project) throws HgException {
 		synchronized (localChangeSets) {
 			try {
-				localUpdateInProgress = true;								
-				
+				localUpdateInProgress = true;
+
 				Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
 						.getCompleteProjectLog(project);
-				
+
 				IResource[] resources = getLocalMembers(project);
 				for (IResource resource : resources) {
 					localChangeSets.remove(resource);
 				}
-				
+
 				for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
 						.hasNext();) {
 					IResource res = iter.next();
