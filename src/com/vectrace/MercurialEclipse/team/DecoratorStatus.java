@@ -14,13 +14,9 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.Observable;
+import java.util.Observer;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -36,49 +32,36 @@ import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author zingo
  * 
  */
-public class DecoratorStatus extends LabelProvider implements ILightweightLabelDecorator, IResourceChangeListener {
+public class DecoratorStatus extends LabelProvider implements
+		ILightweightLabelDecorator, IResourceChangeListener, Observer {
 
-	//relative order for folders
-	private final static int BIT_IGNORE     = 0;
-	private final static int BIT_CLEAN      = 1;
-	private final static int BIT_DELETED    = 2;
-	private final static int BIT_REMOVED    = 3;
-	private final static int BIT_UNKNOWN    = 4;
-	private final static int BIT_ADDED      = 5;
-	private final static int BIT_MODIFIED   = 6;
-	private final static int BIT_IMPOSSIBLE = 7;
-	
-	/** Used to store the last known status of a resource */
-	private static Map<IResource, BitSet> statusMap = new HashMap<IResource, BitSet>();
-
-	/** Used to store which projects have already been parsed */
-	private static Set<IProject> knownStatus = new HashSet<IProject>();
-
-	private static Map<IProject, String> versions = new HashMap<IProject, String>();
-
-	//set to true when having 2 different statuses in a folder flags it has modified
+	// set to true when having 2 different statuses in a folder flags it has
+	// modified
 	private static boolean folder_logic_2MM;
-	
+	private static MercurialStatusCache statusCache;
+
 	/**
 	 * 
 	 */
 	public DecoratorStatus() {
 		configureFromPreferences();
 		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+		statusCache = MercurialStatusCache.getInstance();
+		statusCache.addObserver(this);
 	}
 
 	private static void configureFromPreferences() {
@@ -88,20 +71,23 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 				.equals(store
 						.getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
 	}
-	
-	/** 
-	 * Clears the known status of all resources and projects.
-	 * and calls for a update of decoration
-	 *  
+
+	/**
+	 * Clears the known status of all resources and projects. and calls for a
+	 * update of decoration
+	 * 
 	 */
 	public static void refresh() {
-		/* While this clearing of status is a "naive" implementation, it is simple. */
-		IWorkbench workbench = PlatformUI.getWorkbench();
-		String decoratorId = DecoratorStatus.class.getName();
+		/*
+		 * While this clearing of status is a "naive" implementation, it is
+		 * simple.
+		 */
 		configureFromPreferences();
-		workbench.getDecoratorManager().update(decoratorId);
-		statusMap.clear();
-		knownStatus.clear();
+		// try {
+		// statusCache.refresh();
+		// } catch (TeamException e) {
+		// MercurialEclipsePlugin.logError(e);
+		// }
 	}
 
 	public void decorate(Object element, IDecoration decoration) {
@@ -119,124 +105,106 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 			return;
 		}
 
-		if (!knownStatus.contains(objectProject)) {
-			/* hg status on project (all files) instead of per file basis*/
+		if (!statusCache.isStatusKnown((objectProject))) {
 			try {
-				refresh(objectProject);
-			} catch (HgException ex) {
+				statusCache.refreshStatus(objectProject);
+			} catch (TeamException ex) {
 				MercurialEclipsePlugin.logError(ex);
 				return;
 			}
 		}
 
-		BitSet output = statusMap.get(element);
+		BitSet output = statusCache.getStatus(objectResource);
 		ImageDescriptor overlay = null;
 		String prefix = null;
-		if(output!=null) {
-			//"ignore" does not really count as modified 
-			if(folder_logic_2MM && (output.cardinality()>2 || (output.cardinality()==2 && !output.get(BIT_IGNORE)))) {
+		if (output != null) {
+			// "ignore" does not really count as modified
+			if (folder_logic_2MM
+					&& (output.cardinality() > 2 || (output.cardinality() == 2 && !output
+							.get(MercurialStatusCache.BIT_IGNORE)))) {
 				overlay = DecoratorImages.modifiedDescriptor;
 				prefix = ">";
 			} else {
-				switch(output.length()-1) {
-					case BIT_MODIFIED:
-						overlay = DecoratorImages.modifiedDescriptor;
-						prefix = ">";
-						break;
-					case BIT_ADDED:
-						overlay = DecoratorImages.addedDescriptor;
-						prefix = ">";
-						break;
-					case BIT_UNKNOWN:
-						overlay = DecoratorImages.notTrackedDescriptor;
-						prefix = ">";
-						break;
-					case BIT_CLEAN:
-						overlay = DecoratorImages.managedDescriptor;
-						break;
-					//case BIT_IGNORE:
-					//do nothing
-					case BIT_REMOVED:
-						overlay = DecoratorImages.removedDescriptor;
-						prefix = ">";
-						break;
-					case BIT_DELETED:
-						overlay = DecoratorImages.deletedStillTrackedDescriptor;
-						prefix = ">";
-						break;
+				switch (output.length() - 1) {
+				case MercurialStatusCache.BIT_MODIFIED:
+					overlay = DecoratorImages.modifiedDescriptor;
+					prefix = ">";
+					break;
+				case MercurialStatusCache.BIT_ADDED:
+					overlay = DecoratorImages.addedDescriptor;
+					prefix = ">";
+					break;
+				case MercurialStatusCache.BIT_UNKNOWN:
+					overlay = DecoratorImages.notTrackedDescriptor;
+					prefix = ">";
+					break;
+				case MercurialStatusCache.BIT_CLEAN:
+					overlay = DecoratorImages.managedDescriptor;
+					break;
+				// case BIT_IGNORE:
+				// do nothing
+				case MercurialStatusCache.BIT_REMOVED:
+					overlay = DecoratorImages.removedDescriptor;
+					prefix = ">";
+					break;
+				case MercurialStatusCache.BIT_DELETED:
+					overlay = DecoratorImages.deletedStillTrackedDescriptor;
+					prefix = ">";
+					break;
 				}
 			}
 		} else {
-			//empty folder, do nothing
+			// empty folder, do nothing
 		}
-		if(overlay != null) {
+		if (overlay != null) {
 			decoration.addOverlay(overlay);
 		}
-		if(prefix != null) {
-			decoration.addPrefix(prefix);
+
+		ChangeSet cs = null;
+		try {
+			cs = statusCache.getNewestIncomingChangeSet(objectResource);
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
 		}
-		if (versions.containsKey(element)) {
-			decoration.addSuffix(" [" + versions.get(element) + "]");
-		}
-	}
 
-	/**
-	 * @param project
-	 * @throws HgException
-	 */
-	private void refresh(IProject project) throws HgException {
-		versions.put(project, HgIdentClient.getCurrentRevision(project));
-		parseStatusCommand(project, HgStatusClient.getStatus(project));
-	}
-
-	/**
-	 * @param output
-	 */
-	private void parseStatusCommand(IProject ctr, String output) {
-		IContainer ctrParent = ctr.getParent();
-		knownStatus.add(ctr);
-		Scanner scanner = new Scanner(output);
-		while (scanner.hasNext()) {
-			String status = scanner.next();
-			String localName = scanner.nextLine();
-			IResource member = ctr.getFile(localName.trim());
-
-			BitSet bitSet = new BitSet();
-			bitSet.set(getBitIndex(status.charAt(0)));
-			statusMap.put(member, bitSet);
-			
-			//ancestors
-			for (IResource parent = member.getParent(); parent != ctrParent; parent = parent.getParent()) {
-				BitSet parentBitSet = statusMap.get(parent);
-				if(parentBitSet!=null) {
-					bitSet = (BitSet)bitSet.clone();
-					bitSet.or(parentBitSet);
-				}
-				statusMap.put(parent, bitSet);
+		if (cs != null) {
+			if (prefix == null) {
+				prefix = "<";
+			} else {
+				prefix = "<" + prefix;
 			}
 		}
-	}
-	
-	private final int getBitIndex(char status) {
-		switch(status) {
-			case '!':
-				return BIT_DELETED;
-			case 'R':
-				return BIT_REMOVED;
-			case 'I':
-				return BIT_IGNORE;
-			case 'C':
-				return BIT_CLEAN;
-			case '?':
-				return BIT_UNKNOWN;
-			case 'A':
-				return BIT_ADDED;
-			case 'M':
-				return BIT_MODIFIED;
-			default:
-				MercurialEclipsePlugin.logWarning("Unknown status: '"+status+"'", null);
-				return BIT_IMPOSSIBLE;
+
+		if (prefix != null) {
+			decoration.addPrefix(prefix);
 		}
+
+		try {
+			ChangeSet changeSet = statusCache.getNewestLocalChangeSet(objectResource);
+			if (changeSet != null) {
+				String hex = ":" + changeSet.getNodeShort();
+				String suffix = " [" + changeSet.getChangesetIndex() + hex
+						+ "]";
+
+				if (objectResource.getType() == IResource.FILE) {
+					suffix = " [" + changeSet.getChangesetIndex() +"] ";
+
+					if (cs != null) {
+						suffix += "< [" + cs.getChangesetIndex() + ":"
+								+ cs.getNodeShort() + " " + cs.getUser() + "]";
+					}
+				}
+
+				if (objectResource.getType() != IResource.FOLDER) {
+					decoration.addSuffix(suffix);
+				}
+			}
+
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logWarning(
+					"Couldn't get version of resource " + objectResource, e);
+		}
+
 	}
 
 	/*
@@ -244,7 +212,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 	 * 
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
 	 */
-  @Override
+	@Override
 	public void addListener(ILabelProviderListener listener) {
 	}
 
@@ -253,7 +221,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 	 * 
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
 	 */
-  @Override
+	@Override
 	public void dispose() {
 		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
 	}
@@ -264,7 +232,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object,
 	 *      java.lang.String)
 	 */
-  @Override
+	@Override
 	public boolean isLabelProperty(Object element, String property) {
 		return false;
 	}
@@ -274,7 +242,7 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 	 * 
 	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
 	 */
-  @Override
+	@Override
 	public void removeListener(ILabelProviderListener listener) {
 	}
 
@@ -287,22 +255,37 @@ public class DecoratorStatus extends LabelProvider implements ILightweightLabelD
 		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
 			IResourceDelta[] children = event.getDelta().getAffectedChildren();
 			for (IResourceDelta delta : children) {
-				IResource res = delta.getResource();
+				final IResource res = delta.getResource();
 				if (null != RepositoryProvider.getProvider(res.getProject(),
 						MercurialTeamProvider.ID)) {
 					// Atleast one resource in a project managed by MEP has
 					// changed, schedule a refresh();
 
-					new SafeUiJob("Update Decorations") {
-						@Override
-						protected IStatus runSafe(IProgressMonitor monitor) {
-							refresh();
-							return super.runSafe(monitor);
-						}
-					}.schedule();
+					try {
+						MercurialStatusCache.getInstance().refreshStatus(
+								res.getProject());
+					} catch (TeamException e) {
+						MercurialEclipsePlugin.logError(
+								"Couldn't refresh project:", e);
+					}
+
 					return;
 				}
 			}
+		}
+	}
+
+	public void update(Observable o, Object updatedObject) {
+		if (o == statusCache) {
+			final IWorkbench workbench = PlatformUI.getWorkbench();
+			final String decoratorId = DecoratorStatus.class.getName();
+			new SafeUiJob("Update Decorations") {
+				@Override
+				protected IStatus runSafe(IProgressMonitor monitor) {
+					workbench.getDecoratorManager().update(decoratorId);
+					return super.runSafe(monitor);
+				}
+			}.schedule();
 		}
 	}
 }

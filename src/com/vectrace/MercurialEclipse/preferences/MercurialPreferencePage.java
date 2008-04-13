@@ -19,11 +19,12 @@ import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.team.DecoratorStatus;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 /**
  * This class represents a preference page that
@@ -76,7 +77,11 @@ public void createFieldEditors()
     	@Override
     	protected void doStore() {
     		super.doStore();
-    		DecoratorStatus.refresh();
+    		try {
+				MercurialStatusCache.getInstance().refresh();
+			} catch (TeamException e) {
+				MercurialEclipsePlugin.logError("Couldn't refresh projects in workspace.",e);
+			}
     	}
     });
   }

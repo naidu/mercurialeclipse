@@ -38,7 +38,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import com.vectrace.MercurialEclipse.team.CompareAction;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 
 public class RevertDialog extends Dialog 
@@ -177,7 +177,7 @@ public class RevertDialog extends Dialog
             if (sel.getFirstElement() instanceof CommitResource) 
             {
               CommitResource resource = (CommitResource) sel.getFirstElement();
-              new CompareAction(true).openEditor(resource.getResource());
+              CompareUtils.openEditor(resource.getResource(), true);
             }
           }
         });

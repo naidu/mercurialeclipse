@@ -9,12 +9,14 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - some updates
+ *     Bastian Doetsch           - new qualified name for project sets
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
@@ -28,6 +30,14 @@ public class MercurialTeamProvider extends RepositoryProvider
 {
 
    public static final String ID = "com.vectrace.MercurialEclipse.team.MercurialTeamProvider";
+   
+    /**
+     * Qualified Name for the repository a project was cloned from.
+     */
+	public static final QualifiedName QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY = new QualifiedName(
+			ID + ".projectSourceRepository",
+			"MercurialEclipseProjectSourceRepository");
+	
   MercurialHistoryProvider FileHistoryProvider; 
 	/**
 	 * 

@@ -23,6 +23,7 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -143,7 +144,11 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             	MercurialEclipsePlugin.logError(e);
 //              System.out.println(e.getMessage());
             }
-          DecoratorStatus.refresh();
+            try {
+        		MercurialStatusCache.getInstance().refresh(proj);
+        	} catch (TeamException e) {
+        		MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
+        	}
           }
         }
 //        else

@@ -79,6 +79,8 @@ public class ShowAnnotationOperation extends TeamOperation
 		        (entry != null ? entry.getDescription() : ""); //$NON-NLS-1$
 		  }
 
+		
+		@Override
 		public String getAuthor()
 		  {
 		    return block.getUser();

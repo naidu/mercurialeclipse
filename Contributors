@@ -53,4 +53,8 @@ Charles O'Farrell - Fix decoration on Project outside of workspace.
 Jerome Negre - 
      Zingo's Comment: Jerome started to fix a few issues and started add missing features like 
      .hgignore support, after that he has made numerous contributions.
+
+Bastian Doetsch - 
+	I'm interested in Mercurial and MercurialEclipse so I started contributing a bit while learning. 
+	I try to get the synchronize infrastructure to work.
      

@@ -10,18 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-
-import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.CompareUI;
-import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.Assert;
 import org.eclipse.team.core.TeamException;
 
-import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
-import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
@@ -29,54 +21,9 @@ import com.vectrace.MercurialEclipse.compare.RevisionNode;
  */
 public class CompareAction extends SingleFileAction {
 
-  private boolean dialog;
-  
-  public CompareAction() {
-    super();
-  }
-  
-  public CompareAction(boolean dialog) {
-    this.dialog = dialog;
-  }
-  
-  @Override
-	public void run(IFile file) throws TeamException {
-		openEditor(file);
-	}
-	
-  public void openEditor(IResource file) {
-    openEditor(null, new IStorageMercurialRevision(file));
-  }
-  
-	public void openEditor(IResource file, String changeset) {
-	  openEditor(null, new IStorageMercurialRevision(file, changeset)); 
-	}
-	
-	public void openEditor(IStorageMercurialRevision left, IStorageMercurialRevision right) {
-	  openEditor(getNode(left), getNode(right));
-	}
+    @Override
+    protected void run(IFile file) throws TeamException {
+        CompareUtils.openEditor(file, false);
+    }
 
-	public void openEditor(ResourceNode left, ResourceNode right) {
-	  Assert.isNotNull(right);
-		CompareEditorInput compareInput = getCompareInput(left, right);
-		if (compareInput != null) {
-		  if(dialog) {
-		    CompareUI.openCompareDialog(compareInput);
-		  } else {
-		    CompareUI.openCompareEditor(compareInput);
-		  }
-		}
-	}
-
-	private CompareEditorInput getCompareInput(ResourceNode left, ResourceNode right) {
-	  IResource resource = right.getResource();
-    return new HgCompareEditorInput(new CompareConfiguration(), resource,
-	      left != null ? left : right,
-	      left != null ? right : new ResourceNode(resource)
-	  );
-	}
-	
-	private RevisionNode getNode(IStorageMercurialRevision rev) {
-	  return rev == null ? null : new RevisionNode(rev);
-	}
 }

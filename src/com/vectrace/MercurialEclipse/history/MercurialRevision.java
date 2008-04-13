@@ -30,16 +30,19 @@ public class MercurialRevision extends FileRevision
 {
   IResource resource; 
   ChangeSet changeSet; 
+  private String revision;
+  private String hash;
   IStorageMercurialRevision iStorageMercurialRevision; //Cached data
   
   public MercurialRevision(ChangeSet changeSet,IResource resource)
   {
     super();
     this.changeSet = changeSet;
+    String[] changeSetParts = changeSet.getChangeset().split(":");
+	this.revision = changeSetParts[0];
+	this.hash = changeSetParts[1];
     this.resource=resource;
   }
-
-  
   
   public ChangeSet getChangeSet()
   {
@@ -66,20 +69,20 @@ public String getContentIdentifier()
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileRevision#getStorage(org.eclipse.core.runtime.IProgressMonitor)
    */
-  public IStorage getStorage(IProgressMonitor monitor) throws CoreException
-  {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::getStorage()");
-    if(iStorageMercurialRevision==null)
-    {
-      iStorageMercurialRevision = new IStorageMercurialRevision(resource,changeSet.getChangeset());
-    }
-    return iStorageMercurialRevision;
-  }
+  public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
+		// System.out.println("MercurialRevision::getStorage()");
+		if (iStorageMercurialRevision == null) {			
+			iStorageMercurialRevision = new IStorageMercurialRevision(resource,
+					revision, hash);
+		}
+		return iStorageMercurialRevision;
+	}
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.core.history.IFileRevision#isPropertyMissing()
-   */
+  /*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.team.core.history.IFileRevision#isPropertyMissing()
+	 */
   public boolean isPropertyMissing()
   {
     // TODO Auto-generated method stub
@@ -96,5 +99,41 @@ public String getContentIdentifier()
 //    System.out.println("MercurialRevision::withAllProperties()");
     return null;
   }
+
+
+
+/**
+ * @return the revision
+ */
+public String getRevision() {
+	return revision;
+}
+
+
+
+/**
+ * @param revision the revision to set
+ */
+public void setRevision(String revision) {
+	this.revision = revision;
+}
+
+
+
+/**
+ * @return the hash
+ */
+public String getHash() {
+	return hash;
+}
+
+
+
+/**
+ * @param hash the hash to set
+ */
+public void setHash(String hash) {
+	this.hash = hash;
+}
 
 }

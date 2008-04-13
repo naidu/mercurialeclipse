@@ -10,6 +10,7 @@
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch			 - now storing clone repository
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.wizards;
@@ -18,6 +19,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -35,22 +37,26 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * 
  */
 
-public class CloneRepoWizard extends SyncRepoWizard
-{
-	
-  /* (non-Javadoc)
-   * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
-   */
-  @Override
-public void init(IWorkbench workbench, IStructuredSelection selection) 
-  {
-    setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
-    setNeedsProgressMonitor(true);
-    syncRepoLocationPage = new SyncRepoPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone","no repo name",null);
-  }
+public class CloneRepoWizard extends SyncRepoWizard {
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
+	 *      org.eclipse.jface.viewers.IStructuredSelection)
+	 */
+	@Override
+	public void init(IWorkbench workbench, IStructuredSelection selection) {
+		setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+		syncRepoLocationPage = new SyncRepoPage(true, "CreateRepoPage",
+				"Create Repository Location",
+				"Create a repository location to clone", "no repo name", null);
+	}
 
-  /* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
 	 */
 	@Override
@@ -63,7 +69,8 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     // Check that this project doesn't exist.
     if( project.getLocation() != null )
     {
-      // TODO: Ask if user wants to torch everything there before the clone, otherwise fail.
+      // TODO: Ask if user wants to torch everything there before the clone,
+		// otherwise fail.
       System.out.println( "Project " + projectName + " already exists");
       return false;
     }
@@ -72,13 +79,13 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
 
     try
     {
-      cloneRepoAction.run();
+      cloneRepoAction.run();      
     }
     catch (Exception e)
     {
     	MercurialEclipsePlugin.logError("Clone operation failed", e);
-//      System.out.println("Clone operation failed");
-//      System.out.println(e.getMessage());
+// System.out.println("Clone operation failed");
+// System.out.println(e.getMessage());
     }
 
     // FIXME: Project creation must be done after the clone otherwise the
@@ -90,6 +97,10 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     {
       project.create(null);
       project.open(null);
+      
+      // we need an identifier (=qualified name) to store settings
+      QualifiedName qualifiedName = MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY;      
+      project.setPersistentProperty(qualifiedName, locationUrl);
     }
     catch(CoreException e)
     {
@@ -114,6 +125,5 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     MercurialEclipsePlugin.getRepoManager().addRepoLocation(repo);
 
     return true;
-  }	
-  
+  }
 }

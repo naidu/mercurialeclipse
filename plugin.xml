@@ -16,6 +16,7 @@
  *     Charles O'Farrell         - Annotation with color
  *     Jerome Negre              - Moving menus around
  *     Sebastian                 - Better naming
+ *     Bastian Doetsch           - RepositoryProviderType for ProjectSets
  *******************************************************************************/
 -->
 
@@ -25,10 +26,12 @@
    <extension point="org.eclipse.team.core.repository">
 	  <repository
     	 class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
+    	 typeClass="com.vectrace.MercurialEclipse.team.MercurialTeamProviderType"
 		 id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-		  metaFilePaths=".hg/">
+		  metaFilePaths=".hg/">		  
  	  </repository>
    </extension>
+   
 	<extension point="org.eclipse.team.ui.configurationWizards">
 	   <wizard
 	        name="Mercurial"
@@ -37,14 +40,14 @@
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
 	   </wizard>
 	</extension>
-
-<!-- TODO 
+		
+     
 	<extension point="org.eclipse.team.ui.synchronizeParticipants">
 	   <participant
 	        icon="icons/mercurialeclipse.png"
-	        id="com.vectrace.MercurialEclipse.team.MercurialSynchronizeParticipant"
-	        class="com.vectrace.MercurialEclipse.team.MercurialSynchronizeParticipant"
-	        name="Mercurial Syncronisation"
+	        id="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
+	        class="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
+	        name="Mercurial Synchronization"
 	        persistent="true">
 	   </participant>
 	</extension>
@@ -54,11 +57,11 @@
 	        name="Mercurial"
 			description="Mercurial synchronize wizard"
 	        icon="icons/mercurialeclipse.png"
-	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
-	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
+	        class="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard"
+	        id="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard">
 	   </wizard>
 	</extension>
--->
+
 
 	<extension point="org.eclipse.ui.decorators">
 	    <decorator
@@ -124,19 +127,47 @@
                id="com.vectrace.MercurialEclipse.team.AddAction">
            </action>
            <action
+               label="Switch to Another Changeset..."
+               class="com.vectrace.MercurialEclipse.team.SwitchAction"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.SwitchAction"
+               enablesFor="1">
+           </action>
+           <action
+               label="Merge... (work in progress)"
+               class="com.vectrace.MercurialEclipse.team.MergeAction"
+               icon="icons/branches_rep.gif"
+               menubarPath="team.main/group3"
+               id="com.vectrace.MercurialEclipse.team.MergeAction">
+               <enablement>
+                   <not>
+	               	   <objectState
+	                       name="projectPersistentProperty"
+	                       value="com.vectrace.MercurialEclipse.merging">
+	                   </objectState>
+                   </not>
+               </enablement>
+           </action>
+           <action
                label="Tag as Version..."
                class="com.vectrace.MercurialEclipse.team.TagAction"
-               tooltip="hg tag"
+               icon="icons/tags.gif"
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.TagAction"
                enablesFor="1">
+           </action>
+           <action
+               label="Show Graphical Log"
+               class="com.vectrace.MercurialEclipse.team.GLogAction"
+               menubarPath="team.main/group4"
+               id="com.vectrace.MercurialEclipse.team.GLogAction">
            </action>
            <action
                label="Show &amp;History"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
                icon="icons/history.gif"
                tooltip="hg log"
-               menubarPath="team.main/group2"
+               menubarPath="team.main/group4"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
            <action
@@ -156,14 +187,29 @@
            <action
                label="Pull..."
                class="com.vectrace.MercurialEclipse.team.ActionPull"
-               tooltip="pull changes from remote/local reposetory (hg pull)"
+               tooltip="pull changes from remote/local repository (hg pull)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPull">
            </action>
            <action
+               label="Update"
+               class="com.vectrace.MercurialEclipse.team.UpdateAction"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.UpdateAction"
+               enablesFor="1">
+          </action>
+          <action
+               label="Pull and Update..."
+               class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
+               tooltip="pull changes from remote/local repository and update (hg pull -u)"
+               menubarPath="team.main/group1"
+               id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
+               enablesFor="1">
+           </action>
+           <action
                label="Push..."
                class="com.vectrace.MercurialEclipse.team.ActionPush"
-               tooltip="push changes to remote/local reposetory (hg push)"
+               tooltip="push changes to remote/local repository (hg push)"
                menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
@@ -306,6 +352,16 @@
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
      </factory>
+   </extension>
+   
+   <!-- Views -->
+   
+   <extension point="org.eclipse.ui.views">
+      <view
+        class="com.vectrace.MercurialEclipse.views.MergeView"
+        id="com.vectrace.MercurialEclipse.views.MergeView"
+        name="Merge">
+      </view>
    </extension>
    
 </plugin>

@@ -16,9 +16,11 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.dialogs.CheckedTreeSelectionDialog;
-import org.eclipse.ui.views.navigator.ResourceSorter;
+import org.eclipse.ui.views.navigator.ResourceComparator;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -68,11 +70,15 @@ public class AddAction extends MultipleResourcesAction {
 		dialog.setMessage("Select the files to add to Mercurial");
 		dialog.setContainerMode(true);
 		dialog.setInitialElementSelections(resources);
-		dialog.setSorter(new ResourceSorter(ResourceSorter.NAME));
+		dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
 		dialog.addFilter(untrackedFilter);
 		if(dialog.open() ==  IDialogConstants.OK_ID) {
 			HgAddClient.addResources(filter(dialog.getResult()), null);
-			DecoratorStatus.refresh();
+			 try {
+					MercurialStatusCache.getInstance().refresh();
+				} catch (TeamException e) {
+					MercurialEclipsePlugin.logError(e);
+			 }
 		}
 	}
 	

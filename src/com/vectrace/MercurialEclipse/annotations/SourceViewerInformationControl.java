@@ -47,7 +47,9 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 			super(store);
 		}
 
-		    protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
+		
+		    @Override
+			protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
 		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", //$NON-NLS-1$
 		            null);
 		//            new IAdaptable() {

@@ -26,6 +26,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
@@ -210,7 +211,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
                 {
                 	MercurialEclipsePlugin.logError(e);
 //                  System.out.println( e.getMessage() );
-                	return;
+                  this_repository = null;
                 }
                 
                 if(this_repository.compareTo(repository) == 0) // Match? Is this file in the same reposetory?
@@ -246,7 +247,11 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
         } while(notEmpty); //Loop until we are empty.        
       }         
     }
-    DecoratorStatus.refresh();
+    try {
+		MercurialStatusCache.getInstance().refresh(project);
+	} catch (TeamException e) {
+		MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
+	}
     //TODO Refresh history view TeamUI.getHistoryView().refresh();
   }
 
