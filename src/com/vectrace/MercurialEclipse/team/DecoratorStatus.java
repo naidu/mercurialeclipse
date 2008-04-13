@@ -162,7 +162,7 @@ public class DecoratorStatus extends LabelProvider implements
 
 		ChangeSet cs = null;
 		try {
-			cs = statusCache.getIncomingVersion(objectResource);
+			cs = statusCache.getNewestIncomingChangeSet(objectResource);
 		} catch (HgException e1) {
 			MercurialEclipsePlugin.logError(e1);
 		}
@@ -180,21 +180,24 @@ public class DecoratorStatus extends LabelProvider implements
 		}
 
 		try {
-			ChangeSet changeSet = statusCache.getVersion(objectResource);
+			ChangeSet changeSet = statusCache.getNewestLocalChangeSet(objectResource);
 			if (changeSet != null) {
-				String hex = "";
-				if (objectResource.getType() == IResource.PROJECT) {
-					hex = ":" + changeSet.getChangeset();
-				}
-
+				String hex = ":" + changeSet.getNodeShort();
 				String suffix = " [" + changeSet.getChangesetIndex() + hex
 						+ "]";
 
-				if (cs != null) {
-					suffix += " < [" + cs.getChangesetIndex() + "] " + "("
-							+ cs.getUser() + ")";
+				if (objectResource.getType() == IResource.FILE) {
+					suffix = " [" + changeSet.getChangesetIndex() +"] ";
+
+					if (cs != null) {
+						suffix += "< [" + cs.getChangesetIndex() + ":"
+								+ cs.getNodeShort() + " " + cs.getUser() + "]";
+					}
 				}
-				decoration.addSuffix(suffix);
+
+				if (objectResource.getType() != IResource.FOLDER) {
+					decoration.addSuffix(suffix);
+				}
 			}
 
 		} catch (HgException e) {
@@ -259,7 +262,7 @@ public class DecoratorStatus extends LabelProvider implements
 					// changed, schedule a refresh();
 
 					try {
-						MercurialStatusCache.getInstance().refresh(
+						MercurialStatusCache.getInstance().refreshStatus(
 								res.getProject());
 					} catch (TeamException e) {
 						MercurialEclipsePlugin.logError(

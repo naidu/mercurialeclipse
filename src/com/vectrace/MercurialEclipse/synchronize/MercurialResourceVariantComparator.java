@@ -41,7 +41,7 @@ public class MercurialResourceVariantComparator implements
 			String localVersion = "0:unknown";
 			String remoteVersion = "0:unknown";
 			try {
-				ChangeSet cs = statusCache.getVersion(local);
+				ChangeSet cs = statusCache.getNewestLocalChangeSet(local);
 				
 				if (cs == null) {
 					return false;

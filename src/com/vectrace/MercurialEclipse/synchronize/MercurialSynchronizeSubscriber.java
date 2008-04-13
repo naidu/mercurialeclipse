@@ -52,8 +52,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-		ChangeSet csBase = statusCache.getVersion(resource);
-		ChangeSet csRemote = statusCache.getIncomingVersion(resource);
+		ChangeSet csBase = statusCache.getNewestLocalChangeSet(resource);
+		ChangeSet csRemote = statusCache.getNewestIncomingChangeSet(resource);
 		IResourceVariant base;
 		IResourceVariant remote;
 		if (csBase != null) {
@@ -88,7 +88,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public boolean isSupervised(IResource resource) throws TeamException {
-		return statusCache.isStatusKnown(resource);
+		return statusCache.isSupervised(resource);
 	}
 
 	@Override
@@ -96,10 +96,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 		Set<IResource> members = new HashSet<IResource>();
 		IResource[] localMembers = statusCache.getLocalMembers(resource);
 		IResource[] remoteMembers = statusCache.getIncomingMembers(resource);
-		members.addAll(Arrays.asList(localMembers));
+		members.addAll(Arrays.asList(localMembers));		
 		if (remoteMembers.length > 0) {
 			members.addAll(Arrays.asList(remoteMembers));
 		}
+		// if somehow we added ourself (happens quite often for me...)
+		members.remove(resource);
 		return members.toArray(new IResource[members.size()]);
 	}
 

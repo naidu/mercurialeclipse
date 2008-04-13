@@ -33,7 +33,7 @@ public class HgIncomingClient {
 	public static Map<IResource, SortedSet<ChangeSet>> getHgIncoming(
 			IProject proj, HgRepositoryLocation repository) throws HgException {
 		HgCommand command = new HgCommand("incoming", proj, false);
-		File bundleFile = getBundleFile(proj);
+		File bundleFile = getBundleFile(proj,repository);
 		File temp = new File(proj.getLocation() + "bundle.temp");
 		try {
 			command.addOptions("--template", template, "--bundle", temp
@@ -57,10 +57,11 @@ public class HgIncomingClient {
 		}
 	}
 
-	public static File getBundleFile(IProject proj) {
+	public static File getBundleFile(IProject proj, HgRepositoryLocation loc) {
+		String strippedLocation = loc.getUrl().replace('.', '_').replace(':', '.');
 		return MercurialEclipsePlugin.getDefault().getStateLocation().append(
 				MercurialEclipsePlugin.BUNDLE_FILE_PREFIX + "."
-						+ proj.getName() + ".hg").toFile();
+						+ proj.getName() + "." + strippedLocation + ".hg").toFile();
 	}
 
 	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
@@ -76,17 +77,33 @@ public class HgIncomingClient {
 			if (cs.getChangedFiles() != null) {
 				for (String file : cs.getChangedFiles()) {
 					IResource res = proj.getFile(file);
-					SortedSet<ChangeSet> incomingFileRevs = fileRevisions
-							.get(res);
-					if (incomingFileRevs == null) {
-						incomingFileRevs = new TreeSet<ChangeSet>();
-					}
-					incomingFileRevs.add(cs);
+					SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
+							fileRevisions, cs, res);
 					fileRevisions.put(res, incomingFileRevs);
 				}
 			}
+			SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(
+					fileRevisions, cs, proj);
+			fileRevisions.put(proj, projectRevs);
 		}
 		return fileRevisions;
+	}
+
+	/**
+	 * @param fileRevisions
+	 * @param cs
+	 * @param res
+	 * @return
+	 */
+	private static SortedSet<ChangeSet> addChangeSetRevisions(
+			Map<IResource, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs,
+			IResource res) {
+		SortedSet<ChangeSet> incomingFileRevs = fileRevisions.get(res);
+		if (incomingFileRevs == null) {
+			incomingFileRevs = new TreeSet<ChangeSet>();
+		}
+		incomingFileRevs.add(cs);
+		return incomingFileRevs;
 	}
 
 	public static ChangeSet getChangeSet(String changeSet, String templ,

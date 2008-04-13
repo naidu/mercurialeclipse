@@ -45,7 +45,7 @@ public class IStorageMercurialRevision implements IStorage {
 		resource = res;
 		revision = rev;
 		try {
-			changeSet = MercurialStatusCache.getInstance().getChangeSets(res)
+			changeSet = MercurialStatusCache.getInstance().getLocalChangeSets(res)
 					.get(new Integer(rev));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -70,7 +70,7 @@ public class IStorageMercurialRevision implements IStorage {
 
 		ChangeSet cs = null;
 		try {
-			cs = MercurialStatusCache.getInstance().getVersion(res);
+			cs = MercurialStatusCache.getInstance().getNewestLocalChangeSet(res);
 
 			this.resource = res;
 			this.revision = cs.getChangesetIndex() + ""; // should be fetched
