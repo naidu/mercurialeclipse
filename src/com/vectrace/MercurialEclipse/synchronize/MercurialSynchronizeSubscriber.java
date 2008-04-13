@@ -25,7 +25,6 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
-import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
@@ -58,19 +57,17 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 		IResourceVariant base;
 		IResourceVariant remote;
 		if (csBase != null) {
-			HgRevision rv = csBase.getRevision();
 
 			IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
-					resource, rv.getRevision() + "", rv.getChangeset());
+					resource, csBase.getRevision() + "", csBase.getChangeset(), csBase);
 
 			base = new MercurialResourceVariant(baseIStorage);
 
-			HgRevision rvRemote;
 			IStorageMercurialRevision remoteIStorage;
 			if (csRemote != null) {
-				rvRemote = csRemote.getRevision();
+				
 				remoteIStorage = new IStorageMercurialRevision(resource,
-						rvRemote + "", rvRemote.getChangeset());
+						csRemote.getRevision() + "", csRemote.getChangeset(), csRemote);
 			} else {
 				remoteIStorage = baseIStorage;
 			}

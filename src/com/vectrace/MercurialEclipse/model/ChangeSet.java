@@ -13,6 +13,7 @@
 
 package com.vectrace.MercurialEclipse.model;
 
+import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -30,6 +31,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private String ageDate;
 	private String nodeShort;
 	private Date realDate;
+	private File bundleFile;
 
 	public ChangeSet(int changesetIndex, String changeSet, String tag,
 			String user, String date, String files, String description) {
@@ -40,9 +42,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		this.date = date;
 		this.files = files;
 		this.description = description;
+		
 		try {
 			if (date != null) {
-				this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss Z")
+				this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z")
 						.parse(date);
 			}
 		} catch (Exception e) {
@@ -57,11 +60,12 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
 	public ChangeSet(int rev, String nodeShort, String node, String tag,
 			String author, String date, String ageDate, String[] changedFiles,
-			String description) {
+			String description, File bundle) {
 		this(rev, node, tag, author, date, null, description);
 		this.nodeShort = nodeShort;
 		this.ageDate = ageDate;
 		this.changedFiles = changedFiles;
+		this.bundleFile = bundle;
 	}
 
 	public int getChangesetIndex() {
@@ -174,5 +178,19 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
 	public Date getRealDate() {
 		return this.realDate;
+	}
+
+	/**
+	 * @return the bundleFile
+	 */
+	public File getBundleFile() {
+		return bundleFile;
+	}
+
+	/**
+	 * @param bundleFile the bundleFile to set
+	 */
+	public void setBundleFile(File bundleFile) {
+		this.bundleFile = bundleFile;
 	}
 }

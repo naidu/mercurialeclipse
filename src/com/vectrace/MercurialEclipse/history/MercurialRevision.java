@@ -73,7 +73,7 @@ public String getContentIdentifier()
 		// System.out.println("MercurialRevision::getStorage()");
 		if (iStorageMercurialRevision == null) {			
 			iStorageMercurialRevision = new IStorageMercurialRevision(resource,
-					revision, hash);
+					revision, hash, changeSet);
 		}
 		return iStorageMercurialRevision;
 	}

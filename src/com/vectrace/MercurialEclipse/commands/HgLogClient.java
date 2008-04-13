@@ -94,7 +94,7 @@ public class HgLogClient {
 		}
 		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
 				.createMercurialRevisions(result, proj, "!!",
-						HgIncomingClient.template, ";;");
+						HgIncomingClient.template, ";;", null);
 		return revisions;
 	}
 }

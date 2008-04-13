@@ -15,12 +15,12 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 public class CompareUtils {
 
     public static void openEditor(IResource file, boolean dialog) {
-        openEditor(null, new IStorageMercurialRevision(file, null,null), dialog);
+        openEditor(null, new IStorageMercurialRevision(file, null,null,null), dialog);
     }
 
     public static void openEditor(IResource file, ChangeSet changeset) {    	  	
         openEditor(null,
-				new IStorageMercurialRevision(file, changeset.getChangesetIndex()+"", changeset.getChangeset() ), false);
+				new IStorageMercurialRevision(file, changeset.getChangesetIndex()+"", changeset.getChangeset(), changeset ), false);
     }
 
     public static void openEditor(IStorageMercurialRevision left, IStorageMercurialRevision right,

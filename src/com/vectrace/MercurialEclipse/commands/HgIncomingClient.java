@@ -44,7 +44,7 @@ public class HgIncomingClient {
 				return null;
 			}
 			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-					result, proj, "!!", template, ";;");
+					result, proj, "!!", template, ";;",bundleFile);
 			temp.renameTo(bundleFile);
 			return revisions;
 		} catch (HgException hg) {
@@ -58,7 +58,7 @@ public class HgIncomingClient {
 	}
 
 	public static File getBundleFile(IProject proj, HgRepositoryLocation loc) {
-		String strippedLocation = loc.getUrl().replace('.', '_').replace(':', '.');
+		String strippedLocation = loc.getUrl().replace('/', '_').replace(':', '.');
 		return MercurialEclipsePlugin.getDefault().getStateLocation().append(
 				MercurialEclipsePlugin.BUNDLE_FILE_PREFIX + "."
 						+ proj.getName() + "." + strippedLocation + ".hg").toFile();
@@ -66,7 +66,7 @@ public class HgIncomingClient {
 
 	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
 			String input, IProject proj, String changeSetSeparator,
-			String templ, String templateElementSeparator) {
+			String templ, String templateElementSeparator, File bundleFile) {
 		String[] changeSetStrings = input.split(changeSetSeparator);
 
 		Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
@@ -74,6 +74,10 @@ public class HgIncomingClient {
 		for (String changeSet : changeSetStrings) {
 			ChangeSet cs = getChangeSet(changeSet, templ,
 					templateElementSeparator);
+			
+			// add bundle file for being able to look into the bundle.
+			
+			cs.setBundleFile(bundleFile);
 			if (cs.getChangedFiles() != null) {
 				for (String file : cs.getChangedFiles()) {
 					IResource res = proj.getFile(file);
@@ -151,7 +155,7 @@ public class HgIncomingClient {
 			files = filesString.split(" ");
 		}
 		ChangeSet cs = new ChangeSet(Integer.parseInt(revision), nodeShort,
-				node, tag, author, date, ageDate, files, description);
+				node, tag, author, date, ageDate, files, description, null);
 		return cs;
 	}
 }

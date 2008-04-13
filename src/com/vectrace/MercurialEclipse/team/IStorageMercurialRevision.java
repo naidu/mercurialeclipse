@@ -15,13 +15,18 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -54,11 +59,12 @@ public class IStorageMercurialRevision implements IStorage {
 		}
 	}
 
-	public IStorageMercurialRevision(IResource res, String rev, String global) {
+	public IStorageMercurialRevision(IResource res, String rev, String global, ChangeSet cs) {
 		super();
 		this.revision = rev;
 		this.global = global;
 		this.resource = res;
+		this.changeSet = cs;
 	}
 
 	public IStorageMercurialRevision(IResource res, int rev) {
@@ -147,20 +153,31 @@ public class IStorageMercurialRevision implements IStorage {
 	public InputStream getContents() throws CoreException {
 
 		// Setup and run command
-		String[] launchCmd;
-		if (revision != null) {
-
-			String rev = revision;
-			/* convert <rev number>:<global> to <global> */
-			// int separator = rev.indexOf(':');
-			// if (separator != -1) {
-			// rev = rev.substring(separator + 1);
-			// }
-			launchCmd = new String[] { MercurialUtilities.getHGExecutable(),
-					"cat", "--rev", rev, "--",
-					MercurialUtilities.getResourceName(resource) };
+		String[] cmd;		
+		if (changeSet != null) {					
+			
+			List<String>launchCmd =new ArrayList<String>();
+			launchCmd.add(MercurialUtilities.getHGExecutable());
+			
+			if (changeSet!=null && changeSet.getBundleFile() != null){
+				launchCmd.add("-R");
+				try {
+					launchCmd.add(changeSet.getBundleFile().getCanonicalFile().getCanonicalPath());
+				} catch (IOException e) {					
+					MercurialEclipsePlugin.logError(e);
+					throw new CoreException(new Status(IStatus.ERROR,MercurialEclipsePlugin.ID,e.getMessage(),e));
+				}
+			}
+			
+			launchCmd.add("cat");
+			launchCmd.add("-r");
+			launchCmd.add(changeSet.getChangesetIndex()+"");
+			launchCmd.add(MercurialUtilities.getResourceName(resource));
+			
+			cmd = launchCmd.toArray(new String[launchCmd.size()]);			
+			
 		} else {
-			launchCmd = new String[] { MercurialUtilities.getHGExecutable(),
+			cmd = new String[] { MercurialUtilities.getHGExecutable(),
 					"cat", "--", MercurialUtilities.getResourceName(resource) };
 		}
 		File workingDir = MercurialUtilities.getWorkingDir(resource);
@@ -171,7 +188,7 @@ public class IStorageMercurialRevision implements IStorage {
 		 * (see the javadoc of java.lang.Process for a possible explanation)
 		 */
 		ByteArrayOutputStream resultStream = MercurialUtilities
-				.ExecuteCommandToByteArrayOutputStream(launchCmd, workingDir,
+				.ExecuteCommandToByteArrayOutputStream(cmd, workingDir,
 						true);
 		return new ByteArrayInputStream(resultStream.toByteArray());
 	}
