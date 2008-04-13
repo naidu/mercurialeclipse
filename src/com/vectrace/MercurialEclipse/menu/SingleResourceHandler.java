@@ -17,6 +17,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
@@ -47,6 +48,7 @@ public abstract class SingleResourceHandler extends AbstractHandler {
         try {
             run(getSelectedResource());
         } catch (Exception e) {
+            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
             throw new ExecutionException(e.getMessage(), e);
         }
         return null;
