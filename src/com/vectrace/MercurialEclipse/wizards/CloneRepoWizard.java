@@ -26,7 +26,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.RepositoryCloneAction;
+import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -75,11 +75,9 @@ public class CloneRepoWizard extends SyncRepoWizard {
       return false;
     }
     
-    RepositoryCloneAction cloneRepoAction = new RepositoryCloneAction(null, workspace, repo, parameters, projectName,null);
-
     try
     {
-      cloneRepoAction.run();      
+      HgCloneClient.clone(workspace, repo, parameters, projectName);
     }
     catch (Exception e)
     {

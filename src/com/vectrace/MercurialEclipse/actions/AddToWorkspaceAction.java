@@ -25,6 +25,7 @@ import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.actions.WorkspaceModifyOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -102,10 +103,11 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
 						referenceParts[2]);
 
 				// Use action from clone command
-				RepositoryCloneAction action = new RepositoryCloneAction(null,
-						workspace, location, null, proj.getName(), null);
-
-				action.run(monitor);
+//				RepositoryCloneAction action = new RepositoryCloneAction(null,
+//						workspace, location, null, proj.getName(), null);				
+//				action.run(monitor);
+				
+				HgCloneClient.clone(workspace, location, null, proj.getName());
 
 				// FIXME: This is duplicate code (from CloneRepoWizard) which
 				// has to be refactored.

@@ -16,12 +16,11 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.RepositoryPullAction;
+import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -61,27 +60,21 @@ public boolean performFinish()
       return false;
     }
 
-
-    RepositoryPullAction repositoryPullAction = new RepositoryPullAction(null, project, repo,null, doUpdate);
-
-
-
     try
     {
-      repositoryPullAction.run();
 
-      Shell shell;
-      IWorkbench workbench;
-
-      workbench = PlatformUI.getWorkbench();
-      shell = workbench.getActiveWorkbenchWindow().getShell();
-
-      if(repositoryPullAction.getResult() != null && repositoryPullAction.getResult().length() != 0)
+      String result = HgPushPullClient.pull(project, repo, doUpdate);
+      if(result.length() != 0)
       {
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Pull output",  repositoryPullAction.getResult());
-      } else { 
-    	MessageDialog.openInformation(shell,"Mercurial Eclipse Pull failed.",  repositoryPullAction.getResult());
-    	throw new TeamException("pull operation failed");
+
+        Shell shell;
+        IWorkbench workbench;
+
+        workbench = PlatformUI.getWorkbench();
+        shell = workbench.getActiveWorkbenchWindow().getShell();
+
+        MessageDialog.openInformation(shell,"Mercurial Eclipse Pull output",  result);
+
       }
       
     }

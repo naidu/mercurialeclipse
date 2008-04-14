@@ -55,4 +55,10 @@ public class DecoratorImages
    */ 
   public static final ImageDescriptor managedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/managed_ov.gif");
   
+  /**
+   * Conflict Image Descriptor
+   */ 
+  //FIXME temporary picture
+  public static final ImageDescriptor conflictDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/confchg_ov.gif");
+  
 }

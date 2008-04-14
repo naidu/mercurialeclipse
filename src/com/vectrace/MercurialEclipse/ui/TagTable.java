@@ -21,21 +21,22 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
-import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.Tag;
 
 /**
  * 
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
-public class ChangesetTable extends Composite {
+public class TagTable extends Composite {
 
     private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getItalic(
             JFaceResources.DIALOG_FONT);
 
     private Table table;
     private int[] parents;
+    private boolean showTip = true;
 
-    public ChangesetTable(Composite parent) {
+    public TagTable(Composite parent) {
         super(parent, SWT.NONE);
 
         this.setLayout(new GridLayout());
@@ -48,8 +49,8 @@ public class ChangesetTable extends Composite {
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Global", "Date", "Author" };
-        int[] widths = { 50, 150, 150, 100 };
+        String[] titles = { "Rev", "Global", "Tag", "Local" };
+        int[] widths = { 50, 150, 300, 70 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
@@ -57,40 +58,41 @@ public class ChangesetTable extends Composite {
         }
     }
 
+    public void hideTip() {
+        this.showTip = false;
+    }
+
     public void highlightParents(int[] newParents) {
         this.parents = newParents;
     }
 
-    public void setChangesets(ChangeSet[] sets) {
+    public void setTags(Tag[] tags) {
         table.removeAll();
-        for (ChangeSet rev : sets) {
-            TableItem row = new TableItem(table, SWT.NONE);
-            if (parents != null && isParent(rev.getChangesetIndex())) {
-                row.setFont(PARENT_FONT);
+        for (Tag tag : tags) {
+            if (showTip || !"tip".equals(tag.getName())) {
+                TableItem row = new TableItem(table, SWT.NONE);
+                if (parents != null && isParent(tag.getRevision())) {
+                    row.setFont(PARENT_FONT);
+                }
+                row.setText(0, Integer.toString(tag.getRevision()));
+                row.setText(1, tag.getGlobalId());
+                row.setText(2, tag.getName());
+                row.setText(3, tag.isLocal() ? "local" : "");
+                row.setData(tag);
             }
-            row.setText(0, Integer.toString(rev.getChangesetIndex()));
-            row.setText(1, rev.getChangeset());
-            row.setText(2, rev.getDate());
-            row.setText(3, rev.getUser());
-            row.setData(rev);
         }
     }
 
-    public ChangeSet getSelection() {
+    public Tag getSelection() {
         TableItem[] selection = table.getSelection();
         if (selection.length == 0) {
             return null;
         }
-        return (ChangeSet) selection[0].getData();
+        return (Tag) selection[0].getData();
     }
 
     public void addSelectionListener(SelectionListener listener) {
         table.addSelectionListener(listener);
-    }
-
-    @Override
-    public void setEnabled(boolean enabled) {
-        table.setEnabled(enabled);
     }
 
     private boolean isParent(int r) {

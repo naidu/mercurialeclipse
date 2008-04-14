@@ -73,12 +73,18 @@ public class AddAction extends MultipleResourcesAction {
 		dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
 		dialog.addFilter(untrackedFilter);
 		if(dialog.open() ==  IDialogConstants.OK_ID) {
-			HgAddClient.addResources(filter(dialog.getResult()), null);
+//<<<<<<< local
+			HgAddClient.addResources(keepFiles(dialog.getResult()), null);
 			 try {
 					MercurialStatusCache.getInstance().refresh();
 				} catch (TeamException e) {
 					MercurialEclipsePlugin.logError(e);
 			 }
+//=======
+//		    Object[] result = dialog.getResult();
+//			HgAddClient.addResources(keepFiles(result), null);
+//			MercurialEclipsePlugin.refreshProjectsFlags(keepProjects(result));
+//>>>>>>> other
 		}
 	}
 	
@@ -87,7 +93,7 @@ public class AddAction extends MultipleResourcesAction {
 	 * @param objects
 	 * @return
 	 */
-	private List<IResource> filter(Object[] objects) {
+	private List<IResource> keepFiles(Object[] objects) {
 		List<IResource> files = new ArrayList<IResource>();
 		for(Object object : objects) {
 			if(object instanceof IFile) {
@@ -97,6 +103,21 @@ public class AddAction extends MultipleResourcesAction {
 		return files;
 	}
 	
+//    /**
+//     * Only keep IProjects
+//     * @param objects
+//     * @return
+//     */
+//    private List<IProject> keepProjects(Object[] objects) {
+//        List<IProject> projects = new ArrayList<IProject>();
+//        for(Object object : objects) {
+//            if(object instanceof IProject) {
+//                projects.add((IProject)object);
+//            }
+//        }
+//        return projects;
+//    }
+    
 	private Set<IProject> getRoots(List<IResource> resources) {
 		Set<IProject> roots = new TreeSet<IProject>(new Comparator<IProject>() {
 			public int compare(IProject p1, IProject p2) {

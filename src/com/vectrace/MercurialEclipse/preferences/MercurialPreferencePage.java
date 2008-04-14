@@ -26,6 +26,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
+
 /**
  * This class represents a preference page that
  * is contributed to the Preferences dialog. By 
@@ -82,6 +83,7 @@ public void createFieldEditors()
 			} catch (TeamException e) {
 				MercurialEclipsePlugin.logError("Couldn't refresh projects in workspace.",e);
 			}
+    		//ResourceDecorator.onConfigurationChanged();
     	}
     });
   }

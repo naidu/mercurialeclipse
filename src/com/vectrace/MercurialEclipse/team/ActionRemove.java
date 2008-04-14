@@ -144,11 +144,14 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             	MercurialEclipsePlugin.logError(e);
 //              System.out.println(e.getMessage());
             }
+
             try {
         		MercurialStatusCache.getInstance().refresh(proj);
         	} catch (TeamException e) {
         		MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
         	}
+//            MercurialEclipsePlugin.refreshProjectFlags(proj);
+
           }
         }
 //        else

@@ -29,9 +29,13 @@ import java.util.TreeMap;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -50,7 +54,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * @author Bastian Doetsch
  * 
  */
-public class MercurialStatusCache extends Observable {
+public class MercurialStatusCache extends Observable implements IResourceChangeListener{
 
 	public final static int BIT_IGNORE = 0;
 	public final static int BIT_CLEAN = 1;
@@ -84,7 +88,8 @@ public class MercurialStatusCache extends Observable {
 			localChangeSets = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
 			projectResources = new HashMap<IProject, Set<IResource>>();
 			incomingChangeSets = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
-			refresh();
+	        ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+			refreshStatus();
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
@@ -149,6 +154,7 @@ public class MercurialStatusCache extends Observable {
 		}
 		return statusMap.get(objectResource);
 	}
+		
 
 	/**
 	 * Checks whether version is known.
@@ -241,7 +247,9 @@ public class MercurialStatusCache extends Observable {
 		try {
 			// set status
 			refreshStatus(project);
-
+			setChanged();
+			notifyObservers(project);
+			
 			new SafeWorkspaceJob("Updating status and version cache...") {
 				@Override
 				protected IStatus runSafe(IProgressMonitor monitor) {
@@ -252,6 +260,8 @@ public class MercurialStatusCache extends Observable {
 					try {
 						monitor.subTask("Loading local revisions...");
 						refreshAllLocalRevisions(project);
+						setChanged();
+						notifyObservers(project);
 						monitor.worked(1);
 						// incoming
 						monitor
@@ -259,7 +269,7 @@ public class MercurialStatusCache extends Observable {
 						refreshIncomingChangeSets(project);
 						monitor.worked(1);
 						setChanged();
-						notifyObservers();
+						notifyObservers(project);
 						monitor.worked(1);
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);
@@ -294,7 +304,6 @@ public class MercurialStatusCache extends Observable {
 		}
 		setChanged();
 		notifyObservers(project);
-
 	}
 
 	private SortedMap<Integer, ChangeSet> refreshIncomingChangeSets(
@@ -402,7 +411,7 @@ public class MercurialStatusCache extends Observable {
 		projectResources.put(member.getProject(), set);
 	}
 
-	private final int getBitIndex(char status) {
+	public int getBitIndex(char status) {
 		switch (status) {
 		case '!':
 			return BIT_DELETED;
@@ -440,6 +449,21 @@ public class MercurialStatusCache extends Observable {
 		}
 	}
 
+	/**
+	 * Refreshes the status for each project in Workspace by questioning
+	 * Mercurial.
+	 * 
+	 * @throws TeamException
+	 *             if status check encountered problems.
+	 */
+	public void refreshStatus() throws TeamException {
+		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
+				.getProjects();
+		for (IProject project : projects) {
+			refreshStatus(project);
+		}
+	}
+	
 	/**
 	 * Checks whether Status of given resource is known.
 	 * 
@@ -569,5 +593,25 @@ public class MercurialStatusCache extends Observable {
 				localUpdateInProgress = false;
 			}
 		}
+	}
+
+	public void resourceChanged(IResourceChangeEvent event) {
+		Set<IProject> changedProjects = new HashSet<IProject>();
+        if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
+            IResourceDelta[] children = event.getDelta().getAffectedChildren();
+            for (IResourceDelta delta : children) {
+                IProject project = delta.getResource().getProject();
+                if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
+                    changedProjects.add(project);
+                }
+            }
+        }
+        for (IProject project : changedProjects) {
+            try {
+                refreshStatus(project);                
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
 	}
 }

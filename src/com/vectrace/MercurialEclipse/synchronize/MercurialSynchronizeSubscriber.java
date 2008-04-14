@@ -36,7 +36,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	private IResource[] myRoots;
 
 	public MercurialSynchronizeSubscriber(ISynchronizeScope scope) {
-		this.myScope = scope;
+		this.myScope = scope;		
 	}
 		
 

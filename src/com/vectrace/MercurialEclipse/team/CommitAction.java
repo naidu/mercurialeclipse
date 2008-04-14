@@ -63,13 +63,16 @@ public class CommitAction extends MultipleResourcesAction {
 					messageToCommit,
 					null); //monitor
 			
-			
 			try {
 				MercurialStatusCache.getInstance().refresh(project);
 			} catch (TeamException e) {
 				MercurialEclipsePlugin.logError("Unable to refresh project: ",
 						e);
 			}
+//=======
+//			MercurialEclipsePlugin.refreshProjectFlags(project);
+//			//TODO Refresh history view TeamUI.getHistoryView().refresh();
+//>>>>>>> other
 		}
 	}
 

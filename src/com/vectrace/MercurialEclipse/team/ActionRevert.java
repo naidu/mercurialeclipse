@@ -209,6 +209,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
             {
                 MercurialEclipsePlugin.logError(e);
             }
+
          // notify();
             
             if (!refreshedProjects.contains(resource.getProject())) {
@@ -229,7 +230,17 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
 				refreshedProjects.add(proj);
 			}
         }                
-    }
+
+        }
+        
+//        // notify();
+//        Set<IProject> projects = new HashSet<IProject>();
+//        for(CommitResource commitResource : resources) {
+//            projects.add(commitResource.getResource().getProject());
+//        }
+//        MercurialEclipsePlugin.refreshProjectsFlags(projects);
+        
+    
 
     /**
 	 * Selection in the workbench has been changed. We can change the state of

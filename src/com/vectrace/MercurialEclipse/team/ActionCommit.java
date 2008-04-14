@@ -247,11 +247,13 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
         } while(notEmpty); //Loop until we are empty.        
       }         
     }
+
     try {
 		MercurialStatusCache.getInstance().refresh(project);
 	} catch (TeamException e) {
 		MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
 	}
+    //MercurialEclipsePlugin.refreshProjectFlags(project);
     //TODO Refresh history view TeamUI.getHistoryView().refresh();
   }
 

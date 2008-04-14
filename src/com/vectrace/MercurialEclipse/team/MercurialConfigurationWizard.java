@@ -258,12 +258,16 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 //			e.printStackTrace();
 			return false;
 		}
+
 		try {
 			MercurialStatusCache.getInstance().refresh(project);
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError("Unable to refresh project: ",
 					e);
 		}
+//=======
+//		MercurialEclipsePlugin.refreshProjectFlags(project);
+//>>>>>>> other
 		return true;
 	}
 	
