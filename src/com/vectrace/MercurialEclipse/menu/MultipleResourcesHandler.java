@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -17,6 +18,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -41,11 +43,13 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
     @SuppressWarnings("unchecked")
     @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        Object selectionObject = ((EvaluationContext) event.getApplicationContext())
+        List<IAdaptable> selectionObject = (List<IAdaptable>)((EvaluationContext) event.getApplicationContext())
                 .getDefaultVariable();
-        System.out.println(selectionObject.getClass());
-        this.selection = (List<IResource>)selectionObject;
         try {
+            this.selection = new ArrayList<IResource>();
+            for(IAdaptable obj : selectionObject) {
+                this.selection.add((IResource)obj.getAdapter(IResource.class));
+            }
             run(getSelectedResources());
         } catch (Exception e) {
             MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");

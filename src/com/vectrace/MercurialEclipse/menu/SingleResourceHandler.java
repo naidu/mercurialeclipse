@@ -17,6 +17,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
@@ -43,9 +44,9 @@ public abstract class SingleResourceHandler extends AbstractHandler {
     public Object execute(ExecutionEvent event) throws ExecutionException {
         Object selectionObject = ((EvaluationContext) event.getApplicationContext())
                 .getDefaultVariable();
-        System.out.println(selectionObject.getClass());
-        this.selection = (IResource)((List)selectionObject).get(0);
         try {
+        	IAdaptable selectionAdaptable = (IAdaptable)((List)selectionObject).get(0);
+            this.selection = (IResource)selectionAdaptable.getAdapter(IResource.class);
             run(getSelectedResource());
         } catch (Exception e) {
             MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
