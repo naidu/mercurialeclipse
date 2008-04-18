@@ -54,7 +54,7 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					break;
 			}
 //			MercurialEclipsePlugin.refreshProjectFlags(resource.getProject());
-			MercurialStatusCache.getInstance().refreshStatus(resource.getProject());
+			MercurialStatusCache.getInstance().refreshStatus(resource.getProject(),null);
 		}
 	}
 

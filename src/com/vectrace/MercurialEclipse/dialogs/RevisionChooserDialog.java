@@ -115,12 +115,9 @@ public class RevisionChooserDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		revision = text.getText().split(":")[0].trim();		
-		try {
-			changeSet = this.dataLoader.getChangeSetByRevision(Integer.parseInt(revision));
-		} catch (NumberFormatException e) {
-			changeSet = this.dataLoader.searchChangeSet(revision);
-		}
+		revision = text.getText().split(":")[0].trim();
+		String global = text.getText().split(":")[1].trim();
+		changeSet = this.dataLoader.getChangeSetByGlobal(global);
 		if (revision.length() == 0) {
 			revision = null;
 		}
@@ -143,7 +140,7 @@ public class RevisionChooserDialog extends Dialog {
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
-                text.setText(Integer.toString(table.getSelection().getChangesetIndex()));
+                text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
             }
         });
 

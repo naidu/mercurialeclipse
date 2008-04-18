@@ -92,7 +92,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
             
             if (!statusCache.isStatusKnown((project))) {
     			try {
-    				statusCache.refreshStatus(project);
+    				statusCache.refreshStatus(project,null);
     			} catch (TeamException ex) {
     				MercurialEclipsePlugin.logError(ex);
     				return;

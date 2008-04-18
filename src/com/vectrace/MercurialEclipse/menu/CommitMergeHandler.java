@@ -17,7 +17,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
         // project.refreshLocal(IResource.DEPTH_INFINITE, null);
         // TODO refresh FlagModel
 //        MercurialEclipsePlugin.refreshProjectFlags(project);
-        MercurialStatusCache.getInstance().refreshStatus(project);
+        MercurialStatusCache.getInstance().refreshStatus(project, null);
     }
 
 }

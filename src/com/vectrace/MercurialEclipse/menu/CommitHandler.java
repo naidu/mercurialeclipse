@@ -44,7 +44,7 @@ public class CommitHandler extends MultipleResourcesHandler {
                     null); //monitor
 
 //            MercurialEclipsePlugin.refreshProjectFlags(project);
-            MercurialStatusCache.getInstance().refreshStatus(project);
+            MercurialStatusCache.getInstance().refreshStatus(project, null);
             //TODO Refresh history view TeamUI.getHistoryView().refresh();
         }
     }

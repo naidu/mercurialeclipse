@@ -14,7 +14,7 @@ package com.vectrace.MercurialEclipse.storage;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.SortedMap;
+import java.util.SortedSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -38,22 +38,16 @@ public class FileDataLoader extends DataLoader {
 
 	@Override
 	public ChangeSet[] getRevisions() throws HgException {
-		// if (file.getType() == IResource.FILE) {
-		// super.changeSets = HgLogClient.getRevisions(file);
-		// return changeSets;
-		// }
-		// return null;
-		
-		SortedMap<Integer, ChangeSet> changeSetMap = MercurialStatusCache
+		SortedSet<ChangeSet> csSet = MercurialStatusCache
 				.getInstance().getLocalChangeSets(file);
 		
-		SortedMap<Integer, ChangeSet> incomingChangeSetMap =MercurialStatusCache.getInstance().getIncomingChangeSets(file);
-		changeSetMap.putAll(incomingChangeSetMap);
+		SortedSet<ChangeSet> incomingChangeSets =MercurialStatusCache.getInstance().getIncomingChangeSets(file);
+		csSet.addAll(incomingChangeSets);
 		
-		ChangeSet[] changes = changeSetMap.values().toArray(
-				new ChangeSet[changeSetMap.values().size()]);
-		Collections.reverse(Arrays.asList(changes));
-		super.changeSets = changes;
-		return changes;
+		ChangeSet[] changeSetArray = csSet.toArray(
+				new ChangeSet[csSet.size()]);
+		Collections.reverse(Arrays.asList(changeSetArray));
+		super.changeSets = changeSetArray;
+		return changeSets;
 	}
 }

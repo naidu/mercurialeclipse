@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.SortedSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -42,14 +43,35 @@ public class IStorageMercurialRevision implements IStorage {
 	private IResource resource;
 	private ChangeSet changeSet;
 
-	@Deprecated
+	
+	/**
+	 * This method should be deprecated because a revision index is not unique.
+	 * Therefore it tries to get the newest ChangeSet with the given revision
+	 * index.
+	 * 
+	 * The recommended constructor to use is IStorageMercurialRevision(IResource
+	 * res, String rev, String global, ChangeSet cs)
+	 * 
+	 */
 	public IStorageMercurialRevision(IResource res, String rev) {
 		super();
 		resource = res;
 		revision = rev;
 		try {
-			changeSet = MercurialStatusCache.getInstance().getLocalChangeSets(
-					res).get(new Integer(rev));
+			SortedSet<ChangeSet> changeSets = MercurialStatusCache
+					.getInstance().getLocalChangeSets(res);
+			if (changeSets != null) {
+				ChangeSet[] changeSetArray = changeSets
+						.toArray(new ChangeSet[changeSets.size()]);
+				for (int i = changeSetArray.length-1; i >= 0; i--) {
+					ChangeSet cs = changeSetArray[i];
+					if (String.valueOf(cs.getRevision().getRevision()).equals(rev)) {
+						this.changeSet = cs;
+						break;
+					}
+				}
+			}
+
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		} catch (NumberFormatException e) {
@@ -66,10 +88,24 @@ public class IStorageMercurialRevision implements IStorage {
 		this.changeSet = cs;
 	}
 
+	
+	/**
+	 * This constructor is not recommended, as the revision index is not unique.
+	 * 
+	 * @param res
+	 * @param rev
+	 */
 	public IStorageMercurialRevision(IResource res, int rev) {
 		this(res, String.valueOf(rev));
 	}
 
+	/**
+	 * Constructs an {@link IStorageMercurialRevision} with the newest local
+	 * changeset available.
+	 * 
+	 * @param res
+	 *            the resource
+	 */
 	public IStorageMercurialRevision(IResource res) {
 		super();
 
@@ -123,6 +159,7 @@ public class IStorageMercurialRevision implements IStorage {
 		// }
 	}
 
+	@Deprecated
 	public IStorageMercurialRevision(IResource res, int rev, int depth) {
 		super();
 		// project = proj;
@@ -152,9 +189,10 @@ public class IStorageMercurialRevision implements IStorage {
 	 */
 	public InputStream getContents() throws CoreException {
 
-		// Setup and run command	
+		// Setup and run command
 		String result = null;
-		IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
+		IFile file = resource.getProject().getFile(
+				resource.getProjectRelativePath());
 		if (changeSet != null) {
 
 			String bundleFile = null;

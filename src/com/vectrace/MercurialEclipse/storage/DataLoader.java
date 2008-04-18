@@ -12,6 +12,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
+import java.util.Arrays;
+
 import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -71,6 +73,19 @@ public abstract class DataLoader {
 					|| changeSet.getNodeShort().equals(tagOrNode)) {
 				return changeSet;
 			}
+		}
+		return null;
+	}
+
+	/**
+	 * Searches for a changeSet by its global identifier.
+	 * @param global
+	 * @return
+	 */
+	public ChangeSet getChangeSetByGlobal(String global) {
+		int found = Arrays.binarySearch(changeSets, new ChangeSet(0,global,null,null)); 
+		if (found >= 0){
+			return changeSets[found];
 		}
 		return null;
 	}

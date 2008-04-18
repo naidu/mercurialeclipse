@@ -107,7 +107,7 @@ public class DecoratorStatus extends LabelProvider implements
 
 		if (!statusCache.isStatusKnown((objectProject))) {
 			try {
-				statusCache.refreshStatus(objectProject);
+				statusCache.refreshStatus(objectProject,null);
 			} catch (TeamException ex) {
 				MercurialEclipsePlugin.logError(ex);
 				return;
@@ -263,7 +263,7 @@ public class DecoratorStatus extends LabelProvider implements
 
 					try {
 						MercurialStatusCache.getInstance().refreshStatus(
-								res.getProject());
+								res.getProject(),null);
 					} catch (TeamException e) {
 						MercurialEclipsePlugin.logError(
 								"Couldn't refresh project:", e);

@@ -22,9 +22,8 @@ import java.util.Map;
 import java.util.Observable;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.SortedMap;
 import java.util.SortedSet;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
@@ -34,10 +33,12 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -72,26 +73,35 @@ public class MercurialStatusCache extends Observable implements
 	/** Used to store which projects have already been parsed */
 	private static Set<IProject> knownStatus;
 
-	private static Map<IResource, SortedMap<Integer, ChangeSet>> localChangeSets;
+	private static Map<IResource, SortedSet<ChangeSet>> localChangeSets;
 
 	private static Map<IProject, Set<IResource>> projectResources;
 
-	private static Map<IResource, SortedMap<Integer, ChangeSet>> incomingChangeSets;
+	private static Map<IResource, SortedSet<ChangeSet>> incomingChangeSets;
 	private boolean localUpdateInProgress = false;
 	private boolean remoteUpdateInProgress = false;
 	private boolean statusUpdateInProgress;
 
 	private MercurialStatusCache() {
-		try {
-			knownStatus = new HashSet<IProject>();
-			localChangeSets = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
-			projectResources = new HashMap<IProject, Set<IResource>>();
-			incomingChangeSets = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
-			ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-			refreshStatus();
-		} catch (TeamException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+
+		knownStatus = new HashSet<IProject>();
+		localChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
+		projectResources = new HashMap<IProject, Set<IResource>>();
+		incomingChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+		new SafeUiJob("Initializing Mercurial") {
+			@Override
+			protected IStatus runSafe(IProgressMonitor monitor) {
+				try {
+					monitor.beginTask(
+							"Obtaining Mercurial Status information.", 5);
+					refreshStatus(monitor);
+				} catch (TeamException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+				return super.runSafe(monitor);
+			}
+		}.schedule();
 	}
 
 	public static MercurialStatusCache getInstance() {
@@ -185,9 +195,9 @@ public class MercurialStatusCache extends Observable implements
 				// waiting for update...
 			}
 		}
-		SortedMap<Integer, ChangeSet> revisions = getLocalChangeSets(objectResource);
+		SortedSet<ChangeSet> revisions = getLocalChangeSets(objectResource);
 		if (revisions != null && revisions.size() > 0) {
-			return revisions.get(revisions.lastKey());
+			return revisions.last();
 		}
 		return null;
 	}
@@ -205,10 +215,9 @@ public class MercurialStatusCache extends Observable implements
 		return false;
 	}
 
-	public SortedMap<Integer, ChangeSet> getLocalChangeSets(
-			IResource objectResource) throws HgException {
-		SortedMap<Integer, ChangeSet> revisions = localChangeSets
-				.get(objectResource);
+	public SortedSet<ChangeSet> getLocalChangeSets(IResource objectResource)
+			throws HgException {
+		SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource);
 		if (revisions == null) {
 			if (objectResource.getType() != IResource.FOLDER
 					&& isSupervised(objectResource)) {
@@ -219,15 +228,14 @@ public class MercurialStatusCache extends Observable implements
 		return revisions;
 	}
 
-	public SortedMap<Integer, ChangeSet> getIncomingChangeSets(
-			IResource objectResource) throws HgException {
+	public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
+			throws HgException {
 		if (remoteUpdateInProgress) {
 			synchronized (incomingChangeSets) {
 				// wait...
 			}
 		}
-		SortedMap<Integer, ChangeSet> revisions = incomingChangeSets
-				.get(objectResource);
+		SortedSet<ChangeSet> revisions = incomingChangeSets.get(objectResource);
 		if (revisions == null) {
 			refreshIncomingChangeSets(objectResource.getProject());
 		}
@@ -249,7 +257,7 @@ public class MercurialStatusCache extends Observable implements
 		/* hg status on project (all files) instead of per file basis */
 		try {
 			// set status
-			refreshStatus(project);
+			refreshStatus(project, monitor);
 			setChanged();
 			notifyObservers(project);
 
@@ -287,7 +295,8 @@ public class MercurialStatusCache extends Observable implements
 	 * @param project
 	 * @throws HgException
 	 */
-	public void refreshStatus(final IProject project) throws HgException {
+	public void refreshStatus(final IProject project, IProgressMonitor monitor)
+			throws HgException {
 		try {
 			synchronized (statusMap) {
 				statusUpdateInProgress = true;
@@ -337,15 +346,13 @@ public class MercurialStatusCache extends Observable implements
 									.get(res);
 
 							if (changes != null && changes.size() > 0) {
-								SortedMap<Integer, ChangeSet> revisions = new TreeMap<Integer, ChangeSet>();
+								SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
 								ChangeSet[] changeSets = changes
 										.toArray(new ChangeSet[changes.size()]);
 
 								if (changeSets != null) {
 									for (ChangeSet changeSet : changeSets) {
-										revisions.put(Integer.valueOf(changeSet
-												.getChangesetIndex()),
-												changeSet);
+										revisions.add(changeSet);
 									}
 								}
 								if (res.getType() == IResource.FILE) {
@@ -453,11 +460,11 @@ public class MercurialStatusCache extends Observable implements
 	 * @throws TeamException
 	 *             if status check encountered problems.
 	 */
-	public void refreshStatus() throws TeamException {
+	public void refreshStatus(IProgressMonitor monitor) throws TeamException {
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
 				.getProjects();
 		for (IProject project : projects) {
-			refreshStatus(project);
+			refreshStatus(project, monitor);
 		}
 	}
 
@@ -534,10 +541,9 @@ public class MercurialStatusCache extends Observable implements
 				}
 			}
 
-			SortedMap<Integer, ChangeSet> revisions = incomingChangeSets
-					.get(resource);
+			SortedSet<ChangeSet> revisions = incomingChangeSets.get(resource);
 			if (revisions != null && revisions.size() > 0) {
-				return revisions.get(revisions.lastKey());
+				return revisions.last();
 			}
 		}
 		return null;
@@ -561,16 +567,6 @@ public class MercurialStatusCache extends Observable implements
 					IResource res = iter.next();
 					SortedSet<ChangeSet> changes = revisions.get(res);
 					if (changes != null && changes.size() > 0) {
-						SortedMap<Integer, ChangeSet> mercRevisions = new TreeMap<Integer, ChangeSet>();
-						ChangeSet[] changeSets = changes
-								.toArray(new ChangeSet[changes.size()]);
-
-						if (changeSets != null) {
-							for (ChangeSet changeSet : changeSets) {
-								mercRevisions.put(Integer.valueOf(changeSet
-										.getChangesetIndex()), changeSet);
-							}
-						}
 						BitSet bitSet = getStatus(res);
 						int status = BIT_UNKNOWN;
 						if (bitSet != null) {
@@ -584,7 +580,7 @@ public class MercurialStatusCache extends Observable implements
 						case BIT_UNKNOWN:
 							continue;
 						}
-						localChangeSets.put(res, mercRevisions);
+						localChangeSets.put(res, changes);
 					}
 				}
 			} finally {
@@ -607,7 +603,7 @@ public class MercurialStatusCache extends Observable implements
 		}
 		for (IProject project : changedProjects) {
 			try {
-				refreshStatus(project);
+				refreshStatus(project, null);
 			} catch (Exception e) {
 				MercurialEclipsePlugin.logError(e);
 			}

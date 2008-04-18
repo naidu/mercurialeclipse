@@ -99,7 +99,7 @@ public void start(BundleContext context) throws Exception
                 try {
                     for (IProject project : projects) {
                         //getDefault().getFlagManager().refresh(project);
-                    	MercurialStatusCache.getInstance().refreshStatus(project);
+                    	MercurialStatusCache.getInstance().refreshStatus(project, monitor);
                     }
                 } catch (HgException e) {
                     logError(e);
