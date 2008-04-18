@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch	         - saving repository to project-specific repos
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -21,6 +22,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -87,7 +89,11 @@ public boolean performFinish()
     }
 
     // It appears good. Stash the repo location.
-    MercurialEclipsePlugin.getRepoManager().addRepoLocation(repo);
+    try {
+		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
+	} catch (HgException e) {
+		MercurialEclipsePlugin.logError("Adding repository to persistent storage failed.",e);
+	}
 
     return true;
   }

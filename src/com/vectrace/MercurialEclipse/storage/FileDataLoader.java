@@ -41,8 +41,12 @@ public class FileDataLoader extends DataLoader {
 		SortedSet<ChangeSet> csSet = MercurialStatusCache
 				.getInstance().getLocalChangeSets(file);
 		
-		SortedSet<ChangeSet> incomingChangeSets =MercurialStatusCache.getInstance().getIncomingChangeSets(file);
-		csSet.addAll(incomingChangeSets);
+		if (MercurialStatusCache.getInstance().isIncomingStatusKnown(
+				getProject())) {
+			SortedSet<ChangeSet> incomingChangeSets = MercurialStatusCache
+					.getInstance().getIncomingChangeSets(file);
+			csSet.addAll(incomingChangeSets);
+		}		
 		
 		ChangeSet[] changeSetArray = csSet.toArray(
 				new ChangeSet[csSet.size()]);

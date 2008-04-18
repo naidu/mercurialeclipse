@@ -146,6 +146,22 @@ public class MercurialStatusCache extends Observable implements
 	}
 
 	/**
+	 * Checks if incoming status for given project is known.
+	 * 
+	 * @param project
+	 *            the project to be checked
+	 * @return true if known, false if not.
+	 */
+	public boolean isIncomingStatusKnown(IProject project) {
+		if (remoteUpdateInProgress) {
+			synchronized (incomingChangeSets) {
+				// wait...
+			}
+		}
+		return incomingChangeSets.get(project) != null;
+	}
+
+	/**
 	 * Gets the status of the given resource from cache. The returned BitSet
 	 * contains a BitSet of the status flags set.
 	 * 
@@ -324,7 +340,7 @@ public class MercurialStatusCache extends Observable implements
 				remoteUpdateInProgress = true;
 
 				Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
-						.getRepoManager().getAllRepoLocations();
+						.getRepoManager().getAllProjectRepoLocations(project);
 
 				if (repositories == null) {
 					return;
