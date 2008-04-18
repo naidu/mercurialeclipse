@@ -46,6 +46,10 @@ public class FileDataLoader extends DataLoader {
 		
 		SortedMap<Integer, ChangeSet> changeSetMap = MercurialStatusCache
 				.getInstance().getLocalChangeSets(file);
+		
+		SortedMap<Integer, ChangeSet> incomingChangeSetMap =MercurialStatusCache.getInstance().getIncomingChangeSets(file);
+		changeSetMap.putAll(incomingChangeSetMap);
+		
 		ChangeSet[] changes = changeSetMap.values().toArray(
 				new ChangeSet[changeSetMap.values().size()]);
 		Collections.reverse(Arrays.asList(changes));
