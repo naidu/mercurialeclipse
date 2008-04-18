@@ -10,8 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
@@ -19,7 +21,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
@@ -36,9 +40,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	private IResource[] myRoots;
 
 	public MercurialSynchronizeSubscriber(ISynchronizeScope scope) {
-		this.myScope = scope;		
+		this.myScope = scope;
 	}
-		
 
 	@Override
 	public String getName() {
@@ -54,20 +57,23 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
 		ChangeSet csBase = statusCache.getNewestLocalChangeSet(resource);
 		ChangeSet csRemote = statusCache.getNewestIncomingChangeSet(resource);
+		
 		IResourceVariant base;
 		IResourceVariant remote;
+		
 		if (csBase != null) {
-
 			IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
-					resource, csBase.getRevision() + "", csBase.getChangeset(), csBase);
+					resource, csBase.getRevision().getRevision() + "", csBase
+							.getChangeset(), csBase);
 
 			base = new MercurialResourceVariant(baseIStorage);
 
 			IStorageMercurialRevision remoteIStorage;
 			if (csRemote != null) {
-				
+
 				remoteIStorage = new IStorageMercurialRevision(resource,
-						csRemote.getRevision() + "", csRemote.getChangeset(), csRemote);
+						csRemote.getRevision().getRevision() + "", csRemote
+								.getChangeset(), csRemote);
 			} else {
 				remoteIStorage = baseIStorage;
 			}
@@ -94,7 +100,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 		Set<IResource> members = new HashSet<IResource>();
 		IResource[] localMembers = statusCache.getLocalMembers(resource);
 		IResource[] remoteMembers = statusCache.getIncomingMembers(resource);
-		members.addAll(Arrays.asList(localMembers));		
+		members.addAll(Arrays.asList(localMembers));
 		if (remoteMembers.length > 0) {
 			members.addAll(Arrays.asList(remoteMembers));
 		}
@@ -108,11 +114,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 	public void refresh(IResource[] resources, int depth,
 			IProgressMonitor monitor) throws TeamException {
 		IResource[] toRefresh = resources;
+
 		if (toRefresh == null) {
 			toRefresh = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		}
 		Set<IProject> refreshed = new HashSet<IProject>(toRefresh.length);
-		monitor.beginTask("Refreshing resources...", toRefresh.length);
+		monitor.subTask("Refreshing resources...");
+		List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
 		for (IResource resource : toRefresh) {
 			if (monitor.isCanceled()) {
 				return;
@@ -122,11 +130,31 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 				monitor.worked(1);
 				continue;
 			}
-			statusCache.refresh(project);
+			statusCache.refresh(project, monitor);
 			refreshed.add(project);
+			IResource[] localMembers = statusCache.getLocalMembers(resource);
+			for (IResource local : localMembers) {
+				monitor.subTask("Adding local members of " + resource.getName()
+						+ " to change.");
+				changeEvents.add(new SubscriberChangeEvent(this,
+						ISubscriberChangeEvent.SYNC_CHANGED, local));
+				monitor.worked(1);
+			}
+			IResource[] incomingMembers = statusCache
+					.getIncomingMembers(resource);
+			for (IResource incoming : incomingMembers) {
+				monitor.subTask("Adding incoming members of "
+						+ resource.getName() + " to change.");
+				changeEvents.add(new SubscriberChangeEvent(this,
+						ISubscriberChangeEvent.SYNC_CHANGED, incoming));
+				monitor.worked(1);
+			}
 			monitor.worked(1);
 		}
-		monitor.done();
+		monitor.subTask("Triggering sync status calculation.");
+		super.fireTeamResourceChange(changeEvents
+				.toArray(new ISubscriberChangeEvent[changeEvents.size()]));
+		monitor.worked(1);
 	}
 
 	@Override

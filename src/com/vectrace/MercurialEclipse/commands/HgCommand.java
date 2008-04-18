@@ -69,6 +69,8 @@ public class HgCommand {
 	private final boolean escapeFiles;
 	private final List<String> options = new ArrayList<String>();
 	private final List<String> files = new ArrayList<String>();
+
+	private List<String> commands;
 	
 	protected HgCommand(String command, File workingDir, boolean escapeFiles) {
 		this.command = command;
@@ -87,6 +89,13 @@ public class HgCommand {
 		this(command, (File)null, escapeFiles);
 	}
 	
+	protected HgCommand(List<String>commands,File workingDir, boolean escapeFiles){
+		this.command = null;
+		this.escapeFiles = escapeFiles;
+		this.workingDir = workingDir;
+		this.commands = commands;
+	}
+	
 	protected String getHgExecutable() {
 		return MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore()
@@ -100,6 +109,9 @@ public class HgCommand {
 	}
 	
 	protected List<String> getCommands() {
+		if (commands != null){
+			return commands;
+		}
 		ArrayList<String> result = new ArrayList<String>();
 		result.add(getHgExecutable());
 		result.add(command);
@@ -148,7 +160,8 @@ public class HgCommand {
 	protected byte[] executeToBytes() throws HgException {
 		try {
 			long start = System.currentTimeMillis();
-			ProcessBuilder builder = new ProcessBuilder(getCommands());
+			List<String> cmd = getCommands();
+			ProcessBuilder builder = new ProcessBuilder(cmd);
 			builder.redirectErrorStream(true); // makes my life easier
 			if(workingDir != null) {
 				builder.directory(workingDir);
@@ -162,7 +175,9 @@ public class HgCommand {
 					console.println("Done in "+(System.currentTimeMillis()-start)+" ms");
 					return consumer.getBytes();
 				}
-				throw new HgException("Process error, return code: "+process.exitValue()+", message: "+new String(consumer.getBytes()));
+				String msg = new String(consumer.getBytes());
+				System.out.println(msg);
+				throw new HgException("Process error, return code: "+process.exitValue()+", message: "+msg);
 			}
 			process.destroy();
 			throw new HgException("Process timeout");

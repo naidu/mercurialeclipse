@@ -13,13 +13,10 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
@@ -29,6 +26,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
@@ -50,8 +48,8 @@ public class IStorageMercurialRevision implements IStorage {
 		resource = res;
 		revision = rev;
 		try {
-			changeSet = MercurialStatusCache.getInstance().getLocalChangeSets(res)
-					.get(new Integer(rev));
+			changeSet = MercurialStatusCache.getInstance().getLocalChangeSets(
+					res).get(new Integer(rev));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		} catch (NumberFormatException e) {
@@ -59,7 +57,8 @@ public class IStorageMercurialRevision implements IStorage {
 		}
 	}
 
-	public IStorageMercurialRevision(IResource res, String rev, String global, ChangeSet cs) {
+	public IStorageMercurialRevision(IResource res, String rev, String global,
+			ChangeSet cs) {
 		super();
 		this.revision = rev;
 		this.global = global;
@@ -76,7 +75,8 @@ public class IStorageMercurialRevision implements IStorage {
 
 		ChangeSet cs = null;
 		try {
-			cs = MercurialStatusCache.getInstance().getNewestLocalChangeSet(res);
+			cs = MercurialStatusCache.getInstance()
+					.getNewestLocalChangeSet(res);
 
 			this.resource = res;
 			this.revision = cs.getChangesetIndex() + ""; // should be fetched
@@ -152,45 +152,37 @@ public class IStorageMercurialRevision implements IStorage {
 	 */
 	public InputStream getContents() throws CoreException {
 
-		// Setup and run command
-		String[] cmd;		
-		if (changeSet != null) {					
-			
-			List<String>launchCmd =new ArrayList<String>();
-			launchCmd.add(MercurialUtilities.getHGExecutable());
-			
-			if (changeSet!=null && changeSet.getBundleFile() != null){
-				launchCmd.add("-R");
+		// Setup and run command	
+		String result = null;
+		IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
+		if (changeSet != null) {
+
+			String bundleFile = null;
+			if (changeSet != null && changeSet.getBundleFile() != null) {
 				try {
-					launchCmd.add(changeSet.getBundleFile().getCanonicalFile().getCanonicalPath());
-				} catch (IOException e) {					
+					bundleFile = changeSet.getBundleFile().getCanonicalFile()
+							.getCanonicalPath();
+				} catch (IOException e) {
 					MercurialEclipsePlugin.logError(e);
-					throw new CoreException(new Status(IStatus.ERROR,MercurialEclipsePlugin.ID,e.getMessage(),e));
+					throw new CoreException(new Status(IStatus.ERROR,
+							MercurialEclipsePlugin.ID, e.getMessage(), e));
 				}
 			}
-			
-			launchCmd.add("cat");
-			launchCmd.add("-r");
-			launchCmd.add(changeSet.getChangesetIndex()+"");
-			launchCmd.add(MercurialUtilities.getResourceName(resource));
-			
-			cmd = launchCmd.toArray(new String[launchCmd.size()]);			
-			
-		} else {
-			cmd = new String[] { MercurialUtilities.getHGExecutable(),
-					"cat", "--", MercurialUtilities.getResourceName(resource) };
-		}
-		File workingDir = MercurialUtilities.getWorkingDir(resource);
 
-		/*
-		 * TODO using MercurialUtilities.ExecuteCommandToInputStream looks buggy
-		 * as hell and fail to diff files that are not really small (deadlock?)
-		 * (see the javadoc of java.lang.Process for a possible explanation)
-		 */
-		ByteArrayOutputStream resultStream = MercurialUtilities
-				.ExecuteCommandToByteArrayOutputStream(cmd, workingDir,
-						true);
-		return new ByteArrayInputStream(resultStream.toByteArray());
+			if (bundleFile != null) {
+				result = HgCatClient.getContentFromBundle(file, changeSet
+						.getChangesetIndex()
+						+ "", bundleFile);
+			} else {
+				result = HgCatClient.getContent(file, changeSet
+						.getChangesetIndex()
+						+ "");
+			}
+		} else {
+			result = HgCatClient.getContent(file, null);
+		}
+		ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes());
+		return is;
 	}
 
 	/*
