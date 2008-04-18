@@ -34,12 +34,10 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -54,7 +52,8 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * @author Bastian Doetsch
  * 
  */
-public class MercurialStatusCache extends Observable implements IResourceChangeListener{
+public class MercurialStatusCache extends Observable implements
+		IResourceChangeListener {
 
 	public final static int BIT_IGNORE = 0;
 	public final static int BIT_CLEAN = 1;
@@ -88,7 +87,7 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 			localChangeSets = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
 			projectResources = new HashMap<IProject, Set<IResource>>();
 			incomingChangeSets = new HashMap<IResource, SortedMap<Integer, ChangeSet>>();
-	        ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+			ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
 			refreshStatus();
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -154,7 +153,6 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 		}
 		return statusMap.get(objectResource);
 	}
-		
 
 	/**
 	 * Checks whether version is known.
@@ -236,49 +234,50 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 		return incomingChangeSets.get(objectResource);
 	}
 
+	public void refresh(final IProject project) throws TeamException {
+		refresh(project, null);
+	}
+
 	/**
 	 * Refreshes sync status of given project by questioning Mercurial.
 	 * 
 	 * @param project
 	 * @throws TeamException
 	 */
-	public void refresh(final IProject project) throws TeamException {
+	public void refresh(final IProject project, IProgressMonitor monitor)
+			throws TeamException {
 		/* hg status on project (all files) instead of per file basis */
 		try {
 			// set status
 			refreshStatus(project);
 			setChanged();
 			notifyObservers(project);
-			
-			new SafeWorkspaceJob("Updating status and version cache...") {
-				@Override
-				protected IStatus runSafe(IProgressMonitor monitor) {
-					// set version
-					monitor
-							.beginTask("Updating status and version cache...",
-									3);
-					try {
-						monitor.subTask("Loading local revisions...");
-						refreshAllLocalRevisions(project);
-						setChanged();
-						notifyObservers(project);
-						monitor.worked(1);
-						// incoming
-						monitor
-								.subTask("Loading remote revisions from repositories...");
-						refreshIncomingChangeSets(project);
-						monitor.worked(1);
-						setChanged();
-						notifyObservers(project);
-						monitor.worked(1);
-					} catch (HgException e) {
-						MercurialEclipsePlugin.logError(e);
-					}
-					monitor.done();
-					return super.runSafe(monitor);
-				}
 
-			}.schedule();
+			if (monitor != null) {
+				monitor.subTask("Updating status and version cache...");
+			}
+			try {
+				if (monitor != null)
+					monitor.subTask("Loading local revisions...");
+				refreshAllLocalRevisions(project);
+				setChanged();
+				notifyObservers(project);
+				if (monitor != null)
+					monitor.worked(1);
+				// incoming
+				if (monitor != null)
+					monitor
+							.subTask("Loading remote revisions from repositories...");
+				refreshIncomingChangeSets(project);
+				if (monitor != null)
+					monitor.worked(1);
+				setChanged();
+				notifyObservers(project);
+				if (monitor != null)
+					monitor.worked(1);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		} catch (HgException e) {
 			throw new TeamException(e.getMessage(), e);
 		}
@@ -306,8 +305,7 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 		notifyObservers(project);
 	}
 
-	private SortedMap<Integer, ChangeSet> refreshIncomingChangeSets(
-			IProject project) throws HgException {
+	private void refreshIncomingChangeSets(IProject project) throws HgException {
 		synchronized (incomingChangeSets) {
 			try {
 				remoteUpdateInProgress = true;
@@ -316,7 +314,7 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 						.getRepoManager().getAllRepoLocations();
 
 				if (repositories == null) {
-					return null;
+					return;
 				}
 
 				IResource[] resources = getIncomingMembers(project);
@@ -360,7 +358,6 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 			} finally {
 				remoteUpdateInProgress = false;
 			}
-			return incomingChangeSets.get(project);
 		}
 	}
 
@@ -445,7 +442,7 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
 				.getProjects();
 		for (IProject project : projects) {
-			refresh(project);
+			refresh(project, null);
 		}
 	}
 
@@ -463,7 +460,7 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 			refreshStatus(project);
 		}
 	}
-	
+
 	/**
 	 * Checks whether Status of given resource is known.
 	 * 
@@ -536,6 +533,7 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 					// wait for update...
 				}
 			}
+
 			SortedMap<Integer, ChangeSet> revisions = incomingChangeSets
 					.get(resource);
 			if (revisions != null && revisions.size() > 0) {
@@ -597,21 +595,22 @@ public class MercurialStatusCache extends Observable implements IResourceChangeL
 
 	public void resourceChanged(IResourceChangeEvent event) {
 		Set<IProject> changedProjects = new HashSet<IProject>();
-        if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
-            IResourceDelta[] children = event.getDelta().getAffectedChildren();
-            for (IResourceDelta delta : children) {
-                IProject project = delta.getResource().getProject();
-                if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
-                    changedProjects.add(project);
-                }
-            }
-        }
-        for (IProject project : changedProjects) {
-            try {
-                refreshStatus(project);                
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
+		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
+			IResourceDelta[] children = event.getDelta().getAffectedChildren();
+			for (IResourceDelta delta : children) {
+				IProject project = delta.getResource().getProject();
+				if (null != RepositoryProvider.getProvider(project,
+						MercurialTeamProvider.ID)) {
+					changedProjects.add(project);
+				}
+			}
+		}
+		for (IProject project : changedProjects) {
+			try {
+				refreshStatus(project);
+			} catch (Exception e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 	}
 }
