@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
-import java.util.Arrays;
-
 import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -59,9 +57,9 @@ public abstract class DataLoader {
 	}
 
 	/**
-	 * Searches for the complete changeset associated with the given string
-	 * in tag, node, and node short entries. This
-	 * method must be called after getRevisions().
+	 * Searches for the complete changeset associated with the given string in
+	 * tag, node, and node short entries. This method must be called after
+	 * getRevisions().
 	 * 
 	 * @param tagOrNode
 	 * @return
@@ -78,14 +76,25 @@ public abstract class DataLoader {
 	}
 
 	/**
-	 * Searches for a changeSet by its global identifier.
-	 * @param global
+	 * Gets the revision, which was tagged with the tag.
+	 * 
+	 * @param tag
 	 * @return
 	 */
-	public ChangeSet getChangeSetByGlobal(String global) {
-		int found = Arrays.binarySearch(changeSets, new ChangeSet(0,global,null,null)); 
-		if (found >= 0){
-			return changeSets[found];
+	public ChangeSet getChangeSetByTag(Tag tag) {
+		for (int i = 0; i < changeSets.length; i++) {
+			ChangeSet cs = changeSets[i];
+			if (cs.getTag().equals(tag.getName())
+					|| cs.getChangeset().equals(tag.getGlobalId())
+					|| cs.getChangesetIndex() == tag.getRevision()) {
+				return cs;
+			} 
+			if (cs.getChangesetIndex() > tag.getRevision()) {
+				if (i > 0) {
+					return changeSets[i - 1];
+				}
+				return changeSets[0];				
+			}
 		}
 		return null;
 	}

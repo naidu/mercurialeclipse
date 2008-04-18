@@ -55,6 +55,7 @@ public class RevisionChooserDialog extends Dialog {
 	private final String title;
 	private Text text;
 	private String revision;
+	private Tag tag;
 	
 	private final int[] parents;
 
@@ -115,9 +116,20 @@ public class RevisionChooserDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		revision = text.getText().split(":")[0].trim();
-		String global = text.getText().split(":")[1].trim();
-		changeSet = this.dataLoader.getChangeSetByGlobal(global);
+		String[] split = text.getText().split(":");
+		revision = split[0].trim();
+		
+		if (changeSet == null) {
+			try {
+				changeSet = this.dataLoader.getChangeSetByRevision(Integer
+						.parseInt(revision));
+			} catch (NumberFormatException e) {
+				if (tag != null){
+					changeSet = this.dataLoader.getChangeSetByTag(tag);
+				}
+			}
+		}
+		
 		if (revision.length() == 0) {
 			revision = null;
 		}
@@ -140,7 +152,9 @@ public class RevisionChooserDialog extends Dialog {
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
+            	tag = null;
                 text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
+                changeSet = table.getSelection();
             }
         });
 
@@ -171,9 +185,11 @@ public class RevisionChooserDialog extends Dialog {
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
         table.addSelectionListener(new SelectionAdapter() {
-            @Override
+
+			@Override
             public void widgetSelected(SelectionEvent e) {
                 text.setText(table.getSelection().getName());
+                tag = table.getSelection(); 
             }
         });
 
@@ -211,6 +227,7 @@ public class RevisionChooserDialog extends Dialog {
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
+            	tag = null;
                 text.setText(Integer.toString(table.getSelection().getChangesetIndex()));
             }
         });

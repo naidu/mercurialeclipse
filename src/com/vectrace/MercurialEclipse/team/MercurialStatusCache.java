@@ -205,6 +205,9 @@ public class MercurialStatusCache extends Observable implements
 	public boolean isSupervised(IResource resource) {
 		BitSet status = getStatus(resource);
 		if (status != null) {
+			if (status.get(MercurialStatusCache.BIT_CLEAN)) {
+				return true;
+			}
 			switch (status.length() - 1) {
 			case MercurialStatusCache.BIT_IGNORE:
 			case MercurialStatusCache.BIT_UNKNOWN:
@@ -304,6 +307,7 @@ public class MercurialStatusCache extends Observable implements
 				for (IResource resource : resources) {
 					statusMap.remove(resource);
 				}
+				statusMap.remove(project);
 				String output = HgStatusClient.getStatus(project);
 				parseStatusCommand(project, output);
 			}
@@ -561,26 +565,31 @@ public class MercurialStatusCache extends Observable implements
 				for (IResource resource : resources) {
 					localChangeSets.remove(resource);
 				}
+				localChangeSets.remove(project);
 
 				for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
 						.hasNext();) {
 					IResource res = iter.next();
 					SortedSet<ChangeSet> changes = revisions.get(res);
 					if (changes != null && changes.size() > 0) {
-						BitSet bitSet = getStatus(res);
-						int status = BIT_UNKNOWN;
-						if (bitSet != null) {
-							status = bitSet.length() - 1;
+//						BitSet bitSet = getStatus(res);
+//						int status = BIT_UNKNOWN;
+//						if (bitSet != null) {
+//							status = bitSet.length() - 1;
+//						}
+//						// only proceed if there were changes or we are at
+//						// initial
+//						// load.
+//						switch (status) {
+//						case BIT_IGNORE:
+//						case BIT_UNKNOWN:
+//							if (bitSet != null && bitSet.cardinality() == 1) {
+//								continue;
+//							}							
+//						}
+						if (isSupervised(res)) {
+							localChangeSets.put(res, changes);
 						}
-						// only proceed if there were changes or we are at
-						// initial
-						// load.
-						switch (status) {
-						case BIT_IGNORE:
-						case BIT_UNKNOWN:
-							continue;
-						}
-						localChangeSets.put(res, changes);
 					}
 				}
 			} finally {
