@@ -277,8 +277,6 @@ public class MercurialStatusCache extends Observable implements
 		try {
 			// set status
 			refreshStatus(project, monitor);
-			setChanged();
-			notifyObservers(project);
 
 			if (monitor != null) {
 				monitor.subTask("Updating status and version cache...");
@@ -287,8 +285,6 @@ public class MercurialStatusCache extends Observable implements
 				if (monitor != null)
 					monitor.subTask("Loading local revisions...");
 				refreshAllLocalRevisions(project);
-				setChanged();
-				notifyObservers(project);
 				if (monitor != null)
 					monitor.worked(1);
 				// incoming
@@ -299,9 +295,7 @@ public class MercurialStatusCache extends Observable implements
 				if (monitor != null)
 					monitor.worked(1);
 				setChanged();
-				notifyObservers(project);
-				if (monitor != null)
-					monitor.worked(1);
+				notifyObservers(project);				
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -319,6 +313,8 @@ public class MercurialStatusCache extends Observable implements
 		try {
 			synchronized (statusMap) {
 				statusUpdateInProgress = true;
+				// members should contain folders and project, so we clear
+				// status for files, folders and project
 				IResource[] resources = getLocalMembers(project);
 				for (IResource resource : resources) {
 					statusMap.remove(resource);
@@ -418,13 +414,13 @@ public class MercurialStatusCache extends Observable implements
 					bitSet.or(parentBitSet);
 				}
 				statusMap.put(parent, bitSet);
+				addToProjectResources(parent);
 			}
 		}
 	}
 
 	private void addToProjectResources(IResource member) {
-		if (member.getType() == IResource.PROJECT
-				|| member.getType() == IResource.FOLDER) {
+		if (member.getType() == IResource.PROJECT) {
 			return;
 		}
 		Set<IResource> set = projectResources.get(member.getProject());
@@ -616,6 +612,8 @@ public class MercurialStatusCache extends Observable implements
 
 	public void resourceChanged(IResourceChangeEvent event) {
 		Set<IProject> changedProjects = new HashSet<IProject>();
+		
+		// only refresh after a change - we aren't interested in build outputs, are we?
 		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
 			IResourceDelta[] children = event.getDelta().getAffectedChildren();
 			for (IResourceDelta delta : children) {
@@ -625,13 +623,14 @@ public class MercurialStatusCache extends Observable implements
 					changedProjects.add(project);
 				}
 			}
-		}
-		for (IProject project : changedProjects) {
-			try {
-				refreshStatus(project, null);
-			} catch (Exception e) {
-				MercurialEclipsePlugin.logError(e);
+			for (IProject project : changedProjects) {
+				try {
+					refreshStatus(project, null);
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 		}
+		
 	}
 }

@@ -136,9 +136,10 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
 					RepositoryProvider.getProvider(proj,
 							MercurialTeamProvider.class.getName());
 					projects.add(proj);
+					MercurialEclipsePlugin.getRepoManager().addRepoLocation(proj, location);
 				} catch (TeamException e) {
 					MercurialEclipsePlugin.logError(e);
-				}
+				}				
 				// increase monitor so we see at least a bit of a progress when
 				// importing multiple projects
 				monitor.worked(1);
