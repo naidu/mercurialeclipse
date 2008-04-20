@@ -158,6 +158,9 @@ public class HgRepositoryLocationManager {
 				.getProjects();
 
 		for (IProject project : projects) {
+			if (!project.isOpen()){
+				continue;
+			}
 			boolean createSrcRepository = false;
 			try {
 				String url = project
