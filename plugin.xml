@@ -112,27 +112,31 @@
 		</definition>
 		<!-- notInMercurial -->
 		<definition id="com.vectrace.MercurialEclipse.def.notInMercurial">
-	        <iterate>
-	           <adapt type="com.vectrace.MercurialEclipse.model.FlaggedResource">
-	           	<test 
-	                  property="com.vectrace.MercurialEclipse.propertyTester.status"
-	                  args="unknown,ignore">
-	           	</test>
-	           </adapt>
-	        </iterate>
+			<iterate>
+				<adapt type="org.eclipse.core.resources.IResource">
+					<adapt type="com.vectrace.MercurialEclipse.model.FlaggedResource">
+						<test 
+						      property="com.vectrace.MercurialEclipse.propertyTester.status"
+						      args="unknown,ignore">
+						</test>
+					</adapt>
+				</adapt>
+			</iterate>
 		</definition>
 		<!-- hgUnknown -->
 		<definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
 			<iterate>
-				<adapt type="com.vectrace.MercurialEclipse.model.FlaggedResource">
-		           	<test property="com.vectrace.MercurialEclipse.propertyTester.status"
-	    	              args="unknown"/>
-					<not>
-						<test property="com.vectrace.MercurialEclipse.propertyTester.status"
+				<adapt type="org.eclipse.core.resources.IResource">
+					<adapt type="com.vectrace.MercurialEclipse.model.FlaggedResource">
+		    	       	<test property="com.vectrace.MercurialEclipse.propertyTester.status"
+	    		              args="unknown"/>
+						<not>
+							<test property="com.vectrace.MercurialEclipse.propertyTester.status"
 						      args="added,clean,modified"/>
-					</not>
-	           </adapt>
-           </iterate>
+						</not>
+					</adapt>
+				</adapt>
+			</iterate>
 		</definition>
 		<!-- merging -->
 		<definition id="com.vectrace.MercurialEclipse.def.merging">
@@ -169,10 +173,17 @@
 		<command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
 		         name="Update"/>
 
+		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
+		         name="Tag as Version..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
 		         name="Merge..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
 		         name="Swith to Another Changeset..."/>
+
+		<command id="com.vectrace.MercurialEclipse.menu.GLogHandler"
+		         name="Show Graphical Log"/>
+		<command id="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
+		         name="Show Annotation"/>
 
 		<command id="com.vectrace.MercurialEclipse.menu.AddHandler"
 		         name="Add to Version Control..."/>
@@ -203,6 +214,14 @@
 			</enabledWhen>
 		</handler>
 
+		<!-- TagHandler -->
+		<handler commandId="com.vectrace.MercurialEclipse.menu.TagHandler"
+		         class="com.vectrace.MercurialEclipse.menu.TagHandler">
+			<enabledWhen>
+				<count value="1"/>
+			</enabledWhen>
+		</handler>
+
 		<!-- MergeHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
 		         class="com.vectrace.MercurialEclipse.menu.MergeHandler">
@@ -222,6 +241,27 @@
 			</enabledWhen>
 		</handler>
 
+		<!-- GLogHandler -->
+		<handler commandId="com.vectrace.MercurialEclipse.menu.GLogHandler"
+		         class="com.vectrace.MercurialEclipse.menu.GLogHandler">
+			<enabledWhen>
+				<count value="1"/>
+			</enabledWhen>
+		</handler>
+
+		<!-- ShowAnnotationHandler -->
+		<handler commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
+		         class="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler">
+			<enabledWhen>
+				<and>
+					<count value="1"/>
+					<iterate>
+						<adapt type="org.eclipse.core.resources.IFile"/>
+					</iterate>
+				</and>
+			</enabledWhen>
+		</handler>
+		
 		<!-- AddHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
 		         class="com.vectrace.MercurialEclipse.menu.AddHandler">
@@ -269,6 +309,11 @@
 				</command>
 				<separator name="group2" visible="false"/><!-- TODO visible="true" -->
 				<separator name="group3" visible="true"/>
+				<command commandId="com.vectrace.MercurialEclipse.menu.TagHandler" icon="icons/tags.gif">
+					<visibleWhen>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+					</visibleWhen>
+				</command>
 				<command commandId="com.vectrace.MercurialEclipse.menu.MergeHandler" icon="icons/branches_rep.gif">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
@@ -280,6 +325,16 @@
 					</visibleWhen>
 				</command>
 				<separator name="group4" visible="true"/>
+				<command commandId="com.vectrace.MercurialEclipse.menu.GLogHandler">
+					<visibleWhen>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+					</visibleWhen>
+				</command>
+				<command commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler" icon="icons/annotate.gif">
+					<visibleWhen>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+					</visibleWhen>
+				</command>
 				<separator name="group5" visible="true"/>
 				<separator name="group6" visible="true"/>
 				<separator name="group7" visible="true"/>
@@ -362,20 +417,20 @@
                    </not>
                </enablement>
            </action-->
-           <action
+           <!--action
                label="Tag as Version..."
                class="com.vectrace.MercurialEclipse.team.TagAction"
                icon="icons/tags.gif"
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.TagAction"
                enablesFor="1">
-           </action>
-           <action
+           </action-->
+           <!--action
                label="Show Graphical Log"
                class="com.vectrace.MercurialEclipse.team.GLogAction"
                menubarPath="team.main/group4"
                id="com.vectrace.MercurialEclipse.team.GLogAction">
-           </action>
+           </action-->
            <action
                label="Show &amp;History"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
@@ -464,7 +519,7 @@
                value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
            </filter>
                  <!-- Team -->
-            <action
+            <!--action
                label="Show Annotation"
                icon="icons/annotate.gif"
                class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
@@ -472,7 +527,7 @@
                menubarPath="team.main/group3"
                id="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
                enablesFor="1">
-           </action>
+           </action-->
                  <!-- Compare -->
            <action
                label="Another Changeset..."
