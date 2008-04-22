@@ -20,6 +20,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -32,6 +33,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class MercurialSynchronizeSubscriber extends Subscriber {
 	private static MercurialStatusCache statusCache = MercurialStatusCache
@@ -55,36 +57,41 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-		ChangeSet csBase = statusCache.getNewestLocalChangeSet(resource);
-		ChangeSet csRemote = statusCache.getNewestIncomingChangeSet(resource);
-		
-		IResourceVariant base;
-		IResourceVariant remote;
-		
-		if (csBase != null) {
-			IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
-					resource, csBase.getRevision().getRevision() + "", csBase
-							.getChangeset(), csBase);
+		if (null != RepositoryProvider.getProvider(resource.getProject(),
+				MercurialTeamProvider.ID)
+				&& resource.getProject().isOpen()) {
+			ChangeSet csBase = statusCache.getNewestLocalChangeSet(resource);
+			ChangeSet csRemote = statusCache
+					.getNewestIncomingChangeSet(resource);
 
-			base = new MercurialResourceVariant(baseIStorage);
+			IResourceVariant base;
+			IResourceVariant remote;
 
-			IStorageMercurialRevision remoteIStorage;
-			if (csRemote != null) {
+			if (csBase != null) {
+				IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
+						resource, csBase.getRevision().getRevision() + "",
+						csBase.getChangeset(), csBase);
 
-				remoteIStorage = new IStorageMercurialRevision(resource,
-						csRemote.getRevision().getRevision() + "", csRemote
-								.getChangeset(), csRemote);
-			} else {
-				remoteIStorage = baseIStorage;
+				base = new MercurialResourceVariant(baseIStorage);
+
+				IStorageMercurialRevision remoteIStorage;
+				if (csRemote != null) {
+
+					remoteIStorage = new IStorageMercurialRevision(resource,
+							csRemote.getRevision().getRevision() + "", csRemote
+									.getChangeset(), csRemote);
+				} else {
+					remoteIStorage = baseIStorage;
+				}
+
+				remote = new MercurialResourceVariant(remoteIStorage);
+
+				SyncInfo info = new MercurialSyncInfo(resource, base, remote,
+						MercurialResourceVariantComparator.getInstance());
+
+				info.init();
+				return info;
 			}
-
-			remote = new MercurialResourceVariant(remoteIStorage);
-
-			SyncInfo info = new MercurialSyncInfo(resource, base, remote,
-					MercurialResourceVariantComparator.getInstance());
-
-			info.init();
-			return info;
 		}
 		return null;
 
@@ -92,6 +99,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
 	@Override
 	public boolean isSupervised(IResource resource) throws TeamException {
+		
 		return statusCache.isSupervised(resource);
 	}
 
@@ -126,6 +134,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 				return;
 			}
 			IProject project = resource.getProject();
+			
 			if (refreshed.contains(project)) {
 				monitor.worked(1);
 				continue;

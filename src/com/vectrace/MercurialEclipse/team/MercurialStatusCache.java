@@ -37,6 +37,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
@@ -317,30 +318,32 @@ public class MercurialStatusCache extends Observable implements
 	 * @param project
 	 * @throws HgException
 	 */
-	public void refreshStatus(final IProject project, IProgressMonitor monitor)
+	public void refreshStatus(final IResource res, IProgressMonitor monitor)
 			throws HgException {
 		try {
-			if (null != RepositoryProvider.getProvider(project,
+			if (monitor != null)
+				monitor.beginTask("Refreshing " + res.getName(), 10);
+			if (null != RepositoryProvider.getProvider(res.getProject(),
 					MercurialTeamProvider.ID)
-					&& project.isOpen()) {
+					&& res.getProject().isOpen()) {
 				synchronized (statusMap) {
 					statusUpdateInProgress = true;
 					// members should contain folders and project, so we clear
 					// status for files, folders and project
-					IResource[] resources = getLocalMembers(project);
+					IResource[] resources = getLocalMembers(res);
 					for (IResource resource : resources) {
 						statusMap.remove(resource);
 					}
-					statusMap.remove(project);
-					String output = HgStatusClient.getStatus(project);
-					parseStatusCommand(project, output);
+					statusMap.remove(res);
+					String output = HgStatusClient.getStatus(res);
+					parseStatus(res, output);
 				}
 			}
 		} finally {
 			statusUpdateInProgress = false;
 		}
 		setChanged();
-		notifyObservers(project);
+		notifyObservers(res);
 	}
 
 	private void refreshIncomingChangeSets(IProject project) throws HgException {
@@ -408,16 +411,19 @@ public class MercurialStatusCache extends Observable implements
 	}
 
 	/**
+	 * @param res
 	 * @param output
+	 * @param ctrParent
 	 */
-	private void parseStatusCommand(IProject ctr, String output) {
-		IContainer ctrParent = ctr.getParent();
-		knownStatus.add(ctr);
+	private void parseStatus(IResource res, String output) {
+		if (res.getType() == IResource.PROJECT) {
+			knownStatus.add(res.getProject());
+		}
 		Scanner scanner = new Scanner(output);
 		while (scanner.hasNext()) {
 			String status = scanner.next();
 			String localName = scanner.nextLine();
-			IResource member = ctr.getFile(localName.trim());
+			IResource member = res.getProject().getFile(localName.trim());
 
 			BitSet bitSet = new BitSet();
 			bitSet.set(getBitIndex(status.charAt(0)));
@@ -429,8 +435,8 @@ public class MercurialStatusCache extends Observable implements
 			}
 
 			// ancestors
-			for (IResource parent = member.getParent(); parent != ctrParent; parent = parent
-					.getParent()) {
+			for (IResource parent = member.getParent(); parent != res
+					.getParent(); parent = parent.getParent()) {
 				BitSet parentBitSet = statusMap.get(parent);
 				if (parentBitSet != null) {
 					bitSet = (BitSet) bitSet.clone();
@@ -534,6 +540,11 @@ public class MercurialStatusCache extends Observable implements
 	 * @return
 	 */
 	public IResource[] getLocalMembers(IResource resource) {
+		if (statusUpdateInProgress){
+			synchronized(statusMap){
+				// wait...
+			}
+		}
 		IContainer container = (IContainer) resource;
 
 		Set<IResource> members = new HashSet<IResource>();
@@ -592,8 +603,9 @@ public class MercurialStatusCache extends Observable implements
 	 * Refreshes all local revisions, uses default limit of revisions to get,
 	 * e.g. the top 50 revisions.
 	 * 
-	 * If a resource version can't be found in the topmost revisions, the last revisions
-	 * of this file (10% of limit number) are obtained via additional calls. 
+	 * If a resource version can't be found in the topmost revisions, the last
+	 * revisions of this file (10% of limit number) are obtained via additional
+	 * calls.
 	 * 
 	 * @param project
 	 * @throws HgException
@@ -606,8 +618,9 @@ public class MercurialStatusCache extends Observable implements
 	 * Refreshes all local revisions. If limit is set, it looks up the default
 	 * number of revisions to get and fetches the topmost till limit is reached.
 	 * 
-	 * If a resource version can't be found in the topmost revisions, the last revisions
-	 * of this file (10% of limit number) are obtained via additional calls. 
+	 * If a resource version can't be found in the topmost revisions, the last
+	 * revisions of this file (10% of limit number) are obtained via additional
+	 * calls.
 	 * 
 	 * @param project
 	 * @param limit
@@ -616,25 +629,30 @@ public class MercurialStatusCache extends Observable implements
 	 */
 	public void refreshAllLocalRevisions(IProject project, boolean limit)
 			throws HgException {
-		int defaultLimit = 300;
-		try {
-			String result = project
-					.getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_DEFAULT_REVISION_LIMIT);
-			if (result != null) {
-				defaultLimit = Integer.parseInt(result);
+		if (null != RepositoryProvider.getProvider(project,
+				MercurialTeamProvider.ID)
+				&& project.isOpen()) {
+			int defaultLimit = 300;
+			try {
+				String result = project
+						.getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_DEFAULT_REVISION_LIMIT);
+				if (result != null) {
+					defaultLimit = Integer.parseInt(result);
+				}
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
 			}
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
+			this.refreshAllLocalRevisions(project, limit, defaultLimit);
 		}
-		this.refreshAllLocalRevisions(project, limit, defaultLimit);
 	}
 
 	/**
 	 * Refreshes all local revisions. If limit is set, it looks up the default
 	 * number of revisions to get and fetches the topmost till limit is reached.
 	 * 
-	 * If a resource version can't be found in the topmost revisions, the last revisions
-	 * of this file (10% of limit number) are obtained via additional calls. 
+	 * If a resource version can't be found in the topmost revisions, the last
+	 * revisions of this file (10% of limit number) are obtained via additional
+	 * calls.
 	 * 
 	 * @param project
 	 * @param limit
@@ -662,25 +680,28 @@ public class MercurialStatusCache extends Observable implements
 
 					}
 
-					IResource[] resources = getLocalMembers(project);
+					Set<IResource> resources = new HashSet<IResource>(Arrays
+							.asList(getLocalMembers(project)));
 					for (IResource resource : resources) {
 						localChangeSets.remove(resource);
 					}
 					localChangeSets.remove(project);
-					
+
 					Set<IResource> concernedResources = new HashSet<IResource>();
-					
+
 					concernedResources.add(project);
-					concernedResources.addAll(Arrays.asList(resources));
-					concernedResources.addAll(revisions.keySet());					
+					concernedResources.addAll(resources);
+					concernedResources.addAll(revisions.keySet());
 
 					for (Iterator<IResource> iter = revisions.keySet()
 							.iterator(); iter.hasNext();) {
 						IResource res = iter.next();
 						SortedSet<ChangeSet> changes = revisions.get(res);
-						// if changes for resource not in top 50, get at least 10% 
+						// if changes for resource not in top 50, get at least
+						// 10%
 						if (changes == null && limit) {
-							changes = HgLogClient.getRecentProjectLog(res, limitNumber/10).get(res);
+							changes = HgLogClient.getRecentProjectLog(res,
+									limitNumber / 10).get(res);
 						}
 						// add changes to cache
 						if (changes != null && changes.size() > 0) {
@@ -688,8 +709,8 @@ public class MercurialStatusCache extends Observable implements
 								localChangeSets.put(res, changes);
 							}
 							addToNodeMap(changes);
-						} 
-					}					
+						}
+					}
 				} finally {
 					localUpdateInProgress = false;
 				}
@@ -709,25 +730,42 @@ public class MercurialStatusCache extends Observable implements
 	}
 
 	public void resourceChanged(IResourceChangeEvent event) {
-		Set<IProject> changedProjects = new HashSet<IProject>();
-
 		// only refresh after a change - we aren't interested in build outputs,
 		// are we?
 		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
-			IResourceDelta[] children = event.getDelta().getAffectedChildren();
-			for (IResourceDelta delta : children) {
-				IProject project = delta.getResource().getProject();
-				if (null != RepositoryProvider.getProvider(project,
+			// workspace childs
+			IResourceDelta[] wsChildren = event.getDelta()
+					.getAffectedChildren();
+			for (IResourceDelta wsChild : wsChildren) {
+
+				// update whole project :-(. else we'd have to walk the project
+				// tree.
+				final IResource res = wsChild.getResource();
+				if (null != RepositoryProvider.getProvider(res.getProject(),
 						MercurialTeamProvider.ID)
-						&& project.isOpen()) {
-					changedProjects.add(project);
-				}
-			}
-			for (IProject project : changedProjects) {
-				try {
-					refreshStatus(project, null);
-				} catch (Exception e) {
-					MercurialEclipsePlugin.logError(e);
+						&& res.getProject().isOpen()) {
+
+					new SafeUiJob("Refreshing status of resource "
+							+ res.getName()) {
+						@Override
+						protected IStatus runSafe(IProgressMonitor monitor) {
+							try {
+								monitor.beginTask(
+										"Starting to refresh status of "
+												+ res.getName(), 10);
+								refreshStatus(res, monitor);
+								return super.runSafe(monitor);
+							} catch (HgException e) {
+								MercurialEclipsePlugin.logError(e);
+								return new Status(IStatus.ERROR,
+										MercurialEclipsePlugin.ID,
+										"Couldn't refresh status of "
+												+ res.getName() + ". E: "
+												+ e.getMessage());
+							}
+						}
+					}.schedule();
+
 				}
 			}
 		}

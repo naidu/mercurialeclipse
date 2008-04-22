@@ -17,6 +17,14 @@ public class HgStatusClient {
 		return command.executeToString();
 	}
 	
+	public static String getStatus(IResource res) throws HgException {
+		HgCommand command = new HgCommand("status", res.getProject(), true);
+		//modified, added, removed, deleted, unknown, ignored, clean
+		command.addOptions("-marduic");
+		command.addOptions(res.getProjectRelativePath().toOSString());
+		return command.executeToString();
+	}
+	
 	public static String[] getUntrackedFiles(IContainer root) throws HgException {
 		HgCommand command = new HgCommand("status", root, true);
 		command.addOptions("-u", "-n");
