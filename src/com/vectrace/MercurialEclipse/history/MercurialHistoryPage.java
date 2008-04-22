@@ -14,6 +14,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.Arrays;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -158,7 +160,7 @@ public class MercurialHistoryPage extends HistoryPage
         
     public String getColumnText(Object obj, int index) 
     {
-      String ret;
+      String ret = null;
 
       if((obj instanceof MercurialRevision) != true)
       {
@@ -183,13 +185,14 @@ public class MercurialHistoryPage extends HistoryPage
           ret= changeSet.getDate();
           break;
         case 5:
-          ret= changeSet.getFiles();
+          if (changeSet.getChangedFiles()!=null && changeSet.getChangedFiles().length>0){
+        	  ret= Arrays.toString(changeSet.getChangedFiles());  
+          }          
           break;
         case 6:
           ret= changeSet.getDescription();
           break;
         default:
-          ret= null;
           break;
       }
       return ret;
