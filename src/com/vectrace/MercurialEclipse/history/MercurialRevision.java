@@ -37,10 +37,11 @@ public class MercurialRevision extends FileRevision
   public MercurialRevision(ChangeSet changeSet,IResource resource)
   {
     super();
-    this.changeSet = changeSet;
-    String[] changeSetParts = changeSet.getChangeset().split(":");
-	this.revision = changeSetParts[0];
-	this.hash = changeSetParts[1];
+    this.changeSet = changeSet;    
+    //String[] changeSetParts = changeSet.getChangeset().split(":");
+    
+	this.revision = changeSet.getChangesetIndex()+"";
+	this.hash = changeSet.getChangeset();
     this.resource=resource;
   }
   
@@ -134,6 +135,10 @@ public String getHash() {
  */
 public void setHash(String hash) {
 	this.hash = hash;
+}
+
+public IResource getResource() {
+	return resource;
 }
 
 }

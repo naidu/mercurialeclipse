@@ -30,11 +30,12 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private String description;
 	private String ageDate;
 	private String nodeShort;
+	private String[] parents;
 	private Date realDate;
 	private File bundleFile;
 
 	public ChangeSet(int changesetIndex, String changeSet, String tag,
-			String user, String date, String files, String description) {
+			String user, String date, String files, String description, String[] parents) {
 		this.changesetIndex = changesetIndex;
 		this.changeset = changeSet;
 		this.tag = tag;
@@ -42,7 +43,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		this.date = date;
 		this.files = files;
 		this.description = description;
-		
+		this.parents = parents;
 		try {
 			if (date != null) {
 				this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z")
@@ -55,13 +56,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
 	public ChangeSet(int changesetIndex, String changeSet, String user,
 			String date) {
-		this(changesetIndex, changeSet, null, user, date, null, null);
+		this(changesetIndex, changeSet, null, user, date, null, null, null);
 	}
 
 	public ChangeSet(int rev, String nodeShort, String node, String tag,
 			String author, String date, String ageDate, String[] changedFiles,
-			String description, File bundle) {
-		this(rev, node, tag, author, date, null, description);
+			String description, File bundle, String[] parents) {
+		this(rev, node, tag, author, date, null, description, parents);
 		this.nodeShort = nodeShort;
 		this.ageDate = ageDate;
 		this.changedFiles = changedFiles;
@@ -192,5 +193,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	 */
 	public void setBundleFile(File bundleFile) {
 		this.bundleFile = bundleFile;
+	}
+
+	public String[] getParents() {
+		return parents;
+	}
+
+	public void setParents(String[] parents) {
+		this.parents = parents;
 	}
 }

@@ -12,15 +12,19 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
-import com.vectrace.MercurialEclipse.model.ChangeLog;
+
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -31,7 +35,7 @@ public class MercurialHistory extends FileHistory
 {
   private IResource resource;
   protected IFileRevision[] revisions;
-  ChangeLog changeLog;
+//  ChangeLog changeLog;
 
 
   public MercurialHistory(IResource resource)
@@ -85,17 +89,16 @@ public class MercurialHistory extends FileHistory
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
       
-      changeLog = new ChangeLog(resource);
-      
-//      changeLog.ChangeChangeLog(in_resource);
-      Vector<ChangeSet> changeSets = changeLog.getChangeLog();
-      
-      
-      revisions = new IFileRevision[changeSets.size()];
-      for(int i=0;i<changeSets.size();i++)
-      {
-        revisions[i]=new MercurialRevision(changeSets.get(i),resource);
-      }
+      List<ChangeSet> changeSets = new ArrayList<ChangeSet>(
+					MercurialStatusCache.getInstance().getLocalChangeSets(
+							resource));
+			Collections.reverse(changeSets);
+
+			revisions = new IFileRevision[changeSets.size()];
+			for (int i = 0; i < changeSets.size(); i++) {
+				revisions[i] = new MercurialRevision(changeSets.get(i),
+						resource);
+			}
     }
   } 
   

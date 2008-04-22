@@ -43,6 +43,8 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -151,7 +153,7 @@ public class MercurialHistoryPage extends HistoryPage
     }
   }
 
-  class ChangeSetLabelProvider extends LabelProvider implements ITableLabelProvider
+    class ChangeSetLabelProvider extends LabelProvider implements ITableLabelProvider
   {
         
     public String getColumnText(Object obj, int index) 
@@ -168,22 +170,22 @@ public class MercurialHistoryPage extends HistoryPage
      
       switch (index)
       {
-        case 0:
-          ret= changeSet.getChangeset();
-          break;
         case 1:
-          ret= changeSet.getTag();
+          ret= changeSet.toString();
           break;
         case 2:
-          ret= changeSet.getUser();
+          ret= changeSet.getTag();
           break;
         case 3:
-          ret= changeSet.getDate();
+          ret= changeSet.getUser();
           break;
         case 4:
-          ret= changeSet.getFiles();
+          ret= changeSet.getDate();
           break;
         case 5:
+          ret= changeSet.getFiles();
+          break;
+        case 6:
           ret= changeSet.getDescription();
           break;
         default:
@@ -196,6 +198,9 @@ public class MercurialHistoryPage extends HistoryPage
     {
       return null; 
     }
+	
+   
+    
   }
   
   class NameSorter extends ViewerSorter 
@@ -282,7 +287,10 @@ public class MercurialHistoryPage extends HistoryPage
     TableLayout layout = new TableLayout();    
     changeLogTable.setLayout(layout);    
     
-    TableColumn column = new TableColumn(changeLogTable,SWT.LEFT);
+    TableColumn column = new TableColumn(changeLogTable,SWT.CENTER);
+    column.setText("Graph");
+    layout.addColumnData(new ColumnWeightData(5,true));
+    column = new TableColumn(changeLogTable,SWT.LEFT);
     column.setText("Changeset");
     layout.addColumnData(new ColumnWeightData(15, true));
     column = new TableColumn(changeLogTable,SWT.LEFT);
@@ -293,7 +301,7 @@ public class MercurialHistoryPage extends HistoryPage
     layout.addColumnData(new ColumnWeightData(7, true));
     column = new TableColumn(changeLogTable,SWT.LEFT);
     column.setText("Date");
-    layout.addColumnData(new ColumnWeightData(18, true));
+    layout.addColumnData(new ColumnWeightData(13, true));
     column = new TableColumn(changeLogTable,SWT.LEFT);
     column.setText("Files");
     layout.addColumnData(new ColumnWeightData(25, true));
@@ -307,6 +315,12 @@ public class MercurialHistoryPage extends HistoryPage
     viewer.setSorter(new NameSorter());
     
     contributeActions();
+    Listener listener = new Listener() {
+    	public void handleEvent(Event event) {
+//    		painter.paint(event,0);
+    	}
+    };
+	changeLogTable.addListener(SWT.PaintItem,listener);
   }
 
 

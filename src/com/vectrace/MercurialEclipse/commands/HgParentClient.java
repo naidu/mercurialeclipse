@@ -4,6 +4,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
@@ -32,5 +33,13 @@ public class HgParentClient {
         }
         throw new HgException("Parse exception: '"+result+"'");
     }
+
+	public static String[] getParents(IResource rev, String node) throws HgException {
+		HgCommand command = new HgCommand("parents", rev.getProject(), false);
+        command.addOptions("--template", "{rev}:{node|short}\n");
+        command.addOptions("-r", node);        
+        String[] lines = command.executeToString().split("\n");        
+        return lines;
+	}
 
 }

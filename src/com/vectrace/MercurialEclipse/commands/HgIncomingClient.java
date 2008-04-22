@@ -2,10 +2,12 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.Vector;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -17,7 +19,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgIncomingClient {
 
-	public static String template = "{tags};;{rev};;{node|short};;{node};;{date|isodate};;{date|age};;{author|person};;{description};;{files};;!!";
+	public static String template = "{tags};;{rev};;{node|short};;{node};;{date|isodate};;{date|age};;{author|person};;{desc};;{parents};;{files};;!!";
 
 	/**
 	 * Gets all File Revisions that are incoming and saves them in a bundle
@@ -33,7 +35,7 @@ public class HgIncomingClient {
 	public static Map<IResource, SortedSet<ChangeSet>> getHgIncoming(
 			IProject proj, HgRepositoryLocation repository) throws HgException {
 		HgCommand command = new HgCommand("incoming", proj, false);
-		File bundleFile = getBundleFile(proj,repository);
+		File bundleFile = getBundleFile(proj, repository);
 		File temp = new File(proj.getLocation() + "bundle.temp");
 		try {
 			command.addOptions("--template", template, "--bundle", temp
@@ -44,7 +46,7 @@ public class HgIncomingClient {
 				return null;
 			}
 			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-					result, proj, "!!", template, ";;",bundleFile);
+					result, proj, "!!", template, ";;", bundleFile);
 			temp.renameTo(bundleFile);
 			return revisions;
 		} catch (HgException hg) {
@@ -58,10 +60,12 @@ public class HgIncomingClient {
 	}
 
 	public static File getBundleFile(IProject proj, HgRepositoryLocation loc) {
-		String strippedLocation = loc.getUrl().replace('/', '_').replace(':', '.');
+		String strippedLocation = loc.getUrl().replace('/', '_').replace(':',
+				'.');
 		return MercurialEclipsePlugin.getDefault().getStateLocation().append(
 				MercurialEclipsePlugin.BUNDLE_FILE_PREFIX + "."
-						+ proj.getName() + "." + strippedLocation + ".hg").toFile();
+						+ proj.getName() + "." + strippedLocation + ".hg")
+				.toFile();
 	}
 
 	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
@@ -74,9 +78,9 @@ public class HgIncomingClient {
 		for (String changeSet : changeSetStrings) {
 			ChangeSet cs = getChangeSet(changeSet, templ,
 					templateElementSeparator);
-			
+
 			// add bundle file for being able to look into the bundle.
-			
+
 			cs.setBundleFile(bundleFile);
 			if (cs.getChangedFiles() != null) {
 				for (String file : cs.getChangedFiles()) {
@@ -138,13 +142,38 @@ public class HgIncomingClient {
 				"{date|isodate}").intValue()];
 		String ageDate = changeSetComponents[templatePositions
 				.get("{date|age}").intValue()];
-		String author = changeSetComponents[templatePositions.get(
-				"{author|person}").intValue()];
-		String description = "";
+
+		String author = null;
 		if (changeSetComponents.length - 1 > templatePositions
-				.get("{description}")) {
-			description = changeSetComponents[templatePositions.get(
-					"{description}").intValue()];
+				.get("{author|person}")) {
+
+			author = changeSetComponents[templatePositions.get(
+					"{author|person}").intValue()];
+		}
+
+		String description = "";
+		if (changeSetComponents.length - 1 > templatePositions.get("{desc}")) {
+			description = changeSetComponents[templatePositions.get("{desc}")
+					.intValue()];
+		}
+
+		String[] parents = null;
+		if (changeSetComponents.length - 1 >= templatePositions
+				.get("{parents}")) {
+			String string = changeSetComponents[templatePositions.get(
+					"{parents}").intValue()];
+			Vector<String> split = new Vector<String>(Arrays.asList(string
+					.split(" ")));
+			for (int j = 0; j < split.size(); j++) {
+				String s = split.get(j);				
+				if (s.equals(""))
+					split.remove(s);
+			}
+			
+			if (split.size()>0){
+				parents = split.toArray(new String[split.size()]);
+			}
+
 		}
 
 		String[] files = null;
@@ -152,10 +181,12 @@ public class HgIncomingClient {
 			String filesString = changeSetComponents[templatePositions.get(
 					"{files}").intValue()];
 
-			files = filesString.split(" ");
+			if (filesString != null)
+				files = filesString.split(" ");
 		}
 		ChangeSet cs = new ChangeSet(Integer.parseInt(revision), nodeShort,
-				node, tag, author, date, ageDate, files, description, null);
+				node, tag, author, date, ageDate, files, description, null,
+				parents);
 		return cs;
 	}
 }

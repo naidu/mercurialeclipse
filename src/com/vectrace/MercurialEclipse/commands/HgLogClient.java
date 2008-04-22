@@ -39,6 +39,14 @@ public class HgLogClient {
 		command.addOptions("--config", "extensions.hgext.graphlog=");
 		return command.executeToString();
 	}
+	
+	public static String getGraphicalLog(IProject project, String template, String filename) throws HgException {
+		HgCommand command = new HgCommand("glog", project, false);
+		command.addOptions("--template",template);
+		command.addOptions("--config", "extensions.hgext.graphlog=");
+		command.addOptions(filename);
+		return command.executeToString();
+	}
 
 	/**
 	 * 
@@ -88,7 +96,7 @@ public class HgLogClient {
 
 		command.addOptions("--template", HgIncomingClient.template);
 		String result = command.executeToString();
-		result = result.substring(result.lastIndexOf("\n") + 1);
+		//result = result.substring(result.lastIndexOf("\n") + 1);
 		if (result.contains("no changes found")) {
 			return null;
 		}
@@ -97,4 +105,21 @@ public class HgLogClient {
 						HgIncomingClient.template, ";;", null);
 		return revisions;
 	}
+	
+	public static Map<IResource, SortedSet<ChangeSet>> getRecentProjectLog(
+			IProject proj) throws HgException {
+		HgCommand command = new HgCommand("log", proj, false);
+
+		command.addOptions("--template", HgIncomingClient.template);
+		command.addOptions("-l","50");
+		String result = command.executeToString();
+		//result = result.substring(result.lastIndexOf("\n") + 1);
+		if (result.contains("no changes found")) {
+			return null;
+		}
+		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
+				.createMercurialRevisions(result, proj, "!!",
+						HgIncomingClient.template, ";;", null);
+		return revisions;
+	}	
 }

@@ -23,6 +23,7 @@ import java.util.Observable;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IContainer;
@@ -74,6 +75,8 @@ public class MercurialStatusCache extends Observable implements
 	private static Set<IProject> knownStatus;
 
 	private static Map<IResource, SortedSet<ChangeSet>> localChangeSets;
+
+	private static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
 
 	private static Map<IProject, Set<IResource>> projectResources;
 
@@ -295,7 +298,7 @@ public class MercurialStatusCache extends Observable implements
 				if (monitor != null)
 					monitor.worked(1);
 				setChanged();
-				notifyObservers(project);				
+				notifyObservers(project);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -369,6 +372,10 @@ public class MercurialStatusCache extends Observable implements
 								if (changeSets != null) {
 									for (ChangeSet changeSet : changeSets) {
 										revisions.add(changeSet);
+										synchronized (nodeMap) {
+											nodeMap.put(changeSet.toString(),
+													changeSet);
+										}
 									}
 								}
 								if (res.getType() == IResource.FILE) {
@@ -571,7 +578,7 @@ public class MercurialStatusCache extends Observable implements
 				localUpdateInProgress = true;
 
 				Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
-						.getCompleteProjectLog(project);
+						.getRecentProjectLog(project);
 
 				IResource[] resources = getLocalMembers(project);
 				for (IResource resource : resources) {
@@ -584,24 +591,10 @@ public class MercurialStatusCache extends Observable implements
 					IResource res = iter.next();
 					SortedSet<ChangeSet> changes = revisions.get(res);
 					if (changes != null && changes.size() > 0) {
-//						BitSet bitSet = getStatus(res);
-//						int status = BIT_UNKNOWN;
-//						if (bitSet != null) {
-//							status = bitSet.length() - 1;
-//						}
-//						// only proceed if there were changes or we are at
-//						// initial
-//						// load.
-//						switch (status) {
-//						case BIT_IGNORE:
-//						case BIT_UNKNOWN:
-//							if (bitSet != null && bitSet.cardinality() == 1) {
-//								continue;
-//							}							
-//						}
 						if (isSupervised(res)) {
 							localChangeSets.put(res, changes);
 						}
+						addToNodeMap(changes);
 					}
 				}
 			} finally {
@@ -610,10 +603,22 @@ public class MercurialStatusCache extends Observable implements
 		}
 	}
 
+	/**
+	 * @param changes
+	 */
+	private void addToNodeMap(SortedSet<ChangeSet> changes) {
+		for (ChangeSet changeSet : changes) {
+			synchronized (nodeMap) {
+				nodeMap.put(changeSet.toString(), changeSet);
+			}
+		}
+	}
+
 	public void resourceChanged(IResourceChangeEvent event) {
 		Set<IProject> changedProjects = new HashSet<IProject>();
-		
-		// only refresh after a change - we aren't interested in build outputs, are we?
+
+		// only refresh after a change - we aren't interested in build outputs,
+		// are we?
 		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
 			IResourceDelta[] children = event.getDelta().getAffectedChildren();
 			for (IResourceDelta delta : children) {
@@ -631,6 +636,47 @@ public class MercurialStatusCache extends Observable implements
 				}
 			}
 		}
-		
+
 	}
+
+	public ChangeSet getChangeSet(String changeSet) {
+		if (this.localUpdateInProgress || this.remoteUpdateInProgress) {
+			synchronized (nodeMap) {
+				// wait
+			}
+		}
+		return nodeMap.get(changeSet);
+	}
+
+	public ChangeSet getChangeSet(IResource res, int changesetIndex) throws HgException {
+		if (this.localUpdateInProgress || this.remoteUpdateInProgress) {
+			synchronized (nodeMap) {
+				// wait
+			}
+		}
+		SortedSet<ChangeSet> locals = getLocalChangeSets(res);
+		for (Iterator<ChangeSet> iterator = locals.iterator(); iterator.hasNext();) {
+			ChangeSet changeSet = iterator.next();			
+			if (changeSet.getChangesetIndex()==changesetIndex){
+				return changeSet;
+			}
+		}
+		return null;
+	}
+
+	public String[] getParentsChangeSet(IResource res, ChangeSet cs) throws HgException {
+		SortedSet<ChangeSet> changeSets = getLocalChangeSets(res);
+		String[] parents = cs.getParents();
+		if (parents == null || parents.length == 0) {
+			ChangeSet candidate = cs;
+			do {
+				candidate = getChangeSet(res, candidate.getChangesetIndex() - 1);
+			} while (candidate != null && !changeSets.contains(candidate));
+			if (candidate != null && candidate != cs) {
+				return new String[] { candidate.toString() };
+			}
+		}
+		return parents;
+	}
+
 }

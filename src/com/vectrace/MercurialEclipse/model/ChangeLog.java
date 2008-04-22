@@ -244,7 +244,7 @@ Moved Prefs to team section fixes ticket #16
 //          System.out.println("files:       <" + files + ">");
 //          System.out.println("description: <" + description + ">");
           changesetIndex= new Integer(changeset.split(":")[0]);
-          this.changeLog.add( new ChangeSet(changesetIndex,changeset,tag,user,date,files,description));
+          this.changeLog.add( new ChangeSet(changesetIndex,changeset,tag,user,date,files,description,null));
       }
     }        
 //    System.out.println("Done!!!");

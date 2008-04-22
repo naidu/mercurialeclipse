@@ -16,6 +16,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.ui.history.HistoryPageSource;
 import org.eclipse.ui.part.Page;
 
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+
 /**
  * @author zingo
  *
@@ -36,18 +38,12 @@ public class MercurialHistoryPageSource extends HistoryPageSource
    */
   public boolean canShowHistoryFor(Object object)
   {
-    // TODO Check if the file is in a Mercurial repository
-//    System.out.println("MercurialHistoryPageSource::canShowHistoryFor( " +object.toString() + ")");
-
-//    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
-//    {
-//      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) object).getProject());
-//      if (provider instanceof MercurialTeamProvider)
-//      {
-        return true;
-//      }
-//    }
-//    return false;
+	if (object instanceof IResource) {
+			return MercurialStatusCache.getInstance().isSupervised(
+					(IResource) object);
+	}
+	return true;
+	
   }
 
   /* (non-Javadoc)
