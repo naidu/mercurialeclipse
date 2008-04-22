@@ -40,8 +40,7 @@ public class HgIncomingClient {
 		try {
 			command.addOptions("--template", template, "--bundle", temp
 					.getCanonicalPath(), repository.getUrl());
-			String result = command.executeToString();
-			result = result.substring(result.lastIndexOf("\n") + 1);
+			String result = command.executeToString();			
 			if (result.contains("no changes found")) {
 				return null;
 			}

@@ -107,18 +107,19 @@ public class HgLogClient {
 	}
 	
 	public static Map<IResource, SortedSet<ChangeSet>> getRecentProjectLog(
-			IProject proj) throws HgException {
-		HgCommand command = new HgCommand("log", proj, false);
+			IResource res, int limitNumber) throws HgException {
+		HgCommand command = new HgCommand("log", res.getProject(), false);
 
 		command.addOptions("--template", HgIncomingClient.template);
-		command.addOptions("-l","50");
+		command.addOptions("-l",limitNumber+"");
+		command.addOptions(res.getProjectRelativePath().toOSString());
 		String result = command.executeToString();
 		//result = result.substring(result.lastIndexOf("\n") + 1);
 		if (result.contains("no changes found")) {
 			return null;
 		}
 		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-				.createMercurialRevisions(result, proj, "!!",
+				.createMercurialRevisions(result, res.getProject(), "!!",
 						HgIncomingClient.template, ";;", null);
 		return revisions;
 	}	

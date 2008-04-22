@@ -14,6 +14,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -33,6 +34,7 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.RepositoryProvider;
@@ -278,29 +280,33 @@ public class MercurialStatusCache extends Observable implements
 			throws TeamException {
 		/* hg status on project (all files) instead of per file basis */
 		try {
-			// set status
-			refreshStatus(project, monitor);
+			if (null != RepositoryProvider.getProvider(project,
+					MercurialTeamProvider.ID)
+					&& project.isOpen()) {
+				// set status
+				refreshStatus(project, monitor);
 
-			if (monitor != null) {
-				monitor.subTask("Updating status and version cache...");
-			}
-			try {
-				if (monitor != null)
-					monitor.subTask("Loading local revisions...");
-				refreshAllLocalRevisions(project);
-				if (monitor != null)
-					monitor.worked(1);
-				// incoming
-				if (monitor != null)
-					monitor
-							.subTask("Loading remote revisions from repositories...");
-				refreshIncomingChangeSets(project);
-				if (monitor != null)
-					monitor.worked(1);
-				setChanged();
-				notifyObservers(project);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+				if (monitor != null) {
+					monitor.subTask("Updating status and version cache...");
+				}
+				try {
+					if (monitor != null)
+						monitor.subTask("Loading local revisions...");
+					refreshAllLocalRevisions(project);
+					if (monitor != null)
+						monitor.worked(1);
+					// incoming
+					if (monitor != null)
+						monitor
+								.subTask("Loading remote revisions from repositories...");
+					refreshIncomingChangeSets(project);
+					if (monitor != null)
+						monitor.worked(1);
+					setChanged();
+					notifyObservers(project);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 		} catch (HgException e) {
 			throw new TeamException(e.getMessage(), e);
@@ -314,17 +320,21 @@ public class MercurialStatusCache extends Observable implements
 	public void refreshStatus(final IProject project, IProgressMonitor monitor)
 			throws HgException {
 		try {
-			synchronized (statusMap) {
-				statusUpdateInProgress = true;
-				// members should contain folders and project, so we clear
-				// status for files, folders and project
-				IResource[] resources = getLocalMembers(project);
-				for (IResource resource : resources) {
-					statusMap.remove(resource);
+			if (null != RepositoryProvider.getProvider(project,
+					MercurialTeamProvider.ID)
+					&& project.isOpen()) {
+				synchronized (statusMap) {
+					statusUpdateInProgress = true;
+					// members should contain folders and project, so we clear
+					// status for files, folders and project
+					IResource[] resources = getLocalMembers(project);
+					for (IResource resource : resources) {
+						statusMap.remove(resource);
+					}
+					statusMap.remove(project);
+					String output = HgStatusClient.getStatus(project);
+					parseStatusCommand(project, output);
 				}
-				statusMap.remove(project);
-				String output = HgStatusClient.getStatus(project);
-				parseStatusCommand(project, output);
 			}
 		} finally {
 			statusUpdateInProgress = false;
@@ -334,59 +344,65 @@ public class MercurialStatusCache extends Observable implements
 	}
 
 	private void refreshIncomingChangeSets(IProject project) throws HgException {
-		synchronized (incomingChangeSets) {
-			try {
-				remoteUpdateInProgress = true;
+		if (null != RepositoryProvider.getProvider(project,
+				MercurialTeamProvider.ID)
+				&& project.isOpen()) {
+			synchronized (incomingChangeSets) {
+				try {
+					remoteUpdateInProgress = true;
 
-				Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
-						.getRepoManager().getAllProjectRepoLocations(project);
+					Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
+							.getRepoManager().getAllProjectRepoLocations(
+									project);
 
-				if (repositories == null) {
-					return;
-				}
+					if (repositories == null) {
+						return;
+					}
 
-				IResource[] resources = getIncomingMembers(project);
-				for (IResource resource : resources) {
-					incomingChangeSets.remove(resource);
-				}
+					IResource[] resources = getIncomingMembers(project);
+					for (IResource resource : resources) {
+						incomingChangeSets.remove(resource);
+					}
 
-				for (HgRepositoryLocation hgRepositoryLocation : repositories) {
+					for (HgRepositoryLocation hgRepositoryLocation : repositories) {
 
-					Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
-							.getHgIncoming(project, hgRepositoryLocation);
+						Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
+								.getHgIncoming(project, hgRepositoryLocation);
 
-					if (incomingResources != null
-							&& incomingResources.size() > 0) {
+						if (incomingResources != null
+								&& incomingResources.size() > 0) {
 
-						for (Iterator<IResource> iter = incomingResources
-								.keySet().iterator(); iter.hasNext();) {
-							IResource res = iter.next();
-							SortedSet<ChangeSet> changes = incomingResources
-									.get(res);
+							for (Iterator<IResource> iter = incomingResources
+									.keySet().iterator(); iter.hasNext();) {
+								IResource res = iter.next();
+								SortedSet<ChangeSet> changes = incomingResources
+										.get(res);
 
-							if (changes != null && changes.size() > 0) {
-								SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
-								ChangeSet[] changeSets = changes
-										.toArray(new ChangeSet[changes.size()]);
+								if (changes != null && changes.size() > 0) {
+									SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
+									ChangeSet[] changeSets = changes
+											.toArray(new ChangeSet[changes
+													.size()]);
 
-								if (changeSets != null) {
-									for (ChangeSet changeSet : changeSets) {
-										revisions.add(changeSet);
-										synchronized (nodeMap) {
-											nodeMap.put(changeSet.toString(),
-													changeSet);
+									if (changeSets != null) {
+										for (ChangeSet changeSet : changeSets) {
+											revisions.add(changeSet);
+											synchronized (nodeMap) {
+												nodeMap.put(changeSet
+														.toString(), changeSet);
+											}
 										}
 									}
-								}
-								if (res.getType() == IResource.FILE) {
-									incomingChangeSets.put(res, revisions);
+									if (res.getType() == IResource.FILE) {
+										incomingChangeSets.put(res, revisions);
+									}
 								}
 							}
 						}
 					}
+				} finally {
+					remoteUpdateInProgress = false;
 				}
-			} finally {
-				remoteUpdateInProgress = false;
 			}
 		}
 	}
@@ -572,33 +588,111 @@ public class MercurialStatusCache extends Observable implements
 		return null;
 	}
 
+	/**
+	 * Refreshes all local revisions, uses default limit of revisions to get,
+	 * e.g. the top 50 revisions.
+	 * 
+	 * If a resource version can't be found in the topmost revisions, the last revisions
+	 * of this file (10% of limit number) are obtained via additional calls. 
+	 * 
+	 * @param project
+	 * @throws HgException
+	 */
 	public void refreshAllLocalRevisions(IProject project) throws HgException {
-		synchronized (localChangeSets) {
-			try {
-				localUpdateInProgress = true;
+		this.refreshAllLocalRevisions(project, true);
+	}
 
-				Map<IResource, SortedSet<ChangeSet>> revisions = HgLogClient
-						.getRecentProjectLog(project);
+	/**
+	 * Refreshes all local revisions. If limit is set, it looks up the default
+	 * number of revisions to get and fetches the topmost till limit is reached.
+	 * 
+	 * If a resource version can't be found in the topmost revisions, the last revisions
+	 * of this file (10% of limit number) are obtained via additional calls. 
+	 * 
+	 * @param project
+	 * @param limit
+	 *            whether to limit or to have full project log
+	 * @throws HgException
+	 */
+	public void refreshAllLocalRevisions(IProject project, boolean limit)
+			throws HgException {
+		int defaultLimit = 300;
+		try {
+			String result = project
+					.getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_DEFAULT_REVISION_LIMIT);
+			if (result != null) {
+				defaultLimit = Integer.parseInt(result);
+			}
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		this.refreshAllLocalRevisions(project, limit, defaultLimit);
+	}
 
-				IResource[] resources = getLocalMembers(project);
-				for (IResource resource : resources) {
-					localChangeSets.remove(resource);
-				}
-				localChangeSets.remove(project);
+	/**
+	 * Refreshes all local revisions. If limit is set, it looks up the default
+	 * number of revisions to get and fetches the topmost till limit is reached.
+	 * 
+	 * If a resource version can't be found in the topmost revisions, the last revisions
+	 * of this file (10% of limit number) are obtained via additional calls. 
+	 * 
+	 * @param project
+	 * @param limit
+	 *            whether to limit or to have full project log
+	 * @param limitNumber
+	 *            if limit is set, how many revisions should be fetched
+	 * @throws HgException
+	 */
+	public void refreshAllLocalRevisions(IProject project, boolean limit,
+			int limitNumber) throws HgException {
+		if (null != RepositoryProvider.getProvider(project,
+				MercurialTeamProvider.ID)
+				&& project.isOpen()) {
+			synchronized (localChangeSets) {
+				try {
+					localUpdateInProgress = true;
 
-				for (Iterator<IResource> iter = revisions.keySet().iterator(); iter
-						.hasNext();) {
-					IResource res = iter.next();
-					SortedSet<ChangeSet> changes = revisions.get(res);
-					if (changes != null && changes.size() > 0) {
-						if (isSupervised(res)) {
-							localChangeSets.put(res, changes);
-						}
-						addToNodeMap(changes);
+					Map<IResource, SortedSet<ChangeSet>> revisions = null;
+
+					if (limit) {
+						revisions = HgLogClient.getRecentProjectLog(project,
+								limitNumber);
+					} else {
+						revisions = HgLogClient.getCompleteProjectLog(project);
+
 					}
+
+					IResource[] resources = getLocalMembers(project);
+					for (IResource resource : resources) {
+						localChangeSets.remove(resource);
+					}
+					localChangeSets.remove(project);
+					
+					Set<IResource> concernedResources = new HashSet<IResource>();
+					
+					concernedResources.add(project);
+					concernedResources.addAll(Arrays.asList(resources));
+					concernedResources.addAll(revisions.keySet());					
+
+					for (Iterator<IResource> iter = revisions.keySet()
+							.iterator(); iter.hasNext();) {
+						IResource res = iter.next();
+						SortedSet<ChangeSet> changes = revisions.get(res);
+						// if changes for resource not in top 50, get at least 10% 
+						if (changes == null && limit) {
+							changes = HgLogClient.getRecentProjectLog(res, limitNumber/10).get(res);
+						}
+						// add changes to cache
+						if (changes != null && changes.size() > 0) {
+							if (isSupervised(res)) {
+								localChangeSets.put(res, changes);
+							}
+							addToNodeMap(changes);
+						} 
+					}					
+				} finally {
+					localUpdateInProgress = false;
 				}
-			} finally {
-				localUpdateInProgress = false;
 			}
 		}
 	}
@@ -624,7 +718,8 @@ public class MercurialStatusCache extends Observable implements
 			for (IResourceDelta delta : children) {
 				IProject project = delta.getResource().getProject();
 				if (null != RepositoryProvider.getProvider(project,
-						MercurialTeamProvider.ID)) {
+						MercurialTeamProvider.ID)
+						&& project.isOpen()) {
 					changedProjects.add(project);
 				}
 			}
@@ -648,23 +743,26 @@ public class MercurialStatusCache extends Observable implements
 		return nodeMap.get(changeSet);
 	}
 
-	public ChangeSet getChangeSet(IResource res, int changesetIndex) throws HgException {
+	public ChangeSet getChangeSet(IResource res, int changesetIndex)
+			throws HgException {
 		if (this.localUpdateInProgress || this.remoteUpdateInProgress) {
 			synchronized (nodeMap) {
 				// wait
 			}
 		}
 		SortedSet<ChangeSet> locals = getLocalChangeSets(res);
-		for (Iterator<ChangeSet> iterator = locals.iterator(); iterator.hasNext();) {
-			ChangeSet changeSet = iterator.next();			
-			if (changeSet.getChangesetIndex()==changesetIndex){
+		for (Iterator<ChangeSet> iterator = locals.iterator(); iterator
+				.hasNext();) {
+			ChangeSet changeSet = iterator.next();
+			if (changeSet.getChangesetIndex() == changesetIndex) {
 				return changeSet;
 			}
 		}
 		return null;
 	}
 
-	public String[] getParentsChangeSet(IResource res, ChangeSet cs) throws HgException {
+	public String[] getParentsChangeSet(IResource res, ChangeSet cs)
+			throws HgException {
 		SortedSet<ChangeSet> changeSets = getLocalChangeSets(res);
 		String[] parents = cs.getParents();
 		if (parents == null || parents.length == 0) {
