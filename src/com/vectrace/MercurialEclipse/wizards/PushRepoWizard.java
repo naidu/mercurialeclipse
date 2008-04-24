@@ -20,7 +20,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.RepositoryPushAction;
+import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -65,12 +65,10 @@ public boolean performFinish()
       return false;
     }
 
-    RepositoryPushAction repositoryPushAction = new RepositoryPushAction(null, project, repo,null);
-
     try
     {
-      repositoryPushAction.run();
-      if(repositoryPushAction.getResult().length() != 0)
+      String result = HgPushPullClient.push(project, repo);
+      if(result.length() != 0)
       {
         Shell shell;
         IWorkbench workbench;
@@ -78,7 +76,7 @@ public boolean performFinish()
         workbench = PlatformUI.getWorkbench();
         shell = workbench.getActiveWorkbenchWindow().getShell();
 
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Push output",  repositoryPushAction.getResult());
+        MessageDialog.openInformation(shell,"Mercurial Eclipse Push output",  result);
       }
     }
     catch (Exception e)

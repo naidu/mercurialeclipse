@@ -20,6 +20,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.window.Window;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
@@ -61,7 +62,7 @@ public class CommitAction extends MultipleResourcesAction {
 					messageToCommit,
 					null); //monitor
 			
-			DecoratorStatus.refresh();
+			MercurialEclipsePlugin.refreshProjectFlags(project);
 			//TODO Refresh history view TeamUI.getHistoryView().refresh();
 		}
 	}

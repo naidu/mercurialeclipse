@@ -23,9 +23,9 @@ import org.eclipse.core.resources.team.IResourceTree;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import com.vectrace.MercurialEclipse.actions.DeleteFileAction;
-import com.vectrace.MercurialEclipse.actions.MoveFileAction;
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
+import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
+import com.vectrace.MercurialEclipse.commands.HgRenameClient;
 
 /**
  * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
@@ -156,13 +156,12 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
   private boolean deleteHgFiles(IResource resource, IProgressMonitor monitor)
   {
     // Delete the file from the Mercurial repository.
-    DeleteFileAction deleteAction = new DeleteFileAction(null, resource);
     
     // TODO: Decide if we should have different Hg behaviour based on the force flag provided in
     //       updateFlags.
     try
     {
-      deleteAction.run(monitor);
+      HgRemoveClient.removeResource(resource, monitor);
     }
     catch(Exception e)
     {
@@ -251,13 +250,11 @@ public class HgMoveDeleteHook implements IMoveDeleteHook
   {
     // Rename the file in the Mercurial repository.
     
-    MoveFileAction moveAction = new MoveFileAction(null, source, destination);
-    
     // TODO: Decide if we should have different Hg behaviour based on the force flag provided in
     //       updateFlags.
     try
     {
-      moveAction.run(monitor);
+      HgRenameClient.renameResource(source, destination, monitor);
     }
     catch(Exception e)
     {

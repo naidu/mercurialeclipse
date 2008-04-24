@@ -59,8 +59,8 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
@@ -354,10 +354,9 @@ public class MercurialHistoryPage extends HistoryPage
       @Override
       public void run()
       {
-        CompareAction compare = new CompareAction();
         try
         {
-          compare.openEditor(getStorage(1), getStorage(0));
+            CompareUtils.openEditor(getStorage(1), getStorage(0), false);
         } 
         catch (Exception e)
         {

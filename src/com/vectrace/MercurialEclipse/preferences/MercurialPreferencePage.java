@@ -23,7 +23,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.team.DecoratorStatus;
+import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 
 /**
  * This class represents a preference page that
@@ -76,7 +76,7 @@ public void createFieldEditors()
     	@Override
     	protected void doStore() {
     		super.doStore();
-    		DecoratorStatus.refresh();
+    		ResourceDecorator.onConfigurationChanged();
     	}
     });
   }

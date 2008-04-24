@@ -246,7 +246,7 @@ public class ActionCommit implements IWorkbenchWindowActionDelegate
         } while(notEmpty); //Loop until we are empty.        
       }         
     }
-    DecoratorStatus.refresh();
+    MercurialEclipsePlugin.refreshProjectFlags(project);
     //TODO Refresh history view TeamUI.getHistoryView().refresh();
   }
 

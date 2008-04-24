@@ -143,7 +143,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             	MercurialEclipsePlugin.logError(e);
 //              System.out.println(e.getMessage());
             }
-          DecoratorStatus.refresh();
+            MercurialEclipsePlugin.refreshProjectFlags(proj);
           }
         }
 //        else
