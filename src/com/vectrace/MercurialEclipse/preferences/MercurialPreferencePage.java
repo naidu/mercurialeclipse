@@ -60,8 +60,16 @@ public class MercurialPreferencePage    extends FieldEditorPreferencePage
   @Override
 public void createFieldEditors() 
   {
-    addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "Mercurial &Executable:",getFieldEditorParent()));
-    addField(new StringFieldEditor( MercurialPreferenceConstants.MERCURIAL_USERNAME, "Mercurial &Username:",getFieldEditorParent()));
+    addField(new FileFieldEditor( MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "Mercurial &Executable:", getFieldEditorParent())
+    {
+      @Override
+      protected boolean checkState()
+      {
+        // There are other ways of doing this properly but this is better than the default behaviour
+        return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE.equals(getTextControl().getText()) || super.checkState();
+      }
+    });
+    addField(new StringFieldEditor( MercurialPreferenceConstants.MERCURIAL_USERNAME, "Mercurial &Username:", getFieldEditorParent()));
     addField(new RadioGroupFieldEditor(
     		MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
     		"When a folders contains files with different statuses, flag the folder:",
