@@ -1,0 +1,23 @@
+changeset:   39:9224c59c4f17
+tag:         tip
+user:        zingo
+date:        Sun Aug 20 00:07:53 2006 +0200
+files:       META-INF/MANIFEST.MF plugin.xml
+description:
+Fix ticket #17 in a better way
+
+
+changeset:   37:284d93450d4b
+user:        zingo@localhost
+date:        Sat Aug 19 23:28:43 2006 +0200
+files:       plugin.xml
+description:
+Team popup only if under hg repository... Fixes ticket #17
+
+
+changeset:   36:7f30553655f4
+user:        zingo@localhost
+date:        Sat Aug 19 23:13:15 2006 +0200
+files:       plugin.xml
+description:
+Moved Prefs to team section fixes ticket #16

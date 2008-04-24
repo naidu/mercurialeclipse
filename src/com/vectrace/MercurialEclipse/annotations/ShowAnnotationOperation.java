@@ -51,6 +51,7 @@ import org.eclipse.ui.texteditor.AbstractDecoratedTextEditor;
 import com.vectrace.MercurialEclipse.HgFile;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.model.ChangeLog;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 public class ShowAnnotationOperation extends TeamOperation
@@ -193,8 +194,12 @@ protected IAction getGotoAction()
   private RevisionInformation createRevisionInformation(
       final AnnotateBlocks annotateBlocks, IProgressMonitor monitor)
   {
-    Map<String, ChangeSet> logEntriesByRevision = new HashMap<String, ChangeSet>();
-    // TODO Get logs for the description...
+    Map<Long, ChangeSet> logEntriesByRevision = new HashMap<Long, ChangeSet>();
+    Iterable<ChangeSet> revisions = new ChangeLog(remoteFile.getFile()).getChangeLog();
+    for(ChangeSet changeSet : revisions)
+    {
+      logEntriesByRevision.put(changeSet.getRevision().getRevision(), changeSet);
+    }
 
     RevisionInformation info = new RevisionInformation();
 
@@ -242,7 +247,7 @@ protected IAction getGotoAction()
     for (final AnnotateBlock block : annotateBlocks.getAnnotateBlocks())
     {
       final String revisionString = block.getRevision().toString();
-      final ChangeSet logEntry = logEntriesByRevision.get(revisionString);
+      final ChangeSet logEntry = logEntriesByRevision.get(block.getRevision().getRevision());
 
       Revision revision = sets.get(revisionString);
       if (revision == null)

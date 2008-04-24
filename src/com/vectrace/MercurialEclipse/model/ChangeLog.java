@@ -17,8 +17,9 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
-import java.util.Vector;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
@@ -28,20 +29,14 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class ChangeLog
 {
-  private Vector<ChangeSet> changeLog=new Vector<ChangeSet>();
-//  private Set changeListeners = new HashSet();
-
-  public ChangeLog()
-  {
-    
-  }
+  private List<ChangeSet> changeLog = new ArrayList<ChangeSet>();
 
   public ChangeLog(IResource changeLog_file)
   {
-    ChangeChangeLog(changeLog_file);
+    log(changeLog_file);
   }
 
-  public void ChangeChangeLog(IResource resource)
+  private void log(IResource resource)
   {
     //Setup and run command
     File workingDir=MercurialUtilities.getWorkingDir(resource);
@@ -66,31 +61,26 @@ public class ChangeLog
     launchCmd.trimToSize();
     String launchCmdStr[] = launchCmd.toArray(new String[0]);
   
-//    System.out.println("log:" + MercurialUtilities.getHGExecutable() + " log -v " + FullPath + " Workingdir:" + workingDir);
     try
     {
       String output = MercurialUtilities.ExecuteCommand(launchCmdStr, workingDir,true);
-      if (output != null)
+      if (output != null && output.length() != 0)
       {
-        if (output.length() != 0)
-        {
-          ChangeChangeLog(output);
-        }
+        changeLog = createFromStdOut(output);
       }
     } catch (HgException e)
     {
     	MercurialEclipsePlugin.logError(e);
-//      System.out.println(e.getMessage());
     }
-
   }
-  private void ChangeChangeLog(String changeLog)
+
+  protected static List<ChangeSet> createFromStdOut(String input)
   {   
-    this.changeLog.clear();
+    List<ChangeSet> changeLog = new ArrayList<ChangeSet>();
     
-    if(changeLog==null)
+    if(input==null)
     {
-      return;
+      return changeLog;
     }
 
     int changesetIndex;
@@ -105,44 +95,17 @@ public class ChangeLog
 
     
     String eol = System.getProperty("line.separator");
-    StringTokenizer st = new StringTokenizer(changeLog, eol);
-    
-/*
-changeset:   39:9224c59c4f17
-tag:         tip
-user:        zingo
-date:        Sun Aug 20 00:07:53 2006 +0200
-files:       META-INF/MANIFEST.MF plugin.xml
-description:
-Fix ticket #17 in a better way
+    StringTokenizer st = new StringTokenizer(input, eol);
 
-
-changeset:   37:284d93450d4b
-user:        zingo@localhost
-date:        Sat Aug 19 23:28:43 2006 +0200
-files:       plugin.xml
-description:
-Team popup only if under hg repository... Fixes ticket #17
-
-
-changeset:   36:7f30553655f4
-user:        zingo@localhost
-date:        Sat Aug 19 23:13:15 2006 +0200
-files:       plugin.xml
-description:
-Moved Prefs to team section fixes ticket #16
-*/
     if(!st.hasMoreTokens())
     {
-      return; //No data at all :(
+      return changeLog; //No data at all :(
     }
 
     token = st.nextToken(eol);
 
     while(st.hasMoreTokens())
     {
-
-//      System.out.println("token: <" + token + ">");
       if(token.startsWith("changeset:")) 
       {
 
@@ -234,39 +197,16 @@ Moved Prefs to team section fixes ticket #16
             }
 
           }
-
         }
-
-//          System.out.println("changeset:   <" + changeset + ">");
-//          System.out.println("tag:         <" + tag + ">");
-//          System.out.println("user:        <" + user + ">");
-//          System.out.println("date:        <" + date + ">");
-//          System.out.println("files:       <" + files + ">");
-//          System.out.println("description: <" + description + ">");
-          changesetIndex= new Integer(changeset.split(":")[0]);
-          this.changeLog.add( new ChangeSet(changesetIndex,changeset,tag,user,date,files,description));
+        changesetIndex= new Integer(changeset.split(":")[0]);
+        changeLog.add( new ChangeSet(changesetIndex,changeset,tag,user,date,files,description));
       }
-    }        
-//    System.out.println("Done!!!");
-  }
-  
-  public Vector<ChangeSet> getChangeLog()
-  {
+    }
     return changeLog;
   }
   
-//  public void removeChangeListener(ChangeLogViewContentProvider viewer) 
-//  {
-//    changeListeners.remove(viewer);
-//  }
-
-  /**
-   * @param viewer
-   */
-//  public void addChangeListener(ChangeLogViewContentProvider viewer) 
-//  {
-//    changeListeners.add(viewer);
-//  }
-  
-  
+  public List<ChangeSet> getChangeLog()
+  {
+    return changeLog;
+  }
 }

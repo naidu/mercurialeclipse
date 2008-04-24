@@ -12,13 +12,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.util.Vector;
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
+
 import com.vectrace.MercurialEclipse.model.ChangeLog;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -30,8 +32,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 public class MercurialHistory extends FileHistory
 {
   private IResource resource;
-  protected IFileRevision[] revisions;
-  ChangeLog changeLog;
+  private IFileRevision[] revisions;
 
 
   public MercurialHistory(IResource resource)
@@ -44,8 +45,6 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision[] getContributors(IFileRevision revision)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistory::getContributors()");
     return null;
   }
 
@@ -54,8 +53,6 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision getFileRevision(String id)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistory::getFileRevision(" + id + ")");
     return null;
   }
 
@@ -64,7 +61,6 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision[] getFileRevisions()
   {
-//    System.out.println("MercurialHistory::getFileRevisions()");
     return revisions;
   }
 
@@ -73,28 +69,19 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision[] getTargets(IFileRevision revision)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistory::getTargets()");
     return null;
   }
 
   public void refresh(IProgressMonitor monitor) throws CoreException 
   {
-//    System.out.println("MercurialHistory::refresh() (home made)");
     RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
-      
-      changeLog = new ChangeLog(resource);
-      
-//      changeLog.ChangeChangeLog(in_resource);
-      Vector<ChangeSet> chageSets = changeLog.getChangeLog();
-      
-      
-      revisions = new IFileRevision[chageSets.size()];
-      for(int i=0;i<chageSets.size();i++)
+      List<ChangeSet> changeSets = new ChangeLog(resource).getChangeLog();
+      revisions = new IFileRevision[changeSets.size()];
+      for(int i=0; i<changeSets.size(); i++)
       {
-        revisions[i]=new MercurialRevision(chageSets.get(i),resource);
+        revisions[i] = new MercurialRevision(changeSets.get(i),resource);
       }
     }
   } 
