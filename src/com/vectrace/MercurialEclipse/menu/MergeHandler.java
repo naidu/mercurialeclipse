@@ -30,11 +30,11 @@ public class MergeHandler extends SingleResourceHandler {
         if (dialog.open() == IDialogConstants.OK_ID) {
             HgIMergeClient.merge(project, dialog.getRevision());
             project.setPersistentProperty(ResourceProperties.MERGING, "true");
-            project.refreshLocal(IResource.DEPTH_INFINITE, null);
             // will trigger a FlagManager refresh
-            // TODO update Merge view
-            PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(
-                    MergeView.ID);
+            MergeView view = (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
+            view.clearView();
+            view.setCurrentProject(project);
+            project.refreshLocal(IResource.DEPTH_INFINITE, null);
         }
     }
 

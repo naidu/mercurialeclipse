@@ -6,6 +6,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class CommitMergeHandler extends SingleResourceHandler {
 
@@ -17,6 +18,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
         // project.refreshLocal(IResource.DEPTH_INFINITE, null);
         // TODO refresh FlagModel
         MercurialEclipsePlugin.refreshProjectFlags(project);
+        MergeView.getView().clearView();
     }
 
 }
