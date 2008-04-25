@@ -9,6 +9,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.model.GChangeSet.RowCount;
 
 public class HgGLogClient extends HgCommand
 {
@@ -36,10 +37,11 @@ public class HgGLogClient extends HgCommand
     String[] split = s.split("\n");
     int length = split.length / 2;
     int lengthp1 = length + 1;
+    RowCount rowCount = new RowCount();
     for(int i=0;i<lengthp1;i++)
     {
       int j = i*2;
-      sets.add(new GChangeSet(i, split[j], i != length ? split[j+1] : ""));
+      sets.add(new GChangeSet(rowCount, i, split[j], i != length ? split[j+1] : ""));
     }
   }
 

@@ -84,7 +84,8 @@ public class MercurialHistory extends FileHistory
       revisions = new MercurialRevision[changeSets.size()];
       for(int i=0; i<changeSets.size(); i++)
       {
-        revisions[i] = new MercurialRevision(changeSets.get(i), gChangeSets.get(i), resource);
+        GChangeSet gChangeSet = gChangeSets.size() > i ? gChangeSets.get(i) : null;
+        revisions[i] = new MercurialRevision(changeSets.get(i), gChangeSet, resource);
       }
     }
   } 

@@ -334,12 +334,6 @@
                enablesFor="1">
            </action>
            <action
-               label="Show Graphical Log"
-               class="com.vectrace.MercurialEclipse.team.GLogAction"
-               menubarPath="team.main/group4"
-               id="com.vectrace.MercurialEclipse.team.GLogAction">
-           </action>
-           <action
                label="Show &amp;History"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
                icon="icons/history.gif"

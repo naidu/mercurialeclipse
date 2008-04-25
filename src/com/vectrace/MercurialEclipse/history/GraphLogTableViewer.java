@@ -41,6 +41,7 @@ public class GraphLogTableViewer extends TableViewer
     colours.add(display.getSystemColor(SWT.COLOR_MAGENTA));
     colours.add(display.getSystemColor(SWT.COLOR_GRAY));
     colours.add(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
+    colours.add(display.getSystemColor(SWT.COLOR_DARK_MAGENTA));
     colours.add(display.getSystemColor(SWT.COLOR_DARK_CYAN));
   }
 
@@ -50,63 +51,74 @@ public class GraphLogTableViewer extends TableViewer
     if(event.index != 0) return;
     MercurialRevision rev = (MercurialRevision)tableItem.getData();
     GChangeSet gcs = rev.getGChangeSet();
+    if(gcs != null)
+    {
+      paint(event, gcs.getMiddle(), 0);
+      paint(event, gcs.getMiddle(), 1);
+      paint(event, gcs.getAfter(), 2);
+    }
+  }
+  
+  private void paint(Event event, List<Edge> edges, int i)
+  {
     GC g = event.gc;
-    
-    int revLength = gcs.getRevLength()+Math.min(0, gcs.getColumnsDiff());
-    int height = event.height;
-    int halfheight = height/2;
-    int middle = event.y + halfheight;
-    int index = gcs.getIndex();
-    int itemCount = getTable().getItemCount() - 1;
-    
-    boolean expand = gcs.getRevIndex() == revLength - 2 && gcs.getColumnsDiff() > 0;
-    
-    for(int i=0;i<revLength;i++) 
+    g.setLineAttributes(new LineAttributes(2));
+    int div3 = event.height/3;
+    int y = event.y + div3 * i;
+    for(Edge e : edges)
     {
-      drawLine(event, g, 
-          i, index == 0 ? middle : event.y,
-          i, index == itemCount || (expand && i == revLength - 1 )? halfheight : height);
+      int top = e.getTop();
+      int bottom = e.getBottom();
+      
+      switch(e.getType())
+      {
+      case plus:
+      case dash:
+        // TODO Something here!!!
+      case line:
+      case slash:
+      case backslash:
+        if((i == 0 || i == 1) && top != bottom)
+        {
+          top = bottom = Math.max(top, bottom);
+        }
+        drawLine(event, g, div3, y, e, top, bottom);
+        break;
+      case dot:
+      case working:
+        if(i == 0)
+        {
+          // TODO Don't always draw this line!!!
+          drawLine(event, g, div3, y, e, top, bottom);
+        } 
+        else 
+        {
+          fillOval(event, e.getTop(), false);
+        }
+        break;
+      }
     }
-    for(Edge e : gcs.getEdges())
-    {
-      drawLine(event, g, e.getX(), middle, e.getY(), height);
-    }
-    // TODO HEADS
-    // TODO gcs.getJumps()
-    if(gcs.getColumnsDiff() < 0)
-    {
-      drawLine(event, g, revLength, event.y, revLength, halfheight);
-      drawLine(event, g, revLength, middle, revLength - 1, height);
-    }
-    if(gcs.getColumnsDiff() > 0)
-    {
-      System.err.println(gcs.getRevIndex() + " " + revLength );
-      drawLine(event, g, revLength-1, middle, revLength, height);
-    }
-    
-    fillOval(event, gcs, g, middle, gcs.isWorking());
   }
 
-  private void fillOval(Event event, GChangeSet gcs, GC g, int middle, boolean working)
+  private void drawLine(Event event, GC g, int div3, int y, Edge e, int top,
+      int bottom)
+  {
+    g.setForeground(getColor(event, e));
+    g.drawLine(getX(event, top), y, getX(event, bottom), y + div3);
+  }
+
+  private void fillOval(Event event, int i, boolean working)
   {
     int size = 6;
     int color = working ? SWT.COLOR_RED : SWT.COLOR_BLACK;
-    g.setBackground(event.display.getSystemColor(color));
+    event.gc.setBackground(event.display.getSystemColor(color));
     int halfSize = size/2;
-    
-    g.fillOval(getX(event, gcs.getRevIndex()) - halfSize , middle - halfSize, size, size);
+    event.gc.fillOval(getX(event, i) - halfSize , event.y + (event.height / 2) - halfSize, size, size);
   }
 
-  private void drawLine(Event event, GC g, int x1, int y1, int x2, int y2)
-  {    
-    g.setForeground(getColor(event, Math.max(x1, x2)));
-    g.setLineAttributes(new LineAttributes(2));
-    g.drawLine(getX(event, x1), y1, getX(event, x2), event.y + y2);
-  }
-
-  private Color getColor(Event event, int i)
+  private Color getColor(Event event, Edge edge)
   {
-    return colours.get(i % colours.size());
+    return colours.get(edge.getCol() % colours.size());
   }
   
   private int getX(Event event, int col)

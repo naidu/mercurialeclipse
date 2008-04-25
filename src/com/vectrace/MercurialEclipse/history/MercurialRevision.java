@@ -33,7 +33,7 @@ public class MercurialRevision extends FileRevision
   private ChangeSet changeSet; 
   private IStorageMercurialRevision iStorageMercurialRevision; //Cached data
   private final GChangeSet gChangeSet;
-  
+
   public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet, IResource resource)
   {
     super();
