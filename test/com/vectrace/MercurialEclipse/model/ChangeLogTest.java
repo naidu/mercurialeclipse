@@ -10,11 +10,11 @@ import junit.framework.TestCase;
 
 public class ChangeLogTest extends TestCase
 {
-  private List<ChangeSet> createFromStdOut(String name)
+  public static List<ChangeSet> createFromStdOut(String name)
   {
     try
     {
-      return ChangeLog.createFromStdOut(toString(getClass().getResourceAsStream(name + ".out")));
+      return ChangeLog.createFromStdOut(toString(ChangeLogTest.class.getResourceAsStream(name + ".out")));
     } 
     catch (IOException e)
     {
@@ -23,7 +23,7 @@ public class ChangeLogTest extends TestCase
   }
 
   // It shouldn't have to be so hard!!!
-  private String toString(InputStream stream) throws IOException
+  public static String toString(InputStream stream) throws IOException
   {
     BufferedReader in = new BufferedReader(new InputStreamReader(stream));
     StringBuffer buffer = new StringBuffer();

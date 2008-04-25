@@ -21,8 +21,10 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
+import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeLog;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -78,10 +80,11 @@ public class MercurialHistory extends FileHistory
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
       List<ChangeSet> changeSets = new ChangeLog(resource).getChangeLog();
-      revisions = new IFileRevision[changeSets.size()];
+      List<GChangeSet> gChangeSets = new HgGLogClient(resource).getChangeSets();
+      revisions = new MercurialRevision[changeSets.size()];
       for(int i=0; i<changeSets.size(); i++)
       {
-        revisions[i] = new MercurialRevision(changeSets.get(i),resource);
+        revisions[i] = new MercurialRevision(changeSets.get(i), gChangeSets.get(i), resource);
       }
     }
   } 

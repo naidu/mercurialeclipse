@@ -32,7 +32,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
@@ -69,17 +68,15 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
  */
 public class MercurialHistoryPage extends HistoryPage
 {
-
-  private TableViewer viewer;
+  private GraphLogTableViewer viewer;
   private IResource resource;
-  private Table changeLogTable;
   private ChangeLogContentProvider changeLogViewContentProvider;
   private Composite composite;
-  MercurialHistory mercurialHistory;
-  IFileRevision[] entries;
+  private MercurialHistory mercurialHistory;
+  private IFileRevision[] entries;
   
   private RefreshMercurialHistory refreshFileHistoryJob;
-
+  
   private class RefreshMercurialHistory extends Job 
   {
     MercurialHistory mercurialHistory;
@@ -168,22 +165,22 @@ public class MercurialHistoryPage extends HistoryPage
      
       switch (index)
       {
-        case 0:
+        case 1:
           ret= changeSet.getChangeset();
           break;
-        case 1:
+        case 2:
           ret= changeSet.getTag();
           break;
-        case 2:
+        case 3:
           ret= changeSet.getUser();
           break;
-        case 3:
+        case 4:
           ret= changeSet.getDate();
           break;
-        case 4:
+        case 5:
           ret= changeSet.getFiles();
           break;
-        case 5:
+        case 6:
           ret= changeSet.getDescription();
           break;
         default:
@@ -268,10 +265,9 @@ public class MercurialHistoryPage extends HistoryPage
     GridData data = new GridData(GridData.FILL_BOTH);
     data.grabExcessVerticalSpace = true;
     composite.setLayoutData(data);
-
     
-    viewer = new TableViewer(composite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-    changeLogTable=viewer.getTable();
+    viewer = new GraphLogTableViewer(composite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+    Table changeLogTable=viewer.getTable();
 
     changeLogTable.setLinesVisible(true);
     changeLogTable.setHeaderVisible(true);
@@ -283,6 +279,9 @@ public class MercurialHistoryPage extends HistoryPage
     changeLogTable.setLayout(layout);    
     
     TableColumn column = new TableColumn(changeLogTable,SWT.LEFT);
+    column.setText("Graph");
+    layout.addColumnData(new ColumnWeightData(10, true));
+    column = new TableColumn(changeLogTable,SWT.LEFT);
     column.setText("Changeset");
     layout.addColumnData(new ColumnWeightData(15, true));
     column = new TableColumn(changeLogTable,SWT.LEFT);

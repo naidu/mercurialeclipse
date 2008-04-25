@@ -14,13 +14,13 @@ public class HgRevision
 {
   public static final HgRevision TIP = new HgRevision("tip");
   private final String changeset;
-  private final long revision;
+  private final int revision;
 
   protected HgRevision(String changeset) {
     this(changeset, -1);
   }
   
-  public HgRevision(String changeset, long revision)
+  public HgRevision(String changeset, int revision)
   {
     this.changeset = changeset;
     this.revision = revision;
@@ -31,7 +31,7 @@ public class HgRevision
     return changeset;
   }
   
-  public long getRevision()
+  public int getRevision()
   {
     return revision;
   }
@@ -47,5 +47,11 @@ public class HgRevision
   public String toString()
   {
     return revision + ":" + changeset;
+  }
+  
+  public static HgRevision parse(String s) 
+  {
+    int i = s.indexOf(':');
+    return new HgRevision(s.substring(i+1), Integer.parseInt(s.substring(0, i)));
   }
 }

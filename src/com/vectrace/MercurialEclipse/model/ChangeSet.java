@@ -12,6 +12,9 @@
 
 package com.vectrace.MercurialEclipse.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.vectrace.MercurialEclipse.HgRevision;
 
 public class ChangeSet
@@ -23,21 +26,19 @@ public class ChangeSet
   private String date;
   private String files;
   private String description;
-  
-  public ChangeSet(int changesetIndex,String changeSet,String tag,String user, String date, String files, String description)
+  private List<HgRevision> parents = new ArrayList<HgRevision>();
+
+  public ChangeSet()
   {
-    this.changesetIndex=changesetIndex;
-    this.changeset=changeSet;
-    this.tag = tag;
-    this.user = user;
-    this.date = date;
-    this.files = files;
-    this.description = description;
+    super();
   }
 
-  public ChangeSet(int changesetIndex,String changeSet,String user, String date)
+  public ChangeSet(int changesetIndex, String changeSet, String user, String date)
   {
-    this(changesetIndex,changeSet,null,user, date, null, null);
+    this.changesetIndex = changesetIndex;
+    this.changeset = changeSet;
+    this.user = user;
+    this.date = date;
   }
 
   public int getChangesetIndex()
@@ -79,5 +80,49 @@ public class ChangeSet
   {
     return new HgRevision(changeset, changesetIndex);
   }
+  
+  public List<HgRevision> getParents()
+  {
+    return parents;
+  }
 
+  public void setChangesetIndex(int changesetIndex)
+  {
+    this.changesetIndex = changesetIndex;
+  }
+
+  public void setChangeset(String changeset)
+  {
+    this.changeset = changeset;
+  }
+
+  public void setTag(String tag)
+  {
+    this.tag = tag;
+  }
+
+  public void setUser(String user)
+  {
+    this.user = user;
+  }
+
+  public void setDate(String date)
+  {
+    this.date = date;
+  }
+
+  public void setFiles(String files)
+  {
+    this.files = files;
+  }
+
+  public void setDescription(String description)
+  {
+    this.description = description;
+  }
+
+  public void addParent(HgRevision parent)
+  {
+    parents.add(parent);
+  }
 }

@@ -20,6 +20,7 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 /**
@@ -28,22 +29,27 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
  */
 public class MercurialRevision extends FileRevision
 {
-  IResource resource; 
-  ChangeSet changeSet; 
-  IStorageMercurialRevision iStorageMercurialRevision; //Cached data
+  private IResource resource; 
+  private ChangeSet changeSet; 
+  private IStorageMercurialRevision iStorageMercurialRevision; //Cached data
+  private final GChangeSet gChangeSet;
   
-  public MercurialRevision(ChangeSet changeSet,IResource resource)
+  public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet, IResource resource)
   {
     super();
     this.changeSet = changeSet;
+    this.gChangeSet = gChangeSet;
     this.resource=resource;
   }
 
-  
-  
   public ChangeSet getChangeSet()
   {
     return changeSet;
+  }
+
+  public GChangeSet getGChangeSet()
+  {
+    return gChangeSet;
   }
 
   /* (non-Javadoc)
@@ -51,15 +57,12 @@ public class MercurialRevision extends FileRevision
    */
   public String getName()
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::getName() = " + file.getName());
     return resource.getName();
   }
 
   @Override
-public String getContentIdentifier() 
+  public String getContentIdentifier() 
   {
-//    System.out.println("MercurialRevision::getContentIdentifier() = " + changeSet.getChangeset());
     return changeSet.getChangeset();
   }
   
@@ -68,8 +71,6 @@ public String getContentIdentifier()
    */
   public IStorage getStorage(IProgressMonitor monitor) throws CoreException
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::getStorage()");
     if(iStorageMercurialRevision==null)
     {
       iStorageMercurialRevision = new IStorageMercurialRevision(resource,changeSet.getChangeset());
@@ -82,8 +83,6 @@ public String getContentIdentifier()
    */
   public boolean isPropertyMissing()
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::isPropertyMissing()");
     return false;
   }
 
@@ -92,8 +91,6 @@ public String getContentIdentifier()
    */
   public IFileRevision withAllProperties(IProgressMonitor monitor) throws CoreException
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::withAllProperties()");
     return null;
   }
 

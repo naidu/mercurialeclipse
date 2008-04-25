@@ -89,7 +89,7 @@ public class AnnotateCommand
         Matcher matcher = ANNOTATE.matcher(line);
         matcher.find();
         String author = matcher.group(1);
-        long revision = Long.parseLong(matcher.group(2));
+        int revision = Integer.parseInt(matcher.group(2));
         String changeset = matcher.group(3);
         Date date = DATE_FORMAT.parse(matcher.group(4));
         blocks.add(new AnnotateBlock(new HgRevision(changeset, revision),

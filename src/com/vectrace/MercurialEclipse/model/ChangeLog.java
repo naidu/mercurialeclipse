@@ -23,6 +23,7 @@ import java.util.StringTokenizer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
+import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -83,17 +84,7 @@ public class ChangeLog
       return changeLog;
     }
 
-    int changesetIndex;
-    String changeset;
-    String tag;
-    String user;
-    String date;
-    String files;
-    String description;
-
     String token;
-
-    
     String eol = System.getProperty("line.separator");
     StringTokenizer st = new StringTokenizer(input, eol);
 
@@ -108,101 +99,70 @@ public class ChangeLog
     {
       if(token.startsWith("changeset:")) 
       {
-
-        int index;
         boolean moredata = true;
-        
-        changeset=null;
-        tag=null;
-        user=null;
-        date=null;
-        files=null;
-        description=null;
 
-        index = "changeset:".length();
+        ChangeSet change = new ChangeSet();
+        String changeset = trim(token, "changeset:");
+        change.setChangeset(changeset);
+        change.setChangesetIndex(new Integer(changeset.split(":")[0]));
         
-        while(token.charAt(index)==' ') 
-        { //remove begining spaces
-          index++;
-        }
-        
-        changeset = token.substring(index);
-      
         while (st.hasMoreTokens() && moredata) 
         {
-          
           token = st.nextToken(eol);
           
           if (token.startsWith("tag:")) 
           {
-            index = "tag:".length();
-            
-              while(token.charAt(index)==' ') 
-              { //remove begining spaces
-                index++;
-              }
-              tag = token.substring(index);
-              
+            change.setTag(trim(token, "tag:"));
           } 
           else if (token.startsWith("user:")) 
           {
-            index = "user:".length();
-            
-              while(token.charAt(index)==' ') 
-              { //remove begining spaces
-                index++;
-              }
-
-            user = token.substring(index);
+            change.setUser(trim(token, "user:"));
           } 
           else if (token.startsWith("date:")) 
           {
-            index = "date:".length();
-            
-              while(token.charAt(index)==' ') 
-              { //remove begining spaces
-                index++;
-              }
-              
-              date = token.substring(index);
+            change.setDate(trim(token, "date:"));
           } 
           else if (token.startsWith("files:")) 
           {
-            index = "files:".length();
-
-              while(token.charAt(index)==' ') 
-              { //remove begining spaces
-                index++;
-              }
-              
-              files = token.substring(index);
-          } 
+            change.setFiles(trim(token, "files:"));
+          }
+          else if (token.startsWith("parent:")) 
+          {
+            change.addParent(HgRevision.parse(trim(token, "parent:")));
+          }
           else if (token.equals("description:")) 
           {
+            StringBuilder description = new StringBuilder(st.nextToken(eol));
             
-            description = st.nextToken(eol);
-            
-            while (st.hasMoreTokens() && moredata) {
-              token = st.nextToken(eol);
-              
+            while (st.hasMoreTokens() && moredata)
+            {
+              token = st.nextToken(eol);  
               if(token.startsWith("changeset:")) 
               {
                 moredata = false;
               } 
               else 
               {
-                description = description + " | " + token;
+                description.append(" | ").append(token);
               }
-
             }
-
+            change.setDescription(description.toString());
           }
         }
-        changesetIndex= new Integer(changeset.split(":")[0]);
-        changeLog.add( new ChangeSet(changesetIndex,changeset,tag,user,date,files,description));
+        changeLog.add(change);
       }
     }
     return changeLog;
+  }
+
+  private static String trim(String token, String string)
+  {
+    int index = string.length();
+    while(token.charAt(index)==' ') 
+    { 
+      index++;
+    }
+    return token.substring(index);
   }
   
   public List<ChangeSet> getChangeLog()

@@ -194,7 +194,7 @@ protected IAction getGotoAction()
   private RevisionInformation createRevisionInformation(
       final AnnotateBlocks annotateBlocks, IProgressMonitor monitor)
   {
-    Map<Long, ChangeSet> logEntriesByRevision = new HashMap<Long, ChangeSet>();
+    Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();
     Iterable<ChangeSet> revisions = new ChangeLog(remoteFile.getFile()).getChangeLog();
     for(ChangeSet changeSet : revisions)
     {
