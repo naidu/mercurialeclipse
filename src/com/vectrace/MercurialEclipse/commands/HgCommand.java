@@ -31,7 +31,7 @@ public class HgCommand {
 	//TODO have an OS-dependent value
 	public static final int MAX_PARAMS = 120;
 	
-	private static PrintStream console = false ? null : new PrintStream(MercurialUtilities.getMercurialConsole().newOutputStream());
+	private static PrintStream console = new PrintStream(MercurialUtilities.getMercurialConsole().newOutputStream());
 	
 	protected static class InputStreamConsumer extends Thread {
 		private final InputStream stream;
