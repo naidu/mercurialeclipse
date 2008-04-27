@@ -171,6 +171,22 @@ public void createControl(Composite parent)
  
     projectNameLabel = new Label(outerContainer, SWT.NONE);
     projectNameLabel.setText("Name of project to pull to:" + repoName);
+    
+    // Dummy labels because of bad choice of GridLayout
+    new Label(outerContainer, SWT.NONE);
+    new Label(outerContainer, SWT.NONE);
+    new Label(outerContainer, SWT.NONE);
+    
+    // toggle wether the wizard should perform a update or not on finish
+    final Button toggleUpdate = new Button(outerContainer,SWT.CHECK);
+    toggleUpdate.addSelectionListener(new SelectionAdapter() {
+        @Override
+         public void widgetSelected(SelectionEvent e) {
+            PullRepoWizard container = (PullRepoWizard) getWizard();
+            container.setDoUpdate(toggleUpdate.getSelection());
+         } 
+    });
+    toggleUpdate.setText("Update After Pull");
 
     setControl(outerContainer);
     setPageComplete(false);
