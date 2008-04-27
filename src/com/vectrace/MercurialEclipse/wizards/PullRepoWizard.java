@@ -51,7 +51,7 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
        PullPage pullPage = new PullPage("PullRepoPage",
                "Pull changes from repository",
                "Select a repository location to pull from",
-               projectName,
+               project,
                null);
        // legacy - required by super
        super.syncRepoLocationPage = pullPage;

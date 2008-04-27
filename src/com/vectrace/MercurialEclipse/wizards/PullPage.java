@@ -12,7 +12,9 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Iterator;
+import java.util.Map;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -29,6 +31,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgPathsClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /*
@@ -48,14 +52,16 @@ public class PullPage extends SyncRepoPage
   private Label    cloneParametersLabel;
   private Label    projectNameLabel;
   private Combo    projectNameCombo;
+  private IProject project;
   String repoName;
   /**
    * @param pageName
    */
-  public PullPage( String pageName, String title, String description,String repoName, ImageDescriptor titleImage ) 
+  public PullPage( String pageName, String title, String description,IProject project, ImageDescriptor titleImage ) 
   {
     super(pageName, title, titleImage);
-    this.repoName=repoName;
+    this.repoName = project.getName();
+    this.project = project;
     setDescription( description);
   }
 
@@ -137,6 +143,8 @@ public void createControl(Composite parent)
       HgRepositoryLocation loc = ((HgRepositoryLocation)locIter.next());
       locationCombo.add( loc.getUrl() );
     }
+    setDefaultLocation(locationCombo);
+    
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
 	browseButton.setText ("Browse repos");
 	browseButton.addSelectionListener(new SelectionAdapter() 
@@ -192,7 +200,27 @@ public void createControl(Composite parent)
     setPageComplete(false);
   }
 
-  @Override
+  private void setDefaultLocation(Combo locations) {
+      try {
+            String defaultUrl = null;
+            Map<String, HgRepositoryLocation> paths = HgPathsClient
+                    .getPaths(project);
+            if (paths.containsKey(HgPathsClient.DEFAULT_PULL)) {
+                defaultUrl = paths.get(HgPathsClient.DEFAULT_PULL).getUrl();
+            } else if (paths.containsKey(HgPathsClient.DEFAULT)) {
+                defaultUrl = paths.get(HgPathsClient.DEFAULT).getUrl();
+            }
+            if (defaultUrl != null) {
+                locations.add(defaultUrl);
+                locations.select(locations.indexOf(defaultUrl));
+            }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
+    // TODO Auto-generated method stub
+    }
+
+@Override
 public void dispose()
   {
     locationLabel.dispose();

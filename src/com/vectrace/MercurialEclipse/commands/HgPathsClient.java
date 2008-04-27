@@ -13,6 +13,8 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgPathsClient {
     public static final String  DEFAULT = "default";
+    public static final String  DEFAULT_PULL = "default-pull";
+    public static final String  DEFAULT_PUSH = "default-push";
         
     public static Map<String, HgRepositoryLocation> getPaths(IProject project) throws HgException {
         HgCommand command = new HgCommand("paths", project, true);
