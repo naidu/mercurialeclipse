@@ -44,8 +44,19 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     projectName = project.getName();
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = new PullPage("PullRepoPage","Pull changes from repository","Select a repository location to pull from",projectName,null);
   }
+  
+    @Override
+    public void addPages() {
+       PullPage pullPage = new PullPage("PullRepoPage",
+               "Pull changes from repository",
+               "Select a repository location to pull from",
+               project,
+               null);
+       // legacy - required by super
+       super.syncRepoLocationPage = pullPage;
+       addPage(pullPage);
+    }
 
   /* (non-Javadoc)
    * @see org.eclipse.jface.wizard.Wizard#performFinish()
@@ -65,7 +76,7 @@ public boolean performFinish()
     try
     {
 
-      String result = HgPushPullClient.pull(project, repo, doUpdate);
+      String result = HgPushPullClient.pull(project, repo, isDoUpdate());
       if(result.length() != 0)
       {
 
