@@ -181,7 +181,7 @@ public class MercurialHistoryPage extends HistoryPage
         case 5:
           // TODO This is temporary - I'll do a proper split view very shortly
           ret = Arrays.toString(changeSet.getChangedFiles());
-          ret = ret.substring(1, ret.length()-2);
+          ret = ret.substring(1, Math.max(1, ret.length()-2));
           break;
         case 6:
           ret = changeSet.getDescription();

@@ -33,6 +33,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private Date realDate;
 	private File bundleFile;
 
+	public ChangeSet() {
+		super();
+	}
+	
 	public ChangeSet(int changesetIndex, String changeSet, String tag,
 			String user, String date, String description, String[] parents) {
 		this.changesetIndex = changesetIndex;
@@ -55,16 +59,6 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	public ChangeSet(int changesetIndex, String changeSet, String user,
 			String date) {
 		this(changesetIndex, changeSet, null, user, date, null, null);
-	}
-
-	public ChangeSet(int rev, String nodeShort, String node, String tag,
-			String author, String date, String ageDate, String[] changedFiles,
-			String description, File bundle, String[] parents) {
-		this(rev, node, tag, author, date, description, parents);
-		this.nodeShort = nodeShort;
-		this.ageDate = ageDate;
-		this.changedFiles = changedFiles;
-		this.bundleFile = bundle;
 	}
 
 	public int getChangesetIndex() {
@@ -195,5 +189,33 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
 	public void setParents(String[] parents) {
 		this.parents = parents;
+	}
+
+	public void setChangesetIndex(int changesetIndex) {
+		this.changesetIndex = changesetIndex;
+	}
+
+	public void setChangeset(String changeset) {
+		this.changeset = changeset;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	public void setDate(String date) {
+		this.date = date;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
+	public void setRealDate(Date realDate) {
+		this.realDate = realDate;
 	}
 }

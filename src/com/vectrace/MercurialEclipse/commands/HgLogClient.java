@@ -86,35 +86,32 @@ public class HgLogClient {
 
 	public static Map<IResource, SortedSet<ChangeSet>> getCompleteProjectLog(
 			IProject proj) throws HgException {
-		HgCommand command = new HgCommand("log", proj, false);
-
-		command.addOptions("--template", HgIncomingClient.template);
-		String result = command.executeToString();
-		//result = result.substring(result.lastIndexOf("\n") + 1);
-		if (result.contains("no changes found")) {
-			return null;
-		}
-		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-				.createMercurialRevisions(result, proj, "!!",
-						HgIncomingClient.template, ";;", null);
-		return revisions;
+		return getProjectLog(proj, -1);
 	}
-	
+
 	public static Map<IResource, SortedSet<ChangeSet>> getRecentProjectLog(
+			IResource res, int limitNumber) throws HgException {
+		return getProjectLog(res.getProject(), limitNumber);
+	}
+
+	private static Map<IResource, SortedSet<ChangeSet>> getProjectLog(
 			IResource res, int limitNumber) throws HgException {
 		HgCommand command = new HgCommand("log", res.getProject(), false);
 
-		command.addOptions("--template", HgIncomingClient.template);
-		command.addOptions("-l",limitNumber+"");
-		command.addOptions(res.getProjectRelativePath().toOSString());
+		command.addOptions("--template", HgIncomingClient.TEMPLATE);
+		if(limitNumber > -1) {
+			command.addOptions("-l",limitNumber+"");
+		}
+		if(!(res instanceof IProject)) {
+			command.addOptions(res.getProjectRelativePath().toOSString());
+		}
 		String result = command.executeToString();
-		//result = result.substring(result.lastIndexOf("\n") + 1);
 		if (result.contains("no changes found")) {
 			return null;
 		}
 		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-				.createMercurialRevisions(result, res.getProject(), "!!",
-						HgIncomingClient.template, ";;", null);
+				.createMercurialRevisions(result, res.getProject(), null);
 		return revisions;
-	}	
+	}
+
 }

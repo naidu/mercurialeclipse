@@ -2,12 +2,12 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.Vector;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -19,8 +19,20 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgIncomingClient {
 
-	public static String template = "{tags};;{rev};;{node|short};;{node};;{date|isodate};;{date|age};;{author|person};;{desc};;{parents};;{files};;!!";
-
+	private static final String FILES = "{files}";
+	private static final String PARENTS = "{parents}";
+	private static final String DESC = "{desc|escape}";
+	private static final String AUTHOR_PERSON = "{author|person}";
+	private static final String DATE_AGE = "{date|age}";
+	private static final String DATE_ISODATE = "{date|isodate}";
+	private static final String NODE = "{node}";
+	private static final String NODE_SHORT = "{node|short}";
+	private static final String REV = "{rev}";
+	private static final String TAGS = "{tags}";
+	private static final String SEP_CHANGE_SET = ">";
+	private static final String SEP_TEMPLATE_ELEMENT = "<";
+	public static final String TEMPLATE = TAGS+SEP_TEMPLATE_ELEMENT+REV+SEP_TEMPLATE_ELEMENT+NODE_SHORT+SEP_TEMPLATE_ELEMENT+NODE+SEP_TEMPLATE_ELEMENT+DATE_ISODATE+SEP_TEMPLATE_ELEMENT+DATE_AGE+SEP_TEMPLATE_ELEMENT+AUTHOR_PERSON+SEP_TEMPLATE_ELEMENT+DESC+SEP_TEMPLATE_ELEMENT+PARENTS+SEP_TEMPLATE_ELEMENT+FILES+SEP_TEMPLATE_ELEMENT+SEP_CHANGE_SET;
+	
 	/**
 	 * Gets all File Revisions that are incoming and saves them in a bundle
 	 * file. There can be more than one revision per file as this method obtains
@@ -38,14 +50,13 @@ public class HgIncomingClient {
 		File bundleFile = getBundleFile(proj, repository);
 		File temp = new File(proj.getLocation() + "bundle.temp");
 		try {
-			command.addOptions("--template", template, "--bundle", temp
+			command.addOptions("--template", TEMPLATE, "--bundle", temp
 					.getCanonicalPath(), repository.getUrl());
 			String result = command.executeToString();			
 			if (result.contains("no changes found")) {
 				return null;
 			}
-			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-					result, proj, "!!", template, ";;", bundleFile);
+			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(result, proj, bundleFile);
 			temp.renameTo(bundleFile);
 			return revisions;
 		} catch (HgException hg) {
@@ -67,7 +78,11 @@ public class HgIncomingClient {
 				.toFile();
 	}
 
-	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
+	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(String input, IProject proj, File bundleFile) {
+		return createMercurialRevisions(input, proj, SEP_CHANGE_SET, TEMPLATE, SEP_TEMPLATE_ELEMENT, bundleFile);
+	}
+	
+	private static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
 			String input, IProject proj, String changeSetSeparator,
 			String templ, String templateElementSeparator, File bundleFile) {
 		String[] changeSetStrings = input.split(changeSetSeparator);
@@ -118,74 +133,57 @@ public class HgIncomingClient {
 		if (changeSet == null)
 			return null;
 		String[] templateElements = templ.split(templateElementSeparator);
-		Map<String, Integer> templatePositions = new HashMap<String, Integer>(
+		Map<String, Integer> pos = new HashMap<String, Integer>(
 				templateElements.length);
 
 		int i = 0;
 		for (String elem : templateElements) {
-			templatePositions.put(elem, Integer.valueOf(i));
+			pos.put(elem, Integer.valueOf(i));
 			i++;
 		}
 
-		String[] changeSetComponents = changeSet
-				.split(templateElementSeparator);
-		String tag = changeSetComponents[templatePositions.get("{tags}")
-				.intValue()];
-		String revision = changeSetComponents[templatePositions.get("{rev}")
-				.intValue()];
-		String nodeShort = changeSetComponents[templatePositions.get(
-				"{node|short}").intValue()];
-		String node = changeSetComponents[templatePositions.get("{node}")
-				.intValue()];
-		String date = changeSetComponents[templatePositions.get(
-				"{date|isodate}").intValue()];
-		String ageDate = changeSetComponents[templatePositions
-				.get("{date|age}").intValue()];
-
-		String author = null;
-		if (changeSetComponents.length - 1 > templatePositions
-				.get("{author|person}")) {
-
-			author = changeSetComponents[templatePositions.get(
-					"{author|person}").intValue()];
-		}
-
-		String description = "";
-		if (changeSetComponents.length - 1 > templatePositions.get("{desc}")) {
-			description = changeSetComponents[templatePositions.get("{desc}")
-					.intValue()];
-		}
-
-		String[] parents = null;
-		if (changeSetComponents.length - 1 >= templatePositions
-				.get("{parents}")) {
-			String string = changeSetComponents[templatePositions.get(
-					"{parents}").intValue()];
-			Vector<String> split = new Vector<String>(Arrays.asList(string
-					.split(" ")));
-			for (int j = 0; j < split.size(); j++) {
-				String s = split.get(j);				
-				if (s.equals(""))
-					split.remove(s);
-			}
-			
-			if (split.size()>0){
-				parents = split.toArray(new String[split.size()]);
-			}
-
-		}
-
-		String[] files = null;
-		if (changeSetComponents.length - 1 >= templatePositions.get("{files}")) {
-			String filesString = changeSetComponents[templatePositions.get(
-					"{files}").intValue()];
-
-			if (filesString != null)
-				files = filesString.split(" ");
-		}
-		ChangeSet cs = new ChangeSet(Integer.parseInt(revision), nodeShort,
-				node, tag, author, date, ageDate, files, description, null,
-				parents);
+		String[] comps = split(changeSet, templateElementSeparator);
+		ChangeSet cs = new ChangeSet();
+		cs.setTag(getValue(pos, comps, TAGS));
+		cs.setChangesetIndex(Integer.parseInt(getValue(pos, comps, REV)));
+		cs.setNodeShort(getValue(pos, comps, NODE_SHORT));
+		cs.setChangeset(getValue(pos, comps, NODE));
+		cs.setDate(getValue(pos, comps, DATE_ISODATE));
+		cs.setAgeDate(getValue(pos, comps, DATE_AGE));
+		cs.setUser(getValue(pos, comps, AUTHOR_PERSON));
+		cs.setDescription(unescape(getValue(pos, comps, DESC)));
+		cs.setParents(splitClean(getValue(pos, comps, PARENTS), " "));
+		cs.setChangedFiles(splitClean(getValue(pos, comps, FILES), " "));
 		return cs;
+	}
+
+	// Split doesn't do a very good of two separators without anything in between
+	// Regex is a better way of doing all of this...
+	private static String[] split(String templ, String sep) {
+		List<String> l = new ArrayList<String>();
+		int j = 0;
+		for(int i = templ.indexOf(sep); i > -1; i = templ.indexOf(sep, i)) {
+			l.add(templ.substring(j, i));
+			i += sep.length();
+			j = i;
+		}
+		return l.toArray(new String[l.size()]);
+	}
+	
+	private static String[] splitClean(String string, String sep) {
+		if(string.length() == 0) return new String[]{};
+		return string.split(sep);
+	}
+
+	private static String getValue(Map<String, Integer> templatePositions,
+			String[] changeSetComponents, String temp) {
+		return changeSetComponents[templatePositions.get(temp).intValue()];
+	}
+
+	private static String unescape(String string) {
+		return string
+			.replaceAll("&lt;", "<")
+			.replaceAll("&gt;", ">")
+			.replaceAll("&amp;", "&");
 	}
 }
