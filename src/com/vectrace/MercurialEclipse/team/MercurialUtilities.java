@@ -14,7 +14,6 @@
 
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -287,20 +286,6 @@ public class MercurialUtilities
   static public String getRepositoryPath(IProject project)
   {
     return project.getLocation().toOSString();
-  }
-
-  // TODO: Should probably not return null in case of error.
-  public static ByteArrayOutputStream ExecuteCommandToByteArrayOutputStream(String cmd[], File workingDir, boolean consoleOutput) throws HgException
-  {
-      byte[] bytes = execute(cmd, workingDir).executeToBytes();
-      ByteArrayOutputStream result = new ByteArrayOutputStream(bytes.length);
-      try {
-        result.write(bytes);
-    } catch (IOException e) {
-        // It is very unlikely this would ever happen
-        throw new RuntimeException(e);
-    }
-      return result;
   }
 
   /*

@@ -37,6 +37,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -137,26 +138,27 @@ public class MergeView extends ViewPart implements ISelectionListener {
     }
 
     private void populateView() throws HgException {
-            statusLabel.setText(currentProject.getName());
+        statusLabel.setText(currentProject.getName());
 
-            List<FlaggedAdaptable> status = HgIMergeClient.getMergeStatus(currentProject);
-            table.removeAll();
-            for (FlaggedAdaptable flagged : status) {
-                TableItem row = new TableItem(table, SWT.NONE);
-                row.setText(0, flagged.getFlag()+"");
-                row.setText(1, ((IFile)flagged.getAdapter(IFile.class)).getProjectRelativePath().toString());
-                row.setData(flagged);
-            }
-            abortAction.setEnabled(true);
+        List<FlaggedAdaptable> status = HgIMergeClient.getMergeStatus(currentProject);
+        table.removeAll();
+        for (FlaggedAdaptable flagged : status) {
+            TableItem row = new TableItem(table, SWT.NONE);
+            row.setText(0, flagged.getFlag()+"");
+            row.setText(1, ((IFile)flagged.getAdapter(IFile.class)).getProjectRelativePath().toString());
+            row.setData(flagged);
+        }
+        abortAction.setEnabled(true);
     }
 
-    private void clearView() {
+    public void clearView() {
         statusLabel.setText("");
         table.removeAll();
+        currentProject = null;
         abortAction.setEnabled(false);
     }
 
-    private void setCurrentProject(IProject project) {
+    public void setCurrentProject(IProject project) {
         try {
             if (this.currentProject != project) {
                 this.currentProject = project;
@@ -203,6 +205,11 @@ public class MergeView extends ViewPart implements ISelectionListener {
     public void dispose() {
         getSite().getPage().removeSelectionListener(this);
         super.dispose();
+    }
+
+    public static MergeView getView()
+    {
+      return (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ID);
     }
 
 }

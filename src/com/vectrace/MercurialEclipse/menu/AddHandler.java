@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ViewerFilter;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.dialogs.CheckedTreeSelectionDialog;
 import org.eclipse.ui.views.navigator.ResourceComparator;
 
@@ -33,6 +34,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.ResourceLabelProvider;
 import com.vectrace.MercurialEclipse.ui.ResourcesTreeContentProvider;
 import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
@@ -79,9 +81,12 @@ public class AddHandler extends MultipleResourcesHandler {
         dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
         dialog.addFilter(untrackedFilter);
         if (dialog.open() == IDialogConstants.OK_ID) {
-            Object[] result = dialog.getResult();
-            HgAddClient.addResources(keepFiles(result), null);
-            MercurialEclipsePlugin.refreshProjectsFlags(keepProjects(result));
+        	HgAddClient.addResources(keepFiles(dialog.getResult()), null);
+			 try {
+					MercurialStatusCache.getInstance().refresh();
+				} catch (TeamException e) {
+					MercurialEclipsePlugin.logError(e);
+			 }
         }
     }
 
@@ -98,21 +103,6 @@ public class AddHandler extends MultipleResourcesHandler {
             }
         }
         return files;
-    }
-
-    /**
-     * Only keep IProjects
-     * @param objects
-     * @return
-     */
-    private List<IProject> keepProjects(Object[] objects) {
-        List<IProject> projects = new ArrayList<IProject>();
-        for (Object object : objects) {
-            if (object instanceof IProject) {
-                projects.add((IProject) object);
-            }
-        }
-        return projects;
     }
 
     private Set<IProject> getRoots(List<IResource> resources) {

@@ -20,6 +20,7 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 /**
@@ -28,17 +29,18 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
  */
 public class MercurialRevision extends FileRevision
 {
-  IResource resource; 
-  ChangeSet changeSet; 
+  private IResource resource; 
+  private ChangeSet changeSet; 
+  private IStorageMercurialRevision iStorageMercurialRevision; //Cached data
+  private final GChangeSet gChangeSet;
   private String revision;
   private String hash;
-  IStorageMercurialRevision iStorageMercurialRevision; //Cached data
-  
-  public MercurialRevision(ChangeSet changeSet,IResource resource)
+
+  public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet, IResource resource)
   {
     super();
     this.changeSet = changeSet;    
-    //String[] changeSetParts = changeSet.getChangeset().split(":");
+    this.gChangeSet = gChangeSet;
     
 	this.revision = changeSet.getChangesetIndex()+"";
 	this.hash = changeSet.getChangeset();
@@ -50,20 +52,22 @@ public class MercurialRevision extends FileRevision
     return changeSet;
   }
 
+  public GChangeSet getGChangeSet()
+  {
+    return gChangeSet;
+  }
+
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileRevision#getName()
    */
   public String getName()
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::getName() = " + file.getName());
     return resource.getName();
   }
 
   @Override
-public String getContentIdentifier() 
+  public String getContentIdentifier() 
   {
-//    System.out.println("MercurialRevision::getContentIdentifier() = " + changeSet.getChangeset());
     return changeSet.getChangeset();
   }
   
@@ -71,7 +75,6 @@ public String getContentIdentifier()
    * @see org.eclipse.team.core.history.IFileRevision#getStorage(org.eclipse.core.runtime.IProgressMonitor)
    */
   public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
-		// System.out.println("MercurialRevision::getStorage()");
 		if (iStorageMercurialRevision == null) {			
 			iStorageMercurialRevision = new IStorageMercurialRevision(resource,
 					revision, hash, changeSet);
@@ -86,8 +89,6 @@ public String getContentIdentifier()
 	 */
   public boolean isPropertyMissing()
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::isPropertyMissing()");
     return false;
   }
 
@@ -96,8 +97,6 @@ public String getContentIdentifier()
    */
   public IFileRevision withAllProperties(IProgressMonitor monitor) throws CoreException
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialRevision::withAllProperties()");
     return null;
   }
 

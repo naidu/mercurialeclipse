@@ -12,9 +12,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -23,7 +24,9 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
+import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -35,21 +38,18 @@ public class MercurialHistory extends FileHistory
 {
   private IResource resource;
   protected IFileRevision[] revisions;
-//  ChangeLog changeLog;
-
 
   public MercurialHistory(IResource resource)
   {
     super();
     this.resource = resource;
   }
+
   /* (non-Javadoc)
    * @see org.eclipse.team.core.history.IFileHistory#getContributors(org.eclipse.team.core.history.IFileRevision)
    */
   public IFileRevision[] getContributors(IFileRevision revision)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistory::getContributors()");
     return null;
   }
 
@@ -58,8 +58,6 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision getFileRevision(String id)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistory::getFileRevision(" + id + ")");
     return null;
   }
 
@@ -68,7 +66,6 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision[] getFileRevisions()
   {
-//    System.out.println("MercurialHistory::getFileRevisions()");
     return revisions;
   }
 
@@ -77,29 +74,32 @@ public class MercurialHistory extends FileHistory
    */
   public IFileRevision[] getTargets(IFileRevision revision)
   {
-    // TODO Auto-generated method stub
-//    System.out.println("MercurialHistory::getTargets()");
     return null;
   }
 
   public void refresh(IProgressMonitor monitor) throws CoreException 
   {
-//    System.out.println("MercurialHistory::refresh() (home made)");
     RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
     if (provider != null && provider instanceof MercurialTeamProvider) 
     {
-      
-      List<ChangeSet> changeSets = new ArrayList<ChangeSet>(
-					MercurialStatusCache.getInstance().getLocalChangeSets(
-							resource));
-			Collections.reverse(changeSets);
-
-			revisions = new IFileRevision[changeSets.size()];
-			for (int i = 0; i < changeSets.size(); i++) {
-				revisions[i] = new MercurialRevision(changeSets.get(i),
-						resource);
-			}
+    	// We need these to be in order for the GChangeSets to display properly
+    	SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(new Comparator<ChangeSet>(){
+    		public int compare(ChangeSet o1, ChangeSet o2) {
+    			return o2.getChangesetIndex() - o1.getChangesetIndex();
+    		}
+    	});
+    	changeSets.addAll(MercurialStatusCache.getInstance().getLocalChangeSets(resource));
+    	List<GChangeSet> gChangeSets = new HgGLogClient(resource).update(changeSets).getChangeSets();
+    	revisions = new IFileRevision[changeSets.size()];
+    	int i = 0;
+    	for (ChangeSet cs : changeSets) {
+    		revisions[i] = new MercurialRevision(
+    				cs,
+    				gChangeSets.get(i),
+    				resource);
+    		i++;
+    	}
     }
   } 
-  
+
 }

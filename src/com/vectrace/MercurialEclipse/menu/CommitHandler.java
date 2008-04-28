@@ -6,7 +6,9 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.window.Window;
+import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
@@ -43,9 +45,14 @@ public class CommitHandler extends MultipleResourcesHandler {
                     messageToCommit,
                     null); //monitor
 
-//            MercurialEclipsePlugin.refreshProjectFlags(project);
-            MercurialStatusCache.getInstance().refreshStatus(project, null);
-            //TODO Refresh history view TeamUI.getHistoryView().refresh();
+            try 
+            {
+                MercurialStatusCache.getInstance().refresh(project);
+            }
+            catch (TeamException e) 
+            {
+            	MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
+            }
         }
     }
 

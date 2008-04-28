@@ -23,7 +23,7 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.CommitAction;
+import com.vectrace.MercurialEclipse.menu.CommitHandler;
 
 public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 	private IResource[] resources;
@@ -43,7 +43,7 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 			@Override
 			protected IStatus runSafe(IProgressMonitor moni) {
 				try {
-					final CommitAction commitAction = new CommitAction();
+					final CommitHandler commitAction = new CommitHandler();
 					commitAction.run(Arrays.asList(resources));
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);

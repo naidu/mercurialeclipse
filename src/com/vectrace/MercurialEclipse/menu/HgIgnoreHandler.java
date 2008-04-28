@@ -14,7 +14,9 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
@@ -53,8 +55,12 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					HgIgnoreClient.addRegexp(resource.getProject(), dialog.getPattern());
 					break;
 			}
-//			MercurialEclipsePlugin.refreshProjectFlags(resource.getProject());
-			MercurialStatusCache.getInstance().refreshStatus(resource.getProject(),null);
+			try {
+				MercurialStatusCache.getInstance().refresh(resource.getProject());
+			} catch (TeamException e) {
+				MercurialEclipsePlugin.logError("Unable to refresh project: ",
+						e);
+			}
 		}
 	}
 

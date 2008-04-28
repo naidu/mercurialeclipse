@@ -14,6 +14,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.Arrays;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -32,9 +34,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
-import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,8 +43,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -71,17 +69,15 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
  */
 public class MercurialHistoryPage extends HistoryPage
 {
-
-  private TableViewer viewer;
+  private GraphLogTableViewer viewer;
   private IResource resource;
-  private Table changeLogTable;
   private ChangeLogContentProvider changeLogViewContentProvider;
   private Composite composite;
-  MercurialHistory mercurialHistory;
-  IFileRevision[] entries;
+  private MercurialHistory mercurialHistory;
+  private IFileRevision[] entries;
   
   private RefreshMercurialHistory refreshFileHistoryJob;
-
+  
   private class RefreshMercurialHistory extends Job 
   {
     MercurialHistory mercurialHistory;
@@ -171,25 +167,27 @@ public class MercurialHistoryPage extends HistoryPage
       switch (index)
       {
         case 1:
-          ret= changeSet.toString();
+          ret = changeSet.toString();
           break;
         case 2:
-          ret= changeSet.getTag();
+          ret = changeSet.getTag();
           break;
         case 3:
-          ret= changeSet.getUser();
+          ret = changeSet.getUser();
           break;
         case 4:
-          ret= changeSet.getDate();
+          ret = changeSet.getDate();
           break;
         case 5:
-          ret= changeSet.getFiles();
+          // TODO This is temporary - I'll do a proper split view very shortly
+          ret = Arrays.toString(changeSet.getChangedFiles());
+          ret = ret.substring(1, ret.length()-2);
           break;
         case 6:
-          ret= changeSet.getDescription();
+          ret = changeSet.getDescription();
           break;
         default:
-          ret= null;
+          ret = null;
           break;
       }
       return ret;
@@ -198,51 +196,6 @@ public class MercurialHistoryPage extends HistoryPage
     {
       return null; 
     }
-	
-   
-    
-  }
-  
-  class NameSorter extends ViewerSorter 
-  {
-    /* 
-      * @param viewer the viewer
-      * @param e1 the first element
-      * @param e2 the second element
-      * @return a negative number if the first element is less  than the 
-      *  second element; the value <code>0</code> if the first element is
-      *  equal to the second element; and a positive number if the first
-      *  element is greater than the second element
-      */
-    @Override
-    public int compare(Viewer viewer, Object e1, Object e2)
-    {
-
-      if(((e1 instanceof MercurialRevision) != true) || ((e1 instanceof MercurialRevision) != true))
-      {
-        return super.compare(viewer, e1, e2);
-      }
-
-      MercurialRevision mercurialFileRevision1 = (MercurialRevision) e1;         
-      MercurialRevision mercurialFileRevision2 = (MercurialRevision) e2;     
-          
-      int value1=mercurialFileRevision1.getChangeSet().getChangesetIndex();
-      int value2=mercurialFileRevision2.getChangeSet().getChangesetIndex();
-      
-      // we want it reverse sorted
-      if(value1<value2)
-      {
-        return 1;
-      }
-      else if(value1==value2)
-      {
-        return 0;
-      }
-      else
-      {
-        return -1;
-      }
-    }   
   }
 
   public MercurialHistoryPage(IResource resource)
@@ -273,10 +226,9 @@ public class MercurialHistoryPage extends HistoryPage
     GridData data = new GridData(GridData.FILL_BOTH);
     data.grabExcessVerticalSpace = true;
     composite.setLayoutData(data);
-
     
-    viewer = new TableViewer(composite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-    changeLogTable=viewer.getTable();
+    viewer = new GraphLogTableViewer(composite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+    Table changeLogTable=viewer.getTable();
 
     changeLogTable.setLinesVisible(true);
     changeLogTable.setHeaderVisible(true);
@@ -289,7 +241,7 @@ public class MercurialHistoryPage extends HistoryPage
     
     TableColumn column = new TableColumn(changeLogTable,SWT.CENTER);
     column.setText("Graph");
-    layout.addColumnData(new ColumnWeightData(5,true));
+    layout.addColumnData(new ColumnWeightData(7,true));
     column = new TableColumn(changeLogTable,SWT.LEFT);
     column.setText("Changeset");
     layout.addColumnData(new ColumnWeightData(15, true));
@@ -312,15 +264,8 @@ public class MercurialHistoryPage extends HistoryPage
     viewer.setLabelProvider(new ChangeSetLabelProvider());
     changeLogViewContentProvider = new ChangeLogContentProvider(); 
     viewer.setContentProvider(changeLogViewContentProvider);
-    viewer.setSorter(new NameSorter());
     
     contributeActions();
-    Listener listener = new Listener() {
-    	public void handleEvent(Event event) {
-//    		painter.paint(event,0);
-    	}
-    };
-	changeLogTable.addListener(SWT.PaintItem,listener);
   }
 
 

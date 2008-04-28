@@ -13,7 +13,9 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.structuremergeviewer.Differencer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 public class HgCompareEditorInput extends CompareEditorInput
@@ -54,9 +56,16 @@ public class HgCompareEditorInput extends CompareEditorInput
   protected Object prepareInput(IProgressMonitor monitor)
       throws InvocationTargetException, InterruptedException
   {
-    if(ancestor != null) {
-      return DIFFERENCER.findDifferences(true, monitor, null, ancestor, left, right);
+    return DIFFERENCER.findDifferences(ancestor != null, monitor, null, ancestor, left, right);
+  }
+  
+  @Override
+  public void saveChanges(IProgressMonitor monitor) throws CoreException
+  {
+    boolean save = isSaveNeeded();
+    super.saveChanges(monitor);
+    if(save) {
+      ((IFile)left.getResource()).setContents(left.getContents(), true, true, monitor);
     }
-    return DIFFERENCER.findDifferences(false, monitor, null, null, left, right);
   }
 }

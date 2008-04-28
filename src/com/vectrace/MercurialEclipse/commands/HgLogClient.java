@@ -34,12 +34,6 @@ public class HgLogClient {
 		return getRevisions(command);
 	}
 
-	public static String getGraphicalLog(IProject project) throws HgException {
-		HgCommand command = new HgCommand("glog", project, false);
-		command.addOptions("--config", "extensions.hgext.graphlog=");
-		return command.executeToString();
-	}
-	
 	public static String getGraphicalLog(IProject project, String template, String filename) throws HgException {
 		HgCommand command = new HgCommand("glog", project, false);
 		command.addOptions("--template",template);

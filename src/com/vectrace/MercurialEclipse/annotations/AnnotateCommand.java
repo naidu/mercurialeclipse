@@ -14,11 +14,11 @@
 package com.vectrace.MercurialEclipse.annotations;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.Reader;
+import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -37,12 +37,11 @@ public class AnnotateCommand
 {
   private static final Pattern ANNOTATE = Pattern
       .compile("^\\s*(.+[^ ])\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$");
-  private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
+  public static final DateFormat DATE_FORMAT = new SimpleDateFormat(
       "EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH);
 
   private final HgFile file;
-  private final AnnotateBlocks blocks = new AnnotateBlocks();
-
+  
   public AnnotateCommand(HgFile file)
   {
     this.file = file;
@@ -50,15 +49,9 @@ public class AnnotateCommand
 
   public AnnotateBlocks execute() throws HgException
   {
-    run();
-    return blocks;
-  }
-
-  private void run() throws HgException
-  {
     IFile resource = file.getFile();
     if (!MercurialUtilities.isResourceInReposetory(resource, true)) {
-        return;
+        return null;
     }
     File workingDir = MercurialUtilities.getWorkingDir(resource);
     String FullPath = MercurialUtilities.getResourceName(resource);
@@ -68,29 +61,23 @@ public class AnnotateCommand
 
     String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir, true);
     if (output == null) {
-        return;
+        return null;
     }
-    try
-    {
-      createFromStdOut(output.getBytes("UTF-8"));
-    } catch (UnsupportedEncodingException e)
-    {
-      throw new RuntimeException(e);
-    }
+    return createFromStdOut(new StringReader(output));
   }
-
-  private void createFromStdOut(byte[] contents)
+  
+  protected static AnnotateBlocks createFromStdOut(InputStream contents)
   {
-    createFromStdOut(new ByteArrayInputStream(contents));
+    return createFromStdOut(new InputStreamReader(contents));
   }
-
-  private void createFromStdOut(InputStream contents)
+  
+  protected static AnnotateBlocks createFromStdOut(Reader contents)
   {
+    AnnotateBlocks blocks = new AnnotateBlocks();
     String line = null;
     try
     {
-      BufferedReader reader = new BufferedReader(
-          new InputStreamReader(contents));
+      BufferedReader reader = new BufferedReader(contents);
       int count = 0;
       for (line = reader.readLine(); line != null; line = reader.readLine())
       {
@@ -102,7 +89,7 @@ public class AnnotateCommand
         Matcher matcher = ANNOTATE.matcher(line);
         matcher.find();
         String author = matcher.group(1);
-        long revision = Long.parseLong(matcher.group(2));
+        int revision = Integer.parseInt(matcher.group(2));
         String changeset = matcher.group(3);
         Date date = DATE_FORMAT.parse(matcher.group(4));
         blocks.add(new AnnotateBlock(new HgRevision(changeset, revision),
@@ -113,5 +100,6 @@ public class AnnotateCommand
     {
       throw new RuntimeException(e);
     }
+    return blocks;
   }
 }
