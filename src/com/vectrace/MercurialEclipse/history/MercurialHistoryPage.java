@@ -65,6 +65,7 @@ import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.HistoryPainter;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
@@ -318,11 +319,14 @@ public class MercurialHistoryPage extends HistoryPage
     viewer.setSorter(new NameSorter());
     
     contributeActions();
+   
+    final HistoryPainter painter = new HistoryPainter(resource); 
+    
     Listener listener = new Listener() {
-    	public void handleEvent(Event event) {
-//    		painter.paint(event,0);
-    	}
-    };
+			public void handleEvent(Event event) {
+				painter.paint(event, 0);
+			}
+		};
 	changeLogTable.addListener(SWT.PaintItem,listener);
   }
 
