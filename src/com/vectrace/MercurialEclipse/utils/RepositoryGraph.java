@@ -111,7 +111,7 @@ public class RepositoryGraph {
 	 * @param cs
 	 * @return
 	 */
-	private List<String> getParentsForResource(IResource res, ChangeSet cs) {
+	public static List<String> getParentsForResource(IResource res, ChangeSet cs) {
 		List<String> parents = new ArrayList<String>();
 		if (cs.getParents() == null
 				|| (cs.getParents().length == 1 && cs.getParents()[0]
