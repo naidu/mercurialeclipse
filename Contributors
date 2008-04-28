@@ -48,13 +48,15 @@ Stefan Groschupf -
      Zingo's Comment: Stefan Groschupf help with logError 
      (He could be the same person as StefanG But Im not sure)
      
-Charles O'Farrell - Fix decoration on Project outside of workspace.
+Charles O'Farrell - 
+     Zingo's Comment: Fixed decoration on Project outside of workspace. Then continued with
+     a lot of changes. 
 
 Jerome Negre - 
      Zingo's Comment: Jerome started to fix a few issues and started add missing features like 
      .hgignore support, after that he has made numerous contributions.
 
 Bastian Doetsch - 
-	I'm interested in Mercurial and MercurialEclipse so I started contributing a bit while learning. 
-	I try to get the synchronize infrastructure to work.
-     
+     I'm interested in Mercurial and MercurialEclipse so I started contributing a bit while learning. 
+	   I try to get the synchronize infrastructure to work.
+     Zingos Comment: Well Bastian seem to learn fast :) the Time from the first small patch to large contribution was quite small.
