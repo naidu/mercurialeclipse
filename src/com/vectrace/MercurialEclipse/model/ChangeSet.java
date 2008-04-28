@@ -33,12 +33,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private Date realDate;
 	private File bundleFile;
 
-	public ChangeSet() {
-		super();
-	}
-	
 	public ChangeSet(int changesetIndex, String changeSet, String tag,
-			String user, String date, String description, String[] parents) {
+			String user, String date, String description,
+			String[] parents) {
 		this.changesetIndex = changesetIndex;
 		this.changeset = changeSet;
 		this.tag = tag;
@@ -59,6 +56,16 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	public ChangeSet(int changesetIndex, String changeSet, String user,
 			String date) {
 		this(changesetIndex, changeSet, null, user, date, null, null);
+	}
+
+	public ChangeSet(int rev, String nodeShort, String node, String tag,
+			String author, String date, String ageDate, String[] changedFiles,
+			String description, File bundle, String[] parents) {
+		this(rev, node, tag, author, date, description, parents);
+		this.nodeShort = nodeShort;
+		this.ageDate = ageDate;
+		this.changedFiles = changedFiles;
+		this.bundleFile = bundle;
 	}
 
 	public int getChangesetIndex() {
@@ -148,11 +155,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
 			return 0;
 		}
 
-		if (realDate != null && o.getRealDate() != null) {
-			int dateCompare = this.getRealDate().compareTo(o.getRealDate());
-			if (dateCompare != 0) {
-				return dateCompare;
-			}
+		if (this.getChangesetIndex() == o.getChangesetIndex()) {
+			return this.date.compareTo(o.date);
 		}
 		return this.getChangesetIndex() - o.getChangesetIndex();
 	}
@@ -177,7 +181,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	/**
-	 * @param bundleFile the bundleFile to set
+	 * @param bundleFile
+	 *            the bundleFile to set
 	 */
 	public void setBundleFile(File bundleFile) {
 		this.bundleFile = bundleFile;
@@ -189,33 +194,5 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
 	public void setParents(String[] parents) {
 		this.parents = parents;
-	}
-
-	public void setChangesetIndex(int changesetIndex) {
-		this.changesetIndex = changesetIndex;
-	}
-
-	public void setChangeset(String changeset) {
-		this.changeset = changeset;
-	}
-
-	public void setTag(String tag) {
-		this.tag = tag;
-	}
-
-	public void setUser(String user) {
-		this.user = user;
-	}
-
-	public void setDate(String date) {
-		this.date = date;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-	public void setRealDate(Date realDate) {
-		this.realDate = realDate;
 	}
 }
