@@ -25,13 +25,14 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private String tag;
 	private String user;
 	private String date;
-	private String[] changedFiles;
+	private FileStatus[] changedFiles;
 	private String description;
 	private String ageDate;
 	private String nodeShort;
 	private String[] parents;
 	private Date realDate;
 	private File bundleFile;
+	private String summary;
 
 	public ChangeSet(int changesetIndex, String changeSet, String tag,
 			String user, String date, String description,
@@ -41,7 +42,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		this.tag = tag;
 		this.user = user;
 		this.date = date;
-		this.description = description;
+		setDescription(description);
 		this.parents = parents;
 		try {
 			if (date != null) {
@@ -108,7 +109,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	/**
 	 * @return the changedFiles
 	 */
-	public String[] getChangedFiles() {
+	public FileStatus[] getChangedFiles() {
 		return changedFiles;
 	}
 
@@ -116,7 +117,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	 * @param changedFiles
 	 *            the changedFiles to set
 	 */
-	public void setChangedFiles(String[] changedFiles) {
+	public void setChangedFiles(FileStatus[] changedFiles) {
 		this.changedFiles = changedFiles;
 	}
 
@@ -195,4 +196,41 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	public void setParents(String[] parents) {
 		this.parents = parents;
 	}
+<<<<<<< local
+
+	public void setChangesetIndex(int changesetIndex) {
+		this.changesetIndex = changesetIndex;
+	}
+
+	public void setChangeset(String changeset) {
+		this.changeset = changeset;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	public void setDate(String date) {
+		this.date = date;
+	}
+
+	public void setDescription(String description) {
+		int i = description.indexOf('\n');
+		this.summary = description.substring(0, i >= 0 ? i : description.length());
+		this.description = description;
+	}
+
+	public void setRealDate(Date realDate) {
+		this.realDate = realDate;
+	}
+	
+	public String getSummary() {
+		return summary;
+	}
+=======
+>>>>>>> other
 }

@@ -370,28 +370,14 @@
                class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
                tooltip="pull changes from remote/local repository and update (hg pull -u)"
                menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate">
-           </action>
-           <action
-               label="Push..."
-               class="com.vectrace.MercurialEclipse.team.ActionPush"
-               tooltip="push changes to remote/local reposetory (hg push)"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionPush">
-           </action>
-           <action
-               label="Pull and Update..."
-               class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
-               tooltip="pull changes from remote/local repository and update (hg pull -u)"
-               menubarPath="team.main/group1"
                id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
                enablesFor="1">
            </action>
            <action
                label="Push..."
                class="com.vectrace.MercurialEclipse.team.ActionPush"
-               tooltip="push changes to remote/local repository (hg push)"
-               menubarPath="team.main/group1"
+               tooltip="push changes to remote/local reposetory (hg push)"
+               menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
       </objectContribution>

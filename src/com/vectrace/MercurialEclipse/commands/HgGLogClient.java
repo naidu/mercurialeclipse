@@ -41,10 +41,12 @@ public class HgGLogClient extends HgCommand
     int length = split.length / 2;
     int lengthp1 = length + 1;
     RowCount rowCount = new RowCount();
+    GChangeSet last = null;
     for(int i=0;i<lengthp1;i++)
     {
       int j = i*2;
-      sets.add(new GChangeSet(rowCount, i, split[j], i != length ? split[j+1] : ""));
+      sets.add(last = new GChangeSet(rowCount, i, split[j], i != length ? split[j+1] : "")
+      	.clean(last));
     }
   }
 

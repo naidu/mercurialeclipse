@@ -88,6 +88,7 @@ public class MercurialHistory extends FileHistory
     			return o2.getChangesetIndex() - o1.getChangesetIndex();
     		}
     	});
+    	MercurialStatusCache.getInstance().refreshAllLocalRevisions(resource.getProject(), false);
     	changeSets.addAll(MercurialStatusCache.getInstance().getLocalChangeSets(resource));
     	List<GChangeSet> gChangeSets = new HgGLogClient(resource).update(changeSets).getChangeSets();
     	revisions = new IFileRevision[changeSets.size()];

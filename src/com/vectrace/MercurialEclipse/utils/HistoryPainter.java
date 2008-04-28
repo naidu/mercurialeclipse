@@ -61,8 +61,17 @@ public class HistoryPainter {
 		int lane = 1;
 		for (HistoryPainterRevision rev : revisions) {
 			lane = Math.max(1, rev.getLane());
+<<<<<<< local
+
+=======
+>>>>>>> other
 			rev.setLane(lane);
+<<<<<<< local
+			rev.setLanes(startedEdges.size());
+
+=======
 			
+>>>>>>> other
 			// update started edges
 			for (int parCount = 0; parCount < rev.getEdgeStarts().size(); parCount++) {
 				HistoryPainterEdge edge = rev.getEdgeStarts().get(parCount);
@@ -88,9 +97,12 @@ public class HistoryPainter {
 					startedEdges.remove(edge);
 				}
 			}
+<<<<<<< local
+=======
 
 			// started edges = lanes
 			rev.setLanes(startedEdges.size());
+>>>>>>> other
 		}
 	}
 
@@ -137,7 +149,11 @@ public class HistoryPainter {
 		gc.setAntialias(SWT.ON);
 		gc.setLineWidth(2);
 
+<<<<<<< local
+		int branchOffsetY = itemHeight / 3;
+=======
 		int branchOffsetY = 0;// itemHeight / 3;
+>>>>>>> other
 		int startX = x;
 		int startY = y;
 		int endY = startY + itemHeight;
@@ -158,8 +174,19 @@ public class HistoryPainter {
 			gc.drawLine(startX, startY, startX, endY - branchOffsetY);
 			if (rev.getLane() == currLane + 1) {
 				drawCircle(pad, gc, startX, startY);
+<<<<<<< local
+				drawBranch(rev, pad, gc, branchOffsetY, startX, endY);
+			}
+
+			// draw rest of vertical line if there are parents
+			if (rev.getParents().size() > 0) {
+				gc.drawLine(startX, endY - branchOffsetY, startX, endY);
+=======
+>>>>>>> other
 			}
 		}
+<<<<<<< local
+=======
 
 		// // now draw arcs - they gotta be drawn after the rest.
 		// for (int currLane = 0; currLane < concLanes; currLane++) {
@@ -171,6 +198,7 @@ public class HistoryPainter {
 		// }
 		// }
 		// found the revision, now we stop.
+>>>>>>> other
 
 		e.gc.dispose();
 
@@ -200,6 +228,42 @@ public class HistoryPainter {
 		gc.fillArc(startX - pad / 2, startY + (pad / 2), pad, pad, 0, 360);
 	}
 
+<<<<<<< local
+	/**
+	 * @param pad
+	 * @param gc
+	 * @param arcOffsetY
+	 * @param startX
+	 * @param endY
+	 */
+	private void drawBranch(HistoryPainterRevision rev, int pad, GC gc,
+			int arcOffsetY, int startX, int endY) {
+		// arc out to outgoingEdges, if they are in different lanes
+		for (HistoryPainterEdge edge : rev.getEdgeStarts()) {
+
+			if (rev.getLane() != edge.getStop().getLane()) {
+				int circleWidth = pad
+						* Math.abs(rev.getLane() - edge.getStop().getLane());
+
+				// arc to the right
+				if (rev.getLane() < edge.getStop().getLane()) {
+					// gc.drawArc(startX-pad, endY - arcOffsetY,
+					// circleWidth,
+					// endY, 0, 90);
+					gc.drawLine(startX, endY - arcOffsetY,
+							startX + circleWidth, endY);
+
+					// arc to the left
+				} else if (rev.getLane() > edge.getStop().getLane()) {
+					// gc.drawArc(startX-pad, endY - arcOffsetY,
+					// circleWidth, endY, 90, 180);
+					gc.drawLine(startX - circleWidth, endY, startX, endY
+							- arcOffsetY);
+				}
+			}
+		}
+	}
+=======
 	// /**
 	// * @param pad
 	// * @param gc
@@ -235,6 +299,7 @@ public class HistoryPainter {
 	// }
 	// }
 	// }
+>>>>>>> other
 
 	/**
 	 * @return the edges
