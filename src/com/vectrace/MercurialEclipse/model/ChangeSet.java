@@ -213,9 +213,16 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	public void setDescription(String description) {
-		int i = description.indexOf('\n');
-		this.summary = description.substring(0, i >= 0 ? i : description.length());
-		this.description = description;
+		if(description != null) {
+			int i = description.indexOf('\n');
+			this.summary = description.substring(0, i >= 0 ? i : description.length());
+			this.description = description;
+		}
+		else
+		{
+			this.summary = "";
+			this.description = "";
+		}
 	}
 
 	public void setRealDate(Date realDate) {
