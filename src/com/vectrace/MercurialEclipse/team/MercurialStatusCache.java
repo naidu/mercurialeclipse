@@ -833,7 +833,7 @@ public class MercurialStatusCache extends Observable implements
 				} else {
 					found = changeSets.contains(candidate);
 				}
-			} while (currIndex != 0 && !found);
+			} while (currIndex >= 0 && !found);
 			if (candidate != null && candidate != cs) {
 				return new String[] { candidate.toString() };
 			}
