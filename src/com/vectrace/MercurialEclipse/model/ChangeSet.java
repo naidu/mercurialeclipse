@@ -25,13 +25,14 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private String tag;
 	private String user;
 	private String date;
-	private String[] changedFiles;
+	private FileStatus[] changedFiles;
 	private String description;
 	private String ageDate;
 	private String nodeShort;
 	private String[] parents;
 	private Date realDate;
 	private File bundleFile;
+	private String summary;
 
 	public ChangeSet() {
 		super();
@@ -44,7 +45,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		this.tag = tag;
 		this.user = user;
 		this.date = date;
-		this.description = description;
+		setDescription(description);
 		this.parents = parents;
 		try {
 			if (date != null) {
@@ -101,7 +102,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	/**
 	 * @return the changedFiles
 	 */
-	public String[] getChangedFiles() {
+	public FileStatus[] getChangedFiles() {
 		return changedFiles;
 	}
 
@@ -109,7 +110,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	 * @param changedFiles
 	 *            the changedFiles to set
 	 */
-	public void setChangedFiles(String[] changedFiles) {
+	public void setChangedFiles(FileStatus[] changedFiles) {
 		this.changedFiles = changedFiles;
 	}
 
@@ -212,10 +213,16 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	public void setDescription(String description) {
+		int i = description.indexOf('\n');
+		this.summary = description.substring(0, i >= 0 ? i : description.length());
 		this.description = description;
 	}
 
 	public void setRealDate(Date realDate) {
 		this.realDate = realDate;
+	}
+	
+	public String getSummary() {
+		return summary;
 	}
 }

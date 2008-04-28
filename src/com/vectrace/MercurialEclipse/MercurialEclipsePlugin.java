@@ -144,7 +144,7 @@ public void stop(BundleContext context) throws Exception
    */
   public static ImageDescriptor getImageDescriptor(String path)
   {
-    return AbstractUIPlugin.imageDescriptorFromPlugin("com.vectrace.MercurialEclipse", path);
+    return AbstractUIPlugin.imageDescriptorFromPlugin("com.vectrace.MercurialEclipse", "icons/"+path);
   }
 
   public static final void logError(String message, Throwable error)

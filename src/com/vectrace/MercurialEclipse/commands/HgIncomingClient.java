@@ -3,7 +3,9 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
@@ -15,11 +17,15 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgIncomingClient {
 
 	private static final String FILES = "{files}";
+	private static final String FILE_ADDS = "{file_adds}";
+	private static final String FILE_DELS = "{file_dels}";
 	private static final String PARENTS = "{parents}";
 	private static final String DESC = "{desc|escape}";
 	private static final String AUTHOR_PERSON = "{author|person}";
@@ -31,8 +37,15 @@ public class HgIncomingClient {
 	private static final String TAGS = "{tags}";
 	private static final String SEP_CHANGE_SET = ">";
 	private static final String SEP_TEMPLATE_ELEMENT = "<";
-	public static final String TEMPLATE = TAGS+SEP_TEMPLATE_ELEMENT+REV+SEP_TEMPLATE_ELEMENT+NODE_SHORT+SEP_TEMPLATE_ELEMENT+NODE+SEP_TEMPLATE_ELEMENT+DATE_ISODATE+SEP_TEMPLATE_ELEMENT+DATE_AGE+SEP_TEMPLATE_ELEMENT+AUTHOR_PERSON+SEP_TEMPLATE_ELEMENT+DESC+SEP_TEMPLATE_ELEMENT+PARENTS+SEP_TEMPLATE_ELEMENT+FILES+SEP_TEMPLATE_ELEMENT+SEP_CHANGE_SET;
-	
+	public static final String TEMPLATE = TAGS + SEP_TEMPLATE_ELEMENT + REV
+			+ SEP_TEMPLATE_ELEMENT + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE
+			+ SEP_TEMPLATE_ELEMENT + DATE_ISODATE + SEP_TEMPLATE_ELEMENT
+			+ DATE_AGE + SEP_TEMPLATE_ELEMENT + AUTHOR_PERSON
+			+ SEP_TEMPLATE_ELEMENT + DESC + SEP_TEMPLATE_ELEMENT + PARENTS
+			+ SEP_TEMPLATE_ELEMENT + FILES + SEP_TEMPLATE_ELEMENT + FILE_ADDS
+			+ SEP_TEMPLATE_ELEMENT + FILE_DELS + SEP_TEMPLATE_ELEMENT
+			+ SEP_CHANGE_SET;
+
 	/**
 	 * Gets all File Revisions that are incoming and saves them in a bundle
 	 * file. There can be more than one revision per file as this method obtains
@@ -52,11 +65,12 @@ public class HgIncomingClient {
 		try {
 			command.addOptions("--template", TEMPLATE, "--bundle", temp
 					.getCanonicalPath(), repository.getUrl());
-			String result = command.executeToString();			
+			String result = command.executeToString();
 			if (result.contains("no changes found")) {
 				return null;
 			}
-			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(result, proj, bundleFile);
+			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+					result, proj, bundleFile);
 			temp.renameTo(bundleFile);
 			return revisions;
 		} catch (HgException hg) {
@@ -78,10 +92,12 @@ public class HgIncomingClient {
 				.toFile();
 	}
 
-	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(String input, IProject proj, File bundleFile) {
-		return createMercurialRevisions(input, proj, SEP_CHANGE_SET, TEMPLATE, SEP_TEMPLATE_ELEMENT, bundleFile);
+	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
+			String input, IProject proj, File bundleFile) {
+		return createMercurialRevisions(input, proj, SEP_CHANGE_SET, TEMPLATE,
+				SEP_TEMPLATE_ELEMENT, bundleFile);
 	}
-	
+
 	private static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
 			String input, IProject proj, String changeSetSeparator,
 			String templ, String templateElementSeparator, File bundleFile) {
@@ -97,8 +113,8 @@ public class HgIncomingClient {
 
 			cs.setBundleFile(bundleFile);
 			if (cs.getChangedFiles() != null) {
-				for (String file : cs.getChangedFiles()) {
-					IResource res = proj.getFile(file);
+				for (FileStatus file : cs.getChangedFiles()) {
+					IResource res = proj.getFile(file.getPath());
 					SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
 							fileRevisions, cs, res);
 					fileRevisions.put(res, incomingFileRevs);
@@ -153,25 +169,57 @@ public class HgIncomingClient {
 		cs.setUser(getValue(pos, comps, AUTHOR_PERSON));
 		cs.setDescription(unescape(getValue(pos, comps, DESC)));
 		cs.setParents(splitClean(getValue(pos, comps, PARENTS), " "));
-		cs.setChangedFiles(splitClean(getValue(pos, comps, FILES), " "));
+		cs.setChangedFiles(getFileStatuses(pos, comps));
 		return cs;
 	}
 
-	// Split doesn't do a very good of two separators without anything in between
+	private static FileStatus[] getFileStatuses(Map<String, Integer> pos,
+			String[] comps) {
+		HashSet<String> files = getFilesValue(pos, comps, FILES);
+		HashSet<String> adds = getFilesValue(pos, comps, FILE_ADDS);
+		HashSet<String> del = getFilesValue(pos, comps, FILE_DELS);
+
+		files.removeAll(adds);
+		files.removeAll(del);
+
+		List<FileStatus> statuses = new ArrayList<FileStatus>(files.size());
+		addFiles(statuses, files, Action.MODIFIED);
+		addFiles(statuses, adds, Action.ADDED);
+		addFiles(statuses, del, Action.REMOVED);
+
+		return statuses.toArray(new FileStatus[statuses.size()]);
+	}
+
+	private static HashSet<String> getFilesValue(Map<String, Integer> pos,
+			String[] comps, String temp) {
+		return new HashSet<String>(Arrays.asList(splitClean(
+				getValue(pos, comps, temp), " ")));
+	}
+
+	private static void addFiles(List<FileStatus> statuses,
+			HashSet<String> files, Action action) {
+		for (String f : files) {
+			statuses.add(new FileStatus(action, f));
+		}
+	}
+
+	// Split doesn't do a very good of two separators without anything in
+	// between
 	// Regex is a better way of doing all of this...
 	private static String[] split(String templ, String sep) {
 		List<String> l = new ArrayList<String>();
 		int j = 0;
-		for(int i = templ.indexOf(sep); i > -1; i = templ.indexOf(sep, i)) {
+		for (int i = templ.indexOf(sep); i > -1; i = templ.indexOf(sep, i)) {
 			l.add(templ.substring(j, i));
 			i += sep.length();
 			j = i;
 		}
 		return l.toArray(new String[l.size()]);
 	}
-	
+
 	private static String[] splitClean(String string, String sep) {
-		if(string.length() == 0) return new String[]{};
+		if (string.length() == 0)
+			return new String[] {};
 		return string.split(sep);
 	}
 
@@ -181,9 +229,7 @@ public class HgIncomingClient {
 	}
 
 	private static String unescape(String string) {
-		return string
-			.replaceAll("&lt;", "<")
-			.replaceAll("&gt;", ">")
-			.replaceAll("&amp;", "&");
+		return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+				.replaceAll("&amp;", "&");
 	}
 }
