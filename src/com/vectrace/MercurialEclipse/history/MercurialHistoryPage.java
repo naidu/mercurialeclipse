@@ -34,7 +34,6 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -43,8 +42,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -63,10 +60,8 @@ import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
-import com.vectrace.MercurialEclipse.utils.HistoryPainter;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
-<<<<<<< local
 public class MercurialHistoryPage extends HistoryPage {
 	private GraphLogTableViewer viewer;
 	private IResource resource;
@@ -75,28 +70,6 @@ public class MercurialHistoryPage extends HistoryPage {
 	private IFileRevision[] entries;
 	private RefreshMercurialHistory refreshFileHistoryJob;
 	private ChangedPathsPage changedPaths;
-=======
-/**
- * @author zingo
- *
- */
-public class MercurialHistoryPage extends HistoryPage
-{
-
-  private TableViewer viewer;
-  private IResource resource;
-  private Table changeLogTable;
-  private ChangeLogContentProvider changeLogViewContentProvider;
-  private Composite composite;
-  MercurialHistory mercurialHistory;
-  IFileRevision[] entries;
-  
-  private RefreshMercurialHistory refreshFileHistoryJob;
-
-  private class RefreshMercurialHistory extends Job 
-  {
-    MercurialHistory mercurialHistory;
->>>>>>> other
 
 	private class RefreshMercurialHistory extends Job {
 		MercurialHistory mercurialHistory;
@@ -139,108 +112,16 @@ public class MercurialHistoryPage extends HistoryPage
 			entries = null;
 		}
 
-<<<<<<< local
 		public void dispose() {
 		}
-=======
-    class ChangeSetLabelProvider extends LabelProvider implements ITableLabelProvider
-  {
-        
-    public String getColumnText(Object obj, int index) 
-    {
-      String ret = null;
->>>>>>> other
 
 		public Object[] getElements(Object parent) {
 			if (entries != null) {
 				return entries;
 			}
 
-<<<<<<< local
 			final IFileHistory fileHistory = (IFileHistory) parent;
 			entries = fileHistory.getFileRevisions();
-=======
-      MercurialRevision mercurialFileRevision = (MercurialRevision) obj;         
-      ChangeSet changeSet = mercurialFileRevision.getChangeSet();
-     
-      switch (index)
-      {
-        case 1:
-          ret= changeSet.toString();
-          break;
-        case 2:
-          ret= changeSet.getTag();
-          break;
-        case 3:
-          ret= changeSet.getUser();
-          break;
-        case 4:
-          ret= changeSet.getDate();
-          break;
-        case 5:
-          if (changeSet.getChangedFiles()!=null && changeSet.getChangedFiles().length>0){
-        	  ret= Arrays.toString(changeSet.getChangedFiles());  
-          }          
-          break;
-        case 6:
-          ret= changeSet.getDescription();
-          break;
-        default:
-          break;
-      }
-      return ret;
-    }
-    public Image getColumnImage(Object obj, int index) 
-    {
-      return null; 
-    }
-	
-   
-    
-  }
-  
-  class NameSorter extends ViewerSorter 
-  {
-    /* 
-      * @param viewer the viewer
-      * @param e1 the first element
-      * @param e2 the second element
-      * @return a negative number if the first element is less  than the 
-      *  second element; the value <code>0</code> if the first element is
-      *  equal to the second element; and a positive number if the first
-      *  element is greater than the second element
-      */
-    @Override
-    public int compare(Viewer viewer, Object e1, Object e2)
-    {
-
-      if(((e1 instanceof MercurialRevision) != true) || ((e1 instanceof MercurialRevision) != true))
-      {
-        return super.compare(viewer, e1, e2);
-      }
-
-      MercurialRevision mercurialFileRevision1 = (MercurialRevision) e1;         
-      MercurialRevision mercurialFileRevision2 = (MercurialRevision) e2;     
-          
-      int value1=mercurialFileRevision1.getChangeSet().getChangesetIndex();
-      int value2=mercurialFileRevision2.getChangeSet().getChangesetIndex();
-      
-      // we want it reverse sorted
-      if(value1<value2)
-      {
-        return 1;
-      }
-      else if(value1==value2)
-      {
-        return 0;
-      }
-      else
-      {
-        return -1;
-      }
-    }   
-  }
->>>>>>> other
 
 			return entries;
 		}
@@ -249,26 +130,8 @@ public class MercurialHistoryPage extends HistoryPage
 	class ChangeSetLabelProvider extends LabelProvider implements
 			ITableLabelProvider {
 
-<<<<<<< local
 		public String getColumnText(Object obj, int index) {
 			String ret;
-=======
-  @Override
-  public void createControl(Composite parent)
-  {
-    composite = new Composite(parent, SWT.NONE);
-    GridLayout layout0 = new GridLayout();
-    layout0.marginHeight = 0;
-    layout0.marginWidth = 0;
-    composite.setLayout(layout0);
-    GridData data = new GridData(GridData.FILL_BOTH);
-    data.grabExcessVerticalSpace = true;
-    composite.setLayoutData(data);
-
-    
-    viewer = new TableViewer(composite, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-    changeLogTable=viewer.getTable();
->>>>>>> other
 
 			if ((obj instanceof MercurialRevision) != true) {
 				return "Type Error";
@@ -277,7 +140,6 @@ public class MercurialHistoryPage extends HistoryPage
 			MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
 			ChangeSet changeSet = mercurialFileRevision.getChangeSet();
 
-<<<<<<< local
 			switch (index) {
 			case 1:
 				ret = changeSet.toString();
@@ -300,56 +162,11 @@ public class MercurialHistoryPage extends HistoryPage
 			}
 			return ret;
 		}
-=======
-    TableLayout layout = new TableLayout();    
-    changeLogTable.setLayout(layout);    
-    
-    TableColumn column = new TableColumn(changeLogTable,SWT.CENTER);
-    column.setText("Graph");
-    layout.addColumnData(new ColumnWeightData(5,true));
-    column = new TableColumn(changeLogTable,SWT.LEFT);
-    column.setText("Changeset");
-    layout.addColumnData(new ColumnWeightData(15, true));
-    column = new TableColumn(changeLogTable,SWT.LEFT);
-    column.setText("Tag");
-    layout.addColumnData(new ColumnWeightData(10, true));
-    column = new TableColumn(changeLogTable,SWT.LEFT);
-    column.setText("User");
-    layout.addColumnData(new ColumnWeightData(7, true));
-    column = new TableColumn(changeLogTable,SWT.LEFT);
-    column.setText("Date");
-    layout.addColumnData(new ColumnWeightData(13, true));
-    column = new TableColumn(changeLogTable,SWT.LEFT);
-    column.setText("Files");
-    layout.addColumnData(new ColumnWeightData(25, true));
-    column = new TableColumn(changeLogTable,SWT.LEFT);
-    column.setText("Description");
-    layout.addColumnData(new ColumnWeightData(25, true));
->>>>>>> other
 
-<<<<<<< local
 		public Image getColumnImage(Object obj, int index) {
 			return null;
 		}
 	}
-=======
-    viewer.setLabelProvider(new ChangeSetLabelProvider());
-    changeLogViewContentProvider = new ChangeLogContentProvider(); 
-    viewer.setContentProvider(changeLogViewContentProvider);
-    viewer.setSorter(new NameSorter());
-    
-    contributeActions();
-   
-    final HistoryPainter painter = new HistoryPainter(resource); 
-    
-    Listener listener = new Listener() {
-			public void handleEvent(Event event) {
-				painter.paint(event, 0);
-			}
-		};
-	changeLogTable.addListener(SWT.PaintItem,listener);
-  }
->>>>>>> other
 
 	public MercurialHistoryPage(IResource resource) {
 		super();
