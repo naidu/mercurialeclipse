@@ -10,12 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
+import java.util.BitSet;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.model.FlaggedResource;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class ResourceAdapterFactory implements IAdapterFactory {
@@ -38,7 +41,9 @@ public class ResourceAdapterFactory implements IAdapterFactory {
 //                    fproject = manager.refresh(project);
 //                }
 //                return fproject.getFlaggedResource(resource);
-                return resource;
+                BitSet status = MercurialStatusCache.getInstance().getStatus(resource);
+                FlaggedResource fResource = new FlaggedResource(resource,status);
+                return fResource;
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
                 return null;

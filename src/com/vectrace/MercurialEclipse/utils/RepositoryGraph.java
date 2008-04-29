@@ -43,8 +43,8 @@ public class RepositoryGraph {
 			instance = new RepositoryGraph();
 		}
 		return instance;
-	}	
-	
+	}
+
 	public ChangeSetNode getSubgraph(MercurialRevision base) {
 		// get corresponding changeset
 		ChangeSet cs = cache.getChangeSet(base.getChangeSet().toString());
@@ -52,8 +52,7 @@ public class RepositoryGraph {
 		if (nodes == null || nodes.size() == 0) {
 			nodes = new HashMap<String, ChangeSetNode>();
 			this.revMap.put(base.getResource(), nodes);
-			ChangeSetNode baseNode = traverseGraph(base.getResource(), null,
-					cs);
+			ChangeSetNode baseNode = traverseGraph(base.getResource(), null, cs);
 			nodes.put(cs.getChangeset(), baseNode);
 			return baseNode;
 		}
@@ -69,7 +68,7 @@ public class RepositoryGraph {
 		Map<String, ChangeSetNode> nodes = revMap.get(res);
 
 		ChangeSetNode csn = null;
-		
+
 		// if we have this node, return
 		if (nodes.containsKey(cs.getChangeset())) {
 			return csn;
@@ -85,7 +84,7 @@ public class RepositoryGraph {
 		if (father != null) {
 			csn.getIncomingEdges().add(father);
 		}
-		
+
 		nodes.put(cs.getChangeset(), csn);
 
 		// walk tree by recursively getting nodes for parent changesets
@@ -111,9 +110,10 @@ public class RepositoryGraph {
 	 * @param cs
 	 * @return
 	 */
-	private List<String> getParentsForResource(IResource res, ChangeSet cs) {
+	public static List<String> getParentsForResource(IResource res, ChangeSet cs) {
 		List<String> parents = new ArrayList<String>();
 		if (cs.getParents() == null
+				|| cs.getParents().length == 0
 				|| (cs.getParents().length == 1 && cs.getParents()[0]
 						.equals(""))) {
 			try {

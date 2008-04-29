@@ -165,6 +165,20 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		}
 		return false;
 	}
+	
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((changeset == null) ? 0 : changeset.hashCode());
+		return result;
+	}
 
 	public Date getRealDate() {
 		return this.realDate;
@@ -213,15 +227,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	public void setDescription(String description) {
-		if(description != null) {
+		if (description != null) {
 			int i = description.indexOf('\n');
-			this.summary = description.substring(0, i >= 0 ? i : description.length());
-			this.description = description;
-		}
-		else
-		{
-			this.summary = "";
-			this.description = "";
+			if (i > 0) {
+				this.summary = description.substring(0, i >= 0 ? i
+						: description.length());
+				this.description = description;
+			}
 		}
 	}
 

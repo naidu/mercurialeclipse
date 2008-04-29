@@ -14,11 +14,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Scanner;
@@ -60,6 +64,13 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class MercurialStatusCache extends Observable implements
 		IResourceChangeListener {
 
+	private final class ChangeSetIndexComparator implements
+			Comparator<ChangeSet> {
+		public int compare(ChangeSet arg0, ChangeSet arg1) {
+			return arg0.getChangesetIndex() - arg1.getChangesetIndex();
+		}
+	}
+
 	public final static int BIT_IGNORE = 0;
 	public final static int BIT_CLEAN = 1;
 	public final static int BIT_DELETED = 2;
@@ -87,9 +98,11 @@ public class MercurialStatusCache extends Observable implements
 	private boolean localUpdateInProgress = false;
 	private boolean remoteUpdateInProgress = false;
 	private boolean statusUpdateInProgress;
+	
+	private static Comparator<ChangeSet> changeSetIndexComparator;
 
 	private MercurialStatusCache() {
-
+		changeSetIndexComparator = new ChangeSetIndexComparator();
 		knownStatus = new HashSet<IProject>();
 		localChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
 		projectResources = new HashMap<IProject, Set<IResource>>();
@@ -540,8 +553,8 @@ public class MercurialStatusCache extends Observable implements
 	 * @return
 	 */
 	public IResource[] getLocalMembers(IResource resource) {
-		if (statusUpdateInProgress){
-			synchronized(statusMap){
+		if (statusUpdateInProgress) {
+			synchronized (statusMap) {
 				// wait...
 			}
 		}
@@ -772,6 +785,13 @@ public class MercurialStatusCache extends Observable implements
 
 	}
 
+	/**
+	 * Gets Changeset by its identifier
+	 * 
+	 * @param changeSet
+	 *            string in format rev:nodeshort
+	 * @return
+	 */
 	public ChangeSet getChangeSet(String changeSet) {
 		if (this.localUpdateInProgress || this.remoteUpdateInProgress) {
 			synchronized (nodeMap) {
@@ -788,13 +808,12 @@ public class MercurialStatusCache extends Observable implements
 				// wait
 			}
 		}
-		SortedSet<ChangeSet> locals = getLocalChangeSets(res);
-		for (Iterator<ChangeSet> iterator = locals.iterator(); iterator
-				.hasNext();) {
-			ChangeSet changeSet = iterator.next();
-			if (changeSet.getChangesetIndex() == changesetIndex) {
-				return changeSet;
-			}
+		SortedSet<ChangeSet> locals = getLocalChangeSets(res);		
+		List<ChangeSet> list = new ArrayList<ChangeSet>(locals);
+		int index = Collections.binarySearch(list, new ChangeSet(
+				changesetIndex, "", "", ""), changeSetIndexComparator);
+		if (index >= 0) {
+			return list.get(index);
 		}
 		return null;
 	}
@@ -805,9 +824,16 @@ public class MercurialStatusCache extends Observable implements
 		String[] parents = cs.getParents();
 		if (parents == null || parents.length == 0) {
 			ChangeSet candidate = cs;
+			int currIndex = cs.getChangesetIndex() - 1;
+			boolean found = false;
 			do {
-				candidate = getChangeSet(res, candidate.getChangesetIndex() - 1);
-			} while (candidate != null && !changeSets.contains(candidate));
+				candidate = getChangeSet(res, currIndex);
+				if (candidate == null) {
+					currIndex--;
+				} else {
+					found = changeSets.contains(candidate);
+				}
+			} while (currIndex >= 0 && !found);
 			if (candidate != null && candidate != cs) {
 				return new String[] { candidate.toString() };
 			}
