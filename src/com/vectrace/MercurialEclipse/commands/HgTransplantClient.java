@@ -19,7 +19,7 @@ public class HgTransplantClient {
     public static void transplant(IProject project, List<String> nodeIds,
             String source, boolean branch) throws HgException {
         HgCommand command = new HgCommand("transplant", project, false);
-        command.addOptions("-v");
+        command.addOptions("--log");
         if (branch) {
             command.addOptions("-b");
         } else {
@@ -31,5 +31,6 @@ public class HgTransplantClient {
                 command.addOptions(node);
             }
         }
+        command.executeToBytes();
     }
 }
