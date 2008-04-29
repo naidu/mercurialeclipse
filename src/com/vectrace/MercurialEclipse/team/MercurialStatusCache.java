@@ -271,7 +271,7 @@ public class MercurialStatusCache extends Observable implements
         if (revisions != null) {
             return Collections.unmodifiableSortedSet(revisions);
         }
-        return null;        
+        return null;
     }
 
     /**
@@ -328,8 +328,12 @@ public class MercurialStatusCache extends Observable implements
             refreshIncomingChangeSets(objectResource.getProject(),
                     repositoryLocation);
         }
-        return Collections.unmodifiableSortedSet(incomingChangeSets.get(
-                repositoryLocation).get(objectResource));
+
+        if (revisions != null) {
+            return Collections.unmodifiableSortedSet(incomingChangeSets.get(
+                    repositoryLocation).get(objectResource));
+        }
+        return null;
     }
 
     /**
@@ -381,6 +385,17 @@ public class MercurialStatusCache extends Observable implements
                         refreshIncomingChangeSets(project, repositoryLocation);
                         if (monitor != null)
                             monitor.worked(1);
+
+                        if (monitor != null)
+                            monitor
+                                    .subTask("Adding remote repository to project repositories...");
+                        MercurialEclipsePlugin.getRepoManager()
+                                .addRepoLocation(
+                                        project,
+                                        new HgRepositoryLocation(
+                                                repositoryLocation));
+                        if (monitor != null)
+                            monitor.worked(1);
                     }
                     setChanged();
                     notifyObservers(project);
@@ -425,7 +440,7 @@ public class MercurialStatusCache extends Observable implements
         notifyObservers(res);
     }
 
-    private void refreshIncomingChangeSets(IProject project,
+    public void refreshIncomingChangeSets(IProject project,
             String repositoryLocation) throws HgException {
 
         // check if mercurial is team provider and if we're working on an
@@ -439,30 +454,16 @@ public class MercurialStatusCache extends Observable implements
                 try {
                     remoteUpdateInProgress = true;
 
-                    // get known repositories
-                    Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
-                            .getRepoManager().getAllProjectRepoLocations(
-                                    project);
-
-                    if (repositories == null) {
-                        return;
-                    }
-
                     // clear cache of old incoming members
                     incomingChangeSets.remove(repositoryLocation);
 
                     // load latest incoming changesets from repository given in
                     // parameter
-                    for (Iterator<HgRepositoryLocation> iterator = repositories
-                            .iterator(); iterator.hasNext();) {
-                        HgRepositoryLocation hgRepositoryLocation = iterator
-                                .next();
-                        if (!hgRepositoryLocation.getUrl().equalsIgnoreCase(
-                                repositoryLocation)) {
-                            // next one, url is not identical
-                            continue;
-                        }
+                    HgRepositoryLocation hgRepositoryLocation = MercurialEclipsePlugin
+                            .getRepoManager().getRepoLocation(
+                                    repositoryLocation);
 
+                    if (hgRepositoryLocation != null) {
                         // get new changesets from hg
                         Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
                                 .getHgIncoming(project, hgRepositoryLocation);
@@ -681,8 +682,8 @@ public class MercurialStatusCache extends Observable implements
     }
 
     /**
-     * Gets all resources that are changed in incoming changesets of given repository, even
-     * resources not known in local workspace.
+     * Gets all resources that are changed in incoming changesets of given
+     * repository, even resources not known in local workspace.
      * 
      * @param resource
      * @param repositoryLocation
@@ -690,11 +691,13 @@ public class MercurialStatusCache extends Observable implements
      */
     public IResource[] getIncomingMembers(IResource resource,
             String repositoryLocation) {
-        Map<IResource,SortedSet<ChangeSet>> changeSets = incomingChangeSets.get(repositoryLocation);
-        if (changeSets!= null){
-            return changeSets.keySet().toArray(new IResource[changeSets.size()]);            
+        Map<IResource, SortedSet<ChangeSet>> changeSets = incomingChangeSets
+                .get(repositoryLocation);
+        if (changeSets != null) {
+            return changeSets.keySet()
+                    .toArray(new IResource[changeSets.size()]);
         }
-        return new IResource[0];         
+        return new IResource[0];
     }
 
     public ChangeSet getNewestIncomingChangeSet(IResource resource,

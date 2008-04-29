@@ -22,12 +22,22 @@ public class MercurialSynchronizePageActionGroup extends
 
 		super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new CommitSynchronizeAction("Commit selected...",
-						configuration, getVisibleRootsSelectionProvider()));
-
-		super.appendToGroup(ISynchronizePageConfiguration.P_TOOLBAR_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new CommitSynchronizeAction("Commit selected...",
-						configuration, getVisibleRootsSelectionProvider()));
+				new CommitSynchronizeAction("Commit",
+						configuration, getVisibleRootsSelectionProvider()));		
+		
+		super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+                ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+                new PullSynchronizeAction("Pull",
+                        configuration, getVisibleRootsSelectionProvider(), false));
+		
+		super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+                ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+                new PullSynchronizeAction("Pull and Update",
+                        configuration, getVisibleRootsSelectionProvider(), true));
+		
+		super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+                ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+                new ShowHistorySynchronizeAction("Show History",
+                        configuration, getVisibleRootsSelectionProvider()));
 	}
 }

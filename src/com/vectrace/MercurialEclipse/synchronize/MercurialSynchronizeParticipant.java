@@ -34,7 +34,7 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
         subscriber = new MercurialSynchronizeSubscriber(scope,
                 repositoryLocation);
         setSubscriber(subscriber);
-        this.secondaryId = new Date().toString();
+        this.secondaryId = new Date().toString();        
     }
 
     @Override
@@ -101,6 +101,13 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
     @Override
     protected String getLongTaskName(IResource[] resources) {
         return "Mercurial: Refreshing resources for synchronization...";
+    }
+
+    /**
+     * @return the repositoryLocation
+     */
+    public String getRepositoryLocation() {
+        return repositoryLocation;
     }
 
 }

@@ -143,11 +143,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 return;
             }
             IProject project = resource.getProject();
+                        
 
-            if (refreshed.contains(project)) {
+            if (refreshed.contains(project)) {                
                 monitor.worked(1);
                 continue;
             }
+                      
             statusCache.refresh(project, monitor, repositoryLocation);
             refreshed.add(project);
             IResource[] localMembers = statusCache.getLocalMembers(resource);
