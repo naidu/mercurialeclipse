@@ -22,67 +22,85 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
 public class MercurialSynchronizeParticipant extends SubscriberParticipant {
-	private String secondaryId;
-	private MercurialSynchronizeSubscriber subscriber = null;
+    private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION";
+    private String secondaryId;
+    private String repositoryLocation;
+    private MercurialSynchronizeSubscriber subscriber = null;
 
-	public MercurialSynchronizeParticipant(ISynchronizeScope scope) {
-		super(scope);
-		subscriber = new MercurialSynchronizeSubscriber(scope);
-		setSubscriber(subscriber);
-		this.secondaryId = new Date().toString();
-	}
+    public MercurialSynchronizeParticipant(ISynchronizeScope scope,
+            String repositoryLocation) {
+        super(scope);
+        this.repositoryLocation = repositoryLocation;
+        subscriber = new MercurialSynchronizeSubscriber(scope,
+                repositoryLocation);
+        setSubscriber(subscriber);
+        this.secondaryId = new Date().toString();
+    }
 
-	@Override
-	public void init(String secId, IMemento memento) throws PartInitException {
-		super.init(secondaryId, memento);
-		subscriber = new MercurialSynchronizeSubscriber(getScope());
-		setSubscriber(subscriber);
-		this.secondaryId = secId;
-	}
+    @Override
+    public void init(String secId, IMemento memento) throws PartInitException {
+        super.init(secondaryId, memento);
+        
+        IMemento myMemento = memento.getChild(MercurialSynchronizeParticipant.class.getName());
+        
+        this.secondaryId = secId;
+        this.repositoryLocation = myMemento.getString(REPOSITORY_LOCATION);
+            
+        subscriber = new MercurialSynchronizeSubscriber(getScope(), repositoryLocation);
+        setSubscriber(subscriber);            
+    }
 
-	public MercurialSynchronizeParticipant() {
-	}
+    public MercurialSynchronizeParticipant() {
+    }
+    
+    @Override
+    public void saveState(IMemento memento) {        
+        super.saveState(memento);
+        IMemento myMemento = memento.createChild(MercurialSynchronizeParticipant.class.getName());
+        myMemento.putString(REPOSITORY_LOCATION, repositoryLocation);
+    }
 
-	@Override
-	protected void initializeConfiguration(
-			final ISynchronizePageConfiguration configuration) {
-		super.initializeConfiguration(configuration);
+    @Override
+    protected void initializeConfiguration(
+            final ISynchronizePageConfiguration configuration) {
+        super.initializeConfiguration(configuration);
 
-		MercurialSynchronizePageActionGroup syncPageActionGroup = new MercurialSynchronizePageActionGroup();
-		configuration.addActionContribution(syncPageActionGroup);
-	}
+        MercurialSynchronizePageActionGroup syncPageActionGroup = new MercurialSynchronizePageActionGroup();
+        configuration.addActionContribution(syncPageActionGroup);
+    }
 
-	@Override
-	public String getId() {
-		return getClass().getName();
-	}
+    @Override
+    public String getId() {
+        return getClass().getName();
+    }
 
-	@Override
-	public String getSecondaryId() {
-		return secondaryId;
-	}
+    @Override
+    public String getSecondaryId() {
+        return secondaryId;
+    }
 
-	@Override
-	public IResource[] getResources() {
-		return subscriber.roots();
-	}
+    @Override
+    public IResource[] getResources() {
+        return subscriber.roots();
+    }
 
-	@Override
-	public String getName() {
-		IResource[] resources = getScope().getRoots();
-		String res = "";
-		if (resources != null) {
-			res += " on resources: ";
-			for (IResource resource : resources) {
-				res += "\n\t" + resource.getName();
-			}
-		}
-		return "Mercurial Synchronization" + res;
-	}
+    @Override
+    public String getName() {
+        IResource[] resources = getScope().getRoots();
+        String res = "";
+        if (resources != null) {
+            res.concat(" on resources: ");
+            for (IResource resource : resources) {
+                res.concat("\n\t" + resource.getName());
+            }
+        }
+        return "Mercurial Synchronization".concat(res).concat("\nRepository: ")
+                .concat(""+repositoryLocation);
+    }
 
-	@Override
-	protected String getLongTaskName(IResource[] resources) {
-		return "Mercurial: Refreshing resources for synchronization...";
-	}
+    @Override
+    protected String getLongTaskName(IResource[] resources) {
+        return "Mercurial: Refreshing resources for synchronization...";
+    }
 
 }

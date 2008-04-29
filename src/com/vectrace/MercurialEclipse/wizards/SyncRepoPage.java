@@ -102,10 +102,9 @@ public boolean isPageComplete()
     return HgRepositoryLocation.validateLocation( url ) && repoName.trim().length() > 0;
   }
 
-  private boolean isPageComplete( String url )
-  {
-    return HgRepositoryLocation.validateLocation( url );
-  }
+  protected boolean isPageComplete(String url) {
+        return HgRepositoryLocation.validateLocation(url);
+    }
 
   
   private boolean validateAndSetComplete( String url, String repoName )
@@ -120,16 +119,16 @@ public boolean isPageComplete()
     return validLocation;
   }
 
-  private boolean validateAndSetComplete( String url )
-  {
-    boolean validLocation = isPageComplete( url );
+  protected boolean validateAndSetComplete(String url) {
+        boolean validLocation = isPageComplete(url);
 
-    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
+        ((SyncRepoWizard) getWizard()).setLocationUrl(validLocation ? url
+                : null);
 
-    setPageComplete( validLocation );
+        setPageComplete(validLocation);
 
-    return validLocation;
-  }
+        return validLocation;
+    }
 
   
   /* (non-Javadoc)
@@ -161,7 +160,7 @@ public boolean isPageComplete()
         }
         else
         {
-          validateAndSetComplete( locationCombo.getText());          
+          validateAndSetComplete( getLocation() );          
         }
       }      
     });
@@ -175,39 +174,34 @@ public boolean isPageComplete()
         }
         else
         {
-          validateAndSetComplete( locationCombo.getText());          
+          validateAndSetComplete( getLocation() );          
         }
       }      
     });
     // Add any previously existing URLs to the combo box for ease of use.
-    Iterator locIter = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations().iterator();
-    while( locIter.hasNext() )
-    {
-      HgRepositoryLocation loc = ((HgRepositoryLocation)locIter.next());
-      locationCombo.add( loc.getUrl() );
-    }
-	Button browseButton = new Button (outerContainer, SWT.PUSH);
-	browseButton.setText ("Browse repos");
-	browseButton.addSelectionListener(new SelectionAdapter() 
-	{
-		@Override
-        public void widgetSelected(SelectionEvent e) 
-		{
-			DirectoryDialog dialog = new DirectoryDialog (getShell());
-      if(clone)
-      {
-			  dialog.setMessage("Select a repository to clone");
-      }
-      else
-      {
-        dialog.setMessage("Select a repository to pull/push");     
-      }
-			String dir = dialog.open();
-			if (dir != null) {
-                locationCombo.setText(dir);
+    Iterator<HgRepositoryLocation> locIter = MercurialEclipsePlugin
+                .getRepoManager().getAllRepoLocations().iterator();
+    
+        while (locIter.hasNext()) {
+            HgRepositoryLocation loc = locIter.next();
+            locationCombo.add(loc.getUrl());
+        }
+	
+    Button browseButton = new Button(outerContainer, SWT.PUSH);
+        browseButton.setText("Browse repos");
+        browseButton.addSelectionListener(new SelectionAdapter() {
+            
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                DirectoryDialog dialog = new DirectoryDialog(getShell());
+                dialog.setMessage(getBrowseDialogMessage());
+                String dir = dialog.open();
+                if (dir != null) {
+                    locationCombo.setText(dir);
+                }
             }
-		}
-	});
+        });
+	
   if(clone)
   {    
     // Box to enter additional parameters for the clone command.
@@ -238,25 +232,39 @@ public boolean isPageComplete()
     projectNameCombo.setLayoutData(projectNameData);
     projectNameCombo.addListener( SWT.Selection, new Listener() {
       public void handleEvent(Event event) {
-        validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
+        validateAndSetComplete( getLocation(), projectNameCombo.getText() );
       }      
     });
     projectNameCombo.addListener( SWT.Modify, new Listener() {
       public void handleEvent(Event event) {
-        validateAndSetComplete( locationCombo.getText(), projectNameCombo.getText() );
+        validateAndSetComplete( getLocation(), projectNameCombo.getText() );
       }      
     });
   } 
   else //if(clone)
   {
     projectNameLabel = new Label(outerContainer, SWT.NONE);
-    projectNameLabel.setText("Name of project to pull to:" + repoName);
+    projectNameLabel.setText(getProjectNameLabelText());
   } //if(clone)
   setControl(outerContainer);
   setPageComplete(false);
   }
 
-  @Override
+/**
+ * @return
+ */
+protected String getProjectNameLabelText() {
+    return "Name of project to pull to:" + repoName;
+}
+
+  protected String getBrowseDialogMessage() {
+        if (clone) {
+            return "Select a repository to clone";
+        }
+        return "Select a repository to pull/push";
+    }
+
+@Override
 public void dispose()
   {
     locationLabel.dispose();
@@ -275,4 +283,8 @@ public void dispose()
       projectNameCombo.dispose();
     }
   }
+
+    public String getLocation() {
+        return locationCombo.getText();
+    }
 }
