@@ -284,6 +284,11 @@ public class MercurialStatusCache extends Observable implements
      */
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
             throws HgException {
+        if (remoteUpdateInProgress){
+            synchronized(incomingChangeSets){
+                // wait
+            }
+        }
         Set<HgRepositoryLocation> repos = MercurialEclipsePlugin
                 .getRepoManager().getAllProjectRepoLocations(
                         objectResource.getProject());
