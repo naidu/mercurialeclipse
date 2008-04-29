@@ -4,9 +4,9 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.TagDialog;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 /**
  * 
@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.dialogs.TagDialog;
 					null, //user
 					dialog.isLocal(),
 					dialog.isForced());
-			MercurialEclipsePlugin.refreshProjectFlags(resource.getProject());
+			MercurialStatusCache.getInstance().refreshStatus(resource, null);
 		}
 	}
 

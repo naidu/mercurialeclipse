@@ -12,7 +12,11 @@ public class GLogHandler extends SingleResourceHandler {
         new MultiLineDialog(
                 getShell(),
                 "Graphical Log",
-                HgLogClient.getGraphicalLog(resource.getProject())
+                HgLogClient
+                        .getGraphicalLog(
+                                resource.getProject(),
+                                "{rev}:{node|short} {date|isodate} {author|person} {desc|escape} \n",
+                                resource.getProjectRelativePath().toOSString())
         ).open();
     }
 
