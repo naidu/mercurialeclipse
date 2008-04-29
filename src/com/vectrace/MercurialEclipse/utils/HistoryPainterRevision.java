@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.utils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -34,8 +33,6 @@ public class HistoryPainterRevision implements
 	private ChangeSet changeSet;
 	private List<HistoryPainterRevision> parents;
 	private IResource resource;
-	private List<HistoryPainterEdge>edgeStarts;
-	private List<HistoryPainterEdge>edgeStops;
 
 	/**
 	 * Constructor. Builds subtree by adding parents.
@@ -55,9 +52,7 @@ public class HistoryPainterRevision implements
 				parents.add(new HistoryPainterRevision(res, parent));
 			}
 		}
-		Collections.sort(parents);
-		edgeStarts = new ArrayList<HistoryPainterEdge>();
-		edgeStops = new ArrayList<HistoryPainterEdge>();
+		//Collections.sort(parents);		
 	}
 
 	HistoryPainterRevision() {
@@ -192,31 +187,5 @@ public class HistoryPainterRevision implements
 		this.resource = resource;
 	}
 
-	/**
-	 * @return the edgeStarts
-	 */
-	public List<HistoryPainterEdge> getEdgeStarts() {
-		return edgeStarts;
-	}
-
-	/**
-	 * @param edgeStarts the edgeStarts to set
-	 */
-	public void setEdgeStarts(List<HistoryPainterEdge> edgeStarts) {
-		this.edgeStarts = edgeStarts;
-	}
-
-	/**
-	 * @return the edgeStops
-	 */
-	public List<HistoryPainterEdge> getEdgeStops() {
-		return edgeStops;
-	}
-
-	/**
-	 * @param edgeStops the edgeStops to set
-	 */
-	public void setEdgeStops(List<HistoryPainterEdge> edgeStops) {
-		this.edgeStops = edgeStops;
-	}
+	
 }

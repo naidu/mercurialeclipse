@@ -13,9 +13,7 @@ package com.vectrace.MercurialEclipse.utils;
 public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	private HistoryPainterRevision start;
 	private HistoryPainterRevision stop;
-	private int startLane;
-	private int stopLane;
-
+	
 	/**
 	 * @param start
 	 * @param stop
@@ -72,34 +70,45 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	
 	@Override
 	public String toString() {
-		return "Start:"+start+",Stop:"+stop+",StartLane:"+startLane+",StopLane:"+stopLane;
+		return "Start:"+start+",Stop:"+stop;
+	}
+	
+	
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((start == null) ? 0 : start.hashCode());
+		result = prime * result + ((stop == null) ? 0 : stop.hashCode());
+		return result;
 	}
 
-	/**
-	 * @return the startLane
+	/* (non-Javadoc)
+	 * @see java.lang.Object#equals(java.lang.Object)
 	 */
-	public int getStartLane() {
-		return startLane;
-	}
-
-	/**
-	 * @param startLane the startLane to set
-	 */
-	public void setStartLane(int startLane) {
-		this.startLane = startLane;
-	}
-
-	/**
-	 * @return the stopLane
-	 */
-	public int getStopLane() {
-		return stopLane;
-	}
-
-	/**
-	 * @param stopLane the stopLane to set
-	 */
-	public void setStopLane(int stopLane) {
-		this.stopLane = stopLane;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (!(obj instanceof HistoryPainterEdge))
+			return false;
+		final HistoryPainterEdge other = (HistoryPainterEdge) obj;
+		if (start == null) {
+			if (other.start != null)
+				return false;
+		} else if (!start.equals(other.start))
+			return false;
+		if (stop == null) {
+			if (other.stop != null)
+				return false;
+		} else if (!stop.equals(other.stop))
+			return false;
+		return true;
 	}
 }

@@ -26,7 +26,6 @@ public class HistoryPainter {
 			SWT.COLOR_DARK_CYAN };
 
 	private HistoryPainterRevision roof;
-	private SortedSet<HistoryPainterEdge> edges = new TreeSet<HistoryPainterEdge>();
 	private SortedSet<HistoryPainterRevision> revisions = new TreeSet<HistoryPainterRevision>();
 	private SortedSet<HistoryPainterEdge> startedEdges = new TreeSet<HistoryPainterEdge>();
 
@@ -34,21 +33,20 @@ public class HistoryPainter {
 
 	public HistoryPainter(IResource resource) {
 		try {
+			MercurialStatusCache.getInstance().refreshAllLocalRevisions(
+					resource.getProject(), false);
+
 			this.roof = new HistoryPainterRevision(resource,
 					MercurialStatusCache.getInstance().getNewestLocalChangeSet(
 							resource));
 
 			// cleanup
 			revisions.clear();
-			edges.clear();
 			startedEdges.clear();
-
-			// gets and sorts all edges
-			this.edges.addAll(addParentEdges(roof));
 
 			// gets and sorts all revisions (313, 312, 311, etc.)
 			this.revisions.add(roof);
-			this.revisions.addAll(addParentRevisions(roof));
+			this.revisions.addAll(loadRevisions(roof));
 
 			this.searchList = new ArrayList<HistoryPainterRevision>(revisions);
 			determineLayout();
@@ -63,57 +61,49 @@ public class HistoryPainter {
 			lane = Math.max(1, rev.getLane());
 
 			rev.setLane(lane);
-			rev.setLanes(startedEdges.size());
 
-			// update started edges
-			for (int parCount = 0; parCount < rev.getEdgeStarts().size(); parCount++) {
-				HistoryPainterEdge edge = rev.getEdgeStarts().get(parCount);
-
-				int parentLane = lane + parCount;
-				edge.setStartLane(lane);
-				edge.setStopLane(parentLane);
-				edge.getStop().setLane(parentLane);
-
-				// add revision start edges to started, remove them from edges
-				if (edge.getStart().equals(rev)) {
-					startedEdges.add(edge);
-				}
-			}
-
-			// update started edges
-			for (Iterator<HistoryPainterEdge> iter = rev.getEdgeStops()
-					.iterator(); iter.hasNext();) {
+			// remove completed started edges
+			for (Iterator<HistoryPainterEdge> iter = new TreeSet<HistoryPainterEdge>(
+					startedEdges).iterator(); iter.hasNext();) {
 				HistoryPainterEdge edge = iter.next();
 
-				// add revision start edges to started, remove them from edges
+				// remove completed edge from started edges
 				if (edge.getStop().equals(rev)) {
 					startedEdges.remove(edge);
 				}
 			}
+
+			// add newly started edges
+			for (int parCount = 0; parCount < rev.getParents().size(); parCount++) {
+				HistoryPainterRevision parent = rev.getParents().get(parCount);
+
+				// create edge for current parent
+				HistoryPainterEdge edge = new HistoryPainterEdge(rev, parent, 0);
+
+				// add edge to started
+				startedEdges.add(edge);
+
+				int parentLane = lane + parCount;
+				if (parCount > 0){
+					parentLane = startedEdges.size();
+				}
+
+				// set lane of edge target revision
+				parent.setLane(parentLane);
+			}
+			
+			rev.setLanes(Math.max(lane, startedEdges.size()));
 		}
 	}
 
-	private SortedSet<HistoryPainterRevision> addParentRevisions(
+	private SortedSet<HistoryPainterRevision> loadRevisions(
 			HistoryPainterRevision hpr) {
 		SortedSet<HistoryPainterRevision> parentRevisions = new TreeSet<HistoryPainterRevision>();
 		for (HistoryPainterRevision parent : hpr.getParents()) {
 			parentRevisions.add(parent);
-			parentRevisions.addAll(addParentRevisions(parent));
+			parentRevisions.addAll(loadRevisions(parent));
 		}
 		return parentRevisions;
-	}
-
-	private SortedSet<HistoryPainterEdge> addParentEdges(
-			HistoryPainterRevision hpr) {
-		SortedSet<HistoryPainterEdge> parentEdges = new TreeSet<HistoryPainterEdge>();
-		for (HistoryPainterRevision parent : hpr.getParents()) {
-			HistoryPainterEdge edge = new HistoryPainterEdge(hpr, parent, 0);
-			parentEdges.add(edge);
-			hpr.getEdgeStarts().add(edge);
-			parent.getEdgeStops().add(edge);
-			parentEdges.addAll(addParentEdges(parent));
-		}
-		return parentEdges;
 	}
 
 	public void paint(Event e, int columnIndex) {
@@ -145,8 +135,10 @@ public class HistoryPainter {
 		HistoryPainterRevision key = new HistoryPainterRevision();
 		key.setResource(mrev.getResource());
 		key.setChangeSet(mrev.getChangeSet());
+
 		int index = Collections.binarySearch(searchList, key);
 		HistoryPainterRevision rev = searchList.get(index);
+
 		System.out.println(rev.toString());
 
 		// draw lane with revision circles
@@ -204,44 +196,26 @@ public class HistoryPainter {
 	private void drawBranch(HistoryPainterRevision rev, int pad, GC gc,
 			int arcOffsetY, int startX, int endY) {
 		// arc out to outgoingEdges, if they are in different lanes
-		for (HistoryPainterEdge edge : rev.getEdgeStarts()) {
+		for (HistoryPainterRevision parent : rev.getParents()) {			
+			int circleWidth = pad
+					* Math.abs(rev.getLane() - parent.getLane());
 
-			if (rev.getLane() != edge.getStop().getLane()) {
-				int circleWidth = pad
-						* Math.abs(rev.getLane() - edge.getStop().getLane());
+			// arc to the right
+			if (rev.getLane() < parent.getLane()) {
+				// gc.drawArc(startX-pad, endY - arcOffsetY,
+				// circleWidth,
+				// endY, 0, 90);
+				gc.drawLine(startX, endY - arcOffsetY, startX + circleWidth,
+						endY);
 
-				// arc to the right
-				if (rev.getLane() < edge.getStop().getLane()) {
-					// gc.drawArc(startX-pad, endY - arcOffsetY,
-					// circleWidth,
-					// endY, 0, 90);
-					gc.drawLine(startX, endY - arcOffsetY,
-							startX + circleWidth, endY);
-
-					// arc to the left
-				} else if (rev.getLane() > edge.getStop().getLane()) {
-					// gc.drawArc(startX-pad, endY - arcOffsetY,
-					// circleWidth, endY, 90, 180);
-					gc.drawLine(startX - circleWidth, endY, startX, endY
-							- arcOffsetY);
-				}
+				// arc to the left
+			} else if (rev.getLane() > parent.getLane()) {
+				// gc.drawArc(startX-pad, endY - arcOffsetY,
+				// circleWidth, endY, 90, 180);
+				gc.drawLine(startX - circleWidth, endY, startX, endY
+						- arcOffsetY);
 			}
 		}
-	}
-
-	/**
-	 * @return the edges
-	 */
-	public SortedSet<HistoryPainterEdge> getEdges() {
-		return edges;
-	}
-
-	/**
-	 * @param edges
-	 *            the edges to set
-	 */
-	public void setEdges(SortedSet<HistoryPainterEdge> edges) {
-		this.edges = edges;
 	}
 
 	/**
@@ -258,16 +232,4 @@ public class HistoryPainter {
 	public void setRoof(HistoryPainterRevision roof) {
 		this.roof = roof;
 	}
-
-	public void addEdge(HistoryPainterEdge e) {
-		if (edges == null) {
-			edges = new TreeSet<HistoryPainterEdge>();
-		}
-		this.edges.add(e);
-	}
-
-	public boolean removeEdge(HistoryPainterEdge e) {
-		return edges.remove(e);
-	}
-
 }
