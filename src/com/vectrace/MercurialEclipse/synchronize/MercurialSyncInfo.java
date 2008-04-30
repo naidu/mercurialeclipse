@@ -21,21 +21,43 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
  * 
  */
 public class MercurialSyncInfo extends SyncInfo {
+//    private final static Differencer DIFFERENCER = new Differencer();
 
-	/**
-	 * @param local
-	 * @param base
-	 * @param remote
-	 * @param comparator
-	 */
-	public MercurialSyncInfo(IResource local, IResourceVariant base,
-			IResourceVariant remote, IResourceVariantComparator comparator) {
-		super(local, base, remote, comparator);
-	}
+    /**
+     * @param local
+     * @param base
+     * @param remote
+     * @param comparator
+     */
+    public MercurialSyncInfo(IResource local, IResourceVariant base,
+            IResourceVariant remote, IResourceVariantComparator comparator) {
+        super(local, base, remote, comparator);
+    }
 
-	@Override
-	protected int calculateKind() throws TeamException {
-		return super.calculateKind();
-	}
+    @Override
+    protected int calculateKind() throws TeamException {
+        int result = super.calculateKind();
+
+        // if it's an incoming change, we gotta find out, if it's a conflict
+        if (result == (INCOMING | CHANGE) || result == (CONFLICTING | CHANGE)) {
+            // FIXME: This always shows a conflict, as it compares 
+            // each character. I'd like something like automerge detection.
+            
+//            RevisionNode baseRev = new RevisionNode(
+//                    ((MercurialResourceVariant) getBase()).getRev());
+//            RevisionNode remoteRev = new RevisionNode(
+//                    ((MercurialResourceVariant) getRemote()).getRev());
+//
+//            Object o = MercurialSyncInfo.DIFFERENCER.findDifferences(true,
+//                    null, null, null, baseRev, remoteRev);
+//
+//            if (o != null && o instanceof DiffNode) {
+//                DiffNode node = (DiffNode) o;
+//                int kind = node.getKind();
+//                return kind;
+//            }
+        }
+        return result;
+    }
 
 }

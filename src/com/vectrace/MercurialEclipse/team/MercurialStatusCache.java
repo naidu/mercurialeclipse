@@ -245,9 +245,6 @@ public class MercurialStatusCache extends Observable implements
     public boolean isSupervised(IResource resource) {
         BitSet status = getStatus(resource);
         if (status != null) {
-            if (status.get(MercurialStatusCache.BIT_CLEAN)) {
-                return true;
-            }
             switch (status.length() - 1) {
             case MercurialStatusCache.BIT_IGNORE:
             case MercurialStatusCache.BIT_UNKNOWN:
@@ -284,8 +281,8 @@ public class MercurialStatusCache extends Observable implements
      */
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
             throws HgException {
-        if (remoteUpdateInProgress){
-            synchronized(incomingChangeSets){
+        if (remoteUpdateInProgress) {
+            synchronized (incomingChangeSets) {
                 // wait
             }
         }
@@ -696,6 +693,11 @@ public class MercurialStatusCache extends Observable implements
      */
     public IResource[] getIncomingMembers(IResource resource,
             String repositoryLocation) {
+        if (remoteUpdateInProgress) {
+            synchronized (incomingChangeSets) {
+                // wait...
+            }
+        }
         Map<IResource, SortedSet<ChangeSet>> changeSets = incomingChangeSets
                 .get(repositoryLocation);
         if (changeSets != null) {
@@ -707,12 +709,14 @@ public class MercurialStatusCache extends Observable implements
 
     public ChangeSet getNewestIncomingChangeSet(IResource resource,
             String repositoryLocation) throws HgException {
-        if (isSupervised(resource)) {
-            if (remoteUpdateInProgress) {
-                synchronized (incomingChangeSets) {
-                    // wait for update...
-                }
+
+        if (remoteUpdateInProgress) {
+            synchronized (incomingChangeSets) {
+                // wait for update...
             }
+        }
+
+        if (isSupervised(resource)) {
 
             Map<IResource, SortedSet<ChangeSet>> repoMap = incomingChangeSets
                     .get(repositoryLocation);
@@ -837,8 +841,8 @@ public class MercurialStatusCache extends Observable implements
                         if (changes != null && changes.size() > 0) {
                             if (isSupervised(res)) {
                                 localChangeSets.put(res, changes);
+                                addToNodeMap(changes);
                             }
-                            addToNodeMap(changes);
                         }
                     }
                 } finally {

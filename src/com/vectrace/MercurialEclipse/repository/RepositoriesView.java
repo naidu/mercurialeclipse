@@ -189,7 +189,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
                 refreshViewer(null, true);
             }
         };
-        refreshAction.setToolTipText("Refresh"); //$NON-NLS-1$
+        refreshAction.setToolTipText("Refresh"); 
         refreshAction.setDisabledImageDescriptor(MercurialEclipsePlugin
                 .getImageDescriptor("dlcl16/refresh.gif"));
         refreshAction.setHoverImageDescriptor(MercurialEclipsePlugin
@@ -197,7 +197,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
         getViewSite().getActionBars().setGlobalActionHandler(
                 ActionFactory.REFRESH.getId(), refreshAction);
 
-        refreshPopupAction = new Action("RefreshPopup", MercurialEclipsePlugin
+        refreshPopupAction = new Action("Refresh", MercurialEclipsePlugin
                 .getImageDescriptor("clcl16/refresh.gif")) {
             @Override
             public void run() {

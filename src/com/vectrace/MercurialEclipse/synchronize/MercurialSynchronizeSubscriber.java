@@ -31,6 +31,7 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -62,7 +63,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     public SyncInfo getSyncInfo(IResource resource) throws TeamException {
         if (null != RepositoryProvider.getProvider(resource.getProject(),
                 MercurialTeamProvider.ID)
-                && resource.getProject().isOpen()) {
+                && resource.getProject().isOpen() && isSupervised(resource)) {
             ChangeSet csBase = statusCache.getNewestLocalChangeSet(resource);
             ChangeSet csRemote = statusCache.getNewestIncomingChangeSet(
                     resource, repositoryLocation);
@@ -70,40 +71,81 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             IResourceVariant base;
             IResourceVariant remote;
 
+            // determine base revision
+            IStorageMercurialRevision baseIStorage;
             if (csBase != null) {
-                IStorageMercurialRevision baseIStorage = new IStorageMercurialRevision(
-                        resource, csBase.getRevision().getRevision() + "",
-                        csBase.getChangeset(), csBase);
+                baseIStorage = new IStorageMercurialRevision(resource, csBase
+                        .getRevision().getRevision()
+                        + "", csBase.getChangeset(), csBase);
 
                 base = new MercurialResourceVariant(baseIStorage);
-
-                IStorageMercurialRevision remoteIStorage;
-                if (csRemote != null) {
-
-                    remoteIStorage = new IStorageMercurialRevision(resource,
-                            csRemote.getRevision().getRevision() + "", csRemote
-                                    .getChangeset(), csRemote);
-                } else {
-                    remoteIStorage = baseIStorage;
-                }
-
-                remote = new MercurialResourceVariant(remoteIStorage);
-
-                SyncInfo info = new MercurialSyncInfo(resource, base, remote,
-                        MercurialResourceVariantComparator.getInstance());
-
-                info.init();
-                return info;
+            } else {
+                baseIStorage = null;
+                base = null;
             }
+
+            // determine remote revision
+            IStorageMercurialRevision remoteIStorage;
+            if (csRemote != null) {
+                remoteIStorage = getRemoteIStorage(resource, csRemote);
+            } else {
+                // if no incoming revision, remote = base
+                remoteIStorage = baseIStorage;
+            }
+
+            if (remoteIStorage != null) {
+                remote = new MercurialResourceVariant(remoteIStorage);
+            } else {
+                remote = null;
+            }
+
+            // now create the sync info object. everything may be null,
+            // but resource and comparator
+            SyncInfo info = new MercurialSyncInfo(resource, base, remote,
+                    MercurialResourceVariantComparator.getInstance());
+
+            info.init();
+            return info;
+
         }
         return null;
 
     }
 
+    /**
+     * @param resource
+     * @param csRemote
+     * @return
+     */
+    private IStorageMercurialRevision getRemoteIStorage(
+            IResource resource, ChangeSet csRemote) {
+        IStorageMercurialRevision remoteIStorage;
+        FileStatus[] files = csRemote.getChangedFiles();
+        FileStatus fileStatus = files[0];
+        for (FileStatus fs : files) {
+            if (fs.getPath().equals(
+                    resource.getProjectRelativePath().toOSString())) {
+                fileStatus = fs;
+                break;
+            }
+        }
+        // only if not removed
+        if (!fileStatus.getAction().toString().equals(
+                String.valueOf(FileStatus.Action.REMOVED))) {
+            remoteIStorage = new IStorageMercurialRevision(resource,
+                    csRemote.getRevision().getRevision() + "", csRemote
+                            .getChangeset(), csRemote);
+        } else {
+            remoteIStorage = null;
+        }
+        return remoteIStorage;
+    }
+
     @Override
     public boolean isSupervised(IResource resource) throws TeamException {
 
-        return statusCache.isSupervised(resource);
+        return statusCache.isSupervised(resource)
+                && resource.getType() == IResource.FILE;
     }
 
     @Override
@@ -112,15 +154,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         IResource[] localMembers = statusCache.getLocalMembers(resource);
         IResource[] remoteMembers = statusCache.getIncomingMembers(resource,
                 repositoryLocation);
-        
+
         if (localMembers != null && localMembers.length > 0) {
             members.addAll(Arrays.asList(localMembers));
         }
-        
+
         if (remoteMembers != null && remoteMembers.length > 0) {
             members.addAll(Arrays.asList(remoteMembers));
         }
-        
+
         // we don't want ourself or the project as our member
         members.remove(resource.getProject());
         members.remove(resource);
@@ -143,13 +185,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 return;
             }
             IProject project = resource.getProject();
-                        
 
-            if (refreshed.contains(project)) {                
+            if (refreshed.contains(project)) {
                 monitor.worked(1);
                 continue;
             }
-                      
+
             statusCache.refresh(project, monitor, repositoryLocation);
             refreshed.add(project);
             IResource[] localMembers = statusCache.getLocalMembers(resource);
