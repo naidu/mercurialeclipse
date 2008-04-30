@@ -44,8 +44,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 /**
  * A manager for all Mercurial repository locations.
  * 
- * TODO: Need a way to delete these repos. Repo Explorer perspective a la
- * subclipse?
+ * 
  */
 public class HgRepositoryLocationManager {
 

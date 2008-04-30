@@ -8,6 +8,8 @@
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch           - additions for repository view
+ *     Subclipse contributors    - fromProperties() initial source
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.storage;
@@ -104,18 +106,18 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
         throws HgException {
         // We build a string to allow validation of the components that are provided to us
     
-        String user = configuration.getProperty("user"); //$NON-NLS-1$ 
+        String user = configuration.getProperty("user");  
         if ((user == null) || (user.length() == 0))
             user = null;
-        String password = configuration.getProperty("password"); //$NON-NLS-1$ 
+        String password = configuration.getProperty("password");  
         if (user == null)
             password = null;
-        String rootUrl = configuration.getProperty("rootUrl"); //$NON-NLS-1$
+        String rootUrl = configuration.getProperty("rootUrl");
         if ((rootUrl == null) || (rootUrl.length() == 0))
             rootUrl = null;
-        String url = configuration.getProperty("url"); //$NON-NLS-1$ 
+        String url = configuration.getProperty("url");  
         if (url == null)
-            throw new HgException("URL must not be null."); //$NON-NLS-1$ 
+            throw new HgException("URL must not be null.");  
             
         
         return new HgRepositoryLocation(url, user, password);

@@ -29,7 +29,7 @@ import org.eclipse.swt.widgets.Display;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
- * HgAction is the common superclass for all SVN actions. It provides
+ * HgAction is the common superclass for all Hg actions. It provides
  * facilities for enablement handling, standard error handling, selection
  * retrieval and prompting.
  */
@@ -38,7 +38,7 @@ abstract public class HgAction extends ReplaceableIconAction {
 	private List<IStatus> accumulatedStatus = new ArrayList<IStatus>();
 	
 	/**
-	 * Common run method for all SVN actions.
+	 * Common run method for all Hg actions.
 	 */
 	@Override
     final public void run(IAction action) {
@@ -241,8 +241,8 @@ abstract public class HgAction extends ReplaceableIconAction {
 	
 	/**
 	 * Answers if the action would like dirty editors to saved
-	 * based on the SVN preference before running the action. By
-	 * default, SVNActions do not save dirty editors.
+	 * based on the Hg preference before running the action. By
+	 * default, HgActions do not save dirty editors.
 	 */
 	protected boolean needsToSaveDirtyEditors() {
 		return false;

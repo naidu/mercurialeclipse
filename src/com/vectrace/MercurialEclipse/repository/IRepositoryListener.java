@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - initial API and implementation
+ *     Bastian Doetsch              - adaptation
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository;
 
