@@ -12,15 +12,30 @@
 
 package com.vectrace.MercurialEclipse.storage;
 
+import java.util.Properties;
+
+import org.eclipse.core.runtime.IProgressMonitor;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
+
 /*
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation implements Comparable<HgRepositoryLocation> {
+public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
     private String location;
+    private String user;
+    private String password;
 
     public HgRepositoryLocation(String url) {
         this.location = url;
+    }
+    
+    public HgRepositoryLocation(String url, String user, String password){
+        this(url);
+        this.user=user;
+        this.password=password;
     }
 
     public String getUrl() {
@@ -76,5 +91,58 @@ public class HgRepositoryLocation implements Comparable<HgRepositoryLocation> {
             return false;
         return true;
     }
+    
+    /**
+     * Create a repository location instance from the given properties.
+     * The supported properties are:
+     *   user The username for the connection (optional)
+     *   password The password used for the connection (optional)
+     *   url The url where the repository resides
+     *   rootUrl The repository root url
+     */
+    public static HgRepositoryLocation fromProperties(Properties configuration)
+        throws HgException {
+        // We build a string to allow validation of the components that are provided to us
+    
+        String user = configuration.getProperty("user"); //$NON-NLS-1$ 
+        if ((user == null) || (user.length() == 0))
+            user = null;
+        String password = configuration.getProperty("password"); //$NON-NLS-1$ 
+        if (user == null)
+            password = null;
+        String rootUrl = configuration.getProperty("rootUrl"); //$NON-NLS-1$
+        if ((rootUrl == null) || (rootUrl.length() == 0))
+            rootUrl = null;
+        String url = configuration.getProperty("url"); //$NON-NLS-1$ 
+        if (url == null)
+            throw new HgException("URL must not be null."); //$NON-NLS-1$ 
+            
+        
+        return new HgRepositoryLocation(url, user, password);
+    }
 
+    /**
+     * @return the user
+     */
+    public String getUser() {
+        return user;
+    }
+
+    /**
+     * @return the password
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public String toString() {
+        return location;
+    }
+    
+    @Override
+    public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
+        return new HgRepositoryLocation[0];
+    }
+    
 }

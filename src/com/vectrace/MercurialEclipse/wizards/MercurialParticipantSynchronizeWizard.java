@@ -19,6 +19,7 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.SubscriberParticipantWizard;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
@@ -55,8 +56,7 @@ public class MercurialParticipantSynchronizeWizard extends
     @Override
     public void addPages() {
         super.addPages();
-        ImageDescriptor image = ImageDescriptor.createFromFile(null,
-                "icons/newconnect_wizban.gif");
+        ImageDescriptor image = MercurialEclipsePlugin.getImageDescriptor("wizards/newconnect_wizban.gif");
         IProject[] projects = MercurialStatusCache.getInstance()
                 .getAllManagedProjects();
         if (projects != null) {

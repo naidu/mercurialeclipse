@@ -23,7 +23,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -31,9 +33,12 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
+import com.vectrace.MercurialEclipse.repository.RepositoryResourcesManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -43,6 +48,9 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * subclipse?
  */
 public class HgRepositoryLocationManager {
+
+    private static final RepositoryResourcesManager REPOSITORY_RESOURCES_MANAGER = RepositoryResourcesManager
+            .getInstance();
 
     final static private String REPO_LOCACTION_FILE = "repositories.txt";
 
@@ -73,7 +81,7 @@ public class HgRepositoryLocationManager {
 
             try {
                 while ((line = reader.readLine()) != null) {
-                    repos.add(new HgRepositoryLocation(line));
+                    addRepoLocation(new HgRepositoryLocation(line));
                 }
             } finally {
                 reader.close();
@@ -124,7 +132,11 @@ public class HgRepositoryLocationManager {
      * Add a repository location to the database.
      */
     public boolean addRepoLocation(HgRepositoryLocation loc) {
-        return repos.add(loc);
+        synchronized (repos) {
+            repos.add(loc);
+            REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
+            return true;
+        }
     }
 
     /**
@@ -137,20 +149,22 @@ public class HgRepositoryLocationManager {
         if (loc == null) {
             return false;
         }
-        if (projectRepos == null) {
-            try {
-                projectRepos = getProjectRepos();
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
+        synchronized (projectRepos) {
+            if (projectRepos == null) {
+                try {
+                    projectRepos = getProjectRepos();
+                } catch (IOException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
             }
+            SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
+            if (repoSet == null) {
+                repoSet = new TreeSet<HgRepositoryLocation>();
+            }
+            repoSet.add(loc);
+            projectRepos.put(project, repoSet);
         }
-        SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
-        if (repoSet == null) {
-            repoSet = new TreeSet<HgRepositoryLocation>();
-        }
-        repoSet.add(loc);
-        projectRepos.put(project, repoSet);
-        repos.add(loc);
+        addRepoLocation(loc);
         return true;
     }
 
@@ -173,8 +187,7 @@ public class HgRepositoryLocationManager {
             }
             boolean createSrcRepository = false;
             try {
-                String url = project
-                        .getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY);
+                String url = getDefaultProjectRepository(project);
                 if (url != null) {
                     HgRepositoryLocation srcRepository = new HgRepositoryLocation(
                             url);
@@ -202,10 +215,7 @@ public class HgRepositoryLocationManager {
 
                         if (createSrcRepository) {
                             try {
-                                project
-                                        .setPersistentProperty(
-                                                MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY,
-                                                loc.getUrl());
+                                setDefaultProjectRepository(project, loc);
                             } catch (CoreException e) {
                                 MercurialEclipsePlugin.logError(e);
                             }
@@ -217,6 +227,39 @@ public class HgRepositoryLocationManager {
                 }
             }
         }
+    }
+
+    /**
+     * @param project
+     * @param loc
+     * @throws CoreException
+     */
+    public void setDefaultProjectRepository(IProject project,
+            HgRepositoryLocation loc) throws CoreException {
+        if (loc != null) {
+            project
+                    .setPersistentProperty(
+                            MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY,
+                            loc.getUrl());
+        } else {
+            project
+                    .setPersistentProperty(
+                            MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY,
+                            null);
+        }
+
+    }
+
+    /**
+     * @param project
+     * @return
+     * @throws CoreException
+     */
+    public String getDefaultProjectRepository(IProject project)
+            throws CoreException {
+        String url = project
+                .getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY);
+        return url;
     }
 
     /**
@@ -255,6 +298,7 @@ public class HgRepositoryLocationManager {
 
     /**
      * Gets a repo by its URL
+     * 
      * @param url
      * @return
      */
@@ -267,6 +311,89 @@ public class HgRepositoryLocationManager {
             }
         }
         return null;
+    }
+
+    public void addRepositoryListener(IRepositoryListener repListener) {
+        REPOSITORY_RESOURCES_MANAGER.addRepositoryListener(repListener);
+    }
+
+    public void refreshRepositories(IProgressMonitor monitor)
+            throws HgException, IOException {
+    	stop();
+        start();
+    }
+
+    /**
+     * Create a repository instance from the given properties. The supported
+     * properties are:
+     * 
+     * user The username for the connection (optional) password The password
+     * used for the connection (optional) url The url where the repository
+     * resides rootUrl The root url of the subversion repository (optional)
+     * 
+     * The created instance is not known by the provider and it's user
+     * information is not cached. The purpose of the created location is to
+     * allow connection validation before adding the location to the provider.
+     * 
+     * This method will throw a HgException if the location for the given
+     * configuration already exists.
+     */
+    public HgRepositoryLocation createRepository(Properties configuration)
+            throws HgException {
+        // Create a new repository location
+        HgRepositoryLocation location = HgRepositoryLocation
+                .fromProperties(configuration);
+
+        // Check the cache for an equivalent instance and if there is one, throw
+        // an exception
+        HgRepositoryLocation existingLocation = getRepoLocation(location
+                .getUrl());
+        if (existingLocation != null) {
+            throw new HgException("Repository location already known.");
+        }        
+        addRepoLocation(location);
+        return location;
+    }
+
+    public void removeRepositoryListener(IRepositoryListener repositoryListener) {
+        REPOSITORY_RESOURCES_MANAGER
+                .removeRepositoryListener(repositoryListener);
+
+    }
+
+    public void disposeRepository(HgRepositoryLocation hgRepositoryLocation)
+            throws CoreException {
+        synchronized (projectRepos) {
+            for (Iterator<IProject> iterator = projectRepos.keySet().iterator(); iterator
+                    .hasNext();) {
+                IProject project = iterator.next();
+                String url = getDefaultProjectRepository(project);
+                if (url != null && url.equals(hgRepositoryLocation.getUrl())) {
+                    setDefaultProjectRepository(project, null);
+                }
+                SortedSet<HgRepositoryLocation> pRepos = projectRepos
+                        .get(project);
+                if (pRepos != null) {
+                    for (HgRepositoryLocation repo : pRepos) {
+                        if (repo.equals(hgRepositoryLocation)) {
+                            pRepos.remove(repo);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        synchronized (repos) {            
+            for (HgRepositoryLocation loc : repos) {
+                if (loc.equals(hgRepositoryLocation)) {
+                    repos.remove(loc);
+                    break;
+                }
+            }
+            REPOSITORY_RESOURCES_MANAGER.repositoryRemoved(hgRepositoryLocation);
+        }
+
     }
 
 }

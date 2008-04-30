@@ -686,6 +686,13 @@
         icon="icons/branches_rep.gif"
         name="Merge">
       </view>
+      
+      <view
+            name="Repository View"
+            icon="icons/cview16/repo_rep.gif"
+            class="com.vectrace.MercurialEclipse.repository.RepositoriesView"
+            id="com.vectrace.MercurialEclipse.repository.RepositoriesView">
+      </view>
    </extension>
    
 </plugin>
