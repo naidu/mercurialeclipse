@@ -172,14 +172,14 @@
 		<command id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
 		         name="Commit merge"/>
 		<command id="com.vectrace.MercurialEclipse.menu.CommitHandler"
-		         name="Commit..."/>
+		         name="Commit"/>
 		<command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
 		         name="Update"/>
 
 		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
-		         name="Tag as Version..."/>
+		         name="Tag as Version"/>
 		<command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
-		         name="Merge..."/>
+		         name="Merge"/>
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
 		         name="Switch to Another Changeset..."/>
 
@@ -189,13 +189,15 @@
 		         name="Show Annotation"/>
 
 		<command id="com.vectrace.MercurialEclipse.menu.AddHandler"
-		         name="Add to Version Control..."/>
+		         name="Add to Version Control"/>
 		<command id="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
-		         name="Add to .hgignore..."/>
+		         name="Add to .hgignore"/>
 		<command id="com.vectrace.MercurialEclipse.menu.RollbackHandler"
 		         name="Rollback"/>		
-		<command id="com.vectrace.MercurialEclipse.menu.TransplantHandler"
-		         name="Transplant"/>		
+		<command id="com.vectrace.MercurialEclipse.menu.PullTransplantHandler"
+		         name="Pull/Transplant"/>
+		<command id="com.vectrace.MercurialEclipse.menu.PushHandler"
+		         name="Push"/>		
 		                  
 	</extension>
 
@@ -214,6 +216,14 @@
 		<handler commandId="com.vectrace.MercurialEclipse.menu.CommitHandler"
 		         class="com.vectrace.MercurialEclipse.menu.CommitHandler"/>
 
+		<!-- PushHandler -->
+		<handler commandId="com.vectrace.MercurialEclipse.menu.PushHandler"
+		         class="com.vectrace.MercurialEclipse.menu.PushHandler">
+			<enabledWhen>
+				<count value="1"/>
+			</enabledWhen>
+		</handler>
+
 		<!-- UpdateHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler"
 		         class="com.vectrace.MercurialEclipse.menu.UpdateHandler">
@@ -222,9 +232,9 @@
 			</enabledWhen>
 		</handler>
 		
-		<!-- TransplantHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler"
-		         class="com.vectrace.MercurialEclipse.menu.TransplantHandler">
+		<!-- PullTransplantHandler -->
+		<handler commandId="com.vectrace.MercurialEclipse.menu.PullTransplantHandler"
+		         class="com.vectrace.MercurialEclipse.menu.PullTransplantHandler">
 			<enabledWhen>
 				<count value="1"/>
 			</enabledWhen>
@@ -282,7 +292,7 @@
 		<handler commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
 		         class="com.vectrace.MercurialEclipse.menu.AddHandler">
 			<enabledWhen>
-				<reference definitionId="com.vectrace.MercurialEclipse.def.notInMercurial"/>
+				<reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
 			</enabledWhen>
 		</handler>
 
@@ -327,18 +337,26 @@
 							<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
 						</and>
 					</visibleWhen>
-				</command>
-				<command commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler" icon="icons/checkout_action.gif">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-				<command commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler" icon="icons/reltopics_co.gif">
+				</command>				
+				<command commandId="com.vectrace.MercurialEclipse.menu.PushHandler" icon="icons/release_rls.gif">
 					<visibleWhen>
 						<and>
 							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 							<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
 						</and>
+					</visibleWhen>
+				</command>		
+				<command commandId="com.vectrace.MercurialEclipse.menu.PullTransplantHandler" icon="icons/checkout_action.gif">
+					<visibleWhen>
+						<and>
+							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+							<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+						</and>
+					</visibleWhen>
+				</command>
+				<command commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler" icon="icons/checkout_action.gif">
+					<visibleWhen>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
 				</command>
 				<separator name="group2" visible="false"/><!-- TODO visible="true" -->
@@ -486,7 +504,7 @@
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionImport">
            </action>
-           <action
+           <!--action
                label="Pull..."               
                class="com.vectrace.MercurialEclipse.team.ActionPull"
                icon="icons/checkout_action.gif"
@@ -504,14 +522,14 @@
                enablesFor="1">
            </action>
            <action
-               label="Push..."
+               label="Push"
                class="com.vectrace.MercurialEclipse.team.ActionPush"
                icon="icons/release_rls.gif"
                tooltip="push changes to remote/local reposetory (hg push)"
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionPush">
            </action>
-           <!--action
+           <action
                label="Update"
                class="com.vectrace.MercurialEclipse.team.UpdateAction"
                menubarPath="team.main/group2"
@@ -575,7 +593,7 @@
            </action-->
                  <!-- Compare -->
            <action
-               label="Another Changeset..."
+               label="Another Changeset"
                class="com.vectrace.MercurialEclipse.team.CompareWithAction"
                icon="icons/compare_view.gif"
                tooltip="hg diff"
