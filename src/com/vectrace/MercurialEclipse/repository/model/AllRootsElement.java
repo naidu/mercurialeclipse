@@ -32,7 +32,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public class AllRootsElement extends HgModelElement  implements IAdaptable  {
 	public ImageDescriptor getImageDescriptor(Object object) {
-		return null;
+		return MercurialEclipsePlugin.getImageDescriptor("cview16/repository_rep.gif");
 	}
 	
 	@Override

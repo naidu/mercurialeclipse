@@ -17,6 +17,7 @@ package com.vectrace.MercurialEclipse.storage;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
@@ -145,6 +146,11 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
     @Override
     public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
         return new HgRepositoryLocation[0];
+    }
+    
+    @Override
+    public ImageDescriptor getImageDescriptor(Object object) {        
+        return super.getImageDescriptor(object);
     }
     
 }
