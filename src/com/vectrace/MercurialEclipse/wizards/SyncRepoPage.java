@@ -97,9 +97,9 @@ public boolean isPageComplete()
     return HgRepositoryLocation.validateLocation( locationCombo.getText() );
   }
   
-  private boolean isPageComplete( String url, String repoName )
+  private boolean isPageComplete( String url, String repoName1 )
   {
-    return HgRepositoryLocation.validateLocation( url ) && repoName.trim().length() > 0;
+    return HgRepositoryLocation.validateLocation( url ) && repoName1.trim().length() > 0;
   }
 
   protected boolean isPageComplete(String url) {
@@ -107,12 +107,12 @@ public boolean isPageComplete()
     }
 
   
-  private boolean validateAndSetComplete( String url, String repoName )
+  private boolean validateAndSetComplete( String url, String repoName1 )
   {
-    boolean validLocation = isPageComplete( url, repoName );
+    boolean validLocation = isPageComplete( url, repoName1 );
 
     ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? url : null);
-    ((SyncRepoWizard)getWizard()).setProjectName(validLocation ? repoName : null);
+    ((SyncRepoWizard)getWizard()).setProjectName(validLocation ? repoName1 : null);
 
     setPageComplete( validLocation );
 

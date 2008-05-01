@@ -46,12 +46,12 @@ public class HgCommand {
 			try {
 				int length;
 				byte[] buffer = new byte[1024];
-				ByteArrayOutputStream output  = new ByteArrayOutputStream();
+				ByteArrayOutputStream myOutput  = new ByteArrayOutputStream();
 				while((length = stream.read(buffer)) != -1) {
-					output.write(buffer, 0, length);
+					myOutput.write(buffer, 0, length);
 				}
 				stream.close();
-				this.output = output.toByteArray();
+				this.output = myOutput.toByteArray();
 			} catch (IOException e) {
 				// TODO report the error to the caller thread
 				MercurialEclipsePlugin.logError(e);
@@ -125,8 +125,8 @@ public class HgCommand {
 		return result;
 	}
 	
-	protected void addOptions(String... options) {
-		for(String option: options) {
+	protected void addOptions(String... optionsToAdd) {
+		for(String option: optionsToAdd) {
 			this.options.add(option);
 		}
 	}
@@ -136,8 +136,8 @@ public class HgCommand {
 		this.options.add(user!=null?user:getDefaultUserName());
 	}
 	
-	protected void addFiles(String... files) {
-		for(String file: files) {
+	protected void addFiles(String... myFiles) {
+		for(String file: myFiles) {
 			this.files.add(file);
 		}
 	}

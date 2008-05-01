@@ -127,9 +127,9 @@ public abstract class TableColumnSorter extends ViewerComparator
   }
 
   @Override
-public int compare(Viewer viewer, Object e1, Object e2) 
+public int compare(Viewer cViewer, Object e1, Object e2) 
   {
-    return direction * doCompare(viewer, e1, e2);
+    return direction * doCompare(cViewer, e1, e2);
   }
 
   protected abstract int doCompare(Viewer TableViewer, Object e1, Object e2);

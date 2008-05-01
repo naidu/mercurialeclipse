@@ -212,9 +212,9 @@ public class ChangedPathsPage {
 			MenuManager menuMgr = new MenuManager();
 			menuMgr.setRemoveAllWhenShown(true);
 			menuMgr.addMenuListener(new IMenuListener() {
-				public void menuAboutToShow(IMenuManager menuMgr) {
-					menuMgr.add(copyAction);
-					menuMgr.add(selectAllAction);
+				public void menuAboutToShow(IMenuManager menuMgr1) {
+					menuMgr1.add(copyAction);
+					menuMgr1.add(selectAllAction);
 				}
 			});
 

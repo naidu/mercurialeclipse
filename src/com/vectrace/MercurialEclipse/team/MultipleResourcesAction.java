@@ -27,10 +27,10 @@ public abstract class MultipleResourcesAction implements IActionDelegate {
 		super();
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
+	public void selectionChanged(IAction action, ISelection sel) {
+		if (sel instanceof IStructuredSelection) {
 			this.selection = new ArrayList<IResource>();
-			for(Object o : ((IStructuredSelection)selection).toArray()) {
+			for(Object o : ((IStructuredSelection)sel).toArray()) {
 				this.selection.add((IResource)o);
 			}
 		}

@@ -87,6 +87,7 @@ public abstract class TeamAction extends ActionDelegate implements
      * @param c
      * @return
      */
+    @SuppressWarnings("unchecked")
     public static Object[] getSelectedAdaptables(ISelection selection, Class c) {
         ArrayList result = null;
         if (!selection.isEmpty()) {
@@ -115,6 +116,7 @@ public abstract class TeamAction extends ActionDelegate implements
      * @param c
      * @return Object
      */
+    @SuppressWarnings("unchecked")
     public static Object getAdapter(Object adaptable, Class c) {
         if (c.isInstance(adaptable)) {
             return adaptable;
@@ -138,14 +140,14 @@ public abstract class TeamAction extends ActionDelegate implements
         IResource[] selectedResources = getSelectedResources();
         if (selectedResources.length == 0)
             return new IProject[0];
-        ArrayList projects = new ArrayList();
+        List<IResource> projects = new ArrayList<IResource>();
         for (int i = 0; i < selectedResources.length; i++) {
             IResource resource = selectedResources[i];
             if (resource.getType() == IResource.PROJECT) {
                 projects.add(resource);
             }
         }
-        return (IProject[]) projects.toArray(new IProject[projects.size()]);
+        return projects.toArray(new IProject[projects.size()]);
     }
 
     /**
@@ -156,6 +158,7 @@ public abstract class TeamAction extends ActionDelegate implements
      * @param c
      * @return
      */
+    @SuppressWarnings("unchecked")
     protected Object[] getSelectedResources(Class c) {
         return getSelectedAdaptables(selection, c);
     }
@@ -166,7 +169,7 @@ public abstract class TeamAction extends ActionDelegate implements
      * @return the selected resources
      */
     protected IResource[] getSelectedResources() {
-        ArrayList resourceArray = new ArrayList();
+        ArrayList<IResource> resourceArray = new ArrayList<IResource>();
         IResource[] resources = (IResource[]) getSelectedResources(IResource.class);
         for (int i = 0; i < resources.length; i++)
             resourceArray.add(resources[i]);
@@ -186,8 +189,7 @@ public abstract class TeamAction extends ActionDelegate implements
                     }
                 }
             } catch (CoreException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
+                MercurialEclipsePlugin.logError(e);
             }
         }
         IResource[] selectedResources = new IResource[resourceArray.size()];
@@ -351,12 +353,12 @@ public abstract class TeamAction extends ActionDelegate implements
 
     /**
      * Convenience method that maps the selected resources to their providers.
-     * The returned Hashtable has keys which are ITeamProviders, and values
+     * The returned Hashtable has keys which are TeamProviders, and values
      * which are Lists of IResources that are shared with that provider.
      * 
      * @return a hashtable mapping providers to their selected resources
      */
-    protected Hashtable getProviderMapping() {
+    protected Hashtable<RepositoryProvider,List<IResource>> getProviderMapping() {
         return getProviderMapping(getSelectedResources());
     }
 
@@ -367,14 +369,14 @@ public abstract class TeamAction extends ActionDelegate implements
      * 
      * @return a hashtable mapping providers to their resources
      */
-    protected Hashtable getProviderMapping(IResource[] resources) {
-        Hashtable result = new Hashtable();
+    protected Hashtable<RepositoryProvider,List<IResource>> getProviderMapping(IResource[] resources) {
+        Hashtable<RepositoryProvider,List<IResource>> result = new Hashtable<RepositoryProvider,List<IResource>>();
         for (int i = 0; i < resources.length; i++) {
             RepositoryProvider provider = RepositoryProvider
                     .getProvider(resources[i].getProject());
-            List list = (List) result.get(provider);
+            List<IResource> list = result.get(provider);
             if (list == null) {
-                list = new ArrayList();
+                list = new ArrayList<IResource>();
                 result.put(provider, list);
             }
             list.add(resources[i]);

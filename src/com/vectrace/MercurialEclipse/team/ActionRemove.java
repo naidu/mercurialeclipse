@@ -63,9 +63,9 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	 * be able to provide parent shell for the message dialog.
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
-	public void init(IWorkbenchWindow window) {
+	public void init(IWorkbenchWindow w) {
 //		System.out.println("ActionRemove:init(window)");
-		this.window = window;
+		this.window = w;
 	}
 
 	/**
@@ -76,7 +76,8 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 	 */
 	
 
-	public void run(IAction action) 
+	@SuppressWarnings("unchecked")
+    public void run(IAction action) 
 	{
 		IProject proj;
 		String Repository;

@@ -50,8 +50,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private Properties properties = null;
 
     // Dialog store id constants
-    private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID";//$NON-NLS-1$
-    private static final String STORE_URL_ID = "ConfigurationWizardMainPage.STORE_URL_ID";//$NON-NLS-1$
+    private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID";
+    private static final String STORE_URL_ID = "ConfigurationWizardMainPage.STORE_URL_ID";
 
     // In case the page was launched from a different wizard
     private IDialogSettings settings;
@@ -84,7 +84,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      * @return the history with the new entry appended
      */
     private String[] addToHistory(String[] history, String newEntry) {
-        ArrayList l = new ArrayList(Arrays.asList(history));
+        ArrayList<String> l = new ArrayList<String>(Arrays.asList(history));
 
         l.remove(newEntry);
         l.add(0, newEntry);
@@ -216,16 +216,16 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private void initializeValues() {
         // Set remembered values
-        IDialogSettings settings = getDialogSettings();
-        if (settings != null) {
-            String[] hostNames = settings.getArray(STORE_URL_ID);
+        IDialogSettings setts = getDialogSettings();
+        if (setts != null) {
+            String[] hostNames = setts.getArray(STORE_URL_ID);
             if (hostNames != null) {
                 for (int i = 0; i < hostNames.length; i++) {
                     urlCombo.add(hostNames[i]);
                 }
             }
             if (showCredentials) {
-                String[] userNames = settings.getArray(STORE_USERNAME_ID);
+                String[] userNames = setts.getArray(STORE_USERNAME_ID);
                 if (userNames != null) {
                     for (int i = 0; i < userNames.length; i++) {
                         userCombo.add(userNames[i]);
@@ -236,17 +236,17 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         if (properties != null) {
             if (showCredentials) {
-                String user = properties.getProperty("user"); //$NON-NLS-1$
+                String user = properties.getProperty("user"); 
                 if (user != null) {
                     userCombo.setText(user);
                 }
 
-                String password = properties.getProperty("password"); //$NON-NLS-1$
+                String password = properties.getProperty("password"); 
                 if (password != null) {
                     passwordText.setText(password);
                 }
             }
-            String host = properties.getProperty("url"); //$NON-NLS-1$
+            String host = properties.getProperty("url"); 
             if (host != null) {
                 urlCombo.setText(host);
             }

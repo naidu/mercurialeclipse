@@ -23,9 +23,9 @@ public class AdapterFactory implements IAdapterFactory
   /* (non-Javadoc)
    * @see org.eclipse.core.runtime.IAdapterFactory#getAdapter(java.lang.Object, java.lang.Class)
    */
-  public Object getAdapter(Object adaptableObject, Class adapterType)
+  @SuppressWarnings("unchecked")
+public MercurialHistoryPageSource getAdapter(Object adaptableObject, Class adapterType)
   {
-    // TODO Auto-generated method stub
 //    System.out.println("AdapterFactory::getAdapter()");
     
     if((adaptableObject instanceof MercurialHistoryProvider) && adapterType == IHistoryPageSource.class) 
@@ -39,11 +39,11 @@ public class AdapterFactory implements IAdapterFactory
   /* (non-Javadoc)
    * @see org.eclipse.core.runtime.IAdapterFactory#getAdapterList()
    */
-  public Class[] getAdapterList()
+@SuppressWarnings("unchecked")
+public Class<IHistoryPageSource>[] getAdapterList()
   {
-    // TODO Auto-generated method stub
 //    System.out.println("AdapterFactory::getAdapterList()");
-    return new Class[] {IHistoryPageSource.class};
+    return new Class[] { IHistoryPageSource.class };
   }
 
 }

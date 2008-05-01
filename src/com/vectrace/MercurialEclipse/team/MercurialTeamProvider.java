@@ -80,9 +80,6 @@ public class MercurialTeamProvider extends RepositoryProvider
 	@Override
     public String getID() 
 	{
-		String ID;
-	    ID=getClass().getName();
-//		System.out.println("MercurialTeamProvider.getID() ID="+ID+" RepositoryPath=" + getRepositoryPath());
 		return ID;
 	}
 

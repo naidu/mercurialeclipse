@@ -121,42 +121,7 @@ public class IStorageMercurialRevision implements IStorage {
 			this.changeSet = cs;
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
-		}
-		//
-		// // File workingDir = MercurialUtilities.getWorkingDir(res);
-		// // IdentifyAction identifyAction = new IdentifyAction(null, res
-		// // .getProject(), workingDir);
-		// String ident = "unknown 0";
-		// try {
-		// ident = HgIdentClient.getCurrentRevision((IContainer) res);
-		// // identifyAction.run();
-		// // FIXME What happens if more than one changeset is found by
-		// // identify? Currently just saving them and using the first.
-		// String[] results = HgIdentClient.getChangeSets(ident);
-		// changeSets = new ChangeSet[results.length];
-		// for (int i = 0; i < results.length; i++) {
-		// String[] parts = results[i].split(":");
-		// changeSets[i] = new ChangeSet(Integer.parseInt(parts[0]),
-		// parts[1], null, null);
-		// this.revision = parts[0];
-		// this.global = parts[1];
-		// }
-		//
-		// } catch (Exception e) {
-		// MercurialEclipsePlugin.logError("pull operation failed", e);
-		// // System.out.println("pull operation failed");
-		// // System.out.println(e.getMessage());
-		//
-		// IWorkbench workbench = PlatformUI.getWorkbench();
-		// if (workbench.getActiveWorkbenchWindow() != null) {
-		// Shell shell = workbench.getActiveWorkbenchWindow().getShell();
-		// MessageDialog.openInformation(shell,
-		// "Mercurial Eclipse couldn't identify hg revision of \n"
-		// + res.getName().toString() + "\nusing tip",
-		// ident);
-		// revision = "tip";
-		// }
-		// }
+		}		
 	}
 
 	@Deprecated
@@ -172,7 +137,8 @@ public class IStorageMercurialRevision implements IStorage {
 	 * 
 	 * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
 	 */
-	public Object getAdapter(Class adapter) {
+	@SuppressWarnings("unchecked")
+    public Object getAdapter(Class adapter) {
 		// System.out.println("IStorageMercurialRevision(" + resource.toString()
 		// + "," + revision + ")::getAdapter()" );
 		return null;

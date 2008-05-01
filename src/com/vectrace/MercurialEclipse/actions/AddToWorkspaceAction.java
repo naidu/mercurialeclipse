@@ -14,11 +14,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -74,7 +74,7 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
 			 * iterate over all reference strings and use them to create
 			 * projects in the current workspace.
 			 * 
-			 * A reference string uses underscore as delimiter looks like this:
+			 * A reference string uses underscore as delimiter and looks like this:
 			 * 
 			 * "MercurialEclipseProjectSet_ProjectName_RepositoryURLForClone"
 			 * 
@@ -102,41 +102,30 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
 				HgRepositoryLocation location = new HgRepositoryLocation(
 						referenceParts[2]);
 
-				// Use action from clone command
-//				RepositoryCloneAction action = new RepositoryCloneAction(null,
-//						workspace, location, null, proj.getName(), null);				
-//				action.run(monitor);
-				
 				HgCloneClient.clone(workspace, location, null, proj.getName());
 
-				// FIXME: This is duplicate code (from CloneRepoWizard) which
-				// has to be refactored.
 				try {
 					proj.create(null);
-					proj.open(null);
-
-					// we need an identifier (=qualified name) to store settings
-					QualifiedName qualifiedName = MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY;
-
-					// save project's original clone repository as a persistent
-					// setting
-					proj
-							.setPersistentProperty(qualifiedName, location
-									.getUrl());
+					proj.open(null);					
 				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(e);
 				}
 
 				try {
-					// Register the project with Team. This will bring all
-					// the files that
-					// we cloned into the project.
+					// Register the project with Team.
 					RepositoryProvider.map(proj, MercurialTeamProvider.class
 							.getName());
 					RepositoryProvider.getProvider(proj,
 							MercurialTeamProvider.class.getName());
 					projects.add(proj);
-					MercurialEclipsePlugin.getRepoManager().addRepoLocation(proj, location);
+					
+					// store repo as default repo
+                    MercurialEclipsePlugin.getRepoManager().setDefaultProjectRepository(proj, location);
+                    MercurialEclipsePlugin.getRepoManager().addRepoLocation(proj, location);
+                    
+                    // refresh project to get decorations
+                    proj.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+					
 				} catch (TeamException e) {
 					MercurialEclipsePlugin.logError(e);
 				}				

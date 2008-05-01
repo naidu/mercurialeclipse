@@ -138,10 +138,10 @@ public void createControl(Composite parent)
       }      
     });
     // Add any previously existing URLs to the combo box for ease of use.
-    Iterator locIter = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations().iterator();
+    Iterator<HgRepositoryLocation> locIter = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations().iterator();
     while( locIter.hasNext() )
     {
-      HgRepositoryLocation loc = ((HgRepositoryLocation)locIter.next());
+      HgRepositoryLocation loc = locIter.next();
       locationCombo.add( loc.getUrl() );
     }
     setDefaultLocation(locationCombo);
@@ -218,7 +218,6 @@ public void createControl(Composite parent)
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
-    // TODO Auto-generated method stub
     }
 
 @Override

@@ -76,9 +76,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
      * 
      * @see IWorkbenchWindowActionDelegate#init
      */
-    public void init(IWorkbenchWindow window) 
+    public void init(IWorkbenchWindow w) 
     {
-      this.window = window;
+      this.window = w;
     }
 
     /**
@@ -216,7 +216,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
             	final IProject proj = resource.getProject();
 				new SafeUiJob("Updating status") {
 					@Override
-					protected IStatus runSafe(IProgressMonitor monitor) {
+					protected IStatus runSafe(IProgressMonitor monitor1) {
 						try {
 							MercurialStatusCache.getInstance().refresh(
 									proj);							
@@ -224,7 +224,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
 							MercurialEclipsePlugin.logError(
 									"Unable to refresh project: ", e);
 						}
-						return super.runSafe(monitor);
+						return super.runSafe(monitor1);
 					}
 				}.schedule();
 				refreshedProjects.add(proj);

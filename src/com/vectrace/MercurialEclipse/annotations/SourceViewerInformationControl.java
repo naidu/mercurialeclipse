@@ -38,7 +38,7 @@ import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
  * @since 3.0
  * 
  * This class is copied from org.eclipse.jface.text.source.projection.SourceViewerInformationControl
- * Several changes are made in order to handle hover for CVS annotations
+ * Several changes are made in order to handle hover for H annotations
  */
 class SourceViewerInformationControl implements IInformationControl, IInformationControlExtension, DisposeListener {
 
@@ -49,8 +49,8 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 		
 		    @Override
-			protected Map getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
-		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", //$NON-NLS-1$
+			protected Map<String,? extends Object> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
+		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", 
 		            null);
 		//            new IAdaptable() {
 		//              public Object getAdapter(Class adapter) {
