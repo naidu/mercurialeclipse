@@ -43,7 +43,7 @@ import org.eclipse.ui.views.navigator.ResourceComparator;
 import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 
 /**
- * Common superclass for SVN wizard pages. Provides convenience methods for
+ * Common superclass for Hg wizard pages. Provides convenience methods for
  * widget creation.
  */
 public abstract class HgWizardPage extends WizardPage {

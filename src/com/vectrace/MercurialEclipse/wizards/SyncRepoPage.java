@@ -17,7 +17,6 @@ import java.util.Iterator;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.IWizardPage;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -44,7 +43,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 
 
-public class SyncRepoPage extends WizardPage implements IWizardPage
+public class SyncRepoPage extends HgWizardPage implements IWizardPage
 {
 
   private Label    locationLabel;
@@ -239,13 +238,14 @@ public boolean isPageComplete()
       public void handleEvent(Event event) {
         validateAndSetComplete( getLocation(), projectNameCombo.getText() );
       }      
-    });
+    });        
   } 
   else //if(clone)
   {
     projectNameLabel = new Label(outerContainer, SWT.NONE);
     projectNameLabel.setText(getProjectNameLabelText());
-  } //if(clone)
+  } //if(clone)  
+  
   setControl(outerContainer);
   setPageComplete(false);
   }
