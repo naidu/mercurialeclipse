@@ -145,7 +145,13 @@ public class GChangeSet {
 				edge.dec();
 				cols.remove(edge.col);
 				col = cols.get(edge.col);
-			} else if (edge.type == EdgeType.dash
+			} else if (edge.type == EdgeType.line && lastEdge != null
+                    && lastEdge.type == EdgeType.slash) {
+                count = 0;
+                edge.dec();
+                col = cols.get(edge.col);
+                dec = -1;
+            } else if (edge.type == EdgeType.dash
 					&& (lastEdge == null || lastEdge.type != EdgeType.dash)) {
 				lastEdge = edge;
 				return 0;
