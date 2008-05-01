@@ -97,6 +97,12 @@ public class HgCommand {
 	}
 	
 	protected String getHgExecutable() {
+	    
+	    if(!MercurialEclipsePlugin.getDefault().isHgUsable()) {
+	        MercurialUtilities.configureExecutable();
+            MercurialEclipsePlugin.getDefault().checkHgInstallation();                                        
+	    }
+	    
 		return MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore()
 			.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);

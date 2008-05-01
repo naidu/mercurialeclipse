@@ -32,8 +32,8 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -52,6 +52,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
 
   // TODO: not quite sure this should be static
   private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
+  
+  private boolean hgUsable = true; 
   
 //  private FlagManager flagManager;
 
@@ -73,19 +75,25 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
             super.start(context);
             checkHgInstallation();
         } catch (Exception e) {
+            this.hgUsable = false;
             logError("Unable to start MercurialEclipsePlugin ", e);
             throw e;
         }
         repoManager.start();
     }
 
-    private boolean checkHgInstallation() throws HgException {
-        String result;
-        result = HgDebugInstallClient.debugInstall();
-        if (result.endsWith("No problems detected")) {
-            return true;
+    public synchronized void checkHgInstallation() {
+        try {
+            this.hgUsable = true;
+            MercurialUtilities.getHGExecutable(true);
+            String result = HgDebugInstallClient.debugInstall();
+            if (result.endsWith("No problems detected")) {
+                this.hgUsable = true;
+                return;
+            }
+        } catch (Exception e) {
+            this.hgUsable = false;
         }
-        throw new HgException(result);
     }
 
     // public static void refreshProjectsFlags(final Collection<IProject>
@@ -251,5 +259,12 @@ public void stop(BundleContext context) throws Exception
         IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         if (window == null) return null;
         return window.getActivePage();
+    }
+
+    /**
+     * @return the hgUsable
+     */
+    public boolean isHgUsable() {
+        return hgUsable;
     }
 }
