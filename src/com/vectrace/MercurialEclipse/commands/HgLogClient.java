@@ -110,7 +110,7 @@ public class HgLogClient {
 			return null;
 		}
 		Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-				.createMercurialRevisions(result, res.getProject(), null);
+				.createMercurialRevisions(result, res.getProject(), null, null);
 		return revisions;
 	}
 
