@@ -16,10 +16,7 @@
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
@@ -34,9 +31,9 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -71,52 +68,43 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
    * This method is called upon plug-in activation
    */
   @Override
-public void start(BundleContext context) throws Exception
-  {
-    try
-    {
-      // System.out.println("MercurialEclipsePlugin.start()");
-      super.start(context);
-    } catch (Exception e)
-    {
-    	logError("unable to startMercurialEclipsePlugin ", e);
-      // TODO: handle exception
-      // System.out.println("MercurialEclipsePlugin.start() got
-      // execption");
-      throw e;
+    public void start(BundleContext context) throws Exception {
+        try {
+            super.start(context);
+            checkHgInstallation();
+        } catch (Exception e) {
+            logError("Unable to start MercurialEclipsePlugin ", e);
+            throw e;
+        }
+        repoManager.start();
     }
 
-    // TODO: Presumably this should be wrapped around some sort of timer to
-    // ensure we don't tank eclipse if something goes wrong.
-    repoManager.start();
-    
-//    flagManager = new FlagManager();
-  }
-
-//  public FlagManager getFlagManager() {
-//      return flagManager;
-//  }
-  
-//  public static void refreshProjectFlags(final IProject project) {
-//        refreshProjectsFlags(Collections.singleton(project));
-//    }
-  
-  public static void refreshProjectsFlags(final Collection<IProject> projects) {
-        new SafeWorkspaceJob("Refresh project state") {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                try {
-                    for (IProject project : projects) {
-                        //getDefault().getFlagManager().refresh(project);
-                    	MercurialStatusCache.getInstance().refreshStatus(project, monitor);
-                    }
-                } catch (HgException e) {
-                    logError(e);
-                } 
-                return Status.OK_STATUS;
-            }
-        }.schedule();
+    private boolean checkHgInstallation() throws HgException {
+        String result;
+        result = HgDebugInstallClient.debugInstall();
+        if (result.endsWith("No problems detected")) {
+            return true;
+        }
+        throw new HgException(result);
     }
+
+    // public static void refreshProjectsFlags(final Collection<IProject>
+    // projects) {
+    // new SafeWorkspaceJob("Refresh project state") {
+    // @Override
+    // protected IStatus runSafe(IProgressMonitor monitor) {
+    // try {
+    // for (IProject project : projects) {
+    // //getDefault().getFlagManager().refresh(project);
+    // MercurialStatusCache.getInstance().refreshStatus(project, monitor);
+    // }
+    // } catch (HgException e) {
+    // logError(e);
+    // }
+    // return Status.OK_STATUS;
+    //            }
+    //        }.schedule();
+    //    }
 
   static public HgRepositoryLocationManager getRepoManager()
   {
