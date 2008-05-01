@@ -70,7 +70,7 @@ public class HgIncomingClient {
 				return null;
 			}
 			Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-					result, proj, bundleFile);
+					result, proj, bundleFile, repository);
 			temp.renameTo(bundleFile);
 			return revisions;
 		} catch (HgException hg) {
@@ -91,16 +91,22 @@ public class HgIncomingClient {
 						+ proj.getName() + "." + strippedLocation + ".hg")
 				.toFile();
 	}
+	
+	@Deprecated
+	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
+            String input, IProject proj, File bundleFile) {
+	    return createMercurialRevisions(input, proj, bundleFile, null);
+	}
 
 	public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
-			String input, IProject proj, File bundleFile) {
+			String input, IProject proj, File bundleFile, HgRepositoryLocation repository) {
 		return createMercurialRevisions(input, proj, SEP_CHANGE_SET, TEMPLATE,
-				SEP_TEMPLATE_ELEMENT, bundleFile);
+				SEP_TEMPLATE_ELEMENT, bundleFile, repository);
 	}
 
 	private static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
 			String input, IProject proj, String changeSetSeparator,
-			String templ, String templateElementSeparator, File bundleFile) {
+			String templ, String templateElementSeparator, File bundleFile, HgRepositoryLocation repository) {
 		String[] changeSetStrings = input.split(changeSetSeparator);
 
 		Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
@@ -110,7 +116,7 @@ public class HgIncomingClient {
 					templateElementSeparator);
 
 			// add bundle file for being able to look into the bundle.
-
+			cs.setRepository(repository);
 			cs.setBundleFile(bundleFile);
 			if (cs.getChangedFiles() != null) {
 				for (FileStatus file : cs.getChangedFiles()) {

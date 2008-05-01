@@ -170,7 +170,7 @@ public class MercurialStatusCache extends Observable implements
     }
 
     /**
-     * Checks if incoming status for given project is known.
+     * Checks if incoming status for given project is known for any location.
      * 
      * @param project
      *            the project to be checked
@@ -182,7 +182,17 @@ public class MercurialStatusCache extends Observable implements
                 // wait...
             }
         }
-        return incomingChangeSets.get(project) != null;
+        if (incomingChangeSets != null && incomingChangeSets.size()>0) {
+            for (Iterator<String> iterator = incomingChangeSets.keySet()
+                    .iterator(); iterator.hasNext();) {
+                Map<IResource, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
+                        .get(iterator.next());
+                if (currLocMap != null && currLocMap.get(project) != null) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -495,16 +505,15 @@ public class MercurialStatusCache extends Observable implements
                                             }
                                         }
                                     }
-                                    if (res.getType() == IResource.FILE) {
-                                        Map<IResource, SortedSet<ChangeSet>> map = incomingChangeSets
-                                                .get(repositoryLocation);
-                                        if (map == null) {
-                                            map = new HashMap<IResource, SortedSet<ChangeSet>>();
-                                        }
-                                        map.put(res, revisions);
-                                        incomingChangeSets.put(
-                                                repositoryLocation, map);
+
+                                    Map<IResource, SortedSet<ChangeSet>> map = incomingChangeSets
+                                            .get(repositoryLocation);
+                                    if (map == null) {
+                                        map = new HashMap<IResource, SortedSet<ChangeSet>>();
                                     }
+                                    map.put(res, revisions);
+                                    incomingChangeSets.put(repositoryLocation,
+                                            map);
                                 }
                             }
                         }

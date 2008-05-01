@@ -18,6 +18,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class ChangeSet implements Comparable<ChangeSet> {
 	private int changesetIndex;
@@ -32,6 +33,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private String[] parents;
 	private Date realDate;
 	private File bundleFile;
+	private HgRepositoryLocation repository;
 	private String summary;
 
 	public ChangeSet() {
@@ -71,6 +73,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	public String getTag() {
+	    if (tag != null && tag.equals("tip") && bundleFile != null){
+	        tag = tag.concat(" [ ").concat(repository.toString()).concat(" ]");
+	    }
 		return tag;
 	}
 
@@ -246,4 +251,18 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	public String getSummary() {
 		return summary;
 	}
+
+    /**
+     * @return the repository
+     */
+    public HgRepositoryLocation getRepository() {
+        return repository;
+    }
+
+    /**
+     * @param repositoryLocation the repository to set
+     */
+    public void setRepository(HgRepositoryLocation repositoryLocation) {
+        this.repository = repositoryLocation;
+    }
 }
