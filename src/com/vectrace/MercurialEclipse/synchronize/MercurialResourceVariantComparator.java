@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.util.BitSet;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
@@ -37,8 +39,9 @@ public class MercurialResourceVariantComparator implements
 	}
 
 	public boolean compare(IResource local, IResourceVariant remote) {
-		if (statusCache.getStatus(local) != null) {
-			int status = statusCache.getStatus(local).length() - 1;
+	    BitSet bitSet = statusCache.getStatus(local);
+		if (bitSet != null) {
+			int status = bitSet.length() - 1;
 			if (status == MercurialStatusCache.BIT_CLEAN) {
 				String localVersion = "0:unknown";
 				String remoteVersion = "0:unknown";
@@ -57,15 +60,6 @@ public class MercurialResourceVariantComparator implements
 				return equal;
 			}
 		}
-//		try {
-//			System.out.println("Local differs from remote:"
-//					+ local.getName() +","
-//					+ statusCache.getStatus(local) + ","
-//					+ statusCache.getNewestLocalChangeSet(local).getChangeset() + ","
-//					+ remote.getContentIdentifier());
-//		} catch (HgException e) {
-//			MercurialEclipsePlugin.logError(e);
-//		}
 		return false;
 
 	}
