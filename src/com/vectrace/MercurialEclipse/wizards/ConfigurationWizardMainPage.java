@@ -22,7 +22,6 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -176,20 +175,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
         combo.setLayoutData(data);
         return combo;
-    }
-
-    protected Group createGroup(Composite parent, String text) {
-        Group group = new Group(parent, SWT.NULL);
-        group.setText(text);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL);
-        data.horizontalSpan = 2;
-        // data.widthHint = GROUP_WIDTH;
-
-        group.setLayoutData(data);
-        GridLayout layout = new GridLayout();
-        layout.numColumns = 2;
-        group.setLayout(layout);
-        return group;
     }
 
     /**

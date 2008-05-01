@@ -26,6 +26,7 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -33,6 +34,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.PlatformUI;
@@ -40,6 +42,7 @@ import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.views.navigator.ResourceComparator;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 
 /**
@@ -325,6 +328,61 @@ public abstract class HgWizardPage extends WizardPage {
         return listViewer;
     }
 
+    /**
+     * Creates a ListViewer whose input is an array of ChangeSets.
+     * 
+     * @param parent
+     *            the parent of the viewer
+     * @param title
+     *            the text for the title label
+     * @param heightHint
+     *            the nominal height of the list
+     * @return the created list viewer
+     */
+    protected ListViewer createChangeSetListViewer(Composite parent,
+            String title, int heightHint) {
+        if (title != null) {
+            createLabel(parent, title);
+        }
+        ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY
+                | SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
+        listViewer.setContentProvider(new IStructuredContentProvider() {
+            public Object[] getElements(Object inputElement) {
+                return (Object[]) inputElement;
+            }
+
+            public void dispose() {
+            }
+
+            public void inputChanged(Viewer viewer, Object oldInput,
+                    Object newInput) {
+            }
+
+        });
+        listViewer.setLabelProvider(new LabelProvider() {
+            @Override
+            public String getText(Object element) {
+                ChangeSet cs = (ChangeSet) element;
+                return (cs.toString().concat("\t").concat(cs.getDate()).concat(
+                        "\t").concat(cs.getUser()));
+            }
+        });
+
+        ViewerComparator comparator = new org.eclipse.ui.model.WorkbenchViewerComparator() {
+            @Override
+            public int compare(Viewer viewer, Object e1, Object e2) {
+                return ((ChangeSet) e2).compareTo((ChangeSet) e1);
+            }
+        };
+
+        listViewer.setComparator(comparator);
+
+        GridData data = new GridData(GridData.FILL_BOTH);
+        data.heightHint = heightHint;
+        listViewer.getList().setLayoutData(data);
+        return listViewer;
+    }
+
     protected TreeViewer createResourceSelectionTree(Composite composite,
             int types, int span) {
         TreeViewer tree = new TreeViewer(composite, SWT.H_SCROLL | SWT.V_SCROLL
@@ -376,5 +434,19 @@ public abstract class HgWizardPage extends WizardPage {
                 return super.getChildren(o);
             }
         };
+    }
+
+    protected Group createGroup(Composite parent, String text) {
+        Group group = new Group(parent, SWT.NULL);
+        group.setText(text);
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.horizontalSpan = 2;
+        // data.widthHint = GROUP_WIDTH;
+
+        group.setLayoutData(data);
+        GridLayout layout = new GridLayout();
+        layout.numColumns = 2;
+        group.setLayout(layout);
+        return group;
     }
 }

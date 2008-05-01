@@ -1,10 +1,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,37 +29,6 @@ public class HgCommand {
 	public static final int MAX_PARAMS = 120;
 	
 	private static PrintStream console = new PrintStream(MercurialUtilities.getMercurialConsole().newOutputStream());
-	
-	protected static class InputStreamConsumer extends Thread {
-		private final InputStream stream;
-		private byte[] output;
-		
-		public InputStreamConsumer(InputStream stream) {
-			this.stream = new BufferedInputStream(stream);
-		}
-		
-		@Override
-		public void run() {
-			try {
-				int length;
-				byte[] buffer = new byte[1024];
-				ByteArrayOutputStream myOutput  = new ByteArrayOutputStream();
-				while((length = stream.read(buffer)) != -1) {
-					myOutput.write(buffer, 0, length);
-				}
-				stream.close();
-				this.output = myOutput.toByteArray();
-			} catch (IOException e) {
-				// TODO report the error to the caller thread
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
-		
-		public byte[] getBytes() {
-			return output;
-		}
-		
-	}
 	
 	private final String command;
 	private final File workingDir;
