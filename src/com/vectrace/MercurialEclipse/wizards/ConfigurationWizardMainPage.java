@@ -12,7 +12,9 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -27,6 +29,9 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * Wizard page for entering information about a SVN repository location. This
@@ -84,7 +89,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      * @return the history with the new entry appended
      */
     private String[] addToHistory(String[] history, String newEntry) {
-        ArrayList<String> l = new ArrayList<String>(Arrays.asList(history));
+        ArrayList<String> l = new ArrayList<String>();
+        if (history != null){
+            l.addAll(Arrays.asList(history));
+        }
 
         l.remove(newEntry);
         l.add(0, newEntry);
@@ -216,9 +224,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private void initializeValues() {
         // Set remembered values
-        IDialogSettings setts = getDialogSettings();
+        IDialogSettings setts = getDialogSettings();        
         if (setts != null) {
             String[] hostNames = setts.getArray(STORE_URL_ID);
+            hostNames = updateHostNames(hostNames);
             if (hostNames != null) {
                 for (int i = 0; i < hostNames.length; i++) {
                     urlCombo.add(hostNames[i]);
@@ -232,7 +241,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     }
                 }
             }
-        }
+        } 
 
         if (properties != null) {
             if (showCredentials) {
@@ -268,11 +277,28 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
             }
             String[] hostNames = dialogSettings.getArray(STORE_URL_ID);
-            if (hostNames == null)
-                hostNames = new String[0];
             hostNames = addToHistory(hostNames, urlCombo.getText());
+            hostNames = updateHostNames(hostNames);
             dialogSettings.put(STORE_URL_ID, hostNames);
         }
+    }
+
+    /**
+     * @param hostNames
+     * @return
+     */
+    private String[] updateHostNames(String[] hostNames) {
+        String[] newHostNames = hostNames;
+        Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
+        if (repositories != null){
+            int i = 0;
+            for (Iterator<HgRepositoryLocation> iterator = repositories.iterator(); iterator
+                    .hasNext();i++) {
+                HgRepositoryLocation hgRepositoryLocation = iterator.next();
+                newHostNames = addToHistory(newHostNames, hgRepositoryLocation.getUrl());
+            }                
+        }
+        return newHostNames;
     }
 
     /**

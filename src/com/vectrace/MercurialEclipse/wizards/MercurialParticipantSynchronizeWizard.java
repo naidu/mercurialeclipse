@@ -13,7 +13,7 @@ package com.vectrace.MercurialEclipse.wizards;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import org.eclipse.team.ui.synchronize.SubscriberParticipant;
@@ -30,12 +30,23 @@ import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 public class MercurialParticipantSynchronizeWizard extends
         SubscriberParticipantWizard implements IWizard {
     private IWizard importWizard = new CloneRepoWizard();
-    private SynchronizeWizardPage page;
-    
+    private ConfigurationWizardMainPage page;
+
+    public MercurialParticipantSynchronizeWizard() {
+        IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
+                .getDialogSettings();
+        IDialogSettings section = workbenchSettings
+                .getSection("MercurialParticipantSynchronizeWizard");
+        if (section == null) {
+            section = workbenchSettings.addNewSection("MercurialParticipantSynchronizeWizard");            
+        }
+        setDialogSettings(section);
+    }
 
     @Override
     protected SubscriberParticipant createParticipant(ISynchronizeScope scope) {
-        return new MercurialSynchronizeParticipant(scope, page.getLocation());
+        return new MercurialSynchronizeParticipant(scope, page.getProperties()
+                .getProperty("url"));
     }
 
     @Override
@@ -56,21 +67,23 @@ public class MercurialParticipantSynchronizeWizard extends
     @Override
     public void addPages() {
         super.addPages();
-        ImageDescriptor image = MercurialEclipsePlugin.getImageDescriptor("wizards/newconnect_wizban.gif");
         IProject[] projects = MercurialStatusCache.getInstance()
                 .getAllManagedProjects();
         if (projects != null) {
-            page = new SynchronizeWizardPage(
-                    "SyncRepoSelection", "Repository Selection", image);
-            page.setDescription("Please select the repository to use for synchronization.");
-            page.setTitle(getPageTitle().concat(" - Repository Selection"));
+            page = new ConfigurationWizardMainPage("repositoryPage1",
+                    "Choose repository", MercurialEclipsePlugin
+                            .getImageDescriptor("wizards/share_wizban.png"));
+
+            page
+                    .setDescription("Please choose the repository location to monitor.");
+            page.setDialogSettings(getDialogSettings());
             addPage(page);
         }
 
     }
-    
+
     @Override
-    public boolean performFinish() {        
+    public boolean performFinish() {
         return super.performFinish();
     }
 
