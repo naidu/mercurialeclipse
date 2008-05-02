@@ -1001,23 +1001,25 @@ public class MercurialStatusCache extends Observable implements
 
                     concernedResources.add(project);
                     concernedResources.addAll(resources);
-                    concernedResources.addAll(revisions.keySet());
+                    if (revisions != null && revisions.size() > 0) {
+                        concernedResources.addAll(revisions.keySet());
 
-                    for (Iterator<IResource> iter = revisions.keySet()
-                            .iterator(); iter.hasNext();) {
-                        IResource res = iter.next();
-                        SortedSet<ChangeSet> changes = revisions.get(res);
-                        // if changes for resource not in top 50, get at least
-                        // 10%
-                        if (changes == null && limit) {
-                            changes = HgLogClient.getRecentProjectLog(res,
-                                    limitNumber / 10).get(res);
-                        }
-                        // add changes to cache
-                        if (changes != null && changes.size() > 0) {
-                            if (isSupervised(res)) {
-                                localChangeSets.put(res, changes);
-                                addToNodeMap(changes);
+                        for (Iterator<IResource> iter = revisions.keySet()
+                                .iterator(); iter.hasNext();) {
+                            IResource res = iter.next();
+                            SortedSet<ChangeSet> changes = revisions.get(res);
+                            // if changes for resource not in top 50, get at least
+                            // 10%
+                            if (changes == null && limit) {
+                                changes = HgLogClient.getRecentProjectLog(res,
+                                        limitNumber / 10).get(res);
+                            }
+                            // add changes to cache
+                            if (changes != null && changes.size() > 0) {
+                                if (isSupervised(res)) {
+                                    localChangeSets.put(res, changes);
+                                    addToNodeMap(changes);
+                                }
                             }
                         }
                     }

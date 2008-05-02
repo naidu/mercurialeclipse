@@ -108,7 +108,7 @@ public class HgLogClient {
             command.addOptions(res.getProjectRelativePath().toOSString());
         }
         String result = command.executeToString();
-        if (result.contains("no changes found")) {
+        if (result.contains("no changes found") || result.length() == 0) {
             return null;
         }
         Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
