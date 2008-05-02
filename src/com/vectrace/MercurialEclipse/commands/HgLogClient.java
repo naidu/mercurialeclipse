@@ -100,7 +100,7 @@ public class HgLogClient {
             IResource res, int limitNumber) throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
 
-        command.addOptions("--template", HgIncomingClient.TEMPLATE);
+        command.addOptions("--debug","--template", HgIncomingClient.TEMPLATE);
         if (limitNumber > -1) {
             command.addOptions("-l", limitNumber + "");
         }

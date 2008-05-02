@@ -64,7 +64,7 @@ public class HgIncomingClient {
         File bundleFile = getBundleFile(proj, repository);
         File temp = new File(proj.getLocation() + "bundle.temp");
         try {
-            command.addOptions("--template", TEMPLATE, "--bundle", temp
+            command.addOptions("--debug", "--template", TEMPLATE, "--bundle", temp
                     .getCanonicalPath(), repository.getUrl());
             String result = command.executeToString();
             if (result.contains("no changes found")) {
@@ -151,8 +151,9 @@ public class HgIncomingClient {
 
     public static ChangeSet getChangeSet(String changeSet, String templ,
             String templateElementSeparator) {
-        if (changeSet == null)
+        if (changeSet == null) {
             return null;
+        }
         String[] templateElements = templ.split(templateElementSeparator);
         Map<String, Integer> pos = new HashMap<String, Integer>(
                 templateElements.length);
@@ -223,8 +224,9 @@ public class HgIncomingClient {
     }
 
     private static String[] splitClean(String string, String sep) {
-        if (string.length() == 0)
+        if (string.length() == 0) {
             return new String[] {};
+        }
         return string.split(sep);
     }
 

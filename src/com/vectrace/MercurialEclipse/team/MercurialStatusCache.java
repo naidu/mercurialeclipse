@@ -429,37 +429,45 @@ public class MercurialStatusCache extends Observable implements
                     monitor.subTask("Updating status and version cache...");
                 }
                 try {
-                    if (monitor != null)
+                    if (monitor != null) {
                         monitor.subTask("Loading local revisions...");
+                    }
                     refreshAllLocalRevisions(project);
-                    if (monitor != null)
+                    if (monitor != null) {
                         monitor.worked(1);
+                    }
                     // incoming
                     if (repositoryLocation != null) {
-                        if (monitor != null)
+                        if (monitor != null) {
                             monitor.subTask("Loading incoming revisions for "
                                     + repositoryLocation);
+                        }
                         refreshIncomingChangeSets(project, repositoryLocation);
-                        if (monitor != null)
+                        if (monitor != null) {
                             monitor.worked(1);
+                        }
 
-                        if (monitor != null)
+                        if (monitor != null) {
                             monitor.subTask("Loading outgoing revisions for "
                                     + repositoryLocation);
+                        }
                         refreshOutgoingChangeSets(project, repositoryLocation);
-                        if (monitor != null)
+                        if (monitor != null) {
                             monitor.worked(1);
+                        }
 
-                        if (monitor != null)
+                        if (monitor != null) {
                             monitor
                                     .subTask("Adding remote repository to project repositories...");
+                        }
                         MercurialEclipsePlugin.getRepoManager()
                                 .addRepoLocation(
                                         project,
                                         new HgRepositoryLocation(
                                                 repositoryLocation));
-                        if (monitor != null)
+                        if (monitor != null) {
                             monitor.worked(1);
+                        }
                     }
                     setChanged();
                     notifyObservers(project);
@@ -479,8 +487,9 @@ public class MercurialStatusCache extends Observable implements
     public void refreshStatus(final IResource res, IProgressMonitor monitor)
             throws HgException {
         try {
-            if (monitor != null)
+            if (monitor != null) {
                 monitor.beginTask("Refreshing " + res.getName(), 50);
+            }
             if (null != RepositoryProvider.getProvider(res.getProject(),
                     MercurialTeamProvider.ID)
                     && res.getProject().isOpen()) {
@@ -1092,7 +1101,7 @@ public class MercurialStatusCache extends Observable implements
      * @return
      */
     public ChangeSet getChangeSet(String changeSet) {
-        if (this.localUpdateInProgress || this.incomingUpdateInProgress) {
+        if (localUpdateInProgress || incomingUpdateInProgress) {
             synchronized (nodeMap) {
                 // wait
             }
@@ -1102,7 +1111,7 @@ public class MercurialStatusCache extends Observable implements
 
     public ChangeSet getChangeSet(IResource res, int changesetIndex)
             throws HgException {
-        if (this.localUpdateInProgress || this.incomingUpdateInProgress) {
+        if (localUpdateInProgress || incomingUpdateInProgress) {
             synchronized (nodeMap) {
                 // wait
             }
@@ -1117,6 +1126,7 @@ public class MercurialStatusCache extends Observable implements
         return null;
     }
 
+    @Deprecated
     public String[] getParentsChangeSet(IResource res, ChangeSet cs)
             throws HgException {
         SortedSet<ChangeSet> changeSets = getLocalChangeSets(res);

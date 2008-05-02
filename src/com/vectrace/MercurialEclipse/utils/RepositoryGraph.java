@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.utils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,8 +19,6 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
@@ -51,7 +48,7 @@ public class RepositoryGraph {
 		Map<String, ChangeSetNode> nodes = revMap.get(base.getResource());
 		if (nodes == null || nodes.size() == 0) {
 			nodes = new HashMap<String, ChangeSetNode>();
-			this.revMap.put(base.getResource(), nodes);
+			revMap.put(base.getResource(), nodes);
 			ChangeSetNode baseNode = traverseGraph(base.getResource(), null, cs);
 			nodes.put(cs.getChangeset(), baseNode);
 			return baseNode;
@@ -111,22 +108,14 @@ public class RepositoryGraph {
 	 * @return
 	 */
 	public static List<String> getParentsForResource(IResource res, ChangeSet cs) {
-		List<String> parents = new ArrayList<String>();
-		if (cs.getParents() == null
-				|| cs.getParents().length == 0
-				|| (cs.getParents().length == 1 && cs.getParents()[0]
-						.equals(""))) {
-			try {
-				String[] temp = cache.getParentsChangeSet(res, cs);
-				if (temp != null) {
-					cs.setParents(temp);
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
+		List<String> parents = new ArrayList<String>(2);
 		if (cs.getParents() != null) {
-			parents.addAll(Arrays.asList(cs.getParents()));
+			for (String string : parents) {
+			    // a non filled parent slot is reported by log --debug as "-1:0000000000"
+                if (string.charAt(0)!='-') {
+                    parents.add(string);
+                }
+            }
 		}
 		return parents;
 	}
