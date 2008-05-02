@@ -18,6 +18,7 @@ import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
@@ -38,6 +39,64 @@ import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 public class MercurialPreferencePage extends FieldEditorPreferencePage
         implements IWorkbenchPreferencePage {
+
+    private final class LabelDecoratorRadioGroupFieldEditor extends
+            RadioGroupFieldEditor {
+        private LabelDecoratorRadioGroupFieldEditor(String name,
+                String labelText, int numColumns, String[][] labelAndValues,
+                Composite parent, boolean useGroup) {
+            super(name, labelText, numColumns, labelAndValues, parent, useGroup);
+        }
+
+        @Override
+        protected void doStore() {
+            super.doStore();
+            try {
+                MercurialEclipsePlugin.getDefault().checkHgInstallation();
+                if (MercurialEclipsePlugin.getDefault().isHgUsable()) {
+                    MercurialStatusCache.getInstance().refresh();
+                }
+            } catch (TeamException e) {
+                MercurialEclipsePlugin.logError(
+                        "Couldn't refresh projects in workspace.", e);
+            }
+            // ResourceDecorator.onConfigurationChanged();
+        }
+    }
+
+    private final class MercurialExecutableFileFieldEditor extends
+            FileFieldEditor {
+        private MercurialExecutableFileFieldEditor(String name,
+                String labelText, Composite parent) {
+            super(name, labelText, parent);
+        }
+
+        @Override
+        protected boolean checkState() {
+            // There are other ways of doing this properly but this is
+            // better than the default behaviour
+            return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
+                    .equals(getTextControl().getText())
+                    || super.checkState();
+        }
+    }
+
+    private final class GpgExecutableFileFieldEditor extends FileFieldEditor {
+        private GpgExecutableFileFieldEditor(String name, String labelText,
+                Composite parent) {
+            super(name, labelText, parent);
+        }
+
+        @Override
+        protected boolean checkState() {
+            // There are other ways of doing this properly but this is
+            // better than the default behaviour
+            return MercurialPreferenceConstants.GPG_EXECUTABLE
+                    .equals(getTextControl().getText())
+                    || super.checkState();
+        }
+    }
+
     public MercurialPreferencePage() {
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
@@ -52,53 +111,36 @@ public class MercurialPreferencePage extends FieldEditorPreferencePage
      */
     @Override
     public void createFieldEditors() {
-        FileFieldEditor execField = new FileFieldEditor(
+        FileFieldEditor execField = new MercurialExecutableFileFieldEditor(
                 MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
-                "Mercurial &Executable:", getFieldEditorParent()) {
-            @Override
-            protected boolean checkState() {
-                // There are other ways of doing this properly but this is
-                // better than the default behaviour                
-                return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
-                        .equals(getTextControl().getText())
-                        || super.checkState();
-            }
-        };
-                
+                "Mercurial &Executable:", getFieldEditorParent());
+
         addField(execField);
-        if (!MercurialEclipsePlugin.getDefault().isHgUsable()){
+        if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
             execField.setErrorMessage("Hg is not correctly installed.");
         }
+
+        addField(new GpgExecutableFileFieldEditor(
+                MercurialPreferenceConstants.GPG_EXECUTABLE,
+                "&GnuPG Executable:", getFieldEditorParent()));
+
         addField(new StringFieldEditor(
                 MercurialPreferenceConstants.MERCURIAL_USERNAME,
                 "Mercurial &Username:", getFieldEditorParent()));
-        addField(new RadioGroupFieldEditor(
+
+        addField(new LabelDecoratorRadioGroupFieldEditor(
                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
                 "When a folders contains files with different statuses, flag the folder:",
                 1,
                 new String[][] {
                         {
-                                "as Modified",
+                                "as modified",
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
                         {
                                 "with the most important status",
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
-                getFieldEditorParent(), true) {
-            @Override
-            protected void doStore() {
-                super.doStore();
-                try {
-                    MercurialEclipsePlugin.getDefault().checkHgInstallation();
-                    if (MercurialEclipsePlugin.getDefault().isHgUsable()){
-                        MercurialStatusCache.getInstance().refresh();
-                    }
-                } catch (TeamException e) {
-                    MercurialEclipsePlugin.logError(
-                            "Couldn't refresh projects in workspace.", e);
-                }
-                // ResourceDecorator.onConfigurationChanged();
-            }
-        });
+                getFieldEditorParent(), true));
+
     }
 
     /*

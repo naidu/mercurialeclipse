@@ -24,7 +24,6 @@ public class SignHandler extends SingleResourceHandler {
         SignWizard signWizard = new SignWizard(project);
         WizardDialog dialog = new WizardDialog(getShell(), signWizard);
         dialog.open();
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
     }
 
 }

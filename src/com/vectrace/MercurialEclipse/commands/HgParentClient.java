@@ -10,36 +10,39 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgParentClient {
 
-    private static final Pattern ANCESTOR_PATTERN = Pattern.compile("^([0-9]+):([0-9a-f]+)$");
-    
+    private static final Pattern ANCESTOR_PATTERN = Pattern
+            .compile("^([0-9]+):([0-9a-f]+)$");
+
     public static int[] getParents(IProject project) throws HgException {
         HgCommand command = new HgCommand("parents", project, false);
         command.addOptions("--template", "{rev}\n");
         String[] lines = command.executeToString().split("\n");
         int[] parents = new int[lines.length];
-        for(int i=0; i<lines.length; i++) {
+        for (int i = 0; i < lines.length; i++) {
             parents[i] = Integer.parseInt(lines[i]);
         }
         return parents;
     }
-    
-    public static int findCommonAncestor(IProject project, int r1, int r2) throws HgException {
+
+    public static int findCommonAncestor(IProject project, int r1, int r2)
+            throws HgException {
         HgCommand command = new HgCommand("debugancestor", project, false);
         command.addOptions(Integer.toString(r1), Integer.toString(r2));
         String result = command.executeToString().trim();
         Matcher m = ANCESTOR_PATTERN.matcher(result);
-        if(m.matches()) {
+        if (m.matches()) {
             return Integer.parseInt(m.group(1));
         }
-        throw new HgException("Parse exception: '"+result+"'");
+        throw new HgException("Parse exception: '" + result + "'");
     }
 
-	public static String[] getParents(IResource rev, String node) throws HgException {
-		HgCommand command = new HgCommand("parents", rev.getProject(), false);
+    public static String[] getParents(IResource rev, String node)
+            throws HgException {
+        HgCommand command = new HgCommand("parents", rev.getProject(), false);
         command.addOptions("--template", "{rev}:{node|short}\n");
-        command.addOptions("-r", node);        
-        String[] lines = command.executeToString().split("\n");        
+        command.addOptions("-r", node);
+        String[] lines = command.executeToString().split("\n");
         return lines;
-	}
+    }
 
 }

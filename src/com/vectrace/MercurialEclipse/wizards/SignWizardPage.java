@@ -10,9 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IProject;
@@ -28,11 +25,9 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgSignClient;
-import com.vectrace.MercurialEclipse.commands.InputStreamConsumer;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
@@ -47,9 +42,6 @@ public class SignWizardPage extends HgWizardPage {
     private final IProject project;
     private Text userTextField;
     private Combo keyCombo;
-    private List<String> getKeysCmd;
-    private final IOConsoleOutputStream console = MercurialUtilities
-            .getMercurialConsole().newOutputStream();
     private Button localCheckBox;
     private Button forceCheckBox;
     private Button noCommitCheckBox;
@@ -135,7 +127,7 @@ public class SignWizardPage extends HgWizardPage {
 
     private void populateKeyCombo(Combo combo) {
         try {
-            String keys = getKeyIds();
+            String keys = HgSignClient.getPrivateKeyList();
             if (keys.indexOf("\n") == -1) {
                 combo.add(keys);
             } else {
@@ -151,55 +143,6 @@ public class SignWizardPage extends HgWizardPage {
             MercurialEclipsePlugin.logError(e);
         }
         combo.setText(combo.getItem(0));
-    }
-
-    protected String getKeyIds() throws HgException {
-
-        if (getKeysCmd == null) {
-            getKeysCmd = new ArrayList<String>();
-            getKeysCmd.add("gpg");
-            getKeysCmd.add("-k");
-            getKeysCmd.add("-v");
-            getKeysCmd.add("0");
-        }
-        return new String(executeCommand());
-
-    }
-
-    /**
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws HgException
-     */
-    private byte[] executeCommand() throws HgException {
-        try {
-            long start = System.currentTimeMillis();
-            ProcessBuilder builder = new ProcessBuilder(getKeysCmd);
-            builder.redirectErrorStream(true);
-            builder.directory(null);
-            Process process = builder.start();
-            InputStreamConsumer consumer = new InputStreamConsumer(process
-                    .getInputStream());
-            consumer.start();
-            consumer.join(10000); // 30 seconds timeout
-            if (!consumer.isAlive()) {
-                if (process.waitFor() == 0) {
-                    console.write("Done in "
-                            + (System.currentTimeMillis() - start) + " ms");
-                    return consumer.getBytes();
-                }
-                String msg = new String(consumer.getBytes());
-                System.out.println(msg);
-                throw new HgException("Process error, return code: "
-                        + process.exitValue() + ", message: " + msg);
-            }
-            process.destroy();
-            throw new HgException("Process timeout");
-        } catch (IOException e) {
-            throw new HgException(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            throw new HgException(e.getMessage(), e);
-        }
     }
 
     private void populateViewer(ListViewer viewer) {

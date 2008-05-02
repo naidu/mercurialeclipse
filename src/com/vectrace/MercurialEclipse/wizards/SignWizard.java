@@ -25,7 +25,7 @@ public class SignWizard extends Wizard {
     public SignWizard(IProject proj) {
         this.project = proj;
         ImageDescriptor image = MercurialEclipsePlugin
-                .getImageDescriptor("wizards/share_wizban.png");
+                .getImageDescriptor("wizards/cleanmanifest_wiz.png");
         page = new SignWizardPage("Sign changesets", "Sign changesets", image,
                 "Cryptographically sign changesets", proj);
         IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()

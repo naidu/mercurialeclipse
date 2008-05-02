@@ -6,7 +6,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgUpdateClient {
 
-    public static void update(IProject project, String revision, boolean clean) throws HgException {
+    public static void update(IProject project, String revision, boolean clean)
+            throws HgException {
         HgCommand command = new HgCommand("update", project, false);
         if (revision != null) {
             command.addOptions("-r", revision);

@@ -17,10 +17,11 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgRemoveClient {
 
-    public static void removeResource(IResource resource, IProgressMonitor monitor)
-            throws HgException {
+    public static void removeResource(IResource resource,
+            IProgressMonitor monitor) throws HgException {
         if (monitor != null) {
-            monitor.subTask("Removing " + resource.getName() + " from repository");
+            monitor.subTask("Removing " + resource.getName()
+                    + " from repository");
         }
         HgCommand command = new HgCommand("remove", resource.getProject(), true);
         command.addOptions("--force");

@@ -276,7 +276,7 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 		//System.out.println("MercurialConfigurationWizard.init()");
 		this.project=proj;
 		if(MercurialUtilities.isExecutableConfigured() == false) {
-			MercurialUtilities.configureExecutable();
+			MercurialUtilities.configureHgExecutable();
 		}
 	}
 

@@ -13,12 +13,16 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * Client for hg sign
@@ -101,5 +105,16 @@ public class HgSignClient {
         } finally {
             file.delete();
         }
+    }
+
+    public static String getPrivateKeyList() throws HgException {
+        List<String> getKeysCmd = new ArrayList<String>();
+        getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
+        getKeysCmd.add("-k");
+        getKeysCmd.add("-v");
+        getKeysCmd.add("0");
+        GpgCommand command = new GpgCommand(getKeysCmd, ResourcesPlugin
+                .getWorkspace().getRoot().getLocation().toFile(), false);
+        return new String(command.executeToBytes());
     }
 }

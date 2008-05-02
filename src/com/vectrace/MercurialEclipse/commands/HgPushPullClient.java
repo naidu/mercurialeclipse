@@ -17,14 +17,15 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgPushPullClient {
 
-    public static String push(IProject project, HgRepositoryLocation location) throws HgException {
+    public static String push(IProject project, HgRepositoryLocation location)
+            throws HgException {
         HgCommand command = new HgCommand("push", project, true);
         command.addFiles(location.getUrl());
         return command.executeToString();
     }
 
-    public static String pull(IProject project, HgRepositoryLocation location, boolean update)
-            throws HgException {
+    public static String pull(IProject project, HgRepositoryLocation location,
+            boolean update) throws HgException {
         HgCommand command = new HgCommand("pull", project, true);
         if (update) {
             command.addOptions("-u");

@@ -181,7 +181,7 @@
 		<command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
 		         name="Merge"/>
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
-		         name="Switch to Another Changeset..."/>
+		         name="Switch to Another Changeset"/>
 
 		<command id="com.vectrace.MercurialEclipse.menu.GLogHandler"
 		         name="Show Graphical Log"/>
@@ -408,7 +408,7 @@
 				<separator name="group7" visible="true"/>
 				<separator name="group8" visible="true"/>
 				<separator name="group9" visible="true"/>
-				<command commandId="com.vectrace.MercurialEclipse.menu.SignHandler">
+				<command commandId="com.vectrace.MercurialEclipse.menu.SignHandler" icon = "icons/clcl16/deadlock_view.gif">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
@@ -416,7 +416,7 @@
 				<separator name="group10" visible="true"/>
 				<command commandId="com.vectrace.MercurialEclipse.menu.AddHandler" icon="icons/add.gif">
 					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
 					</visibleWhen>
 				</command>
 				<!--

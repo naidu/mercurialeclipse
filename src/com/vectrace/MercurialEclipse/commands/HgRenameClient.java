@@ -17,12 +17,13 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgRenameClient {
 
-    public static void renameResource(IResource source, IResource dest, IProgressMonitor monitor)
-            throws HgException {
+    public static void renameResource(IResource source, IResource dest,
+            IProgressMonitor monitor) throws HgException {
         // FIXME what are we supposed to do if both resources are in a different
         // project?
         if (monitor != null) {
-            monitor.subTask("Moving " + source.getName() + " to " + dest.getName());
+            monitor.subTask("Moving " + source.getName() + " to "
+                    + dest.getName());
         }
         HgCommand command = new HgCommand("rename", source.getProject(), true);
         command.addOptions("--force");
