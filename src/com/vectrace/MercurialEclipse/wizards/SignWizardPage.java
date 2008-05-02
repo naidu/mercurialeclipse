@@ -80,6 +80,10 @@ public class SignWizardPage extends HgWizardPage {
 
         ISelectionChangedListener listener = new ISelectionChangedListener() {
             public void selectionChanged(SelectionChangedEvent event) {
+                ChangeSet cs = (ChangeSet) ((IStructuredSelection) event
+                        .getSelection()).getFirstElement();
+                messageTextField.setText("Added signature for changeset "
+                        .concat(cs.toString()));
                 setPageComplete(true);
             }
         };

@@ -65,7 +65,9 @@ public class HgSignClient {
             boolean noCommit, String passphrase) throws HgException {
         HgCommand command = new HgCommand("sign", project, true);
         File file = new File("me.gpg.tmp");
-        String cmd = "gpg.cmd=gpg --batch --no-tty";
+        String cmd = "gpg.cmd=".concat(
+                MercurialUtilities.getGpgExecutable(true)).concat(
+                " --batch --no-tty");
         if (passphrase != null && passphrase.length() > 0) {
             FileWriter fw = null;
             try {
