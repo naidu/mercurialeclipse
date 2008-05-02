@@ -28,21 +28,24 @@ public class SwitchHandler extends SingleResourceHandler {
         IProject project = resource.getProject();
         // better safe than sorry => do not trust the FlagManager
         if (HgStatusClient.isDirty(project)) {
-            if (!MessageDialog.openQuestion(
-                    getShell(),
-                    "Do you really want to switch changeset?",
-                    "Project has some pending changes, do you want to continue and lose them?")) {
+            if (!MessageDialog
+                    .openQuestion(getShell(),
+                            "Do you really want to switch changeset?",
+                            "Project has some pending changes, do you want to continue and lose them?")) {
                 return;
             }
         }
-        RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(), "Switch to...",
-                project);
+        RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
+                "Switch to...", project);
         int result = dialog.open();
         if (result == IDialogConstants.OK_ID) {
             HgUpdateClient.update(project, dialog.getRevision(), true);
             project.setPersistentProperty(ResourceProperties.MERGING, null);
             project.refreshLocal(IResource.DEPTH_INFINITE, null);
-            MergeView.getView().clearView();
+            MergeView view = MergeView.getView();
+            if (view != null) {
+                view.clearView();
+            }
             // will trigger a FlagManager refresh
         }
     }

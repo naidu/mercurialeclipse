@@ -67,7 +67,7 @@ public class HgSignClient {
         File file = new File("me.gpg.tmp");
         String cmd = "gpg.cmd=".concat(
                 MercurialUtilities.getGpgExecutable(true)).concat(
-                " --batch --no-tty");
+                " --batch --no-tty --armor");
         if (passphrase != null && passphrase.length() > 0) {
             FileWriter fw = null;
             try {
