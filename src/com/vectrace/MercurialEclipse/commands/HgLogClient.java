@@ -11,6 +11,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
 public class HgLogClient {
 
@@ -111,7 +112,8 @@ public class HgLogClient {
             return null;
         }
         Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-                .createMercurialRevisions(result, res.getProject(), null, null);
+                .createMercurialRevisions(result, res.getProject(), null, null,
+                        Direction.LOCAL);
         return revisions;
     }
 

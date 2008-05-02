@@ -37,7 +37,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * wizard can be initialized using setProperties or using setDialogSettings
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
-    private boolean showCredentials = false;
+    private final boolean showCredentials = false;
 
     // Widgets
 
@@ -89,7 +89,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private String[] addToHistory(String[] history, String newEntry) {
         ArrayList<String> l = new ArrayList<String>();
-        if (history != null){
+        if (history != null) {
             l.addAll(Arrays.asList(history));
         }
 
@@ -130,8 +130,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         };
 
-        Group g = createGroup(composite,
-                "Repository location");
+        Group g = createGroup(composite, "Repository location");
 
         // repository Url
         createLabel(g, "URL");
@@ -140,8 +139,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         urlCombo.addListener(SWT.Modify, listener);
 
         if (showCredentials) {
-            g = createGroup(composite,
-                    "Authentication");
+            g = createGroup(composite, "Authentication");
 
             // User name
             createLabel(g, "Username");
@@ -209,7 +207,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private void initializeValues() {
         // Set remembered values
-        IDialogSettings setts = getDialogSettings();        
+        IDialogSettings setts = getDialogSettings();
         if (setts != null) {
             String[] hostNames = setts.getArray(STORE_URL_ID);
             hostNames = updateHostNames(hostNames);
@@ -226,21 +224,21 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     }
                 }
             }
-        } 
+        }
 
         if (properties != null) {
             if (showCredentials) {
-                String user = properties.getProperty("user"); 
+                String user = properties.getProperty("user");
                 if (user != null) {
                     userCombo.setText(user);
                 }
 
-                String password = properties.getProperty("password"); 
+                String password = properties.getProperty("password");
                 if (password != null) {
                     passwordText.setText(password);
                 }
             }
-            String host = properties.getProperty("url"); 
+            String host = properties.getProperty("url");
             if (host != null) {
                 urlCombo.setText(host);
             }
@@ -274,14 +272,16 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private String[] updateHostNames(String[] hostNames) {
         String[] newHostNames = hostNames;
-        Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
-        if (repositories != null){
+        Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
+                .getRepoManager().getAllRepoLocations();
+        if (repositories != null) {
             int i = 0;
-            for (Iterator<HgRepositoryLocation> iterator = repositories.iterator(); iterator
-                    .hasNext();i++) {
+            for (Iterator<HgRepositoryLocation> iterator = repositories
+                    .iterator(); iterator.hasNext(); i++) {
                 HgRepositoryLocation hgRepositoryLocation = iterator.next();
-                newHostNames = addToHistory(newHostNames, hgRepositoryLocation.getUrl());
-            }                
+                newHostNames = addToHistory(newHostNames, hgRepositoryLocation
+                        .getUrl());
+            }
         }
         return newHostNames;
     }
@@ -307,7 +307,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             setErrorMessage(null);
             setPageComplete(false);
             return;
-        }        
+        }
         setErrorMessage(null);
         setPageComplete(true);
     }

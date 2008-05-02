@@ -18,6 +18,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
@@ -70,7 +71,7 @@ public class HgIncomingClient {
                 return null;
             }
             Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, proj, bundleFile, repository);
+                    result, proj, bundleFile, repository, Direction.INCOMING);
             temp.renameTo(bundleFile);
             return revisions;
         } catch (HgException hg) {
@@ -92,23 +93,17 @@ public class HgIncomingClient {
                 .toFile();
     }
 
-    @Deprecated
-    public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
-            String input, IProject proj, File bundleFile) {
-        return createMercurialRevisions(input, proj, bundleFile, null);
-    }
-
     public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
             String input, IProject proj, File bundleFile,
-            HgRepositoryLocation repository) {
+            HgRepositoryLocation repository, Direction direction) {
         return createMercurialRevisions(input, proj, SEP_CHANGE_SET, TEMPLATE,
-                SEP_TEMPLATE_ELEMENT, bundleFile, repository);
+                SEP_TEMPLATE_ELEMENT, bundleFile, repository, direction);
     }
 
     private static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
             String input, IProject proj, String changeSetSeparator,
             String templ, String templateElementSeparator, File bundleFile,
-            HgRepositoryLocation repository) {
+            HgRepositoryLocation repository, Direction direction) {
         String[] changeSetStrings = input.split(changeSetSeparator);
 
         Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
@@ -120,6 +115,8 @@ public class HgIncomingClient {
             // add bundle file for being able to look into the bundle.
             cs.setRepository(repository);
             cs.setBundleFile(bundleFile);
+            cs.setDirection(direction);
+
             if (cs.getChangedFiles() != null) {
                 for (FileStatus file : cs.getChangedFiles()) {
                     IResource res = proj.getFile(file.getPath());

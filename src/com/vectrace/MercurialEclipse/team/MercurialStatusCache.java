@@ -49,9 +49,11 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
@@ -90,6 +92,12 @@ public class MercurialStatusCache extends Observable implements
 
     private static Map<IResource, SortedSet<ChangeSet>> localChangeSets;
 
+    /**
+     * The Map has the following structure: RepositoryLocation -> IResource ->
+     * Changeset-Set
+     */
+    private static Map<String, Map<IResource, SortedSet<ChangeSet>>> outgoingChangeSets;
+
     private static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
 
     private static Map<IProject, Set<IResource>> projectResources;
@@ -101,8 +109,9 @@ public class MercurialStatusCache extends Observable implements
     private static Map<String, Map<IResource, SortedSet<ChangeSet>>> incomingChangeSets;
 
     private boolean localUpdateInProgress = false;
-    private boolean remoteUpdateInProgress = false;
-    private boolean statusUpdateInProgress;
+    private boolean incomingUpdateInProgress = false;
+    private boolean statusUpdateInProgress = false;
+    private boolean outgoingUpdateInProgress = false;
 
     private static Comparator<ChangeSet> changeSetIndexComparator;
 
@@ -112,6 +121,7 @@ public class MercurialStatusCache extends Observable implements
         localChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
         projectResources = new HashMap<IProject, Set<IResource>>();
         incomingChangeSets = new HashMap<String, Map<IResource, SortedSet<ChangeSet>>>();
+        outgoingChangeSets = new HashMap<String, Map<IResource, SortedSet<ChangeSet>>>();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
         new SafeUiJob("Initializing Mercurial") {
             @Override
@@ -177,12 +187,12 @@ public class MercurialStatusCache extends Observable implements
      * @return true if known, false if not.
      */
     public boolean isIncomingStatusKnown(IProject project) {
-        if (remoteUpdateInProgress) {
+        if (incomingUpdateInProgress) {
             synchronized (incomingChangeSets) {
                 // wait...
             }
         }
-        if (incomingChangeSets != null && incomingChangeSets.size()>0) {
+        if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
             for (Iterator<String> iterator = incomingChangeSets.keySet()
                     .iterator(); iterator.hasNext();) {
                 Map<IResource, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
@@ -291,7 +301,7 @@ public class MercurialStatusCache extends Observable implements
      */
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
             throws HgException {
-        if (remoteUpdateInProgress) {
+        if (incomingUpdateInProgress) {
             synchronized (incomingChangeSets) {
                 // wait
             }
@@ -324,7 +334,7 @@ public class MercurialStatusCache extends Observable implements
      */
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource,
             String repositoryLocation) throws HgException {
-        if (remoteUpdateInProgress) {
+        if (incomingUpdateInProgress) {
             synchronized (incomingChangeSets) {
                 // wait...
             }
@@ -343,6 +353,41 @@ public class MercurialStatusCache extends Observable implements
 
         if (revisions != null) {
             return Collections.unmodifiableSortedSet(incomingChangeSets.get(
+                    repositoryLocation).get(objectResource));
+        }
+        return null;
+    }
+
+    /**
+     * Gets all outgoing changesets of the given location for the given
+     * IResource.
+     * 
+     * @param objectResource
+     * @param repositoryLocation
+     * @return
+     * @throws HgException
+     */
+    public SortedSet<ChangeSet> getOutgoingChangeSets(IResource objectResource,
+            String repositoryLocation) throws HgException {
+        if (outgoingUpdateInProgress) {
+            synchronized (outgoingChangeSets) {
+                // wait...
+            }
+        }
+        Map<IResource, SortedSet<ChangeSet>> repoOutgoing = outgoingChangeSets
+                .get(repositoryLocation);
+
+        SortedSet<ChangeSet> revisions = null;
+        if (repoOutgoing != null) {
+            revisions = repoOutgoing.get(objectResource);
+        }
+        if (revisions == null) {
+            refreshOutgoingChangeSets(objectResource.getProject(),
+                    repositoryLocation);
+        }
+
+        if (revisions != null) {
+            return Collections.unmodifiableSortedSet(outgoingChangeSets.get(
                     repositoryLocation).get(objectResource));
         }
         return null;
@@ -392,9 +437,16 @@ public class MercurialStatusCache extends Observable implements
                     // incoming
                     if (repositoryLocation != null) {
                         if (monitor != null)
-                            monitor
-                                    .subTask("Loading remote revisions from repositories...");
+                            monitor.subTask("Loading incoming revisions for "
+                                    + repositoryLocation);
                         refreshIncomingChangeSets(project, repositoryLocation);
+                        if (monitor != null)
+                            monitor.worked(1);
+
+                        if (monitor != null)
+                            monitor.subTask("Loading outgoing revisions for "
+                                    + repositoryLocation);
+                        refreshOutgoingChangeSets(project, repositoryLocation);
                         if (monitor != null)
                             monitor.worked(1);
 
@@ -428,7 +480,7 @@ public class MercurialStatusCache extends Observable implements
             throws HgException {
         try {
             if (monitor != null)
-                monitor.beginTask("Refreshing " + res.getName(), 10);
+                monitor.beginTask("Refreshing " + res.getName(), 50);
             if (null != RepositoryProvider.getProvider(res.getProject(),
                     MercurialTeamProvider.ID)
                     && res.getProject().isOpen()) {
@@ -452,6 +504,14 @@ public class MercurialStatusCache extends Observable implements
         notifyObservers(res);
     }
 
+    /**
+     * Gets all incoming changesets by querying Mercurial and adds them to the
+     * caches.
+     * 
+     * @param project
+     * @param repositoryLocation
+     * @throws HgException
+     */
     public void refreshIncomingChangeSets(IProject project,
             String repositoryLocation) throws HgException {
 
@@ -464,62 +524,119 @@ public class MercurialStatusCache extends Observable implements
             // lock the cache till update is complete
             synchronized (incomingChangeSets) {
                 try {
-                    remoteUpdateInProgress = true;
+                    incomingUpdateInProgress = true;
 
-                    // clear cache of old incoming members
-                    incomingChangeSets.remove(repositoryLocation);
+                    addResourcesToCache(project, repositoryLocation,
+                            incomingChangeSets, Direction.INCOMING);
 
-                    // load latest incoming changesets from repository given in
-                    // parameter
-                    HgRepositoryLocation hgRepositoryLocation = MercurialEclipsePlugin
-                            .getRepoManager().getRepoLocation(
-                                    repositoryLocation);
+                } finally {
+                    incomingUpdateInProgress = false;
+                }
+            }
+        }
+    }
 
-                    if (hgRepositoryLocation != null) {
-                        // get new changesets from hg
-                        Map<IResource, SortedSet<ChangeSet>> incomingResources = HgIncomingClient
-                                .getHgIncoming(project, hgRepositoryLocation);
+    /**
+     * Gets all outgoing changesets by querying Mercurial and adds them to the
+     * caches.
+     * 
+     * @param project
+     * @param repositoryLocation
+     * @throws HgException
+     */
+    public void refreshOutgoingChangeSets(IProject project,
+            String repositoryLocation) throws HgException {
 
-                        // add them to cache(s)
-                        if (incomingResources != null
-                                && incomingResources.size() > 0) {
+        // check if mercurial is team provider and if we're working on an
+        // open project
+        if (null != RepositoryProvider.getProvider(project,
+                MercurialTeamProvider.ID)
+                && project.isOpen()) {
 
-                            for (Iterator<IResource> iter = incomingResources
-                                    .keySet().iterator(); iter.hasNext();) {
-                                IResource res = iter.next();
-                                SortedSet<ChangeSet> changes = incomingResources
-                                        .get(res);
+            // lock the cache till update is complete
+            synchronized (outgoingChangeSets) {
+                try {
+                    outgoingUpdateInProgress = true;
 
-                                if (changes != null && changes.size() > 0) {
-                                    SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
-                                    ChangeSet[] changeSets = changes
-                                            .toArray(new ChangeSet[changes
-                                                    .size()]);
+                    addResourcesToCache(project, repositoryLocation,
+                            outgoingChangeSets, Direction.OUTGOING);
+                } finally {
+                    outgoingUpdateInProgress = false;
+                }
+            }
+        }
+    }
 
-                                    if (changeSets != null) {
-                                        for (ChangeSet changeSet : changeSets) {
-                                            revisions.add(changeSet);
-                                            synchronized (nodeMap) {
-                                                nodeMap.put(changeSet
-                                                        .toString(), changeSet);
-                                            }
-                                        }
+    /**
+     * @param repositoryLocation
+     * @param outgoing
+     *            flag, which direction should be queried.
+     * @param changeSetMap
+     * @throws HgException
+     */
+    private void addResourcesToCache(IProject project,
+            String repositoryLocation,
+            Map<String, Map<IResource, SortedSet<ChangeSet>>> changeSetMap,
+            Direction direction) throws HgException {
+        // load latest outgoing changesets from repository given in
+        // parameter
+        HgRepositoryLocation hgRepositoryLocation = MercurialEclipsePlugin
+                .getRepoManager().getRepoLocation(repositoryLocation);
+
+        // clear cache of old members
+        final Map<IResource, SortedSet<ChangeSet>> removeMap = changeSetMap
+                .get(repositoryLocation);
+
+        if (removeMap != null) {
+            removeMap.clear();
+            changeSetMap.remove(repositoryLocation);
+        }
+
+        if (hgRepositoryLocation != null) {
+
+            // get changesets from hg
+            Map<IResource, SortedSet<ChangeSet>> resources;
+            if (direction == Direction.OUTGOING) {
+                resources = HgOutgoingClient.getOutgoing(project,
+                        hgRepositoryLocation);
+            } else {
+                resources = HgIncomingClient.getHgIncoming(project,
+                        hgRepositoryLocation);
+            }
+
+            // add them to cache(s)
+            if (resources != null && resources.size() > 0) {
+
+                for (Iterator<IResource> iter = resources.keySet().iterator(); iter
+                        .hasNext();) {
+                    IResource res = iter.next();
+                    SortedSet<ChangeSet> changes = resources.get(res);
+
+                    if (changes != null && changes.size() > 0) {
+                        SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
+                        ChangeSet[] changeSets = changes
+                                .toArray(new ChangeSet[changes.size()]);
+
+                        if (changeSets != null) {
+                            for (ChangeSet changeSet : changeSets) {
+                                revisions.add(changeSet);
+                                if (direction == Direction.INCOMING) {
+                                    synchronized (nodeMap) {
+                                        nodeMap.put(changeSet.toString(),
+                                                changeSet);
                                     }
-
-                                    Map<IResource, SortedSet<ChangeSet>> map = incomingChangeSets
-                                            .get(repositoryLocation);
-                                    if (map == null) {
-                                        map = new HashMap<IResource, SortedSet<ChangeSet>>();
-                                    }
-                                    map.put(res, revisions);
-                                    incomingChangeSets.put(repositoryLocation,
-                                            map);
                                 }
                             }
                         }
+
+                        Map<IResource, SortedSet<ChangeSet>> map = changeSetMap
+                                .get(repositoryLocation);
+                        if (map == null) {
+                            map = new HashMap<IResource, SortedSet<ChangeSet>>();
+                        }
+                        map.put(res, revisions);
+                        changeSetMap.put(repositoryLocation, map);
                     }
-                } finally {
-                    remoteUpdateInProgress = false;
                 }
             }
         }
@@ -702,7 +819,7 @@ public class MercurialStatusCache extends Observable implements
      */
     public IResource[] getIncomingMembers(IResource resource,
             String repositoryLocation) {
-        if (remoteUpdateInProgress) {
+        if (incomingUpdateInProgress) {
             synchronized (incomingChangeSets) {
                 // wait...
             }
@@ -716,10 +833,34 @@ public class MercurialStatusCache extends Observable implements
         return new IResource[0];
     }
 
+    /**
+     * Gets all resources that are changed in incoming changesets of given
+     * repository, even resources not known in local workspace.
+     * 
+     * @param resource
+     * @param repositoryLocation
+     * @return
+     */
+    public IResource[] getOutgoingMembers(IResource resource,
+            String repositoryLocation) {
+        if (outgoingUpdateInProgress) {
+            synchronized (outgoingChangeSets) {
+                // wait...
+            }
+        }
+        Map<IResource, SortedSet<ChangeSet>> changeSets = outgoingChangeSets
+                .get(repositoryLocation);
+        if (changeSets != null) {
+            return changeSets.keySet()
+                    .toArray(new IResource[changeSets.size()]);
+        }
+        return new IResource[0];
+    }
+
     public ChangeSet getNewestIncomingChangeSet(IResource resource,
             String repositoryLocation) throws HgException {
 
-        if (remoteUpdateInProgress) {
+        if (incomingUpdateInProgress) {
             synchronized (incomingChangeSets) {
                 // wait for update...
             }
@@ -728,6 +869,32 @@ public class MercurialStatusCache extends Observable implements
         if (isSupervised(resource)) {
 
             Map<IResource, SortedSet<ChangeSet>> repoMap = incomingChangeSets
+                    .get(repositoryLocation);
+
+            SortedSet<ChangeSet> revisions = null;
+            if (repoMap != null) {
+                revisions = repoMap.get(resource);
+            }
+
+            if (revisions != null && revisions.size() > 0) {
+                return revisions.last();
+            }
+        }
+        return null;
+    }
+
+    public ChangeSet getNewestOutgoingChangeSet(IResource resource,
+            String repositoryLocation) throws HgException {
+
+        if (outgoingUpdateInProgress) {
+            synchronized (outgoingChangeSets) {
+                // wait for update...
+            }
+        }
+
+        if (isSupervised(resource)) {
+
+            Map<IResource, SortedSet<ChangeSet>> repoMap = outgoingChangeSets
                     .get(repositoryLocation);
 
             SortedSet<ChangeSet> revisions = null;
@@ -923,7 +1090,7 @@ public class MercurialStatusCache extends Observable implements
      * @return
      */
     public ChangeSet getChangeSet(String changeSet) {
-        if (this.localUpdateInProgress || this.remoteUpdateInProgress) {
+        if (this.localUpdateInProgress || this.incomingUpdateInProgress) {
             synchronized (nodeMap) {
                 // wait
             }
@@ -933,7 +1100,7 @@ public class MercurialStatusCache extends Observable implements
 
     public ChangeSet getChangeSet(IResource res, int changesetIndex)
             throws HgException {
-        if (this.localUpdateInProgress || this.remoteUpdateInProgress) {
+        if (this.localUpdateInProgress || this.incomingUpdateInProgress) {
             synchronized (nodeMap) {
                 // wait
             }

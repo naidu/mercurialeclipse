@@ -13,64 +13,66 @@ package com.vectrace.MercurialEclipse.synchronize;
 import java.util.BitSet;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 
 public class MercurialResourceVariantComparator implements
-		IResourceVariantComparator {
+        IResourceVariantComparator {
 
-	private static MercurialResourceVariantComparator instance;
-	private static MercurialStatusCache statusCache = MercurialStatusCache
-			.getInstance();
+    private static MercurialStatusCache statusCache = MercurialStatusCache
+            .getInstance();
 
-	private MercurialResourceVariantComparator() {
-	}
+    public MercurialResourceVariantComparator() {
+    }
 
-	public static MercurialResourceVariantComparator getInstance() {
-		if (instance == null) {
-			instance = new MercurialResourceVariantComparator();
-		}
-		return instance;
-	}
+    public boolean compare(IResource local, IResourceVariant remote) {
+        BitSet bitSet = statusCache.getStatus(local);
+        if (bitSet != null) {
+            int status = bitSet.length() - 1;
+            if (status == MercurialStatusCache.BIT_CLEAN) {
+                String localVersion = "0:unknown";
+                String remoteVersion = "0:unknown";
+                try {
+                    IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) remote
+                            .getStorage(null);
+                    ChangeSet cs = remoteIStorage.getChangeSet();
 
-	public boolean compare(IResource local, IResourceVariant remote) {
-	    BitSet bitSet = statusCache.getStatus(local);
-		if (bitSet != null) {
-			int status = bitSet.length() - 1;
-			if (status == MercurialStatusCache.BIT_CLEAN) {
-				String localVersion = "0:unknown";
-				String remoteVersion = "0:unknown";
-				try {
-					ChangeSet cs = statusCache.getNewestLocalChangeSet(local);
+                    localVersion = cs.getChangeset();
 
-					if (cs == null) {
-						return false;
-					}
-					localVersion = cs.getChangeset();
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-				remoteVersion = remote.getContentIdentifier();
-				boolean equal = localVersion.equals(remoteVersion);
-				return equal;
-			}
-		}
-		return false;
+                    // if this is outgoing, it's can't be equal to any other
+                    // changeset
+                    if (cs.getDirection() == Direction.OUTGOING) {
+                        return false;
+                    }
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logError(e);
+                } catch (TeamException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+                remoteVersion = remote.getContentIdentifier();
+                boolean equal = localVersion.equals(remoteVersion);
+                return equal;
+            }
+        }
+        return false;
 
-	}
+    }
 
-	public boolean compare(IResourceVariant base, IResourceVariant remote) {
-		return base.getContentIdentifier()
-				.equals(remote.getContentIdentifier());
-	}
+    public boolean compare(IResourceVariant base, IResourceVariant remote) {
+        return base.getContentIdentifier()
+                .equals(remote.getContentIdentifier());
+    }
 
-	public boolean isThreeWay() {
-		return true;
-	}
+    public boolean isThreeWay() {
+        return true;
+    }
 
 }

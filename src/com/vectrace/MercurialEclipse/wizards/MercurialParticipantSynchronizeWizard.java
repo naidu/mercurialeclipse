@@ -10,9 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.util.Properties;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
@@ -29,8 +32,9 @@ import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
  */
 public class MercurialParticipantSynchronizeWizard extends
         SubscriberParticipantWizard implements IWizard {
-    private IWizard importWizard = new CloneRepoWizard();
+    private final IWizard importWizard = new CloneRepoWizard();
     private ConfigurationWizardMainPage page;
+    private Properties pageProperties = null;
 
     public MercurialParticipantSynchronizeWizard() {
         IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
@@ -38,14 +42,15 @@ public class MercurialParticipantSynchronizeWizard extends
         IDialogSettings section = workbenchSettings
                 .getSection("MercurialParticipantSynchronizeWizard");
         if (section == null) {
-            section = workbenchSettings.addNewSection("MercurialParticipantSynchronizeWizard");            
+            section = workbenchSettings
+                    .addNewSection("MercurialParticipantSynchronizeWizard");
         }
         setDialogSettings(section);
     }
 
     @Override
     protected SubscriberParticipant createParticipant(ISynchronizeScope scope) {
-        return new MercurialSynchronizeParticipant(scope, page.getProperties()
+        return new MercurialSynchronizeParticipant(scope, pageProperties
                 .getProperty("url"));
     }
 
@@ -84,6 +89,8 @@ public class MercurialParticipantSynchronizeWizard extends
 
     @Override
     public boolean performFinish() {
+        page.finish(new NullProgressMonitor());
+        this.pageProperties = page.getProperties();
         return super.performFinish();
     }
 
