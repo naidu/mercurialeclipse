@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - initial API and implementation
+ *     Bastian Doetsch              - adaptions&additions
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -21,9 +22,13 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
@@ -33,7 +38,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
- * Wizard page for entering information about a SVN repository location. This
+ * Wizard page for entering information about a Hg repository location. This
  * wizard can be initialized using setProperties or using setDialogSettings
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
@@ -123,7 +128,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      *            the parent of the created widgets
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 2);
+        Composite composite = createComposite(parent, 3);
 
         Listener listener = new Listener() {
             public void handleEvent(Event event) {
@@ -131,13 +136,26 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         };
 
-        Group g = createGroup(composite, "Repository location");
+        Group g = createGroup(composite, "Repository location", 3);
 
         // repository Url
         createLabel(g, "URL");
         urlCombo = createEditableCombo(g);
         urlCombo.addListener(SWT.Selection, listener);
         urlCombo.addListener(SWT.Modify, listener);
+
+        Button browseButton = createPushButton(g, "Browse", 1);
+        browseButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                DirectoryDialog dialog = new DirectoryDialog(getShell());
+                dialog.setMessage("Select directory.");
+                String dir = dialog.open();
+                if (dir != null) {
+                    urlCombo.setText(dir);
+                }
+            }
+        });
 
         if (showCredentials) {
             g = createGroup(composite, "Authentication");
@@ -266,7 +284,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             hostNames = dialogSettings.getArray(STORE_URL_ID);
             hostNames = addToHistory(hostNames, urlCombo.getText());
             dialogSettings.put(STORE_URL_ID, hostNames);
-        }        
+        }
     }
 
     /**
@@ -336,7 +354,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     }
 
     /**
-     * @param showCredentials the showCredentials to set
+     * @param showCredentials
+     *            the showCredentials to set
      */
     public void setShowCredentials(boolean showCredentials) {
         this.showCredentials = showCredentials;

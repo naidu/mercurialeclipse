@@ -116,6 +116,15 @@ public abstract class HgWizardPage extends WizardPage {
         return button;
     }
 
+    protected Button createPushButton(Composite parent, String label, int span) {
+        Button button = new Button(parent, SWT.PUSH);
+        button.setText(label);
+        GridData data = new GridData();
+        data.horizontalSpan = span;
+        button.setLayoutData(data);
+        return button;
+    }
+
     /**
      * Utility method that creates a combo box
      * 
@@ -436,17 +445,21 @@ public abstract class HgWizardPage extends WizardPage {
         };
     }
 
-    protected Group createGroup(Composite parent, String text) {
+    protected Group createGroup(Composite parent, String text, int span) {
         Group group = new Group(parent, SWT.NULL);
         group.setText(text);
         GridData data = new GridData(GridData.FILL_HORIZONTAL);
-        data.horizontalSpan = 2;
+        data.horizontalSpan = span;
         // data.widthHint = GROUP_WIDTH;
 
         group.setLayoutData(data);
         GridLayout layout = new GridLayout();
-        layout.numColumns = 2;
+        layout.numColumns = span;
         group.setLayout(layout);
         return group;
+    }
+
+    protected Group createGroup(Composite parent, String text) {
+        return createGroup(parent, text, 2);
     }
 }
