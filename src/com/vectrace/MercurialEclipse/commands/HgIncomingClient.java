@@ -38,14 +38,15 @@ public class HgIncomingClient {
     private static final String TAGS = "{tags}";
     private static final String SEP_CHANGE_SET = ">";
     private static final String SEP_TEMPLATE_ELEMENT = "<";
-    public static final String TEMPLATE = TAGS + SEP_TEMPLATE_ELEMENT + REV
-            + SEP_TEMPLATE_ELEMENT + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE
-            + SEP_TEMPLATE_ELEMENT + DATE_ISODATE + SEP_TEMPLATE_ELEMENT
-            + DATE_AGE + SEP_TEMPLATE_ELEMENT + AUTHOR_PERSON
-            + SEP_TEMPLATE_ELEMENT + DESC + SEP_TEMPLATE_ELEMENT + PARENTS
-            + SEP_TEMPLATE_ELEMENT + FILES + SEP_TEMPLATE_ELEMENT + FILE_ADDS
-            + SEP_TEMPLATE_ELEMENT + FILE_DELS + SEP_TEMPLATE_ELEMENT
-            + SEP_CHANGE_SET;
+    private static final String START = "°";
+    public static final String TEMPLATE = START + SEP_TEMPLATE_ELEMENT + TAGS
+            + SEP_TEMPLATE_ELEMENT + REV + SEP_TEMPLATE_ELEMENT + NODE_SHORT
+            + SEP_TEMPLATE_ELEMENT + NODE + SEP_TEMPLATE_ELEMENT + DATE_ISODATE
+            + SEP_TEMPLATE_ELEMENT + DATE_AGE + SEP_TEMPLATE_ELEMENT
+            + AUTHOR_PERSON + SEP_TEMPLATE_ELEMENT + DESC
+            + SEP_TEMPLATE_ELEMENT + PARENTS + SEP_TEMPLATE_ELEMENT + FILES
+            + SEP_TEMPLATE_ELEMENT + FILE_ADDS + SEP_TEMPLATE_ELEMENT
+            + FILE_DELS + SEP_TEMPLATE_ELEMENT + SEP_CHANGE_SET;
 
     /**
      * Gets all File Revisions that are incoming and saves them in a bundle
@@ -64,8 +65,8 @@ public class HgIncomingClient {
         File bundleFile = getBundleFile(proj, repository);
         File temp = new File(proj.getLocation() + "bundle.temp");
         try {
-            command.addOptions("--debug", "--template", TEMPLATE, "--bundle", temp
-                    .getCanonicalPath(), repository.getUrl());
+            command.addOptions("--debug", "--template", TEMPLATE, "--bundle",
+                    temp.getCanonicalPath(), repository.getUrl());
             String result = command.executeToString();
             if (result.contains("no changes found")) {
                 return null;
@@ -96,17 +97,25 @@ public class HgIncomingClient {
     public static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
             String input, IProject proj, File bundleFile,
             HgRepositoryLocation repository, Direction direction) {
-        return createMercurialRevisions(input, proj, SEP_CHANGE_SET, TEMPLATE,
-                SEP_TEMPLATE_ELEMENT, bundleFile, repository, direction);
+        return createMercurialRevisions(input, proj, TEMPLATE, SEP_CHANGE_SET,
+                SEP_TEMPLATE_ELEMENT, direction, repository, bundleFile, START);
     }
 
     private static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
-            String input, IProject proj, String changeSetSeparator,
-            String templ, String templateElementSeparator, File bundleFile,
-            HgRepositoryLocation repository, Direction direction) {
-        String[] changeSetStrings = input.split(changeSetSeparator);
+            String input, IProject proj, String templ,
+            String changeSetSeparator, String templateElementSeparator,
+            Direction direction, HgRepositoryLocation repository,
+            File bundleFile, String contentStartMarker) {
 
         Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
+
+        if (input == null || input.length() == 0
+                || input.indexOf(contentStartMarker) == -1) {
+            return fileRevisions;
+        }
+
+        String content = input.substring(input.indexOf(contentStartMarker));
+        String[] changeSetStrings = content.split(changeSetSeparator);
 
         for (String changeSet : changeSetStrings) {
             ChangeSet cs = getChangeSet(changeSet, templ,
