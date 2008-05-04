@@ -14,6 +14,8 @@
 
 package com.vectrace.MercurialEclipse.storage;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -27,15 +29,21 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
  * or remote.
  */
 public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
+    private URL url;
     private String location;
     private String user;
     private String password;
 
-    public HgRepositoryLocation(String url) {
+    public HgRepositoryLocation(String url) throws MalformedURLException {
         this.location = url;
+        try {
+            this.url = new URL(location);
+        } catch (MalformedURLException e) {
+            this.url = new URL("file:///".concat(location));
+        }
     }
     
-    public HgRepositoryLocation(String url, String user, String password){
+    public HgRepositoryLocation(String url, String user, String password) throws MalformedURLException{
         this(url);
         this.user=user;
         this.password=password;
@@ -80,18 +88,23 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
      */
     @Override
     public boolean equals(Object obj) {
-        if (this == obj)
+        if (this == obj) {
             return true;
-        if (obj == null)
+        }
+        if (obj == null) {
             return false;
-        if (!(obj instanceof HgRepositoryLocation))
+        }
+        if (!(obj instanceof HgRepositoryLocation)) {
             return false;
+        }
         final HgRepositoryLocation other = (HgRepositoryLocation) obj;
         if (location == null) {
-            if (other.location != null)
+            if (other.location != null) {
                 return false;
-        } else if (!location.equals(other.location))
+            }
+        } else if (!location.equals(other.location)) {
             return false;
+        }
         return true;
     }
     
@@ -102,25 +115,28 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
      *   password The password used for the connection (optional)
      *   url The url where the repository resides
      *   rootUrl The repository root url
+     * @throws MalformedURLException 
      */
     public static HgRepositoryLocation fromProperties(Properties configuration)
-        throws HgException {
+        throws HgException, MalformedURLException {
         // We build a string to allow validation of the components that are provided to us
     
         String user = configuration.getProperty("user");  
-        if ((user == null) || (user.length() == 0))
+        if ((user == null) || (user.length() == 0)) {
             user = null;
+        }
         String password = configuration.getProperty("password");  
-        if (user == null)
+        if (user == null) {
             password = null;
+        }
         String rootUrl = configuration.getProperty("rootUrl");
-        if ((rootUrl == null) || (rootUrl.length() == 0))
+        if ((rootUrl == null) || (rootUrl.length() == 0)) {
             rootUrl = null;
+        }
         String url = configuration.getProperty("url");  
-        if (url == null)
-            throw new HgException("URL must not be null.");  
-            
-        
+        if (url == null) {
+            throw new HgException("URL must not be null.");
+        }                      
         return new HgRepositoryLocation(url, user, password);
     }
 
@@ -151,6 +167,13 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
     @Override
     public ImageDescriptor getImageDescriptor(Object object) {        
         return super.getImageDescriptor(object);
+    }
+
+    /**
+     * @return the urlObject
+     */
+    public URL getUrlObject() {
+        return url;
     }
     
 }

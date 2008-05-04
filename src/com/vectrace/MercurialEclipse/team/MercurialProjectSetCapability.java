@@ -18,11 +18,12 @@ import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.ProjectSetCapability;
 import org.eclipse.team.core.ProjectSetSerializationContext;
 import org.eclipse.team.core.TeamException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.AddToWorkspaceAction;
 
 /**
@@ -80,7 +81,8 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 		try {
 			action.run(monitor);
 		} catch (Exception e) {
-			MercurialEclipsePlugin.logError(e);
+		    MessageDialog.openError(Display.getCurrent().getActiveShell(),
+                    "Error while importing project sets", e.getMessage());
 		}
 		return action.getProjectsCreated();
 	}

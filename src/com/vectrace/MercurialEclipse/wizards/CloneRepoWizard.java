@@ -15,12 +15,16 @@
 
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.MalformedURLException;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
@@ -65,7 +69,14 @@ public class CloneRepoWizard extends SyncRepoWizard {
   {
     final IWorkspace workspace = ResourcesPlugin.getWorkspace();
     final IProject project = workspace.getRoot().getProject(projectName);
-    final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
+    HgRepositoryLocation repo;
+    try {
+        repo = new HgRepositoryLocation(locationUrl);
+    } catch (MalformedURLException e) {
+        MessageDialog.openError(Display.getCurrent().getActiveShell(),
+                "Malformed URL:", e.getMessage());
+        return false;
+    }
     
     // Check that this project doesn't exist.
     if( project.getLocation() != null )

@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -122,8 +123,9 @@ public class HgRepositoryLocationManager {
 
     public Set<HgRepositoryLocation> getAllProjectRepoLocations(IProject project) {
         SortedSet<HgRepositoryLocation> loc = projectRepos.get(project);
-        if (loc == null)
+        if (loc == null) {
             return Collections.emptySet();
+        }
         return Collections.unmodifiableSet(loc);
     }
 
@@ -340,8 +342,14 @@ public class HgRepositoryLocationManager {
     public HgRepositoryLocation createRepository(Properties configuration)
             throws HgException {
         // Create a new repository location
-        HgRepositoryLocation location = HgRepositoryLocation
-                .fromProperties(configuration);
+        HgRepositoryLocation location;
+        try {
+            location = HgRepositoryLocation
+                    .fromProperties(configuration);
+        } catch (MalformedURLException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException("Couldn't create repository location.",e);
+        }
 
         // Check the cache for an equivalent instance and if there is one, throw
         // an exception

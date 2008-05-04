@@ -14,6 +14,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
@@ -460,11 +461,15 @@ public class MercurialStatusCache extends Observable implements
                             monitor
                                     .subTask("Adding remote repository to project repositories...");
                         }
-                        MercurialEclipsePlugin.getRepoManager()
-                                .addRepoLocation(
-                                        project,
-                                        new HgRepositoryLocation(
-                                                repositoryLocation));
+                        try {
+                            MercurialEclipsePlugin.getRepoManager()
+                                    .addRepoLocation(
+                                            project,
+                                            new HgRepositoryLocation(
+                                                    repositoryLocation));
+                        } catch (MalformedURLException e) {
+                            MercurialEclipsePlugin.logWarning("couldn't add repository to location manager",e);
+                        }
                         if (monitor != null) {
                             monitor.worked(1);
                         }

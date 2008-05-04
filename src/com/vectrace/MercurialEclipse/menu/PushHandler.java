@@ -12,9 +12,7 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.wizards.PushRepoWizard;
 
@@ -23,9 +21,7 @@ public class PushHandler extends SingleResourceHandler {
     @Override
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
-        PushRepoWizard pushRepoWizard = new PushRepoWizard();
-        pushRepoWizard.init(PlatformUI.getWorkbench(), new StructuredSelection(
-                resource));
+        PushRepoWizard pushRepoWizard = new PushRepoWizard(resource);        
         WizardDialog pushWizardDialog = new WizardDialog(getShell(),
                 pushRepoWizard);
         pushWizardDialog.open();

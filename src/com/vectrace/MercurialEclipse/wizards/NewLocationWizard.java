@@ -12,9 +12,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Properties;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.dialogs.IDialogSettings;
-import org.eclipse.jface.wizard.Wizard;
+import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -25,53 +23,35 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
  * Wizard to add a new location. Uses ConfigurationWizardMainPage for entering
  * informations about SVN repository location
  */
-public class NewLocationWizard extends Wizard {
-    private ConfigurationWizardMainPage mainPage;
-
-    private Properties properties = null;
-
+public class NewLocationWizard extends HgWizard {
+    
     public NewLocationWizard() {
-        IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
-                .getDialogSettings();
-        IDialogSettings section = workbenchSettings
-                .getSection("NewLocationWizard");
-        if (section == null) {
-            section = workbenchSettings.addNewSection("NewLocationWizard");
-        }
-        setDialogSettings(section);
-        setWindowTitle("Create new repository location");
+        super("Create new repository location");
     }
 
     public NewLocationWizard(Properties initialProperties) {
         this();
         this.properties = initialProperties;
     }
-
-    /**
-     * Creates the wizard pages
-     */
+    
     @Override
     public void addPages() {
-        mainPage = new ConfigurationWizardMainPage("repositoryPage1",
-                "Create new repository", MercurialEclipsePlugin
-                        .getImageDescriptor("wizards/share_wizban.png"));
-        if (properties != null) {
-            mainPage.setProperties(properties);
-        }
-        mainPage.setDescription("Here you can create a new repository location.");
-        mainPage.setDialogSettings(getDialogSettings());
+        mainPage = createPage("RepoCreationPage", "Create new repository",
+                "wizards/share_wizban.png",
+                "Here you can create a new repository location.");
         addPage(mainPage);
     }
 
-    /*
+    /**
      * @see IWizard#performFinish
      */
     @Override
     public boolean performFinish() {
-        mainPage.finish(new NullProgressMonitor());
+        super.performFinish();
         Properties props = mainPage.getProperties();
         final HgRepositoryLocation[] root = new HgRepositoryLocation[1];
-        HgRepositoryLocationManager provider = MercurialEclipsePlugin.getRepoManager();
+        HgRepositoryLocationManager provider = MercurialEclipsePlugin
+                .getRepoManager();
         try {
             root[0] = provider.createRepository(props);
             provider.addRepoLocation(root[0]);

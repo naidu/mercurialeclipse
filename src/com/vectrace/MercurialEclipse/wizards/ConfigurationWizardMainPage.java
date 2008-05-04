@@ -37,7 +37,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * wizard can be initialized using setProperties or using setDialogSettings
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
-    private final boolean showCredentials = false;
+    protected boolean showCredentials = false;
 
     // Widgets
 
@@ -49,7 +49,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     // url of the repository we want to add
     private Combo urlCombo;
 
-    private static final int COMBO_HISTORY_LENGTH = 5;
+    private static final int COMBO_HISTORY_LENGTH = 10;
 
     private Properties properties = null;
 
@@ -98,8 +98,9 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         // since only one new item was added, we can be over the limit
         // by at most one item
-        if (l.size() > COMBO_HISTORY_LENGTH)
+        if (l.size() > COMBO_HISTORY_LENGTH) {
             l.remove(COMBO_HISTORY_LENGTH);
+        }
 
         String[] r = new String[l.size()];
         l.toArray(r);
@@ -251,19 +252,21 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private void saveWidgetValues() {
         // Update history
         IDialogSettings dialogSettings = getDialogSettings();
+        String[] hostNames = null;
+        hostNames = updateHostNames(hostNames);
         if (settings != null) {
             if (showCredentials) {
                 String[] userNames = dialogSettings.getArray(STORE_USERNAME_ID);
-                if (userNames == null)
+                if (userNames == null) {
                     userNames = new String[0];
+                }
                 userNames = addToHistory(userNames, userCombo.getText());
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
             }
-            String[] hostNames = dialogSettings.getArray(STORE_URL_ID);
+            hostNames = dialogSettings.getArray(STORE_URL_ID);
             hostNames = addToHistory(hostNames, urlCombo.getText());
-            hostNames = updateHostNames(hostNames);
             dialogSettings.put(STORE_URL_ID, hostNames);
-        }
+        }        
     }
 
     /**
@@ -323,6 +326,20 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     @Override
     public boolean canFlipToNextPage() {
         return super.canFlipToNextPage();
+    }
+
+    /**
+     * @return the showCredentials
+     */
+    public boolean isShowCredentials() {
+        return showCredentials;
+    }
+
+    /**
+     * @param showCredentials the showCredentials to set
+     */
+    public void setShowCredentials(boolean showCredentials) {
+        this.showCredentials = showCredentials;
     }
 
 }

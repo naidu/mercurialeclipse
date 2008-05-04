@@ -13,6 +13,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.MalformedURLException;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -64,7 +66,14 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
   @Override
 public boolean performFinish()
   {
-    final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
+    HgRepositoryLocation repo;
+    try {
+        repo = new HgRepositoryLocation(locationUrl);
+    } catch (MalformedURLException e) {
+        MessageDialog.openInformation(getShell(), "URL is malformed.",e.getMessage());
+        MercurialEclipsePlugin.logInfo(e.getMessage(), e);
+        return false;
+    }
     
     // Check that this project exist.
     if( project.getLocation() == null )
