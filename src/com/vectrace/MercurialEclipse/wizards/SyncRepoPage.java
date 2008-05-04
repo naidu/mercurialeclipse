@@ -43,7 +43,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 
 
-public class SyncRepoPage extends ConfigurationWizardMainPage implements IWizardPage
+public class SyncRepoPage extends HgWizardPage implements IWizardPage
 {
 
   private Label    locationLabel;
@@ -133,8 +133,7 @@ public boolean isPageComplete()
   /* (non-Javadoc)
    * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
    */
-  @Override
-public void createControl(Composite parent)
+  public void createControl(Composite parent)
   {
     Composite outerContainer = new Composite(parent,SWT.NONE);
     GridLayout layout = new GridLayout();

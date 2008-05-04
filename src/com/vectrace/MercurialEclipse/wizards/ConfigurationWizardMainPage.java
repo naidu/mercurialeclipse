@@ -337,7 +337,9 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
-            urlCombo.setFocus();
+            if (urlCombo != null) {
+                urlCombo.setFocus();
+            }
         }
     }
 
