@@ -56,6 +56,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * Caches the Mercurial Status of each file and offers methods for retrieving,
@@ -347,9 +348,14 @@ public class MercurialStatusCache extends Observable implements
         if (repoIncoming != null) {
             revisions = repoIncoming.get(objectResource);
         }
-        if (revisions == null) {
+        boolean refreshed = false;
+        if (revisions == null && !refreshed) {
             refreshIncomingChangeSets(objectResource.getProject(),
                     repositoryLocation);
+            repoIncoming = incomingChangeSets.get(repositoryLocation);
+            if (repoIncoming != null) {
+                revisions = repoIncoming.get(objectResource);
+            }
         }
 
         if (revisions != null) {
@@ -594,8 +600,10 @@ public class MercurialStatusCache extends Observable implements
             Direction direction) throws HgException {
         // load latest outgoing changesets from repository given in
         // parameter
-        HgRepositoryLocation hgRepositoryLocation = MercurialEclipsePlugin
-                .getRepoManager().getRepoLocation(repositoryLocation);
+        HgRepositoryLocationManager repoManager = MercurialEclipsePlugin
+                        .getRepoManager();
+        
+        HgRepositoryLocation hgRepositoryLocation = repoManager.getRepoLocation(repositoryLocation);
 
         // clear cache of old members
         final Map<IResource, SortedSet<ChangeSet>> removeMap = changeSetMap
@@ -606,51 +614,59 @@ public class MercurialStatusCache extends Observable implements
             changeSetMap.remove(repositoryLocation);
         }
 
-        if (hgRepositoryLocation != null) {
+        if (hgRepositoryLocation == null) {
+            try {
+                hgRepositoryLocation = new HgRepositoryLocation(repositoryLocation);
+                repoManager.addRepoLocation(hgRepositoryLocation);
+            } catch (MalformedURLException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new HgException(e.getLocalizedMessage(),e);
+            }
+        }
 
             // get changesets from hg
-            Map<IResource, SortedSet<ChangeSet>> resources;
-            if (direction == Direction.OUTGOING) {
-                resources = HgOutgoingClient.getOutgoing(project,
-                        hgRepositoryLocation);
-            } else {
-                resources = HgIncomingClient.getHgIncoming(project,
-                        hgRepositoryLocation);
-            }
+        Map<IResource, SortedSet<ChangeSet>> resources;
+        if (direction == Direction.OUTGOING) {
+            resources = HgOutgoingClient.getOutgoing(project,
+                    hgRepositoryLocation);
+        } else {
+            resources = HgIncomingClient.getHgIncoming(project,
+                    hgRepositoryLocation);
+        }
 
-            // add them to cache(s)
-            if (resources != null && resources.size() > 0) {
+        // add them to cache(s)
+        if (resources != null && resources.size() > 0) {
 
-                for (Iterator<IResource> iter = resources.keySet().iterator(); iter
-                        .hasNext();) {
-                    IResource res = iter.next();
-                    SortedSet<ChangeSet> changes = resources.get(res);
+            for (Iterator<IResource> iter = resources.keySet().iterator(); iter
+                    .hasNext();) {
+                IResource res = iter.next();
+                SortedSet<ChangeSet> changes = resources.get(res);
 
-                    if (changes != null && changes.size() > 0) {
-                        SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
-                        ChangeSet[] changeSets = changes
-                                .toArray(new ChangeSet[changes.size()]);
+                if (changes != null && changes.size() > 0) {
+                    SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
+                    ChangeSet[] changeSets = changes
+                            .toArray(new ChangeSet[changes.size()]);
 
-                        if (changeSets != null) {
-                            for (ChangeSet changeSet : changeSets) {
-                                revisions.add(changeSet);
-                                if (direction == Direction.INCOMING) {
-                                    synchronized (nodeMap) {
-                                        nodeMap.put(changeSet.toString(),
-                                                changeSet);
-                                    }
+                    if (changeSets != null) {
+                        for (ChangeSet changeSet : changeSets) {
+                            revisions.add(changeSet);
+                            if (direction == Direction.INCOMING) {
+                                synchronized (nodeMap) {
+                                    nodeMap
+                                            .put(changeSet.toString(),
+                                                    changeSet);
                                 }
                             }
                         }
-
-                        Map<IResource, SortedSet<ChangeSet>> map = changeSetMap
-                                .get(repositoryLocation);
-                        if (map == null) {
-                            map = new HashMap<IResource, SortedSet<ChangeSet>>();
-                        }
-                        map.put(res, revisions);
-                        changeSetMap.put(repositoryLocation, map);
                     }
+
+                    Map<IResource, SortedSet<ChangeSet>> map = changeSetMap
+                            .get(repositoryLocation);
+                    if (map == null) {
+                        map = new HashMap<IResource, SortedSet<ChangeSet>>();
+                    }
+                    map.put(res, revisions);
+                    changeSetMap.put(repositoryLocation, map);
                 }
             }
         }
