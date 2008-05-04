@@ -348,8 +348,7 @@ public class MercurialStatusCache extends Observable implements
         if (repoIncoming != null) {
             revisions = repoIncoming.get(objectResource);
         }
-        boolean refreshed = false;
-        if (revisions == null && !refreshed) {
+        if (revisions == null) {
             refreshIncomingChangeSets(objectResource.getProject(),
                     repositoryLocation);
             repoIncoming = incomingChangeSets.get(repositoryLocation);
