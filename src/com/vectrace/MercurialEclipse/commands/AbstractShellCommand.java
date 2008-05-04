@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * Bastian Doetsch	implementation (with lots of stuff pulled up from HgCommand)
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
