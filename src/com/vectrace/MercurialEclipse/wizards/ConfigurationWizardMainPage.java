@@ -90,9 +90,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      *            the current history
      * @param newEntry
      *            the entry to add to the history
+     * @param limitHistory number of max entries, -1 if no limit            
      * @return the history with the new entry appended
      */
-    private String[] addToHistory(String[] history, String newEntry) {
+    private String[] addToHistory(String[] history, String newEntry, int limitHistory) {
         ArrayList<String> l = new ArrayList<String>();
         if (history != null) {
             l.addAll(Arrays.asList(history));
@@ -103,7 +104,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         // since only one new item was added, we can be over the limit
         // by at most one item
-        if (l.size() > COMBO_HISTORY_LENGTH) {
+        if (l.size() > COMBO_HISTORY_LENGTH && limitHistory > 0) {
             l.remove(COMBO_HISTORY_LENGTH);
         }
 
@@ -278,11 +279,11 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 if (userNames == null) {
                     userNames = new String[0];
                 }
-                userNames = addToHistory(userNames, userCombo.getText());
+                userNames = addToHistory(userNames, userCombo.getText(), COMBO_HISTORY_LENGTH);
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
             }
             hostNames = dialogSettings.getArray(STORE_URL_ID);
-            hostNames = addToHistory(hostNames, urlCombo.getText());
+            hostNames = addToHistory(hostNames, urlCombo.getText(), -1);
             dialogSettings.put(STORE_URL_ID, hostNames);
         }
     }
@@ -301,7 +302,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     .iterator(); iterator.hasNext(); i++) {
                 HgRepositoryLocation hgRepositoryLocation = iterator.next();
                 newHostNames = addToHistory(newHostNames, hgRepositoryLocation
-                        .getUrl());
+                        .getUrl(),-1);
             }
         }
         return newHostNames;
