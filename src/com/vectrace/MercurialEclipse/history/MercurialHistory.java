@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.SortedSet;
@@ -21,13 +20,10 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
@@ -133,16 +129,9 @@ public class MercurialHistory extends FileHistory {
             List<GChangeSet> gChangeSets = null;
             if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
                 changeSets.addAll(incomingChangeSets);
-                try {
-                    gChangeSets = new HgGLogClient(resource, incomingChangeSets
-                            .first().getBundleFile().getCanonicalFile()
-                            .getCanonicalPath()).update(changeSets)
+               gChangeSets = new HgGLogClient(resource).update(changeSets)
                             .getChangeSets();
-                } catch (IOException e) {
-                    throw new CoreException(new Status(IStatus.ERROR,
-                            MercurialEclipsePlugin.ID,
-                            "Cannot get bundle file.", e));
-                }
+                
             } else {
                 gChangeSets = new HgGLogClient(resource).update(changeSets)
                         .getChangeSets();
