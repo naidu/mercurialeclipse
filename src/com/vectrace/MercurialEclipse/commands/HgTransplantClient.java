@@ -25,6 +25,7 @@ public class HgTransplantClient {
     public static void transplant(IProject project, List<String> nodeIds,
             String source, boolean branch) throws HgException {
         HgCommand command = new HgCommand("transplant", project, false);
+        command.addOptions("--config extensions.transplant=");
         command.addOptions("--log");
         if (branch) {
             command.addOptions("-b");
