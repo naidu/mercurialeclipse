@@ -81,10 +81,16 @@ public class PushRepoWizard extends HgWizard {
             }
 
             PushRepoPage pushRepoPage = (PushRepoPage) mainPage;
-            
+
+            int timeout = 300000;
+            if (!pushRepoPage.isTimeout()) {
+                timeout = Integer.MAX_VALUE;
+            }
+
             String result = HgPushPullClient.push(project, repo,
-                    repo.getUser(), repo.getPassword(), pushRepoPage.isForce(), pushRepoPage.getRevision());
-            
+                    repo.getUser(), repo.getPassword(), pushRepoPage.isForce(),
+                    pushRepoPage.getRevision(), timeout);
+
             if (result.length() != 0) {
                 Shell shell;
                 IWorkbench workbench;

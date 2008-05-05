@@ -88,8 +88,18 @@ public abstract class AbstractShellCommand {
             this.options.add(option);
         }
     }
-
+    
     protected byte[] executeToBytes() throws HgException {
+        return executeToBytes(30000);
+    }
+
+    /**
+     * Execute a command.
+     * @param timeout -1 if no timeout, else the timeout in ms.
+     * @return
+     * @throws HgException
+     */
+    protected byte[] executeToBytes(int timeout) throws HgException {
         try {
             long start = System.currentTimeMillis();
             List<String> cmd = getCommands();

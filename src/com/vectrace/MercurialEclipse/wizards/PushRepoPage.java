@@ -46,6 +46,8 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
     private IProject project;
     private String revision;
     private Button revCheckBox;
+    private Button timeoutCheckBox;
+    private boolean timeout;
 
     public PushRepoPage(String pageName, String title,
             ImageDescriptor titleImage, IProject project) {
@@ -60,7 +62,8 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
 
         // now the options
         Group optionGroup = createGroup(composite, "Please select the options");
-        this.forceCheckBox = createCheckBox(optionGroup, "Force Push");
+        this.timeoutCheckBox = createCheckBox(optionGroup, "Abort push when a timeout occurs (might be dangerous)");
+        this.forceCheckBox = createCheckBox(optionGroup, "Force Push");        
         this.revCheckBox = createCheckBox(optionGroup, "Push up to a revision");
 
         Listener revCheckBoxListener = new Listener() {
@@ -118,6 +121,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
     @Override
     public boolean finish(IProgressMonitor monitor) {
         this.force = forceCheckBox.getSelection();
+        this.timeout = timeoutCheckBox.getSelection();
         if (revCheckBox.getSelection()) {
             ChangeSet cs = (ChangeSet) ((IStructuredSelection) revisionListView
                     .getSelection()).getFirstElement();
@@ -150,6 +154,13 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
      */
     public String getRevision() {
         return revision;
+    }
+
+    /**
+     * @return the timeout
+     */
+    public boolean isTimeout() {
+        return timeout;
     }
 
 }

@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class HgPushPullClient {
 
     public static String push(IProject project, HgRepositoryLocation location,
-            String user, String pass, boolean force, String revision)
+            String user, String pass, boolean force, String revision, int timeout)
             throws HgException {
         try {
             HgCommand command = new HgCommand("push", project, true);
@@ -51,8 +51,8 @@ public class HgPushPullClient {
             URI uri = new URI(url.getProtocol(), userInfo, url.getHost(), url
                     .getPort(), url.getPath(), null, null);
 
-            command.addFiles(uri.toASCIIString());
-            return command.executeToString();
+            command.addFiles(uri.toASCIIString());            
+            return new String(command.executeToBytes(timeout));
         } catch (URISyntaxException e) {
             throw new HgException("URI invalid", e);
         }
