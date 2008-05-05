@@ -7,9 +7,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.CheckStateChangedEvent;
-import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.ICheckStateListener;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -36,7 +35,7 @@ import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 
 final class IncomingPage extends WizardPage {
 
-    private CheckboxTableViewer changeSetViewer;
+    private TableViewer changeSetViewer;
     private TableViewer fileStatusViewer;
 
     protected IncomingPage(String pageName) {
@@ -48,10 +47,6 @@ final class IncomingPage extends WizardPage {
         super.setVisible(visible);
         if (visible) {
             changeSetViewer.setInput(getIncoming());
-            changeSetViewer.setAllChecked(true);
-        } else {
-            // A transplant is not performed unless this page is visible
-            getPullWizard().setTransplant(new TreeSet<ChangeSet>());
         }
     }
 
@@ -97,7 +92,7 @@ final class IncomingPage extends WizardPage {
         setControl(container);
         container.setLayout(new FillLayout(SWT.VERTICAL));
 
-        changeSetViewer = CheckboxTableViewer.newCheckList(container,
+        changeSetViewer = new TableViewer(container,
                 SWT.FULL_SELECTION | SWT.BORDER);
         changeSetViewer.setContentProvider(new ArrayContentProvider());
         changeSetViewer.setLabelProvider(new ChangeSetLabelProvider());
@@ -130,13 +125,20 @@ final class IncomingPage extends WizardPage {
         makeActions();
     }
 
+    ChangeSet getSelectedChangeSet() {
+        IStructuredSelection sel = (IStructuredSelection) changeSetViewer.getSelection();
+        Object firstElement = sel.getFirstElement();
+        if (firstElement instanceof ChangeSet) {
+            return (ChangeSet) firstElement;
+        }
+        return null;
+    }
+
     private void makeActions() {
         changeSetViewer.addSelectionChangedListener(new ISelectionChangedListener() {
             public void selectionChanged(SelectionChangedEvent event) {
-                IStructuredSelection sel = (IStructuredSelection) changeSetViewer.getSelection();
-                Object firstElement = sel.getFirstElement();
-                if (firstElement instanceof ChangeSet) {
-                    ChangeSet change = (ChangeSet) firstElement;
+                ChangeSet change = getSelectedChangeSet();
+                if( change != null){
                     fileStatusViewer.setInput(change.getChangedFiles());
                 } else {
                     fileStatusViewer.setInput(new Object[0]);
@@ -144,26 +146,18 @@ final class IncomingPage extends WizardPage {
             }
         });
 
-
-        changeSetViewer.addCheckStateListener(new ICheckStateListener() {
-            public void checkStateChanged(CheckStateChangedEvent event) {
-                Object[] checkedElements = changeSetViewer.getCheckedElements();
-                updateTransplantStatus(checkedElements);
+        fileStatusViewer.addDoubleClickListener(new IDoubleClickListener() {
+            public void doubleClick(DoubleClickEvent event) {
+                ChangeSet change = getSelectedChangeSet();
+                IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+                FileStatus clickedFileStatus  = (FileStatus) sel.getFirstElement();
+                if( change != null && clickedFileStatus != null) {
+                    // TODO open up an overlaid compare
+                }
             }
         });
     }
 
-    protected void updateTransplantStatus(Object[] checkedElements) {
-        // TODO Question, can transplant always be used instead of normal
-        // pull. Ie, will it gracefully degrade to perform a pull
-        // if elements are sequential without interuptions
-
-        TreeSet<ChangeSet> selectedChangeSets = new TreeSet<ChangeSet>();
-        for(Object object : checkedElements) {
-            selectedChangeSets.add((ChangeSet) object);
-        }
-        getPullWizard().setTransplant(selectedChangeSets);
-    }
 
     private static class FileStatusLabelProvider
         extends LabelProvider

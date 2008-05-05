@@ -11,11 +11,17 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.ComboViewer;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -38,7 +44,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 /*
  * This file implements a wizard page which will allow the user to create a repository
  * location.
- * 
+ *
  */
 
 
@@ -57,7 +63,7 @@ public class PullPage extends SyncRepoPage
   /**
    * @param pageName
    */
-  public PullPage( String pageName, String title, String description,IProject project, ImageDescriptor titleImage ) 
+  public PullPage( String pageName, String title, String description,IProject project, ImageDescriptor titleImage )
   {
     super(pageName, title, titleImage);
     this.repoName = project.getName();
@@ -65,12 +71,12 @@ public class PullPage extends SyncRepoPage
     setDescription( description);
   }
 
-  public PullPage( String pageName, String title, ImageDescriptor titleImage ) 
+  public PullPage( String pageName, String title, ImageDescriptor titleImage )
   {
     super(pageName, title, titleImage);
   }
 
-  
+
   @Override
 public boolean canFlipToNextPage()
   {
@@ -84,7 +90,7 @@ public boolean isPageComplete()
     /// having any text is grounds for completion.
     return HgRepositoryLocation.validateLocation( locationCombo.getText() );
   }
-  
+
   @Override
 protected boolean isPageComplete(String url) {
         return HgRepositoryLocation.validateLocation(url);
@@ -102,7 +108,7 @@ protected boolean isPageComplete(String url) {
         return validLocation;
     }
 
-  
+
   /* (non-Javadoc)
    * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
    */
@@ -121,71 +127,71 @@ public void createControl(Composite parent)
     locationLabel.setText("Repository Location:");
     locationData = new GridData();
     locationData.widthHint = 300;
-    locationCombo = new Combo(outerContainer, SWT.DROP_DOWN);
+    final ComboViewer locationViewer = new ComboViewer(outerContainer, SWT.DROP_DOWN);
+    locationViewer.setContentProvider(new ArrayContentProvider());
+    // TODO Make named HgRepositoryLocations possible (ie, add names to HgRepositoyLocation and modify label provider accordingly)
+    locationViewer.setLabelProvider(new LabelProvider());
+    locationCombo =  locationViewer.getCombo(); // new Combo(outerContainer, SWT.DROP_DOWN);
     locationCombo.setLayoutData(locationData);
-    locationCombo.addListener( SWT.Selection, new Listener() 
-    {
-      public void handleEvent(Event event) 
-      {
-        validateAndSetComplete( locationCombo.getText());          
-      }      
+    locationViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+        public void selectionChanged(SelectionChangedEvent event) {
+            IStructuredSelection sel = (IStructuredSelection) locationViewer.getSelection();
+            HgRepositoryLocation selectedLocation = (HgRepositoryLocation) sel.getFirstElement();
+            validateAndSetComplete(selectedLocation.getUrl());
+
+        }
+
     });
-    locationCombo.addListener( SWT.Modify, new Listener() 
-    {
-      public void handleEvent(Event event) 
+    locationCombo.addListener( SWT.Modify, new Listener() {
+      public void handleEvent(Event event)
       {
-        validateAndSetComplete( locationCombo.getText());
-      }      
+        validateAndSetComplete(locationCombo.getText());
+      }
     });
-    // Add any previously existing URLs to the combo box for ease of use.
-    Iterator<HgRepositoryLocation> locIter = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations().iterator();
-    while( locIter.hasNext() )
-    {
-      HgRepositoryLocation loc = locIter.next();
-      locationCombo.add( loc.getUrl() );
-    }
-    setDefaultLocation(locationCombo);
-    
+    locationViewer.setInput(MercurialEclipsePlugin.getRepoManager().getAllRepoLocations());
+
+    setDefaultLocation(locationViewer);
+
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
 	browseButton.setText ("Browse repos");
-	browseButton.addSelectionListener(new SelectionAdapter() 
+	browseButton.addSelectionListener(new SelectionAdapter()
 	{
 		@Override
-        public void widgetSelected(SelectionEvent e) 
+        public void widgetSelected(SelectionEvent e)
 		{
 			DirectoryDialog dialog = new DirectoryDialog (getShell());
-      dialog.setMessage("Select a repository to pull/push");     
+      dialog.setMessage("Select a repository to pull/push");
 			String dir = dialog.open();
 			if (dir != null) {
                 locationCombo.setText(dir);
             }
 			}
 	 });
-  
+
     Button browsefileButton = new Button (outerContainer, SWT.PUSH);
     browsefileButton.setText ("Browse bundles");
-    browsefileButton.addSelectionListener(new SelectionAdapter() 
+    browsefileButton.addSelectionListener(new SelectionAdapter()
     {
       @Override
-    public void widgetSelected(SelectionEvent e) 
+    public void widgetSelected(SelectionEvent e)
       {
         FileDialog dialog = new FileDialog (getShell());
-        dialog.setText("Select a bundle to pull/push from/to");     
+        dialog.setText("Select a bundle to pull/push from/to");
         String dir = dialog.open();
         if (dir != null) {
             locationCombo.setText(dir);
         }
       }
     });
- 
+
     projectNameLabel = new Label(outerContainer, SWT.NONE);
     projectNameLabel.setText("Name of project to pull to:" + repoName);
-    
+
     // Dummy labels because of bad choice of GridLayout
     new Label(outerContainer, SWT.NONE);
     new Label(outerContainer, SWT.NONE);
     new Label(outerContainer, SWT.NONE);
-    
+
     // toggle wether the wizard should perform a update or not on finish
     final Button toggleUpdate = new Button(outerContainer,SWT.CHECK);
     toggleUpdate.addSelectionListener(new SelectionAdapter() {
@@ -193,7 +199,7 @@ public void createControl(Composite parent)
          public void widgetSelected(SelectionEvent e) {
             PullRepoWizard container = (PullRepoWizard) getWizard();
             container.setDoUpdate(toggleUpdate.getSelection());
-         } 
+         }
     });
     toggleUpdate.setText("Update After Pull");
 
@@ -201,19 +207,19 @@ public void createControl(Composite parent)
     setPageComplete(false);
   }
 
-  private void setDefaultLocation(Combo locations) {
+  private void setDefaultLocation(ComboViewer locations) {
       try {
-            String defaultUrl = null;
+            HgRepositoryLocation defaultLocation = null;
             Map<String, HgRepositoryLocation> paths = HgPathsClient
                     .getPaths(project);
             if (paths.containsKey(HgPathsClient.DEFAULT_PULL)) {
-                defaultUrl = paths.get(HgPathsClient.DEFAULT_PULL).getUrl();
+                defaultLocation = paths.get(HgPathsClient.DEFAULT_PULL);
             } else if (paths.containsKey(HgPathsClient.DEFAULT)) {
-                defaultUrl = paths.get(HgPathsClient.DEFAULT).getUrl();
+                defaultLocation = paths.get(HgPathsClient.DEFAULT);
             }
-            if (defaultUrl != null) {
-                locations.add(defaultUrl);
-                locations.select(locations.indexOf(defaultUrl));
+            if (defaultLocation != null) {
+                locations.add(defaultLocation);
+                locations.setSelection(new StructuredSelection(defaultLocation));
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);

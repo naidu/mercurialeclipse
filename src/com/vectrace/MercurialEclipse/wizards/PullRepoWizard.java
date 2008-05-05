@@ -15,11 +15,6 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.net.MalformedURLException;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.SortedSet;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -29,10 +24,9 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
-import com.vectrace.MercurialEclipse.commands.HgTransplantClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
@@ -41,7 +35,6 @@ public class PullRepoWizard extends SyncRepoWizard
 
   IProject project;
   boolean doUpdate = false;
-  private SortedSet<ChangeSet> transplant;
 
 
   /* (non-Javadoc)
@@ -81,14 +74,8 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
         }
 
         final HgRepositoryLocation repo = getLocation();
-        // if no transplant is to be performed, do a normal pull
-        if (!isTransplant()) {
-            performPull(repo);
 
-        } else {
-            // if a transplan is to be performed, do a transplant
-            performTransplant(repo);
-        }
+        performPull(repo);
 
         // It appears good. Stash the repo location.
         try {
@@ -102,37 +89,10 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
         return true;
     }
 
-    private void performTransplant(final HgRepositoryLocation repo) {
-        List<String> nodeIds = new ArrayList<String>(transplant.size());
-        for(ChangeSet changeset : transplant) {
-            nodeIds.add(changeset.getChangeset());
-        }
-        try {
-            HgTransplantClient.transplant(project, nodeIds, getLocation().getUrl(), false);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.showError(e);
-        }
-    }
-
-    private boolean isTransplant() {
-        if(transplant == null || transplant.isEmpty()) {
-            return false;
-        }
-        Iterator<ChangeSet> iter = transplant.iterator();
-        ChangeSet prev = iter.next();
-        while(iter.hasNext()) {
-            ChangeSet current = iter.next();
-            int next = prev.getRevision().getRevision() + 1;
-            if(next != current.getRevision().getRevision()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void performPull(final HgRepositoryLocation repo) {
         try {
             String result = HgPushPullClient.pull(project, repo, isDoUpdate());
+            MercurialStatusCache.getInstance().clear();
             if (result.length() != 0) {
 
                 Shell shell;
@@ -176,11 +136,4 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     public void setDoUpdate(boolean doUpdate) {
         this.doUpdate = doUpdate;
     }
-
-    void setTransplant(SortedSet<ChangeSet> selectedChangeSets) {
-        this.transplant = selectedChangeSets;
-    }
-
-
-
 }
