@@ -15,8 +15,6 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IFile;
@@ -32,7 +30,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
 /**
  * @author zingo
@@ -157,69 +154,39 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public InputStream getContents() throws CoreException {
         // we can't retrieve the remote repo content, so we return nothing
-        if (changeSet.getDirection() != Direction.OUTGOING) {
-            // Setup and run command
-            String result = null;
-            IFile file = resource.getProject().getFile(
-                    resource.getProjectRelativePath());
-            if (changeSet != null) {
+        // Setup and run command
+        String result = null;
+        IFile file = resource.getProject().getFile(
+                resource.getProjectRelativePath());
+        if (changeSet != null) {
 
-                String bundleFile = null;
-                if (changeSet != null && changeSet.getBundleFile() != null) {
-                    try {
-                        bundleFile = changeSet.getBundleFile()
-                                .getCanonicalFile().getCanonicalPath();
-                    } catch (IOException e) {
-                        MercurialEclipsePlugin.logError(e);
-                        throw new CoreException(new Status(IStatus.ERROR,
-                                MercurialEclipsePlugin.ID, e.getMessage(), e));
-                    }
+            String bundleFile = null;
+            if (changeSet != null && changeSet.getBundleFile() != null) {
+                try {
+                    bundleFile = changeSet.getBundleFile().getCanonicalFile()
+                            .getCanonicalPath();
+                } catch (IOException e) {
+                    MercurialEclipsePlugin.logError(e);
+                    throw new CoreException(new Status(IStatus.ERROR,
+                            MercurialEclipsePlugin.ID, e.getMessage(), e));
                 }
+            }
 
-                if (bundleFile != null) {
-                    result = HgCatClient.getContentFromBundle(file, changeSet
-                            .getChangesetIndex()
-                            + "", bundleFile);
-                } else {
-                    result = HgCatClient.getContent(file, changeSet
-                            .getChangesetIndex()
-                            + "");
-                }
+            if (bundleFile != null) {
+                result = HgCatClient.getContentFromBundle(file, changeSet
+                        .getChangesetIndex()
+                        + "", bundleFile);
             } else {
-                result = HgCatClient.getContent(file, null);
+                result = HgCatClient.getContent(file, changeSet
+                        .getChangesetIndex()
+                        + "");
             }
-            ByteArrayInputStream is = new ByteArrayInputStream(result
-                    .getBytes());
-            return is;
+        } else {
+            result = HgCatClient.getContent(file, null);
         }
-        // OUTGOING , remote content unknown.
-        InputStream is;
-        PipedOutputStream out = null;
-        try {
-            out = new PipedOutputStream();
-            is = new PipedInputStream(out);
-            out
-                    .write(("Sorry, no content available for remote revision.\n"
-                            + "Mercurial doesn't allow access to the contents\n"
-                            + "of a remote repository (for incoming changes we "
-                            + "look inside downloaded bundles, that's why it works).\n")
-                            .getBytes());
-            out.flush();
-            out.close();
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-            is = null;
-        } finally {
-            try {
-                if (out != null) {
-                    out.close();
-                }
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-
+        ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes());
         return is;
+
     }
 
     /*
