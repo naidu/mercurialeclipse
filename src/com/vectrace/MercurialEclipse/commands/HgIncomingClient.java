@@ -1,4 +1,3 @@
-
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
@@ -24,15 +23,13 @@ import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors:
- * Bastian Doetsch  -  implementation
- *******************************************************************************/
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
+ * reserved. This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors: Bastian Doetsch - implementation
+ ******************************************************************************/
 public class HgIncomingClient {
 
     private static final String FILES = "{files}";
@@ -74,7 +71,8 @@ public class HgIncomingClient {
             IProject proj, HgRepositoryLocation repository) throws HgException {
         HgCommand command = new HgCommand("incoming", proj, false);
         File bundleFile = getBundleFile(proj, repository);
-        File temp = new File(proj.getLocation() + "bundle.temp");
+        File temp = new File(bundleFile.getAbsolutePath() + ".temp."
+                + System.currentTimeMillis());
         try {
             command.addOptions("--debug", "--template", TEMPLATE, "--bundle",
                     temp.getCanonicalPath(), repository.getUrl());
