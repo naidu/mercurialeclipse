@@ -15,7 +15,9 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -53,7 +55,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
         this.user = user;
         this.date = date;
         setDescription(description);
-        this.parents = parents;
+        setParents(parents);
         try {
             if (date != null) {
                 this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z")
@@ -218,7 +220,15 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public void setParents(String[] parents) {
-        this.parents = parents;
+        // filter null parents (hg uses -1 to signify a null parent)
+        List<String> temp = new ArrayList<String>(parents.length);
+        for (int i = 0; i < parents.length; i++) {
+            String parent = parents[i];
+            if (parent.charAt(0) != '-') {
+                temp.add(parent);
+            }
+        }
+        this.parents = temp.toArray(new String[temp.size()]);
     }
 
     public void setChangesetIndex(int changesetIndex) {
