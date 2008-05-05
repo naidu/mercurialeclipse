@@ -7,6 +7,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -123,16 +125,34 @@ final class IncomingPage extends WizardPage {
         makeActions();
     }
 
+    ChangeSet getSelectedChangeSet() {
+        IStructuredSelection sel = (IStructuredSelection) changeSetViewer.getSelection();
+        Object firstElement = sel.getFirstElement();
+        if (firstElement instanceof ChangeSet) {
+            return (ChangeSet) firstElement;
+        }
+        return null;
+    }
+
     private void makeActions() {
         changeSetViewer.addSelectionChangedListener(new ISelectionChangedListener() {
             public void selectionChanged(SelectionChangedEvent event) {
-                IStructuredSelection sel = (IStructuredSelection) changeSetViewer.getSelection();
-                Object firstElement = sel.getFirstElement();
-                if (firstElement instanceof ChangeSet) {
-                    ChangeSet change = (ChangeSet) firstElement;
+                ChangeSet change = getSelectedChangeSet();
+                if( change != null){
                     fileStatusViewer.setInput(change.getChangedFiles());
                 } else {
                     fileStatusViewer.setInput(new Object[0]);
+                }
+            }
+        });
+
+        fileStatusViewer.addDoubleClickListener(new IDoubleClickListener() {
+            public void doubleClick(DoubleClickEvent event) {
+                ChangeSet change = getSelectedChangeSet();
+                IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+                FileStatus clickedFileStatus  = (FileStatus) sel.getFirstElement();
+                if( change != null && clickedFileStatus != null) {
+                    // TODO open up an overlaid compare
                 }
             }
         });
