@@ -16,10 +16,11 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgRollbackClient {
 
-    public static void rollback(IProject project) throws HgException {
+    public static String rollback(IProject project) throws HgException {
         HgCommand command = new HgCommand("rollback", project.getLocation()
                 .toFile(), true);
-        command.executeToString();
+        String result = command.executeToString();
+        return result;
     }
 
 }

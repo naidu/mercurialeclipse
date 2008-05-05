@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Bastian Doetsch           - implementation
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
 import java.util.List;
@@ -22,7 +32,7 @@ public class HgTransplantClient {
      *            if repo.
      * @throws HgException
      */
-    public static void transplant(IProject project, List<String> nodeIds,
+    public static String transplant(IProject project, List<String> nodeIds,
             String source, boolean branch) throws HgException {
         HgCommand command = new HgCommand("transplant", project, false);
         command.addOptions("--config extensions.transplant=");
@@ -38,6 +48,6 @@ public class HgTransplantClient {
                 command.addOptions(node);
             }
         }
-        command.executeToBytes();
+        return new String(command.executeToBytes());
     }
 }
