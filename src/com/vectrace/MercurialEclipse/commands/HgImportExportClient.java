@@ -16,7 +16,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgImportExportClient {
 
-    public static String importPatch(IProject project, String patchLocation) throws HgException {
+    public static String importPatch(IProject project, String patchLocation)
+            throws HgException {
         HgCommand command = new HgCommand("import", project, true);
         command.addFiles(patchLocation);
         return command.executeToString();

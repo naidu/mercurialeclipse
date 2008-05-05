@@ -67,25 +67,25 @@ public boolean isPageComplete()
     return ( locationCombo.getText() != null );
   }
   
-  private boolean isPageComplete( String file )
-  {
-    if(file != null)
-    {
-       return true;
+  @Override
+    protected boolean isPageComplete(String file) {
+        if (file != null) {
+            return true;
+        }
+        return false;
     }
-    return false;
-  }
 
-  private boolean validateAndSetComplete( String file )
-  {
-    boolean validLocation = isPageComplete( file );
+    @Override
+    protected boolean validateAndSetComplete(String file) {
+        boolean validLocation = isPageComplete(file);
 
-    ((SyncRepoWizard)getWizard()).setLocationUrl(validLocation ? file : null);
+        ((SyncRepoWizard) getWizard()).setLocationUrl(validLocation ? file
+                : null);
 
-    setPageComplete( validLocation );
+        setPageComplete(validLocation);
 
-    return validLocation;
-  }
+        return validLocation;
+    }
 
   
   /* (non-Javadoc)

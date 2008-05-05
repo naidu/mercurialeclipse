@@ -133,9 +133,9 @@ private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDIT
       new SafeUiJob("Hg Annotate") 
       {
           @Override
-          protected IStatus runSafe(IProgressMonitor monitor) 
+          protected IStatus runSafe(IProgressMonitor moni) 
           {
-              monitor.beginTask("Applying Annotation", IProgressMonitor.UNKNOWN);
+              moni.beginTask("Applying Annotation", IProgressMonitor.UNKNOWN);
               final AbstractDecoratedTextEditor editor = getEditor();
               if (editor != null)
               {
@@ -144,8 +144,8 @@ private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDIT
                   HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER); //$NON-NLS-1$
                   
               }
-              monitor.done();
-              return super.runSafe(monitor);
+              moni.done();
+              return super.runSafe(moni);
           }
       }.schedule();
 
@@ -242,7 +242,8 @@ protected IAction getGotoAction()
     return null;
   }
 
-  private RevisionInformation createRevisionInformation(
+  @SuppressWarnings("unchecked")
+private RevisionInformation createRevisionInformation(
       final AnnotateBlocks annotateBlocks, IProgressMonitor monitor) throws HgException
   {
     Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();

@@ -27,11 +27,10 @@ public class HgIMergeClient {
         command.addOptions("status");
         String[] lines = command.executeToString().split("\n");
         ArrayList<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
-        if(lines.length != 1 || !"all conflicts resolved".equals(lines[0])) {
+        if (lines.length != 1 || !"all conflicts resolved".equals(lines[0])) {
             for (String line : lines) {
-                FlaggedAdaptable flagged = new FlaggedAdaptable(
-                        project.getFile(line.substring(2)),
-                        line.charAt(0));
+                FlaggedAdaptable flagged = new FlaggedAdaptable(project
+                        .getFile(line.substring(2)), line.charAt(0));
                 result.add(flagged);
             }
         }

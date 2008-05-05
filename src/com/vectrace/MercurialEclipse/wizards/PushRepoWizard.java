@@ -13,88 +13,103 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.MalformedURLException;
+import java.util.Properties;
+
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author zingo
- *
+ * 
  */
-public class PushRepoWizard extends SyncRepoWizard
-{  
-  
-  IProject project;
-  
-  /* (non-Javadoc)
-   * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
-   */
-  @Override
-public void init(IWorkbench workbench, IStructuredSelection selection)
-  {
-    project = MercurialUtilities.getProject(selection);
-    projectName = project.getName();
-    setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
-    setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = new SyncRepoPage(false,"PushRepoPage","Push changes to repository","Select a repository location to push to",projectName,null);
-  }
+public class PushRepoWizard extends HgWizard {
 
-  /* (non-Javadoc)
-   * @see org.eclipse.jface.wizard.Wizard#performFinish()
-   */
-  @Override
-public boolean performFinish()
-  {
-//    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-//    final IProject project = workspace.getRoot().getProject(projectName);
-    final HgRepositoryLocation repo = new HgRepositoryLocation(locationUrl);
-    
-    // Check that this project exist.
-    if( project.getLocation() == null )
-    {
-      String msg = "Project " + projectName + " don't exists why push?";
-      MercurialEclipsePlugin.logError(msg, null);
-//	System.out.println( string);
-      return false;
+    private IProject project;
+    private String projectName;
+
+    private PushRepoWizard() {
+        super("Push changes to a repository");
+        setNeedsProgressMonitor(true);
     }
 
-    try
-    {
-      String result = HgPushPullClient.push(project, repo);
-      if(result.length() != 0)
-      {
-        Shell shell;
-        IWorkbench workbench;
-
-        workbench = PlatformUI.getWorkbench();
-        shell = workbench.getActiveWorkbenchWindow().getShell();
-
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Push output",  result);
-      }
-    }
-    catch (Exception e)
-    {
-//      System.out.println("push operation failed");
-//      System.out.println(e.getMessage());
-    	 MercurialEclipsePlugin.logError("push operation failed",e);
+    public PushRepoWizard(IResource resource) {
+        this();
+        this.project = resource.getProject();
     }
 
-    // It appears good. Stash the repo location.
-    try {
-		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
-	} catch (HgException e) {
-		MercurialEclipsePlugin.logError("Adding repository to persistent storage failed.",e);
-	}
+    @Override
+    public void addPages() {
+        super.addPages();
+        mainPage = new PushRepoPage("PushRepoPage",
+                "Push changes to a repository", null, project);
+        initPage("Here you can push changes to a repository for sharing them.",
+                mainPage);
+        mainPage.setShowCredentials(true);
+        addPage(mainPage);
+    }
 
-    return true;
-  }
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.wizard.Wizard#performFinish()
+     */
+    @Override
+    public boolean performFinish() {
+        super.performFinish();
+        try {
+            Properties props = mainPage.getProperties();
+            HgRepositoryLocation repo = HgRepositoryLocation
+                    .fromProperties(props);
+
+            // Check that this project exist.
+            if (project.getLocation() == null) {
+                String msg = "Project " + projectName
+                        + " don't exists why push?";
+                MercurialEclipsePlugin.logError(msg, null);
+                // System.out.println( string);
+                return false;
+            }
+
+            PushRepoPage pushRepoPage = (PushRepoPage) mainPage;
+            
+            String result = HgPushPullClient.push(project, repo,
+                    repo.getUser(), repo.getPassword(), pushRepoPage.isForce(), pushRepoPage.getRevision());
+            
+            if (result.length() != 0) {
+                Shell shell;
+                IWorkbench workbench;
+
+                workbench = PlatformUI.getWorkbench();
+                shell = workbench.getActiveWorkbenchWindow().getShell();
+
+                MessageDialog.openInformation(shell,
+                        "Mercurial Eclipse Push output", result);
+            }
+
+            // It appears good. Stash the repo location.
+            MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
+                    repo);
+        } catch (MalformedURLException e) {
+            MessageDialog.openError(Display.getCurrent().getActiveShell(),
+                    "Malformed URL:", e.getMessage());
+            return false;
+
+        } catch (Exception e) {
+            MercurialEclipsePlugin.logError(e);
+            MessageDialog.openError(Display.getCurrent().getActiveShell(), e
+                    .getMessage(), e.getMessage());
+            return false;
+        }
+        return true;
+    }
 }

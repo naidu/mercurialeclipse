@@ -31,12 +31,12 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 		super();
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
+	public void selectionChanged(IAction action, ISelection sel) {
+		if (sel instanceof IStructuredSelection) {
 			this.selection = new ArrayList<IFile>();
 			extractFiles(
 					this.selection,
-					Arrays.asList(((IStructuredSelection)selection).toArray()).toArray(new IResource[0]));
+					Arrays.asList(((IStructuredSelection)sel).toArray()).toArray(new IResource[0]));
 		}
 	}
 	

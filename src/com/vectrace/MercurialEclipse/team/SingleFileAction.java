@@ -24,10 +24,10 @@ public abstract class SingleFileAction implements IActionDelegate {
 		super();
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
+	public void selectionChanged(IAction action, ISelection sel) {
+		if (sel instanceof IStructuredSelection) {
 			//the xml enables this action only for a selection of a single file
-			this.selection = (IFile)((IStructuredSelection) selection).getFirstElement();
+			this.selection = (IFile)((IStructuredSelection) sel).getFirstElement();
 		}
 	}
 

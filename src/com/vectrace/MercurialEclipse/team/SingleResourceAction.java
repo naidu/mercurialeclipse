@@ -24,10 +24,10 @@ public abstract class SingleResourceAction implements IActionDelegate {
 		super();
 	}
 
-	public void selectionChanged(IAction action, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
+	public void selectionChanged(IAction action, ISelection sel) {
+		if (sel instanceof IStructuredSelection) {
 			//the xml enables this action only for a selection of a single resource
-			this.selection = (IResource)((IStructuredSelection) selection).getFirstElement();
+			this.selection = (IResource)((IStructuredSelection) sel).getFirstElement();
 		}
 	}
 

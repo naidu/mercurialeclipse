@@ -19,12 +19,9 @@ import java.util.Map;
 import org.eclipse.swt.graphics.RGB;
 
 /**
- * XXX This was copied from internal CVS UI code
+ * This was copied from internal CVS UI code
  * 
  * Default implementation, assigns random colors to revisions based on committer id.
- * <p>
- * XXX This API is provisional and may change any time during the development of eclipse 3.2.
- * </p>
  * 
  * @since 3.2
  */
@@ -44,7 +41,7 @@ final class CommitterColors {
 	}
 
 	/** The color map. */
-	private Map fColors= new HashMap();
+	private Map<String,RGB> fColors= new HashMap<String,RGB>();
 
 	/** The number of colors that have been issued. */
 	private int fCount= 0;
@@ -60,7 +57,7 @@ final class CommitterColors {
 	 * @return the corresponding color
 	 */
 	public RGB getCommitterRGB(String committer) {
-		RGB rgb= (RGB) fColors.get(committer);
+		RGB rgb= fColors.get(committer);
 		if (rgb == null) {
 			rgb= computeRGB(fCount++);
 			fColors.put(committer, rgb);

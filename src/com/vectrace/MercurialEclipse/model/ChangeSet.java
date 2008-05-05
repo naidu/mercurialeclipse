@@ -15,214 +15,290 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class ChangeSet implements Comparable<ChangeSet> {
-	private int changesetIndex;
-	private String changeset;
-	private String tag;
-	private String user;
-	private String date;
-	private FileStatus[] changedFiles;
-	private String description;
-	private String ageDate;
-	private String nodeShort;
-	private String[] parents;
-	private Date realDate;
-	private File bundleFile;
-	private String summary;
+    public static enum Direction {
+        INCOMING, OUTGOING, LOCAL;
+    }
 
-	public ChangeSet() {
-		super();
-	}
-	
-	public ChangeSet(int changesetIndex, String changeSet, String tag,
-			String user, String date, String description, String[] parents) {
-		this.changesetIndex = changesetIndex;
-		this.changeset = changeSet;
-		this.tag = tag;
-		this.user = user;
-		this.date = date;
-		setDescription(description);
-		this.parents = parents;
-		try {
-			if (date != null) {
-				this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z")
-						.parse(date);
-			}
-		} catch (Exception e) {
-			this.realDate = null;
-		}
-	}
+    private int changesetIndex;
+    private String changeset;
+    private String tag;
+    private String user;
+    private String date;
+    private FileStatus[] changedFiles;
+    private String description;
+    private String ageDate;
+    private String nodeShort;
+    private String[] parents;
+    private Date realDate;
+    private File bundleFile;
+    private HgRepositoryLocation repository;
+    private Direction direction;
+    private String summary;
 
-	public ChangeSet(int changesetIndex, String changeSet, String user,
-			String date) {
-		this(changesetIndex, changeSet, null, user, date, null, null);
-	}
+    public ChangeSet() {
+        super();
+    }
 
-	public int getChangesetIndex() {
-		return changesetIndex;
-	}
+    public ChangeSet(int changesetIndex, String changeSet, String tag,
+            String user, String date, String description, String[] parents) {
+        this.changesetIndex = changesetIndex;
+        this.changeset = changeSet;
+        this.tag = tag;
+        this.user = user;
+        this.date = date;
+        setDescription(description);
+        setParents(parents);
+        try {
+            if (date != null) {
+                this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z")
+                        .parse(date);
+            }
+        } catch (Exception e) {
+            this.realDate = null;
+        }
+    }
 
-	public String getChangeset() {
-		return changeset;
-	}
+    public ChangeSet(int changesetIndex, String changeSet, String user,
+            String date) {
+        this(changesetIndex, changeSet, null, user, date, null, null);
+    }
 
-	public String getTag() {
-		return tag;
-	}
+    public int getChangesetIndex() {
+        return changesetIndex;
+    }
 
-	public String getUser() {
-		return user;
-	}
+    public String getChangeset() {
+        return changeset;
+    }
 
-	public String getDate() {
-		return date;
-	}
+    public String getTag() {
+        if (tag != null && tag.equals("tip") && bundleFile != null) {
+            tag = tag.concat(" [ ").concat(repository.toString()).concat(" ]");
+        }
+        return tag;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public String getUser() {
+        return user;
+    }
 
-	public HgRevision getRevision() {
-		return new HgRevision(changeset, changesetIndex);
-	}
+    public String getDate() {
+        return date;
+    }
 
-	@Override
-	public String toString() {
-		if (nodeShort != null) {
-			return this.changesetIndex + ":" + this.nodeShort;
-		}
-		return this.changesetIndex + ":" + this.changeset;
+    public String getDescription() {
+        return description;
+    }
 
-	}
+    public HgRevision getRevision() {
+        return new HgRevision(changeset, changesetIndex);
+    }
 
-	/**
-	 * @return the changedFiles
-	 */
-	public FileStatus[] getChangedFiles() {
-		return changedFiles;
-	}
+    @Override
+    public String toString() {
+        if (nodeShort != null) {
+            return this.changesetIndex + ":" + this.nodeShort;
+        }
+        return this.changesetIndex + ":" + this.changeset;
 
-	/**
-	 * @param changedFiles
-	 *            the changedFiles to set
-	 */
-	public void setChangedFiles(FileStatus[] changedFiles) {
-		this.changedFiles = changedFiles;
-	}
+    }
 
-	/**
-	 * @return the ageDate
-	 */
-	public String getAgeDate() {
-		return ageDate;
-	}
+    /**
+     * @return the changedFiles
+     */
+    public FileStatus[] getChangedFiles() {
+        if( changedFiles != null) {
+            // Don't let clients manipulate the array in-place
+            return changedFiles.clone();
+        }
+        return new FileStatus[0];
+    }
 
-	/**
-	 * @param ageDate
-	 *            the ageDate to set
-	 */
-	public void setAgeDate(String ageDate) {
-		this.ageDate = ageDate;
-	}
+    /**
+     * @param changedFiles
+     *            the changedFiles to set
+     */
+    public void setChangedFiles(FileStatus[] changedFiles) {
+        this.changedFiles = changedFiles;
+    }
 
-	/**
-	 * @return the nodeShort
-	 */
-	public String getNodeShort() {
-		return nodeShort;
-	}
+    /**
+     * @return the ageDate
+     */
+    public String getAgeDate() {
+        return ageDate;
+    }
 
-	/**
-	 * @param nodeShort
-	 *            the nodeShort to set
-	 */
-	public void setNodeShort(String nodeShort) {
-		this.nodeShort = nodeShort;
-	}
+    /**
+     * @param ageDate
+     *            the ageDate to set
+     */
+    public void setAgeDate(String ageDate) {
+        this.ageDate = ageDate;
+    }
 
-	public int compareTo(ChangeSet o) {
-		if (o.getChangeset().equals(this.getChangeset())) {
-			return 0;
-		}
+    /**
+     * @return the nodeShort
+     */
+    public String getNodeShort() {
+        return nodeShort;
+    }
 
-		if (realDate != null && o.getRealDate() != null) {
-			int dateCompare = this.getRealDate().compareTo(o.getRealDate());
-			if (dateCompare != 0) {
-				return dateCompare;
-			}
-		}
-		return this.getChangesetIndex() - o.getChangesetIndex();
-	}
+    /**
+     * @param nodeShort
+     *            the nodeShort to set
+     */
+    public void setNodeShort(String nodeShort) {
+        this.nodeShort = nodeShort;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (obj != null && obj instanceof ChangeSet) {
-			return this.compareTo((ChangeSet) obj) == 0;
-		}
-		return false;
-	}
+    public int compareTo(ChangeSet o) {
+        if (o.getChangeset().equals(this.getChangeset())) {
+            return 0;
+        }
 
-	public Date getRealDate() {
-		return this.realDate;
-	}
+        if (realDate != null && o.getRealDate() != null) {
+            int dateCompare = this.getRealDate().compareTo(o.getRealDate());
+            if (dateCompare != 0) {
+                return dateCompare;
+            }
+        }
+        return this.getChangesetIndex() - o.getChangesetIndex();
+    }
 
-	/**
-	 * @return the bundleFile
-	 */
-	public File getBundleFile() {
-		return bundleFile;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (obj != null && obj instanceof ChangeSet) {
+            return this.compareTo((ChangeSet) obj) == 0;
+        }
+        return false;
+    }
 
-	/**
-	 * @param bundleFile the bundleFile to set
-	 */
-	public void setBundleFile(File bundleFile) {
-		this.bundleFile = bundleFile;
-	}
+    /*
+     * (non-Javadoc)
+     *
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((changeset == null) ? 0 : changeset.hashCode());
+        return result;
+    }
 
-	public String[] getParents() {
-		return parents;
-	}
+    public Date getRealDate() {
+        return this.realDate;
+    }
 
-	public void setParents(String[] parents) {
-		this.parents = parents;
-	}
+    /**
+     * @return the bundleFile
+     */
+    public File getBundleFile() {
+        return bundleFile;
+    }
 
-	public void setChangesetIndex(int changesetIndex) {
-		this.changesetIndex = changesetIndex;
-	}
+    /**
+     * @param bundleFile
+     *            the bundleFile to set
+     */
+    public void setBundleFile(File bundleFile) {
+        this.bundleFile = bundleFile;
+    }
 
-	public void setChangeset(String changeset) {
-		this.changeset = changeset;
-	}
+    public String[] getParents() {
+        return parents;
+    }
 
-	public void setTag(String tag) {
-		this.tag = tag;
-	}
+    public void setParents(String[] parents) {
+        // filter null parents (hg uses -1 to signify a null parent)
+        List<String> temp = new ArrayList<String>(parents.length);
+        for (int i = 0; i < parents.length; i++) {
+            String parent = parents[i];
+            if (parent.charAt(0) != '-') {
+                temp.add(parent);
+            }
+        }
+        this.parents = temp.toArray(new String[temp.size()]);
+    }
 
-	public void setUser(String user) {
-		this.user = user;
-	}
+    public void setChangesetIndex(int changesetIndex) {
+        this.changesetIndex = changesetIndex;
+    }
 
-	public void setDate(String date) {
-		this.date = date;
-	}
+    public void setChangeset(String changeset) {
+        this.changeset = changeset;
+    }
 
-	public void setDescription(String description) {
-		int i = description.indexOf('\n');
-		this.summary = description.substring(0, i >= 0 ? i : description.length());
-		this.description = description;
-	}
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
 
-	public void setRealDate(Date realDate) {
-		this.realDate = realDate;
-	}
-	
-	public String getSummary() {
-		return summary;
-	}
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public void setDescription(String description) {
+        if (description != null) {
+            int i = description.indexOf('\n');
+            if (i > 0) {
+                this.summary = description.substring(0, i >= 0 ? i
+                        : description.length());
+                this.description = description;
+            } else {
+                this.summary = description;
+            }
+        }
+    }
+
+    public void setRealDate(Date realDate) {
+        this.realDate = realDate;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    /**
+     * @return the repository
+     */
+    public HgRepositoryLocation getRepository() {
+        return repository;
+    }
+
+    /**
+     * @param repositoryLocation
+     *            the repository to set
+     */
+    public void setRepository(HgRepositoryLocation repositoryLocation) {
+        this.repository = repositoryLocation;
+    }
+
+    /**
+     * @return the direction
+     */
+    public Direction getDirection() {
+        return direction;
+    }
+
+    /**
+     * @param direction
+     *            the direction to set
+     */
+    public void setDirection(Direction direction) {
+        this.direction = direction;
+    }
 }

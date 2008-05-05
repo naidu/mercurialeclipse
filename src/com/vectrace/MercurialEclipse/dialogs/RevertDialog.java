@@ -211,6 +211,7 @@ public class RevertDialog extends Dialog
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void okPressed() 
     {

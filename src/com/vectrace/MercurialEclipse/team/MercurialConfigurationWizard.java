@@ -265,9 +265,6 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 			MercurialEclipsePlugin.logError("Unable to refresh project: ",
 					e);
 		}
-//=======
-//		MercurialEclipsePlugin.refreshProjectFlags(project);
-//>>>>>>> other
 		return true;
 	}
 	
@@ -275,11 +272,11 @@ public class MercurialConfigurationWizard extends Wizard implements IConfigurati
 	// (non-Javadoc)
 	// @see org.eclipse.team.ui.IConfigurationWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.core.resources.IProject)
 	//
-	public void init(IWorkbench workbench, IProject project) {
+	public void init(IWorkbench workbench, IProject proj) {
 		//System.out.println("MercurialConfigurationWizard.init()");
-		this.project=project;
+		this.project=proj;
 		if(MercurialUtilities.isExecutableConfigured() == false) {
-			MercurialUtilities.configureExecutable();
+			MercurialUtilities.configureHgExecutable();
 		}
 	}
 

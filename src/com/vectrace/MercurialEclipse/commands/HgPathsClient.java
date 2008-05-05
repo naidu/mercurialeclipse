@@ -12,28 +12,32 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgPathsClient {
-    public static final String  DEFAULT = "default";
-        
-    public static Map<String, HgRepositoryLocation> getPaths(IProject project) throws HgException {
+    public static final String DEFAULT = "default";
+    public static final String DEFAULT_PULL = "default-pull";
+    public static final String DEFAULT_PUSH = "default-push";
+
+    public static Map<String, HgRepositoryLocation> getPaths(IProject project)
+            throws HgException {
         HgCommand command = new HgCommand("paths", project, true);
         return getPaths(command);
     }
 
-    private static Map<String, HgRepositoryLocation> getPaths(HgCommand command) throws HgException {
+    private static Map<String, HgRepositoryLocation> getPaths(HgCommand command)
+            throws HgException {
         String result = command.executeToString();
-        
+
         return parse(result);
     }
 
-    static Map<String, HgRepositoryLocation> parse(String result)  {
+    static Map<String, HgRepositoryLocation> parse(String result) {
         StringReader string = new StringReader(result);
-        
-        BufferedReader  reader = new BufferedReader(string);
-        
+
+        BufferedReader reader = new BufferedReader(string);
+
         Map<String, HgRepositoryLocation> urlByName = new HashMap<String, HgRepositoryLocation>();
         String line;
         try {
-            while(null != (line = reader.readLine())) {
+            while (null != (line = reader.readLine())) {
                 String[] parts = line.split("=", 2);
                 String name = parts[0].trim();
                 String url = parts[1].trim();

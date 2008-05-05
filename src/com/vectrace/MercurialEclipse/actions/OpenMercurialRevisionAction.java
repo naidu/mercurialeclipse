@@ -132,11 +132,11 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
       String ret="";//$NON-NLS-1$
       if (fileRevision != null)
       {
-        ret = fileRevision.getName() + " " + fileRevision.getContentIdentifier();  //$NON-NLS-1$
+        ret = fileRevision.getName() + " " + fileRevision.getContentIdentifier();  
       }
       else if (storage != null) 
       {
-        ret = storage.getName() + " " + DateFormat.getInstance().format(new Date(((IFileState) storage).getModificationTime())); //$NON-NLS-1$
+        ret = storage.getName() + " " + DateFormat.getInstance().format(new Date(((IFileState) storage).getModificationTime())); 
       }
 //      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getName() return:" + ret);
       return ret; 
@@ -168,13 +168,13 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction
         return storage.getFullPath().toString();
       }
 
-      return ""; //$NON-NLS-1$
+      return ""; 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public Object getAdapter(Class adapter) 
     {
-//      System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getAdapter()");
       if (adapter == IWorkbenchAdapter.class) 
       {
         return this;
@@ -301,7 +301,7 @@ public void run()
     String id;
     if (descriptor == null || descriptor.isOpenExternal()) 
     {
-      id = "org.eclipse.ui.DefaultTextEditor"; //$NON-NLS-1$
+      id = "org.eclipse.ui.DefaultTextEditor"; 
     } 
     else 
     {
@@ -312,10 +312,10 @@ public void run()
   }
 
   @Override
-protected boolean updateSelection(IStructuredSelection selection) 
+protected boolean updateSelection(IStructuredSelection selection1) 
   {
 //    System.out.println("OpenMercurialRevisionAction::updateSelection()");
-    this.selection = selection;
+    this.selection = selection1;
     return shouldShow();
   }
 

@@ -246,14 +246,14 @@ public class MercurialHistoryPage extends HistoryPage {
 		final MenuManager menuMgr = new MenuManager();
 		Menu menu = menuMgr.createContextMenu(viewer.getTable());
 		menuMgr.addMenuListener(new IMenuListener() {
-			public void menuAboutToShow(IMenuManager menuMgr) {
-				menuMgr
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				menuMgr1
 						.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-				menuMgr.add(openAction);
+				menuMgr1.add(openAction);
 				// TODO This is a HACK but I can't get the menu to update on
 				// selection :-(
 				compareAction.setEnabled(compareAction.isEnabled());
-				menuMgr.add(compareAction);
+				menuMgr1.add(compareAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
@@ -350,7 +350,8 @@ public class MercurialHistoryPage extends HistoryPage {
 		Utils.schedule(refreshFileHistoryJob, site);
 	}
 
-	public Object getAdapter(Class adapter) {
+	@SuppressWarnings("unchecked")
+    public Object getAdapter(Class adapter) {
 		return null;
 	}
 

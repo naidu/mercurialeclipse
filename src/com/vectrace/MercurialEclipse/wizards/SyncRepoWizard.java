@@ -12,7 +12,6 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.INewWizard;
@@ -93,17 +92,5 @@ public void addPages()
   {
     super.addPages();
     addPage(syncRepoLocationPage);
-  }
-
-  @Override
-public IWizardPage getNextPage(IWizardPage page)
-  {
-    return null;
-  }
-
-  @Override
-public IWizardPage getPreviousPage(IWizardPage page)
-  {
-    return null;
   }
 }

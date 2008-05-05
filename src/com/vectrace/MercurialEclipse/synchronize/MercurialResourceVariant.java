@@ -44,4 +44,11 @@ public class MercurialResourceVariant implements IResourceVariant {
 		return false;
 	}
 
+    /**
+     * @return the rev
+     */
+    public IStorageMercurialRevision getRev() {
+        return rev;
+    }
+
 }
