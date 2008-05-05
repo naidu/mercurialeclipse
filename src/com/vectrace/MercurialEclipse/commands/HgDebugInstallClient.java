@@ -18,8 +18,7 @@ public class HgDebugInstallClient {
 
     public static String debugInstall() throws HgException {
         // we don't really need a working dir...
-        File workingDir = new File("hg");
-        HgCommand command = new HgCommand("debuginstall", workingDir, true);
+        HgCommand command = new HgCommand("debuginstall", (File)null, true);
         return command.executeToString().trim();
     }
 }
