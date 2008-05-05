@@ -15,6 +15,11 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.net.MalformedURLException;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -24,18 +29,21 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.HgTransplantClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
 public class PullRepoWizard extends SyncRepoWizard
-{  
-  
+{
+
   IProject project;
   boolean doUpdate = false;
-  
-  
+  private SortedSet<ChangeSet> transplant;
+
+
   /* (non-Javadoc)
    * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
    */
@@ -47,7 +55,7 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
   }
-  
+
     @Override
     public void addPages() {
        PullPage pullPage = new PullPage("PullRepoPage",
@@ -58,80 +66,121 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
        // legacy - required by super
        super.syncRepoLocationPage = pullPage;
        addPage(pullPage);
+       addPage(new IncomingPage("Incoming"));
     }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.jface.wizard.Wizard#performFinish()
-   */
-  @Override
-public boolean performFinish()
-  {
-    HgRepositoryLocation repo;
-    try {
-        repo = new HgRepositoryLocation(locationUrl);
-    } catch (MalformedURLException e) {
-        MessageDialog.openInformation(getShell(), "URL is malformed.",e.getMessage());
-        MercurialEclipsePlugin.logInfo(e.getMessage(), e);
+    /* (non-Javadoc)
+     * @see org.eclipse.jface.wizard.Wizard#performFinish()
+     */
+    @Override
+    public boolean performFinish() {
+
+        // If there is no project set the wizard can't finish
+        if (project.getLocation() == null) {
+            return false;
+        }
+
+        final HgRepositoryLocation repo = getLocation();
+        // if no transplant is to be performed, do a normal pull
+        if (!isTransplant()) {
+            performPull(repo);
+
+        } else {
+            // if a transplan is to be performed, do a transplant
+            performTransplant(repo);
+        }
+
+        // It appears good. Stash the repo location.
+        try {
+            MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
+                    repo);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(
+                    "Adding repository to persistent storage failed.", e);
+        }
+
+        return true;
+    }
+
+    private void performTransplant(final HgRepositoryLocation repo) {
+        List<String> nodeIds = new ArrayList<String>(transplant.size());
+        for(ChangeSet changeset : transplant) {
+            nodeIds.add(changeset.getChangeset());
+        }
+        try {
+            HgTransplantClient.transplant(project, nodeIds, getLocation().getUrl(), false);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.showError(e);
+        }
+    }
+
+    private boolean isTransplant() {
+        if(transplant == null || transplant.isEmpty()) {
+            return false;
+        }
+        Iterator<ChangeSet> iter = transplant.iterator();
+        ChangeSet prev = iter.next();
+        while(iter.hasNext()) {
+            ChangeSet current = iter.next();
+            int next = prev.getRevision().getRevision() + 1;
+            if(next != current.getRevision().getRevision()) {
+                return true;
+            }
+        }
         return false;
     }
-    
-    // Check that this project exist.
-    if( project.getLocation() == null )
-    {
-//      System.out.println( "Project " + projectName + " don't exists why pull?");
-      return false;
+
+    private void performPull(final HgRepositoryLocation repo) {
+        try {
+            String result = HgPushPullClient.pull(project, repo, isDoUpdate());
+            if (result.length() != 0) {
+
+                Shell shell;
+                IWorkbench workbench;
+
+                workbench = PlatformUI.getWorkbench();
+                shell = workbench.getActiveWorkbenchWindow().getShell();
+
+                MessageDialog.openInformation(shell,
+                        "Mercurial Eclipse Pull output", result);
+
+            }
+
+        } catch (Exception e) {
+            MercurialEclipsePlugin.logError("pull operation failed", e);
+        }
     }
 
-    try
-    {
+    HgRepositoryLocation getLocation() {
 
-      String result = HgPushPullClient.pull(project, repo, isDoUpdate());
-      if(result.length() != 0)
-      {
-
-        Shell shell;
-        IWorkbench workbench;
-
-        workbench = PlatformUI.getWorkbench();
-        shell = workbench.getActiveWorkbenchWindow().getShell();
-
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Pull output",  result);
-
-      }
-      
-    }
-    catch (Exception e)
-    {
-    	MercurialEclipsePlugin.logError("pull operation failed", e);
-//      System.out.println("pull operation failed");
-//      System.out.println(e.getMessage());
+        try {
+            return new HgRepositoryLocation(locationUrl);
+        } catch (MalformedURLException e) {
+            MessageDialog.openInformation(getShell(), "URL is malformed.",e.getMessage());
+            MercurialEclipsePlugin.logInfo(e.getMessage(), e);
+            return null;
+        }
     }
 
-    // It appears good. Stash the repo location.
-    try {
-		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
-	} catch (HgException e) {		
-		MercurialEclipsePlugin.logError("Adding repository to persistent storage failed.",e);
-	}
+    /**
+     * @return the doUpdate
+     */
+    public boolean isDoUpdate() {
+        return doUpdate;
+    }
 
-    return true;
-  }
+    /**
+     * @param doUpdate
+     *            true if the pull should be followed by an update
+     */
+    public void setDoUpdate(boolean doUpdate) {
+        this.doUpdate = doUpdate;
+    }
 
-	/**
-	 * @return the doUpdate
-	 */
-	public boolean isDoUpdate() {
-		return doUpdate;
-	}
+    void setTransplant(SortedSet<ChangeSet> selectedChangeSets) {
+        this.transplant = selectedChangeSets;
+    }
 
-	/**
-	 * @param doUpdate
-	 *            true if the pull should be followed by an update
-	 */
-	public void setDoUpdate(boolean doUpdate) {
-		this.doUpdate = doUpdate;
-	}
 
-  
 
 }

@@ -20,6 +20,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
@@ -42,19 +43,19 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
 {
 
   public static final String ID = "com.vectrace.MercurialEclipse";
-  
+
   public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView";
 
   public static final String BUNDLE_FILE_PREFIX = "bundlefile";
-  
+
   // The shared instance.
   private static MercurialEclipsePlugin plugin;
 
   // TODO: not quite sure this should be static
   private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
-  
-  private boolean hgUsable = true; 
-  
+
+  private boolean hgUsable = true;
+
 //  private FlagManager flagManager;
 
   /**
@@ -142,7 +143,7 @@ public void stop(BundleContext context) throws Exception
   /**
    * Returns an image descriptor for the image file at the given plug-in
    * relative path.
-   * 
+   *
    * @param path
    *          the path
    * @return the image descriptor
@@ -156,12 +157,17 @@ public void stop(BundleContext context) throws Exception
   {
     getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
   }
-  
+
+  public static void showError(Throwable error) {
+      ErrorDialog.openError(null, "Unexpected Error", error.getMessage(),
+              createStatus(error.getMessage(), 0, IStatus.ERROR, error));
+  }
+
   public static final void logWarning(String message, Throwable error)
   {
     getDefault().getLog().log(createStatus(message, 0, IStatus.WARNING, error));
   }
-  
+
   public static final void logInfo(String message, Throwable error)
   {
     getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
@@ -180,18 +186,18 @@ public void stop(BundleContext context) throws Exception
   {
     logError(ex.getMessage(), ex);
   }
-  
+
   /**
      * Creates a busy cursor and runs the specified runnable. May be called from
      * a non-UI thread.
-     * 
+     *
      * @param parent
      *            the parent Shell for the dialog
      * @param cancelable
      *            if true, the dialog will support cancelation
      * @param runnable
      *            the runnable
-     * 
+     *
      * @exception InvocationTargetException
      *                when an exception is thrown from the runnable
      * @exception InterruptedException
@@ -245,14 +251,14 @@ public void stop(BundleContext context) throws Exception
             if (createdShell)
                 parent.dispose();
         }
-    }   
-    
+    }
+
     /**
      * Convenience method to get the currently active workbench page. Note that
      * the active page may not be the one that the usr perceives as active in
      * some situations so this method of obtaining the activae page should only
      * be used if no other method is available.
-     * 
+     *
      * @return the active workbench page
      */
     public static IWorkbenchPage getActivePage() {
