@@ -50,12 +50,13 @@ public class PushRepoWizard extends HgWizard {
     @Override
     public void addPages() {
         super.addPages();
-        mainPage = new PushRepoPage("PushRepoPage",
+        PushRepoPage myPage = new PushRepoPage("PushRepoPage",
                 "Push changes to a repository", null, project);
         initPage("Here you can push changes to a repository for sharing them.",
-                mainPage);
-        mainPage.setShowCredentials(true);
-        addPage(mainPage);
+                myPage);
+        myPage.setShowCredentials(true);
+        page = myPage;
+        addPage(page);
     }
 
     /*
@@ -67,7 +68,7 @@ public class PushRepoWizard extends HgWizard {
     public boolean performFinish() {
         super.performFinish();
         try {
-            Properties props = mainPage.getProperties();
+            Properties props = page.getProperties();
             HgRepositoryLocation repo = HgRepositoryLocation
                     .fromProperties(props);
 
@@ -80,7 +81,7 @@ public class PushRepoWizard extends HgWizard {
                 return false;
             }
 
-            PushRepoPage pushRepoPage = (PushRepoPage) mainPage;
+            PushRepoPage pushRepoPage = (PushRepoPage) page;
 
             int timeout = 300000;
             if (!pushRepoPage.isTimeout()) {
@@ -118,4 +119,16 @@ public class PushRepoWizard extends HgWizard {
         }
         return true;
     }
+
+    /**
+     * Creates a ConfigurationWizardPage.
+     */
+    protected HgWizardPage createPage(String pageName, String pageTitle, String iconPath,
+            String description) {
+                page = new ConfigurationWizardMainPage(
+                        pageName, pageTitle, MercurialEclipsePlugin
+                                .getImageDescriptor(iconPath));
+                initPage(description, page);
+                return page;
+            }
 }
