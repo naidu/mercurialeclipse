@@ -18,5 +18,6 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.console,
  org.eclipse.compare,
  org.eclipse.core.filesystem,
- org.eclipse.core.expressions
+ org.eclipse.core.expressions,
+ org.eclipse.jdt.junit.runtime
 Eclipse-LazyStart: true

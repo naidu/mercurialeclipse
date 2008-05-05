@@ -10,15 +10,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.resources.ResourcesPlugin;
+import java.io.File;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgDebugInstallClient {
 
     public static String debugInstall() throws HgException {
-        HgCommand command = new HgCommand("debuginstall", ResourcesPlugin
-                .getWorkspace().getRoot(), true);
+        // we don't really need a working dir...
+        File workingDir = new File("hg");
+        HgCommand command = new HgCommand("debuginstall", workingDir, true);
         return command.executeToString().trim();
     }
 }
