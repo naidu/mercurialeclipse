@@ -67,7 +67,7 @@ public class BackoutWizardPage extends HgWizardPage {
 
         // list view of changesets
         Group changeSetGroup = createGroup(composite,
-                "Please select the changeset to sign.");
+                "Please select the changeset to back out from");
 
         changeSetListView = super.createChangeSetListViewer(changeSetGroup,
                 null, 100);
