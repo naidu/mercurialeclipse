@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
 /**
  * @author zingo
@@ -153,15 +154,17 @@ public class IStorageMercurialRevision implements IStorage {
      * 
      */
     public InputStream getContents() throws CoreException {
-        // we can't retrieve the remote repo content, so we return nothing
         // Setup and run command
         String result = null;
         IFile file = resource.getProject().getFile(
                 resource.getProjectRelativePath());
         if (changeSet != null) {
+            
+            // incoming: overlay repository with bundle and extract then via cat
+            if (changeSet.getDirection() == Direction.INCOMING
+                    && changeSet.getBundleFile() != null) {
 
-            String bundleFile = null;
-            if (changeSet != null && changeSet.getBundleFile() != null) {
+                String bundleFile = null;
                 try {
                     bundleFile = changeSet.getBundleFile().getCanonicalFile()
                             .getCanonicalPath();
@@ -170,23 +173,37 @@ public class IStorageMercurialRevision implements IStorage {
                     throw new CoreException(new Status(IStatus.ERROR,
                             MercurialEclipsePlugin.ID, e.getMessage(), e));
                 }
-            }
-
-            if (bundleFile != null) {
-                result = HgCatClient.getContentFromBundle(file, changeSet
-                        .getChangesetIndex()
-                        + "", bundleFile);
-            } else {
+                if (bundleFile != null) {
+                    result = HgCatClient.getContentFromBundle(file, changeSet
+                            .getChangesetIndex()
+                            + "", bundleFile);
+                }
+                
+            } else if (changeSet.getDirection() == Direction.OUTGOING) {
+                
+                // outgoing: we can't query remote repositories :-(.
+                result = "Sorry, no content available for remote revision.\n"
+                        + "Mercurial doesn't allow access to the contents\n"
+                        + "of a remote repository (for incoming changes we "
+                        + "look inside downloaded bundles, that's why it works).\n";
+                
+            } else if (changeSet.getDirection() == Direction.LOCAL) {
+                
+                // local: get the contents via cat
                 result = HgCatClient.getContent(file, changeSet
                         .getChangesetIndex()
                         + "");
+                
+            } else {
+                result = "no content found for changeset ".concat(changeSet.toString());
             }
+            
         } else {
+            // no changeset known
             result = HgCatClient.getContent(file, null);
         }
         ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes());
         return is;
-
     }
 
     /*
