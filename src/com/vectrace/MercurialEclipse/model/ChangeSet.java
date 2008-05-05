@@ -113,7 +113,11 @@ public class ChangeSet implements Comparable<ChangeSet> {
      * @return the changedFiles
      */
     public FileStatus[] getChangedFiles() {
-        return changedFiles;
+        if( changedFiles != null) {
+            // Don't let clients manipulate the array in-place
+            return changedFiles.clone();
+        }
+        return new FileStatus[0];
     }
 
     /**
@@ -178,7 +182,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
