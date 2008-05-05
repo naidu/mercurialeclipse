@@ -12,12 +12,15 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.ArrayList;
+import java.util.Properties;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -54,6 +57,8 @@ public abstract class HgWizardPage extends WizardPage {
     protected static final int LABEL_INDENT_WIDTH = 32;
     protected static final int LIST_HEIGHT_HINT = 100;
     protected static final int SPACER_HEIGHT = 8;
+    protected Properties properties = null;
+    protected IDialogSettings settings;
 
     /**
      * HgWizardPage constructor comment.
@@ -461,5 +466,41 @@ public abstract class HgWizardPage extends WizardPage {
 
     protected Group createGroup(Composite parent, String text) {
         return createGroup(parent, text, 2);
+    }
+
+    /**
+     * @param monitor
+     * @return
+     */
+    public boolean finish(IProgressMonitor monitor) {
+        return true;
+    }
+
+    /**
+     * Returns the properties for the repository connection
+     * 
+     * @return the properties or null
+     */
+    public Properties getProperties() {
+        return properties;
+    }
+
+    /**
+     * Sets the properties for the repository connection
+     * 
+     * @param properties
+     *            the properties or null
+     */
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+
+    @Override
+    public IDialogSettings getDialogSettings() {
+        return settings;
+    }
+
+    public void setDialogSettings(IDialogSettings settings) {
+        this.settings = settings;
     }
 }

@@ -24,7 +24,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public abstract class HgWizard extends Wizard {
 
-    protected ConfigurationWizardMainPage mainPage;
+    protected HgWizardPage page;
     protected Properties properties = null;
 
     public HgWizard(String windowTitle) {
@@ -39,8 +39,8 @@ public abstract class HgWizard extends Wizard {
      */
     @Override
     public boolean performFinish() {
-        if (mainPage != null) {
-            return mainPage.finish(new NullProgressMonitor());
+        if (page != null) {
+            return page.finish(new NullProgressMonitor());
         }
         return true;
     }
@@ -62,27 +62,15 @@ public abstract class HgWizard extends Wizard {
     }
 
     /**
-     * Creates a ConfigurationWizardPage.
-     */
-    protected ConfigurationWizardMainPage createPage(String pageName,
-            String pageTitle, String iconPath, String description) {
-        ConfigurationWizardMainPage page = new ConfigurationWizardMainPage(
-                pageName, pageTitle, MercurialEclipsePlugin
-                        .getImageDescriptor(iconPath));
-        initPage(description, page);
-        return page;
-    }
-
-    /**
      * @param description
      * @param page
      */
-    protected void initPage(String description, ConfigurationWizardMainPage page) {
+    protected void initPage(String description, HgWizardPage wizardPage) {
         if (properties != null) {
-            page.setProperties(properties);
+            wizardPage.setProperties(properties);
         }
-        page.setDescription(description);
-        page.setDialogSettings(getDialogSettings());
+        wizardPage.setDescription(description);
+        wizardPage.setDialogSettings(getDialogSettings());
     }
 
 }

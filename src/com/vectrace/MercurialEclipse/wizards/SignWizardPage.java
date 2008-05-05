@@ -169,6 +169,7 @@ public class SignWizardPage extends HgWizardPage {
         return ((IStructuredSelection) changeSetListView.getSelection()).size() == 1;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean finish(IProgressMonitor monitor) {
         ChangeSet cs = (ChangeSet) ((IStructuredSelection) changeSetListView

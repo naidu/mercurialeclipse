@@ -221,14 +221,16 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     public void setParents(String[] parents) {
         // filter null parents (hg uses -1 to signify a null parent)
-        List<String> temp = new ArrayList<String>(parents.length);
-        for (int i = 0; i < parents.length; i++) {
-            String parent = parents[i];
-            if (parent.charAt(0) != '-') {
-                temp.add(parent);
+        if (parents != null) {
+            List<String> temp = new ArrayList<String>(parents.length);
+            for (int i = 0; i < parents.length; i++) {
+                String parent = parents[i];
+                if (parent.charAt(0) != '-') {
+                    temp.add(parent);
+                }
             }
+            this.parents = temp.toArray(new String[temp.size()]);
         }
-        this.parents = temp.toArray(new String[temp.size()]);
     }
 
     public void setChangesetIndex(int changesetIndex) {

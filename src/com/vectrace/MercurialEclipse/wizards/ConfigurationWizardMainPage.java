@@ -56,14 +56,9 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
     private static final int COMBO_HISTORY_LENGTH = 10;
 
-    private Properties properties = null;
-
     // Dialog store id constants
     private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID";
     private static final String STORE_URL_ID = "ConfigurationWizardMainPage.STORE_URL_ID";
-
-    // In case the page was launched from a different wizard
-    private IDialogSettings settings;
 
     /**
      * ConfigurationWizardMainPage constructor.
@@ -111,15 +106,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         String[] r = new String[l.size()];
         l.toArray(r);
         return r;
-    }
-
-    @Override
-    public IDialogSettings getDialogSettings() {
-        return settings;
-    }
-
-    public void setDialogSettings(IDialogSettings settings) {
-        this.settings = settings;
     }
 
     /**
@@ -198,6 +184,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     /**
      * @see HgWizardPage#finish
      */
+    @Override
     public boolean finish(IProgressMonitor monitor) {
         // Set the result to be the current values
         Properties result = new Properties();
@@ -211,15 +198,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         saveWidgetValues();
 
         return true;
-    }
-
-    /**
-     * Returns the properties for the repository connection
-     * 
-     * @return the properties or null
-     */
-    public Properties getProperties() {
-        return properties;
     }
 
     /**
@@ -306,16 +284,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         }
         return newHostNames;
-    }
-
-    /**
-     * Sets the properties for the repository connection
-     * 
-     * @param properties
-     *            the properties or null
-     */
-    public void setProperties(Properties properties) {
-        this.properties = properties;
     }
 
     /**

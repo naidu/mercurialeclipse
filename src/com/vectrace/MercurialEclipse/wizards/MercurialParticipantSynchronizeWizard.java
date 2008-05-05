@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 public class MercurialParticipantSynchronizeWizard extends
         SubscriberParticipantWizard implements IWizard {
     private final IWizard importWizard = new CloneRepoWizard();
-    private ConfigurationWizardMainPage page;
+    private HgWizardPage page;
     private Properties pageProperties = null;
 
     public MercurialParticipantSynchronizeWizard() {

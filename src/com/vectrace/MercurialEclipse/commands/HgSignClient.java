@@ -100,6 +100,8 @@ public class HgSignClient {
         } else {
             command.addOptions("-m", message, "-u", user);
         }
+        
+        command.addOptions(cs.getChangeset());
         String result;
         try {
             result = command.executeToString();

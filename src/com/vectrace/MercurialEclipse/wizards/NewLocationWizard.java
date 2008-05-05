@@ -24,7 +24,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
  * informations about SVN repository location
  */
 public class NewLocationWizard extends HgWizard {
-    
+
     public NewLocationWizard() {
         super("Create new repository location");
     }
@@ -33,13 +33,13 @@ public class NewLocationWizard extends HgWizard {
         this();
         this.properties = initialProperties;
     }
-    
+
     @Override
     public void addPages() {
-        mainPage = createPage("RepoCreationPage", "Create new repository",
+        page = createPage("RepoCreationPage", "Create new repository",
                 "wizards/share_wizban.png",
                 "Here you can create a new repository location.");
-        addPage(mainPage);
+        addPage(page);
     }
 
     /**
@@ -48,7 +48,7 @@ public class NewLocationWizard extends HgWizard {
     @Override
     public boolean performFinish() {
         super.performFinish();
-        Properties props = mainPage.getProperties();
+        Properties props = page.getProperties();
         final HgRepositoryLocation[] root = new HgRepositoryLocation[1];
         HgRepositoryLocationManager provider = MercurialEclipsePlugin
                 .getRepoManager();
@@ -60,5 +60,16 @@ public class NewLocationWizard extends HgWizard {
             MercurialEclipsePlugin.logError(e);
         }
         return false;
+    }
+
+    /**
+     * Creates a ConfigurationWizardPage.
+     */
+    protected HgWizardPage createPage(String pageName, String pageTitle,
+            String iconPath, String description) {
+        page = new ConfigurationWizardMainPage(pageName, pageTitle,
+                MercurialEclipsePlugin.getImageDescriptor(iconPath));
+        initPage(description, page);
+        return page;
     }
 }

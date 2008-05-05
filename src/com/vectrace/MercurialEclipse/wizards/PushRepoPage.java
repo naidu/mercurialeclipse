@@ -71,7 +71,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
                 if (revCheckBox.getSelection()) {
                     if (revisionListView.getList().getItems().length == 0) {
                         try {
-                            populateRevisionCombo();
+                            populateRevisionListView();
                         } catch (HgException e) {
                             MessageDialog.openInformation(getShell(),
                                     "Error while loading local changesets", e
@@ -105,7 +105,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
 
     }
 
-    private void populateRevisionCombo() throws HgException {
+    private void populateRevisionListView() throws HgException {
         SortedSet<ChangeSet> changesets = MercurialStatusCache.getInstance()
                 .getLocalChangeSets(project);
         if (changesets != null) {

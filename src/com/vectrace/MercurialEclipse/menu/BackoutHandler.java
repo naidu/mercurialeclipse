@@ -12,18 +12,21 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.commands.HgRollbackClient;
 import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 
-public class RollbackHandler extends SingleResourceHandler {
+public class BackoutHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
-        String result = HgRollbackClient.rollback(project);
-        MessageDialog.openInformation(getShell(),"Rollback output", result);
+        BackoutWizard backoutWizard = new BackoutWizard(
+                project);
+        WizardDialog dialog = new WizardDialog(getShell(), backoutWizard);
+        dialog.setBlockOnOpen(true);
+        dialog.open();
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
         MercurialStatusCache.getInstance().refreshAllLocalRevisions(project);
     }
