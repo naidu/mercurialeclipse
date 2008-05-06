@@ -1038,7 +1038,6 @@ public class MercurialStatusCache extends Observable implements
                     concernedResources.addAll(resources);
                     if (revisions != null && revisions.size() > 0) {
                         
-                        // FIXME: Paths gotta be adjusted to project relative to hg root
                         concernedResources.addAll(revisions.keySet());
 
                         for (Iterator<IResource> iter = revisions.keySet()
