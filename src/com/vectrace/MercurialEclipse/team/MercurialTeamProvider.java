@@ -25,6 +25,8 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
+import com.vectrace.MercurialEclipse.commands.HgRootClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 
 /**
@@ -76,21 +78,28 @@ public class MercurialTeamProvider extends RepositoryProvider
      * @throws CoreException
      */
     private static void determineHgRoot(IProject project) throws CoreException {
-        IResource resource = project.getFolder(".hg"); 
+        IResource resource = project.getFolder(".hg");
         if (resource != null && resource.exists()) {
-		    resource.setTeamPrivateMember(true);
-		    MercurialTeamProvider.HG_ROOTS.put(project,new Boolean(true));
-		} else {
-		    MercurialTeamProvider.HG_ROOTS.put(project,new Boolean(false));
-		}
+            resource.setTeamPrivateMember(true);
+            MercurialTeamProvider.HG_ROOTS.put(project, new Boolean(true));
+        } else {
+            String root = HgRootClient.getHgRoot(project);
+            if (root != null && root.length() != 0) {
+                MercurialTeamProvider.HG_ROOTS.put(project, new Boolean(false));
+            } else {
+                throw new HgException(project.getName()
+                        + " does not belong to a Hg repository.");
+            }
+        }
     }
 	
-	public static boolean isProjectRootInProject(IProject project) throws CoreException {
-	    if (HG_ROOTS.get(project)==null) {
-	        determineHgRoot(project);
-	    }
-	    return HG_ROOTS.get(project).booleanValue();
-	}
+	public static boolean isProjectRootInProject(IProject project)
+            throws CoreException {
+        if (HG_ROOTS.get(project) == null) {
+            determineHgRoot(project);
+        }
+        return HG_ROOTS.get(project).booleanValue();
+    }
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.resources.IProjectNature#deconfigure()

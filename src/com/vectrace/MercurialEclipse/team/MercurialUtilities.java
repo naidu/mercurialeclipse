@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -480,5 +481,31 @@ public class MercurialUtilities {
         protected byte[] executeToBytes() throws HgException {
             return super.executeToBytes();
         }
+    }
+
+    /**
+     * This methods extracts the IResource from the given file path
+     * taking into account, that the repository root might be above
+     * project level. 
+     *   
+     * @param proj
+     * @param file
+     * @param res
+     * @return
+     */
+    public static IResource getIResource(IProject proj, String path) {
+        int projectPathStartIndex = 0;
+        try {
+            if (!MercurialTeamProvider.isProjectRootInProject(proj)) {
+                projectPathStartIndex = path.indexOf(proj.getName());
+            }
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            MercurialEclipsePlugin.showError(e);            
+        }
+        if (projectPathStartIndex >= 0) {
+            return proj.getFile(path.substring(projectPathStartIndex));
+        }
+        return null;
     }
 }

@@ -22,15 +22,13 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
@@ -76,10 +74,10 @@ public abstract class AbstractParseChangesetClient {
             String input, IProject proj, String templ,
             String changeSetSeparator, String templateElementSeparator,
             Direction direction, HgRepositoryLocation repository,
-            File bundleFile, String contentStartMarker) {        
-        
+            File bundleFile, String contentStartMarker) {
+
         Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
-        
+
         if (input == null || input.length() == 0
                 || input.indexOf(contentStartMarker) == -1) {
             return fileRevisions;
@@ -97,7 +95,7 @@ public abstract class AbstractParseChangesetClient {
             cs.setBundleFile(bundleFile);
             cs.setDirection(direction);
 
-            // changeset to resources & project 
+            // changeset to resources & project
             addChangesetToResourceMap(proj, fileRevisions, cs);
         }
         return fileRevisions;
@@ -112,22 +110,11 @@ public abstract class AbstractParseChangesetClient {
             Map<IResource, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs) {
         if (cs.getChangedFiles() != null) {
             for (FileStatus file : cs.getChangedFiles()) {
-                int projectPathStartIndex = 0;
-                try {
-                    if (!MercurialTeamProvider.isProjectRootInProject(proj)) {
-                        projectPathStartIndex = file.getPath().indexOf(
-                                proj.getName());
-                    }
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-                if (projectPathStartIndex >= 0) {
-                    IResource res = proj.getFile(file.getPath().substring(
-                            projectPathStartIndex));
-                    SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
-                            fileRevisions, cs, res);
-                    fileRevisions.put(res, incomingFileRevs);
-                }
+                IResource res = MercurialUtilities.getIResource(proj, file.getPath());
+                SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
+                        fileRevisions, cs, res);
+                fileRevisions.put(res, incomingFileRevs);
+
             }
         }
         SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(fileRevisions,

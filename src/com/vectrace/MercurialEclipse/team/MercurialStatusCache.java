@@ -1045,8 +1045,7 @@ public class MercurialStatusCache extends Observable implements
                             IResource res = iter.next();
                             SortedSet<ChangeSet> changes = revisions.get(res);
                             // if changes for resource not in top 50, get at
-                            // least
-                            // 10%
+                            // least 10%
                             if (changes == null && limit) {
                                 changes = HgLogClient.getRecentProjectLog(res,
                                         limitNumber / 10).get(res);
