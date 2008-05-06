@@ -62,7 +62,10 @@ public class MercurialTeamProvider extends RepositoryProvider
     public void configureProject() throws CoreException 
 	{
 		getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
-		getProject().getFolder(".hg").setTeamPrivateMember(true);
+		IResource resource = getProject().getFolder(".hg");
+		if (resource != null && resource.exists()) {
+		    resource.setTeamPrivateMember(true);
+		}
 	}
 
 	/* (non-Javadoc)

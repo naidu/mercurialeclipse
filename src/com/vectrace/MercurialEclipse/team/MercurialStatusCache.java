@@ -473,7 +473,10 @@ public class MercurialStatusCache extends Observable implements
                                             new HgRepositoryLocation(
                                                     repositoryLocation));
                         } catch (MalformedURLException e) {
-                            MercurialEclipsePlugin.logWarning("couldn't add repository to location manager",e);
+                            MercurialEclipsePlugin
+                                    .logWarning(
+                                            "couldn't add repository to location manager",
+                                            e);
                         }
                         if (monitor != null) {
                             monitor.worked(1);
@@ -600,9 +603,10 @@ public class MercurialStatusCache extends Observable implements
         // load latest outgoing changesets from repository given in
         // parameter
         HgRepositoryLocationManager repoManager = MercurialEclipsePlugin
-                        .getRepoManager();
-        
-        HgRepositoryLocation hgRepositoryLocation = repoManager.getRepoLocation(repositoryLocation);
+                .getRepoManager();
+
+        HgRepositoryLocation hgRepositoryLocation = repoManager
+                .getRepoLocation(repositoryLocation);
 
         // clear cache of old members
         final Map<IResource, SortedSet<ChangeSet>> removeMap = changeSetMap
@@ -615,15 +619,16 @@ public class MercurialStatusCache extends Observable implements
 
         if (hgRepositoryLocation == null) {
             try {
-                hgRepositoryLocation = new HgRepositoryLocation(repositoryLocation);
+                hgRepositoryLocation = new HgRepositoryLocation(
+                        repositoryLocation);
                 repoManager.addRepoLocation(hgRepositoryLocation);
             } catch (MalformedURLException e) {
                 MercurialEclipsePlugin.logError(e);
-                throw new HgException(e.getLocalizedMessage(),e);
+                throw new HgException(e.getLocalizedMessage(), e);
             }
         }
 
-            // get changesets from hg
+        // get changesets from hg
         Map<IResource, SortedSet<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
             resources = HgOutgoingClient.getOutgoing(project,
@@ -684,6 +689,7 @@ public class MercurialStatusCache extends Observable implements
         while (scanner.hasNext()) {
             String status = scanner.next();
             String localName = scanner.nextLine();
+
             IResource member = res.getProject().getFile(localName.trim());
 
             BitSet bitSet = new BitSet();
@@ -1031,13 +1037,16 @@ public class MercurialStatusCache extends Observable implements
                     concernedResources.add(project);
                     concernedResources.addAll(resources);
                     if (revisions != null && revisions.size() > 0) {
+                        
+                        // FIXME: Paths gotta be adjusted to project relative to hg root
                         concernedResources.addAll(revisions.keySet());
 
                         for (Iterator<IResource> iter = revisions.keySet()
                                 .iterator(); iter.hasNext();) {
                             IResource res = iter.next();
                             SortedSet<ChangeSet> changes = revisions.get(res);
-                            // if changes for resource not in top 50, get at least
+                            // if changes for resource not in top 50, get at
+                            // least
                             // 10%
                             if (changes == null && limit) {
                                 changes = HgLogClient.getRecentProjectLog(res,
