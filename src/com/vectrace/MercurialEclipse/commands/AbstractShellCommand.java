@@ -27,9 +27,14 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
- * 
+ *
  */
 public abstract class AbstractShellCommand {
+    /**
+     *
+     */
+    private static final int DEFAULT_TIMEOUT = 30000;
+
     private class InputStreamConsumer extends Thread {
         private byte[] output;
         private final InputStream stream;
@@ -88,9 +93,9 @@ public abstract class AbstractShellCommand {
             this.options.add(option);
         }
     }
-    
+
     protected byte[] executeToBytes() throws HgException {
-        return executeToBytes(30000);
+        return executeToBytes(DEFAULT_TIMEOUT);
     }
 
     /**
@@ -112,7 +117,7 @@ public abstract class AbstractShellCommand {
             InputStreamConsumer consumer = new InputStreamConsumer(process
                     .getInputStream());
             consumer.start();
-            consumer.join(30000); // 30 seconds timeout
+            consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
                 if (process.waitFor() == 0) {
                     console.println("Done in "
