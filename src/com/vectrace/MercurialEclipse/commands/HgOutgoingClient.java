@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgOutgoingClient {
+public class HgOutgoingClient extends AbstractParseChangesetClient {
 
     public static Map<IResource, SortedSet<ChangeSet>> getOutgoing(
             IResource res, HgRepositoryLocation loc) throws HgException {
@@ -28,16 +28,16 @@ public class HgOutgoingClient {
             HgCommand command = new HgCommand("outgoing", res.getProject(),
                     false);
 
-            command.addOptions("--template", HgIncomingClient.TEMPLATE);
+            command.addOptions("--template",
+                    AbstractParseChangesetClient.TEMPLATE);
 
             command.addOptions(loc.toString());
             String result = command.executeToString();
             if (result.contains("no changes found")) {
                 return null;
             }
-            Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-                    .createMercurialRevisions(result, res.getProject(), null,
-                            loc, Direction.OUTGOING);
+            Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                    result, res.getProject(), null, loc, Direction.OUTGOING);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) {

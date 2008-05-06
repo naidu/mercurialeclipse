@@ -13,7 +13,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
-public class HgLogClient {
+public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) (.+)$");
@@ -100,7 +100,8 @@ public class HgLogClient {
             IResource res, int limitNumber) throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
 
-        command.addOptions("--debug","--template", HgIncomingClient.TEMPLATE);
+        command.addOptions("--debug", "--template",
+                AbstractParseChangesetClient.TEMPLATE);
         if (limitNumber > -1) {
             command.addOptions("-l", limitNumber + "");
         }
@@ -111,9 +112,8 @@ public class HgLogClient {
         if (result.contains("no changes found") || result.length() == 0) {
             return null;
         }
-        Map<IResource, SortedSet<ChangeSet>> revisions = HgIncomingClient
-                .createMercurialRevisions(result, res.getProject(), null, null,
-                        Direction.LOCAL);
+        Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                result, res.getProject(), null, null, Direction.LOCAL);
         return revisions;
     }
 
