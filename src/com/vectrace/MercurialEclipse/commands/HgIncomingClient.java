@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -21,6 +22,7 @@ import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /*******************************************************************************
  * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
@@ -137,10 +139,21 @@ public class HgIncomingClient {
 
             if (cs.getChangedFiles() != null) {
                 for (FileStatus file : cs.getChangedFiles()) {
-                    IResource res = proj.getFile(file.getPath());
-                    SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
-                            fileRevisions, cs, res);
-                    fileRevisions.put(res, incomingFileRevs);
+                    int projectPathStartIndex = 0;
+                    try {
+                        if (!MercurialTeamProvider.isProjectRootInProject(proj)) {
+                             projectPathStartIndex = file.getPath().indexOf(proj.getName());
+                        }
+                    } catch (CoreException e) {                        
+                        MercurialEclipsePlugin.logError(e);
+                    }
+                    if (projectPathStartIndex >= 0) {
+                        IResource res = proj.getFile(file.getPath().substring(
+                                projectPathStartIndex));
+                        SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
+                                fileRevisions, cs, res);
+                        fileRevisions.put(res, incomingFileRevs);
+                    }
                 }
             }
             SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(

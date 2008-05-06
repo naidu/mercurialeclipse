@@ -14,6 +14,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.runtime.CoreException;
@@ -42,6 +46,8 @@ public class MercurialTeamProvider extends RepositoryProvider
 	public static final QualifiedName QUALIFIED_NAME_DEFAULT_REVISION_LIMIT = new QualifiedName(
 			ID + ".defaultRevisionLimit",
 			"defaultRevisionLimit");
+
+    private static final Map<IProject,Boolean> HG_ROOTS = new HashMap<IProject,Boolean>();
 	
   MercurialHistoryProvider FileHistoryProvider; 
 	/**
@@ -61,11 +67,29 @@ public class MercurialTeamProvider extends RepositoryProvider
 	@Override
     public void configureProject() throws CoreException 
 	{
-		getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
-		IResource resource = getProject().getFolder(".hg");
-		if (resource != null && resource.exists()) {
+		getProject().refreshLocal(IResource.DEPTH_INFINITE, null);			
+		determineHgRoot(getProject());
+	}
+
+    /**
+     * @param resource
+     * @throws CoreException
+     */
+    private static void determineHgRoot(IProject project) throws CoreException {
+        IResource resource = project.getFolder(".hg"); 
+        if (resource != null && resource.exists()) {
 		    resource.setTeamPrivateMember(true);
+		    MercurialTeamProvider.HG_ROOTS.put(project,new Boolean(true));
+		} else {
+		    MercurialTeamProvider.HG_ROOTS.put(project,new Boolean(false));
 		}
+    }
+	
+	public static boolean isProjectRootInProject(IProject project) throws CoreException {
+	    if (HG_ROOTS.get(project)==null) {
+	        determineHgRoot(project);
+	    }
+	    return HG_ROOTS.get(project).booleanValue();
 	}
 
 	/* (non-Javadoc)
