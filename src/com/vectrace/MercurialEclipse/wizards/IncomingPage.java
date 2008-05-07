@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 
 final class IncomingPage extends WizardPage {
@@ -73,7 +73,7 @@ final class IncomingPage extends WizardPage {
         try {
             File bundleFile = HgIncomingClient.getBundleFile(wiz.project, remote);
             System.out.println(bundleFile);
-            SortedSet<ChangeSet> incoming = MercurialStatusCache.getInstance().getIncomingChangeSets(wiz.project, remote.getUrl());
+            SortedSet<ChangeSet> incoming = IncomingChangesetCache.getInstance().getIncomingChangeSets(wiz.project, remote.getUrl());
             return incoming;
         } catch (HgException e) {
             MercurialEclipsePlugin.showError(e);

@@ -24,7 +24,7 @@ import org.eclipse.team.ui.synchronize.SubscriberParticipantWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author bastian

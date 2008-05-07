@@ -15,7 +15,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.commands.HgRollbackClient;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 public class RollbackHandler extends SingleResourceHandler {
 
@@ -25,7 +25,7 @@ public class RollbackHandler extends SingleResourceHandler {
         String result = HgRollbackClient.rollback(project);
         MessageDialog.openInformation(getShell(),"Rollback output", result);
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        MercurialStatusCache.getInstance().refreshAllLocalRevisions(project);
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project);
     }
 
 }

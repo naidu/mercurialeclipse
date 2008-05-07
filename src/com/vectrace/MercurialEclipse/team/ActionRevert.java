@@ -46,6 +46,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 
 

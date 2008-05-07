@@ -33,11 +33,22 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 public class MercurialSynchronizeSubscriber extends Subscriber {
-    private static MercurialStatusCache statusCache = MercurialStatusCache
+    /**
+     * 
+     */
+    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
+    /**
+     * 
+     */
+    private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache.getInstance();
+    private static MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
     private final ISynchronizeScope myScope;
     private IResource[] myRoots;
@@ -69,12 +80,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         if (null != RepositoryProvider.getProvider(resource.getProject(),
                 MercurialTeamProvider.ID)
                 && resource.getProject().isOpen() && isSupervised(resource)) {
-            ChangeSet csBase = statusCache.getNewestOutgoingChangeSet(resource,
+            ChangeSet csBase = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource,
                     repositoryLocation);
             if (csBase == null) {
-                csBase = statusCache.getNewestLocalChangeSet(resource);
+                csBase = LocalChangesetCache.getInstance().getNewestLocalChangeSet(resource);
             }
-            ChangeSet csRemote = statusCache.getNewestIncomingChangeSet(
+            ChangeSet csRemote = INCOMING_CACHE.getNewestIncomingChangeSet(
                     resource, repositoryLocation);
 
             IResourceVariant base;
@@ -153,17 +164,17 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     @Override
     public boolean isSupervised(IResource resource) throws TeamException {
 
-        return statusCache.isSupervised(resource)
+        return STATUS_CACHE.isSupervised(resource)
                 && resource.getType() == IResource.FILE;
     }
 
     @Override
     public IResource[] members(IResource resource) throws TeamException {
         Set<IResource> members = new HashSet<IResource>();
-        IResource[] localMembers = statusCache.getLocalMembers(resource);
-        IResource[] outgoingMembers = statusCache.getOutgoingMembers(resource,
+        IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
+        IResource[] outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(resource,
                 repositoryLocation);
-        IResource[] remoteMembers = statusCache.getIncomingMembers(resource,
+        IResource[] remoteMembers = INCOMING_CACHE.getIncomingMembers(resource,
                 repositoryLocation);
 
         if (localMembers != null && localMembers.length > 0) {
@@ -206,12 +217,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 continue;
             }
 
-            statusCache.refresh(project, monitor, repositoryLocation);
+            STATUS_CACHE.refresh(project, monitor, repositoryLocation);
             refreshed.add(project);
-            IResource[] localMembers = statusCache.getLocalMembers(resource);
-            IResource[] incomingMembers = statusCache.getIncomingMembers(
+            IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
+            IResource[] incomingMembers = INCOMING_CACHE.getIncomingMembers(
                     resource, repositoryLocation);
-            IResource[] outgoingMembers = statusCache.getOutgoingMembers(
+            IResource[] outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(
                     resource, repositoryLocation);
 
             Set<IResource> resourcesToRefresh = new HashSet<IResource>();

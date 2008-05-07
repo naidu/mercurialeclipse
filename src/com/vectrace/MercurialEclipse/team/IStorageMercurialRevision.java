@@ -31,6 +31,7 @@ import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author zingo
@@ -58,7 +59,7 @@ public class IStorageMercurialRevision implements IStorage {
         resource = res;
         revision = rev;
         try {
-            SortedSet<ChangeSet> changeSets = MercurialStatusCache
+            SortedSet<ChangeSet> changeSets = LocalChangesetCache
                     .getInstance().getLocalChangeSets(res);
             if (changeSets != null) {
                 ChangeSet[] changeSetArray = changeSets
@@ -111,7 +112,7 @@ public class IStorageMercurialRevision implements IStorage {
 
         ChangeSet cs = null;
         try {
-            cs = MercurialStatusCache.getInstance()
+            cs = LocalChangesetCache.getInstance()
                     .getNewestLocalChangeSet(res);
 
             this.resource = res;

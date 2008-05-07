@@ -21,7 +21,8 @@ import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 public class FileDataLoader extends DataLoader {
 
@@ -38,13 +39,11 @@ public class FileDataLoader extends DataLoader {
 
 	@Override
 	public ChangeSet[] getRevisions() throws HgException {
-		SortedSet<ChangeSet> csSet = MercurialStatusCache
-				.getInstance().getLocalChangeSets(file);
+		SortedSet<ChangeSet> csSet = LocalChangesetCache.getInstance().getLocalChangeSets(file);
 		
-		if (MercurialStatusCache.getInstance().isIncomingStatusKnown(
+		if (IncomingChangesetCache.getInstance().isIncomingStatusKnown(
 				getProject())) {
-			SortedSet<ChangeSet> incomingChangeSets = MercurialStatusCache
-					.getInstance().getIncomingChangeSets(file);
+			SortedSet<ChangeSet> incomingChangeSets = IncomingChangesetCache.getInstance().getIncomingChangeSets(file);
 			csSet.addAll(incomingChangeSets);
 		}		
 		

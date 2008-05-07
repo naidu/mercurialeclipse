@@ -29,8 +29,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author bastian
@@ -115,7 +115,7 @@ public class BackoutWizardPage extends HgWizardPage {
     }    
     
     protected void populateBackoutRevisionListView() throws HgException {
-        SortedSet<ChangeSet> changesets = MercurialStatusCache.getInstance()
+        SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
                 .getLocalChangeSets(project);
         if (changesets != null) {
             for (ChangeSet changeSet : changesets) {

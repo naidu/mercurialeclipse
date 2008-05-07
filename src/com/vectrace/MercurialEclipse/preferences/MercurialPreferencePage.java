@@ -24,7 +24,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * This class represents a preference page that is contributed to the

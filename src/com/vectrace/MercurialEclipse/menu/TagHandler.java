@@ -6,7 +6,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.TagDialog;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * 

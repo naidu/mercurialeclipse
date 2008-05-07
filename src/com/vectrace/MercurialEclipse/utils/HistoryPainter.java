@@ -26,7 +26,7 @@ import org.eclipse.swt.widgets.Event;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 public class HistoryPainter {
 	private final static int[] colors = new int[] { SWT.COLOR_RED,
@@ -43,11 +43,11 @@ public class HistoryPainter {
 
 	public HistoryPainter(IResource resource) {
 		try {
-			MercurialStatusCache.getInstance().refreshAllLocalRevisions(
+		    LocalChangesetCache.getInstance().refreshAllLocalRevisions(
 					resource.getProject(), false);
 
 			this.roof = new HistoryPainterRevision(resource,
-					MercurialStatusCache.getInstance().getNewestLocalChangeSet(
+			        LocalChangesetCache.getInstance().getNewestLocalChangeSet(
 							resource));
 
 			// cleanup

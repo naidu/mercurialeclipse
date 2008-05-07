@@ -93,13 +93,14 @@ public class MercurialTeamProvider extends RepositoryProvider
         }
     }
 	
-	public static boolean isProjectRootInProject(IProject project)
+	public static boolean isRepositoryRootInProject(IProject project)
             throws CoreException {
         if (HG_ROOTS.get(project) == null) {
             determineHgRoot(project);
         }
         return HG_ROOTS.get(project).booleanValue();
     }
+		
 
 	/* (non-Javadoc)
 	 * @see org.eclipse.core.resources.IProjectNature#deconfigure()

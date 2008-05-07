@@ -19,7 +19,7 @@ import org.eclipse.team.core.TeamException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgIgnoreHandler extends SingleResourceHandler {
 

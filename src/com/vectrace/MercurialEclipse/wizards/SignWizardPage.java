@@ -30,8 +30,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgSignClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author Bastian Doetsch
@@ -151,8 +151,7 @@ public class SignWizardPage extends HgWizardPage {
 
     private void populateViewer(ListViewer viewer) {
         try {
-            SortedSet<ChangeSet> changesets = MercurialStatusCache
-                    .getInstance().getLocalChangeSets(project);
+            SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance().getLocalChangeSets(project);
             if (changesets != null) {
                 viewer
                         .add(changesets

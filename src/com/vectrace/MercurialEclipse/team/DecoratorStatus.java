@@ -41,6 +41,9 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author zingo
@@ -162,7 +165,7 @@ public class DecoratorStatus extends LabelProvider implements
 
 		ChangeSet cs = null;
 		try {
-			cs = statusCache.getNewestIncomingChangeSet(objectResource);
+			cs = IncomingChangesetCache.getInstance().getNewestIncomingChangeSet(objectResource);
 		} catch (HgException e1) {
 			MercurialEclipsePlugin.logError(e1);
 		}
@@ -180,7 +183,7 @@ public class DecoratorStatus extends LabelProvider implements
 		}
 
 		try {
-			ChangeSet changeSet = statusCache.getNewestLocalChangeSet(objectResource);
+			ChangeSet changeSet = LocalChangesetCache.getInstance().getNewestLocalChangeSet(objectResource);
 			if (changeSet != null) {
 				String hex = ":" + changeSet.getNodeShort();
 				String suffix = " [" + changeSet.getChangesetIndex() + hex

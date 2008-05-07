@@ -4,8 +4,8 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class CommitMergeHandler extends SingleResourceHandler {
 

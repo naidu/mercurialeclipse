@@ -21,7 +21,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class RepositoryGraph {
 	private static RepositoryGraph instance = null;

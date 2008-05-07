@@ -14,7 +14,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 
 public class BackoutHandler extends SingleResourceHandler {
@@ -28,7 +28,7 @@ public class BackoutHandler extends SingleResourceHandler {
         dialog.setBlockOnOpen(true);
         dialog.open();
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        MercurialStatusCache.getInstance().refreshAllLocalRevisions(project);
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project);
     }
 
 }

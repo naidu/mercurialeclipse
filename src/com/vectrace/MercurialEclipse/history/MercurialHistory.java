@@ -27,8 +27,9 @@ import org.eclipse.team.core.history.provider.FileHistory;
 import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author zingo
@@ -108,11 +109,10 @@ public class MercurialHistory extends FileHistory {
             SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(
                     getChangeSetComparator());
 
-            MercurialStatusCache.getInstance().refreshAllLocalRevisions(
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(
                     resource.getProject(), false);
 
-            SortedSet<ChangeSet> localChangeSets = MercurialStatusCache
-                    .getInstance().getLocalChangeSets(resource);
+            SortedSet<ChangeSet> localChangeSets = LocalChangesetCache.getInstance().getLocalChangeSets(resource);
 
             if (localChangeSets != null) {
                 changeSets.addAll(localChangeSets);
@@ -120,9 +120,9 @@ public class MercurialHistory extends FileHistory {
             
             // only get incoming if changesets are already there (e.g. via Sync Participant).
             SortedSet<ChangeSet> incomingChangeSets = null;           
-            if (MercurialStatusCache.getInstance().isIncomingStatusKnown(
+            if (IncomingChangesetCache.getInstance().isIncomingStatusKnown(
                     resource.getProject())) {
-                incomingChangeSets = MercurialStatusCache.getInstance()
+                incomingChangeSets = IncomingChangesetCache.getInstance()
                         .getIncomingChangeSets(resource);
             }
             

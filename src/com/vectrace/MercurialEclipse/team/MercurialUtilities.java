@@ -496,7 +496,7 @@ public class MercurialUtilities {
     public static IResource getIResource(IProject proj, String path) {
         int projectPathStartIndex = 0;
         try {
-            if (!MercurialTeamProvider.isProjectRootInProject(proj)) {
+            if (!MercurialTeamProvider.isRepositoryRootInProject(proj)) {
                 projectPathStartIndex = path.indexOf(proj.getName());
             }
         } catch (CoreException e) {

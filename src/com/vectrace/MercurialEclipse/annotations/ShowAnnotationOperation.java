@@ -53,7 +53,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 public class ShowAnnotationOperation extends TeamOperation
 {
@@ -247,7 +247,7 @@ private RevisionInformation createRevisionInformation(
       final AnnotateBlocks annotateBlocks, IProgressMonitor monitor) throws HgException
   {
     Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();
-    Iterable<ChangeSet> revisions = MercurialStatusCache.getInstance().getLocalChangeSets(remoteFile.getFile());
+    Iterable<ChangeSet> revisions = LocalChangesetCache.getInstance().getLocalChangeSets(remoteFile.getFile());
     for(ChangeSet changeSet : revisions)
     {
       logEntriesByRevision.put(changeSet.getRevision().getRevision(), changeSet);

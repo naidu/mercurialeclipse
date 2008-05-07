@@ -18,8 +18,8 @@ import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.model.FlaggedResource;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class ResourceAdapterFactory implements IAdapterFactory {
 

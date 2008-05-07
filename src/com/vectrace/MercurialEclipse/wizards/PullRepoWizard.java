@@ -26,8 +26,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 
 
 public class PullRepoWizard extends SyncRepoWizard
@@ -92,7 +92,7 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     private void performPull(final HgRepositoryLocation repo) {
         try {
             String result = HgPushPullClient.pull(project, repo, isDoUpdate());
-            MercurialStatusCache.getInstance().clear();
+            IncomingChangesetCache.getInstance().clear();
             if (result.length() != 0) {
 
                 Shell shell;
