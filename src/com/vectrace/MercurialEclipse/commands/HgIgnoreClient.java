@@ -1,14 +1,13 @@
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -66,41 +65,32 @@ public class HgIgnoreClient {
 	
 	private static void addPattern(IProject project, String syntax, String pattern) throws HgException {
 		//TODO use existing sections
+	    BufferedOutputStream buffer = null;
 		try {
-			IFile hgignore = project.getFile(".hgignore");
-			hgignore.refreshLocal(IResource.DEPTH_ZERO, null);
-			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-			boolean exists = hgignore.exists();
-			if(exists) {
-				//read current patterns
-				BufferedInputStream content = new BufferedInputStream(hgignore
-						.getContents());
-				try {
-					byte[] b = new byte[1024];
-					int len;
-					while ((len = content.read(b)) != -1) {
-						buffer.write(b, 0, len);
-					}
-				} finally {
-					content.close();
-				}
-			}
-			//add the new one
+		    String path = HgRootClient.getHgRoot(project).concat(File.separator).concat(".hgignore");
+		    
+		    File hgignore = new File(path);
+		    // append to file if it exists, else create a new one
+			buffer = new BufferedOutputStream(new FileOutputStream(hgignore,true));
+			// write contents
 			buffer.write(new byte[]{'\n','s','y','n','t','a','x',':',' '});
 			buffer.write(syntax.getBytes());
 			buffer.write('\n');
 			buffer.write(pattern.getBytes());
-			//write to .hgignore
-			ByteArrayInputStream input = new ByteArrayInputStream(buffer.toByteArray());
-			if(exists) {
-				hgignore.setContents(input, false, true, null);
-			} else {
-				hgignore.create(input, false, null);
-			}
+			buffer.flush();
 		} catch (CoreException e) {
 			throw new HgException("Failed to add an entry to .hgignore", e);
 		} catch (IOException e) {
 			throw new HgException("Failed to add an entry to .hgignore", e);
+		} finally {
+		    // we don't want to leak file descriptors...
+		    if (buffer != null) {
+		        try {
+                    buffer.close();
+                } catch (IOException e) {
+                   throw new HgException("Failed to close file .hgignore",e);
+                }
+		    }
 		}
 		
 	}
