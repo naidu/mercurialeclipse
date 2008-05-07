@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.team.core.TeamException;
 
@@ -56,7 +57,8 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					break;
 			}
 			try {
-				MercurialStatusCache.getInstance().refresh(resource.getProject());
+				MercurialStatusCache.getInstance().refreshStatus(resource,
+                        new NullProgressMonitor());
 			} catch (TeamException e) {
 				MercurialEclipsePlugin.logError("Unable to refresh project: ",
 						e);
