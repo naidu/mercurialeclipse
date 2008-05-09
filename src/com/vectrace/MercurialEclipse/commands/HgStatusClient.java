@@ -46,4 +46,17 @@ public class HgStatusClient {
         return command.executeToBytes().length != 0;
     }
 
+    /**
+     * @param array
+     * @return
+     * @throws HgException 
+     */
+    public static String getStatus(IProject proj, List<IResource> files) throws HgException {
+        HgCommand command = new HgCommand("status", proj, true);
+        // modified, added, removed, deleted, unknown, ignored, clean
+        command.addOptions("-marduic");
+        command.addFiles(files);
+        return command.executeToString();
+    }
+
 }

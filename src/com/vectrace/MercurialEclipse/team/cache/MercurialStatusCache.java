@@ -15,11 +15,13 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
@@ -30,10 +32,12 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
@@ -55,6 +59,59 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class MercurialStatusCache extends AbstractCache implements
         IResourceChangeListener {
+
+   
+    private static final int STATUS_BATCH_SIZE = 10;
+    private static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
+
+    /**
+     * @author bastian
+     * 
+     */
+    private final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
+        
+        private final List<IResource> removed;
+        private final List<IResource> changed;
+        private final List<IResource> added;
+
+        /**
+         * @param removed
+         * @param changed
+         * @param added
+         */
+        private ResourceDeltaVisitor(List<IResource> removed,
+                List<IResource> changed, List<IResource> added) {
+            this.removed = removed;
+            this.changed = changed;
+            this.added = added;
+        }
+
+        public boolean visit(IResourceDelta delta) throws CoreException {
+            final IResource res = delta.getResource();
+            if (res.isAccessible()
+                    && res.getProject().isOpen()
+                    && RepositoryProvider.getProvider(res.getProject(),
+                            MercurialTeamProvider.ID) != null) {
+                switch (delta.getKind()) {
+                case IResourceDelta.ADDED:                    
+                        added.add(res);
+                    break;
+                case IResourceDelta.CHANGED:
+                    if (isSupervised(res)) {
+                        changed.add(res);
+                    }
+                    break;
+                case IResourceDelta.REMOVED:
+                    if (isSupervised(res)) {
+                        removed.add(res);
+                    }
+                    break;
+                }
+                return true;
+            }
+            return false;
+        }
+    }
 
     private final class ChangeSetIndexComparator implements
             Comparator<ChangeSet> {
@@ -205,7 +262,7 @@ public class MercurialStatusCache extends AbstractCache implements
             new SafeWorkspaceJob("Refreshing caches and status.") {
 
                 @Override
-                protected IStatus runSafe(IProgressMonitor monitor) {                    
+                protected IStatus runSafe(IProgressMonitor monitor) {
                     try {
                         refreshStatus(project, monitor);
                     } catch (HgException e1) {
@@ -340,8 +397,8 @@ public class MercurialStatusCache extends AbstractCache implements
             }
 
             // ancestors
-            for (IResource parent = member.getParent(); parent != res
-                    .getParent(); parent = parent.getParent()) {
+            for (IResource parent = member.getParent(); parent != null
+                    && parent != res.getParent(); parent = parent.getParent()) {
                 BitSet parentBitSet = statusMap.get(parent);
                 if (parentBitSet != null) {
                     bitSet = (BitSet) bitSet.clone();
@@ -375,6 +432,27 @@ public class MercurialStatusCache extends AbstractCache implements
             return BIT_IMPOSSIBLE;
         }
     }
+
+    // private char getHgStatusFlag(int bitIndex) {
+    // switch (bitIndex) {
+    // case BIT_DELETED:
+    // return '!';
+    // case BIT_REMOVED:
+    // return 'R';
+    // case BIT_IGNORE:
+    // return 'I';
+    // case BIT_CLEAN:
+    // return 'C';
+    // case BIT_UNKNOWN:
+    // return '?';
+    // case BIT_ADDED:
+    // return 'A';
+    // case BIT_MODIFIED:
+    // return 'M';
+    // default:
+    // return ' ';
+    // }
+    // }
 
     /**
      * Refreshes the sync status for each project in Workspace by questioning
@@ -427,46 +505,68 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     public void resourceChanged(IResourceChangeEvent event) {
-        // only refresh after a change - we aren't interested in build outputs,
-        // are we?
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
-            // workspace childs
-            IResourceDelta[] wsChildren = event.getDelta()
-                    .getAffectedChildren();
-            for (IResourceDelta wsChild : wsChildren) {
+            try {
+                for (IResourceDelta delta : event.getDelta()
+                        .getAffectedChildren()) {
+                    
+                    final List<IResource> changed = new ArrayList<IResource>();
+                    final List<IResource> added = new ArrayList<IResource>();
+                    final List<IResource> removed = new ArrayList<IResource>();
+                    
+                    IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(removed,
+                            changed, added);
+                    
+                    // walk tree
+                    delta.accept(visitor);
 
-                // update whole project :-(. else we'd have to walk the project
-                // tree.
-                final IResource res = wsChild.getResource();
-                if (null != RepositoryProvider.getProvider(res.getProject(),
-                        MercurialTeamProvider.ID)
-                        && res.getProject().isOpen()) {
+                    // now process gathered changes (they are in the lists)
+                    if (changed.size() + added.size() + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
+                        refresh(delta.getResource().getProject(),
+                                new NullProgressMonitor(), null);
+                    } else {
+                        // changed
+                        refreshStatus(changed);
 
-                    new SafeUiJob("Refreshing status of resource "
-                            + res.getName()) {
-                        @Override
-                        protected IStatus runSafe(IProgressMonitor monitor) {
-                            try {
-                                monitor.beginTask(
-                                        "Starting to refresh status of "
-                                                + res.getName(), 10);
-                                refreshStatus(res, monitor);
-                                return super.runSafe(monitor);
-                            } catch (HgException e) {
-                                MercurialEclipsePlugin.logError(e);
-                                return new Status(IStatus.ERROR,
-                                        MercurialEclipsePlugin.ID,
-                                        "Couldn't refresh status of "
-                                                + res.getName() + ". E: "
-                                                + e.getMessage());
-                            }
-                        }
-                    }.schedule();
+                        // added
+                        refreshStatus(added);
+
+                        // removed
+                        refreshStatus(removed);
+                    }
 
                 }
+                // notify observers
+                setChanged();
+                notifyObservers(this);
+
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
             }
         }
+    }
 
+    /**
+     * Refreshes Status of resources in batches
+     * @param resources
+     * @return
+     * @throws HgException
+     */
+    private void refreshStatus(final List<IResource> resources)
+            throws HgException {
+        List<IResource> currentBatch = new ArrayList<IResource>();
+        for (Iterator<IResource> iterator = resources.iterator(); iterator
+                .hasNext();) {
+            IResource resource = iterator.next();
+            currentBatch.add(resource);
+            if (currentBatch.size() % STATUS_BATCH_SIZE == 0 || !iterator.hasNext()) {
+                // call hg with batch
+                String output = HgStatusClient.getStatus(resource.getProject(),
+                        currentBatch);
+                parseStatus(resource.getProject(), output);
+                currentBatch.clear();
+            }
+        }
     }
 
     /**
