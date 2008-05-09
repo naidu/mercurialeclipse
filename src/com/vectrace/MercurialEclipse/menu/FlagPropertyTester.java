@@ -49,7 +49,7 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
                 return !test.isEmpty();
                 
             } catch (Exception e) {
-                MercurialEclipsePlugin.logWarning("Could not test status field "+expectedValue, e);
+                MercurialEclipsePlugin.logWarning("Could not test status field "+expectedValue+" on "+receiver, e);
                 return false;
             }
         }
