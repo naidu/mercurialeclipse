@@ -156,7 +156,7 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public InputStream getContents() throws CoreException {
         // Setup and run command
-        String result = null;
+        String result = "";
         IFile file = resource.getProject().getFile(
                 resource.getProjectRelativePath());
         if (changeSet != null) {
