@@ -25,7 +25,6 @@ import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
@@ -37,6 +36,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /**
  * @author zingo
@@ -98,8 +98,10 @@ public class ResourceDecorator extends LabelProvider implements
 
 			if (!statusCache.isStatusKnown((project))) {
 				try {
-					statusCache.refreshStatus(project, null);
-				} catch (TeamException ex) {
+					RefreshJob job = new RefreshJob("Refreshing status for decoration...",null,project);
+					job.schedule(10);
+					job.join();
+				} catch (Exception ex) {
 					MercurialEclipsePlugin.logError(ex);
 					return;
 				}

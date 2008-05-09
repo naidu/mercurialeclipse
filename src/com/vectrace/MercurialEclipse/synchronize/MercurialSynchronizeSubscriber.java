@@ -30,6 +30,7 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
@@ -38,16 +39,19 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class MercurialSynchronizeSubscriber extends Subscriber {
     /**
      * 
      */
-    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
+    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
+            .getInstance();
     /**
      * 
      */
-    private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache.getInstance();
+    private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache
+            .getInstance();
     private static MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
     private final ISynchronizeScope myScope;
@@ -80,10 +84,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         if (null != RepositoryProvider.getProvider(resource.getProject(),
                 MercurialTeamProvider.ID)
                 && resource.getProject().isOpen() && isSupervised(resource)) {
-            ChangeSet csBase = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource,
-                    repositoryLocation);
+            ChangeSet csBase = OUTGOING_CACHE.getNewestOutgoingChangeSet(
+                    resource, repositoryLocation);
             if (csBase == null) {
-                csBase = LocalChangesetCache.getInstance().getNewestLocalChangeSet(resource);
+                csBase = LocalChangesetCache.getInstance()
+                        .getNewestLocalChangeSet(resource);
             }
             ChangeSet csRemote = INCOMING_CACHE.getNewestIncomingChangeSet(
                     resource, repositoryLocation);
@@ -172,8 +177,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     public IResource[] members(IResource resource) throws TeamException {
         Set<IResource> members = new HashSet<IResource>();
         IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
-        IResource[] outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(resource,
-                repositoryLocation);
+        IResource[] outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(
+                resource, repositoryLocation);
         IResource[] remoteMembers = INCOMING_CACHE.getIncomingMembers(resource,
                 repositoryLocation);
 
@@ -217,7 +222,16 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 continue;
             }
 
-            STATUS_CACHE.refresh(project, monitor, repositoryLocation);
+            RefreshJob job = new RefreshJob(
+                    "Refreshing resources for synchronize...",
+                    repositoryLocation, project);
+            job.schedule(10);
+            try {
+                job.join();
+            } catch (InterruptedException e) {
+                MercurialEclipsePlugin.logError(e);
+                return;
+            }
             refreshed.add(project);
             IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
             IResource[] incomingMembers = INCOMING_CACHE.getIncomingMembers(

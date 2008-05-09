@@ -14,7 +14,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
@@ -36,18 +35,14 @@ import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -144,19 +139,7 @@ public class MercurialStatusCache extends AbstractCache implements
         knownStatus = new HashSet<IProject>();
         AbstractCache.projectResources = new HashMap<IProject, Set<IResource>>();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-        new SafeUiJob("Initializing Mercurial") {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                try {
-                    monitor.beginTask(
-                            "Obtaining Mercurial Status information.", 5);
-                    refreshStatus(monitor);
-                } catch (TeamException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-                return super.runSafe(monitor);
-            }
-        }.schedule();
+        new RefreshStatusJob("Initializing Mercurial").schedule();
     }
 
     public static MercurialStatusCache getInstance() {
@@ -259,82 +242,9 @@ public class MercurialStatusCache extends AbstractCache implements
                 MercurialTeamProvider.ID)
                 && project.isOpen()) {
             // set status
-            new SafeWorkspaceJob("Refreshing caches and status.") {
-
-                @Override
-                protected IStatus runSafe(IProgressMonitor monitor) {
-                    try {
-                        refreshStatus(project, monitor);
-                    } catch (HgException e1) {
-                        MercurialEclipsePlugin.logError(e1);
-                    }
-
-                    if (monitor != null) {
-                        monitor.subTask("Updating status and version cache...");
-                    }
-                    try {
-                        if (monitor != null) {
-                            monitor.subTask("Loading local revisions...");
-                        }
-                        LocalChangesetCache.getInstance()
-                                .refreshAllLocalRevisions(project);
-                        if (monitor != null) {
-                            monitor.worked(1);
-                        }
-                        // incoming
-                        if (repositoryLocation != null) {
-                            if (monitor != null) {
-                                monitor
-                                        .subTask("Loading incoming revisions for "
-                                                + repositoryLocation);
-                            }
-                            IncomingChangesetCache.getInstance()
-                                    .refreshIncomingChangeSets(project,
-                                            repositoryLocation);
-                            if (monitor != null) {
-                                monitor.worked(1);
-                            }
-
-                            if (monitor != null) {
-                                monitor
-                                        .subTask("Loading outgoing revisions for "
-                                                + repositoryLocation);
-                            }
-                            OutgoingChangesetCache.getInstance()
-                                    .refreshOutgoingChangeSets(project,
-                                            repositoryLocation);
-                            if (monitor != null) {
-                                monitor.worked(1);
-                            }
-
-                            if (monitor != null) {
-                                monitor
-                                        .subTask("Adding remote repository to project repositories...");
-                            }
-                            try {
-                                MercurialEclipsePlugin.getRepoManager()
-                                        .addRepoLocation(
-                                                project,
-                                                new HgRepositoryLocation(
-                                                        repositoryLocation));
-                            } catch (MalformedURLException e) {
-                                MercurialEclipsePlugin
-                                        .logWarning(
-                                                "couldn't add repository to location manager",
-                                                e);
-                            }
-                            if (monitor != null) {
-                                monitor.worked(1);
-                            }
-                        }
-                        setChanged();
-                        notifyObservers(project);
-                    } catch (HgException e) {
-                        MercurialEclipsePlugin.logError(e);
-                    }
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
+            new RefreshJob("Refreshing caches and status.", repositoryLocation, project).schedule();
+            setChanged();
+            notifyObservers(project);
         }
     }
 

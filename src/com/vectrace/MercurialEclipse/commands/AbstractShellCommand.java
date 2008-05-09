@@ -33,7 +33,7 @@ public abstract class AbstractShellCommand {
     /**
      *
      */
-    private static final int DEFAULT_TIMEOUT = 30000;
+    private static final int DEFAULT_TIMEOUT = 120000;
 
     private class InputStreamConsumer extends Thread {
         private byte[] output;
