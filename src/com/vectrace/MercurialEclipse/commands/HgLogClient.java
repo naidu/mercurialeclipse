@@ -12,6 +12,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgLogClient extends AbstractParseChangesetClient {
 
@@ -20,11 +21,15 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
     public static ChangeSet[] getRevisions(IProject project) throws HgException {
         HgCommand command = new HgCommand("log", project, true);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         return getRevisions(command);
     }
 
     public static ChangeSet[] getRevisions(IFile file) throws HgException {
         HgCommand command = new HgCommand("log", file.getParent(), true);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         command.addOptions("-f");
         command.addFiles(file.getName());
         return getRevisions(command);
@@ -32,12 +37,16 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         HgCommand command = new HgCommand("heads", project, true);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         return getRevisions(command);
     }
 
     public static String getGraphicalLog(IProject project, String template,
             String filename) throws HgException {
         HgCommand command = new HgCommand("glog", project, false);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         command.addOptions("--template", template);
         command.addOptions("--config", "extensions.hgext.graphlog=");
         command.addOptions(filename);
@@ -55,7 +64,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
             throws HgException {
         command.addOptions("--template",
                 "{rev}:{node} {date|isodate} {author|person}\n");
-
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         String[] lines = null;
         try {
             lines = command.executeToString().split("\n");
@@ -87,21 +97,34 @@ public class HgLogClient extends AbstractParseChangesetClient {
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getCompleteProjectLog(
-            IProject proj) throws HgException {
-        return getProjectLog(proj, -1);
+            IResource res) throws HgException {
+        return getProjectLog(res, -1, -1);
+    }
+
+    public static Map<IResource, SortedSet<ChangeSet>> getProjectLogBatch(
+            IResource res, int batchSize, int startRev) throws HgException {
+        return getProjectLog(res, batchSize, startRev);
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getRecentProjectLog(
             IResource res, int limitNumber) throws HgException {
-        return getProjectLog(res.getProject(), limitNumber);
+        return getProjectLogBatch(res, limitNumber, -1);
     }
 
-    private static Map<IResource, SortedSet<ChangeSet>> getProjectLog(
-            IResource res, int limitNumber) throws HgException {
+    public static Map<IResource, SortedSet<ChangeSet>> getProjectLog(
+            IResource res, int limitNumber, int startRev) throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
-
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         command.addOptions("--debug", "--template",
                 AbstractParseChangesetClient.TEMPLATE);
+
+        if (startRev >= 0) {
+            int last = Math.max(startRev - limitNumber, 0);
+            command.addOptions("-r");
+            command.addOptions(startRev + ":" + last);
+        }
+
         if (limitNumber > -1) {
             command.addOptions("-l", limitNumber + "");
         }

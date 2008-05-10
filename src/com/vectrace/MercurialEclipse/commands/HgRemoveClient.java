@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgRemoveClient {
 
@@ -26,6 +27,7 @@ public class HgRemoveClient {
         HgCommand command = new HgCommand("remove", resource.getProject(), true);
         command.addOptions("--force");
         command.addFiles(resource);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.RemoveTimeout);
         command.executeToBytes();
     }
 }

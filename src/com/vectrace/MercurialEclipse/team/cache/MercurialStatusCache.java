@@ -43,7 +43,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * Caches the Mercurial Status of each file and offers methods for retrieving,
@@ -55,7 +57,6 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 public class MercurialStatusCache extends AbstractCache implements
         IResourceChangeListener {
 
-   
     private static final int STATUS_BATCH_SIZE = 10;
     private static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
 
@@ -64,7 +65,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * 
      */
     private final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
-        
+
         private final List<IResource> removed;
         private final List<IResource> changed;
         private final List<IResource> added;
@@ -88,8 +89,8 @@ public class MercurialStatusCache extends AbstractCache implements
                     && RepositoryProvider.getProvider(res.getProject(),
                             MercurialTeamProvider.ID) != null) {
                 switch (delta.getKind()) {
-                case IResourceDelta.ADDED:                    
-                        added.add(res);
+                case IResourceDelta.ADDED:
+                    added.add(res);
                     break;
                 case IResourceDelta.CHANGED:
                     if (isSupervised(res)) {
@@ -242,7 +243,8 @@ public class MercurialStatusCache extends AbstractCache implements
                 MercurialTeamProvider.ID)
                 && project.isOpen()) {
             // set status
-            new RefreshJob("Refreshing caches and status.", repositoryLocation, project).schedule();
+            new RefreshJob("Refreshing caches and status.", repositoryLocation,
+                    project).schedule();
             setChanged();
             notifyObservers(project);
         }
@@ -419,14 +421,14 @@ public class MercurialStatusCache extends AbstractCache implements
             try {
                 for (IResourceDelta delta : event.getDelta()
                         .getAffectedChildren()) {
-                    
+
                     final List<IResource> changed = new ArrayList<IResource>();
                     final List<IResource> added = new ArrayList<IResource>();
                     final List<IResource> removed = new ArrayList<IResource>();
-                    
-                    IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(removed,
-                            changed, added);
-                    
+
+                    IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(
+                            removed, changed, added);
+
                     // walk tree
                     delta.accept(visitor);
 
@@ -441,8 +443,8 @@ public class MercurialStatusCache extends AbstractCache implements
                         // added
                         refreshStatus(added);
 
-                        // removed
-                        refreshStatus(removed);
+                        // removed not used right now
+                        // refreshStatus(removed);
                     }
 
                 }
@@ -458,18 +460,32 @@ public class MercurialStatusCache extends AbstractCache implements
 
     /**
      * Refreshes Status of resources in batches
+     * 
      * @param resources
      * @return
      * @throws HgException
      */
     private void refreshStatus(final List<IResource> resources)
             throws HgException {
+        String pref = MercurialUtilities.getPreference(
+                MercurialPreferenceConstants.StatusBatchSize, String
+                        .valueOf(STATUS_BATCH_SIZE));
+        
+        int batchSize = STATUS_BATCH_SIZE;        
+        if (pref.length()>0) {
+            try {
+                batchSize = Integer.parseInt(pref);
+            } catch (NumberFormatException e) {
+                MercurialEclipsePlugin.logWarning("Batch size for status command not correct.",e);
+            }
+        }
         List<IResource> currentBatch = new ArrayList<IResource>();
         for (Iterator<IResource> iterator = resources.iterator(); iterator
                 .hasNext();) {
             IResource resource = iterator.next();
             currentBatch.add(resource);
-            if (currentBatch.size() % STATUS_BATCH_SIZE == 0 || !iterator.hasNext()) {
+            if (currentBatch.size() % batchSize == 0
+                    || !iterator.hasNext()) {
                 // call hg with batch
                 String output = HgStatusClient.getStatus(resource.getProject(),
                         currentBatch);
@@ -490,8 +506,7 @@ public class MercurialStatusCache extends AbstractCache implements
             synchronized (statusMap) {
                 // wait...
             }
-        }
-        IContainer container = (IContainer) resource;
+        }        
 
         Set<IResource> members = new HashSet<IResource>();
 
@@ -514,6 +529,7 @@ public class MercurialStatusCache extends AbstractCache implements
                     continue;
                 }
 
+                IContainer container = (IContainer) resource;
                 IResource foundMember = container.findMember(member.getName());
                 if (foundMember != null && foundMember.equals(member)) {
                     members.add(member);

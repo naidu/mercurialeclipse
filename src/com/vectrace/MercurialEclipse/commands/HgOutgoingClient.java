@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
@@ -27,7 +28,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         try {
             HgCommand command = new HgCommand("outgoing", res.getProject(),
                     false);
-
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PullTimeout);
             command.addOptions("--template",
                     AbstractParseChangesetClient.TEMPLATE);
 

@@ -13,6 +13,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet.RowCount;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgGLogClient extends HgCommand {
     private List<GChangeSet> sets = new ArrayList<GChangeSet>();
@@ -25,6 +26,7 @@ public class HgGLogClient extends HgCommand {
         if (resource instanceof IFile) {
             addFiles(resource.getName());
         }
+        setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
         load(executeToString());
     }
 

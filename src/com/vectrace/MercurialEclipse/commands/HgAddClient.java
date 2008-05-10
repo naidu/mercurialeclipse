@@ -8,6 +8,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgAddClient {
 
@@ -25,6 +26,7 @@ public class HgAddClient {
             for (int i = 0; i < size; i += delta) {
                 AbstractShellCommand command = new HgCommand("add", project,
                         true);
+                command.setUsePreferenceTimeout(MercurialPreferenceConstants.AddTimeout);
                 command.addFiles(resourcesByProject.get(project).subList(i,
                         Math.min(i + delta, size - i)));
                 command.executeToBytes();

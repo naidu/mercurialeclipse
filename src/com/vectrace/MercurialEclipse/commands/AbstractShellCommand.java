@@ -27,13 +27,13 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
- *
+ * 
  */
 public abstract class AbstractShellCommand {
     /**
-     *
+     * 
      */
-    private static final int DEFAULT_TIMEOUT = 120000;
+    public static final int DEFAULT_TIMEOUT = 120000;
 
     private class InputStreamConsumer extends Thread {
         private byte[] output;
@@ -77,6 +77,8 @@ public abstract class AbstractShellCommand {
     protected File workingDir;
     final List<String> files = new ArrayList<String>();
 
+    private String timeoutConstant;
+
     protected AbstractShellCommand() {
     }
 
@@ -95,12 +97,30 @@ public abstract class AbstractShellCommand {
     }
 
     protected byte[] executeToBytes() throws HgException {
-        return executeToBytes(DEFAULT_TIMEOUT);
+        int timeout = DEFAULT_TIMEOUT;
+        if (this.timeoutConstant != null) {
+            String pref = MercurialUtilities.getPreference(
+                    this.timeoutConstant, String.valueOf(DEFAULT_TIMEOUT));
+            try {
+                timeout = Integer.parseInt(pref);
+                if (timeout < 0) {
+                    throw new NumberFormatException("Timeout < 0");
+                }
+            } catch (NumberFormatException e) {
+                MercurialEclipsePlugin.logWarning(
+                        "Timeout for command " + command
+                                + " not correctly configured in preferences.",
+                        e);
+            }
+        }
+        return executeToBytes(timeout);
     }
 
     /**
      * Execute a command.
-     * @param timeout -1 if no timeout, else the timeout in ms.
+     * 
+     * @param timeout
+     *            -1 if no timeout, else the timeout in ms.
      * @return
      * @throws HgException
      */
@@ -177,5 +197,12 @@ public abstract class AbstractShellCommand {
         for (IResource resource : resources) {
             this.files.add(resource.getLocation().toOSString());
         }
+    }
+
+    /**
+     * @param cloneTimeout
+     */
+    public void setUsePreferenceTimeout(String cloneTimeout) {
+        this.timeoutConstant = cloneTimeout;
     }
 }

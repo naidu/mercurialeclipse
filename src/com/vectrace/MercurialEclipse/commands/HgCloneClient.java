@@ -13,13 +13,15 @@ package com.vectrace.MercurialEclipse.commands;
 import org.eclipse.core.resources.IWorkspace;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgCloneClient {
 
     public static void clone(IWorkspace workspace, HgRepositoryLocation repo,
-            String cloneParameters, String projectName) throws HgException {
+            String cloneParameters, String projectName) throws HgException {        
         HgCommand command = new HgCommand("clone", workspace.getRoot(), false);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.CloneTimeout);
         if (cloneParameters != null) {
             command.addOptions(cloneParameters);
         }

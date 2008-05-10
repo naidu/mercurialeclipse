@@ -85,13 +85,21 @@ public class MercurialUtilities {
      * @return false if no hg is defined. True if hg executable is defined
      */
     public static String getHGExecutable() {
+        return getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
+                "");
+    }
+
+    public static String getPreference(String preferenceConstant,
+            String defaultIfNotSet) {
         IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
                 .getPreferenceStore();
         // This returns "" if not defined
-        String executable = preferenceStore
-                .getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
-        return executable;
+        String pref = preferenceStore.getString(preferenceConstant);
 
+        if (pref.length() > 0) {
+            return pref;
+        }
+        return defaultIfNotSet;
     }
 
     public static String getHGExecutable(boolean configureIfMissing) {
@@ -135,13 +143,7 @@ public class MercurialUtilities {
      * @return false if no hg is defined. True if hg executable is defined
      */
     public static String getGpgExecutable() {
-        IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore();
-        // This returns "" if not defined
-        String executable = preferenceStore
-                .getString(MercurialPreferenceConstants.GPG_EXECUTABLE);
-        return executable;
-
+        return getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE, "");
     }
 
     public static void configureHgExecutable() {
@@ -484,10 +486,9 @@ public class MercurialUtilities {
     }
 
     /**
-     * This methods extracts the IResource from the given file path
-     * taking into account, that the repository root might be above
-     * project level. 
-     *   
+     * This methods extracts the IResource from the given file path taking into
+     * account, that the repository root might be above project level.
+     * 
      * @param proj
      * @param file
      * @param res
@@ -501,7 +502,7 @@ public class MercurialUtilities {
             }
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);            
+            MercurialEclipsePlugin.showError(e);
         }
         if (projectPathStartIndex >= 0) {
             return proj.getFile(path.substring(projectPathStartIndex));

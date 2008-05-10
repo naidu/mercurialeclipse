@@ -16,6 +16,7 @@ package com.vectrace.MercurialEclipse.preferences;
 
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.widgets.Composite;
@@ -24,6 +25,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -39,6 +41,68 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class MercurialPreferencePage extends FieldEditorPreferencePage
         implements IWorkbenchPreferencePage {
+
+    /**
+     * @author bastian
+     * 
+     */
+    private final class StatusBatchSizeIntegerFieldEditor extends
+            IntegerFieldEditor {
+        /**
+         * @param name
+         * @param labelText
+         * @param parent
+         */
+        private StatusBatchSizeIntegerFieldEditor(String name,
+                String labelText, Composite parent) {
+            super(name, labelText, parent);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.eclipse.jface.preference.FieldEditor#load()
+         */
+        @Override
+        public void load() {
+            super.load();
+            if (getIntValue() <= 0) {
+                super.setPresentsDefaultValue(true);
+                super.setStringValue(String.valueOf(DEFAULT_STATUS_BATCH_SIZE));
+            }
+        }
+    }
+
+    /**
+     * @author bastian
+     * 
+     */
+    private final class LogBatchSizeIntegerFieldEditor extends
+            IntegerFieldEditor {
+        /**
+         * @param name
+         * @param labelText
+         * @param parent
+         */
+        private LogBatchSizeIntegerFieldEditor(String name, String labelText,
+                Composite parent) {
+            super(name, labelText, parent);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.eclipse.jface.preference.FieldEditor#load()
+         */
+        @Override
+        public void load() {
+            super.load();
+            if (getIntValue() <= 0) {
+                super.setPresentsDefaultValue(true);
+                super.setStringValue(String.valueOf(DEFAULT_LOG_BATCH_SIZE));
+            }
+        }
+    }
 
     private final class LabelDecoratorRadioGroupFieldEditor extends
             RadioGroupFieldEditor {
@@ -97,6 +161,31 @@ public class MercurialPreferencePage extends FieldEditorPreferencePage
         }
     }
 
+    private class TimeoutFieldEditor extends IntegerFieldEditor {
+        private TimeoutFieldEditor(String name, String labelText,
+                Composite parent) {
+            super(name, labelText, parent);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.eclipse.jface.preference.FieldEditor#load()
+         */
+        @Override
+        public void load() {
+            super.load();
+            if (getIntValue() <= 0) {
+                super.setPresentsDefaultValue(true);
+                super.setStringValue(String
+                        .valueOf(AbstractShellCommand.DEFAULT_TIMEOUT));
+            }
+        }
+    }
+
+    protected static final int DEFAULT_LOG_BATCH_SIZE = 500;
+    protected static final int DEFAULT_STATUS_BATCH_SIZE = 10;
+
     public MercurialPreferencePage() {
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
@@ -141,6 +230,57 @@ public class MercurialPreferencePage extends FieldEditorPreferencePage
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
                 getFieldEditorParent(), true));
 
+        // batch size preferences
+
+        addField(new LogBatchSizeIntegerFieldEditor(
+                MercurialPreferenceConstants.LogBatchSize,
+                "hg log revision limit:",
+                getFieldEditorParent()));
+
+        addField(new StatusBatchSizeIntegerFieldEditor(
+                MercurialPreferenceConstants.StatusBatchSize,
+                "Number of files to query hg status with:", getFieldEditorParent()));
+
+        // timeout preferences
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.CloneTimeout,
+                "Clone timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.PushTimeout, "Push timeout (ms):",
+                getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.PullTimeout,
+                "Pull/Incoming/Outgoing timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.UpdateTimeout,
+                "Update timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.CommitTimeout,
+                "Commit timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.ImergeTimeout,
+                "Imerge timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.LogTimeout,
+                "Log/GLog timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.StatusTimeout,
+                "Status timeout (ms):", getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.AddTimeout, "Add timeout (ms):",
+                getFieldEditorParent()));
+
+        addField(new TimeoutFieldEditor(
+                MercurialPreferenceConstants.RemoveTimeout,
+                "Remove timeout (ms):", getFieldEditorParent()));
     }
 
     /*

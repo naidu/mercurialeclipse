@@ -12,6 +12,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /*******************************************************************************
@@ -38,6 +39,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
     public static Map<IResource, SortedSet<ChangeSet>> getHgIncoming(
             IProject proj, HgRepositoryLocation repository) throws HgException {
         HgCommand command = new HgCommand("incoming", proj, false);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PullTimeout);
         File bundleFile = getBundleFile(proj, repository);
         File temp = new File(bundleFile.getAbsolutePath() + ".temp."
                 + System.currentTimeMillis());

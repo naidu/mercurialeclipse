@@ -18,6 +18,7 @@ import java.net.URL;
 import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgPushPullClient {
@@ -27,6 +28,7 @@ public class HgPushPullClient {
             throws HgException {
         try {
             HgCommand command = new HgCommand("push", project, true);
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PushTimeout);
             URL url = location.getUrlObject();
 
             if (force) {
@@ -61,6 +63,7 @@ public class HgPushPullClient {
     public static String pull(IProject project, HgRepositoryLocation location,
             boolean update) throws HgException {
         HgCommand command = new HgCommand("pull", project, true);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PullTimeout);
         if (update) {
             command.addOptions("-u");
         }
