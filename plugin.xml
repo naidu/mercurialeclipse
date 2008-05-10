@@ -96,7 +96,7 @@
 	         id="com.vectrace.MercurialEclipse.propertyTester"
 	         namespace="com.vectrace.MercurialEclipse.propertyTester"
 	         properties="status"
-	         type="com.vectrace.MercurialEclipse.model.FlaggedResource">
+	         type="org.eclipse.core.resources.IResource">
 	  	</propertyTester>
 	</extension>
 	
@@ -116,13 +116,11 @@
 		<!-- notInMercurial -->
 		<definition id="com.vectrace.MercurialEclipse.def.notInMercurial">
 			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">
-					<adapt type="com.vectrace.MercurialEclipse.model.FlaggedResource">
+				<adapt type="org.eclipse.core.resources.IResource">					
 						<test 
 						      property="com.vectrace.MercurialEclipse.propertyTester.status"
 						      args="unknown,ignore">
 						</test>
-					</adapt>
 				</adapt>
 			</iterate>
 		</definition>
@@ -130,14 +128,12 @@
 		<definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
 			<iterate>
 				<adapt type="org.eclipse.core.resources.IResource">
-					<adapt type="com.vectrace.MercurialEclipse.model.FlaggedResource">
 		    	       	<test property="com.vectrace.MercurialEclipse.propertyTester.status"
 	    		              args="unknown"/>
 						<not>
 							<test property="com.vectrace.MercurialEclipse.propertyTester.status"
 						      args="added,clean,modified"/>
 						</not>
-					</adapt>
 				</adapt>
 			</iterate>
 		</definition>
@@ -284,9 +280,9 @@
 			<enabledWhen>
 				<and>
 					<count value="1"/>
-					<iterate>
+					<!--iterate>
 						<adapt type="org.eclipse.core.resources.IFile"/>
-					</iterate>
+					</iterate-->
 				</and>
 			</enabledWhen>
 		</handler>
@@ -706,7 +702,7 @@
     <factory
        adaptableType="org.eclipse.core.resources.IResource"
        class="com.vectrace.MercurialEclipse.ResourceAdapterFactory">
-       <adapter type="com.vectrace.MercurialEclipse.model.FlaggedResource"/>
+       <adapter type="org.eclipse.core.resources.IResource"/>
      </factory>
    </extension>
    

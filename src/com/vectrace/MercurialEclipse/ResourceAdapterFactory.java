@@ -7,10 +7,9 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Bastian Doetsch           - changes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
-
-import java.util.BitSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -19,13 +18,12 @@ import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.model.FlaggedResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class ResourceAdapterFactory implements IAdapterFactory {
 
     @SuppressWarnings("unchecked")
     public Object getAdapter(Object adaptableObject, Class adapterType) {
-        if (adapterType == FlaggedResource.class) {
+        if (adapterType == IResource.class) {
             try {
                 IResource resource = (IResource) adaptableObject;
                 IProject project = resource.getProject();
@@ -34,16 +32,7 @@ public class ResourceAdapterFactory implements IAdapterFactory {
                 if (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
                     return null;
                 }
-
-//                FlagManager manager = MercurialEclipsePlugin.getDefault().getFlagManager();
-//                FlaggedProject fproject = manager.getFlaggedProject(project);
-//                if (fproject == null) {
-//                    fproject = manager.refresh(project);
-//                }
-//                return fproject.getFlaggedResource(resource);
-                BitSet status = MercurialStatusCache.getInstance().getStatus(resource);
-                FlaggedResource fResource = new FlaggedResource(resource,status);
-                return fResource;
+                return resource;
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
                 return null;

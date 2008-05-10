@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Bastian Doetsch
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -14,8 +15,10 @@ import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.resources.IResource;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.FlaggedResource;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
 
@@ -24,26 +27,25 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
     @SuppressWarnings("serial")
     private final static Map<Object, Integer> BIT_MAP = new HashMap<Object, Integer>() {
         {
-            put("added", FlaggedResource.BIT_ADDED);
-            put("clean", FlaggedResource.BIT_CLEAN);
-            put("deleted", FlaggedResource.BIT_DELETED);
-            put("ignore", FlaggedResource.BIT_IGNORE);
-            put("modified", FlaggedResource.BIT_MODIFIED);
-            put("removed", FlaggedResource.BIT_REMOVED);
-            put("unknown", FlaggedResource.BIT_UNKNOWN);
+            put("added", MercurialStatusCache.BIT_ADDED);
+            put("clean", MercurialStatusCache.BIT_CLEAN);
+            put("deleted", MercurialStatusCache.BIT_DELETED);
+            put("ignore", MercurialStatusCache.BIT_IGNORE);
+            put("modified", MercurialStatusCache.BIT_MODIFIED);
+            put("removed", MercurialStatusCache.BIT_REMOVED);
+            put("unknown", MercurialStatusCache.BIT_UNKNOWN);
         }
     };
     
     public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
         if(PROPERTY_STATUS.equals(property)) {
             try {
-                FlaggedResource fg = (FlaggedResource)receiver;
+                IResource res = (IResource)receiver;
                 BitSet test = new BitSet();
                 for(Object arg: args) {
                     test.set(BIT_MAP.get(arg));
                 }
-                BitSet status = fg.getStatus();
-                
+                BitSet status = MercurialStatusCache.getInstance().getStatus(res);                
                 test.and(status);
                 
                 return !test.isEmpty();

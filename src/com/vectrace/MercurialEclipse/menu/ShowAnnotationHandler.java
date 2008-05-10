@@ -7,6 +7,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.IEvaluationContext;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
@@ -35,7 +36,7 @@ public class ShowAnnotationHandler extends AbstractHandler {
 
             Object selectionObject = context.getDefaultVariable();
             IAdaptable selectionAdaptable = (IAdaptable) ((List) selectionObject).get(0);
-            IFile file = (IFile) selectionAdaptable.getAdapter(IFile.class);
+            IFile file = (IFile) selectionAdaptable.getAdapter(IResource.class);
 
             IWorkbenchPart part = (IWorkbenchPart) context.getVariable("activePart");
 

@@ -259,10 +259,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
             if (i > 0) {
                 this.summary = description.substring(0, i >= 0 ? i
                         : description.length());
-                this.description = description;
             } else {
                 this.summary = description;
             }
+            this.description = description;
         }
     }
 

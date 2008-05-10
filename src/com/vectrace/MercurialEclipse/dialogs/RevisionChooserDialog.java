@@ -41,6 +41,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.FileDataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
 
@@ -120,13 +121,9 @@ public class RevisionChooserDialog extends Dialog {
 		revision = split[0].trim();
 		
 		if (changeSet == null) {
-			try {
-				changeSet = this.dataLoader.getChangeSetByRevision(Integer
-						.parseInt(revision));
-			} catch (NumberFormatException e) {
-				if (tag != null){
-					changeSet = this.dataLoader.getChangeSetByTag(tag);
-				}
+			if (tag != null){
+					changeSet = LocalChangesetCache.getInstance().getChangeSet(
+                        tag.getRevision() + ":"+tag.getGlobalId());				
 			}
 		}
 		
@@ -228,7 +225,8 @@ public class RevisionChooserDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
-                text.setText(Integer.toString(table.getSelection().getChangesetIndex()));
+            	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
+                changeSet = table.getSelection();
             }
         });
 

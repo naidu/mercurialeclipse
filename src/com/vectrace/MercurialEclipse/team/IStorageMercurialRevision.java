@@ -59,8 +59,8 @@ public class IStorageMercurialRevision implements IStorage {
         resource = res;
         revision = rev;
         try {
-            SortedSet<ChangeSet> changeSets = LocalChangesetCache
-                    .getInstance().getLocalChangeSets(res);
+            SortedSet<ChangeSet> changeSets = LocalChangesetCache.getInstance()
+                    .getLocalChangeSets(res);
             if (changeSets != null) {
                 ChangeSet[] changeSetArray = changeSets
                         .toArray(new ChangeSet[changeSets.size()]);
@@ -112,8 +112,7 @@ public class IStorageMercurialRevision implements IStorage {
 
         ChangeSet cs = null;
         try {
-            cs = LocalChangesetCache.getInstance()
-                    .getNewestLocalChangeSet(res);
+            cs = LocalChangesetCache.getInstance().getNewestLocalChangeSet(res);
 
             this.resource = res;
             this.revision = cs.getChangesetIndex() + ""; // should be fetched
@@ -160,7 +159,7 @@ public class IStorageMercurialRevision implements IStorage {
         IFile file = resource.getProject().getFile(
                 resource.getProjectRelativePath());
         if (changeSet != null) {
-            
+
             // incoming: overlay repository with bundle and extract then via cat
             if (changeSet.getDirection() == Direction.INCOMING
                     && changeSet.getBundleFile() != null) {
@@ -179,26 +178,21 @@ public class IStorageMercurialRevision implements IStorage {
                             .getChangesetIndex()
                             + "", bundleFile);
                 }
-                
+
             } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                
+
                 // outgoing: we can't query remote repositories :-(.
                 result = "Sorry, no content available for remote revision.\n"
                         + "Mercurial doesn't allow access to the contents\n"
                         + "of a remote repository (for incoming changes we "
                         + "look inside downloaded bundles, that's why it works).\n";
-                
-            } else if (changeSet.getDirection() == Direction.LOCAL) {
-                
+
+            } else {
                 // local: get the contents via cat
                 result = HgCatClient.getContent(file, changeSet
                         .getChangesetIndex()
                         + "");
-                
-            } else {
-                result = "no content found for changeset ".concat(changeSet.toString());
             }
-            
         } else {
             // no changeset known
             result = HgCatClient.getContent(file, null);
