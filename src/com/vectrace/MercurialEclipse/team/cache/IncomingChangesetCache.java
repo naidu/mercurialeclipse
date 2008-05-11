@@ -69,7 +69,7 @@ public class IncomingChangesetCache extends AbstractCache {
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
             throws HgException {
         if (incomingUpdateInProgress) {
-            synchronized (IncomingChangesetCache.incomingChangeSets) {
+            synchronized (incomingChangeSets) {
                 // wait
             }
         }
@@ -102,11 +102,11 @@ public class IncomingChangesetCache extends AbstractCache {
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource,
             String repositoryLocation) throws HgException {
         if (incomingUpdateInProgress) {
-            synchronized (IncomingChangesetCache.incomingChangeSets) {
+            synchronized (incomingChangeSets) {
                 // wait...
             }
         }
-        Map<IResource, SortedSet<ChangeSet>> repoIncoming = IncomingChangesetCache.incomingChangeSets
+        Map<IResource, SortedSet<ChangeSet>> repoIncoming = incomingChangeSets
                 .get(repositoryLocation);
     
         SortedSet<ChangeSet> revisions = null;
@@ -116,14 +116,14 @@ public class IncomingChangesetCache extends AbstractCache {
         if (revisions == null) {
             refreshIncomingChangeSets(objectResource.getProject(),
                     repositoryLocation);
-            repoIncoming = IncomingChangesetCache.incomingChangeSets.get(repositoryLocation);
+            repoIncoming = incomingChangeSets.get(repositoryLocation);
             if (repoIncoming != null) {
                 revisions = repoIncoming.get(objectResource);
             }
         }
     
         if (revisions != null) {
-            return Collections.unmodifiableSortedSet(IncomingChangesetCache.incomingChangeSets.get(
+            return Collections.unmodifiableSortedSet(incomingChangeSets.get(
                     repositoryLocation).get(objectResource));
         }
         return null;
@@ -140,11 +140,11 @@ public class IncomingChangesetCache extends AbstractCache {
     public IResource[] getIncomingMembers(IResource resource,
             String repositoryLocation) {
         if (incomingUpdateInProgress) {
-            synchronized (IncomingChangesetCache.incomingChangeSets) {
+            synchronized (incomingChangeSets) {
                 // wait...
             }
         }
-        Map<IResource, SortedSet<ChangeSet>> changeSets = IncomingChangesetCache.incomingChangeSets
+        Map<IResource, SortedSet<ChangeSet>> changeSets = incomingChangeSets
                 .get(repositoryLocation);
         if (changeSets != null) {
             return changeSets.keySet()
@@ -184,14 +184,14 @@ public class IncomingChangesetCache extends AbstractCache {
             String repositoryLocation) throws HgException {
     
         if (incomingUpdateInProgress) {
-            synchronized (IncomingChangesetCache.incomingChangeSets) {
+            synchronized (incomingChangeSets) {
                 // wait for update...
             }
         }
     
         if (MercurialStatusCache.getInstance().isSupervised(resource)) {
     
-            Map<IResource, SortedSet<ChangeSet>> repoMap = IncomingChangesetCache.incomingChangeSets
+            Map<IResource, SortedSet<ChangeSet>> repoMap = incomingChangeSets
                     .get(repositoryLocation);
     
             SortedSet<ChangeSet> revisions = null;
@@ -215,14 +215,14 @@ public class IncomingChangesetCache extends AbstractCache {
      */
     public boolean isIncomingStatusKnown(IProject project) {
         if (incomingUpdateInProgress) {
-            synchronized (IncomingChangesetCache.incomingChangeSets) {
+            synchronized (incomingChangeSets) {
                 // wait...
             }
         }
-        if (IncomingChangesetCache.incomingChangeSets != null && IncomingChangesetCache.incomingChangeSets.size() > 0) {
-            for (Iterator<String> iterator = IncomingChangesetCache.incomingChangeSets.keySet()
+        if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
+            for (Iterator<String> iterator = incomingChangeSets.keySet()
                     .iterator(); iterator.hasNext();) {
-                Map<IResource, SortedSet<ChangeSet>> currLocMap = IncomingChangesetCache.incomingChangeSets
+                Map<IResource, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
                         .get(iterator.next());
                 if (currLocMap != null && currLocMap.get(project) != null) {
                     return true;
@@ -250,15 +250,17 @@ public class IncomingChangesetCache extends AbstractCache {
                 && project.isOpen()) {
     
             // lock the cache till update is complete
-            synchronized (IncomingChangesetCache.incomingChangeSets) {
+            synchronized (incomingChangeSets) {
                 try {
                     incomingUpdateInProgress = true;
     
                     addResourcesToCache(project, repositoryLocation,
-                            IncomingChangesetCache.incomingChangeSets, Direction.INCOMING);
+                            incomingChangeSets, Direction.INCOMING);
     
                 } finally {
                     incomingUpdateInProgress = false;
+                    setChanged();
+                    notifyObservers(project);
                 }
             }
         }

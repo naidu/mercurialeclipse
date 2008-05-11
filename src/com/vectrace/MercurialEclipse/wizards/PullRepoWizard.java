@@ -51,15 +51,15 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
 
     @Override
     public void addPages() {
-       PullPage pullPage = new PullPage("PullRepoPage",
-               "Pull changes from repository",
-               "Select a repository location to pull from",
+       PullPage pullPage = new PullPage(Messages.getString("PullRepoWizard.pullPage.name"), //$NON-NLS-1$
+               Messages.getString("PullRepoWizard.pullPage.title"), //$NON-NLS-1$
+               Messages.getString("PullRepoWizard.pullPage.description"), //$NON-NLS-1$
                project,
                null);
        // legacy - required by super
        super.syncRepoLocationPage = pullPage;
        addPage(pullPage);
-       addPage(new IncomingPage("Incoming"));
+       addPage(new IncomingPage(Messages.getString("PullRepoWizard.incomingPage.name"))); //$NON-NLS-1$
     }
 
     /* (non-Javadoc)
@@ -83,7 +83,7 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
                     repo);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(
-                    "Adding repository to persistent storage failed.", e);
+                    Messages.getString("PullRepoWizard.addingRepositoryFailed"), e); //$NON-NLS-1$
         }
 
         return true;
@@ -102,12 +102,12 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
                 shell = workbench.getActiveWorkbenchWindow().getShell();
 
                 MessageDialog.openInformation(shell,
-                        "Mercurial Eclipse Pull output", result);
+                        Messages.getString("PullRepoWizard.messageDialog.title"), result); //$NON-NLS-1$
 
             }
 
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError("pull operation failed", e);
+            MercurialEclipsePlugin.logError(Messages.getString("PullRepoWizard.pullOperationFailed"), e); //$NON-NLS-1$
         }
     }
 
@@ -116,7 +116,7 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
         try {
             return new HgRepositoryLocation(locationUrl);
         } catch (MalformedURLException e) {
-            MessageDialog.openInformation(getShell(), "URL is malformed.",e.getMessage());
+            MessageDialog.openInformation(getShell(), Messages.getString("PullRepoWizard.malformedURL"),e.getMessage()); //$NON-NLS-1$
             MercurialEclipsePlugin.logInfo(e.getMessage(), e);
             return null;
         }

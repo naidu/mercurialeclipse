@@ -39,7 +39,7 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
     projectName = project.getName();
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    super.syncRepoLocationPage = new ImportPage("ImportPage","Import changes from patchfile","Select a patch file to Import from",projectName,null);
+    super.syncRepoLocationPage = new ImportPage(Messages.getString("ImportWizard.pageName"),Messages.getString("ImportWizard.pageTitle"),Messages.getString("ImportWizard.pageDescription"),projectName,null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
   }
 
   /* (non-Javadoc)
@@ -70,12 +70,12 @@ public boolean performFinish()
         workbench = PlatformUI.getWorkbench();
         shell = workbench.getActiveWorkbenchWindow().getShell();
 
-        MessageDialog.openInformation(shell,"Mercurial Eclipse Import output",  result);
+        MessageDialog.openInformation(shell,Messages.getString("ImportWizard.outputMessageDialog.title"),  result); //$NON-NLS-1$
       }
     }
     catch (Exception e)
     {
-    	MercurialEclipsePlugin.logError("import operation failed", e);
+    	MercurialEclipsePlugin.logError(Messages.getString("ImportWizard.importOperationFailed"), e); //$NON-NLS-1$
 //      System.out.println("pull operation failed");
 //      System.out.println(e.getMessage());
     }

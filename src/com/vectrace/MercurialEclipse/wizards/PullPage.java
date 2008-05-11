@@ -124,7 +124,7 @@ public void createControl(Composite parent)
 
     // Box to enter the repo location
     locationLabel = new Label(outerContainer, SWT.NONE);
-    locationLabel.setText("Repository Location:");
+    locationLabel.setText(Messages.getString("PullPage.locationLabel.text")); //$NON-NLS-1$
     locationData = new GridData();
     locationData.widthHint = 300;
     final ComboViewer locationViewer = new ComboViewer(outerContainer, SWT.DROP_DOWN);
@@ -153,14 +153,14 @@ public void createControl(Composite parent)
     setDefaultLocation(locationViewer);
 
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
-	browseButton.setText ("Browse repos");
+	browseButton.setText (Messages.getString("PullPage.browseButton.text")); //$NON-NLS-1$
 	browseButton.addSelectionListener(new SelectionAdapter()
 	{
 		@Override
         public void widgetSelected(SelectionEvent e)
 		{
 			DirectoryDialog dialog = new DirectoryDialog (getShell());
-      dialog.setMessage("Select a repository to pull/push");
+      dialog.setMessage(Messages.getString("PullPage.repoDialog.message")); //$NON-NLS-1$
 			String dir = dialog.open();
 			if (dir != null) {
                 locationCombo.setText(dir);
@@ -169,14 +169,14 @@ public void createControl(Composite parent)
 	 });
 
     Button browsefileButton = new Button (outerContainer, SWT.PUSH);
-    browsefileButton.setText ("Browse bundles");
+    browsefileButton.setText (Messages.getString("PullPage.browseFileButton.text")); //$NON-NLS-1$
     browsefileButton.addSelectionListener(new SelectionAdapter()
     {
       @Override
     public void widgetSelected(SelectionEvent e)
       {
         FileDialog dialog = new FileDialog (getShell());
-        dialog.setText("Select a bundle to pull/push from/to");
+        dialog.setText(Messages.getString("PullPage.bundleDialog.text")); //$NON-NLS-1$
         String dir = dialog.open();
         if (dir != null) {
             locationCombo.setText(dir);
@@ -185,7 +185,7 @@ public void createControl(Composite parent)
     });
 
     projectNameLabel = new Label(outerContainer, SWT.NONE);
-    projectNameLabel.setText("Name of project to pull to:" + repoName);
+    projectNameLabel.setText(Messages.getString("PullPage.projectNameLabel.text") + repoName); //$NON-NLS-1$
 
     // Dummy labels because of bad choice of GridLayout
     new Label(outerContainer, SWT.NONE);
@@ -201,7 +201,7 @@ public void createControl(Composite parent)
             container.setDoUpdate(toggleUpdate.getSelection());
          }
     });
-    toggleUpdate.setText("Update After Pull");
+    toggleUpdate.setText(Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
 
     setControl(outerContainer);
     setPageComplete(false);

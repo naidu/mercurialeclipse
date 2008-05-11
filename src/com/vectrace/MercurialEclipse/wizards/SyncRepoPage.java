@@ -144,7 +144,7 @@ public boolean isPageComplete()
 
     // Box to enter the repo location
     locationLabel = new Label(outerContainer, SWT.NONE);
-    locationLabel.setText("Repository Location:");
+    locationLabel.setText(Messages.getString("SyncRepoPage.locationLabel.text")); //$NON-NLS-1$
     locationData = new GridData();
     locationData.widthHint = 300;
     locationCombo = new Combo(outerContainer, SWT.DROP_DOWN);
@@ -187,7 +187,7 @@ public boolean isPageComplete()
         }
 	
     Button browseButton = new Button(outerContainer, SWT.PUSH);
-        browseButton.setText("Browse repos");
+        browseButton.setText(Messages.getString("SyncRepoPage.browseButton.text")); //$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
             
             @Override
@@ -207,7 +207,7 @@ public boolean isPageComplete()
     // TODO: In the future this should go away and be replaced with something
     //       more graphical including, probably, a repo browser.
     cloneParametersLabel = new Label(outerContainer, SWT.NONE);
-    cloneParametersLabel.setText("Clone command additional parameters:");
+    cloneParametersLabel.setText(Messages.getString("SyncRepoPage.cloneParametersLabel.text")); //$NON-NLS-1$
     cloneParameters = new Text(outerContainer, SWT.BORDER);
     parameterData = new GridData();
     parameterData.widthHint = 285;
@@ -223,7 +223,7 @@ public boolean isPageComplete()
     // Box to enter additional parameters for the clone command.
     // TODO: In the future this should have some population smarts. Not sure what that might be right now.
     projectNameLabel = new Label(outerContainer, SWT.NONE);
-    projectNameLabel.setText("Name of project to create:");
+    projectNameLabel.setText(Messages.getString("SyncRepoPage.projectNameLabel.text")); //$NON-NLS-1$
     projectNameCombo = new Combo(outerContainer, SWT.DROP_DOWN);
     projectNameData = new GridData();
     projectNameData.widthHint = 300;
@@ -254,14 +254,14 @@ public boolean isPageComplete()
  * @return
  */
 protected String getProjectNameLabelText() {
-    return "Name of project to pull to:" + repoName;
+    return Messages.getString("SyncRepoPage.getProjectNameLabelText") + repoName; //$NON-NLS-1$
 }
 
   protected String getBrowseDialogMessage() {
         if (clone) {
-            return "Select a repository to clone";
+            return Messages.getString("SyncRepoPage.browseDialogMessage.clone"); //$NON-NLS-1$
         }
-        return "Select a repository to pull/push";
+        return Messages.getString("SyncRepoPage.browseDialogMessage.pullpush"); //$NON-NLS-1$
     }
 
 @Override

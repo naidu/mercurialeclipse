@@ -73,7 +73,7 @@ public class SignWizardPage extends HgWizardPage {
 
         // list view of changesets
         Group changeSetGroup = createGroup(composite,
-                "Please select the changeset to sign.");
+                Messages.getString("SignWizardPage.changeSetGroup.title")); //$NON-NLS-1$
 
         changeSetListView = super.createChangeSetListViewer(changeSetGroup,
                 null, 200);
@@ -82,7 +82,7 @@ public class SignWizardPage extends HgWizardPage {
             public void selectionChanged(SelectionChangedEvent event) {
                 ChangeSet cs = (ChangeSet) ((IStructuredSelection) event
                         .getSelection()).getFirstElement();
-                messageTextField.setText("Added signature for changeset "
+                messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.text") //$NON-NLS-1$
                         .concat(cs.toString()));
                 setPageComplete(true);
             }
@@ -92,37 +92,37 @@ public class SignWizardPage extends HgWizardPage {
 
         // now the fields for user data
         Group userGroup = createGroup(composite,
-                "Please enter the information needed for signing.");
+                Messages.getString("SignWizardPage.userGroup.title")); //$NON-NLS-1$
 
-        createLabel(userGroup, "User");
+        createLabel(userGroup, Messages.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
         this.userTextField = createTextField(userGroup);
         this.userTextField.setText(MercurialUtilities.getHGUsername());
 
-        createLabel(userGroup, "Key");
+        createLabel(userGroup, Messages.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
         this.keyCombo = createCombo(userGroup);
 
-        createLabel(userGroup, "Passphrase");
+        createLabel(userGroup, Messages.getString("SignWizardPage.passphraseLabel.text")); //$NON-NLS-1$
         this.passTextField = createTextField(userGroup);
         // this.passTextField.setEchoChar('*');
         this.passTextField
-                .setText("Look out for the gpg agent that will ask you.");
+                .setText(Messages.getString("SignWizardPage.passTextField.text")); //$NON-NLS-1$
         this.passTextField.setEnabled(false);
 
         // now the options
-        Group optionGroup = createGroup(composite, "Please choose the options");
+        Group optionGroup = createGroup(composite, Messages.getString("SignWizardPage.optionGroup.title")); //$NON-NLS-1$
 
         this.localCheckBox = createCheckBox(optionGroup,
-                "Make the signature local");
+                Messages.getString("SignWizardPage.localCheckBox.text")); //$NON-NLS-1$
 
         this.forceCheckBox = createCheckBox(optionGroup,
-                "Sign even if the sigfile is modified");
+                Messages.getString("SignWizardPage.forceCheckBox.text")); //$NON-NLS-1$
 
         this.noCommitCheckBox = createCheckBox(optionGroup,
-                "Do not commit the sigfile after signing");
+                Messages.getString("SignWizardPage.noCommitCheckBox.text")); //$NON-NLS-1$
 
-        createLabel(optionGroup, "Commit message");
+        createLabel(optionGroup, Messages.getString("SignWizardPage.commitLabel.text")); //$NON-NLS-1$
         this.messageTextField = createTextField(optionGroup);
-        this.messageTextField.setText("Signed changeset.");
+        this.messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.defaultText")); //$NON-NLS-1$
 
         populateViewer(changeSetListView);
         populateKeyCombo(keyCombo);
@@ -132,18 +132,18 @@ public class SignWizardPage extends HgWizardPage {
     private void populateKeyCombo(Combo combo) {
         try {
             String keys = HgSignClient.getPrivateKeyList();
-            if (keys.indexOf("\n") == -1) {
+            if (keys.indexOf("\n") == -1) { //$NON-NLS-1$
                 combo.add(keys);
             } else {
-                String[] items = keys.split("\n");
+                String[] items = keys.split("\n"); //$NON-NLS-1$
                 for (String string : items) {
-                    if (string.trim().startsWith("pub")) {
+                    if (string.trim().startsWith("pub")) { //$NON-NLS-1$
                         combo.add(string.substring(6));
                     }
                 }
             }
         } catch (HgException e) {
-            combo.setText("Couldn't load keys. See log for details.");
+            combo.setText(Messages.getString("SignWizardPage.errorLoadingGpgKeys")); //$NON-NLS-1$
             MercurialEclipsePlugin.logError(e);
         }
         combo.setText(combo.getItem(0));
@@ -151,6 +151,7 @@ public class SignWizardPage extends HgWizardPage {
 
     private void populateViewer(ListViewer viewer) {
         try {
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
             SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance().getLocalChangeSets(project);
             if (changesets != null) {
                 viewer
@@ -162,19 +163,17 @@ public class SignWizardPage extends HgWizardPage {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public boolean canFlipToNextPage() {
         return ((IStructuredSelection) changeSetListView.getSelection()).size() == 1;
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
+    @Override    
     public boolean finish(IProgressMonitor monitor) {
         ChangeSet cs = (ChangeSet) ((IStructuredSelection) changeSetListView
                 .getSelection()).getFirstElement();
         String key = keyCombo.getText();
-        key = key.substring(key.indexOf("/") + 1, key.indexOf(" "));
+        key = key.substring(key.indexOf("/") + 1, key.indexOf("\\")); //$NON-NLS-1$ //$NON-NLS-2$
         String msg = messageTextField.getText();
         String user = userTextField.getText();
         String pass = passTextField.getText();
@@ -185,7 +184,7 @@ public class SignWizardPage extends HgWizardPage {
             HgSignClient.sign(project, cs, key, msg, user, local, force,
                     noCommit, pass);
         } catch (HgException e) {
-            MessageDialog.openInformation(getShell(), "Error while signing: ",
+            MessageDialog.openInformation(getShell(), Messages.getString("SignWizardPage.errorSigning"),
                     e.getMessage());
             MercurialEclipsePlugin.logError(e);
             return false;

@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 public class NewLocationWizard extends HgWizard {
 
     public NewLocationWizard() {
-        super("Create new repository location");
+        super(Messages.getString("NewLocationWizard.name")); //$NON-NLS-1$
     }
 
     public NewLocationWizard(Properties initialProperties) {
@@ -36,9 +36,9 @@ public class NewLocationWizard extends HgWizard {
 
     @Override
     public void addPages() {
-        page = createPage("RepoCreationPage", "Create new repository",
-                "wizards/share_wizban.png",
-                "Here you can create a new repository location.");
+        page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"), Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
+                Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
         addPage(page);
     }
 

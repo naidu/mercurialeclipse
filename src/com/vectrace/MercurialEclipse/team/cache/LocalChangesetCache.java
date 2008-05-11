@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.RepositoryProvider;
@@ -209,11 +210,14 @@ public class LocalChangesetCache extends AbstractCache {
 
                     Set<IResource> concernedResources = new HashSet<IResource>();
 
-                    concernedResources.add(res);
-                    concernedResources.addAll(resources);
                     if (revisions != null && revisions.size() > 0) {
 
+                        concernedResources.add(res);
+                        concernedResources.addAll(resources);
+
                         // add all concerned resources if project is updated
+                        // so we have all resources' changesets of the most
+                        // recent revs.
                         if (res.getType() == IResource.PROJECT) {
                             concernedResources.addAll(revisions.keySet());
                         }
@@ -233,7 +237,12 @@ public class LocalChangesetCache extends AbstractCache {
                             // add changes to cache
                             if (changes != null && changes.size() > 0) {
                                 if (STATUS_CACHE.isSupervised(resource)) {
-                                    localChangeSets.put(resource, changes);
+                                    SortedSet<ChangeSet> existing = localChangeSets.get(resource);
+                                    if (existing == null) {
+                                        existing = new TreeSet<ChangeSet>();
+                                    }
+                                    existing.addAll(changes);
+                                    localChangeSets.put(resource, existing);
                                     addToNodeMap(changes);
                                 }
                             }
@@ -241,6 +250,8 @@ public class LocalChangesetCache extends AbstractCache {
                     }
                 } finally {
                     localUpdateInProgress = false;
+                    setChanged();
+                    notifyObservers(res);
                 }
             }
         }

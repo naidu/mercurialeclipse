@@ -40,10 +40,10 @@ public class MercurialParticipantSynchronizeWizard extends
         IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
                 .getDialogSettings();
         IDialogSettings section = workbenchSettings
-                .getSection("MercurialParticipantSynchronizeWizard");
+                .getSection("MercurialParticipantSynchronizeWizard"); //$NON-NLS-1$
         if (section == null) {
             section = workbenchSettings
-                    .addNewSection("MercurialParticipantSynchronizeWizard");
+                    .addNewSection("MercurialParticipantSynchronizeWizard"); //$NON-NLS-1$
         }
         setDialogSettings(section);
     }
@@ -51,7 +51,7 @@ public class MercurialParticipantSynchronizeWizard extends
     @Override
     protected SubscriberParticipant createParticipant(ISynchronizeScope scope) {
         return new MercurialSynchronizeParticipant(scope, pageProperties
-                .getProperty("url"));
+                .getProperty("url")); //$NON-NLS-1$
     }
 
     @Override
@@ -61,7 +61,7 @@ public class MercurialParticipantSynchronizeWizard extends
 
     @Override
     protected String getPageTitle() {
-        return "Mercurial Synchronization Wizard";
+        return Messages.getString("MercurialParticipantSynchronizeWizard.pageTitle"); //$NON-NLS-1$
     }
 
     @Override
@@ -75,12 +75,12 @@ public class MercurialParticipantSynchronizeWizard extends
         IProject[] projects = MercurialStatusCache.getInstance()
                 .getAllManagedProjects();
         if (projects != null) {
-            page = new ConfigurationWizardMainPage("repositoryPage1",
-                    "Choose repository", MercurialEclipsePlugin
-                            .getImageDescriptor("wizards/share_wizban.png"));
+            page = new ConfigurationWizardMainPage(Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.name"), //$NON-NLS-1$
+                    Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.title"), MercurialEclipsePlugin //$NON-NLS-1$
+                            .getImageDescriptor(Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.image"))); //$NON-NLS-1$
 
             page
-                    .setDescription("Please choose the repository location to monitor.");
+                    .setDescription(Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.description")); //$NON-NLS-1$
             page.setDialogSettings(getDialogSettings());
             addPage(page);
         }

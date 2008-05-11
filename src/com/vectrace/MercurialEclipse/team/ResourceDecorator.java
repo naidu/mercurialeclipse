@@ -44,25 +44,31 @@ public class ResourceDecorator extends LabelProvider implements
         ILightweightLabelDecorator, Observer
 // FlagManagerListener
 {
-    private static MercurialStatusCache statusCache = MercurialStatusCache
+   
+    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
-    // private FlagManager flagManager =
-    // MercurialEclipsePlugin.getDefault().getFlagManager();
-
+    
+    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
+    private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
+    
+    
     // set to true when having 2 different statuses in a folder flags it has
     // modified
     private static boolean folder_logic_2MM;
 
     public ResourceDecorator() {
         configureFromPreferences();
-        statusCache.addObserver(this);
-        // flagManager.addListener(this);
+        STATUS_CACHE.addObserver(this);
+        LOCAL_CACHE.addObserver(this);
+        INCOMING_CACHE.addObserver(this);
     }
 
     @Override
     public void dispose() {
         // flagManager.removeListener(this);
-        statusCache.deleteObserver(this);
+        STATUS_CACHE.deleteObserver(this);
+        INCOMING_CACHE.deleteObserver(this);
+        LOCAL_CACHE.deleteObserver(this);
         super.dispose();
     }
 
@@ -90,13 +96,13 @@ public class ResourceDecorator extends LabelProvider implements
                 return;
             }
 
-            if (!statusCache.isStatusKnown((project))) {
+            if (!STATUS_CACHE.isStatusKnown((project))) {
                 return;
             }                                     
 
             ImageDescriptor overlay = null;
             String prefix = null;
-            BitSet output = statusCache.getStatus(resource);
+            BitSet output = STATUS_CACHE.getStatus(resource);
             if (output != null) {
                 // BitSet output = fr.getStatus();
                 // "ignore" does not really count as modified
@@ -142,12 +148,12 @@ public class ResourceDecorator extends LabelProvider implements
             }
             
             // get recent project versions
-            LocalChangesetCache.getInstance().getLocalChangeSets(project);
+            LOCAL_CACHE.getLocalChangeSets(project);
             
             // label info for incoming changesets
             ChangeSet cs = null;
             try {
-                cs = IncomingChangesetCache.getInstance()
+                cs = INCOMING_CACHE
                         .getNewestIncomingChangeSet(resource);
             } catch (HgException e1) {
                 MercurialEclipsePlugin.logError(e1);
@@ -167,15 +173,18 @@ public class ResourceDecorator extends LabelProvider implements
 
             // local changeset info
             try {
-                ChangeSet changeSet = LocalChangesetCache.getInstance()
-                        .getNewestLocalChangeSet(resource);
+                ChangeSet changeSet = LOCAL_CACHE.getNewestLocalChangeSet(project);
 
                 if (changeSet != null) {
                     String hex = ":" + changeSet.getNodeShort();
+                    // suffix for project
                     String suffix = " [" + changeSet.getChangesetIndex() + hex
                             + "]";
 
+                    // suffix for files
                     if (resource.getType() == IResource.FILE) {
+                        changeSet = LOCAL_CACHE.getNewestLocalChangeSet(resource);
+
                         suffix = " [" + changeSet.getChangesetIndex() + "] ";
 
                         if (cs != null) {
@@ -185,6 +194,7 @@ public class ResourceDecorator extends LabelProvider implements
                         }
                     }
 
+                    // only decorate files and project with suffix
                     if (resource.getType() != IResource.FOLDER) {
                         decoration.addSuffix(suffix);
                     }
@@ -206,10 +216,9 @@ public class ResourceDecorator extends LabelProvider implements
         String decoratorId = ResourceDecorator.class.getName();
         configureFromPreferences();
         PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
-    }
-
-    public void update(Observable o, Object updatedObject) {
-        if (o == statusCache) {
+    }    
+        
+    public void update(Observable o, Object updatedObject) {        
             final IWorkbench workbench = PlatformUI.getWorkbench();
             final String decoratorId = ResourceDecorator.class.getName();
             new SafeUiJob("Update Decorations") {
@@ -218,8 +227,7 @@ public class ResourceDecorator extends LabelProvider implements
                     workbench.getDecoratorManager().update(decoratorId);
                     return super.runSafe(monitor);
                 }
-            }.schedule();
-        }
+            }.schedule();        
     }
 
 }

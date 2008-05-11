@@ -67,7 +67,7 @@ public class BackoutWizardPage extends HgWizardPage {
 
         // list view of changesets
         Group changeSetGroup = createGroup(composite,
-                "Please select the changeset to back out from");
+                Messages.getString("BackoutWizardPage.changeSetGroup.title")); //$NON-NLS-1$
 
         changeSetListView = super.createChangeSetListViewer(changeSetGroup,
                 null, 100);
@@ -76,7 +76,7 @@ public class BackoutWizardPage extends HgWizardPage {
             public void selectionChanged(SelectionChangedEvent event) {
                 backoutRevision = (ChangeSet) ((IStructuredSelection) event
                         .getSelection()).getFirstElement();
-                messageTextField.setText("Backed out of changeset "
+                messageTextField.setText(Messages.getString("BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
                         .concat(backoutRevision.toString()));
                 setPageComplete(true);
             }
@@ -87,27 +87,27 @@ public class BackoutWizardPage extends HgWizardPage {
                 
 
         // now the options
-        Group optionGroup = createGroup(composite, "Please choose the options");
+        Group optionGroup = createGroup(composite, Messages.getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
         
         
-        createLabel(optionGroup, "User");
+        createLabel(optionGroup, Messages.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
         this.userTextField = createTextField(optionGroup);
         this.userTextField.setText(MercurialUtilities.getHGUsername());
 
         
-        createLabel(optionGroup, "Commit message");
+        createLabel(optionGroup, Messages.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
         this.messageTextField = createTextField(optionGroup);
         
         // --merge merge with old dirstate parent after backout
         this.mergeCheckBox = createCheckBox(optionGroup,
-                "Merge with old dirstate parent after backout");
+                Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
         this.mergeCheckBox.setSelection(true);
         
         try {
             populateBackoutRevisionListView();
         } catch (HgException e) {
             MessageDialog.openInformation(getShell(),
-                    "Error while loading local changesets", e
+                    Messages.getString("BackoutWizardPage.changesetLoadingError"), e //$NON-NLS-1$
                             .getMessage());
             MercurialEclipsePlugin.logError(e);
         }
@@ -115,6 +115,8 @@ public class BackoutWizardPage extends HgWizardPage {
     }    
     
     protected void populateBackoutRevisionListView() throws HgException {
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,true);
+
         SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
                 .getLocalChangeSets(project);
         if (changesets != null) {
@@ -131,10 +133,10 @@ public class BackoutWizardPage extends HgWizardPage {
         try {
             String result = HgBackoutClient.backout(project, backoutRevision,
                     merge, msg, userTextField.getText());
-            MessageDialog.openInformation(getShell(), "Backout output: ",
+            MessageDialog.openInformation(getShell(), Messages.getString("BackoutWizardPage.backoutOutput"), //$NON-NLS-1$
                     result);
         } catch (HgException e) {
-            MessageDialog.openError(getShell(), "Error while backing out: ", e
+            MessageDialog.openError(getShell(), Messages.getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
                     .getMessage());
             MercurialEclipsePlugin.logError(e);
             return false;

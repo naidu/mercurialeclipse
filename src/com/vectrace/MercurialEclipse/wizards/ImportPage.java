@@ -103,7 +103,7 @@ public void createControl(Composite parent)
 
     // Box to enter the repo location
     locationLabel = new Label(outerContainer, SWT.NONE);
-    locationLabel.setText("Patch file:");
+    locationLabel.setText(Messages.getString("ImportPage.locationLabel.text")); //$NON-NLS-1$
     locationData = new GridData();
     locationData.widthHint = 300;
     locationCombo = new Combo(outerContainer, SWT.DROP_DOWN);
@@ -123,14 +123,14 @@ public void createControl(Composite parent)
       }      
     });
 	Button browseButton = new Button (outerContainer, SWT.PUSH);
-	browseButton.setText ("Browse...");
+	browseButton.setText (Messages.getString("ImportPage.browseButton.text")); //$NON-NLS-1$
 	browseButton.addSelectionListener(new SelectionAdapter() 
 	{
 		@Override
         public void widgetSelected(SelectionEvent e) 
 		{
 			FileDialog dialog = new FileDialog (getShell());
-      dialog.setText("Select a file to import from");     
+      dialog.setText(Messages.getString("ImportPage.dialog.text"));      //$NON-NLS-1$
 			String file = dialog.open();
 			if (file != null) {
                 locationCombo.setText(file);
@@ -139,7 +139,7 @@ public void createControl(Composite parent)
 	});
 
   projectNameLabel = new Label(outerContainer, SWT.NONE);
-  projectNameLabel.setText("Name of project to Import to:" + repoName);
+  projectNameLabel.setText(Messages.getString("ImportPage.projectNameLabel.text") + repoName); //$NON-NLS-1$
   setControl(outerContainer);
   setPageComplete(false);
   }

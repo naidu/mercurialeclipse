@@ -72,7 +72,7 @@ public boolean canFinish()
   {
     setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
     setNeedsProgressMonitor(true);
-    syncRepoLocationPage = new SyncRepoPage(true,"CreateRepoPage","Create Repository Location","Create a repository location to clone",null,null);
+    syncRepoLocationPage = new SyncRepoPage(true,Messages.getString("SyncRepoWizard.syncRepoLocationPage.name"),Messages.getString("SyncRepoWizard.syncRepoLocationPage.title"),Messages.getString("SyncRepoWizard.syncRepoLocationPage.description"),null,null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
   }
   
   
