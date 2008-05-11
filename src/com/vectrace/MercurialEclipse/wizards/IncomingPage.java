@@ -32,6 +32,7 @@ import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 final class IncomingPage extends WizardPage {
 
@@ -66,14 +67,17 @@ final class IncomingPage extends WizardPage {
         set.add(a);
         set.add(b);
 
-//        if(true) return set;
+        // if(true) return set;
 
         PullRepoWizard wiz = getPullWizard();
         HgRepositoryLocation remote = wiz.getLocation();
         try {
-            File bundleFile = HgIncomingClient.getBundleFile(wiz.project, remote);
+            File bundleFile = HgIncomingClient.getBundleFile(wiz.project,
+                    remote);
             System.out.println(bundleFile);
-            SortedSet<ChangeSet> incoming = IncomingChangesetCache.getInstance().getIncomingChangeSets(wiz.project, remote.getUrl());
+            SortedSet<ChangeSet> incoming = IncomingChangesetCache
+                    .getInstance().getIncomingChangeSets(wiz.project,
+                            remote.getUrl());
             return incoming;
         } catch (HgException e) {
             MercurialEclipsePlugin.showError(e);
@@ -92,8 +96,8 @@ final class IncomingPage extends WizardPage {
         setControl(container);
         container.setLayout(new FillLayout(SWT.VERTICAL));
 
-        changeSetViewer = new TableViewer(container,
-                SWT.FULL_SELECTION | SWT.BORDER);
+        changeSetViewer = new TableViewer(container, SWT.FULL_SELECTION
+                | SWT.BORDER);
         changeSetViewer.setContentProvider(new ArrayContentProvider());
         changeSetViewer.setLabelProvider(new ChangeSetLabelProvider());
         Table table = changeSetViewer.getTable();
@@ -107,16 +111,18 @@ final class IncomingPage extends WizardPage {
             column.setWidth(widths[i]);
         }
 
-        fileStatusViewer = new TableViewer(container,
-                SWT.FULL_SELECTION | SWT.BORDER);
+        fileStatusViewer = new TableViewer(container, SWT.FULL_SELECTION
+                | SWT.BORDER);
         fileStatusViewer.setContentProvider(new ArrayContentProvider());
         fileStatusViewer.setLabelProvider(new FileStatusLabelProvider());
 
         table = fileStatusViewer.getTable();
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        titles = new String[]{ Messages.getString("IncomingPage.fileStatusTable.columnTitle.status"), Messages.getString("IncomingPage.fileStatusTable.columnTitle.path")}; //$NON-NLS-1$ //$NON-NLS-2$
-        widths = new int[]{ 80, 400};
+        titles = new String[] {
+                Messages
+                        .getString("IncomingPage.fileStatusTable.columnTitle.status"), Messages.getString("IncomingPage.fileStatusTable.columnTitle.path") }; //$NON-NLS-1$ //$NON-NLS-2$
+        widths = new int[] { 80, 400 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
@@ -126,7 +132,8 @@ final class IncomingPage extends WizardPage {
     }
 
     ChangeSet getSelectedChangeSet() {
-        IStructuredSelection sel = (IStructuredSelection) changeSetViewer.getSelection();
+        IStructuredSelection sel = (IStructuredSelection) changeSetViewer
+                .getSelection();
         Object firstElement = sel.getFirstElement();
         if (firstElement instanceof ChangeSet) {
             return (ChangeSet) firstElement;
@@ -135,33 +142,36 @@ final class IncomingPage extends WizardPage {
     }
 
     private void makeActions() {
-        changeSetViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-            public void selectionChanged(SelectionChangedEvent event) {
-                ChangeSet change = getSelectedChangeSet();
-                if( change != null){
-                    fileStatusViewer.setInput(change.getChangedFiles());
-                } else {
-                    fileStatusViewer.setInput(new Object[0]);
-                }
-            }
-        });
+        changeSetViewer
+                .addSelectionChangedListener(new ISelectionChangedListener() {
+                    public void selectionChanged(SelectionChangedEvent event) {
+                        ChangeSet change = getSelectedChangeSet();
+                        if (change != null) {
+                            fileStatusViewer.setInput(change.getChangedFiles());
+                        } else {
+                            fileStatusViewer.setInput(new Object[0]);
+                        }
+                    }
+                });
 
         fileStatusViewer.addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
                 ChangeSet change = getSelectedChangeSet();
-                IStructuredSelection sel = (IStructuredSelection) event.getSelection();
-                FileStatus clickedFileStatus  = (FileStatus) sel.getFirstElement();
-                if( change != null && clickedFileStatus != null) {
-                    // TODO open up an overlaid compare
+                IStructuredSelection sel = (IStructuredSelection) event
+                        .getSelection();
+                FileStatus clickedFileStatus = (FileStatus) sel
+                        .getFirstElement();
+                if (change != null && clickedFileStatus != null) {
+                    org.eclipse.core.resources.IResource file = getPullWizard().project
+                            .findMember(clickedFileStatus.getPath());
+                    CompareUtils.openEditor(file, change, true);
                 }
             }
         });
     }
 
-
-    private static class FileStatusLabelProvider
-        extends LabelProvider
-        implements ITableLabelProvider {
+    private static class FileStatusLabelProvider extends LabelProvider
+            implements ITableLabelProvider {
 
         public Image getColumnImage(Object element, int columnIndex) {
             return null;
@@ -172,11 +182,11 @@ final class IncomingPage extends WizardPage {
                 return Messages.getString("IncomingPage.unknownElement") + element; //$NON-NLS-1$
             }
             FileStatus status = (FileStatus) element;
-            switch(columnIndex) {
-                case 0:
-                    return status.getAction().name();
-                case 1:
-                    return status.getPath();
+            switch (columnIndex) {
+            case 0:
+                return status.getAction().name();
+            case 1:
+                return status.getPath();
             }
             return Messages.getString("IncomingPage.notApplicable"); //$NON-NLS-1$
         }

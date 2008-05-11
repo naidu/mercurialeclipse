@@ -18,6 +18,11 @@ public class CompareUtils {
         openEditor(null, new IStorageMercurialRevision(file, null,null,null), dialog);
     }
 
+    public static void openEditor(IResource file, ChangeSet changeset, boolean dialog) {
+        openEditor(null,
+                new IStorageMercurialRevision(file, changeset.getChangesetIndex()+"", changeset.getChangeset(), changeset ), dialog);
+    }
+    
     public static void openEditor(IResource file, ChangeSet changeset) {    	  	
         openEditor(null,
 				new IStorageMercurialRevision(file, changeset.getChangesetIndex()+"", changeset.getChangeset(), changeset ), false);
