@@ -204,14 +204,20 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     public boolean isSupervised(IResource resource) {
-        BitSet status = getStatus(resource);
-        if (status != null) {
-            switch (status.length() - 1) {
-            case MercurialStatusCache.BIT_IGNORE:
-            case MercurialStatusCache.BIT_UNKNOWN:
-                return false;
+        if (null != RepositoryProvider.getProvider(resource.getProject(),
+                MercurialTeamProvider.ID)) {
+            if (resource.getType() == IResource.PROJECT) {
+                return true;
             }
-            return true;
+            BitSet status = getStatus(resource);
+            if (status != null) {
+                switch (status.length() - 1) {
+                case MercurialStatusCache.BIT_IGNORE:
+                case MercurialStatusCache.BIT_UNKNOWN:
+                    return false;
+                }
+                return true;
+            }
         }
         return false;
     }
