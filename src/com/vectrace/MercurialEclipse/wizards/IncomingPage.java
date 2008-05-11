@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -38,9 +39,13 @@ final class IncomingPage extends WizardPage {
 
     private TableViewer changeSetViewer;
     private TableViewer fileStatusViewer;
+    private IProject project;
+    private HgRepositoryLocation location;
 
     protected IncomingPage(String pageName) {
         super(pageName);
+        this.setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
+        this.setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
     }
 
     @Override
@@ -69,25 +74,18 @@ final class IncomingPage extends WizardPage {
 
         // if(true) return set;
 
-        PullRepoWizard wiz = getPullWizard();
-        HgRepositoryLocation remote = wiz.getLocation();
         try {
-            File bundleFile = HgIncomingClient.getBundleFile(wiz.project,
-                    remote);
+            HgRepositoryLocation remote = location;
+            File bundleFile = HgIncomingClient.getBundleFile(project, remote);
             System.out.println(bundleFile);
             SortedSet<ChangeSet> incoming = IncomingChangesetCache
-                    .getInstance().getIncomingChangeSets(wiz.project,
+                    .getInstance().getIncomingChangeSets(project,
                             remote.getUrl());
             return incoming;
         } catch (HgException e) {
             MercurialEclipsePlugin.showError(e);
         }
         return new TreeSet<ChangeSet>();
-    }
-
-    private PullRepoWizard getPullWizard() {
-        PullRepoWizard wiz = (PullRepoWizard) getWizard();
-        return wiz;
     }
 
     public void createControl(Composite parent) {
@@ -162,7 +160,7 @@ final class IncomingPage extends WizardPage {
                 FileStatus clickedFileStatus = (FileStatus) sel
                         .getFirstElement();
                 if (change != null && clickedFileStatus != null) {
-                    org.eclipse.core.resources.IResource file = getPullWizard().project
+                    org.eclipse.core.resources.IResource file = project
                             .findMember(clickedFileStatus.getPath());
                     CompareUtils.openEditor(file, change, true);
                 }
@@ -190,5 +188,19 @@ final class IncomingPage extends WizardPage {
             }
             return Messages.getString("IncomingPage.notApplicable"); //$NON-NLS-1$
         }
+    }
+
+    /**
+     * @param project
+     */
+    public void setProject(IProject project) {
+        this.project = project;
+    }
+
+    /**
+     * @param repo
+     */
+    public void setLocation(HgRepositoryLocation repo) {
+        this.location = repo;
     }
 }

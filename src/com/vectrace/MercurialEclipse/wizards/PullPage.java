@@ -11,6 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.MalformedURLException;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
@@ -78,10 +79,31 @@ public class PullPage extends SyncRepoPage
 
 
   @Override
-public boolean canFlipToNextPage()
-  {
-    return isPageComplete() && (getWizard().getNextPage(this) != null);
-  }
+    public boolean canFlipToNextPage() {
+        try {
+            if (locationCombo != null && locationCombo.getText() != null) {
+                IncomingPage incomingPage = (IncomingPage) getNextPage();
+                incomingPage.setProject(project);
+                incomingPage
+                        .setLocation(new HgRepositoryLocation(getLocation()));
+                return isPageComplete()
+                        && (getWizard().getNextPage(this) != null);
+            }
+        } catch (MalformedURLException e) {
+            MercurialEclipsePlugin.showError(e);
+        }
+        return false;
+    }
+  
+  /*
+     * (non-Javadoc)
+     * 
+     * @see com.vectrace.MercurialEclipse.wizards.SyncRepoPage#getLocation()
+     */
+    @Override
+    public String getLocation() {        
+        return locationCombo.getText();
+    }
 
   @Override
 public boolean isPageComplete()
@@ -245,4 +267,32 @@ public void dispose()
       projectNameCombo.dispose();
     }
   }
+
+/**
+ * @return the locationCombo
+ */
+public Combo getLocationCombo() {
+    return locationCombo;
+}
+
+/**
+ * @param locationCombo the locationCombo to set
+ */
+public void setLocationCombo(Combo locationCombo) {
+    this.locationCombo = locationCombo;
+}
+
+/**
+ * @return the project
+ */
+public IProject getProject() {
+    return project;
+}
+
+/**
+ * @param project the project to set
+ */
+public void setProject(IProject project) {
+    this.project = project;
+}
 }

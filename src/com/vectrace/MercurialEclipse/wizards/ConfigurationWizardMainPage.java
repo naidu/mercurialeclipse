@@ -22,6 +22,8 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -85,10 +87,12 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      *            the current history
      * @param newEntry
      *            the entry to add to the history
-     * @param limitHistory number of max entries, -1 if no limit            
+     * @param limitHistory
+     *            number of max entries, -1 if no limit
      * @return the history with the new entry appended
      */
-    private String[] addToHistory(String[] history, String newEntry, int limitHistory) {
+    private String[] addToHistory(String[] history, String newEntry,
+            int limitHistory) {
         ArrayList<String> l = new ArrayList<String>();
         if (history != null) {
             l.addAll(Arrays.asList(history));
@@ -123,20 +127,25 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         };
 
-        Group g = createGroup(composite, Messages.getString("ConfigurationWizardMainPage.urlGroup.title"), 3); //$NON-NLS-1$
+        Group g = createGroup(composite, Messages
+                .getString("ConfigurationWizardMainPage.urlGroup.title"), 3); //$NON-NLS-1$
 
         // repository Url
-        createLabel(g, Messages.getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
+        createLabel(g, Messages
+                .getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
         urlCombo = createEditableCombo(g);
         urlCombo.addListener(SWT.Selection, listener);
         urlCombo.addListener(SWT.Modify, listener);
 
-        Button browseButton = createPushButton(g, Messages.getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
+        Button browseButton = createPushButton(g, Messages
+                .getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 DirectoryDialog dialog = new DirectoryDialog(getShell());
-                dialog.setMessage(Messages.getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
+                dialog
+                        .setMessage(Messages
+                                .getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
                 String dir = dialog.open();
                 if (dir != null) {
                     urlCombo.setText(dir);
@@ -144,17 +153,35 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         });
 
+        urlCombo.addModifyListener(new ModifyListener() {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.ModifyListener#modifyText(org.eclipse.swt.events.ModifyEvent)
+             */
+            public void modifyText(ModifyEvent e) {
+                setPageComplete(true);
+            }
+        });
+
         if (showCredentials) {
-            g = createGroup(composite, Messages.getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
+            g = createGroup(
+                    composite,
+                    Messages
+                            .getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
 
             // User name
-            createLabel(g, Messages.getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
+            createLabel(g, Messages
+                    .getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
             userCombo = createEditableCombo(g);
             userCombo.addListener(SWT.Selection, listener);
             userCombo.addListener(SWT.Modify, listener);
 
             // Password
-            createLabel(g, Messages.getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
+            createLabel(
+                    g,
+                    Messages
+                            .getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
             passwordText = createTextField(g);
             passwordText.setEchoChar('*');
         }
@@ -257,7 +284,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 if (userNames == null) {
                     userNames = new String[0];
                 }
-                userNames = addToHistory(userNames, userCombo.getText(), COMBO_HISTORY_LENGTH);
+                userNames = addToHistory(userNames, userCombo.getText(),
+                        COMBO_HISTORY_LENGTH);
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
             }
             hostNames = dialogSettings.getArray(STORE_URL_ID);
@@ -280,7 +308,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     .iterator(); iterator.hasNext(); i++) {
                 HgRepositoryLocation hgRepositoryLocation = iterator.next();
                 newHostNames = addToHistory(newHostNames, hgRepositoryLocation
-                        .getUrl(),-1);
+                        .getUrl(), -1);
             }
         }
         return newHostNames;

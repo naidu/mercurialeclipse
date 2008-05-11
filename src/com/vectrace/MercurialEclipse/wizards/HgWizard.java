@@ -39,10 +39,13 @@ public abstract class HgWizard extends Wizard {
      */
     @Override
     public boolean performFinish() {
-        if (page != null) {
-            return page.finish(new NullProgressMonitor());
+        HgWizardPage[] pages = (HgWizardPage[]) getPages();
+        boolean retValue = true;
+        NullProgressMonitor monitor = new NullProgressMonitor();
+        for (HgWizardPage hgWizardPage : pages) {
+            retValue &= hgWizardPage.finish(monitor);
         }
-        return true;
+        return retValue;
     }
 
     /**

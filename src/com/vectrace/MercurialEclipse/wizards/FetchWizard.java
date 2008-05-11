@@ -1,15 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     VecTrace (Zingo Andersen) - implementation
- *     Stefan Groschupf          - logError
- *     Stefan C                  - Code cleanup
- *     Bastian Doetsch	         - saving repository to project-specific repos
+ * Bastian Doetsch	implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -25,24 +22,24 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.HgFetchClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
- * @author zingo
+ * @author bastian
  * 
  */
-public class PushRepoWizard extends HgWizard {
+public class FetchWizard extends HgWizard {
 
     private IProject project;
     private String projectName;
 
-    private PushRepoWizard() {
-        super(Messages.getString("PushRepoWizard.title")); //$NON-NLS-1$
+    private FetchWizard() {
+        super(Messages.getString("FetchWizard.title")); //$NON-NLS-1$        
         setNeedsProgressMonitor(true);
     }
 
-    public PushRepoWizard(IResource resource) {
+    public FetchWizard(IResource resource) {
         this();
         this.project = resource.getProject();
     }
@@ -50,14 +47,18 @@ public class PushRepoWizard extends HgWizard {
     @Override
     public void addPages() {
         super.addPages();
-        PushRepoPage myPage = new PushRepoPage(
-                Messages.getString("PushRepoWizard.pushRepoPage.name"), //$NON-NLS-1$
-                Messages.getString("PushRepoWizard.pushRepoPage.title"), null, project); //$NON-NLS-1$
-        initPage(Messages.getString("PushRepoWizard.pushRepoPage.description"), //$NON-NLS-1$
-                myPage);
-        myPage.setShowCredentials(true);
-        page = myPage;
+        FetchPage fetchPage = new FetchPage(
+                Messages.getString("FetchWizard.fetchPage.name"), Messages.getString("FetchWizard.fetchPage.title"), null, project); //$NON-NLS-1$ //$NON-NLS-2$
+        initPage(Messages.getString("FetchWizard.fetchPage.description"), //$NON-NLS-1$
+                fetchPage);
+        fetchPage.setShowCredentials(true);
+        page = fetchPage;
         addPage(page);
+
+        IncomingPage incomingPage = new IncomingPage(Messages
+                .getString("FetchWizard.incomingPage.name")); //$NON-NLS-1$
+        addPage(incomingPage);
+
     }
 
     /*
@@ -67,7 +68,6 @@ public class PushRepoWizard extends HgWizard {
      */
     @Override
     public boolean performFinish() {
-        super.performFinish();
         try {
             Properties props = page.getProperties();
             HgRepositoryLocation repo = HgRepositoryLocation
@@ -82,16 +82,8 @@ public class PushRepoWizard extends HgWizard {
                 return false;
             }
 
-            PushRepoPage pushRepoPage = (PushRepoPage) page;
-
-            int timeout = 300000;
-            if (!pushRepoPage.isTimeout()) {
-                timeout = Integer.MAX_VALUE;
-            }
-
-            String result = HgPushPullClient.push(project, repo,
-                    repo.getUser(), repo.getPassword(), pushRepoPage.isForce(),
-                    pushRepoPage.getRevision(), timeout);
+            String result = HgFetchClient.fetch(project, repo, repo.getUser(),
+                    repo.getPassword());
 
             if (result.length() != 0) {
                 Shell shell;
@@ -104,7 +96,7 @@ public class PushRepoWizard extends HgWizard {
                         .openInformation(
                                 shell,
                                 Messages
-                                        .getString("PushRepoWizard.outputDialog.title"), result); //$NON-NLS-1$
+                                        .getString("FetchWizard.fetchOutputDialog.title"), result); //$NON-NLS-1$
             }
 
             // It appears good. Stash the repo location.
@@ -136,4 +128,5 @@ public class PushRepoWizard extends HgWizard {
         initPage(description, page);
         return page;
     }
+
 }

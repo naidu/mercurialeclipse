@@ -15,18 +15,17 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
+import com.vectrace.MercurialEclipse.wizards.FetchWizard;
 
 public class FetchHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
-        BackoutWizard fetchWiz = new BackoutWizard(
-                project);
-        WizardDialog dialog = new WizardDialog(getShell(), fetchWiz);
-        dialog.setBlockOnOpen(true);
-        dialog.open();
+        FetchWizard fetchWizard = new FetchWizard(project);
+        WizardDialog pullWizardDialog = new WizardDialog(getShell(),
+                fetchWizard);
+        pullWizardDialog.open();
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
         LocalChangesetCache.getInstance().refreshAllLocalRevisions(project);
     }
