@@ -221,6 +221,24 @@ public class MercurialStatusCache extends AbstractCache implements
         }
         return false;
     }
+    
+    public boolean isAdded(IResource resource) {
+        if (null != RepositoryProvider.getProvider(resource.getProject(),
+                MercurialTeamProvider.ID)) {
+            if (resource.getType() == IResource.PROJECT) {
+                return false;
+            }
+            BitSet status = getStatus(resource);
+            if (status != null) {
+                switch (status.length() - 1) {
+                case MercurialStatusCache.BIT_ADDED:
+                    return true;
+                }
+                return false;
+            }
+        }
+        return false;
+    }
 
     /**
      * Refreshes local repository status. No refresh of incoming changesets.

@@ -69,7 +69,7 @@ public class LocalChangesetCache extends AbstractCache {
         SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource);
         if (revisions == null) {
             if (objectResource.getType() != IResource.FOLDER
-                    && STATUS_CACHE.isSupervised(objectResource)) {
+                    && STATUS_CACHE.isSupervised(objectResource) && !STATUS_CACHE.isAdded(objectResource)) {
                 refreshAllLocalRevisions(objectResource);
                 revisions = localChangeSets.get(objectResource);
             }
@@ -236,7 +236,7 @@ public class LocalChangesetCache extends AbstractCache {
                             }
                             // add changes to cache
                             if (changes != null && changes.size() > 0) {
-                                if (STATUS_CACHE.isSupervised(resource)) {
+                                if (STATUS_CACHE.isSupervised(resource) && !STATUS_CACHE.isAdded(resource)) {
                                     SortedSet<ChangeSet> existing = localChangeSets.get(resource);
                                     if (existing == null) {
                                         existing = new TreeSet<ChangeSet>();
