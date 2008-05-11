@@ -39,7 +39,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
     public static Map<IResource, SortedSet<ChangeSet>> getHgIncoming(
             IProject proj, HgRepositoryLocation repository) throws HgException {
         HgCommand command = new HgCommand("incoming", proj, false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PullTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         File bundleFile = getBundleFile(proj, repository);
         File temp = new File(bundleFile.getAbsolutePath() + ".temp."
                 + System.currentTimeMillis());

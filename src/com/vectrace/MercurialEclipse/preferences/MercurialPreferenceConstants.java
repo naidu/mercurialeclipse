@@ -31,19 +31,19 @@ public class MercurialPreferenceConstants {
     public static final String LABELDECORATOR_LOGIC_HB = "high-bit";
     
     // Timeouts
-    public static final String DefaultTimeout = "hg.timeout.default";
-    public static final String CloneTimeout = "hg.timeout.clone";
-    public static final String PushTimeout = "hg.timeout.push";
-    public static final String PullTimeout = "hg.timeout.pull";
-    public static final String UpdateTimeout = "hg.timeout.update";
-    public static final String CommitTimeout = "hg.timeout.commit";
-    public static final String ImergeTimeout = "hg.timeout.imerge";
-    public static final String LogTimeout = "hg.timeout.log";
-    public static final String StatusTimeout = "hg.timeout.status";
-    public static final String AddTimeout = "hg.timeout.add";
-    public static final String RemoveTimeout = "hg.timeout.remove";
+    public static final String DEFAULT_TIMEOUT = "hg.timeout.default";
+    public static final String CLONE_TIMEOUT = "hg.timeout.clone";
+    public static final String PUSH_TIMEOUT = "hg.timeout.push";
+    public static final String PULL_TIMEOUT = "hg.timeout.pull";
+    public static final String UPDATE_TIMEOUT = "hg.timeout.update";
+    public static final String COMMIT_TIMEOUT = "hg.timeout.commit";
+    public static final String IMERGE_TIMEOUT = "hg.timeout.imerge";
+    public static final String LOG_TIMEOUT = "hg.timeout.log";
+    public static final String STATUS_TIMEOUT = "hg.timeout.status";
+    public static final String ADD_TIMEOUT = "hg.timeout.add";
+    public static final String REMOVE_TIMEOUT = "hg.timeout.remove";
     
     // batch sizes
-    public static final String LogBatchSize = "hg.batchsize.log";
-    public static final String StatusBatchSize = "hg.batchsize.status";
+    public static final String LOG_BATCH_SIZE = "hg.batchsize.log";
+    public static final String STATUS_BATCH_SIZE = "hg.batchsize.status";
 }

@@ -233,53 +233,53 @@ public class MercurialPreferencePage extends FieldEditorPreferencePage
         // batch size preferences
 
         addField(new LogBatchSizeIntegerFieldEditor(
-                MercurialPreferenceConstants.LogBatchSize,
+                MercurialPreferenceConstants.LOG_BATCH_SIZE,
                 "hg log revision limit:",
                 getFieldEditorParent()));
 
         addField(new StatusBatchSizeIntegerFieldEditor(
-                MercurialPreferenceConstants.StatusBatchSize,
+                MercurialPreferenceConstants.STATUS_BATCH_SIZE,
                 "Number of files to query hg status with:", getFieldEditorParent()));
 
         // timeout preferences
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.CloneTimeout,
+                MercurialPreferenceConstants.CLONE_TIMEOUT,
                 "Clone timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.PushTimeout, "Push timeout (ms):",
+                MercurialPreferenceConstants.PUSH_TIMEOUT, "Push timeout (ms):",
                 getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.PullTimeout,
+                MercurialPreferenceConstants.PULL_TIMEOUT,
                 "Pull/Incoming/Outgoing timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.UpdateTimeout,
+                MercurialPreferenceConstants.UPDATE_TIMEOUT,
                 "Update timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.CommitTimeout,
+                MercurialPreferenceConstants.COMMIT_TIMEOUT,
                 "Commit timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.ImergeTimeout,
+                MercurialPreferenceConstants.IMERGE_TIMEOUT,
                 "Imerge timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.LogTimeout,
+                MercurialPreferenceConstants.LOG_TIMEOUT,
                 "Log/GLog timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.StatusTimeout,
+                MercurialPreferenceConstants.STATUS_TIMEOUT,
                 "Status timeout (ms):", getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.AddTimeout, "Add timeout (ms):",
+                MercurialPreferenceConstants.ADD_TIMEOUT, "Add timeout (ms):",
                 getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.RemoveTimeout,
+                MercurialPreferenceConstants.REMOVE_TIMEOUT,
                 "Remove timeout (ms):", getFieldEditorParent()));
     }
 

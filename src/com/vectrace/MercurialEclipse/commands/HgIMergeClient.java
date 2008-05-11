@@ -14,7 +14,7 @@ public class HgIMergeClient {
     public static void merge(IProject project, String revision)
             throws HgException {
         HgCommand command = new HgCommand("imerge", project, false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.ImergeTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         command.addOptions("--config", "extensions.imerge=");
         if (revision != null) {
             command.addOptions("-r", revision);
@@ -27,7 +27,7 @@ public class HgIMergeClient {
         HgCommand command = new HgCommand("imerge", project, false);
         command.addOptions("--config", "extensions.imerge=");
         command.addOptions("status");
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.ImergeTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         String[] lines = command.executeToString().split("\n");
         ArrayList<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
         if (lines.length != 1 || !"all conflicts resolved".equals(lines[0])) {

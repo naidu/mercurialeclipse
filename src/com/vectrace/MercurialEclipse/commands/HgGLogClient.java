@@ -26,7 +26,7 @@ public class HgGLogClient extends HgCommand {
         if (resource instanceof IFile) {
             addFiles(resource.getName());
         }
-        setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+        setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         load(executeToString());
     }
 

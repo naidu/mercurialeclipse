@@ -21,7 +21,7 @@ public class HgCloneClient {
     public static void clone(IWorkspace workspace, HgRepositoryLocation repo,
             String cloneParameters, String projectName) throws HgException {        
         HgCommand command = new HgCommand("clone", workspace.getRoot(), false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.CloneTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
         if (cloneParameters != null) {
             command.addOptions(cloneParameters);
         }

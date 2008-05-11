@@ -28,7 +28,7 @@ public class HgPushPullClient {
             throws HgException {
         try {
             HgCommand command = new HgCommand("push", project, true);
-            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PushTimeout);
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
             URL url = location.getUrlObject();
 
             if (force) {
@@ -63,7 +63,7 @@ public class HgPushPullClient {
     public static String pull(IProject project, HgRepositoryLocation location,
             boolean update) throws HgException {
         HgCommand command = new HgCommand("pull", project, true);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PullTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         if (update) {
             command.addOptions("-u");
         }

@@ -26,7 +26,7 @@ public class HgAddClient {
             for (int i = 0; i < size; i += delta) {
                 AbstractShellCommand command = new HgCommand("add", project,
                         true);
-                command.setUsePreferenceTimeout(MercurialPreferenceConstants.AddTimeout);
+                command.setUsePreferenceTimeout(MercurialPreferenceConstants.ADD_TIMEOUT);
                 command.addFiles(resourcesByProject.get(project).subList(i,
                         Math.min(i + delta, size - i)));
                 command.executeToBytes();

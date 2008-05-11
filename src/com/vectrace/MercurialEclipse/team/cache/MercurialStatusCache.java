@@ -468,7 +468,7 @@ public class MercurialStatusCache extends AbstractCache implements
     private void refreshStatus(final List<IResource> resources)
             throws HgException {
         String pref = MercurialUtilities.getPreference(
-                MercurialPreferenceConstants.StatusBatchSize, String
+                MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
                         .valueOf(STATUS_BATCH_SIZE));
         
         int batchSize = STATUS_BATCH_SIZE;        

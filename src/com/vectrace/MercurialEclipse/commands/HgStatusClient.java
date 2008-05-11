@@ -15,7 +15,7 @@ public class HgStatusClient {
         HgCommand command = new HgCommand("status", root, true);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduic");
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.StatusTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         return command.executeToString();
     }
 
@@ -23,7 +23,7 @@ public class HgStatusClient {
         HgCommand command = new HgCommand("status", res.getProject(), true);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduic");
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.StatusTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions(res.getProjectRelativePath().toOSString());
         return command.executeToString();
     }
@@ -31,7 +31,7 @@ public class HgStatusClient {
     public static String[] getUntrackedFiles(IContainer root)
             throws HgException {
         HgCommand command = new HgCommand("status", root, true);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.StatusTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-u", "-n");
         return command.executeToString().split("\n");
     }
@@ -39,7 +39,7 @@ public class HgStatusClient {
     public static boolean isDirty(List<? extends IResource> resources)
             throws HgException {
         HgCommand command = new HgCommand("status", true);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.StatusTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-mard");// modified, added, removed, deleted
         command.addFiles(resources);
         return command.executeToBytes().length != 0;
@@ -47,7 +47,7 @@ public class HgStatusClient {
 
     public static boolean isDirty(IProject project) throws HgException {
         HgCommand command = new HgCommand("status", project, true);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.StatusTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-mard");// modified, added, removed, deleted
         return command.executeToBytes().length != 0;
     }
@@ -59,7 +59,7 @@ public class HgStatusClient {
      */
     public static String getStatus(IProject proj, List<IResource> files) throws HgException {
         HgCommand command = new HgCommand("status", proj, true);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.StatusTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduic");
         command.addFiles(files);

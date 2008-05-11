@@ -28,7 +28,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         try {
             HgCommand command = new HgCommand("outgoing", res.getProject(),
                     false);
-            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PullTimeout);
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
             command.addOptions("--template",
                     AbstractParseChangesetClient.TEMPLATE);
 

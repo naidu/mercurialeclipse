@@ -27,7 +27,7 @@ public class HgRemoveClient {
         HgCommand command = new HgCommand("remove", resource.getProject(), true);
         command.addOptions("--force");
         command.addFiles(resource);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.RemoveTimeout);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
         command.executeToBytes();
     }
 }

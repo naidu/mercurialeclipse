@@ -22,14 +22,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
     public static ChangeSet[] getRevisions(IProject project) throws HgException {
         HgCommand command = new HgCommand("log", project, true);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         return getRevisions(command);
     }
 
     public static ChangeSet[] getRevisions(IFile file) throws HgException {
         HgCommand command = new HgCommand("log", file.getParent(), true);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         command.addOptions("-f");
         command.addFiles(file.getName());
         return getRevisions(command);
@@ -38,7 +38,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         HgCommand command = new HgCommand("heads", project, true);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         return getRevisions(command);
     }
 
@@ -46,7 +46,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             String filename) throws HgException {
         HgCommand command = new HgCommand("glog", project, false);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         command.addOptions("--template", template);
         command.addOptions("--config", "extensions.hgext.graphlog=");
         command.addOptions(filename);
@@ -65,7 +65,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         command.addOptions("--template",
                 "{rev}:{node} {date|isodate} {author|person}\n");
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         String[] lines = null;
         try {
             lines = command.executeToString().split("\n");
@@ -115,7 +115,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             IResource res, int limitNumber, int startRev) throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LogTimeout);
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         command.addOptions("--debug", "--template",
                 AbstractParseChangesetClient.TEMPLATE);
 
