@@ -32,20 +32,12 @@ public abstract class HgWizard extends Wizard {
         init(windowTitle);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.wizard.Wizard#performFinish()
-     */
     @Override
     public boolean performFinish() {
-        HgWizardPage[] pages = (HgWizardPage[]) getPages();
-        boolean retValue = true;
-        NullProgressMonitor monitor = new NullProgressMonitor();
-        for (HgWizardPage hgWizardPage : pages) {
-            retValue &= hgWizardPage.finish(monitor);
+        if (page != null) {
+            return page.finish(new NullProgressMonitor());
         }
-        return retValue;
+        return true;
     }
 
     /**
