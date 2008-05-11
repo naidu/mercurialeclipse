@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
@@ -93,7 +92,7 @@ public class ResourceDecorator extends LabelProvider implements
 
             if (!statusCache.isStatusKnown((project))) {
                 return;
-            }
+            }                                     
 
             ImageDescriptor overlay = null;
             String prefix = null;
@@ -141,6 +140,11 @@ public class ResourceDecorator extends LabelProvider implements
             if (overlay != null) {
                 decoration.addOverlay(overlay);
             }
+            
+            // get recent project versions
+            LocalChangesetCache.getInstance().getLocalChangeSets(project);
+            
+            // label info for incoming changesets
             ChangeSet cs = null;
             try {
                 cs = IncomingChangesetCache.getInstance()
@@ -161,6 +165,7 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addPrefix(prefix);
             }
 
+            // local changeset info
             try {
                 ChangeSet changeSet = LocalChangesetCache.getInstance()
                         .getNewestLocalChangeSet(resource);
@@ -201,18 +206,6 @@ public class ResourceDecorator extends LabelProvider implements
         String decoratorId = ResourceDecorator.class.getName();
         configureFromPreferences();
         PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
-    }
-
-    public void onRefresh(IProject project) {
-        new SafeUiJob("Update Decorations") {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                String decoratorId = ResourceDecorator.class.getName();
-                PlatformUI.getWorkbench().getDecoratorManager().update(
-                        decoratorId);
-                return Status.OK_STATUS;
-            }
-        }.schedule();
     }
 
     public void update(Observable o, Object updatedObject) {
