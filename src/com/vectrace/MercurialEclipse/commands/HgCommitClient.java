@@ -8,6 +8,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgCommitClient {
 
@@ -21,6 +22,7 @@ public class HgCommitClient {
 				monitor.subTask("Committing resources from " + project.getName());
 			}
 			HgCommand command = new HgCommand("commit", project, true);
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 			command.addUserName(user);
 			command.addOptions("-m", message);
 			command.addFiles(resourcesByProject.get(project));
@@ -31,6 +33,7 @@ public class HgCommitClient {
 	public static void commitProject(IProject project, String user, String message)
             throws HgException {
         HgCommand command = new HgCommand("commit", project, false);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         command.addUserName(user);
         command.addOptions("-m", message);
         command.executeToBytes();
