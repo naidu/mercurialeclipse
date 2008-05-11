@@ -90,15 +90,17 @@ public class MercurialStatusCache extends AbstractCache implements
                             MercurialTeamProvider.ID) != null) {
                 switch (delta.getKind()) {
                 case IResourceDelta.ADDED:
-                    added.add(res);
+                    if (res.getType() == IResource.FILE) {
+                        added.add(res);
+                    }
                     break;
                 case IResourceDelta.CHANGED:
-                    if (isSupervised(res)) {
+                    if (isSupervised(res) && res.getType() == IResource.FILE) {
                         changed.add(res);
                     }
                     break;
                 case IResourceDelta.REMOVED:
-                    if (isSupervised(res)) {
+                    if (isSupervised(res) && res.getType() == IResource.FILE) {
                         removed.add(res);
                     }
                     break;
@@ -140,7 +142,7 @@ public class MercurialStatusCache extends AbstractCache implements
         knownStatus = new HashSet<IProject>();
         AbstractCache.projectResources = new HashMap<IProject, Set<IResource>>();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-        new RefreshStatusJob("Initializing Mercurial").schedule();
+        new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }
 
     public static MercurialStatusCache getInstance() {
@@ -470,13 +472,14 @@ public class MercurialStatusCache extends AbstractCache implements
         String pref = MercurialUtilities.getPreference(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
                         .valueOf(STATUS_BATCH_SIZE));
-        
-        int batchSize = STATUS_BATCH_SIZE;        
-        if (pref.length()>0) {
+
+        int batchSize = STATUS_BATCH_SIZE;
+        if (pref.length() > 0) {
             try {
                 batchSize = Integer.parseInt(pref);
             } catch (NumberFormatException e) {
-                MercurialEclipsePlugin.logWarning("Batch size for status command not correct.",e);
+                MercurialEclipsePlugin.logWarning(
+                        "Batch size for status command not correct.", e);
             }
         }
         List<IResource> currentBatch = new ArrayList<IResource>();
@@ -484,8 +487,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 .hasNext();) {
             IResource resource = iterator.next();
             currentBatch.add(resource);
-            if (currentBatch.size() % batchSize == 0
-                    || !iterator.hasNext()) {
+            if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
                 String output = HgStatusClient.getStatus(resource.getProject(),
                         currentBatch);
@@ -506,7 +508,7 @@ public class MercurialStatusCache extends AbstractCache implements
             synchronized (statusMap) {
                 // wait...
             }
-        }        
+        }
 
         Set<IResource> members = new HashSet<IResource>();
 

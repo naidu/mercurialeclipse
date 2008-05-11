@@ -21,16 +21,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
@@ -40,13 +40,13 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * 
      */
-    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
+    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
+            .getInstance();
 
     private static LocalChangesetCache instance = null;
 
     private boolean localUpdateInProgress = false;
     private static Map<IResource, SortedSet<ChangeSet>> localChangeSets;
-    
 
     private LocalChangesetCache() {
         localChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
@@ -58,30 +58,26 @@ public class LocalChangesetCache extends AbstractCache {
         }
         return instance;
     }
-    
+
     public synchronized void clear() {
         localChangeSets.clear();
     }
-    
 
     public SortedSet<ChangeSet> getLocalChangeSets(IResource objectResource)
             throws HgException {
-        SortedSet<ChangeSet> revisions = LocalChangesetCache.localChangeSets
-                .get(objectResource);
+        SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource);
         if (revisions == null) {
             if (objectResource.getType() != IResource.FOLDER
-                    && STATUS_CACHE.isSupervised(
-                            objectResource)) {
-                refreshAllLocalRevisions(objectResource.getProject());
-                revisions = LocalChangesetCache.localChangeSets
-                        .get(objectResource);
+                    && STATUS_CACHE.isSupervised(objectResource)) {
+                refreshAllLocalRevisions(objectResource);
+                revisions = localChangeSets.get(objectResource);
             }
         }
         if (revisions != null) {
             return Collections.unmodifiableSortedSet(revisions);
         }
         return null;
-    }    
+    }
 
     /**
      * Gets version for given resource.
@@ -94,7 +90,7 @@ public class LocalChangesetCache extends AbstractCache {
     public ChangeSet getNewestLocalChangeSet(IResource objectResource)
             throws HgException {
         if (localUpdateInProgress) {
-            synchronized (LocalChangesetCache.localChangeSets) {
+            synchronized (localChangeSets) {
                 // waiting for update...
             }
         }
@@ -114,11 +110,11 @@ public class LocalChangesetCache extends AbstractCache {
      */
     public boolean isLocallyKnown(IResource objectResource) {
         if (localUpdateInProgress) {
-            synchronized (LocalChangesetCache.localChangeSets) {
+            synchronized (localChangeSets) {
                 // wait...
             }
         }
-        return LocalChangesetCache.localChangeSets.containsKey(objectResource);
+        return localChangeSets.containsKey(objectResource);
     }
 
     /**
@@ -132,8 +128,8 @@ public class LocalChangesetCache extends AbstractCache {
      * @param project
      * @throws HgException
      */
-    public void refreshAllLocalRevisions(IProject project) throws HgException {
-        this.refreshAllLocalRevisions(project, true);
+    public void refreshAllLocalRevisions(IResource res) throws HgException {
+        this.refreshAllLocalRevisions(res, true);
     }
 
     /**
@@ -149,22 +145,28 @@ public class LocalChangesetCache extends AbstractCache {
      *            whether to limit or to have full project log
      * @throws HgException
      */
-    public void refreshAllLocalRevisions(IProject project, boolean limit)
+    public void refreshAllLocalRevisions(IResource res, boolean limit)
             throws HgException {
-        if (null != RepositoryProvider.getProvider(project,
+        if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
-                && project.isOpen()) {
+                && res.getProject().isOpen()) {
             int defaultLimit = 2000;
+            String pref = MercurialUtilities.getPreference(
+                    MercurialPreferenceConstants.LOG_BATCH_SIZE, String
+                            .valueOf(defaultLimit));
             try {
-                String result = project
-                        .getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_DEFAULT_REVISION_LIMIT);
-                if (result != null) {
-                    defaultLimit = Integer.parseInt(result);
+                defaultLimit = Integer.parseInt(pref);
+                if (defaultLimit < 0) {
+                    throw new NumberFormatException("Limit < 0");
                 }
-            } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
+            } catch (NumberFormatException e) {
+                MercurialEclipsePlugin
+                        .logWarning(
+                                "Log limit not correctly configured in preferences.",
+                                e);
             }
-            this.refreshAllLocalRevisions(project, limit, defaultLimit);
+
+            this.refreshAllLocalRevisions(res, limit, defaultLimit);
         }
     }
 
@@ -183,55 +185,55 @@ public class LocalChangesetCache extends AbstractCache {
      *            if limit is set, how many revisions should be fetched
      * @throws HgException
      */
-    public void refreshAllLocalRevisions(IProject project, boolean limit,
+    public void refreshAllLocalRevisions(IResource res, boolean limit,
             int limitNumber) throws HgException {
-        if (null != RepositoryProvider.getProvider(project,
+        if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
-                && project.isOpen()) {
-            synchronized (LocalChangesetCache.localChangeSets) {
+                && res.getProject().isOpen()) {
+            synchronized (localChangeSets) {
                 try {
                     localUpdateInProgress = true;
 
                     Map<IResource, SortedSet<ChangeSet>> revisions = null;
 
                     if (limit) {
-                        revisions = HgLogClient.getRecentProjectLog(project,
+                        revisions = HgLogClient.getRecentProjectLog(res,
                                 limitNumber);
                     } else {
-                        revisions = HgLogClient.getCompleteProjectLog(project);
+                        revisions = HgLogClient.getCompleteProjectLog(res);
 
                     }
 
                     Set<IResource> resources = new HashSet<IResource>(Arrays
-                            .asList(STATUS_CACHE.getLocalMembers(project)));
-                    for (IResource resource : resources) {
-                        LocalChangesetCache.localChangeSets.remove(resource);
-                    }
-                    LocalChangesetCache.localChangeSets.remove(project);
+                            .asList(STATUS_CACHE.getLocalMembers(res)));
 
                     Set<IResource> concernedResources = new HashSet<IResource>();
 
-                    concernedResources.add(project);
+                    concernedResources.add(res);
                     concernedResources.addAll(resources);
                     if (revisions != null && revisions.size() > 0) {
 
-                        concernedResources.addAll(revisions.keySet());
+                        // add all concerned resources if project is updated
+                        if (res.getType() == IResource.PROJECT) {
+                            concernedResources.addAll(revisions.keySet());
+                        }
 
                         for (Iterator<IResource> iter = revisions.keySet()
                                 .iterator(); iter.hasNext();) {
-                            IResource res = iter.next();
-                            SortedSet<ChangeSet> changes = revisions.get(res);
+                            IResource resource = iter.next();
+                            SortedSet<ChangeSet> changes = revisions
+                                    .get(resource);
                             // if changes for resource not in top 50, get at
                             // least 10%
                             if (changes == null && limit) {
-                                changes = HgLogClient.getRecentProjectLog(res,
-                                        limitNumber / 10).get(res);
+                                changes = HgLogClient.getRecentProjectLog(
+                                        resource, limitNumber / 10).get(
+                                        resource);
                             }
                             // add changes to cache
                             if (changes != null && changes.size() > 0) {
-                                if (STATUS_CACHE.isSupervised(res)) {
-                                    LocalChangesetCache.localChangeSets.put(
-                                            res, changes);
+                                if (STATUS_CACHE.isSupervised(resource)) {
+                                    localChangeSets.put(resource, changes);
                                     addToNodeMap(changes);
                                 }
                             }

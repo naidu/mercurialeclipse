@@ -247,6 +247,7 @@ private RevisionInformation createRevisionInformation(
       final AnnotateBlocks annotateBlocks, IProgressMonitor monitor) throws HgException
   {
     Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();
+    LocalChangesetCache.getInstance().refreshAllLocalRevisions(remoteFile.getFile(), true);
     Iterable<ChangeSet> revisions = LocalChangesetCache.getInstance().getLocalChangeSets(remoteFile.getFile());
     for(ChangeSet changeSet : revisions)
     {

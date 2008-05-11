@@ -42,21 +42,19 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class MercurialSynchronizeSubscriber extends Subscriber {
-    /**
-     * 
-     */
+    
     private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
             .getInstance();
-    /**
-     * 
-     */
+    
     private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache
             .getInstance();
-    private static MercurialStatusCache STATUS_CACHE = MercurialStatusCache
+    
+    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
-    private final ISynchronizeScope myScope;
+    
+    private ISynchronizeScope myScope;
     private IResource[] myRoots;
-    private final String repositoryLocation;
+    private String repositoryLocation;
     private IResourceVariantComparator comparator;
 
     public MercurialSynchronizeSubscriber(ISynchronizeScope scope,

@@ -59,6 +59,7 @@ public class IStorageMercurialRevision implements IStorage {
         resource = res;
         revision = rev;
         try {
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res, true);
             SortedSet<ChangeSet> changeSets = LocalChangesetCache.getInstance()
                     .getLocalChangeSets(res);
             if (changeSets != null) {
@@ -112,6 +113,7 @@ public class IStorageMercurialRevision implements IStorage {
 
         ChangeSet cs = null;
         try {
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res, true);
             cs = LocalChangesetCache.getInstance().getNewestLocalChangeSet(res);
 
             this.resource = res;

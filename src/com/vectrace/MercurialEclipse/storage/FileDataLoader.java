@@ -39,6 +39,7 @@ public class FileDataLoader extends DataLoader {
 
 	@Override
 	public ChangeSet[] getRevisions() throws HgException {
+	    LocalChangesetCache.getInstance().refreshAllLocalRevisions(file, false);
 		SortedSet<ChangeSet> csSet = LocalChangesetCache.getInstance().getLocalChangeSets(file);
 		
 		if (IncomingChangesetCache.getInstance().isIncomingStatusKnown(
