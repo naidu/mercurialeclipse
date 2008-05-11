@@ -61,10 +61,10 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
         Composite composite = (Composite) getControl();
 
         // now the options
-        Group optionGroup = createGroup(composite, "Please select the options");
-        this.timeoutCheckBox = createCheckBox(optionGroup, "Abort push when a timeout occurs (might be dangerous)");
-        this.forceCheckBox = createCheckBox(optionGroup, "Force Push");        
-        this.revCheckBox = createCheckBox(optionGroup, "Push up to a revision");
+        Group optionGroup = createGroup(composite, Messages.getString("PushRepoPage.optionGroup.title")); //$NON-NLS-1$
+        this.timeoutCheckBox = createCheckBox(optionGroup, Messages.getString("PushRepoPage.timeoutCheckBox.text")); //$NON-NLS-1$
+        this.forceCheckBox = createCheckBox(optionGroup, Messages.getString("PushRepoPage.forceCheckBox.text"));         //$NON-NLS-1$
+        this.revCheckBox = createCheckBox(optionGroup, Messages.getString("PushRepoPage.revCheckBox.text")); //$NON-NLS-1$
 
         Listener revCheckBoxListener = new Listener() {
             public void handleEvent(Event event) {
@@ -74,7 +74,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
                             populateRevisionListView();
                         } catch (HgException e) {
                             MessageDialog.openInformation(getShell(),
-                                    "Error while loading local changesets", e
+                                    Messages.getString("PushRepoPage.errorLoadingChangesets"), e //$NON-NLS-1$
                                             .getMessage());
                             MercurialEclipsePlugin.logError(e);
                         }
@@ -87,7 +87,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
 
         this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);       
 
-        Group revGroup = createGroup(composite, "Please select the revision up to which you want to push");
+        Group revGroup = createGroup(composite, Messages.getString("PushRepoPage.revGroup.title")); //$NON-NLS-1$
         
         this.revisionListView = createChangeSetListViewer(revGroup, null,
                 100);
@@ -127,9 +127,9 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
                     .getSelection()).getFirstElement();
 
             String rev = cs.toString();
-            if (rev != null && rev.length() > 0 && rev.indexOf(":") != -1) {
+            if (rev != null && rev.length() > 0 && rev.indexOf(":") != -1) { //$NON-NLS-1$
                 // we save the nodeshort info
-                this.revision = rev.split(":")[1];
+                this.revision = rev.split(":")[1]; //$NON-NLS-1$
             }
         }
         return super.finish(monitor);

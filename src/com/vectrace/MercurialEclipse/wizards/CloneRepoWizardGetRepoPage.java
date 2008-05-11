@@ -40,7 +40,7 @@ public class CloneRepoWizardGetRepoPage extends WizardPage implements IWizardPag
                                      String title,
                                      ImageDescriptor titleImage ) {
 		super(pageName, title, titleImage);
-		setDescription("Clone a repository into the workspace.");
+		setDescription(Messages.getString("CloneRepoWizardGetRepoPage.description")); //$NON-NLS-1$
     setPageComplete(false);
   }
 
@@ -72,10 +72,10 @@ public boolean isPageComplete()
     new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
     
     createNewRepoLocButton = new Button(outerContainer, SWT.RADIO);
-    createNewRepoLocButton.setText("Create new repository location");
+    createNewRepoLocButton.setText(Messages.getString("CloneRepoWizardGetRepoPage.createNewRepoLocButton.text")); //$NON-NLS-1$
     
     useExistingRepoLocButton = new Button(outerContainer, SWT.RADIO);
-    useExistingRepoLocButton.setText("Use existing repository location");
+    useExistingRepoLocButton.setText(Messages.getString("CloneRepoWizardGetRepoPage.useExistingRepoLocButton.text")); //$NON-NLS-1$
 
     createNewRepoLocButton.addListener(SWT.Selection, new Listener() {
       public void handleEvent(Event event) {

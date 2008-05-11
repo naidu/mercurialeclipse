@@ -23,7 +23,7 @@ public class BackoutWizard extends HgWizard {
     private IProject project;    
 
     private BackoutWizard() {
-        super("Backout Wizard");
+        super(Messages.getString("BackoutWizard.title")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);       
     }
 
@@ -35,8 +35,8 @@ public class BackoutWizard extends HgWizard {
     @Override
     public void addPages() {
         super.addPages();
-        page = createPage("Backout", "Backout",null,
-                "With backout you can reverse changes that have been committed earlier" );
+        page = createPage(Messages.getString("BackoutWizard.pageName"), Messages.getString("BackoutWizard.pageTitle"),null, //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("BackoutWizard.pageDescription") ); //$NON-NLS-1$
         addPage(page);
     }
 

@@ -377,8 +377,8 @@ public abstract class HgWizardPage extends WizardPage {
             @Override
             public String getText(Object element) {
                 ChangeSet cs = (ChangeSet) element;
-                return (cs.toString().concat("\t").concat(cs.getDate()).concat(
-                        "\t").concat(cs.getUser()));
+                return (cs.toString().concat("\t").concat(cs.getDate()).concat( //$NON-NLS-1$
+                        "\t").concat(cs.getUser())); //$NON-NLS-1$
             }
         });
 

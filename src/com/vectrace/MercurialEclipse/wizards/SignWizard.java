@@ -25,14 +25,14 @@ public class SignWizard extends Wizard {
     public SignWizard(IProject proj) {
         this.project = proj;
         ImageDescriptor image = MercurialEclipsePlugin
-                .getImageDescriptor("wizards/cleanmanifest_wiz.png");
-        page = new SignWizardPage("Sign changesets", "Sign changesets", image,
-                "Cryptographically sign changesets", proj);
+                .getImageDescriptor(Messages.getString("SignWizard.signWizardPage.image")); //$NON-NLS-1$
+        page = new SignWizardPage(Messages.getString("SignWizard.signWizardPage.name"), Messages.getString("SignWizard.signWizardPage.title"), image, //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("SignWizard.signWizardPage.description"), proj); //$NON-NLS-1$
         IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
                 .getDialogSettings();
-        IDialogSettings section = workbenchSettings.getSection("SignWizard");
+        IDialogSettings section = workbenchSettings.getSection("SignWizard"); //$NON-NLS-1$
         if (section == null) {
-            section = workbenchSettings.addNewSection("SignWizard");
+            section = workbenchSettings.addNewSection("SignWizard"); //$NON-NLS-1$
         }
         setDialogSettings(section);
     }

@@ -57,8 +57,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private static final int COMBO_HISTORY_LENGTH = 10;
 
     // Dialog store id constants
-    private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID";
-    private static final String STORE_URL_ID = "ConfigurationWizardMainPage.STORE_URL_ID";
+    private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
+    private static final String STORE_URL_ID = "ConfigurationWizardMainPage.STORE_URL_ID"; //$NON-NLS-1$
 
     /**
      * ConfigurationWizardMainPage constructor.
@@ -123,20 +123,20 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         };
 
-        Group g = createGroup(composite, "Repository location", 3);
+        Group g = createGroup(composite, Messages.getString("ConfigurationWizardMainPage.urlGroup.title"), 3); //$NON-NLS-1$
 
         // repository Url
-        createLabel(g, "URL");
+        createLabel(g, Messages.getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
         urlCombo = createEditableCombo(g);
         urlCombo.addListener(SWT.Selection, listener);
         urlCombo.addListener(SWT.Modify, listener);
 
-        Button browseButton = createPushButton(g, "Browse", 1);
+        Button browseButton = createPushButton(g, Messages.getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 DirectoryDialog dialog = new DirectoryDialog(getShell());
-                dialog.setMessage("Select directory.");
+                dialog.setMessage(Messages.getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
                 String dir = dialog.open();
                 if (dir != null) {
                     urlCombo.setText(dir);
@@ -145,16 +145,16 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         });
 
         if (showCredentials) {
-            g = createGroup(composite, "Authentication");
+            g = createGroup(composite, Messages.getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
 
             // User name
-            createLabel(g, "Username");
+            createLabel(g, Messages.getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
             userCombo = createEditableCombo(g);
             userCombo.addListener(SWT.Selection, listener);
             userCombo.addListener(SWT.Modify, listener);
 
             // Password
-            createLabel(g, "Password");
+            createLabel(g, Messages.getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
             passwordText = createTextField(g);
             passwordText.setEchoChar('*');
         }
@@ -189,10 +189,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         // Set the result to be the current values
         Properties result = new Properties();
         if (showCredentials) {
-            result.setProperty("user", userCombo.getText());
-            result.setProperty("password", passwordText.getText());
+            result.setProperty("user", userCombo.getText()); //$NON-NLS-1$
+            result.setProperty("password", passwordText.getText()); //$NON-NLS-1$
         }
-        result.setProperty("url", urlCombo.getText());
+        result.setProperty("url", urlCombo.getText()); //$NON-NLS-1$
         this.properties = result;
 
         saveWidgetValues();
@@ -226,17 +226,17 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         if (properties != null) {
             if (showCredentials) {
-                String user = properties.getProperty("user");
+                String user = properties.getProperty("user"); //$NON-NLS-1$
                 if (user != null) {
                     userCombo.setText(user);
                 }
 
-                String password = properties.getProperty("password");
+                String password = properties.getProperty("password"); //$NON-NLS-1$
                 if (password != null) {
                     passwordText.setText(password);
                 }
             }
-            String host = properties.getProperty("url");
+            String host = properties.getProperty("url"); //$NON-NLS-1$
             if (host != null) {
                 urlCombo.setText(host);
             }

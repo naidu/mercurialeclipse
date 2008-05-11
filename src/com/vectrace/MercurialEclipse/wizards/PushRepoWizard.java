@@ -38,7 +38,7 @@ public class PushRepoWizard extends HgWizard {
     private String projectName;
 
     private PushRepoWizard() {
-        super("Push changes to a repository");
+        super(Messages.getString("PushRepoWizard.title")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
     }
 
@@ -50,9 +50,9 @@ public class PushRepoWizard extends HgWizard {
     @Override
     public void addPages() {
         super.addPages();
-        PushRepoPage myPage = new PushRepoPage("PushRepoPage",
-                "Push changes to a repository", null, project);
-        initPage("Here you can push changes to a repository for sharing them.",
+        PushRepoPage myPage = new PushRepoPage(Messages.getString("PushRepoWizard.pushRepoPage.name"), //$NON-NLS-1$
+                Messages.getString("PushRepoWizard.pushRepoPage.title"), null, project); //$NON-NLS-1$
+        initPage(Messages.getString("PushRepoWizard.pushRepoPage.description"), //$NON-NLS-1$
                 myPage);
         myPage.setShowCredentials(true);
         page = myPage;
@@ -74,8 +74,8 @@ public class PushRepoWizard extends HgWizard {
 
             // Check that this project exist.
             if (project.getLocation() == null) {
-                String msg = "Project " + projectName
-                        + " don't exists why push?";
+                String msg = Messages.getString("PushRepoWizard.project") + projectName //$NON-NLS-1$
+                        + Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
                 MercurialEclipsePlugin.logError(msg, null);
                 // System.out.println( string);
                 return false;
@@ -100,7 +100,7 @@ public class PushRepoWizard extends HgWizard {
                 shell = workbench.getActiveWorkbenchWindow().getShell();
 
                 MessageDialog.openInformation(shell,
-                        "Mercurial Eclipse Push output", result);
+                        Messages.getString("PushRepoWizard.outputDialog.title"), result); //$NON-NLS-1$
             }
 
             // It appears good. Stash the repo location.
@@ -108,7 +108,7 @@ public class PushRepoWizard extends HgWizard {
                     repo);
         } catch (MalformedURLException e) {
             MessageDialog.openError(Display.getCurrent().getActiveShell(),
-                    "Malformed URL:", e.getMessage());
+                    Messages.getString("PushRepoWizard.malformedUrl"), e.getMessage()); //$NON-NLS-1$
             return false;
 
         } catch (Exception e) {

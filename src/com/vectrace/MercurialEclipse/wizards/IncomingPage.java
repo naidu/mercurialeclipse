@@ -52,14 +52,14 @@ final class IncomingPage extends WizardPage {
 
     private SortedSet<ChangeSet> getIncoming() {
 
-        ChangeSet a = new ChangeSet(0, "00000000", "dummy", "2008-01-01");
-        ChangeSet b = new ChangeSet(1, "11111111", "dummy 2 ", "2008-01-02");
+        ChangeSet a = new ChangeSet(0, "00000000", "dummy", "2008-01-01"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        ChangeSet b = new ChangeSet(1, "11111111", "dummy 2 ", "2008-01-02"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         List<FileStatus> st = new ArrayList<FileStatus>();
 
-        st.add(new FileStatus(Action.ADDED, "/foo/bar/path"));
-        st.add(new FileStatus(Action.MODIFIED, "/foo/bar/path2"));
-        st.add(new FileStatus(Action.REMOVED, "/foo/bar/path3"));
+        st.add(new FileStatus(Action.ADDED, "/foo/bar/path")); //$NON-NLS-1$
+        st.add(new FileStatus(Action.MODIFIED, "/foo/bar/path2")); //$NON-NLS-1$
+        st.add(new FileStatus(Action.REMOVED, "/foo/bar/path3")); //$NON-NLS-1$
         a.setChangedFiles(st.toArray(new FileStatus[st.size()]));
 
         TreeSet<ChangeSet> set = new TreeSet<ChangeSet>();
@@ -99,7 +99,7 @@ final class IncomingPage extends WizardPage {
         Table table = changeSetViewer.getTable();
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        String[] titles = { "Rev", "Global", "Date", "Author" };
+        String[] titles = { "Rev", "Global", "Date", "Author" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 50, 150, 150, 100 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -115,7 +115,7 @@ final class IncomingPage extends WizardPage {
         table = fileStatusViewer.getTable();
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        titles = new String[]{ "Status", "Path"};
+        titles = new String[]{ Messages.getString("IncomingPage.fileStatusTable.columnTitle.status"), Messages.getString("IncomingPage.fileStatusTable.columnTitle.path")}; //$NON-NLS-1$ //$NON-NLS-2$
         widths = new int[]{ 80, 400};
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -169,7 +169,7 @@ final class IncomingPage extends WizardPage {
 
         public String getColumnText(Object element, int columnIndex) {
             if (!(element instanceof FileStatus)) {
-                return "Unknown Element: " + element;
+                return Messages.getString("IncomingPage.unknownElement") + element; //$NON-NLS-1$
             }
             FileStatus status = (FileStatus) element;
             switch(columnIndex) {
@@ -178,7 +178,7 @@ final class IncomingPage extends WizardPage {
                 case 1:
                     return status.getPath();
             }
-            return "N/A";
+            return Messages.getString("IncomingPage.notApplicable"); //$NON-NLS-1$
         }
     }
 }

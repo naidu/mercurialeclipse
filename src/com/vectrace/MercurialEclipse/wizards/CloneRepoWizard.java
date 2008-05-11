@@ -54,9 +54,9 @@ public class CloneRepoWizard extends SyncRepoWizard {
 	public void init(IWorkbench workbench, IStructuredSelection selection) {
 		setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
 		setNeedsProgressMonitor(true);
-		syncRepoLocationPage = new SyncRepoPage(true, "CreateRepoPage",
-				"Create Repository Location",
-				"Create a repository location to clone", "no repo name", null);
+		syncRepoLocationPage = new SyncRepoPage(true, Messages.getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("CloneRepoWizard.pageTitle"), //$NON-NLS-1$
+				Messages.getString("CloneRepoWizard.pageDescription"), Messages.getString("CloneRepoWizard.noRepoName"), null); //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	/*
@@ -74,7 +74,7 @@ public class CloneRepoWizard extends SyncRepoWizard {
         repo = new HgRepositoryLocation(locationUrl);
     } catch (MalformedURLException e) {
         MessageDialog.openError(Display.getCurrent().getActiveShell(),
-                "Malformed URL:", e.getMessage());
+                Messages.getString("CloneRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$
         return false;
     }
     
@@ -83,7 +83,7 @@ public class CloneRepoWizard extends SyncRepoWizard {
     {
       // TODO: Ask if user wants to torch everything there before the clone,
 		// otherwise fail.
-      System.out.println( "Project " + projectName + " already exists");
+      System.out.println( Messages.getString("CloneRepoWizard.project") + projectName + Messages.getString("CloneRepoWizard.alreadyExists")); //$NON-NLS-1$ //$NON-NLS-2$
       return false;
     }
     
@@ -93,7 +93,7 @@ public class CloneRepoWizard extends SyncRepoWizard {
     }
     catch (Exception e)
     {
-    	MercurialEclipsePlugin.logError("Clone operation failed", e);
+    	MercurialEclipsePlugin.logError(Messages.getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
 // System.out.println("Clone operation failed");
 // System.out.println(e.getMessage());
     }
@@ -135,7 +135,7 @@ public class CloneRepoWizard extends SyncRepoWizard {
     try {
 		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
 	} catch (HgException e) {
-		MercurialEclipsePlugin.logError("Adding repository to persistent storage failed.",e);
+		MercurialEclipsePlugin.logError(Messages.getString("CloneRepoWizard.AddingRepositoryFailed"),e); //$NON-NLS-1$
 		return false;
 	}
 
