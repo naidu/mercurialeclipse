@@ -44,14 +44,15 @@ public class ResourceDecorator extends LabelProvider implements
         ILightweightLabelDecorator, Observer
 // FlagManagerListener
 {
-   
+
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
-    
-    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
-    private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
-    
-    
+
+    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
+            .getInstance();
+    private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache
+            .getInstance();
+
     // set to true when having 2 different statuses in a folder flags it has
     // modified
     private static boolean folder_logic_2MM;
@@ -98,7 +99,7 @@ public class ResourceDecorator extends LabelProvider implements
 
             if (!STATUS_CACHE.isStatusKnown((project))) {
                 return;
-            }                                     
+            }
 
             ImageDescriptor overlay = null;
             String prefix = null;
@@ -146,15 +147,14 @@ public class ResourceDecorator extends LabelProvider implements
             if (overlay != null) {
                 decoration.addOverlay(overlay);
             }
-            
+
             // get recent project versions
             LOCAL_CACHE.getLocalChangeSets(project);
-            
+
             // label info for incoming changesets
             ChangeSet cs = null;
             try {
-                cs = INCOMING_CACHE
-                        .getNewestIncomingChangeSet(resource);
+                cs = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
             } catch (HgException e1) {
                 MercurialEclipsePlugin.logError(e1);
             }
@@ -173,7 +173,8 @@ public class ResourceDecorator extends LabelProvider implements
 
             // local changeset info
             try {
-                ChangeSet changeSet = LOCAL_CACHE.getNewestLocalChangeSet(project);
+                ChangeSet changeSet = LOCAL_CACHE
+                        .getNewestLocalChangeSet(project);
 
                 if (changeSet != null) {
                     String hex = ":" + changeSet.getNodeShort();
@@ -183,14 +184,17 @@ public class ResourceDecorator extends LabelProvider implements
 
                     // suffix for files
                     if (resource.getType() == IResource.FILE) {
-                        changeSet = LOCAL_CACHE.getNewestLocalChangeSet(resource);
+                        changeSet = LOCAL_CACHE
+                                .getNewestLocalChangeSet(resource);
+                        if (changeSet != null) {
+                            suffix = " [" + changeSet.getChangesetIndex()
+                                    + "] ";
 
-                        suffix = " [" + changeSet.getChangesetIndex() + "] ";
-
-                        if (cs != null) {
-                            suffix += "< [" + cs.getChangesetIndex() + ":"
-                                    + cs.getNodeShort() + " " + cs.getUser()
-                                    + "]";
+                            if (cs != null) {
+                                suffix += "< [" + cs.getChangesetIndex() + ":"
+                                        + cs.getNodeShort() + " "
+                                        + cs.getUser() + "]";
+                            }
                         }
                     }
 
@@ -216,18 +220,18 @@ public class ResourceDecorator extends LabelProvider implements
         String decoratorId = ResourceDecorator.class.getName();
         configureFromPreferences();
         PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
-    }    
-        
-    public void update(Observable o, Object updatedObject) {        
-            final IWorkbench workbench = PlatformUI.getWorkbench();
-            final String decoratorId = ResourceDecorator.class.getName();
-            new SafeUiJob("Update Decorations") {
-                @Override
-                protected IStatus runSafe(IProgressMonitor monitor) {
-                    workbench.getDecoratorManager().update(decoratorId);
-                    return super.runSafe(monitor);
-                }
-            }.schedule();        
+    }
+
+    public void update(Observable o, Object updatedObject) {
+        final IWorkbench workbench = PlatformUI.getWorkbench();
+        final String decoratorId = ResourceDecorator.class.getName();
+        new SafeUiJob("Update Decorations") {
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                workbench.getDecoratorManager().update(decoratorId);
+                return super.runSafe(monitor);
+            }
+        }.schedule();
     }
 
 }
