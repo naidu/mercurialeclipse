@@ -234,6 +234,7 @@ public class ResourceDecorator extends LabelProvider implements
         new SafeUiJob("Update Decorations") {
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
+                // FIXME: fire events for the changed resources instead!
                 workbench.getDecoratorManager().update(decoratorId);
                 return super.runSafe(monitor);
             }
