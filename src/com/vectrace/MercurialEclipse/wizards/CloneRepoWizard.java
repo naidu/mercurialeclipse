@@ -139,7 +139,7 @@ public class CloneRepoWizard extends SyncRepoWizard {
 		MercurialEclipsePlugin.logError(Messages.getString("CloneRepoWizard.AddingRepositoryFailed"),e); //$NON-NLS-1$
 		return false;
 	}
-	new RefreshJob("Refreshing status and changeset information after clone...",null,project);
+	new RefreshJob(Messages.getString("CloneRepoWizard.refreshJob.name"),null,project); //$NON-NLS-1$
     return true;
   }
 }
