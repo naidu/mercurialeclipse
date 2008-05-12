@@ -45,11 +45,11 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
                 for(Object arg: args) {
                     test.set(BIT_MAP.get(arg));
                 }
-                BitSet status = MercurialStatusCache.getInstance().getStatus(res);                
-                test.and(status);
-                
-                return !test.isEmpty();
-                
+                BitSet status = MercurialStatusCache.getInstance().getStatus(res);
+                if (status != null) {
+                    test.and(status);                
+                    return !test.isEmpty();
+                }                
             } catch (Exception e) {
                 MercurialEclipsePlugin.logWarning("Could not test status field "+expectedValue+" on "+receiver, e);
                 return false;

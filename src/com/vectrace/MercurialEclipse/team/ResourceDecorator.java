@@ -148,8 +148,10 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addOverlay(overlay);
             }
 
-            // get recent project versions
-            LOCAL_CACHE.getLocalChangeSets(project);
+            // get recent project versions - the order is important here, as "isLocallyKnown" blocks
+            if (!LOCAL_CACHE.isLocalUpdateInProgress() && LOCAL_CACHE.isLocallyKnown(project)) {
+                LOCAL_CACHE.getLocalChangeSets(project);
+            }
 
             // label info for incoming changesets
             ChangeSet cs = null;
@@ -173,8 +175,12 @@ public class ResourceDecorator extends LabelProvider implements
 
             // local changeset info
             try {
-                ChangeSet changeSet = LOCAL_CACHE
+                ChangeSet changeSet = null;
+                // the order is important here as well :-).
+                if (!LOCAL_CACHE.isLocalUpdateInProgress() && LOCAL_CACHE.isLocallyKnown(project)) {
+                changeSet = LOCAL_CACHE
                         .getNewestLocalChangeSet(project);
+                }
 
                 if (changeSet != null) {
                     String hex = ":" + changeSet.getNodeShort();

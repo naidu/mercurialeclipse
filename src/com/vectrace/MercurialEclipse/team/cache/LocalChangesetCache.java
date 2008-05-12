@@ -22,7 +22,9 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -51,6 +53,15 @@ public class LocalChangesetCache extends AbstractCache {
 
     private LocalChangesetCache() {
         localChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
+        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
+                .getProjects();
+        if (projects != null) {
+            for (IProject project : projects) {
+                new RefreshLocalChangesetsJob(
+                        "Initializing changeset cache for " + project.getName(),
+                        project).schedule();
+            }
+        }
     }
 
     public static LocalChangesetCache getInstance() {
@@ -69,7 +80,8 @@ public class LocalChangesetCache extends AbstractCache {
         SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource);
         if (revisions == null) {
             if (objectResource.getType() != IResource.FOLDER
-                    && STATUS_CACHE.isSupervised(objectResource) && !STATUS_CACHE.isAdded(objectResource)) {
+                    && STATUS_CACHE.isSupervised(objectResource)
+                    && !STATUS_CACHE.isAdded(objectResource)) {
                 refreshAllLocalRevisions(objectResource);
                 revisions = localChangeSets.get(objectResource);
             }
@@ -236,8 +248,10 @@ public class LocalChangesetCache extends AbstractCache {
                             }
                             // add changes to cache
                             if (changes != null && changes.size() > 0) {
-                                if (STATUS_CACHE.isSupervised(resource) && !STATUS_CACHE.isAdded(resource)) {
-                                    SortedSet<ChangeSet> existing = localChangeSets.get(resource);
+                                if (STATUS_CACHE.isSupervised(resource)
+                                        && !STATUS_CACHE.isAdded(resource)) {
+                                    SortedSet<ChangeSet> existing = localChangeSets
+                                            .get(resource);
                                     if (existing == null) {
                                         existing = new TreeSet<ChangeSet>();
                                     }

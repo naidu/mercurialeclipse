@@ -18,6 +18,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends SingleResourceHandler {
@@ -35,6 +36,9 @@ public class MergeHandler extends SingleResourceHandler {
             view.clearView();
             view.setCurrentProject(project);
             project.refreshLocal(IResource.DEPTH_INFINITE, null);
+            new RefreshJob(
+                    "Refreshing project status and changesets after merge.",
+                    null, resource.getProject()).schedule();
         }
     }
 

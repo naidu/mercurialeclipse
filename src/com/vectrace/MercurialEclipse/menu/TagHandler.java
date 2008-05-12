@@ -6,7 +6,7 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.TagDialog;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /**
  * 
@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 					null, //user
 					dialog.isLocal(),
 					dialog.isForced());
-			MercurialStatusCache.getInstance().refreshStatus(resource, null);
+			new RefreshJob("Refreshing status and changesets after tagging...",null,project).schedule();
 		}
 	}
 

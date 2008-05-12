@@ -26,15 +26,13 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.dialogs.CheckedTreeSelectionDialog;
 import org.eclipse.ui.views.navigator.ResourceComparator;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.ui.ResourceLabelProvider;
 import com.vectrace.MercurialEclipse.ui.ResourcesTreeContentProvider;
 import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
@@ -82,11 +80,7 @@ public class AddHandler extends MultipleResourcesHandler {
         dialog.addFilter(untrackedFilter);
         if (dialog.open() == IDialogConstants.OK_ID) {
         	HgAddClient.addResources(keepFiles(dialog.getResult()), null);
-			 try {
-					MercurialStatusCache.getInstance().refresh();
-				} catch (TeamException e) {
-					MercurialEclipsePlugin.logError(e);
-			 }
+			new RefreshStatusJob("Refreshing status after adding resources...").schedule();
         }
     }
 

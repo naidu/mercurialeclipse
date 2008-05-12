@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
  * @author bastian
  * 
  */
-final class RefreshStatusJob extends SafeWorkspaceJob {
+public class RefreshStatusJob extends SafeWorkspaceJob {
     /**
      * 
      */
@@ -33,7 +33,7 @@ final class RefreshStatusJob extends SafeWorkspaceJob {
      * @param mercurialStatusCache
      *            TODO
      */
-    RefreshStatusJob(String name) {
+    public RefreshStatusJob(String name) {
         super(name);
     }
 

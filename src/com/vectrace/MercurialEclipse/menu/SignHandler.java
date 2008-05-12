@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.wizards.SignWizard;
 
 public class SignHandler extends SingleResourceHandler {
@@ -24,6 +25,7 @@ public class SignHandler extends SingleResourceHandler {
         SignWizard signWizard = new SignWizard(project);
         WizardDialog dialog = new WizardDialog(getShell(), signWizard);
         dialog.open();
+        new RefreshJob("Refreshing status and changeset cache after signing...",null, project).schedule();
     }
 
 }
