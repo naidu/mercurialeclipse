@@ -19,10 +19,6 @@ import java.util.Observer;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IResourceChangeEvent;
-import org.eclipse.core.resources.IResourceChangeListener;
-import org.eclipse.core.resources.IResourceDelta;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -50,7 +46,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * 
  */
 public class DecoratorStatus extends LabelProvider implements
-		ILightweightLabelDecorator, IResourceChangeListener, Observer {
+		ILightweightLabelDecorator, Observer {
 
 	// set to true when having 2 different statuses in a folder flags it has
 	// modified
@@ -61,8 +57,7 @@ public class DecoratorStatus extends LabelProvider implements
 	 * 
 	 */
 	public DecoratorStatus() {
-		configureFromPreferences();
-		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+		configureFromPreferences();		
 		statusCache = MercurialStatusCache.getInstance();
 		statusCache.addObserver(this);
 	}
@@ -218,16 +213,7 @@ public class DecoratorStatus extends LabelProvider implements
 	@Override
 	public void addListener(ILabelProviderListener listener) {
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#dispose()
-	 */
-	@Override
-	public void dispose() {
-		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-	}
+	
 
 	/*
 	 * (non-Javadoc)
@@ -247,35 +233,6 @@ public class DecoratorStatus extends LabelProvider implements
 	 */
 	@Override
 	public void removeListener(ILabelProviderListener listener) {
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
-	 */
-	public void resourceChanged(final IResourceChangeEvent event) {
-		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
-			IResourceDelta[] children = event.getDelta().getAffectedChildren();
-			for (IResourceDelta delta : children) {
-				final IResource res = delta.getResource();
-				if (null != RepositoryProvider.getProvider(res.getProject(),
-						MercurialTeamProvider.ID)) {
-					// Atleast one resource in a project managed by MEP has
-					// changed, schedule a refresh();
-
-					try {
-						MercurialStatusCache.getInstance().refreshStatus(
-								res.getProject(),null);
-					} catch (TeamException e) {
-						MercurialEclipsePlugin.logError(
-								"Couldn't refresh project:", e);
-					}
-
-					return;
-				}
-			}
-		}
 	}
 
 	public void update(Observable o, Object updatedObject) {
