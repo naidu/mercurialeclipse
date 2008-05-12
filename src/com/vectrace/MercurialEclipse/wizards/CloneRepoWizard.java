@@ -34,6 +34,7 @@ import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /*
  * 
@@ -138,7 +139,7 @@ public class CloneRepoWizard extends SyncRepoWizard {
 		MercurialEclipsePlugin.logError(Messages.getString("CloneRepoWizard.AddingRepositoryFailed"),e); //$NON-NLS-1$
 		return false;
 	}
-
+	new RefreshJob("Refreshing status and changeset information after clone...",null,project);
     return true;
   }
 }
