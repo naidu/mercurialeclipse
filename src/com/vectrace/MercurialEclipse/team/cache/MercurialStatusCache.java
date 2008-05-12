@@ -66,17 +66,17 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     private final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
-        private final List<IResource> removed;
-        private final List<IResource> changed;
-        private final List<IResource> added;
+        private final Set<IResource> removed;
+        private final Set<IResource> changed;
+        private final Set<IResource> added;
 
         /**
          * @param removed
          * @param changed
          * @param added
          */
-        private ResourceDeltaVisitor(List<IResource> removed,
-                List<IResource> changed, List<IResource> added) {
+        private ResourceDeltaVisitor(Set<IResource> removed,
+                Set<IResource> changed, Set<IResource> added) {
             this.removed = removed;
             this.changed = changed;
             this.added = added;
@@ -448,9 +448,9 @@ public class MercurialStatusCache extends AbstractCache implements
                 for (IResourceDelta delta : event.getDelta()
                         .getAffectedChildren()) {
 
-                    final List<IResource> changed = new ArrayList<IResource>();
-                    final List<IResource> added = new ArrayList<IResource>();
-                    final List<IResource> removed = new ArrayList<IResource>();
+                    final Set<IResource> changed = new HashSet<IResource>();
+                    final Set<IResource> added = new HashSet<IResource>();
+                    final Set<IResource> removed = new HashSet<IResource>();
 
                     IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(
                             removed, changed, added);
@@ -491,7 +491,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return
      * @throws HgException
      */
-    private void refreshStatus(final List<IResource> resources)
+    private void refreshStatus(final Set<IResource> resources)
             throws HgException {
         String pref = MercurialUtilities.getPreference(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
