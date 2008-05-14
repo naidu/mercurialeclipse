@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -26,7 +27,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  */
 public class HistoryPainterRevision implements
 		Comparable<HistoryPainterRevision> {
-	private static MercurialStatusCache cache = MercurialStatusCache
+	private static AbstractCache cache = MercurialStatusCache
 			.getInstance();
 	private int lane;
 	private int lanes;

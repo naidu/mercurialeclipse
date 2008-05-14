@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -48,7 +49,7 @@ public class LocalChangesetCache extends AbstractCache {
 
     private static LocalChangesetCache instance = null;
 
-    private boolean localUpdateInProgress = false;
+    private static Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
     private static Map<IResource, SortedSet<ChangeSet>> localChangeSets;
 
     private LocalChangesetCache() {
@@ -102,16 +103,28 @@ public class LocalChangesetCache extends AbstractCache {
      */
     public ChangeSet getNewestLocalChangeSet(IResource objectResource)
             throws HgException {
-        if (localUpdateInProgress) {
-            synchronized (localChangeSets) {
-                // waiting for update...
-            }
+        ReentrantLock lock = getLock(objectResource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         SortedSet<ChangeSet> revisions = getLocalChangeSets(objectResource);
         if (revisions != null && revisions.size() > 0) {
             return revisions.last();
         }
         return null;
+    }
+
+    /**
+     * @param objectResource
+     */
+    private ReentrantLock getLock(IResource objectResource) {
+        ReentrantLock lock = locks.get(objectResource.getProject());
+        if (lock == null) {
+            lock = new ReentrantLock();
+            locks.put(objectResource.getProject(), lock);
+        }
+        return lock;
     }
 
     /**
@@ -122,10 +135,10 @@ public class LocalChangesetCache extends AbstractCache {
      * @return true if known, false if not.
      */
     public boolean isLocallyKnown(IResource objectResource) {
-        if (localUpdateInProgress) {
-            synchronized (localChangeSets) {
-                // wait...
-            }
+        ReentrantLock lock = getLock(objectResource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         return localChangeSets.containsKey(objectResource);
     }
@@ -203,80 +216,76 @@ public class LocalChangesetCache extends AbstractCache {
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
-            synchronized (localChangeSets) {
-                try {
-                    localUpdateInProgress = true;
+            ReentrantLock lock = getLock(res);
+            try {
+                lock.lock();
 
-                    Map<IResource, SortedSet<ChangeSet>> revisions = null;
+                Map<IResource, SortedSet<ChangeSet>> revisions = null;
 
-                    if (limit) {
-                        revisions = HgLogClient.getRecentProjectLog(res,
-                                limitNumber);
-                    } else {
-                        revisions = HgLogClient.getCompleteProjectLog(res);
+                if (limit) {
+                    revisions = HgLogClient.getRecentProjectLog(res,
+                            limitNumber);
+                } else {
+                    revisions = HgLogClient.getCompleteProjectLog(res);
 
-                    }
-
-                    Set<IResource> resources = new HashSet<IResource>(Arrays
-                            .asList(STATUS_CACHE.getLocalMembers(res)));
-
-                    Set<IResource> concernedResources = new HashSet<IResource>();
-
-                    if (revisions != null && revisions.size() > 0) {
-
-                        concernedResources.add(res);
-                        concernedResources.addAll(resources);
-
-                        // add all concerned resources if project is updated
-                        // so we have all resources' changesets of the most
-                        // recent revs.
-                        if (res.getType() == IResource.PROJECT) {
-                            concernedResources.addAll(revisions.keySet());
-                        }
-
-                        for (Iterator<IResource> iter = revisions.keySet()
-                                .iterator(); iter.hasNext();) {
-                            IResource resource = iter.next();
-                            SortedSet<ChangeSet> changes = revisions
-                                    .get(resource);
-                            // if changes for resource not in top 50, get at
-                            // least 10%
-                            if (changes == null && limit) {
-                                changes = HgLogClient.getRecentProjectLog(
-                                        resource, limitNumber / 10).get(
-                                        resource);
-                            }
-                            // add changes to cache
-                            if (changes != null && changes.size() > 0) {
-                                if (STATUS_CACHE.isSupervised(resource)
-                                        && !STATUS_CACHE.isAdded(resource)) {
-                                    SortedSet<ChangeSet> existing = localChangeSets
-                                            .get(resource);
-                                    if (existing == null) {
-                                        existing = new TreeSet<ChangeSet>();
-                                    }
-                                    existing.addAll(changes);
-                                    localChangeSets.put(resource, existing);
-                                    addToNodeMap(changes);
-                                }
-                            }
-                        }
-                    }
-                } finally {
-                    localUpdateInProgress = false;
-                    setChanged();
-                    notifyObservers(res);
                 }
+
+                Set<IResource> resources = new HashSet<IResource>(Arrays
+                        .asList(STATUS_CACHE.getLocalMembers(res)));
+
+                Set<IResource> concernedResources = new HashSet<IResource>();
+
+                if (revisions != null && revisions.size() > 0) {
+
+                    concernedResources.add(res);
+                    concernedResources.addAll(resources);
+
+                    // add all concerned resources if project is updated
+                    // so we have all resources' changesets of the most
+                    // recent revs.
+                    if (res.getType() == IResource.PROJECT) {
+                        concernedResources.addAll(revisions.keySet());
+                    }
+
+                    for (Iterator<IResource> iter = revisions.keySet()
+                            .iterator(); iter.hasNext();) {
+                        IResource resource = iter.next();
+                        SortedSet<ChangeSet> changes = revisions.get(resource);
+                        // if changes for resource not in top 50, get at
+                        // least 10%
+                        if (changes == null && limit) {
+                            changes = HgLogClient.getRecentProjectLog(resource,
+                                    limitNumber / 10).get(resource);
+                        }
+                        // add changes to cache
+                        if (changes != null && changes.size() > 0) {
+                            if (STATUS_CACHE.isSupervised(resource)
+                                    && !STATUS_CACHE.isAdded(resource)) {
+                                SortedSet<ChangeSet> existing = localChangeSets
+                                        .get(resource);
+                                if (existing == null) {
+                                    existing = new TreeSet<ChangeSet>();
+                                }
+                                existing.addAll(changes);
+                                localChangeSets.put(resource, existing);
+                                addToNodeMap(changes);
+                            }
+                        }
+                    }
+                }
+            } finally {
+                lock.unlock();
+                notifyChanged(res);
             }
         }
     }
 
     public ChangeSet getLocalChangeSet(IResource res, int changesetIndex)
             throws HgException {
-        if (localUpdateInProgress) {
-            synchronized (AbstractCache.nodeMap) {
-                // wait
-            }
+        ReentrantLock lock = getLock(res);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         SortedSet<ChangeSet> locals = getLocalChangeSets(res);
         List<ChangeSet> list = new ArrayList<ChangeSet>(locals);
@@ -292,8 +301,8 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * @return the localUpdateInProgress
      */
-    public boolean isLocalUpdateInProgress() {
-        return localUpdateInProgress;
+    public boolean isLocalUpdateInProgress(IResource res) {
+        return getLock(res).isLocked();
     }
 
 }

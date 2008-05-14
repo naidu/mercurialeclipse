@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,8 +23,10 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -163,6 +166,31 @@ public abstract class AbstractCache extends Observable {
      */
     public ChangeSet getChangeSet(String changeSet) {
         return AbstractCache.nodeMap.get(changeSet);
+    }
+    /**
+     * @param resource
+     */
+    protected void notifyChanged(final IResource resource) {
+        Set<IResource> resources = new HashSet<IResource>();
+        resources.add(resource);
+        notifyChanged(resources);
+    }
+    /**
+     * @param resources
+     */
+    protected void notifyChanged(Set<IResource> resources) {
+        for (IResource r : resources) {                    
+        if (r instanceof IContainer) {
+                IContainer cont = (IContainer) r;
+                try {
+                    resources.addAll(Arrays.asList(cont.members()));
+                } catch (CoreException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+        }
+        setChanged();
+        notifyObservers(resources);
     }
 
 }

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
@@ -135,7 +136,7 @@ public class MercurialStatusCache extends AbstractCache implements
     /** Used to store which projects have already been parsed */
     private static Set<IProject> knownStatus;
 
-    private boolean statusUpdateInProgress = false;
+    private static Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
 
     private MercurialStatusCache() {
         AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
@@ -165,7 +166,16 @@ public class MercurialStatusCache extends AbstractCache implements
         knownStatus.clear();
         AbstractCache.projectResources.clear();
         setChanged();
-        notifyObservers(knownStatus.toArray(new IProject[knownStatus.size()]));
+        notifyObservers(knownStatus);
+    }
+
+    private ReentrantLock getLock(IResource objectResource) {
+        ReentrantLock lock = locks.get(objectResource.getProject());
+        if (lock == null) {
+            lock = new ReentrantLock();
+            locks.put(objectResource.getProject(), lock);
+        }
+        return lock;
     }
 
     /**
@@ -176,10 +186,10 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return true if known, false if not.
      */
     public boolean isStatusKnown(IProject project) {
-        if (statusUpdateInProgress) {
-            synchronized (statusMap) {
-                // wait...
-            }
+        ReentrantLock lock = getLock(project);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         return knownStatus.contains(project);
     }
@@ -195,10 +205,10 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return the BitSet with status flags.
      */
     public BitSet getStatus(IResource objectResource) {
-        if (statusUpdateInProgress) {
-            synchronized (statusMap) {
-                // wait...
-            }
+        ReentrantLock lock = getLock(objectResource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         return statusMap.get(objectResource);
     }
@@ -221,7 +231,7 @@ public class MercurialStatusCache extends AbstractCache implements
         }
         return false;
     }
-    
+
     public boolean isAdded(IResource resource) {
         if (null != RepositoryProvider.getProvider(resource.getProject(),
                 MercurialTeamProvider.ID)) {
@@ -271,8 +281,7 @@ public class MercurialStatusCache extends AbstractCache implements
             // set status
             new RefreshJob("Refreshing caches and status.", repositoryLocation,
                     project).schedule();
-            setChanged();
-            notifyObservers(project);
+            notifyChanged(project);
         }
     }
 
@@ -281,32 +290,30 @@ public class MercurialStatusCache extends AbstractCache implements
      * @throws HgException
      */
     public void refreshStatus(final IResource res, IProgressMonitor monitor)
-            throws HgException {
-        try {
-            if (monitor != null) {
-                monitor.beginTask("Refreshing " + res.getName(), 50);
-            }
-            if (null != RepositoryProvider.getProvider(res.getProject(),
-                    MercurialTeamProvider.ID)
-                    && res.getProject().isOpen()) {
-                synchronized (statusMap) {
-                    statusUpdateInProgress = true;
-                    // members should contain folders and project, so we clear
-                    // status for files, folders and project
-                    IResource[] resources = getLocalMembers(res);
-                    for (IResource resource : resources) {
-                        statusMap.remove(resource);
-                    }
-                    statusMap.remove(res);
-                    String output = HgStatusClient.getStatus(res);
-                    parseStatus(res, output);
-                }
-            }
-        } finally {
-            statusUpdateInProgress = false;
+            throws HgException {        
+        if (monitor != null) {
+            monitor.beginTask("Refreshing " + res.getName(), 50);
         }
-        setChanged();
-        notifyObservers(res);
+        if (null != RepositoryProvider.getProvider(res.getProject(),
+                MercurialTeamProvider.ID)
+                && res.getProject().isOpen()) {
+            ReentrantLock lock = getLock(res);
+            try {
+                lock.lock();
+                // members should contain folders and project, so we clear
+                // status for files, folders and project
+                IResource[] resources = getLocalMembers(res);
+                for (IResource resource : resources) {
+                    statusMap.remove(resource);
+                }
+                statusMap.remove(res);
+                String output = HgStatusClient.getStatus(res);
+                parseStatus(res, output);
+            } finally {
+                lock.unlock();
+            }
+        }
+        notifyChanged(res);
     }
 
     /**
@@ -472,12 +479,14 @@ public class MercurialStatusCache extends AbstractCache implements
                         // removed not used right now
                         // refreshStatus(removed);
                     }
+                    // notify observers
+                    Set<IResource> resources = new HashSet<IResource>();
+                    resources.addAll(changed);
+                    resources.addAll(added);
+                    resources.addAll(removed);
+                    notifyChanged(resources);
 
                 }
-                // notify observers
-                setChanged();
-                notifyObservers(this);
-
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }
@@ -528,10 +537,10 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return
      */
     public IResource[] getLocalMembers(IResource resource) {
-        if (statusUpdateInProgress) {
-            synchronized (statusMap) {
-                // wait...
-            }
+        ReentrantLock lock = getLock(resource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
 
         Set<IResource> members = new HashSet<IResource>();

@@ -13,22 +13,20 @@ package com.vectrace.MercurialEclipse.team;
 import java.util.BitSet;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -148,8 +146,10 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addOverlay(overlay);
             }
 
-            // get recent project versions - the order is important here, as "isLocallyKnown" blocks
-            if (!LOCAL_CACHE.isLocalUpdateInProgress() && LOCAL_CACHE.isLocallyKnown(project)) {
+            // get recent project versions - the order is important here, as
+            // "isLocallyKnown" blocks
+            if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                    && LOCAL_CACHE.isLocallyKnown(project)) {
                 LOCAL_CACHE.getLocalChangeSets(project);
             }
 
@@ -177,9 +177,9 @@ public class ResourceDecorator extends LabelProvider implements
             try {
                 ChangeSet changeSet = null;
                 // the order is important here as well :-).
-                if (!LOCAL_CACHE.isLocalUpdateInProgress() && LOCAL_CACHE.isLocallyKnown(project)) {
-                changeSet = LOCAL_CACHE
-                        .getNewestLocalChangeSet(project);
+                if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                        && LOCAL_CACHE.isLocallyKnown(project)) {
+                    changeSet = LOCAL_CACHE.getNewestLocalChangeSet(project);
                 }
 
                 if (changeSet != null) {
@@ -228,17 +228,24 @@ public class ResourceDecorator extends LabelProvider implements
         PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
     }
 
+    @SuppressWarnings("unchecked")
     public void update(Observable o, Object updatedObject) {
-        final IWorkbench workbench = PlatformUI.getWorkbench();
-        final String decoratorId = ResourceDecorator.class.getName();
-        new SafeUiJob("Update Decorations") {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                // FIXME: fire events for the changed resources instead!
-                workbench.getDecoratorManager().update(decoratorId);
-                return super.runSafe(monitor);
-            }
-        }.schedule();
+        // final IWorkbench workbench = PlatformUI.getWorkbench();
+        // final String decoratorId = ResourceDecorator.class.getName();
+        // new SafeUiJob("Update Decorations") {
+        // @Override
+        // protected IStatus runSafe(IProgressMonitor monitor) {
+        // // FIXME: fire events for the changed resources instead!
+        // workbench.getDecoratorManager().update(decoratorId);
+        // return super.runSafe(monitor);
+        // }
+        // }.schedule();
+        if (updatedObject instanceof Set) {
+            Set changed = (Set) updatedObject;
+            LabelProviderChangedEvent event = new LabelProviderChangedEvent(this,
+                    changed.toArray());
+            fireLabelProviderChanged(event);
+        }
     }
 
 }
