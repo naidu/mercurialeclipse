@@ -22,8 +22,10 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -36,15 +38,14 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * @author bastian
- *
+ * 
  */
 public abstract class AbstractCache extends Observable {
 
-    protected static Map<IProject, Set<IResource>> projectResources;
+    protected static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
     protected static Comparator<ChangeSet> changeSetIndexComparator;
     protected static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
-    
-    
+
     /**
      * @param repositoryLocation
      * @param outgoing
@@ -60,19 +61,19 @@ public abstract class AbstractCache extends Observable {
         // parameter
         HgRepositoryLocationManager repoManager = MercurialEclipsePlugin
                 .getRepoManager();
-    
+
         HgRepositoryLocation hgRepositoryLocation = repoManager
                 .getRepoLocation(repositoryLocation);
-    
+
         // clear cache of old members
         final Map<IResource, SortedSet<ChangeSet>> removeMap = changeSetMap
                 .get(repositoryLocation);
-    
+
         if (removeMap != null) {
             removeMap.clear();
             changeSetMap.remove(repositoryLocation);
         }
-    
+
         if (hgRepositoryLocation == null) {
             try {
                 hgRepositoryLocation = new HgRepositoryLocation(
@@ -83,7 +84,7 @@ public abstract class AbstractCache extends Observable {
                 throw new HgException(e.getLocalizedMessage(), e);
             }
         }
-    
+
         // get changesets from hg
         Map<IResource, SortedSet<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
@@ -93,33 +94,33 @@ public abstract class AbstractCache extends Observable {
             resources = HgIncomingClient.getHgIncoming(project,
                     hgRepositoryLocation);
         }
-    
+
         // add them to cache(s)
         if (resources != null && resources.size() > 0) {
-    
+
             for (Iterator<IResource> iter = resources.keySet().iterator(); iter
                     .hasNext();) {
                 IResource res = iter.next();
                 SortedSet<ChangeSet> changes = resources.get(res);
-    
+
                 if (changes != null && changes.size() > 0) {
                     SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
                     ChangeSet[] changeSets = changes
                             .toArray(new ChangeSet[changes.size()]);
-    
+
                     if (changeSets != null) {
                         for (ChangeSet changeSet : changeSets) {
                             revisions.add(changeSet);
                             if (direction == Direction.INCOMING) {
-                                synchronized (AbstractCache.nodeMap) {
-                                    AbstractCache.nodeMap
+                                synchronized (nodeMap) {
+                                    nodeMap
                                             .put(changeSet.toString(),
                                                     changeSet);
                                 }
                             }
                         }
                     }
-    
+
                     Map<IResource, SortedSet<ChangeSet>> map = changeSetMap
                             .get(repositoryLocation);
                     if (map == null) {
@@ -131,6 +132,7 @@ public abstract class AbstractCache extends Observable {
             }
         }
     }
+
     /**
      * @param changes
      */
@@ -141,19 +143,22 @@ public abstract class AbstractCache extends Observable {
             }
         }
     }
-    
+
     protected void addToProjectResources(IResource member) {
         if (member.getType() == IResource.PROJECT) {
             return;
         }
-        Set<IResource> set = AbstractCache.projectResources.get(member.getProject());
-        if (set == null) {
-            set = new HashSet<IResource>();
+        synchronized (projectResources) {
+            Set<IResource> set = AbstractCache.projectResources.get(member
+                    .getProject());
+            if (set == null) {
+                set = new HashSet<IResource>();
+            }
+            set.add(member);
+            AbstractCache.projectResources.put(member.getProject(), set);
         }
-        set.add(member);
-        AbstractCache.projectResources.put(member.getProject(), set);
     }
-    
+
     /**
      * Gets Changeset by its identifier
      * 
@@ -163,6 +168,49 @@ public abstract class AbstractCache extends Observable {
      */
     public ChangeSet getChangeSet(String changeSet) {
         return AbstractCache.nodeMap.get(changeSet);
+    }
+
+    /**
+     * @param resource
+     */
+    protected void notifyChanged(final IResource resource) {
+        Set<IResource> resources = new HashSet<IResource>();
+        resources.add(resource);
+        notifyChanged(resources);
+    }
+
+    /**
+     * @param resources
+     */
+    protected void notifyChanged(Set<IResource> resources) {
+        for (IResource r : resources) {
+            resources.addAll(getMembers(r));
+        }
+        setChanged();
+        notifyObservers(resources);
+    }
+    
+    protected Set<IResource> getMembers(IResource r) {
+        HashSet<IResource> set = new HashSet<IResource>();
+        if (r instanceof IContainer) {
+            IContainer cont = (IContainer) r;
+            try {
+                IResource[] members = cont.members();
+                if (members!=null) {
+                    for (IResource member : members) {
+                        if (member instanceof IContainer) {
+                            set.addAll(getMembers(member));
+                        } else {
+                            set.add(member);
+                        }
+                    }
+                }
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+        set.add(r);
+        return set;
     }
 
 }

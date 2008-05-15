@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -26,50 +27,60 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- *
+ * 
  */
 public class OutgoingChangesetCache extends AbstractCache {
     private static OutgoingChangesetCache instance;
     /**
-     * The Map has the following structure: RepositoryLocation -> IResource -> Changeset-Set
+     * The Map has the following structure: RepositoryLocation -> IResource ->
+     * Changeset-Set
      */
     private static Map<String, Map<IResource, SortedSet<ChangeSet>>> outgoingChangeSets;
-    private boolean outgoingUpdateInProgress = false;
-    
-    private OutgoingChangesetCache() {        
+    private static Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
+
+    private OutgoingChangesetCache() {
         outgoingChangeSets = new HashMap<String, Map<IResource, SortedSet<ChangeSet>>>();
     }
-    
+
     public static OutgoingChangesetCache getInstance() {
         if (instance == null) {
             instance = new OutgoingChangesetCache();
         }
         return instance;
     }
-    
+
     public synchronized void clear() {
         outgoingChangeSets.clear();
     }
 
+    private ReentrantLock getLock(IResource objectResource) {
+        ReentrantLock lock = locks.get(objectResource.getProject());
+        if (lock == null) {
+            lock = new ReentrantLock();
+            locks.put(objectResource.getProject(), lock);
+        }
+        return lock;
+    }
+
     public ChangeSet getNewestOutgoingChangeSet(IResource resource,
             String repositoryLocation) throws HgException {
-    
-        if (outgoingUpdateInProgress) {
-            synchronized (outgoingChangeSets) {
-                // wait for update...
-            }
+
+        ReentrantLock lock = getLock(resource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
-    
+
         if (MercurialStatusCache.getInstance().isSupervised(resource)) {
-    
+
             Map<IResource, SortedSet<ChangeSet>> repoMap = outgoingChangeSets
                     .get(repositoryLocation);
-    
+
             SortedSet<ChangeSet> revisions = null;
             if (repoMap != null) {
                 revisions = repoMap.get(resource);
             }
-    
+
             if (revisions != null && revisions.size() > 0) {
                 return revisions.last();
             }
@@ -88,14 +99,14 @@ public class OutgoingChangesetCache extends AbstractCache {
      */
     public SortedSet<ChangeSet> getOutgoingChangeSets(IResource objectResource,
             String repositoryLocation) throws HgException {
-        if (outgoingUpdateInProgress) {
-            synchronized (outgoingChangeSets) {
-                // wait...
-            }
+        ReentrantLock lock = getLock(objectResource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         Map<IResource, SortedSet<ChangeSet>> repoOutgoing = outgoingChangeSets
                 .get(repositoryLocation);
-    
+
         SortedSet<ChangeSet> revisions = null;
         if (repoOutgoing != null) {
             revisions = repoOutgoing.get(objectResource);
@@ -104,7 +115,7 @@ public class OutgoingChangesetCache extends AbstractCache {
             refreshOutgoingChangeSets(objectResource.getProject(),
                     repositoryLocation);
         }
-    
+
         if (revisions != null) {
             return Collections.unmodifiableSortedSet(outgoingChangeSets.get(
                     repositoryLocation).get(objectResource));
@@ -122,10 +133,10 @@ public class OutgoingChangesetCache extends AbstractCache {
      */
     public IResource[] getOutgoingMembers(IResource resource,
             String repositoryLocation) {
-        if (outgoingUpdateInProgress) {
-            synchronized (outgoingChangeSets) {
-                // wait...
-            }
+        ReentrantLock lock = getLock(resource);
+        if (lock.isLocked()) {
+            lock.lock();
+            lock.unlock();
         }
         Map<IResource, SortedSet<ChangeSet>> changeSets = outgoingChangeSets
                 .get(repositoryLocation);
@@ -146,23 +157,21 @@ public class OutgoingChangesetCache extends AbstractCache {
      */
     public void refreshOutgoingChangeSets(IProject project,
             String repositoryLocation) throws HgException {
-    
+
         // check if mercurial is team provider and if we're working on an
         // open project
         if (null != RepositoryProvider.getProvider(project,
                 MercurialTeamProvider.ID)
                 && project.isOpen()) {
-    
+
             // lock the cache till update is complete
-            synchronized (outgoingChangeSets) {
-                try {
-                    outgoingUpdateInProgress = true;
-    
-                    addResourcesToCache(project, repositoryLocation,
-                            outgoingChangeSets, Direction.OUTGOING);
-                } finally {
-                    outgoingUpdateInProgress = false;
-                }
+            ReentrantLock lock = getLock(project);
+            try {
+                lock.lock();
+                addResourcesToCache(project, repositoryLocation,
+                        outgoingChangeSets, Direction.OUTGOING);
+            } finally {
+                lock.unlock();
             }
         }
     }

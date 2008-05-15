@@ -13,22 +13,20 @@ package com.vectrace.MercurialEclipse.team;
 import java.util.BitSet;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -47,7 +45,6 @@ public class ResourceDecorator extends LabelProvider implements
 
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
-
     private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
             .getInstance();
     private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache
@@ -148,71 +145,81 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addOverlay(overlay);
             }
 
-            // get recent project versions - the order is important here, as "isLocallyKnown" blocks
-            if (!LOCAL_CACHE.isLocalUpdateInProgress() && LOCAL_CACHE.isLocallyKnown(project)) {
-                LOCAL_CACHE.getLocalChangeSets(project);
-            }
-
-            // label info for incoming changesets
-            ChangeSet cs = null;
-            try {
-                cs = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
-            } catch (HgException e1) {
-                MercurialEclipsePlugin.logError(e1);
-            }
-
-            if (cs != null) {
-                if (prefix == null) {
-                    prefix = "<";
-                } else {
-                    prefix = "<" + prefix;
-                }
-            }
-
-            if (prefix != null) {
-                decoration.addPrefix(prefix);
-            }
-
-            // local changeset info
-            try {
-                ChangeSet changeSet = null;
-                // the order is important here as well :-).
-                if (!LOCAL_CACHE.isLocalUpdateInProgress() && LOCAL_CACHE.isLocallyKnown(project)) {
-                changeSet = LOCAL_CACHE
-                        .getNewestLocalChangeSet(project);
+            boolean showChangeset = Boolean
+                    .valueOf(MercurialUtilities
+                            .getPreference(
+                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                    "false"));
+            if (showChangeset) {
+                // get recent project versions - the order is important here, as
+                // "isLocallyKnown" blocks
+                if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                        && LOCAL_CACHE.isLocallyKnown(project)) {
+                    LOCAL_CACHE.getLocalChangeSets(project);
                 }
 
-                if (changeSet != null) {
-                    String hex = ":" + changeSet.getNodeShort();
-                    // suffix for project
-                    String suffix = " [" + changeSet.getChangesetIndex() + hex
-                            + "]";
+                // label info for incoming changesets
+                ChangeSet cs = null;
+                try {
+                    cs = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
+                } catch (HgException e1) {
+                    MercurialEclipsePlugin.logError(e1);
+                }
 
-                    // suffix for files
-                    if (resource.getType() == IResource.FILE) {
+                if (cs != null) {
+                    if (prefix == null) {
+                        prefix = "<";
+                    } else {
+                        prefix = "<" + prefix;
+                    }
+                }
+
+                if (prefix != null) {
+                    decoration.addPrefix(prefix);
+                }
+
+                // local changeset info
+                try {
+                    ChangeSet changeSet = null;
+                    // the order is important here as well :-).
+                    if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                            && LOCAL_CACHE.isLocallyKnown(project)) {
                         changeSet = LOCAL_CACHE
-                                .getNewestLocalChangeSet(resource);
-                        if (changeSet != null) {
-                            suffix = " [" + changeSet.getChangesetIndex()
-                                    + "] ";
+                                .getNewestLocalChangeSet(project);
+                    }
 
-                            if (cs != null) {
-                                suffix += "< [" + cs.getChangesetIndex() + ":"
-                                        + cs.getNodeShort() + " "
-                                        + cs.getUser() + "]";
+                    if (changeSet != null) {
+                        String hex = ":" + changeSet.getNodeShort();
+                        // suffix for project
+                        String suffix = " [" + changeSet.getChangesetIndex()
+                                + hex + "]";
+
+                        // suffix for files
+                        if (resource.getType() == IResource.FILE) {
+                            changeSet = LOCAL_CACHE
+                                    .getNewestLocalChangeSet(resource);
+                            if (changeSet != null) {
+                                suffix = " [" + changeSet.getChangesetIndex()
+                                        + "] ";
+
+                                if (cs != null) {
+                                    suffix += "< [" + cs.getChangesetIndex()
+                                            + ":" + cs.getNodeShort() + " "
+                                            + cs.getUser() + "]";
+                                }
                             }
+                        }
+
+                        // only decorate files and project with suffix
+                        if (resource.getType() != IResource.FOLDER) {
+                            decoration.addSuffix(suffix);
                         }
                     }
 
-                    // only decorate files and project with suffix
-                    if (resource.getType() != IResource.FOLDER) {
-                        decoration.addSuffix(suffix);
-                    }
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logWarning(
+                            "Couldn't get version of resource " + resource, e);
                 }
-
-            } catch (HgException e) {
-                MercurialEclipsePlugin.logWarning(
-                        "Couldn't get version of resource " + resource, e);
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
@@ -228,17 +235,24 @@ public class ResourceDecorator extends LabelProvider implements
         PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
     }
 
+    @SuppressWarnings("unchecked")
     public void update(Observable o, Object updatedObject) {
-        final IWorkbench workbench = PlatformUI.getWorkbench();
-        final String decoratorId = ResourceDecorator.class.getName();
-        new SafeUiJob("Update Decorations") {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                // FIXME: fire events for the changed resources instead!
-                workbench.getDecoratorManager().update(decoratorId);
-                return super.runSafe(monitor);
-            }
-        }.schedule();
+        // final IWorkbench workbench = PlatformUI.getWorkbench();
+        // final String decoratorId = ResourceDecorator.class.getName();
+        // new SafeUiJob("Update Decorations") {
+        // @Override
+        // protected IStatus runSafe(IProgressMonitor monitor) {
+        // // FIXME: fire events for the changed resources instead!
+        // workbench.getDecoratorManager().update(decoratorId);
+        // return super.runSafe(monitor);
+        // }
+        // }.schedule();
+        if (updatedObject instanceof Set) {
+            Set changed = (Set) updatedObject;
+            LabelProviderChangedEvent event = new LabelProviderChangedEvent(
+                    this, changed.toArray());
+            fireLabelProviderChanged(event);
+        }
     }
 
 }

@@ -661,10 +661,19 @@
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
-      <page class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
+      <page class="com.vectrace.MercurialEclipse.preferences.GeneralPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
             category="org.eclipse.team.ui.TeamPreferences"
             name="Mercurial Eclipse"/>
+      <page class="com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="Timeouts"/>  
+      <page class="com.vectrace.MercurialEclipse.preferences.PerformancePreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.Performance"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="Performance"/>              
+                      
    </extension>
 
    <extension point="org.eclipse.core.runtime.preferences">

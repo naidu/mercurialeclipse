@@ -49,7 +49,6 @@ public class RefreshLocalChangesetsJob extends SafeWorkspaceJob {
                     .refreshAllLocalRevisions(project, true);
         } catch (HgException e) {      
             MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
         }
         return super.runSafe(monitor);
     }
