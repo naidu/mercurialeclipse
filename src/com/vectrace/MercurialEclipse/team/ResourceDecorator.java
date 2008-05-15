@@ -45,7 +45,6 @@ public class ResourceDecorator extends LabelProvider implements
 
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
-
     private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
             .getInstance();
     private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache
@@ -146,73 +145,81 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addOverlay(overlay);
             }
 
-            // get recent project versions - the order is important here, as
-            // "isLocallyKnown" blocks
-            if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
-                    && LOCAL_CACHE.isLocallyKnown(project)) {
-                LOCAL_CACHE.getLocalChangeSets(project);
-            }
-
-            // label info for incoming changesets
-            ChangeSet cs = null;
-            try {
-                cs = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
-            } catch (HgException e1) {
-                MercurialEclipsePlugin.logError(e1);
-            }
-
-            if (cs != null) {
-                if (prefix == null) {
-                    prefix = "<";
-                } else {
-                    prefix = "<" + prefix;
-                }
-            }
-
-            if (prefix != null) {
-                decoration.addPrefix(prefix);
-            }
-
-            // local changeset info
-            try {
-                ChangeSet changeSet = null;
-                // the order is important here as well :-).
+            boolean showChangeset = Boolean
+                    .valueOf(MercurialUtilities
+                            .getPreference(
+                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                    "false"));
+            if (showChangeset) {
+                // get recent project versions - the order is important here, as
+                // "isLocallyKnown" blocks
                 if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
                         && LOCAL_CACHE.isLocallyKnown(project)) {
-                    changeSet = LOCAL_CACHE.getNewestLocalChangeSet(project);
+                    LOCAL_CACHE.getLocalChangeSets(project);
                 }
 
-                if (changeSet != null) {
-                    String hex = ":" + changeSet.getNodeShort();
-                    // suffix for project
-                    String suffix = " [" + changeSet.getChangesetIndex() + hex
-                            + "]";
+                // label info for incoming changesets
+                ChangeSet cs = null;
+                try {
+                    cs = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
+                } catch (HgException e1) {
+                    MercurialEclipsePlugin.logError(e1);
+                }
 
-                    // suffix for files
-                    if (resource.getType() == IResource.FILE) {
+                if (cs != null) {
+                    if (prefix == null) {
+                        prefix = "<";
+                    } else {
+                        prefix = "<" + prefix;
+                    }
+                }
+
+                if (prefix != null) {
+                    decoration.addPrefix(prefix);
+                }
+
+                // local changeset info
+                try {
+                    ChangeSet changeSet = null;
+                    // the order is important here as well :-).
+                    if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                            && LOCAL_CACHE.isLocallyKnown(project)) {
                         changeSet = LOCAL_CACHE
-                                .getNewestLocalChangeSet(resource);
-                        if (changeSet != null) {
-                            suffix = " [" + changeSet.getChangesetIndex()
-                                    + "] ";
+                                .getNewestLocalChangeSet(project);
+                    }
 
-                            if (cs != null) {
-                                suffix += "< [" + cs.getChangesetIndex() + ":"
-                                        + cs.getNodeShort() + " "
-                                        + cs.getUser() + "]";
+                    if (changeSet != null) {
+                        String hex = ":" + changeSet.getNodeShort();
+                        // suffix for project
+                        String suffix = " [" + changeSet.getChangesetIndex()
+                                + hex + "]";
+
+                        // suffix for files
+                        if (resource.getType() == IResource.FILE) {
+                            changeSet = LOCAL_CACHE
+                                    .getNewestLocalChangeSet(resource);
+                            if (changeSet != null) {
+                                suffix = " [" + changeSet.getChangesetIndex()
+                                        + "] ";
+
+                                if (cs != null) {
+                                    suffix += "< [" + cs.getChangesetIndex()
+                                            + ":" + cs.getNodeShort() + " "
+                                            + cs.getUser() + "]";
+                                }
                             }
+                        }
+
+                        // only decorate files and project with suffix
+                        if (resource.getType() != IResource.FOLDER) {
+                            decoration.addSuffix(suffix);
                         }
                     }
 
-                    // only decorate files and project with suffix
-                    if (resource.getType() != IResource.FOLDER) {
-                        decoration.addSuffix(suffix);
-                    }
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logWarning(
+                            "Couldn't get version of resource " + resource, e);
                 }
-
-            } catch (HgException e) {
-                MercurialEclipsePlugin.logWarning(
-                        "Couldn't get version of resource " + resource, e);
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
@@ -242,8 +249,8 @@ public class ResourceDecorator extends LabelProvider implements
         // }.schedule();
         if (updatedObject instanceof Set) {
             Set changed = (Set) updatedObject;
-            LabelProviderChangedEvent event = new LabelProviderChangedEvent(this,
-                    changed.toArray());
+            LabelProviderChangedEvent event = new LabelProviderChangedEvent(
+                    this, changed.toArray());
             fireLabelProviderChanged(event);
         }
     }

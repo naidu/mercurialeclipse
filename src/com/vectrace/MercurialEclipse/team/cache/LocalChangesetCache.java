@@ -54,13 +54,20 @@ public class LocalChangesetCache extends AbstractCache {
 
     private LocalChangesetCache() {
         localChangeSets = new HashMap<IResource, SortedSet<ChangeSet>>();
-        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
-                .getProjects();
-        if (projects != null) {
-            for (IProject project : projects) {
-                new RefreshLocalChangesetsJob(
-                        "Initializing changeset cache for " + project.getName(),
-                        project).schedule();
+        boolean showChangeset = Boolean
+                .valueOf(MercurialUtilities
+                        .getPreference(
+                                MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                "false"));
+        if (showChangeset) {
+            IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
+                    .getProjects();
+            if (projects != null) {
+                for (IProject project : projects) {
+                    new RefreshLocalChangesetsJob(
+                            "Initializing changeset cache for "
+                                    + project.getName(), project).schedule();
+                }
             }
         }
     }
