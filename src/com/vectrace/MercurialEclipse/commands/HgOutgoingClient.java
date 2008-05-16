@@ -30,7 +30,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                     false);
             command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
             command.addOptions("--template",
-                    AbstractParseChangesetClient.TEMPLATE);
+                    AbstractParseChangesetClient.TEMPLATE_WITH_FILES);
 
             command.addOptions(loc.toString());
             String result = command.executeToString();

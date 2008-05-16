@@ -19,12 +19,10 @@ import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * This class represents a preference page that is contributed to the
@@ -37,8 +35,8 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * preferences can be accessed directly via the preference store.
  */
 
-public class GeneralPreferencePage extends FieldEditorPreferencePage
-        implements IWorkbenchPreferencePage {
+public class GeneralPreferencePage extends FieldEditorPreferencePage implements
+        IWorkbenchPreferencePage {
 
     private final class LabelDecoratorRadioGroupFieldEditor extends
             RadioGroupFieldEditor {
@@ -51,15 +49,7 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage
         @Override
         protected void doStore() {
             super.doStore();
-            try {
-                MercurialEclipsePlugin.getDefault().checkHgInstallation();
-                if (MercurialEclipsePlugin.getDefault().isHgUsable()) {
-                    MercurialStatusCache.getInstance().refresh();
-                }
-            } catch (TeamException e) {
-                MercurialEclipsePlugin.logError(
-                        "Couldn't refresh projects in workspace.", e);
-            }
+            MercurialEclipsePlugin.getDefault().checkHgInstallation();
             // ResourceDecorator.onConfigurationChanged();
         }
     }
@@ -101,7 +91,7 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
                 .getPreferenceStore());
-        setDescription("MercurialEclipse plugin for Mercurial(Hg) version control system");
+        setDescription(Messages.getString("GeneralPreferencePage.description")); //$NON-NLS-1$
     }
 
     /**
@@ -113,34 +103,34 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage
     public void createFieldEditors() {
         FileFieldEditor execField = new MercurialExecutableFileFieldEditor(
                 MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
-                "Mercurial &Executable:", getFieldEditorParent());
+                Messages.getString("GeneralPreferencePage.field.hgExecutable"), getFieldEditorParent()); //$NON-NLS-1$
 
         addField(execField);
         if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
-            execField.setErrorMessage("Hg is not correctly installed.");
+            execField.setErrorMessage(Messages.getString("GeneralPreferencePage.error.HgNotInstalled")); //$NON-NLS-1$
         }
 
         addField(new GpgExecutableFileFieldEditor(
                 MercurialPreferenceConstants.GPG_EXECUTABLE,
-                "&GnuPG Executable:", getFieldEditorParent()));
+                Messages.getString("GeneralPreferencePage.field.gpgExecutable"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new StringFieldEditor(
                 MercurialPreferenceConstants.MERCURIAL_USERNAME,
-                "Mercurial &Username:", getFieldEditorParent()));
+                Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new LabelDecoratorRadioGroupFieldEditor(
                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
-                "When a folders contains files with different statuses, flag the folder:",
+                Messages.getString("GeneralPreferencePage.field.decorationGroup.description"), //$NON-NLS-1$
                 1,
                 new String[][] {
                         {
-                                "as modified",
+                                Messages.getString("GeneralPreferencePage.field.decorationGroup.asModified"), //$NON-NLS-1$
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
                         {
-                                "with the most important status",
+                                Messages.getString("GeneralPreferencePage.field.decorationGroup.mostImportant"), //$NON-NLS-1$
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
                 getFieldEditorParent(), true));
-                      
+
     }
 
     /*

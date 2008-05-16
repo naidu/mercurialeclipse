@@ -51,7 +51,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         command.addOptions("--config", "extensions.hgext.graphlog=");
         command.addOptions(filename);
         return command.executeToString();
-    }
+    }        
 
     /**
      * 
@@ -97,28 +97,30 @@ public class HgLogClient extends AbstractParseChangesetClient {
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getCompleteProjectLog(
-            IResource res) throws HgException {
-        return getProjectLog(res, -1, -1);
+            IResource res, boolean withFiles) throws HgException {
+        return getProjectLog(res, -1, -1, withFiles);
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getProjectLogBatch(
-            IResource res, int batchSize, int startRev) throws HgException {
-        return getProjectLog(res, batchSize, startRev);
+            IResource res, int batchSize, int startRev, boolean withFiles) throws HgException {
+        return getProjectLog(res, batchSize, startRev, withFiles);
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getRecentProjectLog(
-            IResource res, int limitNumber) throws HgException {
-        return getProjectLogBatch(res, limitNumber, -1);
+            IResource res, int limitNumber, boolean withFiles) throws HgException {
+        return getProjectLogBatch(res, limitNumber, -1, withFiles);
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getProjectLog(
-            IResource res, int limitNumber, int startRev) throws HgException {
+            IResource res, int limitNumber, int startRev, boolean withFiles) throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("--debug", "--template",
-                AbstractParseChangesetClient.TEMPLATE);
-
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+        String myTemplate = TEMPLATE;
+        if (withFiles) {
+            myTemplate = TEMPLATE_WITH_FILES;
+        }
+        command.addOptions("--debug", "--template", myTemplate);
+       
         if (startRev >= 0) {
             int last = Math.max(startRev - limitNumber, 0);
             command.addOptions("-r");
@@ -129,6 +131,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             command.addOptions("-l", limitNumber + "");
         }
         if (!(res instanceof IProject)) {
+            //command.addOptions("-f");
             command.addOptions(res.getProjectRelativePath().toOSString());
         }
         String result = command.executeToString();
@@ -136,7 +139,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
             return null;
         }
         Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                result, res.getProject(), null, null, Direction.LOCAL);
+                result, res.getProject(), myTemplate, SEP_CHANGE_SET,
+                SEP_TEMPLATE_ELEMENT, Direction.LOCAL, null, null, START);
         return revisions;
     }
 

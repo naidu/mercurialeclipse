@@ -106,7 +106,7 @@ public class PerformancePreferencePage extends FieldEditorPreferencePage
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
                 .getPreferenceStore());
-        setDescription("MercurialEclipse plugin for Mercurial(Hg) version control system");
+        setDescription(Messages.getString("PerformancePreferencePage.description")); //$NON-NLS-1$
     }
 
     /**
@@ -115,27 +115,28 @@ public class PerformancePreferencePage extends FieldEditorPreferencePage
      * editor knows how to save and restore itself.
      */
     @Override
-    public void createFieldEditors() {        
+    public void createFieldEditors() {
         // batch size preferences
 
         addField(new LogBatchSizeIntegerFieldEditor(
                 MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                "hg log revision limit:",
-                getFieldEditorParent()));
+                Messages.getString("PerformancePreferencePage.field.revisionLimit"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new StatusBatchSizeIntegerFieldEditor(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE,
-                "Number of files to query hg status with:", getFieldEditorParent()));
-        
-        addField(new BooleanFieldEditor(MercurialPreferenceConstants.RESOURCE_DECORATOR_DEEP_COMPUTATION,
-                "Always call hg status for whole repository (Compute deep decorator status)",getFieldEditorParent()));
-        
-        addField(new BooleanFieldEditor(MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                "Show changeset information for files",getFieldEditorParent()));
-        
-        addField(new BooleanFieldEditor(MercurialPreferenceConstants.SYNCHRONIZE_FILES,
-                "Synchronize view compares files",getFieldEditorParent()));
-        
+                Messages.getString("PerformancePreferencePage.field.statusBatchSize"), //$NON-NLS-1$
+                getFieldEditorParent()));
+
+        addField(new BooleanFieldEditor(
+                MercurialPreferenceConstants.RESOURCE_DECORATOR_DEEP_COMPUTATION,
+                Messages.getString("PerformancePreferencePage.field.deepComputation"), //$NON-NLS-1$
+                getFieldEditorParent()));
+
+        addField(new BooleanFieldEditor(
+                MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                Messages.getString("PerformancePreferencePage.field.showChangesetOnFiles"), //$NON-NLS-1$
+                getFieldEditorParent()));
+
     }
 
     /*

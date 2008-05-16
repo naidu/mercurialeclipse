@@ -281,39 +281,14 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     /**
-     * Refreshes local repository status. No refresh of incoming changesets.
+     * Refreshes local repository status. No refresh of changesets.
      * 
      * @param project
      * @throws TeamException
      */
     public void refresh(final IProject project) throws TeamException {
-        refresh(project, null, null);
-    }
-
-    /**
-     * Refreshes sync status of given project by questioning Mercurial.
-     * 
-     * @param project
-     *            the project to refresh
-     * @param monitor
-     *            the progress monitor
-     * @param repositoryLocation
-     *            the remote repository to get the incoming changesets from. If
-     *            null, no incoming changesets will be retrieved.
-     * @throws TeamException
-     */
-    public void refresh(final IProject project, final IProgressMonitor moni,
-            final String repositoryLocation) throws TeamException {
-        /* hg status on project (all files) instead of per file basis */
-        if (null != RepositoryProvider.getProvider(project,
-                MercurialTeamProvider.ID)
-                && project.isOpen()) {
-            // set status
-            new RefreshJob("Refreshing caches and status.", repositoryLocation,
-                    project).schedule();
-            notifyChanged(project);
-        }
-    }
+        refreshStatus(project, new NullProgressMonitor());
+    }    
 
     /**
      * @param project
@@ -408,41 +383,6 @@ public class MercurialStatusCache extends AbstractCache implements
         }
     }
 
-    // private char getHgStatusFlag(int bitIndex) {
-    // switch (bitIndex) {
-    // case BIT_DELETED:
-    // return '!';
-    // case BIT_REMOVED:
-    // return 'R';
-    // case BIT_IGNORE:
-    // return 'I';
-    // case BIT_CLEAN:
-    // return 'C';
-    // case BIT_UNKNOWN:
-    // return '?';
-    // case BIT_ADDED:
-    // return 'A';
-    // case BIT_MODIFIED:
-    // return 'M';
-    // default:
-    // return ' ';
-    // }
-    // }
-
-    /**
-     * Refreshes the sync status for each project in Workspace by questioning
-     * Mercurial. No refresh of incoming changesets.
-     * 
-     * @throws TeamException
-     *             if status check encountered problems.
-     */
-    public void refresh() throws TeamException {
-        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
-                .getProjects();
-        for (IProject project : projects) {
-            refresh(project, null, null);
-        }
-    }
 
     /**
      * Refreshes the status for each project in Workspace by questioning
@@ -505,8 +445,15 @@ public class MercurialStatusCache extends AbstractCache implements
 
                     // now process gathered changes (they are in the lists)
                     if (changed.size() + added.size() + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
-                        refresh(delta.getResource().getProject(),
-                                new NullProgressMonitor(), null);
+                        changed.addAll(added);
+                        changed.addAll(removed);
+                        Set<IProject> projects = new HashSet<IProject>();
+                        for (IResource resource : changed) {
+                            projects.add(resource.getProject());
+                        }
+                        for (IProject project : projects) {
+                            refreshStatus(project, new NullProgressMonitor());                            
+                        }                        
                     } else {
                         // changed
                         refreshStatus(changed);

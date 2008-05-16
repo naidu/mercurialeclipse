@@ -64,7 +64,7 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
                 .getPreferenceStore());
-        setDescription("MercurialEclipse plugin for Mercurial(Hg) version control system");
+        setDescription(Messages.getString("TimeoutPreferencePage.description")); //$NON-NLS-1$
     }
 
     /**
@@ -78,43 +78,43 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
         // timeout preferences
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.CLONE_TIMEOUT,
-                "Clone timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.clone"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.PUSH_TIMEOUT, "Push timeout (ms):",
+                MercurialPreferenceConstants.PUSH_TIMEOUT, Messages.getString("TimeoutPreferencePage.field.push"), //$NON-NLS-1$
                 getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.PULL_TIMEOUT,
-                "Pull/Incoming/Outgoing timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.pull"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.UPDATE_TIMEOUT,
-                "Update timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.update"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.COMMIT_TIMEOUT,
-                "Commit timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.commit"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.IMERGE_TIMEOUT,
-                "Imerge timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.imerge"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.LOG_TIMEOUT,
-                "Log/GLog timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.log"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.STATUS_TIMEOUT,
-                "Status timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.status"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new TimeoutFieldEditor(
-                MercurialPreferenceConstants.ADD_TIMEOUT, "Add timeout (ms):",
+                MercurialPreferenceConstants.ADD_TIMEOUT, Messages.getString("TimeoutPreferencePage.field.add"), //$NON-NLS-1$
                 getFieldEditorParent()));
 
         addField(new TimeoutFieldEditor(
                 MercurialPreferenceConstants.REMOVE_TIMEOUT,
-                "Remove timeout (ms):", getFieldEditorParent()));
+                Messages.getString("TimeoutPreferencePage.field.remove"), getFieldEditorParent())); //$NON-NLS-1$
     }
 
     /*

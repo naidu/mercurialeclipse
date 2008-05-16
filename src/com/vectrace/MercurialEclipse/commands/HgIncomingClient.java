@@ -44,7 +44,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
         File temp = new File(bundleFile.getAbsolutePath() + ".temp."
                 + System.currentTimeMillis());
         try {
-            command.addOptions("--debug", "--template", TEMPLATE, "--bundle",
+            command.addOptions("--debug", "--template", TEMPLATE_WITH_FILES, "--bundle",
                     temp.getCanonicalPath(), repository.getUrl());
             String result = command.executeToString();
             if (result.contains("no changes found")) {

@@ -33,6 +33,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /**
  * @author zingo
@@ -146,16 +147,18 @@ public class ResourceDecorator extends LabelProvider implements
             }
 
             boolean showChangeset = Boolean
-                    .valueOf(MercurialUtilities
-                            .getPreference(
-                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                    "false"));
+                    .valueOf(
+                            MercurialUtilities
+                                    .getPreference(
+                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                            "false")).booleanValue();
             if (showChangeset) {
-                // get recent project versions - the order is important here, as
-                // "isLocallyKnown" blocks
-                if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
-                        && LOCAL_CACHE.isLocallyKnown(project)) {
-                    LOCAL_CACHE.getLocalChangeSets(project);
+                // get recent project versions
+                if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
+                        && !LOCAL_CACHE.isLocallyKnown(resource.getProject())) {
+                    // LOCAL_CACHE notifies resource decorator when it's finished.
+                    new RefreshJob("Refreshing changeset decoration", null,
+                            resource.getProject(), showChangeset).schedule();
                 }
 
                 // label info for incoming changesets
@@ -182,7 +185,7 @@ public class ResourceDecorator extends LabelProvider implements
                 try {
                     ChangeSet changeSet = null;
                     // the order is important here as well :-).
-                    if (!LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                    if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
                             && LOCAL_CACHE.isLocallyKnown(project)) {
                         changeSet = LOCAL_CACHE
                                 .getNewestLocalChangeSet(project);
@@ -195,7 +198,9 @@ public class ResourceDecorator extends LabelProvider implements
                                 + hex + "]";
 
                         // suffix for files
-                        if (resource.getType() == IResource.FILE) {
+                        if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
+                                && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
+                                && resource.getType() == IResource.FILE) {                            
                             changeSet = LOCAL_CACHE
                                     .getNewestLocalChangeSet(resource);
                             if (changeSet != null) {

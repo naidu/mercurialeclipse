@@ -33,8 +33,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
     public void initializeDefaultPreferences() 
   {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
-    store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, System.getProperty ( "user.name" ));
+		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
+    store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, System.getProperty ( "user.name" )); //$NON-NLS-1$
     store.setDefault(MercurialPreferenceConstants.LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM);
 
     /*
