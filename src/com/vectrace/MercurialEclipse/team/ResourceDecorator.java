@@ -96,9 +96,34 @@ public class ResourceDecorator extends LabelProvider implements
                 return;
             }
 
-            if (!STATUS_CACHE.isStatusKnown((project))) {
-                new RefreshStatusJob("Refreshing status "+project.getName(), project).schedule();
-                return;
+            boolean showChangeset = Boolean
+                    .valueOf(
+                            MercurialUtilities
+                                    .getPreference(
+                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                            "false")).booleanValue();
+            if (showChangeset) {
+                // get recent project versions
+                if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
+                        && !LOCAL_CACHE.isLocallyKnown(resource.getProject())) {
+                    // LOCAL_CACHE notifies resource decorator when it's
+                    // finished.
+                    RefreshJob job = new RefreshJob(
+                            "Refreshing changeset decoration", null, resource
+                                    .getProject(), showChangeset);
+                    job.schedule();
+                    job.join();
+                }
+            } else {
+                if (!STATUS_CACHE.isStatusKnown(project)) {
+                    RefreshStatusJob job = new RefreshStatusJob(
+                            "Updating status for project " + project.getName()
+                                    + " on behalf of resource "
+                                    + resource.getName(), project);
+                    job.schedule();
+                    job.join();
+                    return;
+                }
             }
 
             ImageDescriptor overlay = null;
@@ -148,20 +173,12 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addOverlay(overlay);
             }
 
-            boolean showChangeset = Boolean
-                    .valueOf(
-                            MercurialUtilities
-                                    .getPreference(
-                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                            "false")).booleanValue();
+            // we want a prefix, even if no changeset is displayed
+            if (prefix != null) {
+                decoration.addPrefix(prefix);
+            }
+
             if (showChangeset) {
-                // get recent project versions
-                if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
-                        && !LOCAL_CACHE.isLocallyKnown(resource.getProject())) {
-                    // LOCAL_CACHE notifies resource decorator when it's finished.
-                    new RefreshJob("Refreshing changeset decoration", null,
-                            resource.getProject(), showChangeset).schedule();
-                }
 
                 // label info for incoming changesets
                 ChangeSet cs = null;
@@ -177,6 +194,8 @@ public class ResourceDecorator extends LabelProvider implements
                     } else {
                         prefix = "<" + prefix;
                     }
+                    // decorate new prefix
+                    decoration.addPrefix(prefix);
                 }
 
                 // local changeset info
@@ -197,8 +216,9 @@ public class ResourceDecorator extends LabelProvider implements
 
                         // suffix for files
                         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
-                                && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
-                                && resource.getType() == IResource.FILE) {                            
+                                && !LOCAL_CACHE
+                                        .isLocalUpdateInProgress(resource)
+                                && resource.getType() == IResource.FILE) {
                             changeSet = LOCAL_CACHE
                                     .getNewestLocalChangeSet(resource);
                             if (changeSet != null) {
@@ -223,9 +243,6 @@ public class ResourceDecorator extends LabelProvider implements
                     MercurialEclipsePlugin.logWarning(
                             "Couldn't get version of resource " + resource, e);
                 }
-            }
-            if (prefix != null) {
-                decoration.addPrefix(prefix);
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
