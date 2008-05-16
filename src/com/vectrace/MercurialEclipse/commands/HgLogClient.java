@@ -135,7 +135,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             command.addOptions(res.getProjectRelativePath().toOSString());
         }
         String result = command.executeToString();
-        if (result.contains("no changes found") || result.length() == 0) {
+        if (result.length() == 0) {
             return null;
         }
         Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(

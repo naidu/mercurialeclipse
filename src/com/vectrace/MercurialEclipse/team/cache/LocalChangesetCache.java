@@ -275,6 +275,9 @@ public class LocalChangesetCache extends AbstractCache {
                     // recent revs.
                     if (res.getType() == IResource.PROJECT) {
                         concernedResources.addAll(revisions.keySet());
+                    } else {
+                        // every changeset is at least stored for the project
+                        localChangeSets.put(res, revisions.get(res.getProject()));
                     }
 
                     for (Iterator<IResource> iter = revisions.keySet()
@@ -300,6 +303,7 @@ public class LocalChangesetCache extends AbstractCache {
                             addToNodeMap(changes);
                         }
                     }
+                    
                 }
             } finally {
                 lock.unlock();
