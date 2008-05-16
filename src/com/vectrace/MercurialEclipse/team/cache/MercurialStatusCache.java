@@ -157,7 +157,7 @@ public class MercurialStatusCache extends AbstractCache implements
         AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
         knownStatus = new HashSet<IProject>();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-        new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
+        //new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }
 
     public static MercurialStatusCache getInstance() {

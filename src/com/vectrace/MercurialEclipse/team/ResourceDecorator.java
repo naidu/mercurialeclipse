@@ -34,6 +34,7 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 /**
  * @author zingo
@@ -96,6 +97,7 @@ public class ResourceDecorator extends LabelProvider implements
             }
 
             if (!STATUS_CACHE.isStatusKnown((project))) {
+                new RefreshStatusJob("Refreshing status "+project.getName(), project).schedule();
                 return;
             }
 
