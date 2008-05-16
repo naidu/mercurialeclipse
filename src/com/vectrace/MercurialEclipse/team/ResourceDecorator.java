@@ -177,10 +177,6 @@ public class ResourceDecorator extends LabelProvider implements
                     }
                 }
 
-                if (prefix != null) {
-                    decoration.addPrefix(prefix);
-                }
-
                 // local changeset info
                 try {
                     ChangeSet changeSet = null;
@@ -225,6 +221,9 @@ public class ResourceDecorator extends LabelProvider implements
                     MercurialEclipsePlugin.logWarning(
                             "Couldn't get version of resource " + resource, e);
                 }
+            }
+            if (prefix != null) {
+                decoration.addPrefix(prefix);
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);

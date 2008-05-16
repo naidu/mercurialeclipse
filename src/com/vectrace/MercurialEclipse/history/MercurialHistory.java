@@ -25,10 +25,10 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.vectrace.MercurialEclipse.commands.HgGLogClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author zingo
@@ -108,33 +108,15 @@ public class MercurialHistory extends FileHistory {
             SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(
                     getChangeSetComparator());
 
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(
-                    resource, false);
-
-            SortedSet<ChangeSet> localChangeSets = LocalChangesetCache.getInstance().getLocalChangeSets(resource);
+            SortedSet<ChangeSet> localChangeSets = HgLogClient.getProjectLog(
+                    resource, -1, -1, false).get(resource.getProject());
 
             if (localChangeSets != null) {
                 changeSets.addAll(localChangeSets);
             }
-            
-//            // only get incoming if changesets are already there (e.g. via Sync Participant).
-//            SortedSet<ChangeSet> incomingChangeSets = null;           
-//            if (IncomingChangesetCache.getInstance().isIncomingStatusKnown(
-//                    resource.getProject())) {
-//                incomingChangeSets = IncomingChangesetCache.getInstance()
-//                        .getIncomingChangeSets(resource);
-//            }
-            
-            List<GChangeSet> gChangeSets = null;
-//            if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
-//                changeSets.addAll(incomingChangeSets);
-//               gChangeSets = new HgGLogClient(resource).update(changeSets)
-//                            .getChangeSets();
-//                
-//            } else {
-                gChangeSets = new HgGLogClient(resource).update(changeSets)
-                        .getChangeSets();
-//            }
+
+            List<GChangeSet> gChangeSets = new HgGLogClient(resource).update(
+                    changeSets).getChangeSets();
 
             revisions = new IFileRevision[changeSets.size()];
             int i = 0;

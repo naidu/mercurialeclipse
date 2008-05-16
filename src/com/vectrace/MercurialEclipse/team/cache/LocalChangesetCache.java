@@ -10,13 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -308,26 +306,7 @@ public class LocalChangesetCache extends AbstractCache {
                 notifyChanged(res);
             }
         }
-    }
-
-    public ChangeSet getLocalChangeSet(IResource res, int changesetIndex)
-            throws HgException {
-        ReentrantLock lock = getLock(res);
-        try {
-            lock.lock();
-            SortedSet<ChangeSet> locals = getLocalChangeSets(res);
-            List<ChangeSet> list = new ArrayList<ChangeSet>(locals);
-            int index = Collections.binarySearch(list, new ChangeSet(
-                    changesetIndex, "", "", ""),
-                    AbstractCache.changeSetIndexComparator);
-            if (index >= 0) {
-                return list.get(index);
-            }
-            return null;
-        } finally {
-            lock.unlock();
-        }
-    }
+    }   
 
     /**
      * @return the localUpdateInProgress
