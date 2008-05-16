@@ -39,19 +39,22 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
     public static Map<IResource, SortedSet<ChangeSet>> getHgIncoming(
             IProject proj, HgRepositoryLocation repository) throws HgException {
         HgCommand command = new HgCommand("incoming", proj, false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         File bundleFile = getBundleFile(proj, repository);
         File temp = new File(bundleFile.getAbsolutePath() + ".temp."
                 + System.currentTimeMillis());
         try {
-            command.addOptions("--debug", "--template", TEMPLATE_WITH_FILES, "--bundle",
-                    temp.getCanonicalPath(), repository.getUrl());
+            command.addOptions("--debug", "--template", TEMPLATE_WITH_FILES,
+                    "--bundle", temp.getCanonicalPath(), repository.getUrl());
             String result = command.executeToString();
             if (result.contains("no changes found")) {
                 return null;
             }
             Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, proj, bundleFile, repository, Direction.INCOMING);
+                    result, proj, TEMPLATE_WITH_FILES, SEP_CHANGE_SET,
+                    SEP_TEMPLATE_ELEMENT, Direction.INCOMING, repository,
+                    bundleFile, START);
             temp.renameTo(bundleFile);
             return revisions;
         } catch (HgException hg) {

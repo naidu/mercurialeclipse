@@ -28,7 +28,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         try {
             HgCommand command = new HgCommand("outgoing", res.getProject(),
                     false);
-            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
             command.addOptions("--template",
                     AbstractParseChangesetClient.TEMPLATE_WITH_FILES);
 
@@ -38,7 +39,9 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                 return null;
             }
             Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, res.getProject(), null, loc, Direction.OUTGOING);
+                    result, res.getProject(), TEMPLATE_WITH_FILES,
+                    SEP_CHANGE_SET, SEP_TEMPLATE_ELEMENT, Direction.OUTGOING,
+                    loc, null, START);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) {
