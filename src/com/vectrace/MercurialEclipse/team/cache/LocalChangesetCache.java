@@ -126,7 +126,7 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * @param objectResource
      */
-    private ReentrantLock getLock(IResource objectResource) {
+    public ReentrantLock getLock(IResource objectResource) {
         ReentrantLock lock = locks.get(objectResource.getProject());
         if (lock == null) {
             lock = new ReentrantLock();

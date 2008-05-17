@@ -65,10 +65,12 @@ public class ResourceDecorator extends LabelProvider implements
 
     @Override
     public void dispose() {
-        // flagManager.removeListener(this);
         STATUS_CACHE.deleteObserver(this);
+        STATUS_CACHE.clear();
         INCOMING_CACHE.deleteObserver(this);
+        INCOMING_CACHE.clear();
         LOCAL_CACHE.deleteObserver(this);
+        LOCAL_CACHE.clear();
         super.dispose();
     }
 
@@ -104,7 +106,10 @@ public class ResourceDecorator extends LabelProvider implements
                                             "false")).booleanValue();
             if (showChangeset) {
                 // get recent project versions
-                if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
+                if (!STATUS_CACHE.getLock(project).isLocked()
+                        && !STATUS_CACHE.getLock(resource).isLocked()
+                        && !LOCAL_CACHE.isLocalUpdateInProgress(project)
+                        && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
                         && !LOCAL_CACHE.isLocallyKnown(resource.getProject())) {
                     // LOCAL_CACHE notifies resource decorator when it's
                     // finished.
@@ -113,9 +118,12 @@ public class ResourceDecorator extends LabelProvider implements
                                     .getProject(), showChangeset);
                     job.schedule();
                     job.join();
+                    return;
                 }
             } else {
-                if (!STATUS_CACHE.isStatusKnown(project)) {
+                if (!STATUS_CACHE.getLock(project).isLocked()
+                        && !STATUS_CACHE.getLock(resource).isLocked()
+                        && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
                             "Updating status for project " + project.getName()
                                     + " on behalf of resource "
