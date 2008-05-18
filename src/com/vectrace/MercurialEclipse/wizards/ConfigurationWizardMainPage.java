@@ -128,7 +128,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         };
 
         Group g = createGroup(composite, Messages
-                .getString("ConfigurationWizardMainPage.urlGroup.title"), 3); //$NON-NLS-1$
+                .getString("ConfigurationWizardMainPage.urlGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
 
         // repository Url
         createLabel(g, Messages
@@ -358,6 +358,48 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     public void setShowCredentials(boolean showCredentials) {
         this.showCredentials = showCredentials;
+    }
+
+    /**
+     * @return the userCombo
+     */
+    public Combo getUserCombo() {
+        return userCombo;
+    }
+
+    /**
+     * @param userCombo the userCombo to set
+     */
+    public void setUserCombo(Combo userCombo) {
+        this.userCombo = userCombo;
+    }
+
+    /**
+     * @return the passwordText
+     */
+    public Text getPasswordText() {
+        return passwordText;
+    }
+
+    /**
+     * @param passwordText the passwordText to set
+     */
+    public void setPasswordText(Text passwordText) {
+        this.passwordText = passwordText;
+    }
+
+    /**
+     * @return the urlCombo
+     */
+    public Combo getUrlCombo() {
+        return urlCombo;
+    }
+
+    /**
+     * @param urlCombo the urlCombo to set
+     */
+    public void setUrlCombo(Combo urlCombo) {
+        this.urlCombo = urlCombo;
     }
 
 }

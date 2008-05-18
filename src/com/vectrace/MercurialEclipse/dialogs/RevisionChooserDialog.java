@@ -158,7 +158,7 @@ public class RevisionChooserDialog extends Dialog {
         new SafeUiJob("Fetching revisions from repository") {
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
-                try {
+                try {                    
                     ChangeSet[] revisions = dataLoader.getRevisions();
                     table.setChangesets(revisions);
                     return Status.OK_STATUS;

@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Bastian Doetsch           - support for multi-select tables
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -29,27 +30,36 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
  */
 public class ChangesetTable extends Composite {
 
-    private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getItalic(
-            JFaceResources.DIALOG_FONT);
+    private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
+            .getItalic(JFaceResources.DIALOG_FONT);
 
     private Table table;
     private int[] parents;
 
+    private ChangeSet[] changesets;
+
     public ChangesetTable(Composite parent) {
+        this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+                | SWT.V_SCROLL | SWT.H_SCROLL);
+    }
+
+    /**
+     * 
+     */
+    public ChangesetTable(Composite parent, int tableStyle) {
         super(parent, SWT.NONE);
 
         this.setLayout(new GridLayout());
         this.setLayoutData(new GridData());
 
-        table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-                | SWT.H_SCROLL);
+        table = new Table(this, tableStyle);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Global", "Date", "Author" };
-        int[] widths = { 50, 150, 150, 100 };
+        String[] titles = { "Rev", "Global", "Date", "Author", "Summary" };
+        int[] widths = { 50, 150, 150, 100, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
@@ -62,6 +72,7 @@ public class ChangesetTable extends Composite {
     }
 
     public void setChangesets(ChangeSet[] sets) {
+        this.changesets = sets;
         table.removeAll();
         for (ChangeSet rev : sets) {
             TableItem row = new TableItem(table, SWT.NONE);
@@ -72,16 +83,30 @@ public class ChangesetTable extends Composite {
             row.setText(1, rev.getChangeset());
             row.setText(2, rev.getDate());
             row.setText(3, rev.getUser());
+            String summary = rev.getSummary();
+            row.setText(4, summary);
             row.setData(rev);
         }
     }
 
-    public ChangeSet getSelection() {
+    public ChangeSet[] getSelections() {
         TableItem[] selection = table.getSelection();
         if (selection.length == 0) {
             return null;
         }
-        return (ChangeSet) selection[0].getData();
+
+        ChangeSet[] csArray = new ChangeSet[selection.length];
+        for (int i = 0; i < selection.length; i++) {
+            csArray[i] = (ChangeSet) selection[i].getData();
+        }
+        return csArray;
+    }
+    
+    public ChangeSet getSelection() {
+        if (getSelections()!=null) {
+            return getSelections()[0];
+        }
+        return null;
     }
 
     public void addSelectionListener(SelectionListener listener) {
@@ -95,17 +120,24 @@ public class ChangesetTable extends Composite {
 
     private boolean isParent(int r) {
         switch (parents.length) {
-            case 2:
-                if (r == parents[1]) {
-                    return true;
-                }
-            case 1:
-                if (r == parents[0]) {
-                    return true;
-                }
-            default:
-                return false;
+        case 2:
+            if (r == parents[1]) {
+                return true;
+            }
+        case 1:
+            if (r == parents[0]) {
+                return true;
+            }
+        default:
+            return false;
         }
+    }
+
+    /**
+     * @return the changesets
+     */
+    public ChangeSet[] getChangesets() {
+        return changesets;
     }
 
 }

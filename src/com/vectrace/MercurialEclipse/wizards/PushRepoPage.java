@@ -18,11 +18,10 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ListViewer;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
@@ -33,6 +32,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 
 /**
  * @author bastian
@@ -42,7 +42,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
 
     private Button forceCheckBox;
     private boolean force;
-    private ListViewer revisionListView;
+    private ChangesetTable changesetTable;
     private IProject project;
     private String revision;
     private Button revCheckBox;
@@ -61,60 +61,84 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
         Composite composite = (Composite) getControl();
 
         // now the options
-        Group optionGroup = createGroup(composite, Messages.getString("PushRepoPage.optionGroup.title")); //$NON-NLS-1$
-        this.timeoutCheckBox = createCheckBox(optionGroup, Messages.getString("PushRepoPage.timeoutCheckBox.text")); //$NON-NLS-1$
-        this.forceCheckBox = createCheckBox(optionGroup, Messages.getString("PushRepoPage.forceCheckBox.text"));         //$NON-NLS-1$
-        this.revCheckBox = createCheckBox(optionGroup, Messages.getString("PushRepoPage.revCheckBox.text")); //$NON-NLS-1$
+        Group optionGroup = createGroup(composite, Messages
+                .getString("PushRepoPage.optionGroup.title")); //$NON-NLS-1$
+        this.timeoutCheckBox = createCheckBox(optionGroup, Messages
+                .getString("PushRepoPage.timeoutCheckBox.text")); //$NON-NLS-1$
+        this.forceCheckBox = createCheckBox(optionGroup, Messages
+                .getString("PushRepoPage.forceCheckBox.text")); //$NON-NLS-1$
+        this.revCheckBox = createCheckBox(optionGroup, Messages
+                .getString("PushRepoPage.revCheckBox.text")); //$NON-NLS-1$
 
         Listener revCheckBoxListener = new Listener() {
             public void handleEvent(Event event) {
                 if (revCheckBox.getSelection()) {
-                    if (revisionListView.getList().getItems().length == 0) {
+                    if (changesetTable.getChangesets() == null
+                            || changesetTable.getChangesets().length == 0) {
                         try {
-                            populateRevisionListView();
+                            populateChangesetTable();
                         } catch (HgException e) {
-                            MessageDialog.openInformation(getShell(),
-                                    Messages.getString("PushRepoPage.errorLoadingChangesets"), e //$NON-NLS-1$
-                                            .getMessage());
+                            MessageDialog
+                                    .openInformation(
+                                            getShell(),
+                                            Messages
+                                                    .getString("PushRepoPage.errorLoadingChangesets"), e //$NON-NLS-1$
+                                                    .getMessage());
                             MercurialEclipsePlugin.logError(e);
                         }
-                    }                    
+                    }
                 }
                 // en-/disable list view
-                revisionListView.getControl().setEnabled(revCheckBox.getSelection());
+                changesetTable.setEnabled(revCheckBox.getSelection());
             }
         };
 
-        this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);       
+        this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
 
-        Group revGroup = createGroup(composite, Messages.getString("PushRepoPage.revGroup.title")); //$NON-NLS-1$
+        Group revGroup = createGroup(composite, Messages
+                .getString("PushRepoPage.revGroup.title"),GridData.FILL_BOTH); //$NON-NLS-1$
         
-        this.revisionListView = createChangeSetListViewer(revGroup, null,
-                100);
+        GridData gridData = new GridData(GridData.FILL_BOTH);        
+        gridData.heightHint = 200;
+        gridData.minimumHeight = 50;
+        this.changesetTable = new ChangesetTable(revGroup);                
+        this.changesetTable.setLayoutData(gridData);
+        this.changesetTable.setEnabled(false);
 
-        this.revisionListView.getControl().setEnabled(false);
-
-        ISelectionChangedListener listener = new ISelectionChangedListener() {
-            public void selectionChanged(SelectionChangedEvent event) {
+        SelectionListener listener = new SelectionListener() {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+             */
+            public void widgetSelected(SelectionEvent e) {
                 setPageComplete(true);
-                revision = revisionListView.getSelection().toString();
+                revision = changesetTable.getSelection().toString();
+            }
+
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+             */
+            public void widgetDefaultSelected(SelectionEvent e) {
+                widgetSelected(e);
             }
         };
 
-        revisionListView.addSelectionChangedListener(listener);
+        this.changesetTable.addSelectionListener(listener);
 
     }
 
-    private void populateRevisionListView() throws HgException {
+    private void populateChangesetTable() throws HgException {
         SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
                 .getLocalChangeSets(project);
         if (changesets != null) {
             TreeSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
                     Collections.reverseOrder());
             reverseOrderSet.addAll(changesets);
-            for (ChangeSet changeSet : reverseOrderSet) {
-                revisionListView.add(changeSet);
-            }
+            changesetTable.setChangesets(reverseOrderSet
+                    .toArray(new ChangeSet[reverseOrderSet.size()]));
         }
     }
 
@@ -123,8 +147,7 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
         this.force = forceCheckBox.getSelection();
         this.timeout = timeoutCheckBox.getSelection();
         if (revCheckBox.getSelection()) {
-            ChangeSet cs = (ChangeSet) ((IStructuredSelection) revisionListView
-                    .getSelection()).getFirstElement();
+            ChangeSet cs = changesetTable.getSelection();
 
             String rev = cs.toString();
             if (rev != null && rev.length() > 0 && rev.indexOf(":") != -1) { //$NON-NLS-1$
@@ -140,13 +163,6 @@ public class PushRepoPage extends ConfigurationWizardMainPage {
      */
     public boolean isForce() {
         return force;
-    }
-
-    /**
-     * @return the revisionTextField
-     */
-    public ListViewer getRevisionListView() {
-        return revisionListView;
     }
 
     /**

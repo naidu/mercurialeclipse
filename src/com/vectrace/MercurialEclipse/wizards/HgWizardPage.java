@@ -394,6 +394,7 @@ public abstract class HgWizardPage extends WizardPage {
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = heightHint;
         listViewer.getList().setLayoutData(data);
+        listViewer.setUseHashlookup(true);
         return listViewer;
     }
 
@@ -450,10 +451,11 @@ public abstract class HgWizardPage extends WizardPage {
         };
     }
 
-    protected Group createGroup(Composite parent, String text, int span) {
+    protected Group createGroup(Composite parent, String text, int span,
+            int style) {
         Group group = new Group(parent, SWT.NULL);
         group.setText(text);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        GridData data = new GridData(style);
         data.horizontalSpan = span;
         // data.widthHint = GROUP_WIDTH;
 
@@ -465,7 +467,11 @@ public abstract class HgWizardPage extends WizardPage {
     }
 
     protected Group createGroup(Composite parent, String text) {
-        return createGroup(parent, text, 2);
+        return createGroup(parent, text, GridData.FILL_HORIZONTAL);
+    }
+
+    protected Group createGroup(Composite parent, String text, int style) {
+        return createGroup(parent, text, 2, style);
     }
 
     /**

@@ -10,16 +10,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.util.Collections;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ListViewer;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
@@ -32,6 +34,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 
 /**
  * @author Bastian Doetsch
@@ -45,7 +48,7 @@ public class SignWizardPage extends HgWizardPage {
     private Button localCheckBox;
     private Button forceCheckBox;
     private Button noCommitCheckBox;
-    private ListViewer changeSetListView;
+    private ChangesetTable changesetTable;
     private Text messageTextField;
     private Text passTextField;
 
@@ -73,22 +76,28 @@ public class SignWizardPage extends HgWizardPage {
 
         // list view of changesets
         Group changeSetGroup = createGroup(composite,
-                Messages.getString("SignWizardPage.changeSetGroup.title")); //$NON-NLS-1$
+                Messages.getString("SignWizardPage.changeSetGroup.title"),GridData.FILL_BOTH); //$NON-NLS-1$
+        GridData gridData = new GridData(GridData.FILL_BOTH);        
+        gridData.heightHint = 200;
+        gridData.minimumHeight = 50;
+        this.changesetTable = new ChangesetTable(changeSetGroup);                
+        this.changesetTable.setLayoutData(gridData);
+        this.changesetTable.setEnabled(true);
 
-        changeSetListView = super.createChangeSetListViewer(changeSetGroup,
-                null, 200);
-
-        ISelectionChangedListener listener = new ISelectionChangedListener() {
-            public void selectionChanged(SelectionChangedEvent event) {
-                ChangeSet cs = (ChangeSet) ((IStructuredSelection) event
-                        .getSelection()).getFirstElement();
+        SelectionListener listener = new SelectionListener() {
+            public void widgetSelected(SelectionEvent event) {
+                ChangeSet cs = changesetTable.getSelection();
                 messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.text") //$NON-NLS-1$
                         .concat(cs.toString()));
                 setPageComplete(true);
             }
+
+            public void widgetDefaultSelected(SelectionEvent e) {
+               widgetSelected(e);
+            }
         };
 
-        changeSetListView.addSelectionChangedListener(listener);
+        changesetTable.addSelectionListener(listener);
 
         // now the fields for user data
         Group userGroup = createGroup(composite,
@@ -124,7 +133,7 @@ public class SignWizardPage extends HgWizardPage {
         this.messageTextField = createTextField(optionGroup);
         this.messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.defaultText")); //$NON-NLS-1$
 
-        populateViewer(changeSetListView);
+        populateChangesetTable();
         populateKeyCombo(keyCombo);
         setControl(composite);
     }
@@ -149,28 +158,23 @@ public class SignWizardPage extends HgWizardPage {
         combo.setText(combo.getItem(0));
     }
 
-    private void populateViewer(ListViewer viewer) {
+    private void populateChangesetTable() {
         try {
             LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
             SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance().getLocalChangeSets(project);
             if (changesets != null) {
-                viewer
-                        .add(changesets
-                                .toArray(new ChangeSet[changesets.size()]));
+                TreeSet<ChangeSet>revOrderSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+                revOrderSet.addAll(changesets);
+                changesetTable.setChangesets(revOrderSet.toArray(new ChangeSet[changesets.size()]));
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
-    }
-
-    @Override
-    public boolean canFlipToNextPage() {
-        return ((IStructuredSelection) changeSetListView.getSelection()).size() == 1;
-    }
+    }    
 
     @Override    
     public boolean finish(IProgressMonitor monitor) {
-        ChangeSet cs = (ChangeSet) ((IStructuredSelection) changeSetListView
+        ChangeSet cs = (ChangeSet) ((IStructuredSelection) changesetTable
                 .getSelection()).getFirstElement();
         String key = keyCombo.getText();
         key = key.substring(key.indexOf("/") + 1, key.indexOf("\\")); //$NON-NLS-1$ //$NON-NLS-2$

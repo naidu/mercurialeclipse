@@ -10,16 +10,17 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.util.Collections;
 import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.ListViewer;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
@@ -31,6 +32,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 
 /**
  * @author bastian
@@ -38,7 +40,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
  */
 public class BackoutWizardPage extends HgWizardPage {
 
-    private ListViewer changeSetListView;
+    private ChangesetTable changesetTable;
     private Text messageTextField;
     private Button mergeCheckBox;
     protected ChangeSet backoutRevision;
@@ -67,23 +69,31 @@ public class BackoutWizardPage extends HgWizardPage {
 
         // list view of changesets
         Group changeSetGroup = createGroup(composite,
-                Messages.getString("BackoutWizardPage.changeSetGroup.title")); //$NON-NLS-1$
+                Messages.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-        changeSetListView = super.createChangeSetListViewer(changeSetGroup,
-                null, 100);
+        changesetTable = new ChangesetTable(changeSetGroup);
+        GridData gridData = new GridData(GridData.FILL_BOTH);        
+        gridData.heightHint = 200;
+        gridData.minimumHeight = 50;
+        changesetTable.setLayoutData(gridData);
 
-        ISelectionChangedListener listener = new ISelectionChangedListener() {
-            public void selectionChanged(SelectionChangedEvent event) {
-                backoutRevision = (ChangeSet) ((IStructuredSelection) event
-                        .getSelection()).getFirstElement();
+        SelectionListener listener = new SelectionListener() {
+            public void widgetSelected(SelectionEvent e) {
+                backoutRevision = changesetTable.getSelection();
                 messageTextField.setText(Messages.getString("BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
                         .concat(backoutRevision.toString()));
                 setPageComplete(true);
             }
+
+            public void widgetDefaultSelected(SelectionEvent e) {
+                widgetSelected(e);
+            }
+
+            
         };
 
-        changeSetListView.addSelectionChangedListener(listener);
-        changeSetListView.getControl().setEnabled(true);
+        changesetTable.addSelectionListener(listener);
+        changesetTable.setEnabled(true);
                 
 
         // now the options
@@ -104,7 +114,7 @@ public class BackoutWizardPage extends HgWizardPage {
         this.mergeCheckBox.setSelection(true);
         
         try {
-            populateBackoutRevisionListView();
+            populateBackoutChangesetTable();
         } catch (HgException e) {
             MessageDialog.openInformation(getShell(),
                     Messages.getString("BackoutWizardPage.changesetLoadingError"), e //$NON-NLS-1$
@@ -114,15 +124,17 @@ public class BackoutWizardPage extends HgWizardPage {
         setControl(composite);
     }    
     
-    protected void populateBackoutRevisionListView() throws HgException {
+    protected void populateBackoutChangesetTable() throws HgException {
         LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,true);
 
         SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
                 .getLocalChangeSets(project);
+        
+        SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+        reverseOrderSet.addAll(changesets);
+        
         if (changesets != null) {
-            for (ChangeSet changeSet : changesets) {
-                changeSetListView.add(changeSet);
-            }
+            changesetTable.setChangesets(reverseOrderSet.toArray(new ChangeSet[changesets.size()]));
         }
     }
 
