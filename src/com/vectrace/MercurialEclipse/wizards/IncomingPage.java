@@ -58,8 +58,8 @@ final class IncomingPage extends WizardPage {
 
     private SortedSet<ChangeSet> getIncoming() {
 
-        ChangeSet a = new ChangeSet(0, "00000000", "dummy", "2008-01-01"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        ChangeSet b = new ChangeSet(1, "11111111", "dummy 2 ", "2008-01-02"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        ChangeSet a = new ChangeSet(0, "00000000", "dummy", "2008-01-01", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        ChangeSet b = new ChangeSet(1, "11111111", "dummy 2 ", "2008-01-02", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         List<FileStatus> st = new ArrayList<FileStatus>();
 

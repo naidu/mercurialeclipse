@@ -30,6 +30,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private int changesetIndex;
     private String changeset;
     private String tag;
+    private String branch;
     private String user;
     private String date;
     private FileStatus[] changedFiles;
@@ -48,10 +49,11 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public ChangeSet(int changesetIndex, String changeSet, String tag,
-            String user, String date, String description, String[] parents) {
+            String branch, String user, String date, String description, String[] parents) {
         this.changesetIndex = changesetIndex;
         this.changeset = changeSet;
         this.tag = tag;
+        this.branch = branch;
         this.user = user;
         this.date = date;
         setDescription(description);
@@ -67,8 +69,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public ChangeSet(int changesetIndex, String changeSet, String user,
-            String date) {
-        this(changesetIndex, changeSet, null, user, date, null, null);
+            String date, String branch) {
+        this(changesetIndex, changeSet, null, branch, user, date, null, null);
     }
 
     public int getChangesetIndex() {
@@ -84,6 +86,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
             tag = tag.concat(" [ ").concat(repository.toString()).concat(" ]");
         }
         return tag;
+    }
+    
+    public String getBranch() {
+        if(branch==null) {
+            return "";
+        }
+        return branch;
     }
 
     public String getUser() {
@@ -243,6 +252,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 
     public void setUser(String user) {

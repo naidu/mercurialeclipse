@@ -14,10 +14,12 @@ package com.vectrace.MercurialEclipse.storage;
 
 import org.eclipse.core.resources.IProject;
 
+import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 
@@ -31,6 +33,10 @@ public abstract class DataLoader {
 	public Tag[] getTags() throws HgException {
 		return HgTagClient.getTags(getProject());
 	}
+
+    public Branch[] getBranches() throws HgException {
+        return HgBranchClient.getBranches(getProject());
+    }
 
 	public ChangeSet[] getHeads() throws HgException {
 		return HgLogClient.getHeads(getProject());

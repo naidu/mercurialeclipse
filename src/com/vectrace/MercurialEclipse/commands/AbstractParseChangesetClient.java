@@ -51,10 +51,12 @@ public abstract class AbstractParseChangesetClient {
     protected static final String NODE_SHORT = "{node|short}";
     protected static final String REV = "{rev}";
     protected static final String TAGS = "{tags}";
+    protected static final String BRANCHES = "{branches}";
     protected static final String SEP_CHANGE_SET = ">";
     protected static final String SEP_TEMPLATE_ELEMENT = "<";
     protected static final String START = "°";
     protected static final String TEMPLATE = START + SEP_TEMPLATE_ELEMENT
+            + BRANCHES + SEP_TEMPLATE_ELEMENT
             + TAGS + SEP_TEMPLATE_ELEMENT + REV + SEP_TEMPLATE_ELEMENT
             + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE + SEP_TEMPLATE_ELEMENT
             + DATE_ISODATE + SEP_TEMPLATE_ELEMENT + DATE_AGE
@@ -215,6 +217,7 @@ public abstract class AbstractParseChangesetClient {
         String[] comps = split(changeSet, templateElementSeparator);
         ChangeSet cs = new ChangeSet();
         cs.setTag(getValue(pos, comps, TAGS));
+        cs.setBranch(getValue(pos, comps, BRANCHES));
         cs.setChangesetIndex(Integer.parseInt(getValue(pos, comps, REV)));
         cs.setNodeShort(getValue(pos, comps, NODE_SHORT));
         cs.setChangeset(getValue(pos, comps, NODE));

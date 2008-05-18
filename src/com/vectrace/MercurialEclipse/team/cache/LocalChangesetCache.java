@@ -281,7 +281,7 @@ public class LocalChangesetCache extends AbstractCache {
         SortedSet<ChangeSet> locals = getLocalChangeSets(res);
         List<ChangeSet> list = new ArrayList<ChangeSet>(locals);
         int index = Collections.binarySearch(list, new ChangeSet(
-                changesetIndex, "", "", ""),
+                changesetIndex, "", "", "", ""),
                 AbstractCache.changeSetIndexComparator);
         if (index >= 0) {
             return list.get(index);

@@ -147,13 +147,16 @@ public class MercurialHistoryPage extends HistoryPage {
 			case 2:
 				ret = changeSet.getTag();
 				break;
-			case 3:
+            case 3:
+                ret = changeSet.getBranch();
+                break;
+			case 4:
 				ret = changeSet.getUser();
 				break;
-			case 4:
+			case 5:
 				ret = changeSet.getDate();
 				break;
-			case 5:
+			case 6:
 				ret = changeSet.getSummary();
 				break;
 			default:
@@ -221,6 +224,9 @@ public class MercurialHistoryPage extends HistoryPage {
 		column = new TableColumn(changeLogTable, SWT.LEFT);
 		column.setText("Tag");
 		layout.addColumnData(new ColumnWeightData(10, true));
+        column = new TableColumn(changeLogTable, SWT.LEFT);
+        column.setText("Branch");
+        layout.addColumnData(new ColumnWeightData(10, true));
 		column = new TableColumn(changeLogTable, SWT.LEFT);
 		column.setText("User");
 		layout.addColumnData(new ColumnWeightData(7, true));

@@ -36,12 +36,14 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.FileDataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.ui.BranchTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
 
@@ -57,6 +59,7 @@ public class RevisionChooserDialog extends Dialog {
 	private Text text;
 	private String revision;
 	private Tag tag;
+    private Branch branch;
 	
 	private final int[] parents;
 
@@ -98,7 +101,7 @@ public class RevisionChooserDialog extends Dialog {
         composite.setLayout(gridLayout);
 
         Label label = new Label(composite, SWT.NONE);
-        label.setText("Please enter a valid revision (local, global or tag):");
+        label.setText("Please enter a valid revision (local, global, tag or branch):");
 
         text = new Text(composite, SWT.BORDER | SWT.DROP_DOWN);
         text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -109,6 +112,7 @@ public class RevisionChooserDialog extends Dialog {
         tabFolder.setLayoutData(data);
         createRevisionTabItem(tabFolder);
         createTagTabItem(tabFolder);
+        createBranchTabItem(tabFolder);
         createHeadTabItem(tabFolder);
 
         return composite;
@@ -124,6 +128,10 @@ public class RevisionChooserDialog extends Dialog {
 			if (tag != null){
 					changeSet = LocalChangesetCache.getInstance().getChangeSet(
                         tag.getRevision() + ":"+tag.getGlobalId());				
+			}
+			else if(branch != null) {
+			    changeSet = LocalChangesetCache.getInstance().getChangeSet(
+                        branch.getRevision() + ":"+branch.getGlobalId());     
 			}
 		}
 		
@@ -150,6 +158,7 @@ public class RevisionChooserDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
+            	branch = null;
                 text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
                 changeSet = table.getSelection();
             }
@@ -187,6 +196,7 @@ public class RevisionChooserDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
                 text.setText(table.getSelection().getName());
                 tag = table.getSelection(); 
+                branch = null;
             }
         });
 
@@ -213,6 +223,47 @@ public class RevisionChooserDialog extends Dialog {
         return item;
     }
 
+    protected TabItem createBranchTabItem(TabFolder folder) {
+        TabItem item = new TabItem(folder, SWT.NONE);
+        item.setText("Branches");
+
+        final BranchTable table = new BranchTable(folder);
+        table.highlightParents(parents);
+        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+        table.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                text.setText(table.getSelection().getName());
+                branch = table.getSelection(); 
+                tag = null;
+            }
+        });
+
+        table.addListener(SWT.Show, new Listener() {
+            public void handleEvent(Event event) {
+                table.removeListener(SWT.Show, this);
+                new SafeUiJob("Fetching branches from repository") {
+                    @Override
+                    protected IStatus runSafe(IProgressMonitor monitor) {
+                        try {
+                            Branch[] branches = dataLoader.getBranches();
+                            table.setBranches(branches);
+                            return Status.OK_STATUS;
+                        } catch (HgException e) {
+                            MercurialEclipsePlugin.logError(e);
+                            return Status.CANCEL_STATUS;
+                        }
+                    }
+                }.schedule();
+            }
+        });
+
+        item.setControl(table);
+        return item;
+    }
+
     protected TabItem createHeadTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
         item.setText("Heads");
@@ -225,6 +276,7 @@ public class RevisionChooserDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
+            	branch = null;
             	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
                 changeSet = table.getSelection();
             }

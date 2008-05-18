@@ -17,7 +17,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
-            .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) (.+)$");
+            .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$");
 
     public static ChangeSet[] getRevisions(IProject project) throws HgException {
         HgCommand command = new HgCommand("log", project, true);
@@ -63,7 +63,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     private static ChangeSet[] getRevisions(HgCommand command)
             throws HgException {
         command.addOptions("--template",
-                "{rev}:{node} {date|isodate} {author|person}\n");
+                "{rev}:{node} {date|isodate} {author|person}#{branches}\n");
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         String[] lines = null;
@@ -85,7 +85,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             if (m.matches()) {
                 ChangeSet changeSet = new ChangeSet(Integer
                         .parseInt(m.group(1)), m.group(2), m.group(4), m
-                        .group(3));
+                        .group(3), m.group(5));
                 changeSets[i] = changeSet;
             } else {
                 throw new HgException("Parse exception: '" + lines[i] + "'");
