@@ -10,11 +10,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
@@ -23,6 +28,12 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgBranchClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 
 /**
@@ -32,26 +43,33 @@ import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 public class TransplantPage extends ConfigurationWizardMainPage {
 
     private IProject project;
-    private List<String> nodeIds;
+    private List<String> nodeIds = new ArrayList<String>();
     private boolean branch;
     private String branchName;
     private boolean all;
-    private boolean merge;
-    private String mergeNodeId;
-    private boolean prune;
-    private String pruneNodeId;
-    private String filter;
-    private boolean filterChangesets;
-    private boolean continueLastTransplant;
     private ChangesetTable changesetTable;
     private Button branchCheckBox;
     private Combo branchNameCombo;
     private Button allCheckBox;
+    private SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(
+            Collections.reverseOrder());
 
     public TransplantPage(String pageName, String title,
             ImageDescriptor titleImage, IProject project) {
         super(pageName, title, titleImage);
         this.project = project;
+        SortedSet<ChangeSet> changes;
+        try {
+            changes = LocalChangesetCache.getInstance().getLocalChangeSets(
+                    project);
+            if (changes != null) {
+                changesets.addAll(changes);
+            }
+        } catch (HgException e) {
+            setErrorMessage(Messages.getString("TransplantPage.errorLoadChangesets") //$NON-NLS-1$
+                    + project.getName());
+            MercurialEclipsePlugin.logError(e);
+        }
     }
 
     @Override
@@ -59,20 +77,112 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         super.createControl(parent);
         Composite composite = (Composite) getControl();
 
-        // now the options
-        Group selectionGroup = createGroup(composite,
-                "Select, if you want to transplant from a branch");
-        this.branchCheckBox = createCheckBox(selectionGroup,
-                "Pull patches from branch");
+        addBranchGroup(composite);
+        addChangesetGroup(composite);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#canFlipToNextPage()
+     */
+    @Override
+    public boolean canFlipToNextPage() {
+        return super.canFlipToNextPage();
+    }
+
+    private void validatePage() {
+        boolean valid = true;
+        if (branch) {
+            valid &= branchName != null;
+            if (!all) {
+                valid &= nodeIds.size() > 0;
+            }
+        } else {
+            valid &= nodeIds.size() > 0;        
+        }
+        setPageComplete(valid);
+    }
+
+    /**
+     * @param composite
+     */
+    private void addBranchGroup(Composite composite) {
+        // now the branch group
+        Group branchGroup = createGroup(composite,
+                Messages.getString("TransplantPage.branchGroup.title")); //$NON-NLS-1$
+        createBranchCheckBox(branchGroup);
+        createAllCheckBox(branchGroup);
+        createBranchNameCombo(branchGroup);
+    }
+
+    /**
+     * @param branchGroup
+     */
+    private void createBranchNameCombo(Group branchGroup) {
+        createLabel(branchGroup, Messages.getString("TransplantPage.branchLabel.title")); //$NON-NLS-1$
+        this.branchNameCombo = createCombo(branchGroup);
+        this.branchNameCombo.setEnabled(false);
+        populateBranchNameCombo();
+
+        SelectionListener branchNameComboListener = new SelectionListener() {
+            public void widgetSelected(SelectionEvent e) {
+                // TODO filter changeset table
+                branchName = branchNameCombo.getText();
+                if (branchName.equals("default")) { //$NON-NLS-1$
+                    branchName = ""; //$NON-NLS-1$
+                }
+                validatePage();
+            }
+
+            public void widgetDefaultSelected(SelectionEvent e) {
+                widgetSelected(e);
+            }
+        };
+
+        this.branchNameCombo.addSelectionListener(branchNameComboListener);
+    }
+
+    /**
+     * @param branchGroup
+     */
+    private void createAllCheckBox(Group branchGroup) {
         this.allCheckBox = createCheckBox(
-                selectionGroup,
-                "Transplant all revisions on branch. If you select a revision, the branch\n"
-                        + "will be rebased up to the selected revision onto your current working directory.");
+                branchGroup,
+                Messages.getString("TransplantPage.allCheckBox.title.1") //$NON-NLS-1$
+                        + Messages.getString("TransplantPage.allCheckBox.title.2")); //$NON-NLS-1$
         this.allCheckBox.setEnabled(false);
 
-        createLabel(selectionGroup, "Branch name");
-        this.branchNameCombo = createEditableCombo(selectionGroup);
-        this.branchNameCombo.setEnabled(false);
+        SelectionListener allCheckBoxListener = new SelectionListener() {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+             */
+            public void widgetDefaultSelected(SelectionEvent e) {
+                widgetSelected(e);
+            }
+
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+             */
+            public void widgetSelected(SelectionEvent e) {
+                all = allCheckBox.getSelection();
+                validatePage();
+            }
+        };
+
+        this.allCheckBox.addSelectionListener(allCheckBoxListener);
+    }
+
+    /**
+     * @param branchGroup
+     */
+    private void createBranchCheckBox(Group branchGroup) {
+        this.branchCheckBox = createCheckBox(branchGroup,
+                Messages.getString("TransplantPage.branchCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener branchCheckBoxListener = new SelectionListener() {
             public void widgetSelected(SelectionEvent e) {
@@ -86,6 +196,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                         .getSelection());
                 TransplantPage.this.branchNameCombo.setEnabled(branchCheckBox
                         .getSelection());
+                branch = branchCheckBox.getSelection();
+                validatePage();
             }
 
             public void widgetDefaultSelected(SelectionEvent e) {
@@ -94,17 +206,23 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         };
 
         this.branchCheckBox.addSelectionListener(branchCheckBoxListener);
+    }
 
+    /**
+     * @param composite
+     */
+    private void addChangesetGroup(Composite composite) {
         // table of changesets
         Group changeSetGroup = createGroup(composite,
-                "Select changesets to transplant", GridData.FILL_BOTH);
+                Messages.getString("TransplantPage.changesetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-        GridData gridData = new GridData(GridData.FILL_BOTH);        
+        GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 200;
         gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(changeSetGroup);                
+        this.changesetTable = new ChangesetTable(changeSetGroup, SWT.MULTI
+                | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
         this.changesetTable.setLayoutData(gridData);
-        this.changesetTable.setEnabled(false);
+        this.changesetTable.setEnabled(true);
 
         SelectionListener changeSetTableListener = new SelectionListener() {
 
@@ -113,13 +231,47 @@ public class TransplantPage extends ConfigurationWizardMainPage {
             }
 
             public void widgetSelected(SelectionEvent e) {
-                setPageComplete(true);
-                // TODO Implement
+                ChangeSet[] changeSets = changesetTable.getSelections();
+                ChangeSet last = changeSets[0];
+                setErrorMessage(null);
+                nodeIds.clear();
+                for (ChangeSet changeSet : changeSets) {
+                    if (Math.abs(changeSet.getChangesetIndex()
+                            - last.getChangesetIndex()) > 1) {
+                        setErrorMessage(Messages.getString("TransplantPage.errorNotSequential")); //$NON-NLS-1$
+                        setPageComplete(false);
+                        break;
+                    }
+                    nodeIds.add(changeSet.getChangeset());
+                    last = changeSet;
+                }
+
+                validatePage();
             }
         };
 
         changesetTable.addSelectionListener(changeSetTableListener);
-        
+        populateChangesetTable();
+    }
+
+    /**
+     * 
+     */
+    private void populateBranchNameCombo() {
+        try {
+            Branch[] branches = HgBranchClient.getBranches(project);
+            for (Branch myBranch : branches) {
+                this.branchNameCombo.add(myBranch.getName());
+            }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.showError(e);
+            MercurialEclipsePlugin.logError(e);
+        }
+    }
+
+    private void populateChangesetTable() {
+        changesetTable.setChangesets(changesets
+                .toArray(new ChangeSet[changesets.size()]));
     }
 
     @Override
@@ -168,52 +320,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
      */
     public boolean isAll() {
         return this.all;
-    }
-
-    /**
-     * @return
-     */
-    public boolean isMerge() {
-        return this.merge;
-    }
-
-    /**
-     * @return
-     */
-    public String getMergeNodeId() {
-        return this.mergeNodeId;
-    }
-
-    /**
-     * @return
-     */
-    public boolean isPrune() {
-        return this.prune;
-    }
-
-    /**
-     * @return
-     */
-    public String getPruneNodeId() {
-        return this.pruneNodeId;
-    }
-
-    public boolean isFilterChangesets() {
-        return this.filterChangesets;
-    }
-
-    /**
-     * @return
-     */
-    public String getFilter() {
-        return this.filter;
-    }
-
-    /**
-     * @return
-     */
-    public boolean isContinueLastTransplant() {
-        return this.continueLastTransplant;
     }
 
 }

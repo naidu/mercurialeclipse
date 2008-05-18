@@ -34,7 +34,7 @@ public class TransplantWizard extends HgWizard {
     private IProject project;
 
     public TransplantWizard(IResource resource) {
-        super("Transplant Wizard");
+        super(Messages.getString("TransplantWizard.title")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
         this.project = resource.getProject();
     }
@@ -42,13 +42,21 @@ public class TransplantWizard extends HgWizard {
     @Override
     public void addPages() {
         super.addPages();
-        TransplantPage transplantPage = new TransplantPage("TransplantPage",
-                "Transplant changesets", null, project);
-        initPage("Transplant changesets from another repository or branch.", transplantPage);
+        TransplantPage transplantPage = new TransplantPage(Messages.getString("TransplantWizard.transplantPage.name"), //$NON-NLS-1$
+                Messages.getString("TransplantWizard.transplantPage.title"), null, project); //$NON-NLS-1$
+        initPage(Messages.getString("TransplantWizard.transplantPage.description"), //$NON-NLS-1$
+                transplantPage);
         transplantPage.setShowCredentials(true);
         page = transplantPage;
         addPage(page);
+
+        TransplantOptionsPage optionsPage = new TransplantOptionsPage(
+                Messages.getString("TransplantWizard.optionsPage.name"), Messages.getString("TransplantWizard.optionsPage.title"), null, project); //$NON-NLS-1$ //$NON-NLS-2$
+        initPage(Messages.getString("TransplantWizard.optionsPage.description"), optionsPage); //$NON-NLS-1$
+        addPage(optionsPage);
     }
+    
+    
 
     /*
      * (non-Javadoc)
@@ -71,14 +79,18 @@ public class TransplantWizard extends HgWizard {
                 return false;
             }
 
-            TransplantPage tPage = (TransplantPage) page;
+            TransplantPage transplantPage = (TransplantPage) page;
+            TransplantOptionsPage optionsPage = (TransplantOptionsPage) page
+                    .getNextPage();
 
-            String result = HgTransplantClient.transplant(project, tPage
-                    .getNodeIds(), repo, tPage.isBranch(), tPage
-                    .getBranchName(), tPage.isAll(), tPage.isMerge(), tPage
-                    .getMergeNodeId(), tPage.isPrune(), tPage.getPruneNodeId(),
-                    tPage.isContinueLastTransplant(), tPage
-                            .isFilterChangesets(), tPage.getFilter());
+            String result = HgTransplantClient.transplant(project,
+                    transplantPage.getNodeIds(), repo, transplantPage
+                            .isBranch(), transplantPage.getBranchName(),
+                    transplantPage.isAll(), optionsPage.isMerge(), optionsPage
+                            .getMergeNodeId(), optionsPage.isPrune(),
+                    optionsPage.getPruneNodeId(), optionsPage
+                            .isContinueLastTransplant(), optionsPage
+                            .isFilterChangesets(), optionsPage.getFilter());
 
             if (result.length() != 0) {
                 Shell shell;
@@ -87,7 +99,7 @@ public class TransplantWizard extends HgWizard {
                 workbench = PlatformUI.getWorkbench();
                 shell = workbench.getActiveWorkbenchWindow().getShell();
 
-                MessageDialog.openInformation(shell, "Transplant output",
+                MessageDialog.openInformation(shell, Messages.getString("TransplantWizard.outputMessage"), //$NON-NLS-1$
                         result);
             }
 

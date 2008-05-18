@@ -37,6 +37,7 @@ public class ChangesetTable extends Composite {
     private int[] parents;
 
     private ChangeSet[] changesets;
+    
 
     public ChangesetTable(Composite parent) {
         this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
@@ -58,13 +59,14 @@ public class ChangesetTable extends Composite {
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Global", "Date", "Author", "Branch", "Summary" };
+        String[] titles = { "Rev", "Global", "Date", "Author", "Branch",
+                "Summary" };
         int[] widths = { 50, 150, 150, 100, 100, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
             column.setWidth(widths[i]);
-        }
+        }        
     }
 
     public void highlightParents(int[] newParents) {
@@ -87,7 +89,9 @@ public class ChangesetTable extends Composite {
             row.setText(5, rev.getSummary());
             row.setData(rev);
         }
-    }
+        table.setItemCount(sets.length);
+
+    }    
 
     public ChangeSet[] getSelections() {
         TableItem[] selection = table.getSelection();
@@ -101,9 +105,9 @@ public class ChangesetTable extends Composite {
         }
         return csArray;
     }
-    
+
     public ChangeSet getSelection() {
-        if (getSelections()!=null) {
+        if (getSelections() != null) {
             return getSelections()[0];
         }
         return null;

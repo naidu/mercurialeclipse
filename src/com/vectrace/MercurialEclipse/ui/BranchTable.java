@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Brian Wallis              - adaptation to branches
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
