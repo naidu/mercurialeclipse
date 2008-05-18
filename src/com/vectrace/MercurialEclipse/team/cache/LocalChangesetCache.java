@@ -21,6 +21,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.RepositoryProvider;
 
@@ -277,7 +278,8 @@ public class LocalChangesetCache extends AbstractCache {
                         concernedResources.addAll(revisions.keySet());
                     } else {
                         // every changeset is at least stored for the project
-                        localChangeSets.put(res, revisions.get(res.getProject()));
+                        localChangeSets.put(res, revisions
+                                .get(res.getProject()));
                     }
 
                     for (Iterator<IResource> iter = revisions.keySet()
@@ -303,14 +305,14 @@ public class LocalChangesetCache extends AbstractCache {
                             addToNodeMap(changes);
                         }
                     }
-                    
+
                 }
             } finally {
                 lock.unlock();
                 notifyChanged(res);
             }
         }
-    }   
+    }
 
     /**
      * @return the localUpdateInProgress
@@ -319,4 +321,29 @@ public class LocalChangesetCache extends AbstractCache {
         return getLock(res).isLocked();
     }
 
+    /**
+     * @param project
+     * @param branchName
+     * @return 
+     * @throws HgException
+     */
+    public SortedSet<ChangeSet> getLocalChangeSetsByBranch(IProject project, String branchName)
+            throws HgException {
+        ReentrantLock lock = getLock(project);
+        try {
+            lock.lock();
+            SortedSet<ChangeSet> changes = getLocalChangeSets(project);
+            SortedSet<ChangeSet> branchChangeSets = new TreeSet<ChangeSet>();
+            for (ChangeSet changeSet : changes) {
+                if (changeSet.getBranch().equals(branchName)
+                        || (branchName.equals("default") && changeSet
+                                .getBranch().equals(""))) {
+                    branchChangeSets.add(changeSet);
+                }
+            }
+            return branchChangeSets;
+        } finally {
+            lock.unlock();
+        }
+    }
 }

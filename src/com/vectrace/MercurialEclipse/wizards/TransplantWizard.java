@@ -15,6 +15,7 @@ import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -66,6 +67,7 @@ public class TransplantWizard extends HgWizard {
     @Override
     public boolean performFinish() {
         try {
+            page.finish(new NullProgressMonitor());
             Properties props = page.getProperties();
             HgRepositoryLocation repo = HgRepositoryLocation
                     .fromProperties(props);

@@ -37,41 +37,51 @@ public class HgTransplantClient extends AbstractRepositoryClient {
      * @throws HgException
      */
     public static String transplant(IProject project, List<String> nodeIds,
-            HgRepositoryLocation loc, boolean branch,
-            String branchName, boolean all, boolean merge, String mergeNodeId,
-            boolean prune, String pruneNodeId, boolean continueLastTransplant,
+            HgRepositoryLocation loc, boolean branch, String branchName,
+            boolean all, boolean merge, String mergeNodeId, boolean prune,
+            String pruneNodeId, boolean continueLastTransplant,
             boolean filterChangesets, String filter) throws HgException {
 
         try {
             HgCommand command = new HgCommand("transplant", project, false);
-            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-            command.addOptions("--config extensions.transplant=");
-            command.addOptions("--log");
-            if (branch) {
-                command.addOptions("--branch");
-                command.addOptions(branchName);
-                if (all) {
-                    command.addOptions("--all");
-                }
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+            command.addOptions("--config", "extensions.hgext.transplant=");
+            if (continueLastTransplant) {
+                command.addOptions("--continue");
             } else {
-                command.addOptions("--source");
-                URI uri = getRepositoryURI(loc, loc.getUser(), loc.getPassword());
-                command.addOptions(uri.toASCIIString());
-            }
-            
-            if (prune) {
-                command.addOptions("--prune");
-                command.addOptions(pruneNodeId);
-            }
-            
-            if (merge) {
-                command.addOptions("--merge");
-                command.addOptions(mergeNodeId);
-            }
+                command.addOptions("--log");
+                if (branch) {
+                    command.addOptions("--branch");
+                    command.addOptions(branchName);
+                    if (all) {
+                        command.addOptions("--all");
+                    }
+                } else {
+                    command.addOptions("--source");
+                    URI uri = getRepositoryURI(loc, loc.getUser(), loc
+                            .getPassword());
+                    command.addOptions(uri.toASCIIString());
+                }
 
-            if (nodeIds != null && nodeIds.size() > 0) {
-                for (String node : nodeIds) {
-                    command.addOptions(node);
+                if (prune) {
+                    command.addOptions("--prune");
+                    command.addOptions(pruneNodeId);
+                }
+
+                if (merge) {
+                    command.addOptions("--merge");
+                    command.addOptions(mergeNodeId);
+                }
+
+                if (nodeIds != null && nodeIds.size() > 0) {
+                    for (String node : nodeIds) {
+                        command.addOptions(node);
+                    }
+                }
+
+                if (filterChangesets) {
+                    command.addOptions("--filter", filter);
                 }
             }
             return new String(command.executeToBytes());

@@ -27,10 +27,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 
 /**
@@ -61,19 +58,6 @@ public class TransplantOptionsPage extends HgWizardPage {
             ImageDescriptor titleImage, IProject project) {
         super(pageName, title, titleImage);
         this.project = project;
-        SortedSet<ChangeSet> changes;
-        try {
-            changes = LocalChangesetCache.getInstance().getLocalChangeSets(
-                    project);
-            if (changes != null) {
-                changesets.addAll(changes);
-            }
-
-        } catch (HgException e) {
-            setErrorMessage(Messages.getString("TransplantOptionsPage.errorLoadingChangesets") //$NON-NLS-1$
-                    + project.getName());
-            MercurialEclipsePlugin.logError(e);
-        }
     }
 
     /*
@@ -155,6 +139,7 @@ public class TransplantOptionsPage extends HgWizardPage {
         SelectionListener pruneCheckBoxListener = new SelectionListener() {
             public void widgetSelected(SelectionEvent e) {
                 pruneNodeIdTable.setEnabled(pruneCheckBox.getSelection());
+                populatePruneNodeIdTable();
             }
 
             public void widgetDefaultSelected(SelectionEvent e) {
@@ -183,8 +168,6 @@ public class TransplantOptionsPage extends HgWizardPage {
             }
         };
         pruneNodeIdTable.addSelectionListener(pruneTableListener);
-
-        populatePruneNodeIdCombo();
     }
 
     /**
@@ -200,6 +183,7 @@ public class TransplantOptionsPage extends HgWizardPage {
         SelectionListener mergeCheckBoxListener = new SelectionListener() {
             public void widgetSelected(SelectionEvent e) {
                 mergeNodeIdTable.setEnabled(mergeCheckBox.getSelection());
+                populateMergeNodeIdTable();
             }
 
             public void widgetDefaultSelected(SelectionEvent e) {
@@ -230,8 +214,15 @@ public class TransplantOptionsPage extends HgWizardPage {
         mergeNodeIdTable.addSelectionListener(mergeTableListener);
         populateMergeNodeIdTable();
     }
+    
+    private void loadChangesets() {
+        if (changesets.size()==0) {
+            TransplantPage page = (TransplantPage) getPreviousPage();
+            changesets.addAll(page.getChangesets());
+        }
+    }
 
-    private void validatePage() {
+    private void validatePage() {       
         boolean valid = true;
         if (merge) {
             valid &= mergeNodeId != null && mergeNodeId.length() > 0;
@@ -285,7 +276,8 @@ public class TransplantOptionsPage extends HgWizardPage {
     /**
      * 
      */
-    private void populatePruneNodeIdCombo() {
+    private void populatePruneNodeIdTable() {
+        loadChangesets();
         pruneNodeIdTable.setChangesets(changesets
                 .toArray(new ChangeSet[changesets.size()]));
     }
@@ -294,6 +286,7 @@ public class TransplantOptionsPage extends HgWizardPage {
      * 
      */
     private void populateMergeNodeIdTable() {
+        loadChangesets();
         mergeNodeIdTable.setChangesets(changesets
                 .toArray(new ChangeSet[changesets.size()]));
     }
