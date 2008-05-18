@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.team.core.TeamException;
@@ -27,6 +28,7 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
      */
     private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
             .getInstance();
+    private IProject project;
 
     /**
      * @param name
@@ -36,12 +38,17 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
     public RefreshStatusJob(String name) {
         super(name);
     }
+    
+    public RefreshStatusJob(String name, IProject project) {
+        super(name);
+        this.project = project;
+    }
 
     @Override
     protected IStatus runSafe(IProgressMonitor monitor) {
         try {
             monitor.beginTask("Obtaining Mercurial Status information.", 5);
-            mercurialStatusCache.refreshStatus(monitor);
+            mercurialStatusCache.refreshStatus(project, monitor);
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);
         }

@@ -19,10 +19,19 @@ import org.eclipse.core.runtime.IStatus;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
- * @author bastian
+ * Refreshes status, local changesets, incoming changesets and outgoing
+ * changesets. If you only want to refresh the status use
+ * {@link RefreshStatusJob}.
+ * 
+ * For big repositories this can be quite slow when "withFiles" is set to true
+ * in constructor.
+ * 
+ * @author Bastian Doetsch
  * 
  */
 public final class RefreshJob extends SafeWorkspaceJob {
@@ -30,18 +39,26 @@ public final class RefreshJob extends SafeWorkspaceJob {
             .getInstance();
     private final String repositoryLocation;
     private final IProject project;
+    private boolean withFiles = false;
 
-    /**
-     * @param name
-     * @param repositoryLocation
-     * @param project
-     * @param mercurialStatusCache
-     *            TODO
-     */
+    public RefreshJob(String name, String repositoryLocation, IProject project,
+            boolean withFiles) {
+        super(name);
+        this.repositoryLocation = repositoryLocation;
+        this.project = project;
+        this.withFiles = withFiles;
+    }
+
     public RefreshJob(String name, String repositoryLocation, IProject project) {
         super(name);
         this.repositoryLocation = repositoryLocation;
         this.project = project;
+        this.withFiles = Boolean
+                .valueOf(
+                        MercurialUtilities
+                                .getPreference(
+                                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                        "false")).booleanValue();
     }
 
     @Override
@@ -59,7 +76,8 @@ public final class RefreshJob extends SafeWorkspaceJob {
             if (monitor != null) {
                 monitor.subTask("Loading local revisions...");
             }
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project);
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
+                    false, withFiles);
             if (monitor != null) {
                 monitor.worked(1);
             }

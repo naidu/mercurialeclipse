@@ -199,7 +199,9 @@
 		<command id="com.vectrace.MercurialEclipse.menu.BackoutHandler"
 		         name="Backout..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.FetchHandler"
-                 name="Fetch (pull, update and merge)..."/>	                  		         
+                 name="Fetch (pull, update and merge)..."/>	         
+        <command id="com.vectrace.MercurialEclipse.menu.TransplantHandler"
+                 name="Transplant..."/>                              		         
 	</extension>
 
 	<!-- handlers -->
@@ -235,7 +237,7 @@
 		
 		<!-- PullTransplantHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.PullTransplantHandler"
-		         class="com.vectrace.MercurialEclipse.menu.PullTransplantHandler">
+		         class="com.vectrace.MercurialEclipse.menu.PullHandler">
 			<enabledWhen>
 				<count value="1"/>
 			</enabledWhen>
@@ -345,6 +347,16 @@
 				</and>
 			</enabledWhen>
 		</handler>
+		
+	    <!-- TransplantHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler"
+                 class="com.vectrace.MercurialEclipse.menu.TransplantHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
 	</extension>
 
 	<extension point="org.eclipse.ui.menus">
@@ -434,11 +446,16 @@
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
 				</command>
-				<separator name="group5" visible="true"/>
+				<separator name="group5" visible="true"/>				
 				<separator name="group6" visible="true"/>
 				<separator name="group7" visible="true"/>
 				<separator name="group8" visible="true"/>
 				<separator name="group9" visible="true"/>
+				<!--command commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler" icon ="icons/checkout_action.gif">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command-->
 				<command commandId="com.vectrace.MercurialEclipse.menu.SignHandler" icon = "icons/clcl16/deadlock_view.gif">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
@@ -661,10 +678,19 @@
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">
-      <page class="com.vectrace.MercurialEclipse.preferences.MercurialPreferencePage"
+      <page class="com.vectrace.MercurialEclipse.preferences.GeneralPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
             category="org.eclipse.team.ui.TeamPreferences"
             name="Mercurial Eclipse"/>
+      <page class="com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="Timeouts"/>  
+      <page class="com.vectrace.MercurialEclipse.preferences.PerformancePreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.Performance"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="Performance"/>              
+                      
    </extension>
 
    <extension point="org.eclipse.core.runtime.preferences">

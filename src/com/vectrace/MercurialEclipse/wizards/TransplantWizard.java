@@ -22,43 +22,32 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgFetchClient;
+import com.vectrace.MercurialEclipse.commands.HgTransplantClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author bastian
  * 
  */
-public class FetchWizard extends HgWizard {
+public class TransplantWizard extends HgWizard {
 
     private IProject project;
-    private String projectName;
 
-    private FetchWizard() {
-        super(Messages.getString("FetchWizard.title")); //$NON-NLS-1$        
+    public TransplantWizard(IResource resource) {
+        super("Transplant Wizard");
         setNeedsProgressMonitor(true);
-    }
-
-    public FetchWizard(IResource resource) {
-        this();
         this.project = resource.getProject();
     }
 
     @Override
     public void addPages() {
         super.addPages();
-        FetchPage fetchPage = new FetchPage(
-                Messages.getString("FetchWizard.fetchPage.name"), Messages.getString("FetchWizard.fetchPage.title"), null, project); //$NON-NLS-1$ //$NON-NLS-2$
-        initPage(Messages.getString("FetchWizard.fetchPage.description"), //$NON-NLS-1$
-                fetchPage);
-        fetchPage.setShowCredentials(true);
-        page = fetchPage;
+        TransplantPage transplantPage = new TransplantPage("TransplantPage",
+                "Transplant changesets", null, project);
+        initPage("Transplant changesets from another repository or branch.", transplantPage);
+        transplantPage.setShowCredentials(true);
+        page = transplantPage;
         addPage(page);
-
-        IncomingPage incomingPage = new IncomingPage(Messages
-                .getString("FetchWizard.incomingPage.name")); //$NON-NLS-1$
-        addPage(incomingPage);
-
     }
 
     /*
@@ -75,15 +64,21 @@ public class FetchWizard extends HgWizard {
 
             // Check that this project exist.
             if (project.getLocation() == null) {
-                String msg = Messages.getString("PushRepoWizard.project") + projectName //$NON-NLS-1$
+                String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
                         + Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
                 MercurialEclipsePlugin.logError(msg, null);
                 // System.out.println( string);
                 return false;
             }
 
-            String result = HgFetchClient.fetch(project, repo, repo.getUser(),
-                    repo.getPassword());
+            TransplantPage tPage = (TransplantPage) page;
+
+            String result = HgTransplantClient.transplant(project, tPage
+                    .getNodeIds(), repo, tPage.isBranch(), tPage
+                    .getBranchName(), tPage.isAll(), tPage.isMerge(), tPage
+                    .getMergeNodeId(), tPage.isPrune(), tPage.getPruneNodeId(),
+                    tPage.isContinueLastTransplant(), tPage
+                            .isFilterChangesets(), tPage.getFilter());
 
             if (result.length() != 0) {
                 Shell shell;
@@ -92,11 +87,8 @@ public class FetchWizard extends HgWizard {
                 workbench = PlatformUI.getWorkbench();
                 shell = workbench.getActiveWorkbenchWindow().getShell();
 
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages
-                                        .getString("FetchWizard.fetchOutputDialog.title"), result); //$NON-NLS-1$
+                MessageDialog.openInformation(shell, "Transplant output",
+                        result);
             }
 
             // It appears good. Stash the repo location.
@@ -117,5 +109,5 @@ public class FetchWizard extends HgWizard {
         }
         return true;
     }
-   
+
 }

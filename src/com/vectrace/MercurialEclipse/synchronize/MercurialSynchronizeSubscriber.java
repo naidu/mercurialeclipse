@@ -42,16 +42,16 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class MercurialSynchronizeSubscriber extends Subscriber {
-    
+
     private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
             .getInstance();
-    
+
     private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache
             .getInstance();
-    
+
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
-    
+
     private ISynchronizeScope myScope;
     private IResource[] myRoots;
     private String repositoryLocation;
@@ -222,7 +222,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
             RefreshJob job = new RefreshJob(
                     "Refreshing resources for synchronize...",
-                    repositoryLocation, project);
+                    repositoryLocation, project, true);
             job.schedule(10);
             try {
                 job.join();

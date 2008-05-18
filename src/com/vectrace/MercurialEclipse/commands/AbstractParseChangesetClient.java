@@ -52,18 +52,25 @@ public abstract class AbstractParseChangesetClient {
     protected static final String REV = "{rev}";
     protected static final String TAGS = "{tags}";
     protected static final String BRANCHES = "{branches}";
-    protected static final String SEP_CHANGE_SET = ">";
-    protected static final String SEP_TEMPLATE_ELEMENT = "<";
-    protected static final String START = "°";
+    protected static final String SEP_CHANGE_SET = "@@@";
+    protected static final String SEP_TEMPLATE_ELEMENT = "§§§";
+    protected static final String START = "°°°";
     protected static final String TEMPLATE = START + SEP_TEMPLATE_ELEMENT
-            + BRANCHES + SEP_TEMPLATE_ELEMENT
-            + TAGS + SEP_TEMPLATE_ELEMENT + REV + SEP_TEMPLATE_ELEMENT
+            + BRANCHES + SEP_TEMPLATE_ELEMENT + TAGS + SEP_TEMPLATE_ELEMENT + REV + SEP_TEMPLATE_ELEMENT
             + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE + SEP_TEMPLATE_ELEMENT
             + DATE_ISODATE + SEP_TEMPLATE_ELEMENT + DATE_AGE
             + SEP_TEMPLATE_ELEMENT + AUTHOR_PERSON + SEP_TEMPLATE_ELEMENT
             + DESC + SEP_TEMPLATE_ELEMENT + PARENTS + SEP_TEMPLATE_ELEMENT
-            + FILES + SEP_TEMPLATE_ELEMENT + FILE_ADDS + SEP_TEMPLATE_ELEMENT
-            + FILE_DELS + SEP_TEMPLATE_ELEMENT + SEP_CHANGE_SET;
+            + SEP_CHANGE_SET;
+
+    protected static final String TEMPLATE_WITH_FILES = START
+            + SEP_TEMPLATE_ELEMENT + BRANCHES + SEP_TEMPLATE_ELEMENT + TAGS + SEP_TEMPLATE_ELEMENT + REV
+            + SEP_TEMPLATE_ELEMENT + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE
+            + SEP_TEMPLATE_ELEMENT + DATE_ISODATE + SEP_TEMPLATE_ELEMENT
+            + DATE_AGE + SEP_TEMPLATE_ELEMENT + AUTHOR_PERSON
+            + SEP_TEMPLATE_ELEMENT + DESC + SEP_TEMPLATE_ELEMENT + PARENTS
+            + SEP_TEMPLATE_ELEMENT + FILES + SEP_TEMPLATE_ELEMENT + FILE_ADDS
+            + SEP_TEMPLATE_ELEMENT + FILE_DELS + SEP_CHANGE_SET;
 
     protected static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
             String input, IProject proj, File bundleFile,
@@ -85,7 +92,7 @@ public abstract class AbstractParseChangesetClient {
             return fileRevisions;
         }
 
-        String content = input.substring(input.indexOf(contentStartMarker));
+        String content = input.substring(input.indexOf(contentStartMarker)+contentStartMarker.length());
         String[] changeSetStrings = content.split(changeSetSeparator);
 
         for (String changeSet : changeSetStrings) {
@@ -112,7 +119,8 @@ public abstract class AbstractParseChangesetClient {
             Map<IResource, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs) {
         if (cs.getChangedFiles() != null) {
             for (FileStatus file : cs.getChangedFiles()) {
-                IResource res = MercurialUtilities.getIResource(proj, file.getPath());
+                IResource res = MercurialUtilities.getIResource(proj, file
+                        .getPath());
                 SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
                         fileRevisions, cs, res);
                 fileRevisions.put(res, incomingFileRevs);
@@ -159,9 +167,10 @@ public abstract class AbstractParseChangesetClient {
     }
 
     private static HashSet<String> getFilesValue(Map<String, Integer> pos,
-            String[] comps, String temp) {
-        return new HashSet<String>(Arrays.asList(splitClean(getValue(pos,
-                comps, temp), " ")));
+            String[] comps, String templateTag) {
+        String value = getValue(pos, comps, templateTag);
+        String[] splitCleanValues = splitClean(value, " ");
+        return new HashSet<String>(Arrays.asList(splitCleanValues));
     }
 
     private static void addFiles(List<FileStatus> statuses,
@@ -183,7 +192,7 @@ public abstract class AbstractParseChangesetClient {
     }
 
     private static String[] splitClean(String string, String sep) {
-        if (string.length() == 0) {
+        if (string == null || string.length() == 0) {
             return new String[] {};
         }
         return string.split(sep);
@@ -191,7 +200,12 @@ public abstract class AbstractParseChangesetClient {
 
     private static String getValue(Map<String, Integer> templatePositions,
             String[] changeSetComponents, String temp) {
-        return changeSetComponents[templatePositions.get(temp).intValue()];
+        Integer valuePosition = templatePositions.get(temp);
+        String returnValue = null;
+        if (valuePosition != null) {
+            returnValue = changeSetComponents[valuePosition.intValue()];
+        }
+        return returnValue;
     }
 
     private static String unescape(String string) {
@@ -214,19 +228,22 @@ public abstract class AbstractParseChangesetClient {
             i++;
         }
 
-        String[] comps = split(changeSet, templateElementSeparator);
+        String[] stringComponents = split(changeSet, templateElementSeparator);
         ChangeSet cs = new ChangeSet();
-        cs.setTag(getValue(pos, comps, TAGS));
-        cs.setBranch(getValue(pos, comps, BRANCHES));
-        cs.setChangesetIndex(Integer.parseInt(getValue(pos, comps, REV)));
-        cs.setNodeShort(getValue(pos, comps, NODE_SHORT));
-        cs.setChangeset(getValue(pos, comps, NODE));
-        cs.setDate(getValue(pos, comps, DATE_ISODATE));
-        cs.setAgeDate(getValue(pos, comps, DATE_AGE));
-        cs.setUser(getValue(pos, comps, AUTHOR_PERSON));
-        cs.setDescription(unescape(getValue(pos, comps, DESC)));
-        cs.setParents(splitClean(getValue(pos, comps, PARENTS), " "));
-        cs.setChangedFiles(getFileStatuses(pos, comps));
+        cs.setTag(getValue(pos, stringComponents, TAGS));
+        cs.setBranch(getValue(pos, stringComponents, BRANCHES));
+        cs.setChangesetIndex(Integer.parseInt(getValue(pos, stringComponents,
+                REV)));
+        cs.setNodeShort(getValue(pos, stringComponents, NODE_SHORT));
+        cs.setChangeset(getValue(pos, stringComponents, NODE));
+        cs.setDate(getValue(pos, stringComponents, DATE_ISODATE));
+        cs.setAgeDate(getValue(pos, stringComponents, DATE_AGE));
+        cs.setUser(getValue(pos, stringComponents, AUTHOR_PERSON));
+        cs.setDescription(unescape(getValue(pos, stringComponents, DESC)));
+        cs
+                .setParents(splitClean(
+                        getValue(pos, stringComponents, PARENTS), " "));
+        cs.setChangedFiles(getFileStatuses(pos, stringComponents));
         return cs;
     }
 

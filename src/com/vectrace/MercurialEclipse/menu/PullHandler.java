@@ -18,7 +18,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.wizards.PullRepoWizard;
 
-public class PullTransplantHandler extends SingleResourceHandler {
+public class PullHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {

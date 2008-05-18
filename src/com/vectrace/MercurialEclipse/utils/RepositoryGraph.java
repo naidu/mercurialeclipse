@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class RepositoryGraph {
@@ -29,7 +30,7 @@ public class RepositoryGraph {
 	private Map<IResource, Map<String, ChangeSetNode>> revMap = new HashMap<IResource, Map<String, ChangeSetNode>>();
 
 	// private SortedSet<ChangeSet> resChangeSets;
-	private static MercurialStatusCache cache = MercurialStatusCache
+	private static AbstractCache cache = MercurialStatusCache
 			.getInstance();
 
 	private RepositoryGraph() {
