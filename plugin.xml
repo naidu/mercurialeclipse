@@ -451,11 +451,11 @@
 				<separator name="group7" visible="true"/>
 				<separator name="group8" visible="true"/>
 				<separator name="group9" visible="true"/>
-				<command commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler" icon ="icons/checkout_action.gif">
+				<!--command commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler" icon ="icons/checkout_action.gif">
                     <visibleWhen>
                         <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
                     </visibleWhen>
-                </command>
+                </command-->
 				<command commandId="com.vectrace.MercurialEclipse.menu.SignHandler" icon = "icons/clcl16/deadlock_view.gif">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
