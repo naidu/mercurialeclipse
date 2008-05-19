@@ -1,6 +1,5 @@
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.SortedSet;
@@ -25,7 +24,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
@@ -76,8 +74,6 @@ final class IncomingPage extends WizardPage {
 
         try {
             HgRepositoryLocation remote = location;
-            File bundleFile = HgIncomingClient.getBundleFile(project, remote);
-            System.out.println(bundleFile);
             SortedSet<ChangeSet> incoming = IncomingChangesetCache
                     .getInstance().getIncomingChangeSets(project,
                             remote.getUrl());
