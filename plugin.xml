@@ -175,7 +175,7 @@
 		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
 		         name="Tag as Version..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
-		         name="Merge"/>
+		         name="Merge..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
 		         name="Switch to Another Changeset..."/>
 
@@ -201,7 +201,9 @@
 		<command id="com.vectrace.MercurialEclipse.menu.FetchHandler"
                  name="Fetch (pull, update and merge)..."/>	         
         <command id="com.vectrace.MercurialEclipse.menu.TransplantHandler"
-                 name="Transplant..."/>                              		         
+                 name="Transplant..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.StripHandler"
+                 name="Strip..."/>
 	</extension>
 
 	<!-- handlers -->
@@ -357,13 +359,23 @@
                 </and>
             </enabledWhen>
         </handler>
+        
+        <!-- StripHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.StripHandler"
+                 class="com.vectrace.MercurialEclipse.menu.StripHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
 	</extension>
 
 	<extension point="org.eclipse.ui.menus">
 		<menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
 			<menu label="Team" id="team.main">
 				<separator name="group1" visible="true"/>
-				<command commandId="com.vectrace.MercurialEclipse.menu.CommitMergeHandler">
+				<command commandId="com.vectrace.MercurialEclipse.menu.CommitMergeHandler" icon="icons/release_rls.gif">
 					<visibleWhen>
 						<and>
 							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
@@ -424,17 +436,7 @@
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
-				</command>
-				<command commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler" icon="icons/undo_edit.gif">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-				<command commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler" icon="icons/undo_edit.gif">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
+				</command>				
 				<separator name="group4" visible="true"/>
 				<command commandId="com.vectrace.MercurialEclipse.menu.GLogHandler">
 					<visibleWhen>
@@ -446,7 +448,22 @@
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
 				</command>
-				<separator name="group5" visible="true"/>				
+				<separator name="group5" visible="true"/>
+				<command commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler" icon="icons/undo_edit.gif">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command>
+                <command commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler" icon="icons/undo_edit.gif">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command>
+                <command commandId="com.vectrace.MercurialEclipse.menu.StripHandler" icon="icons/undo_edit.gif">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command>				
 				<separator name="group6" visible="true"/>
 				<separator name="group7" visible="true"/>
 				<separator name="group8" visible="true"/>
@@ -558,7 +575,7 @@
                class="com.vectrace.MercurialEclipse.team.ActionRevert"
                icon="icons/undo_edit.gif"
                tooltip="hg revert"
-               menubarPath="team.main/group2"
+               menubarPath="team.main/group5"
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
            <action

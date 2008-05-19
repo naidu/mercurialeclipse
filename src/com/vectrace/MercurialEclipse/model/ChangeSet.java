@@ -70,7 +70,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     public ChangeSet(int changesetIndex, String changeSet, String user,
             String date, String branch) {
-        this(changesetIndex, changeSet, null, branch, user, date, null, null);
+        this(changesetIndex, changeSet, null, branch, user, date, "", null);
     }
 
     public int getChangesetIndex() {

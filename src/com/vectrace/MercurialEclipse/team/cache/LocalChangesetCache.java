@@ -73,9 +73,24 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
     public synchronized void clear() {
-        localChangeSets.clear();
+        localChangeSets.clear();        
     }
-
+    
+    public void clear(IResource objectResource) {
+        ReentrantLock lock = getLock(objectResource);
+        try {
+            lock.lock();
+            Set<IResource>members = getMembers(objectResource);
+            members.add(objectResource);
+            for (IResource resource : members) {
+                localChangeSets.remove(resource);
+            }            
+            notifyChanged(objectResource);
+        } finally {
+            lock.unlock();
+        }
+    }
+    
     public SortedSet<ChangeSet> getLocalChangeSets(IResource objectResource)
             throws HgException {
         ReentrantLock lock = getLock(objectResource);
