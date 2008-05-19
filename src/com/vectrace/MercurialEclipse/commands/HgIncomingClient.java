@@ -40,13 +40,13 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             IProject proj, HgRepositoryLocation repository) throws HgException {
         HgCommand command = new HgCommand("incoming", proj, false);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-        File bundleFile = getBundleFile(proj, repository);
-        File temp = new File(bundleFile.getAbsolutePath() + ".temp."
-                + System.currentTimeMillis());
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);                        
         try {
+            final File bundleFile = File.createTempFile("bundleFile-".concat(proj.getName()).concat("-"), ".tmp",null);
+            bundleFile.deleteOnExit();
             command.addOptions("--debug", "--template", TEMPLATE_WITH_FILES,
-                    "--bundle", temp.getCanonicalPath(), repository.getUrl());
+                    "--bundle", bundleFile.getAbsolutePath(), repository.getUrl());
+                        
             String result = command.executeToString();
             if (result.contains("no changes found")) {
                 return null;
@@ -55,24 +55,16 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                     result, proj, TEMPLATE_WITH_FILES, SEP_CHANGE_SET,
                     SEP_TEMPLATE_ELEMENT, Direction.INCOMING, repository,
                     bundleFile, START);
-            temp.renameTo(bundleFile);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) {
                 return null;
             }
+            MercurialEclipsePlugin.logError(hg);
             throw new HgException(hg.getMessage(), hg);
         } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getMessage(), e);
         }
-    }
-
-    public static File getBundleFile(IProject proj, HgRepositoryLocation loc) {
-        String strippedLocation = loc.getUrl().replace('/', '_').replace(':',
-                '.');
-        return MercurialEclipsePlugin.getDefault().getStateLocation().append(
-                MercurialEclipsePlugin.BUNDLE_FILE_PREFIX + "."
-                        + proj.getName() + "." + strippedLocation + ".hg")
-                .toFile();
     }
 }
