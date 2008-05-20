@@ -108,6 +108,7 @@ public class ResourceDecorator extends LabelProvider implements
                 // get recent project versions
                 if (!STATUS_CACHE.getLock(project).isLocked()
                         && !STATUS_CACHE.getLock(resource).isLocked()
+                        && !STATUS_CACHE.isStatusKnown(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
                         && !LOCAL_CACHE.isLocallyKnown(resource.getProject())) {
