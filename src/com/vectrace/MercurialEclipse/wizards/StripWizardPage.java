@@ -107,7 +107,7 @@ public class StripWizardPage extends HgWizardPage {
                 Messages.getString("StripWizardPage.stripHeadsCheckBox.title")); //$NON-NLS-1$
 
         try {
-            populateBackoutChangesetTable();
+            populateChangesetTable();
         } catch (HgException e) {
             MessageDialog.openInformation(getShell(),
                     Messages.getString("StripWizardPage.errorLoadChangesets"), e.getMessage()); //$NON-NLS-1$
@@ -116,7 +116,7 @@ public class StripWizardPage extends HgWizardPage {
         setControl(composite);
     }
 
-    protected void populateBackoutChangesetTable() throws HgException {
+    protected void populateChangesetTable() throws HgException {
         LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
                 true);
 
@@ -136,6 +136,7 @@ public class StripWizardPage extends HgWizardPage {
     @Override
     public boolean finish(IProgressMonitor monitor) {
         super.finish(monitor);
+        this.stripRevision = changesetTable.getSelection();
         this.unrelated = unrelatedCheckBox.getSelection();
         this.stripHeads = stripHeadsCheckBox.getSelection();
         this.backup = backupCheckBox.getSelection();

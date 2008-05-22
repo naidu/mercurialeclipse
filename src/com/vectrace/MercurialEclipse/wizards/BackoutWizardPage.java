@@ -142,6 +142,7 @@ public class BackoutWizardPage extends HgWizardPage {
     public boolean finish(IProgressMonitor monitor) {
         String msg = messageTextField.getText();
         boolean merge = mergeCheckBox.getSelection();
+        backoutRevision = changesetTable.getSelection();
         try {
             String result = HgBackoutClient.backout(project, backoutRevision,
                     merge, msg, userTextField.getText());

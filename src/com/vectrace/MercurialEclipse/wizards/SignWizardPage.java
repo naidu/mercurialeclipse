@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
@@ -174,10 +173,9 @@ public class SignWizardPage extends HgWizardPage {
 
     @Override    
     public boolean finish(IProgressMonitor monitor) {
-        ChangeSet cs = (ChangeSet) ((IStructuredSelection) changesetTable
-                .getSelection()).getFirstElement();
+        ChangeSet cs = changesetTable.getSelection();
         String key = keyCombo.getText();
-        key = key.substring(key.indexOf("/") + 1, key.indexOf("\\")); //$NON-NLS-1$ //$NON-NLS-2$
+        key = key.substring(key.indexOf("/") + 1, key.indexOf(" ")); //$NON-NLS-1$ //$NON-NLS-2$
         String msg = messageTextField.getText();
         String user = userTextField.getText();
         String pass = passTextField.getText();

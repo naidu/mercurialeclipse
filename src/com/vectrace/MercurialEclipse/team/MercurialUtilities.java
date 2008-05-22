@@ -132,7 +132,7 @@ public class MercurialUtilities {
         try {
             Runtime.getRuntime().exec(getGpgExecutable());
             return true;
-        } catch (IOException e) {
+        } catch (Exception e) {
             return false;
         }
     }
@@ -143,7 +143,7 @@ public class MercurialUtilities {
      * @return false if no hg is defined. True if hg executable is defined
      */
     public static String getGpgExecutable() {
-        return getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE, "");
+        return getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
     }
 
     public static void configureHgExecutable() {

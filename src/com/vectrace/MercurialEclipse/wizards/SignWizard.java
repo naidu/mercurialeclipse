@@ -50,7 +50,7 @@ public class SignWizard extends Wizard {
 
     @Override
     public boolean canFinish() {
-        return super.canFinish() && page.canFlipToNextPage();
+        return super.canFinish() && page.isPageComplete();
     }
 
 }
