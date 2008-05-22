@@ -185,7 +185,7 @@ public abstract class AbstractShellCommand {
             result.add("--");
         }
         result.addAll(files);
-        console.println("Command: (" + result.size() + ") " + result);
+        console.println("Command: (" + result.size() + ") " + result.toString().replace(",",""));
         // TODO check that length <= MAX_PARAMS
         return result;
     }
