@@ -49,25 +49,36 @@ public abstract class AbstractShellCommand {
 
         @Override
         public void run() {
+            ByteArrayOutputStream myOutput = new ByteArrayOutputStream();
             try {
                 int length;
                 byte[] buffer = new byte[1024];
-                ByteArrayOutputStream myOutput = new ByteArrayOutputStream();
+                
                 while ((length = stream.read(buffer)) != -1) {
                     myOutput.write(buffer, 0, length);
                 }
-                stream.close();
-                this.output = myOutput.toByteArray();
+                this.output = myOutput.toByteArray();                
             } catch (IOException e) {
                 // TODO report the error to the caller thread
                 MercurialEclipsePlugin.logError(e);
+            } finally {
+                try {
+                    this.stream.close();
+                } catch (IOException e) {                    
+                    MercurialEclipsePlugin.logError(e);
+                }
+                try {
+                    myOutput.close();
+                } catch (IOException e) {                    
+                    MercurialEclipsePlugin.logError(e);
+                }
             }
         }
 
     }
 
     protected static PrintStream console = new PrintStream(MercurialUtilities
-            .getMercurialConsole().newOutputStream());
+            .getMercurialConsole().newOutputStream());    
 
     public static final int MAX_PARAMS = 120;
     protected String command;
@@ -135,7 +146,7 @@ public abstract class AbstractShellCommand {
             }
             Process process = builder.start();
             InputStreamConsumer consumer = new InputStreamConsumer(process
-                    .getInputStream());
+                    .getInputStream());            
             consumer.start();
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
