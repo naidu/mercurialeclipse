@@ -46,9 +46,8 @@ public class GraphLogTableViewer extends TableViewer {
 
 	protected void paint(Event event) {
 		TableItem tableItem = (TableItem) event.item;
-		if (event.index != 0) {
-            return;
-        }
+		if (event.index != 0)
+			return;
 		MercurialRevision rev = (MercurialRevision) tableItem.getData();
 		GChangeSet gcs = rev.getGChangeSet();
 		if (gcs != null) {
@@ -56,7 +55,6 @@ public class GraphLogTableViewer extends TableViewer {
 			paint(event, gcs.getMiddle(), 1);
 			paint(event, gcs.getAfter(), 2);
 		}
-		event.gc.dispose();
 	}
 
 	private void paint(Event event, EdgeList edges, int i) {
@@ -77,7 +75,7 @@ public class GraphLogTableViewer extends TableViewer {
 			g.setLineStyle(SWT.LINE_DOT);
 			g.setForeground(g.getDevice().getSystemColor(SWT.COLOR_BLACK));
 			g.drawLine(getX(event, jump[0]), middle, getX(event, jump[1]), middle);
-		}		
+		}
 	}
 
 	private void drawLine(Event event, GC g, int div3, int y, Edge e, int top,
