@@ -64,7 +64,7 @@ public class AddHandler extends MultipleResourcesHandler {
             untrackedFiles.put(project, files);
             untrackedFolders.put(project, folders);
         }
-
+       
         ViewerFilter untrackedFilter = new UntrackedResourcesFilter(untrackedFiles,
                 untrackedFolders);
 
@@ -80,7 +80,9 @@ public class AddHandler extends MultipleResourcesHandler {
         dialog.addFilter(untrackedFilter);
         if (dialog.open() == IDialogConstants.OK_ID) {
         	HgAddClient.addResources(keepFiles(dialog.getResult()), null);
-			new RefreshStatusJob("Refreshing status after adding resources...").schedule();
+        	for (IProject proj : roots) {
+        	    new RefreshStatusJob("Refreshing status after adding resources...", proj).schedule();    
+            }			
         }
     }
 
