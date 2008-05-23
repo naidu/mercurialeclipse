@@ -113,6 +113,12 @@
 				</adapt>
 			</iterate>
 		</definition>
+		<!-- Must be file -->
+		<definition id="com.vectrace.MercurialEclipse.def.file">
+			<iterate>
+				<adapt type="org.eclipse.core.resources.IFile"/>
+			</iterate>
+		</definition>
 		<!-- notInMercurial -->
 		<definition id="com.vectrace.MercurialEclipse.def.notInMercurial">
 			<iterate>
@@ -445,7 +451,10 @@
 				</command>
 				<command commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler" icon="icons/annotate.gif">
 					<visibleWhen>
+					<and>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.file"/>
+					</and>
 					</visibleWhen>
 				</command>
 				<separator name="group5" visible="true"/>
