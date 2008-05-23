@@ -26,15 +26,33 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 			Object element) {
 		
 		IResource resource = (IResource) element;
-		IProject project = resource.getProject();
-		IPath path = resource.getProjectRelativePath();
+		IProject project = resource.getProject();		
+		String path = resource.getFullPath().toOSString();
+		
 		if(resource.getType() == IResource.FILE) {
-			return untrackedFiles.get(project).contains(path);
+			Set<IPath> set = untrackedFiles.get(project);
+			return isSubPath(path, set);
 		} else if(resource.getType() == IResource.FOLDER){
-			return untrackedFolders.get(project).contains(path);
+		    Set<IPath> set = untrackedFolders.get(project);
+			return isSubPath(path, set);
 		} else {
 			return true;
 		}
 	}
+
+    /**
+     * @param path
+     * @param set
+     * @return
+     */
+    private boolean isSubPath(String path, Set<IPath> set) {
+        for (IPath setPath : set) {
+            String setPathString = setPath.toOSString();
+            if (setPathString.endsWith(path)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
