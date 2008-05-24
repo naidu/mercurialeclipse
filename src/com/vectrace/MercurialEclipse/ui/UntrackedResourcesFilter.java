@@ -27,7 +27,7 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 		
 		IResource resource = (IResource) element;
 		IProject project = resource.getProject();		
-		String path = resource.getFullPath().toOSString();
+		String path = resource.getProjectRelativePath().toOSString();
 		
 		if(resource.getType() == IResource.FILE) {
 			Set<IPath> set = untrackedFiles.get(project);
