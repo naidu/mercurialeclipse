@@ -53,23 +53,24 @@ public abstract class AbstractShellCommand {
             try {
                 int length;
                 byte[] buffer = new byte[1024];
-                
+
                 while ((length = stream.read(buffer)) != -1) {
                     myOutput.write(buffer, 0, length);
                 }
-                this.output = myOutput.toByteArray();                
+                this.output = myOutput.toByteArray();
             } catch (IOException e) {
-                // TODO report the error to the caller thread
-                MercurialEclipsePlugin.logError(e);
+                if (!interrupted()) {
+                    MercurialEclipsePlugin.logError(e);
+                }
             } finally {
                 try {
                     this.stream.close();
-                } catch (IOException e) {                    
+                } catch (IOException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
                 try {
                     myOutput.close();
-                } catch (IOException e) {                    
+                } catch (IOException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
             }
@@ -78,7 +79,7 @@ public abstract class AbstractShellCommand {
     }
 
     protected static PrintStream console = new PrintStream(MercurialUtilities
-            .getMercurialConsole().newOutputStream());    
+            .getMercurialConsole().newOutputStream());
 
     public static final int MAX_PARAMS = 120;
     protected String command;
@@ -89,6 +90,8 @@ public abstract class AbstractShellCommand {
     final List<String> files = new ArrayList<String>();
 
     private String timeoutConstant;
+    private InputStreamConsumer consumer;
+    private Process process;
 
     protected AbstractShellCommand() {
     }
@@ -127,6 +130,10 @@ public abstract class AbstractShellCommand {
         return executeToBytes(timeout);
     }
 
+    protected byte[] executeToBytes(int timeout) throws HgException {
+        return this.executeToBytes(timeout, true);
+    }
+
     /**
      * Execute a command.
      * 
@@ -135,7 +142,8 @@ public abstract class AbstractShellCommand {
      * @return
      * @throws HgException
      */
-    protected byte[] executeToBytes(int timeout) throws HgException {
+    protected byte[] executeToBytes(int timeout,
+            boolean expectPositiveReturnValue) throws HgException {
         try {
             long start = System.currentTimeMillis();
             List<String> cmd = getCommands();
@@ -144,9 +152,8 @@ public abstract class AbstractShellCommand {
             if (workingDir != null) {
                 builder.directory(workingDir);
             }
-            Process process = builder.start();
-            InputStreamConsumer consumer = new InputStreamConsumer(process
-                    .getInputStream());            
+            process = builder.start();
+            consumer = new InputStreamConsumer(process.getInputStream());
             consumer.start();
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
@@ -155,17 +162,26 @@ public abstract class AbstractShellCommand {
                             + (System.currentTimeMillis() - start) + " ms");
                     return consumer.getBytes();
                 }
-                String msg = new String(consumer.getBytes());
-                System.out.println(msg);
+                String msg = "";
+                if (consumer.getBytes() != null) {
+                    msg = new String(consumer.getBytes());
+                    System.out.println(msg);
+                }
+
+                if (!expectPositiveReturnValue) {
+                    return msg.getBytes();
+                }
+
                 throw new HgException("Process error, return code: "
                         + process.exitValue() + ", message: " + msg);
             }
-            process.destroy();
             throw new HgException("Process timeout");
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
         } catch (InterruptedException e) {
             throw new HgException(e.getMessage(), e);
+        } finally {
+            process.destroy();
         }
     }
 
@@ -185,7 +201,8 @@ public abstract class AbstractShellCommand {
             result.add("--");
         }
         result.addAll(files);
-        console.println("Command: (" + result.size() + ") " + result.toString().replace(",",""));
+        console.println("Command: (" + result.size() + ") "
+                + result.toString().replace(",", ""));
         // TODO check that length <= MAX_PARAMS
         return result;
     }
@@ -215,5 +232,15 @@ public abstract class AbstractShellCommand {
      */
     public void setUsePreferenceTimeout(String cloneTimeout) {
         this.timeoutConstant = cloneTimeout;
+    }
+
+    /**
+     * 
+     */
+    public void terminate() {
+        if (consumer != null) {
+            consumer.interrupt();
+        }
+        process.destroy();
     }
 }
