@@ -18,20 +18,28 @@ import java.net.URL;
 import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgFetchClient {
 
     public static String fetch(IProject project, HgRepositoryLocation location,
-            String user, String pass) throws HgException {
+            ChangeSet changeset) throws HgException {
         try {
             HgCommand command = new HgCommand("fetch", project, true);
             command.addOptions("--config", "extensions.fetch=");
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+
+            if (changeset != null) {
+                command.addOptions("--rev", changeset.getChangeset());
+            }
+
             URL url = location.getUrlObject();
 
+            String user = location.getUser();
+            String pass = location.getPassword();
             String userInfo = user;
             if (user != null && user.length() == 0) {
                 // URI parts are undefinied, if they are null.

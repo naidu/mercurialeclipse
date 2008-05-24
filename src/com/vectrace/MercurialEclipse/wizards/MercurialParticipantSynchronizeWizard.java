@@ -61,7 +61,8 @@ public class MercurialParticipantSynchronizeWizard extends
 
     @Override
     protected String getPageTitle() {
-        return Messages.getString("MercurialParticipantSynchronizeWizard.pageTitle"); //$NON-NLS-1$
+        return Messages
+                .getString("MercurialParticipantSynchronizeWizard.pageTitle"); //$NON-NLS-1$
     }
 
     @Override
@@ -75,12 +76,19 @@ public class MercurialParticipantSynchronizeWizard extends
         IProject[] projects = MercurialStatusCache.getInstance()
                 .getAllManagedProjects();
         if (projects != null) {
-            page = new ConfigurationWizardMainPage(Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.name"), //$NON-NLS-1$
-                    Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.title"), MercurialEclipsePlugin //$NON-NLS-1$
-                            .getImageDescriptor(Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.image"))); //$NON-NLS-1$
+            ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(
+                    Messages
+                            .getString("MercurialParticipantSynchronizeWizard.repositoryPage.name"), //$NON-NLS-1$
+                    Messages
+                            .getString("MercurialParticipantSynchronizeWizard.repositoryPage.title"), MercurialEclipsePlugin //$NON-NLS-1$
+                            .getImageDescriptor(Messages
+                                    .getString("MercurialParticipantSynchronizeWizard.repositoryPage.image"))); //$NON-NLS-1$
 
+            mainPage.setShowBundleButton(false);
+            page = mainPage;
             page
-                    .setDescription(Messages.getString("MercurialParticipantSynchronizeWizard.repositoryPage.description")); //$NON-NLS-1$
+                    .setDescription(Messages
+                            .getString("MercurialParticipantSynchronizeWizard.repositoryPage.description")); //$NON-NLS-1$
             page.setDialogSettings(getDialogSettings());
             addPage(page);
         }

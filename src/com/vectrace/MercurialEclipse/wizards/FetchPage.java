@@ -35,6 +35,7 @@ public class FetchPage extends ConfigurationWizardMainPage {
             IProject project) {
         super(pageName, title, titleImage);
         this.project = project;
+        setShowBundleButton(true);
     }
 
     @Override

@@ -1,7 +1,5 @@
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -15,11 +13,12 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
-import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
-import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
@@ -27,18 +26,19 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
-final class IncomingPage extends WizardPage {
+public class IncomingPage extends HgWizardPage {
 
     private TableViewer changeSetViewer;
     private TableViewer fileStatusViewer;
     private IProject project;
     private HgRepositoryLocation location;
+    private Button revisionCheckBox;
+    private ChangeSet revision;
 
     protected IncomingPage(String pageName) {
         super(pageName);
@@ -55,23 +55,6 @@ final class IncomingPage extends WizardPage {
     }
 
     private SortedSet<ChangeSet> getIncoming() {
-
-        ChangeSet a = new ChangeSet(0, "00000000", "dummy", "2008-01-01", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        ChangeSet b = new ChangeSet(1, "11111111", "dummy 2 ", "2008-01-02", ""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-        List<FileStatus> st = new ArrayList<FileStatus>();
-
-        st.add(new FileStatus(Action.ADDED, "/foo/bar/path")); //$NON-NLS-1$
-        st.add(new FileStatus(Action.MODIFIED, "/foo/bar/path2")); //$NON-NLS-1$
-        st.add(new FileStatus(Action.REMOVED, "/foo/bar/path3")); //$NON-NLS-1$
-        a.setChangedFiles(st.toArray(new FileStatus[st.size()]));
-
-        TreeSet<ChangeSet> set = new TreeSet<ChangeSet>();
-        set.add(a);
-        set.add(b);
-
-        // if(true) return set;
-
         try {
             HgRepositoryLocation remote = location;
             SortedSet<ChangeSet> incoming = IncomingChangesetCache
@@ -86,18 +69,22 @@ final class IncomingPage extends WizardPage {
 
     public void createControl(Composite parent) {
 
-        Composite container = new Composite(parent, SWT.NULL);
+        Composite container = createComposite(parent, 1);
         setControl(container);
-        container.setLayout(new FillLayout(SWT.VERTICAL));
 
-        changeSetViewer = new TableViewer(container, SWT.FULL_SELECTION
-                | SWT.BORDER);
+        changeSetViewer = new TableViewer(container, SWT.SINGLE | SWT.BORDER
+                | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
         changeSetViewer.setContentProvider(new ArrayContentProvider());
         changeSetViewer.setLabelProvider(new ChangeSetLabelProvider());
         Table table = changeSetViewer.getTable();
+        GridData gridData = new GridData(GridData.FILL_BOTH);
+        gridData.heightHint = 150;
+        gridData.minimumHeight = 50;
+        table.setLayoutData(gridData);
+        
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        String[] titles = { "Rev", "Global", "Date", "Author" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String[] titles = { Messages.getString("IncomingPage.columnHeader.revision"), Messages.getString("IncomingPage.columnHeader.global"), Messages.getString("IncomingPage.columnHeader.date"), Messages.getString("IncomingPage.columnHeader.author") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 50, 150, 150, 100 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -105,12 +92,16 @@ final class IncomingPage extends WizardPage {
             column.setWidth(widths[i]);
         }
 
-        fileStatusViewer = new TableViewer(container, SWT.FULL_SELECTION
-                | SWT.BORDER);
+        fileStatusViewer = new TableViewer(container, SWT.SINGLE | SWT.BORDER
+                | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
         fileStatusViewer.setContentProvider(new ArrayContentProvider());
         fileStatusViewer.setLabelProvider(new FileStatusLabelProvider());
 
         table = fileStatusViewer.getTable();
+        gridData = new GridData(GridData.FILL_BOTH);
+        gridData.heightHint = 150;
+        gridData.minimumHeight = 50;
+        table.setLayoutData(gridData);
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
         titles = new String[] {
@@ -122,6 +113,10 @@ final class IncomingPage extends WizardPage {
             column.setText(titles[i]);
             column.setWidth(widths[i]);
         }
+
+        Group group = createGroup(container, Messages.getString("IncomingPage.group.title")); //$NON-NLS-1$
+        this.revisionCheckBox = createCheckBox(group,
+                Messages.getString("IncomingPage.revisionCheckBox.title")); //$NON-NLS-1$
         makeActions();
     }
 
@@ -140,6 +135,7 @@ final class IncomingPage extends WizardPage {
                 .addSelectionChangedListener(new ISelectionChangedListener() {
                     public void selectionChanged(SelectionChangedEvent event) {
                         ChangeSet change = getSelectedChangeSet();
+                        revision = change;
                         if (change != null) {
                             fileStatusViewer.setInput(change.getChangedFiles());
                         } else {
@@ -198,5 +194,19 @@ final class IncomingPage extends WizardPage {
      */
     public void setLocation(HgRepositoryLocation repo) {
         this.location = repo;
+    }
+
+    /**
+     * @return the revisionCheckBox
+     */
+    public Button getRevisionCheckBox() {
+        return revisionCheckBox;
+    }
+
+    /**
+     * @return the revision
+     */
+    public ChangeSet getRevision() {
+        return revision;
     }
 }

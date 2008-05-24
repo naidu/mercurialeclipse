@@ -181,7 +181,9 @@ public abstract class AbstractShellCommand {
         } catch (InterruptedException e) {
             throw new HgException(e.getMessage(), e);
         } finally {
-            process.destroy();
+            if (process != null) {
+                process.destroy();
+            }
         }
     }
 

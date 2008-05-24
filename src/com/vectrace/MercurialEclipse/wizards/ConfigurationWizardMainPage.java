@@ -32,6 +32,7 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
@@ -45,16 +46,23 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
     protected boolean showCredentials = false;
+    protected boolean showBundleButton = false;
 
     // Widgets
 
     // User
-    private Combo userCombo;
+    protected Combo userCombo;
     // Password
-    private Text passwordText;
+    protected Text passwordText;
 
     // url of the repository we want to add
-    private Combo urlCombo;
+    protected Combo urlCombo;
+
+    // local repositories button
+    protected Button browseButton;
+
+    // bundles
+    protected Button browseFileButton;
 
     private static final int COMBO_HISTORY_LENGTH = 10;
 
@@ -119,7 +127,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      *            the parent of the created widgets
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 3);
+        Composite composite = createComposite(parent, 1);
 
         Listener listener = new Listener() {
             public void handleEvent(Event event) {
@@ -127,8 +135,31 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         };
 
-        Group g = createGroup(composite, Messages
-                .getString("ConfigurationWizardMainPage.urlGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+        createUrlControl(composite, listener);
+
+        if (showCredentials) {
+            createAuthenticationControl(composite, listener);
+        }
+
+        initializeValues();
+        validateFields();
+        urlCombo.setFocus();
+
+        setControl(composite);
+    }
+
+    
+
+    /**
+     * @param composite
+     * @param listener
+     */
+    private void createUrlControl(Composite composite, Listener listener) {
+        Composite urlComposite = createComposite(composite, 4);
+
+        Group g = createGroup(urlComposite, Messages
+                .getString("ConfigurationWizardMainPage.urlGroup.title"), 4, //$NON-NLS-1$
+                GridData.FILL_HORIZONTAL); //$NON-NLS-1$
 
         // repository Url
         createLabel(g, Messages
@@ -137,7 +168,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         urlCombo.addListener(SWT.Selection, listener);
         urlCombo.addListener(SWT.Modify, listener);
 
-        Button browseButton = createPushButton(g, Messages
+        browseButton = createPushButton(g, Messages
                 .getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -153,6 +184,24 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             }
         });
 
+        if (showBundleButton) {
+            browseFileButton = createPushButton(g, Messages
+                    .getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
+
+            browseFileButton.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    FileDialog dialog = new FileDialog(getShell());
+                    dialog.setText(Messages
+                            .getString("PullPage.bundleDialog.text")); //$NON-NLS-1$
+                    String dir = dialog.open();
+                    if (dir != null) {
+                        getUrlCombo().setText(dir);
+                    }
+                }
+            });
+        }
+
         urlCombo.addModifyListener(new ModifyListener() {
             /*
              * (non-Javadoc)
@@ -163,35 +212,48 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 setPageComplete(true);
             }
         });
-
-        if (showCredentials) {
-            g = createGroup(
-                    composite,
-                    Messages
-                            .getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
-
-            // User name
-            createLabel(g, Messages
-                    .getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
-            userCombo = createEditableCombo(g);
-            userCombo.addListener(SWT.Selection, listener);
-            userCombo.addListener(SWT.Modify, listener);
-
-            // Password
-            createLabel(
-                    g,
-                    Messages
-                            .getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
-            passwordText = createTextField(g);
-            passwordText.setEchoChar('*');
-        }
-
-        initializeValues();
-        validateFields();
-        urlCombo.setFocus();
-
-        setControl(composite);
     }
+
+    /**
+     * @param composite
+     * @param listener
+     */
+    private void createAuthenticationControl(Composite composite,
+            Listener listener) {
+        Group g;
+        Composite authComposite = createComposite(composite, 2);
+        g = createGroup(
+                authComposite,
+                Messages
+                        .getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
+
+        // User name
+        createLabel(g, Messages
+                .getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
+        userCombo = createEditableCombo(g);
+        userCombo.addListener(SWT.Selection, listener);
+        userCombo.addListener(SWT.Modify, listener);
+
+        // Password
+        createLabel(g, Messages
+                .getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
+        passwordText = createTextField(g);
+        passwordText.setEchoChar('*');
+    }
+
+    /*
+     * private void setDefaultLocation(ComboViewer locations) { try {
+     * HgRepositoryLocation defaultLocation = null; Map<String,
+     * HgRepositoryLocation> paths = HgPathsClient
+     * .getPaths(resource.getProject()); if
+     * (paths.containsKey(HgPathsClient.DEFAULT_PULL)) { defaultLocation =
+     * paths.get(HgPathsClient.DEFAULT_PULL); } else if
+     * (paths.containsKey(HgPathsClient.DEFAULT)) { defaultLocation =
+     * paths.get(HgPathsClient.DEFAULT); } if (defaultLocation != null) {
+     * locations.add(defaultLocation); locations .setSelection(new
+     * StructuredSelection(defaultLocation)); } } catch (HgException e) {
+     * MercurialEclipsePlugin.logError(e); } }
+     */
 
     /**
      * Utility method to create an editable combo box
@@ -368,7 +430,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     }
 
     /**
-     * @param userCombo the userCombo to set
+     * @param userCombo
+     *            the userCombo to set
      */
     public void setUserCombo(Combo userCombo) {
         this.userCombo = userCombo;
@@ -382,7 +445,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     }
 
     /**
-     * @param passwordText the passwordText to set
+     * @param passwordText
+     *            the passwordText to set
      */
     public void setPasswordText(Text passwordText) {
         this.passwordText = passwordText;
@@ -396,10 +460,26 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     }
 
     /**
-     * @param urlCombo the urlCombo to set
+     * @param urlCombo
+     *            the urlCombo to set
      */
     public void setUrlCombo(Combo urlCombo) {
         this.urlCombo = urlCombo;
+    }
+
+    /**
+     * @return the showBundleButton
+     */
+    public boolean isShowBundleButton() {
+        return showBundleButton;
+    }
+
+    /**
+     * @param showBundleButton
+     *            the showBundleButton to set
+     */
+    public void setShowBundleButton(boolean showBundleButton) {
+        this.showBundleButton = showBundleButton;
     }
 
 }

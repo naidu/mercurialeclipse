@@ -186,7 +186,7 @@ public class SignWizardPage extends HgWizardPage {
             HgSignClient.sign(project, cs, key, msg, user, local, force,
                     noCommit, pass);
         } catch (HgException e) {
-            MessageDialog.openInformation(getShell(), Messages.getString("SignWizardPage.errorSigning"),
+            MessageDialog.openInformation(getShell(), Messages.getString("SignWizardPage.errorSigning"), //$NON-NLS-1$
                     e.getMessage());
             MercurialEclipsePlugin.logError(e);
             return false;

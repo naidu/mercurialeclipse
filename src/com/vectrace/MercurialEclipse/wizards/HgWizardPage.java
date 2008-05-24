@@ -163,9 +163,9 @@ public abstract class HgWizardPage extends WizardPage {
         composite.setLayout(layout);
 
         // GridData
-        GridData data = new GridData();
-        data.verticalAlignment = GridData.FILL;
-        data.horizontalAlignment = GridData.FILL;
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.verticalAlignment = SWT.FILL;
+        data.horizontalAlignment = SWT.FILL;
         composite.setLayoutData(data);
         return composite;
     }

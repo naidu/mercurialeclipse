@@ -12,80 +12,47 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.net.MalformedURLException;
-import java.util.Map;
 
-import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.viewers.ArrayContentProvider;
-import org.eclipse.jface.viewers.ComboViewer;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgPathsClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /*
- * This file implements a wizard page which will allow the user to create a repository
- * location.
- *
+ * This file implements a wizard page which will allow the user to create a
+ * repository location.
+ * 
  */
 
+public class PullPage extends PushPullPage {
 
-public class PullPage extends SyncRepoPage
-{
+    private Button updateCheckBox;
 
-  private Label    locationLabel;
-  private Combo    locationCombo;
-  private GridData locationData;
+    /**
+     * @param pageName
+     */
+    public PullPage(String pageName, String title, String description,
+            IResource resource, ImageDescriptor titleImage) {
+        super(resource, pageName, title, titleImage);
+        setDescription(description);
+        setShowCredentials(true);
+        setShowBundleButton(true);
+        setShowRevisionTable(false);
+    }
 
-  private Label    cloneParametersLabel;
-  private Label    projectNameLabel;
-  private Combo    projectNameCombo;
-  private IProject project;
-  String repoName;
-  /**
-   * @param pageName
-   */
-  public PullPage( String pageName, String title, String description,IProject project, ImageDescriptor titleImage )
-  {
-    super(pageName, title, titleImage);
-    this.repoName = project.getName();
-    this.project = project;
-    setDescription( description);
-  }
-
-  public PullPage( String pageName, String title, ImageDescriptor titleImage )
-  {
-    super(pageName, title, titleImage);
-  }
-
-
-  @Override
+    @Override
     public boolean canFlipToNextPage() {
         try {
-            if (locationCombo != null && locationCombo.getText() != null) {
+            if (getUrlCombo().getText() != null
+                    && getUrlCombo().getText() != null) {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
-                incomingPage.setProject(project);
-                incomingPage
-                        .setLocation(new HgRepositoryLocation(getLocation()));
+                incomingPage.setProject(resource.getProject());
+                incomingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
+                        .getText()));
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
@@ -94,205 +61,107 @@ public class PullPage extends SyncRepoPage
         }
         return false;
     }
-  
-  /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.SyncRepoPage#getLocation()
-     */
+
     @Override
-    public String getLocation() {        
-        return locationCombo.getText();
+    public boolean isPageComplete() {
+        return HgRepositoryLocation.validateLocation(getUrlCombo().getText());
     }
 
-  @Override
-public boolean isPageComplete()
-  {
-    // This page has no smarts when it comes to parsing. As far as it is concerned
-    /// having any text is grounds for completion.
-    return HgRepositoryLocation.validateLocation( locationCombo.getText() );
-  }
-
-  @Override
-protected boolean isPageComplete(String url) {
+    protected boolean isPageComplete(String url) {
         return HgRepositoryLocation.validateLocation(url);
     }
 
-    @Override
     protected boolean validateAndSetComplete(String url) {
         boolean validLocation = isPageComplete(url);
-
-        ((SyncRepoWizard) getWizard()).setLocationUrl(validLocation ? url
-                : null);
 
         setPageComplete(validLocation);
 
         return validLocation;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
+     */
+    @Override
+    public void createControl(Composite parent) {
+        super.createControl(parent);
+        Composite composite = (Composite) getControl();        
 
-  /* (non-Javadoc)
-   * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-   */
-  @Override
-public void createControl(Composite parent)
-  {
-    Composite outerContainer = new Composite(parent,SWT.NONE);
-    GridLayout layout = new GridLayout();
-    layout.numColumns = 4;
-    outerContainer.setLayout(layout);
-    outerContainer.setLayoutData(
-    new GridData(GridData.GRAB_HORIZONTAL | GridData.HORIZONTAL_ALIGN_FILL));
+        // now the options
+        this.updateCheckBox = createCheckBox(optionGroup, Messages
+                .getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
 
-    // Box to enter the repo location
-    locationLabel = new Label(outerContainer, SWT.NONE);
-    locationLabel.setText(Messages.getString("PullPage.locationLabel.text")); //$NON-NLS-1$
-    locationData = new GridData();
-    locationData.widthHint = 300;
-    final ComboViewer locationViewer = new ComboViewer(outerContainer, SWT.DROP_DOWN);
-    locationViewer.setContentProvider(new ArrayContentProvider());
-    // TODO Make named HgRepositoryLocations possible (ie, add names to HgRepositoyLocation and modify label provider accordingly)
-    locationViewer.setLabelProvider(new LabelProvider());
-    locationCombo =  locationViewer.getCombo(); // new Combo(outerContainer, SWT.DROP_DOWN);
-    locationCombo.setLayoutData(locationData);
-    locationViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-        public void selectionChanged(SelectionChangedEvent event) {
-            IStructuredSelection sel = (IStructuredSelection) locationViewer.getSelection();
-            HgRepositoryLocation selectedLocation = (HgRepositoryLocation) sel.getFirstElement();
-            validateAndSetComplete(selectedLocation.getUrl());
+        this.updateCheckBox.moveAbove(this.revCheckBox);
 
-        }
+        setPageComplete(false);
+        setControl(composite);
 
-    });
-    locationCombo.addListener( SWT.Modify, new Listener() {
-      public void handleEvent(Event event)
-      {
-        validateAndSetComplete(locationCombo.getText());
-      }
-    });
-    locationViewer.setInput(MercurialEclipsePlugin.getRepoManager().getAllRepoLocations());
-
-    setDefaultLocation(locationViewer);
-
-	Button browseButton = new Button (outerContainer, SWT.PUSH);
-	browseButton.setText (Messages.getString("PullPage.browseButton.text")); //$NON-NLS-1$
-	browseButton.addSelectionListener(new SelectionAdapter()
-	{
-		@Override
-        public void widgetSelected(SelectionEvent e)
-		{
-			DirectoryDialog dialog = new DirectoryDialog (getShell());
-      dialog.setMessage(Messages.getString("PullPage.repoDialog.message")); //$NON-NLS-1$
-			String dir = dialog.open();
-			if (dir != null) {
-                locationCombo.setText(dir);
-            }
-			}
-	 });
-
-    Button browsefileButton = new Button (outerContainer, SWT.PUSH);
-    browsefileButton.setText (Messages.getString("PullPage.browseFileButton.text")); //$NON-NLS-1$
-    browsefileButton.addSelectionListener(new SelectionAdapter()
-    {
-      @Override
-    public void widgetSelected(SelectionEvent e)
-      {
-        FileDialog dialog = new FileDialog (getShell());
-        dialog.setText(Messages.getString("PullPage.bundleDialog.text")); //$NON-NLS-1$
-        String dir = dialog.open();
-        if (dir != null) {
-            locationCombo.setText(dir);
-        }
-      }
-    });
-
-    projectNameLabel = new Label(outerContainer, SWT.NONE);
-    projectNameLabel.setText(Messages.getString("PullPage.projectNameLabel.text") + repoName); //$NON-NLS-1$
-
-    // Dummy labels because of bad choice of GridLayout
-    new Label(outerContainer, SWT.NONE);
-    new Label(outerContainer, SWT.NONE);
-    new Label(outerContainer, SWT.NONE);
-
-    // toggle wether the wizard should perform a update or not on finish
-    final Button toggleUpdate = new Button(outerContainer,SWT.CHECK);
-    toggleUpdate.addSelectionListener(new SelectionAdapter() {
-        @Override
-         public void widgetSelected(SelectionEvent e) {
-            PullRepoWizard container = (PullRepoWizard) getWizard();
-            container.setDoUpdate(toggleUpdate.getSelection());
-         }
-    });
-    toggleUpdate.setText(Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-
-    setControl(outerContainer);
-    setPageComplete(false);
-  }
-
-  private void setDefaultLocation(ComboViewer locations) {
-      try {
-            HgRepositoryLocation defaultLocation = null;
-            Map<String, HgRepositoryLocation> paths = HgPathsClient
-                    .getPaths(project);
-            if (paths.containsKey(HgPathsClient.DEFAULT_PULL)) {
-                defaultLocation = paths.get(HgPathsClient.DEFAULT_PULL);
-            } else if (paths.containsKey(HgPathsClient.DEFAULT)) {
-                defaultLocation = paths.get(HgPathsClient.DEFAULT);
-            }
-            if (defaultLocation != null) {
-                locations.add(defaultLocation);
-                locations.setSelection(new StructuredSelection(defaultLocation));
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
     }
 
-@Override
-public void dispose()
-  {
-    locationLabel.dispose();
-    locationCombo.dispose();
-    if(cloneParametersLabel != null)
-    {
-      cloneParametersLabel.dispose();
+    /* (non-Javadoc)
+     * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+     */
+    @Override
+    public boolean finish(IProgressMonitor monitor) {
+        return super.finish(monitor);        
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getForceCheckBoxLabel()
+     */
+    @Override
+    protected String getForceCheckBoxLabel() {
+        return Messages.getString("PullPage.forceCheckBox.title"); //$NON-NLS-1$
     }
 
-    if(projectNameLabel != null)
-    {
-      projectNameLabel.dispose();
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevGroupLabel()
+     */
+    @Override
+    protected String getRevGroupLabel() {
+        return Messages.getString("PullPage.revGroup.title"); //$NON-NLS-1$
     }
-    if(projectNameCombo != null)
-    {
-      projectNameCombo.dispose();
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevCheckBoxLabel()
+     */
+    @Override
+    protected String getRevCheckBoxLabel() {
+        return Messages.getString("PullPage.revCheckBox.title"); //$NON-NLS-1$
     }
-  }
 
-/**
- * @return the locationCombo
- */
-public Combo getLocationCombo() {
-    return locationCombo;
-}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getTimeoutCheckBoxLabel()
+     */
+    @Override
+    protected String getTimeoutCheckBoxLabel() {
+        return Messages.getString("PullPage.timeoutCheckBox.title"); //$NON-NLS-1$
+    }
 
-/**
- * @param locationCombo the locationCombo to set
- */
-public void setLocationCombo(Combo locationCombo) {
-    this.locationCombo = locationCombo;
-}
+    /**
+     * @return the updateCheckBox
+     */
+    public Button getUpdateCheckBox() {
+        return updateCheckBox;
+    }
 
-/**
- * @return the project
- */
-public IProject getProject() {
-    return project;
-}
+    /**
+     * @param updateCheckBox
+     *            the updateCheckBox to set
+     */
+    public void setUpdateCheckBox(Button updateCheckBox) {
+        this.updateCheckBox = updateCheckBox;
+    }
 
-/**
- * @param project the project to set
- */
-public void setProject(IProject project) {
-    this.project = project;
-}
+    
 }

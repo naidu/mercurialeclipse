@@ -15,6 +15,7 @@ import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
@@ -33,6 +34,7 @@ public class FetchWizard extends HgWizard {
 
     private IProject project;
     private String projectName;
+    private IncomingPage incomingPage;
 
     private FetchWizard() {
         super(Messages.getString("FetchWizard.title")); //$NON-NLS-1$        
@@ -55,7 +57,7 @@ public class FetchWizard extends HgWizard {
         page = fetchPage;
         addPage(page);
 
-        IncomingPage incomingPage = new IncomingPage(Messages
+        incomingPage = new IncomingPage(Messages
                 .getString("FetchWizard.incomingPage.name")); //$NON-NLS-1$
         addPage(incomingPage);
 
@@ -82,8 +84,9 @@ public class FetchWizard extends HgWizard {
                 return false;
             }
 
-            String result = HgFetchClient.fetch(project, repo, repo.getUser(),
-                    repo.getPassword());
+            incomingPage.finish(new NullProgressMonitor());
+            
+            String result = HgFetchClient.fetch(project, repo, incomingPage.getRevision());
 
             if (result.length() != 0) {
                 Shell shell;

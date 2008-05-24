@@ -10,24 +10,19 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.wizards.PullRepoWizard;
 
 public class PullHandler extends SingleResourceHandler {
 
     @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();        
-        PullRepoWizard pullRepoWizard = new PullRepoWizard();        
-        pullRepoWizard.init(PlatformUI.getWorkbench(), new StructuredSelection(resource));        
+    protected void run(IResource resource) throws Exception {        
+        PullRepoWizard pullRepoWizard = new PullRepoWizard(resource);                       
         WizardDialog pullWizardDialog = new WizardDialog(getShell(),pullRepoWizard);
         pullWizardDialog.open();
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
+        resource.getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
     }
 
 }

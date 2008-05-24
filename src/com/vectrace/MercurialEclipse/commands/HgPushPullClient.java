@@ -15,20 +15,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgPushPullClient extends AbstractRepositoryClient {
 
     public static String push(IProject project, HgRepositoryLocation location,
-            String user, String pass, boolean force, String revision, int timeout)
-            throws HgException {
+            String user, String pass, boolean force, String revision,
+            int timeout) throws HgException {
         try {
             HgCommand command = new HgCommand("push", project, true);
-            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
-            
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
             if (force) {
                 command.addOptions("-f");
@@ -39,26 +41,48 @@ public class HgPushPullClient extends AbstractRepositoryClient {
             }
 
             URI uri = getRepositoryURI(location, user, pass);
-            command.addFiles(uri.toASCIIString());            
+            command.addFiles(uri.toASCIIString());
             return new String(command.executeToBytes(timeout));
         } catch (URISyntaxException e) {
             throw new HgException("URI invalid", e);
         }
     }
 
-    public static String pull(IProject project, HgRepositoryLocation location,
-            boolean update) throws HgException {
+    public static String pull(IResource resource,
+            HgRepositoryLocation location, boolean update) throws HgException {
+        return pull(resource, location, update, false, false, null);
+    }
+
+    public static String pull(IResource resource,
+            HgRepositoryLocation location, boolean update, boolean force,
+            boolean timeout, ChangeSet changeset) throws HgException {
         try {
-            HgCommand command = new HgCommand("pull", project, true);
-            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+            HgCommand command = new HgCommand("pull", resource.getLocation()
+                    .toFile(), true);
+
             if (update) {
-                command.addOptions("-u");
+                command.addOptions("--update");
             }
-            URI uri = getRepositoryURI(location, location.getUser(), location.getPassword());
+            if (force) {
+                command.addOptions("--force");
+            }
+            if (changeset != null) {
+                command.addOptions("--rev",changeset.getChangeset());
+            }
+            
+            URI uri = getRepositoryURI(location, location.getUser(), location
+                    .getPassword());
+            
             command.addFiles(uri.toASCIIString());
-            return command.executeToString();
+            if (timeout) {
+                command
+                        .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+                return new String(command.executeToBytes());
+            }
+            return new String(command.executeToBytes(Integer.MAX_VALUE));
         } catch (URISyntaxException e) {
-           throw new HgException("URI invalid",e);
+            throw new HgException("URI invalid", e);
         }
-    }    
+
+    }
 }

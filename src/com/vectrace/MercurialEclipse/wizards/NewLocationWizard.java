@@ -67,8 +67,11 @@ public class NewLocationWizard extends HgWizard {
      */
     protected HgWizardPage createPage(String pageName, String pageTitle,
             String iconPath, String description) {
-        page = new ConfigurationWizardMainPage(pageName, pageTitle,
+        ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
                 MercurialEclipsePlugin.getImageDescriptor(iconPath));
+        
+        mainPage.setShowBundleButton(false);
+        page = mainPage;
         initPage(description, page);
         return page;
     }

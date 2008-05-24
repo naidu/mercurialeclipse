@@ -50,7 +50,7 @@ public class PushRepoWizard extends HgWizard {
     @Override
     public void addPages() {
         super.addPages();
-        PushRepoPage myPage = new PushRepoPage(
+        PushPullPage myPage = new PushRepoPage(
                 Messages.getString("PushRepoWizard.pushRepoPage.name"), //$NON-NLS-1$
                 Messages.getString("PushRepoWizard.pushRepoPage.title"), null, project); //$NON-NLS-1$
         initPage(Messages.getString("PushRepoWizard.pushRepoPage.description"), //$NON-NLS-1$
@@ -82,7 +82,7 @@ public class PushRepoWizard extends HgWizard {
                 return false;
             }
 
-            PushRepoPage pushRepoPage = (PushRepoPage) page;
+            PushPullPage pushRepoPage = (PushPullPage) page;
 
             int timeout = 300000;
             if (!pushRepoPage.isTimeout()) {

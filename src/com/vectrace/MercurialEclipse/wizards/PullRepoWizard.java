@@ -13,11 +13,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.MalformedURLException;
-
-import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
@@ -25,74 +23,84 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
+public class PullRepoWizard extends HgWizard {
 
-public class PullRepoWizard extends SyncRepoWizard
-{
+    private boolean doUpdate;
+    private PullPage pullPage;
+    private IncomingPage incomingPage;
+    private IResource resource;
 
-  IProject project;
-  boolean doUpdate = false;
-
-
-  /* (non-Javadoc)
-   * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
-   */
-  @Override
-public void init(IWorkbench workbench, IStructuredSelection selection)
-  {
-    project = MercurialUtilities.getProject(selection);
-    projectName = project.getName();
-    setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
-    setNeedsProgressMonitor(true);
-  }
+    /**
+     * 
+     */
+    public PullRepoWizard(IResource resource) {
+        super(Messages.getString("PullRepoWizard.title")); //$NON-NLS-1$
+        this.resource = resource;
+    }
 
     @Override
     public void addPages() {
-       PullPage pullPage = new PullPage(Messages.getString("PullRepoWizard.pullPage.name"), //$NON-NLS-1$
-               Messages.getString("PullRepoWizard.pullPage.title"), //$NON-NLS-1$
-               Messages.getString("PullRepoWizard.pullPage.description"), //$NON-NLS-1$
-               project,
-               null);
-       // legacy - required by super
-       super.syncRepoLocationPage = pullPage;
-       addPage(pullPage);
-       addPage(new IncomingPage(Messages.getString("PullRepoWizard.incomingPage.name"))); //$NON-NLS-1$
+        pullPage = new PullPage(Messages
+                .getString("PullRepoWizard.pullPage.name"), //$NON-NLS-1$
+                Messages.getString("PullRepoWizard.pullPage.title"), //$NON-NLS-1$
+                Messages.getString("PullRepoWizard.pullPage.description"), //$NON-NLS-1$
+                resource.getProject(), null);
+
+        addPage(pullPage);
+        incomingPage = new IncomingPage(Messages
+                .getString("PullRepoWizard.incomingPage.name")); //$NON-NLS-1$
+        addPage(incomingPage);
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.eclipse.jface.wizard.Wizard#performFinish()
      */
     @Override
     public boolean performFinish() {
 
         // If there is no project set the wizard can't finish
-        if (project.getLocation() == null) {
+        if (resource.getProject().getLocation() == null) {
             return false;
         }
 
+        pullPage.finish(new NullProgressMonitor());
+        incomingPage.finish(new NullProgressMonitor());
+        
         final HgRepositoryLocation repo = getLocation();
-
         performPull(repo);
 
         // It appears good. Stash the repo location.
         try {
-            MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
-                    repo);
+            MercurialEclipsePlugin.getRepoManager().addRepoLocation(
+                    resource.getProject(), repo);
         } catch (HgException e) {
-            MercurialEclipsePlugin.logError(
-                    Messages.getString("PullRepoWizard.addingRepositoryFailed"), e); //$NON-NLS-1$
+            MercurialEclipsePlugin.logError(Messages
+                    .getString("PullRepoWizard.addingRepositoryFailed"), e); //$NON-NLS-1$
         }
-
         return true;
     }
 
     private void performPull(final HgRepositoryLocation repo) {
         try {
-            String result = HgPushPullClient.pull(project, repo, isDoUpdate());
+            ChangeSet cs = null;
+            if (incomingPage.getRevisionCheckBox().getSelection()) {
+                cs = incomingPage.getRevision();
+            }
+            this.doUpdate=pullPage.getUpdateCheckBox().getSelection();
+            String result = HgPushPullClient.pull(resource, repo, isDoUpdate(),
+                    pullPage.getForceCheckBox().getSelection(), pullPage
+                            .getTimeoutCheckBox().getSelection(), cs);
             IncomingChangesetCache.getInstance().clear();
+            LocalChangesetCache.getInstance().clear(resource.getProject());
+            new RefreshStatusJob(Messages.getString("PullRepoWizard.refreshJob.title"),resource.getProject()).schedule(); //$NON-NLS-1$
             if (result.length() != 0) {
 
                 Shell shell;
@@ -101,22 +109,26 @@ public void init(IWorkbench workbench, IStructuredSelection selection)
                 workbench = PlatformUI.getWorkbench();
                 shell = workbench.getActiveWorkbenchWindow().getShell();
 
-                MessageDialog.openInformation(shell,
-                        Messages.getString("PullRepoWizard.messageDialog.title"), result); //$NON-NLS-1$
+                MessageDialog
+                        .openInformation(
+                                shell,
+                                Messages
+                                        .getString("PullRepoWizard.messageDialog.title"), result); //$NON-NLS-1$
 
             }
 
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(Messages.getString("PullRepoWizard.pullOperationFailed"), e); //$NON-NLS-1$
+            MercurialEclipsePlugin.logError(Messages
+                    .getString("PullRepoWizard.pullOperationFailed"), e); //$NON-NLS-1$
         }
     }
 
-    HgRepositoryLocation getLocation() {
-
+    private HgRepositoryLocation getLocation() {
         try {
-            return new HgRepositoryLocation(locationUrl);
-        } catch (MalformedURLException e) {
-            MessageDialog.openInformation(getShell(), Messages.getString("PullRepoWizard.malformedURL"),e.getMessage()); //$NON-NLS-1$
+            return HgRepositoryLocation.fromProperties(pullPage.getProperties());
+        } catch (Exception e) {
+            MessageDialog.openInformation(getShell(), Messages
+                    .getString("PullRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$
             MercurialEclipsePlugin.logInfo(e.getMessage(), e);
             return null;
         }
