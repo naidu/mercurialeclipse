@@ -107,8 +107,8 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
                     HgCloneClient.clone(workspace, location, null, proj
                             .getName());
 
-                    proj.create(null);
-                    proj.open(null);
+                    proj.create(monitor);
+                    proj.open(monitor);
 
                     // Register the project with Team.
                     RepositoryProvider.map(proj, MercurialTeamProvider.class

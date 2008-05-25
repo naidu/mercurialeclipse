@@ -15,21 +15,31 @@
 
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.MalformedURLException;
+import java.io.File;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URISyntaxException;
 
+import org.eclipse.core.internal.resources.ProjectDescription;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -43,103 +53,233 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
  * 
  */
 
-public class CloneRepoWizard extends SyncRepoWizard {
+public class CloneRepoWizard extends HgWizard implements IImportWizard {
+    private ClonePage clonePage;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
-	 *      org.eclipse.jface.viewers.IStructuredSelection)
-	 */
-	@Override
-	public void init(IWorkbench workbench, IStructuredSelection selection) {
-		setWindowTitle(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
-		setNeedsProgressMonitor(true);
-		syncRepoLocationPage = new SyncRepoPage(true, Messages.getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
-				Messages.getString("CloneRepoWizard.pageTitle"), //$NON-NLS-1$
-				Messages.getString("CloneRepoWizard.pageDescription"), Messages.getString("CloneRepoWizard.noRepoName"), null); //$NON-NLS-1$ //$NON-NLS-2$
-	}
+    private class CloneOperation extends HgOperation {
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.wizard.Wizard#performFinish()
-	 */
-	@Override
-    public boolean performFinish()
-  {
-    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-    final IProject project = workspace.getRoot().getProject(projectName);
-    HgRepositoryLocation repo;
-    try {
-        repo = new HgRepositoryLocation(locationUrl);
-    } catch (MalformedURLException e) {
-        MessageDialog.openError(Display.getCurrent().getActiveShell(),
-                Messages.getString("CloneRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$
-        return false;
-    }
-    
-    // Check that this project doesn't exist.
-    if( project.getLocation() != null )
-    {
-      // TODO: Ask if user wants to torch everything there before the clone,
-		// otherwise fail.
-      System.out.println( Messages.getString("CloneRepoWizard.project") + projectName + Messages.getString("CloneRepoWizard.alreadyExists")); //$NON-NLS-1$ //$NON-NLS-2$
-      return false;
-    }
-    
-    try
-    {
-      HgCloneClient.clone(workspace, repo, parameters, projectName);
-    }
-    catch (Exception e)
-    {
-    	MercurialEclipsePlugin.logError(Messages.getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
-// System.out.println("Clone operation failed");
-// System.out.println(e.getMessage());
+        private String parentDirectory;
+        private HgRepositoryLocation repo;
+        private boolean noUpdate;
+        private boolean pull;
+        private boolean uncompressed;
+        private boolean timeout;
+        private String rev;
+        private String cloneName;
+        private IProject project;
+
+        /**
+         * @param name
+         */
+        public CloneOperation(IRunnableContext context, String parentDirectory,
+                HgRepositoryLocation repo, boolean noUpdate, boolean pull,
+                boolean uncompressed, boolean timeout, String rev,
+                String cloneName) {
+            super(context);
+            this.parentDirectory = parentDirectory;
+            this.repo = repo;
+            this.noUpdate = noUpdate;
+            this.pull = pull;
+            this.uncompressed = uncompressed;
+            this.timeout = timeout;
+            this.rev = rev;
+            this.cloneName = cloneName;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+         */
+        @SuppressWarnings("restriction") //$NON-NLS-1$
+        @Override
+        public void run(IProgressMonitor monitor)
+                throws InvocationTargetException, InterruptedException {
+
+            IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
+                    .getRoot();
+
+            monitor.beginTask(Messages.getString("CloneRepoWizard.operation.name"), 15); //$NON-NLS-1$
+
+            // set defaults
+            if (this.parentDirectory == null || parentDirectory.length() == 0) {
+                parentDirectory = workspaceRoot.getLocation().toOSString();
+            }
+
+            monitor.subTask(Messages.getString("CloneRepoWizard.subTaskParentDirectory.name") + parentDirectory); //$NON-NLS-1$
+            monitor.worked(1);
+
+            if (cloneName == null || cloneName.length() == 0) {
+                try {
+                    cloneName = repo.getUrlObject().toURI().getFragment();
+                } catch (URISyntaxException e) {
+                    throw new InvocationTargetException(e);
+                }
+            }
+
+            monitor.subTask(Messages.getString("CloneRepoWizard.subTaskCloneDirectory.name") + cloneName); //$NON-NLS-1$
+            monitor.worked(1);
+
+            try {
+
+                monitor.subTask(Messages.getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
+                HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,
+                        uncompressed, timeout, rev, cloneName);
+                monitor.worked(1);
+            } catch (HgException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new InvocationTargetException(e);
+            }
+
+            project = workspaceRoot.getProject(cloneName);
+            IProjectDescription description = new ProjectDescription();
+            description.setName(cloneName);
+            description.setComment(Messages.getString("CloneRepoWizard.description.comment") + repo); //$NON-NLS-1$
+
+            IPath projectLocation = null;
+            if (!workspaceRoot.getLocation().toOSString().equals(
+                    this.parentDirectory)) {
+                projectLocation = new Path(this.parentDirectory
+                        + File.separatorChar + cloneName);
+            }
+
+            description.setLocation(projectLocation);
+
+            try {
+                project.create(description, monitor);
+                project.open(monitor);
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new InvocationTargetException(e, e.getMessage());
+            }
+
+            try {
+                // Register the project with Team. This will bring all the files
+                // that
+                // we cloned into the project.
+                monitor.subTask(Messages.getString("CloneRepoWizard.subTask.registeringProject1") + project.getName() //$NON-NLS-1$
+                        + Messages.getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
+                RepositoryProvider.map(project, MercurialTeamProvider.class
+                        .getName());
+                RepositoryProvider.getProvider(project,
+                        MercurialTeamProvider.class.getName());
+            } catch (TeamException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new InvocationTargetException(e, e.getMessage());
+            }
+            monitor.worked(1);
+
+            // It appears good. Stash the repo location.
+            try {
+                monitor.subTask(Messages.getString("CloneRepoWizard.subTask.addingRepository.1") + repo //$NON-NLS-1$
+                        + Messages.getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
+                MercurialEclipsePlugin.getRepoManager().addRepoLocation(
+                        project, repo);
+            } catch (HgException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new InvocationTargetException(e, e.getMessage());
+            }
+            monitor.worked(1);
+            monitor.done();
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
+         */
+        @Override
+        protected String getActionDescription() {
+            return Messages.getString("CloneRepoWizard.actionDescription.1") + repo + Messages.getString("CloneRepoWizard.actionDescription.2") + cloneName; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+
+        /**
+         * @return the project
+         */
+        public IProject getProject() {
+            return project;
+        }
+
     }
 
-    // FIXME: Project creation must be done after the clone otherwise the
-    // clone command will barf. Not quite sure why a destination directory isn't
-    // really allowed to exist with the hg clone command...
-    // At any rate we have a potential race condition on project creation if
-    // anything to do with project is done before the clone operation.
-    try
-    {
-      project.create(null);
-      project.open(null);
-      
-      // we need an identifier (=qualified name) to store settings
-      QualifiedName qualifiedName = MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY;      
-      project.setPersistentProperty(qualifiedName, locationUrl);
-    }
-    catch(CoreException e)
-    {
-      // TODO: Should kill the project if we could map everything
-      return false;      
+    /**
+     * @param windowTitle
+     */
+    public CloneRepoWizard() {
+        super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
     }
 
-    try
-    {
-      // Register the project with Team. This will bring all the files that
-      // we cloned into the project.
-      RepositoryProvider.map(project, MercurialTeamProvider.class.getName());
-      RepositoryProvider.getProvider(project, MercurialTeamProvider.class.getName());
-    }
-    catch(TeamException e)
-    {
-      // TODO: Should kill the project if we could map everything
-      return false;
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.wizard.Wizard#performFinish()
+     */
+    @Override
+    public boolean performFinish() {
+        clonePage.finish(null);
+        HgRepositoryLocation repo;
+        IResource res;
+        try {
+            repo = HgRepositoryLocation.fromProperties(clonePage
+                    .getProperties());
+            res = ResourcesPlugin.getWorkspace().getRoot().findMember(
+                    clonePage.getCloneNameTextField().getText());
+        } catch (Exception e) {
+            MessageDialog
+                    .openError(
+                            Display.getCurrent().getActiveShell(),
+                            Messages.getString("CloneRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$
+            return false;
+        }
+
+        // Check that this project doesn't exist.
+        if (res != null) {
+            MessageDialog
+                    .openError(
+                            Display.getCurrent().getActiveShell(),
+                            "Error occurred while cloning", Messages.getString("CloneRepoWizard.project") + res.getName() + Messages.getString("CloneRepoWizard.alreadyExists")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            return false;
+        }
+
+        try {
+
+            CloneOperation cloneOperation = new CloneOperation(getContainer(),
+                    clonePage.getDirectoryTextField().getText(), repo,
+                    clonePage.getNoUpdateCheckBox().getSelection(), clonePage
+                            .getPullCheckBox().getSelection(), clonePage
+                            .getUncompressedCheckBox().getSelection(),
+                    clonePage.getTimeoutCheckBox().getSelection(), clonePage
+                            .getRevisionTextField().getText(), clonePage
+                            .getCloneNameTextField().getText());
+            getContainer().run(false, false, cloneOperation);
+            new RefreshJob(
+                    Messages.getString("CloneRepoWizard.refreshJob.name"), null, cloneOperation.getProject()).schedule(); //$NON-NLS-1$
+        } catch (Exception e) {
+            MercurialEclipsePlugin.showError(e);
+            MercurialEclipsePlugin.logError(Messages
+                    .getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
+        }
+
+        return true;
     }
 
-    // It appears good. Stash the repo location.
-    try {
-		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
-	} catch (HgException e) {
-		MercurialEclipsePlugin.logError(Messages.getString("CloneRepoWizard.AddingRepositoryFailed"),e); //$NON-NLS-1$
-		return false;
-	}
-	new RefreshJob(Messages.getString("CloneRepoWizard.refreshJob.name"),null,project); //$NON-NLS-1$
-    return true;
-  }
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
+     *      org.eclipse.jface.viewers.IStructuredSelection)
+     */
+    public void init(IWorkbench workbench, IStructuredSelection selection) {
+        setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
+        setNeedsProgressMonitor(true);
+        clonePage = new ClonePage(null, Messages
+                .getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
+                Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
+
+        clonePage.setDescription(Messages
+                .getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
+        initPage(clonePage.getDescription(), clonePage);
+        addPage(clonePage);
+    }
+
 }

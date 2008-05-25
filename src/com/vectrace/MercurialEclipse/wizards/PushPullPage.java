@@ -51,6 +51,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     protected boolean timeout;
     protected Group optionGroup;
     protected boolean showRevisionTable = true;
+    private boolean showForce = true;
 
     public PushPullPage(IResource resource, String pageName, String title,
             ImageDescriptor titleImage) {
@@ -68,9 +69,11 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 .getString("PushRepoPage.optionGroup.title")); //$NON-NLS-1$
         this.timeoutCheckBox = createCheckBox(optionGroup,
                 getTimeoutCheckBoxLabel());
-        this.forceCheckBox = createCheckBox(optionGroup,
-                getForceCheckBoxLabel());
 
+        if (showForce) {
+            this.forceCheckBox = createCheckBox(optionGroup,
+                    getForceCheckBoxLabel());
+        }
         if (showRevisionTable) {
             createRevisionTable(composite);
         }
@@ -144,6 +147,9 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
     protected void setDefaultLocation() {
         try {
+            if (resource == null) {
+                return;
+            }
             HgRepositoryLocation defaultLocation = null;
             Map<String, HgRepositoryLocation> paths = HgPathsClient
                     .getPaths(resource.getProject());
@@ -272,10 +278,25 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     }
 
     /**
-     * @param showRevisionTable the showRevisionTable to set
+     * @param showRevisionTable
+     *            the showRevisionTable to set
      */
     public void setShowRevisionTable(boolean showRevisionTable) {
         this.showRevisionTable = showRevisionTable;
+    }
+
+    /**
+     * @return the showForce
+     */
+    public boolean isShowForce() {
+        return showForce;
+    }
+
+    /**
+     * @param showForce the showForce to set
+     */
+    public void setShowForce(boolean showForce) {
+        this.showForce = showForce;
     }
 
 }
