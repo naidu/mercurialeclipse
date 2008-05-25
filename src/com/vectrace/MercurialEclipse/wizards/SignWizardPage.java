@@ -151,7 +151,7 @@ public class SignWizardPage extends HgWizardPage {
                 }
             }
         } catch (HgException e) {
-            combo.setText(Messages.getString("SignWizardPage.errorLoadingGpgKeys")); //$NON-NLS-1$
+            combo.add(Messages.getString("SignWizardPage.errorLoadingGpgKeys")); //$NON-NLS-1$
             MercurialEclipsePlugin.logError(e);
         }
         combo.setText(combo.getItem(0));
