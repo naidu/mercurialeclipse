@@ -57,7 +57,11 @@ public class HgPushPullClient extends AbstractRepositoryClient {
             HgRepositoryLocation location, boolean update, boolean force,
             boolean timeout, ChangeSet changeset) throws HgException {
         try {
-            HgCommand command = new HgCommand("pull", resource.getLocation()
+            IResource workDir = resource;
+            if (resource.getType()==IResource.FILE) {
+                workDir = resource.getParent();
+            }
+            HgCommand command = new HgCommand("pull", workDir.getLocation()
                     .toFile(), true);
 
             if (update) {

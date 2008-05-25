@@ -16,10 +16,14 @@ import java.net.MalformedURLException;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /*
@@ -31,6 +35,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class PullPage extends PushPullPage {
 
     private Button updateCheckBox;
+    private Button fetchCheckBox;
 
     /**
      * @param pageName
@@ -64,7 +69,7 @@ public class PullPage extends PushPullPage {
 
     @Override
     public boolean isPageComplete() {
-        return HgRepositoryLocation.validateLocation(getUrlCombo().getText());
+        return super.isPageComplete() && HgRepositoryLocation.validateLocation(getUrlCombo().getText());
     }
 
     protected boolean isPageComplete(String url) {
@@ -92,22 +97,68 @@ public class PullPage extends PushPullPage {
         // now the options
         this.updateCheckBox = createCheckBox(optionGroup, Messages
                 .getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-
         this.updateCheckBox.moveAbove(this.revCheckBox);
-
-        setPageComplete(false);
+        
+        this.fetchCheckBox = createCheckBox(optionGroup, "Merge and, if there are no conflicts, commit after update");
+        this.fetchCheckBox.moveBelow(this.updateCheckBox);
+        
+        SelectionListener fetchListener = new SelectionListener() {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+             */
+            public void widgetDefaultSelected(SelectionEvent e) {
+                widgetSelected(e);
+            }
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+             */
+            public void widgetSelected(SelectionEvent e) {
+                if (fetchCheckBox.getSelection()) {
+                    String status;
+                    try {
+                        status = HgStatusClient.getStatus(resource.getProject());
+                        if (status.length()>0 && status.indexOf("M ")>=0) {
+                            setErrorMessage("Please commit modified resources before trying to merge.");      
+                            setPageComplete(false);
+                        } else {
+                            setErrorMessage(null);
+                            setPageComplete(true);
+                        }
+                    } catch (HgException e1) {
+                        setErrorMessage("Couldn't get status from Mercurial. Merge disabled.");
+                        fetchCheckBox.setSelection(false);
+                        fetchCheckBox.setEnabled(false);
+                        setPageComplete(true);
+                    }
+                    
+                } else {
+                  setErrorMessage(null);
+                  setPageComplete(true);
+                }
+            }
+        };
+        
+        fetchCheckBox.addSelectionListener(fetchListener);
+        
+        setPageComplete(true);
         setControl(composite);
 
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish(org.eclipse.core.runtime.IProgressMonitor)
      */
     @Override
     public boolean finish(IProgressMonitor monitor) {
-        return super.finish(monitor);        
+        return super.finish(monitor);
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -163,5 +214,11 @@ public class PullPage extends PushPullPage {
         this.updateCheckBox = updateCheckBox;
     }
 
-    
+    /**
+     * @return the mergeCheckBox
+     */
+    public Button getFetchCheckBox() {
+        return fetchCheckBox;
+    }
+
 }

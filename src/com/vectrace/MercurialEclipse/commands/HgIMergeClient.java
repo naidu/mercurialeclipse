@@ -11,7 +11,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgIMergeClient {
 
-    public static void merge(IProject project, String revision)
+    public static String merge(IProject project, String revision)
             throws HgException {
         HgCommand command = new HgCommand("imerge", project, false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -19,7 +19,7 @@ public class HgIMergeClient {
         if (revision != null) {
             command.addOptions("-r", revision);
         }
-        command.executeToBytes();
+        return new String(command.executeToBytes());
     }
 
     public static List<FlaggedAdaptable> getMergeStatus(IProject project)

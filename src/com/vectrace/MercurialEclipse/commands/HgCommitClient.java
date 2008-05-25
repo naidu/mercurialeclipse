@@ -30,13 +30,13 @@ public class HgCommitClient {
 		}
 	}
 	
-	public static void commitProject(IProject project, String user, String message)
+	public static String commitProject(IProject project, String user, String message)
             throws HgException {
         HgCommand command = new HgCommand("commit", project, false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         command.addUserName(user);
         command.addOptions("-m", message);
-        command.executeToBytes();
+        return new String(command.executeToBytes());
     }
 	
 }

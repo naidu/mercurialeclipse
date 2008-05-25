@@ -27,80 +27,74 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public abstract class HgOperation extends TeamOperation {
 
-	private String result;
+    private String result;
 
-	/**
-	 * @param part
-	 */
-	public HgOperation(IWorkbenchPart part) {
-		super(part);
-	}
-
-	/**
-	 * @param context
-	 */
-	public HgOperation(IRunnableContext context) {
-		super(context);
-	}
-
-	/**
-	 * @param part
-	 * @param context
-	 */
-	public HgOperation(IWorkbenchPart part, IRunnableContext context) {
-		super(part, context);
-	}
-
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
-	 */
-	public void run(IProgressMonitor monitor) throws InvocationTargetException,InterruptedException 
-	{
-	    // TODO: Would be nice to have something that indicates progress
-	    //       but that would require that functionality from the utilities.
-	    monitor.beginTask(getActionDescription(), 1);
-
-	    try
-	    {
-	      result = MercurialUtilities.ExecuteCommand(getHgCommand(),getHgWorkingDir(), true);
-	    } 
-	    catch (HgException e)
-	    {
-	    	MercurialEclipsePlugin.logError(getActionDescription() + " failed:" , e);
-	    }
-	    finally
-	    {
-	      monitor.done();
-	    }
-	}
-	
-	protected String[] getHgCommand()
-	{
-		return null;
-	}
-	
-  protected File getHgWorkingDir()
-  {
-    return null;
-  }
-	  
-    public String getResult()
-    {
-    	return result;
+    /**
+     * @param part
+     */
+    public HgOperation(IWorkbenchPart part) {
+        super(part);
     }
-	
-	// TODO: No background for now. 
-	@Override
-    protected boolean canRunAsJob()
-	{
-		return false;
-	}
 
-	@Override
-    protected String getJobName()
-	{
-		return getActionDescription();
-	}
-	
-	abstract protected String getActionDescription();
+    /**
+     * @param context
+     */
+    public HgOperation(IRunnableContext context) {
+        super(context);
+    }
+
+    /**
+     * @param part
+     * @param context
+     */
+    public HgOperation(IWorkbenchPart part, IRunnableContext context) {
+        super(part, context);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
+     */
+    public void run(IProgressMonitor monitor) throws InvocationTargetException,
+            InterruptedException {
+        // TODO: Would be nice to have something that indicates progress
+        // but that would require that functionality from the utilities.
+        monitor.beginTask(getActionDescription(), 1);
+
+        try {
+            result = MercurialUtilities.ExecuteCommand(getHgCommand(),
+                    getHgWorkingDir(), true);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(
+                    getActionDescription() + " failed:", e);
+        } finally {
+            monitor.done();
+        }
+    }
+
+    protected String[] getHgCommand() {
+        return null;
+    }
+
+    protected File getHgWorkingDir() {
+        return null;
+    }
+
+    public String getResult() {
+        return result;
+    }
+
+    // TODO: No background for now.
+    @Override
+    protected boolean canRunAsJob() {
+        return false;
+    }
+
+    @Override
+    protected String getJobName() {
+        return getActionDescription();
+    }
+
+    abstract protected String getActionDescription();
 }
