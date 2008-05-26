@@ -37,7 +37,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * @author Bastian Doetsch
  * 
  */
-public abstract class AbstractParseChangesetClient {
+public abstract class AbstractParseChangesetClient extends AbstractClient {
 
     protected static final String FILES = "{files}";
     protected static final String FILE_ADDS = "{file_adds}";

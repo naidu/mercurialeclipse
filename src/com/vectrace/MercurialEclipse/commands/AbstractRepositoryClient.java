@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * @author bastian
  *
  */
-public class AbstractRepositoryClient {
+public class AbstractRepositoryClient extends AbstractClient {
 
     /**
      * @param location
