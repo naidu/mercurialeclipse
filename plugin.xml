@@ -210,6 +210,8 @@
                  name="Strip..."/>
         <command id="com.vectrace.MercurialEclipse.menu.ServeHandler"
                  name="Serve repository..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
+                 name="Add Branch..."/>  
 	</extension>
 
 	<!-- handlers -->
@@ -376,6 +378,15 @@
                 </and>
             </enabledWhen>
         </handler>
+        <!-- AddBranchHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
+                 class="com.vectrace.MercurialEclipse.menu.AddBranchHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
 	</extension>
 
 	<extension point="org.eclipse.ui.menus">
@@ -432,6 +443,11 @@
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
 				</command>
+				<command commandId="com.vectrace.MercurialEclipse.menu.AddBranchHandler">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command>
 				<command commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
