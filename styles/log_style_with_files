@@ -1,0 +1,10 @@
+changeset = log_style_with_files.tmpl
+start_files = ''
+file = '\n\t{file}'
+end_files = ''
+start_file_adds = ''
+file_add = '\n\t{file_add}'
+end_file_adds = ''
+start_file_dels = ''
+file_del = '\n\t{file_del}'
+end_file_dels = ''

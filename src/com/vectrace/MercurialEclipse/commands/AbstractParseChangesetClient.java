@@ -11,6 +11,10 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -22,7 +26,10 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -39,23 +46,23 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  */
 public abstract class AbstractParseChangesetClient {
 
-    protected static final String FILES = "{files}";
-    protected static final String FILE_ADDS = "{file_adds}";
-    protected static final String FILE_DELS = "{file_dels}";
-    protected static final String PARENTS = "{parents}";
-    protected static final String DESC = "{desc|escape}";
-    protected static final String AUTHOR_PERSON = "{author|person}";
-    protected static final String DATE_AGE = "{date|age}";
-    protected static final String DATE_ISODATE = "{date|isodate}";
-    protected static final String NODE = "{node}";
-    protected static final String NODE_SHORT = "{node|short}";
-    protected static final String REV = "{rev}";
-    protected static final String TAGS = "{tags}";
-    protected static final String BRANCHES = "{branches}";
-    protected static final String SEP_CHANGE_SET = "@@@";
-    protected static final String SEP_TEMPLATE_ELEMENT = "§§§";
-    protected static final String START = "°°°";
-    protected static final String TEMPLATE = START + SEP_TEMPLATE_ELEMENT
+    private static final String FILES = "{files}";
+    private static final String FILE_ADDS = "{file_adds}";
+    private static final String FILE_DELS = "{file_dels}";
+    private static final String PARENTS = "{parents}";
+    private static final String DESC = "{desc|escape}";
+    private static final String AUTHOR_PERSON = "{author|person}";
+    private static final String DATE_AGE = "{date|age}";
+    private static final String DATE_ISODATE = "{date|isodate}";
+    private static final String NODE = "{node}";
+    private static final String NODE_SHORT = "{node|short}";
+    private static final String REV = "{rev}";
+    private static final String TAGS = "{tags}";
+    private static final String BRANCHES = "{branches}";
+    private static final String SEP_CHANGE_SET = "@@@";
+    private static final String SEP_TEMPLATE_ELEMENT = "§§§";
+    private static final String START = "°°°";
+    private static final String TEMPLATE = START + SEP_TEMPLATE_ELEMENT
             + BRANCHES + SEP_TEMPLATE_ELEMENT + TAGS + SEP_TEMPLATE_ELEMENT + REV + SEP_TEMPLATE_ELEMENT
             + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE + SEP_TEMPLATE_ELEMENT
             + DATE_ISODATE + SEP_TEMPLATE_ELEMENT + DATE_AGE
@@ -63,7 +70,7 @@ public abstract class AbstractParseChangesetClient {
             + DESC + SEP_TEMPLATE_ELEMENT + PARENTS + SEP_TEMPLATE_ELEMENT
             + SEP_CHANGE_SET;
 
-    protected static final String TEMPLATE_WITH_FILES = START
+    private static final String TEMPLATE_WITH_FILES = START
             + SEP_TEMPLATE_ELEMENT + BRANCHES + SEP_TEMPLATE_ELEMENT + TAGS + SEP_TEMPLATE_ELEMENT + REV
             + SEP_TEMPLATE_ELEMENT + NODE_SHORT + SEP_TEMPLATE_ELEMENT + NODE
             + SEP_TEMPLATE_ELEMENT + DATE_ISODATE + SEP_TEMPLATE_ELEMENT
@@ -72,32 +79,132 @@ public abstract class AbstractParseChangesetClient {
             + SEP_TEMPLATE_ELEMENT + FILES + SEP_TEMPLATE_ELEMENT + FILE_ADDS
             + SEP_TEMPLATE_ELEMENT + FILE_DELS + SEP_CHANGE_SET;
 
-    protected static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
-            String input, IProject proj, File bundleFile,
-            HgRepositoryLocation repository, Direction direction) {
-        return createMercurialRevisions(input, proj, TEMPLATE, SEP_CHANGE_SET,
-                SEP_TEMPLATE_ELEMENT, direction, repository, bundleFile, START);
+    private static final String STYLE_SRC = "/styles/log_style";
+    private static final String STYLE = "/log_style";
+    private static final String STYLE_WITH_FILES_SRC = "/styles/log_style_with_files";
+    private static final String STYLE_WITH_FILES = "/log_style_with_files";
+    private static final String STYLE_TEMP_EXTN = ".tmpl";
+
+    /**
+     * Return a File reference to a copy of the required mercurial style file. Two types
+     * are available, one that includes  the files and one that doesn't. Using the one
+     * with files can be very slow on large repos.
+     * <p>
+     * These style files are included in the plugin jar file and need to be copied out of there
+     * into the plugin state area so a path can be given to the hg command.
+     * 
+     * @param withFiles return the style that includes the files if true.
+     * @return a File reference to an existing file
+     */
+    protected static File getStyleFile(boolean withFiles) throws HgException {
+        String style_src;
+        String style;
+        
+        if(withFiles) {
+            style = STYLE;
+            style_src = STYLE_SRC;
+        }
+        else {
+            style = STYLE_WITH_FILES;
+            style_src = STYLE_WITH_FILES_SRC;
+        }
+        String style_tmpl = style+STYLE_TEMP_EXTN;
+        String style_tmpl_src = style_src+STYLE_TEMP_EXTN;
+
+        IPath sl = MercurialEclipsePlugin.getDefault().getStateLocation();
+
+        File stylefile = sl.append(style).toFile();
+        File tmplfile = sl.append(style_tmpl).toFile();
+
+        ClassLoader cl = AbstractParseChangesetClient.class.getClassLoader();
+
+        if(stylefile.canRead()&&tmplfile.canRead()) {
+            // Already have copies, return the file reference to the style file
+            return stylefile;
+        }
+        // Need to make copies into the state directory from the jar file.
+        // set delete on exit so a new copy is made each time eclipse is started
+        // so we don't use stale copies on plugin updates.
+        InputStream styleistr = cl.getResourceAsStream(style_src);
+        InputStream tmplistr = cl.getResourceAsStream(style_tmpl_src);
+        try {
+            OutputStream styleostr = new FileOutputStream(stylefile);
+            stylefile.deleteOnExit();
+            OutputStream tmplostr = new FileOutputStream(tmplfile);
+            tmplfile.deleteOnExit();
+
+            byte buffer[] = new byte[1024];
+            int n;
+            while((n = styleistr.read(buffer))!=-1) {
+                styleostr.write(buffer,0,n);
+            }
+            while((n = tmplistr.read(buffer))!=-1) {
+                tmplostr.write(buffer,0,n);
+            }
+            styleostr.close();
+            tmplostr.close();
+
+            return stylefile;
+        }
+        catch (IOException e) {
+            throw new HgException("Failed to setup hg style file",e);
+        }
     }
 
+    /**
+     * Parse log output into a set of changesets.
+     * <p>
+     * Format of input is defined in the two style files in /styles and is as follows for
+     * each changeset. The changesets are separated by a line of '=' characters "^=+$". 
+     * <br><pre>
+     * Branches: b2_1_5
+     * Tags: tip
+     * Rev: 3634
+     * NodeShort: 9ace0a054654
+     * NodeLong: 9ace0a054654fe893198d3937b49fe6bff48a708
+     * DateIso: 2008-04-28 01:06 +0000
+     * DateAge: 4 weeks
+     * Author: xxxxxx
+     * Parents: 3631:22d44005f98fb5b1d794d1e6a93a68393190f50d -1:0000000000000000000000000000000000000000 
+     * Description: Update to deployment notes, clarification on database migration for  bookings
+     *         and minor formating changes
+     * Files:
+     *         Products/dev/deployment_notes.txt
+     * FileAdds:
+     * FileDels:
+     * ================
+     * </pre><br>
+     * 
+     * @param input output from the hg log command
+     * @param proj
+     * @param withFiles Are files included in the log output
+     * @param direction Incoming, Outgoing or Local changesets
+     * @param repository
+     * @param bundleFile
+     * @return
+     */
     protected static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
-            String input, IProject proj, String templ,
-            String changeSetSeparator, String templateElementSeparator,
+            String input, IProject proj, boolean withFiles,
             Direction direction, HgRepositoryLocation repository,
-            File bundleFile, String contentStartMarker) {
+            File bundleFile) {
 
         Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
-
-        if (input == null || input.length() == 0
-                || input.indexOf(contentStartMarker) == -1) {
+        
+        String templ;
+        if(withFiles) {
+            templ = TEMPLATE_WITH_FILES;
+        }
+        else {
+            templ = TEMPLATE;
+        }
+        if (input == null || input.length() == 0) {
             return fileRevisions;
         }
 
-        String content = input.substring(input.indexOf(contentStartMarker)+contentStartMarker.length());
-        String[] changeSetStrings = content.split(changeSetSeparator);
+        String[] changeSetStrings = input.split("^=+$");
 
         for (String changeSet : changeSetStrings) {
-            ChangeSet cs = getChangeSet(changeSet, templ,
-                    templateElementSeparator);
+            ChangeSet cs = getChangeSet(changeSet);
 
             // add bundle file for being able to look into the bundle.
             cs.setRepository(repository);
@@ -213,8 +320,13 @@ public abstract class AbstractParseChangesetClient {
                 .replaceAll("&amp;", "&");
     }
 
-    private static ChangeSet getChangeSet(String changeSet, String templ,
-            String templateElementSeparator) {
+    /**
+     * Parse a changeset as output from the log command (see {@link #createMercurialRevisions()}).
+     * 
+     * @param changeSet
+     * @return
+     */
+    private static ChangeSet getChangeSet(String changeSet) {
         if (changeSet == null) {
             return null;
         }

@@ -115,11 +115,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             IResource res, int limitNumber, int startRev, boolean withFiles) throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        String myTemplate = TEMPLATE;
-        if (withFiles) {
-            myTemplate = TEMPLATE_WITH_FILES;
-        }
-        command.addOptions("--debug", "--template", myTemplate);
+        command.addOptions("--debug", "--style", AbstractParseChangesetClient.getStyleFile(withFiles).getAbsolutePath());
        
         if (startRev >= 0) {
             int last = Math.max(startRev - limitNumber, 0);
@@ -139,8 +135,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
             return null;
         }
         Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                result, res.getProject(), myTemplate, SEP_CHANGE_SET,
-                SEP_TEMPLATE_ELEMENT, Direction.LOCAL, null, null, START);
+                result, res.getProject(), withFiles, Direction.LOCAL,
+                null, null);
         return revisions;
     }
 
