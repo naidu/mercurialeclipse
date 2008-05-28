@@ -83,7 +83,7 @@ public class AddBranchWizard extends HgWizard {
         this.resource = resource;
         setNeedsProgressMonitor(true);
         branchPage = new AddBranchPage(Messages.getString("AddBranchWizard.branchPage.name"), //$NON-NLS-1$
-                Messages.getString("AddBranchWizard.branchPage.title"), null, //$NON-NLS-1$
+                Messages.getString("AddBranchWizard.branchPage.title"), MercurialEclipsePlugin.getImageDescriptor("wizards/newstream_wizban.gif"), //$NON-NLS-1$
                 Messages.getString("AddBranchWizard.branchPage.description")); //$NON-NLS-1$
         addPage(branchPage);
     }
