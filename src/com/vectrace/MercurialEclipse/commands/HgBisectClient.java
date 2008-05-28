@@ -29,26 +29,62 @@ public final class HgBisectClient {
 
     public enum Status { GOOD, BAD }
     
+    /**
+     * Marks the specified changeset as a good revision. If no changeset is specified
+     * bisect will use the "current" changeset.
+     * 
+     * @param repository the repository to bisect
+     * @param the changeset to mark as good, or null for current
+     * @return a message from the command
+     * @throws HgException
+     */
     public static String markGood(File repository, ChangeSet good)
             throws HgException {
         HgCommand cmd = new HgCommand("bisect", repository, true);
-        cmd.addOptions("-g", getRevision(good));
+        cmd.addOptions("-g");
+        if(good != null) {
+            cmd.addOptions(getRevision(good));
+        }
         return cmd.executeToString();
     }
 
+    /**
+     * Marks the specified changeset as a bad revivision. If no changeset is specified
+     * bisect will use teh "current" changeset.
+     * 
+     * @param repository the repository to bisect
+     * @param bad the changeset to mark as bad, or null for current
+     * @return a message from the command
+     * @throws HgException
+     */
     public static String markBad(File repository, ChangeSet bad)
             throws HgException {
         HgCommand cmd = new HgCommand("bisect", repository, true);
-        cmd.addOptions("-b", getRevision(bad));
+        cmd.addOptions("-b");
+        if(bad != null) {
+            cmd.addOptions(getRevision(bad));
+        }
         return cmd.executeToString();
     }
 
+    /**
+     * Resets the bisect status for this repository. This command will not update the repository
+     * to the head.
+     * @param repository the repository to reset bisect status for
+     * @return
+     * @throws HgException
+     */
     public static String reset(File repository) throws HgException {
         HgCommand cmd = new HgCommand("bisect", repository, true);
         cmd.addOptions("-r");
         return cmd.executeToString();
     }
     
+    /**
+     * Checks if the repository is currently being bisected
+     * @param repository
+     * @return
+     */
     public static boolean isBisecting(File repository) {
         try {
             File file = getStatusFile(repository);
@@ -58,6 +94,11 @@ public final class HgBisectClient {
         }
     }
     
+    /**
+     * Gets a Status by Changeset map containing marked bisect statuses.
+     * @param repository
+     * @return
+     */
     public static Map<String, Status> getBisectStatus(File repository) {
         HashMap<String, Status> statusByRevision = new HashMap<String, Status>();
         if(!isBisecting(repository)) {
