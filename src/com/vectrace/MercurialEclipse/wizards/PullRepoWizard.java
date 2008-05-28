@@ -145,7 +145,7 @@ public class PullRepoWizard extends HgWizard {
         
         incomingPage = new IncomingPage(Messages
                 .getString("PullRepoWizard.incomingPage.name")); //$NON-NLS-1$
-        initPage(incomingPage.getDescription(), pullPage);
+        initPage(incomingPage.getDescription(), incomingPage);
         addPage(incomingPage);
     }
 
