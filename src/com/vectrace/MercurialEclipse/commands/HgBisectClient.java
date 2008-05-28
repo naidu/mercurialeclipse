@@ -75,6 +75,7 @@ public final class HgBisectClient {
                     statusByRevision.put(statusChangeset[1].trim(), Status.GOOD);
                 }
             }
+            reader.close();
         } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
         }
