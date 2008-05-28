@@ -22,6 +22,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgRootClient {
     public static String getHgRoot(IProject proj) throws HgException {
         HgCommand command = new HgCommand("root", proj, true);
-        return command.executeToString().replaceAll("\n", "");
+        return new String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n", "");
     }
 }
