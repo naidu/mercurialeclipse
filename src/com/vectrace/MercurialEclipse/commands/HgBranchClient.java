@@ -9,7 +9,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 
-public class HgBranchClient {
+public class HgBranchClient extends AbstractClient {
 
     private static final Pattern GET_BRANCHES_PATTERN = Pattern
             .compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( +(.+))?$");
@@ -42,15 +42,14 @@ public class HgBranchClient {
      * @param local
      * @throws HgException
      */
-    public static void addBranch(IResource resource, String name,
+    public static String addBranch(IResource resource, String name,
             String user, boolean force) throws HgException {
-        HgCommand command = new HgCommand("branch", resource.getProject(), false);
+        HgCommand command = new HgCommand("branch", getWorkingDirectory(resource), false);
         if (force) {
             command.addOptions("-f");
         }
-        command.addUserName(user);
         command.addOptions(name);
-        command.executeToBytes();
+        return new String(command.executeToBytes());
     }
 
 }

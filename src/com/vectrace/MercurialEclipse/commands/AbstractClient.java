@@ -6,22 +6,32 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
+ * bastian	implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.resources.IProject;
+import java.io.File;
 
-import com.vectrace.MercurialEclipse.exception.HgException;
+import org.eclipse.core.resources.IResource;
 
 /**
- * Calls hg root
+ * Base client class
  * @author bastian
- *
+ * 
  */
-public class HgRootClient {
-    public static String getHgRoot(IProject proj) throws HgException {
-        HgCommand command = new HgCommand("root", proj, true);
-        return new String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n", "");
+public abstract class AbstractClient {
+    /**
+     * @param workDir
+     * @return
+     */
+    protected static File getWorkingDirectory(IResource workDir) {
+        IResource myWorkDir = workDir;
+        if (workDir.getType()==IResource.FILE) {
+            myWorkDir = workDir.getParent();
+        }
+        return myWorkDir.getLocation().toFile();
+    }
+
+    public AbstractClient() {
     }
 }

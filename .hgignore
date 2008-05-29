@@ -12,3 +12,8 @@ syntax: regexp
 
 syntax: regexp
 ^\.settings/org\.eclipse\.jdt\.ui\.prefs$
+
+syntax: regexp
+\.orig$
+^com.vectrace.MercurialEclipse_[0-9.]*.zip$
+^src.zip$

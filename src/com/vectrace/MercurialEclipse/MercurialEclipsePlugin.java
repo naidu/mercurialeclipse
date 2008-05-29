@@ -83,7 +83,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
         repoManager.start();
     }
 
-    public synchronized void checkHgInstallation() {
+    public void checkHgInstallation() {
         try {
             this.hgUsable = true;
             MercurialUtilities.getHGExecutable(true);
@@ -248,8 +248,9 @@ public void stop(BundleContext context) throws Exception
             // new TimeoutProgressMonitorDialog(parent, TIMEOUT).run(true
             // /*fork*/, cancelable, runnable);
         } finally {
-            if (createdShell)
+            if (createdShell) {
                 parent.dispose();
+            }
         }
     }
 
@@ -263,7 +264,9 @@ public void stop(BundleContext context) throws Exception
      */
     public static IWorkbenchPage getActivePage() {
         IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-        if (window == null) return null;
+        if (window == null) {
+            return null;
+        }
         return window.getActivePage();
     }
 

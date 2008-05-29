@@ -140,9 +140,12 @@ public class PullRepoWizard extends HgWizard {
                 Messages.getString("PullRepoWizard.pullPage.description"), //$NON-NLS-1$
                 resource.getProject(), null);
 
+        initPage(pullPage.getDescription(), pullPage);                
         addPage(pullPage);
+        
         incomingPage = new IncomingPage(Messages
                 .getString("PullRepoWizard.incomingPage.name")); //$NON-NLS-1$
+        initPage(incomingPage.getDescription(), incomingPage);
         addPage(incomingPage);
     }
 

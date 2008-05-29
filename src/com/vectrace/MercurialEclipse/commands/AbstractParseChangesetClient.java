@@ -54,7 +54,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * @author Bastian Doetsch
  * 
  */
-public abstract class AbstractParseChangesetClient {
+public abstract class AbstractParseChangesetClient extends AbstractClient {
 
     private static final String STYLE_SRC = "/styles/log_style";
     private static final String STYLE = "/log_style";
