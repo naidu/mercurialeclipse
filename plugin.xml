@@ -291,13 +291,11 @@
 		<!-- ShowAnnotationHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
 		         class="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler">
-			<enabledWhen>
-				<and>
+			<enabledWhen>				
 					<count value="1"/>
 					<!--iterate>
 						<adapt type="org.eclipse.core.resources.IFile"/>
 					</iterate-->
-				</and>
 			</enabledWhen>
 		</handler>
 		
@@ -463,7 +461,7 @@
 					<visibleWhen>
 					<and>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.file"/>
+						<!--reference definitionId="com.vectrace.MercurialEclipse.def.file"/-->
 					</and>
 					</visibleWhen>
 				</command>
