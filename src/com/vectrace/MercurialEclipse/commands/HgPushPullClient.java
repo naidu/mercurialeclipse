@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgPushPullClient extends AbstractRepositoryClient {
+public class HgPushPullClient  {
 
     public static String push(IProject project, HgRepositoryLocation location,
             boolean force, String revision, int timeout) throws HgException {

@@ -18,7 +18,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgTransplantClient extends AbstractRepositoryClient {
+public class HgTransplantClient {
 
     /**
      * Cherrypicks given ChangeSets from repository or branch.

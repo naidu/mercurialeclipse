@@ -19,7 +19,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgCloneClient extends AbstractRepositoryClient {
+public class HgCloneClient {
 
     public static void clone(IWorkspace workspace, HgRepositoryLocation repo,
             String cloneParameters, String projectName) throws HgException {
