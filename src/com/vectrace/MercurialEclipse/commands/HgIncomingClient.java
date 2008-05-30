@@ -14,6 +14,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import static com.vectrace.MercurialEclipse.commands.AbstractParseChangesetClient.*;
 
 /*******************************************************************************
  * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
@@ -23,7 +24,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * 
  * Contributors: Bastian Doetsch - implementation
  ******************************************************************************/
-public class HgIncomingClient extends AbstractParseChangesetClient {
+public class HgIncomingClient { 
 
     /**
      * Gets all File Revisions that are incoming and saves them in a bundle

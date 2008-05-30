@@ -1,8 +1,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 import org.eclipse.core.resources.IContainer;
 
@@ -17,54 +17,29 @@ public class HgIdentClient {
     }
 
     /**
-     * This summary identifies the repository state using one or two parent hash
-     * identifiers, followed by a "+" if there are uncommitted changes in the
-     * working directory, a list of tags for this revision and a branch name for
-     * non-default branches.
-     * 
-     * @return
+     * Returns the current node-id as a String
+     * @param repository the root of the repository to identify
+     * @return Returns the node-id for the current changeset
+     * @throws HgException
+     * @throws IOException 
      */
-    public static String[] getChangeSets(String resultString) {
-        // It consists of the revision id (hash), optionally a '+' sign
-        // if the working tree has been modified, followed by a list of tags.
-        // => we need to strip it ...
-        // String changeset = getResult();
-        // if (changeset.indexOf(" ") != -1) // is there a space?
-        // {
-        // changeset = changeset.substring(0, changeset.indexOf(" ")); // take
-        // the begining until the first space
-        // }
-        // if (changeset.indexOf("+") != -1) // is there a +?
-        // {
-        // changeset = changeset.substring(0, changeset.indexOf("+")); // take
-        // the begining until the first +
-        // }
-
-        // get result
-        String hash = resultString.trim();
-        // split it by its spaces
-        String[] parts = hash.split(" ");
-
-        // reverse it to get the revision to the front
-        List<String> list = Arrays.asList(parts);
-        Collections.reverse(list);
-
-        // now we iterate over the parts to get the return value in the format
-        // revision:hash
-        String[] changeSets = new String[list.size() / 2];
-        for (int i = 0; i < list.size(); i++) {
-            if (i % 2 == 0) {
-                changeSets[i] = list.get(i) + ":";
-            } else {
-                changeSets[i - 1] += list.get(i);
+    public static String getCurrentChangesetId(File repository)
+            throws HgException, IOException {
+        String dirstate = repository.getCanonicalPath() + File.separator
+                + ".hg" + File.separator + "dirstate";
+        FileInputStream reader = new FileInputStream(dirstate);
+        try {
+            byte[] nodid = new byte[20];
+            reader.read(nodid);
+            StringBuilder id = new StringBuilder();
+            for (byte b : nodid) {
+                int x = b;
+                x = x & 0xFF;
+                id.append(Integer.toHexString(x));
             }
+            return id.toString();
+        } finally {
+            reader.close();
         }
-
-        // return the result to its original order
-        list = Arrays.asList(changeSets);
-        Collections.reverse(list);
-
-        // ... and return it to caller
-        return list.toArray(changeSets);
     }
 }
