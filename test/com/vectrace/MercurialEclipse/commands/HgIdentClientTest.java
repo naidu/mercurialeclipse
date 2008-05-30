@@ -11,9 +11,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.PrintStream;
 
 import junit.framework.TestCase;
 
@@ -24,10 +21,6 @@ import junit.framework.TestCase;
 public class HgIdentClientTest extends TestCase {
 
     public void testGetCurrentChangesetId() throws Exception {
-        AbstractShellCommand.setConsole(new PrintStream(new OutputStream() {
-            @Override
-            public void write(int b) throws IOException {
-            }} ));
         File repo = new File(".");
         String id = HgIdentClient.getCurrentChangesetId(repo);
         System.out.println(id);
