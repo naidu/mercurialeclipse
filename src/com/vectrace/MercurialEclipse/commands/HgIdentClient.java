@@ -1,6 +1,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 
 import org.eclipse.core.resources.IContainer;
 
@@ -19,11 +21,19 @@ public class HgIdentClient {
      * @param repository the root of the repository to identify
      * @return Returns the node-id for the current changeset
      * @throws HgException
+     * @throws IOException 
      */
-    public static String getCurrentChangesetId(File repository) throws HgException {
-        HgCommand command = new HgCommand("ident", repository, true);
-        command.addOptions("-i", "--debug");
-        String nodeid = command.executeToString().trim();
-        return nodeid.replace("+", "");
+    public static String getCurrentChangesetId(File repository) throws HgException, IOException {
+        String dirstate = repository.getCanonicalPath() + File.separator + ".hg" + File.separator + "dirstate";
+        FileInputStream reader = new FileInputStream(dirstate);
+        byte[] nodid = new byte[20];
+        reader.read(nodid);
+        StringBuilder id = new StringBuilder();
+        for (byte b : nodid) {
+            int x = b;
+            x = x & 0xFF;
+            id.append(Integer.toHexString(x));
+        }
+        return id.toString();
     }
 }
