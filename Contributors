@@ -35,9 +35,11 @@ Sebastian Herbszt - Some code changes and some testing on Windows
      Zingo's Comment: Sebastian started out with a small changelog patch but have since 
      then help with bug tracking and other patches 
      
-StefanC
-     I'm a developer at ZealCore Embedded Solutions AB (Västerås, Sweden) with a deep interest
-     in eclipse plugin development. 
+Stefan Chyssler
+     I currently work as a python developer in Stockholm, Sweden.
+     Previously I worked as an eclipse plugin developer developer at an company in Sweden. I have a genuine interest
+     in eclipse plugin development and believe a full fledged mercurial team support will help make
+     eclipse stay on top. 
      Zingo's Comment: StefanC started out to helped me with not selecting ignored 
      files in Commit dialog and making it resizable, after that he has made numerous contributions. 
 
