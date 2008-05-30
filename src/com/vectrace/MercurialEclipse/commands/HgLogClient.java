@@ -13,8 +13,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import static com.vectrace.MercurialEclipse.commands.AbstractParseChangesetClient.*;
 
-public class HgLogClient extends AbstractParseChangesetClient {
+public class HgLogClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$");

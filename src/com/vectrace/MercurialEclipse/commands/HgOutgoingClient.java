@@ -20,8 +20,9 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import static com.vectrace.MercurialEclipse.commands.AbstractParseChangesetClient.*;
 
-public class HgOutgoingClient extends AbstractParseChangesetClient {
+public class HgOutgoingClient {
 
     public static Map<IResource, SortedSet<ChangeSet>> getOutgoing(
             IResource res, HgRepositoryLocation loc) throws HgException {
