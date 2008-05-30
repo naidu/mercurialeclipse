@@ -13,7 +13,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
@@ -89,8 +89,7 @@ public class PushRepoWizard extends HgWizard {
                 timeout = Integer.MAX_VALUE;
             }
 
-            String result = HgPushPullClient.push(project, repo,
-                    repo.getUser(), repo.getPassword(), pushRepoPage.isForce(),
+            String result = HgPushPullClient.push(project, repo, pushRepoPage.isForce(),
                     pushRepoPage.getRevision(), timeout);
 
             if (result.length() != 0) {
@@ -110,7 +109,7 @@ public class PushRepoWizard extends HgWizard {
             // It appears good. Stash the repo location.
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
                     repo);
-        } catch (MalformedURLException e) {
+        } catch (URISyntaxException e) {
             MessageDialog
                     .openError(
                             Display.getCurrent().getActiveShell(),

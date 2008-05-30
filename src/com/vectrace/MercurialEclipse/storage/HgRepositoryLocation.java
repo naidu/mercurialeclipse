@@ -15,7 +15,8 @@
 package com.vectrace.MercurialEclipse.storage;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -28,25 +29,47 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
-    private URL url;
+public class HgRepositoryLocation extends AllRootsElement implements
+        Comparable<HgRepositoryLocation> {
     private String location;
     private String user;
     private String password;
+    private URI uri;
 
-    public HgRepositoryLocation(String url) throws MalformedURLException {
-        this.location = url;
-        try {
-            this.url = new URL(location);
-        } catch (MalformedURLException e) {
-            this.url = new URL("file:///".concat(location));
-        }
+    public HgRepositoryLocation(String uri) throws URISyntaxException {
+        this(uri, null, null);
     }
-    
-    public HgRepositoryLocation(String url, String user, String password) throws MalformedURLException{
-        this(url);
-        this.user=user;
-        this.password=password;
+
+    public HgRepositoryLocation(String uri, String user, String password)
+            throws URISyntaxException {
+        this.location = uri;
+        this.user = user;
+        this.password = password;
+
+        URI myUri;
+        try {
+            myUri = new URI(uri);
+        } catch (URISyntaxException e) {
+            myUri = new URI("file:///".concat(location));
+        }
+
+        if (myUri.getUserInfo() == null) {
+            String userInfo = user;
+            if (user != null && user.length() == 0) {
+                // URI parts are undefinied, if they are null.
+                userInfo = null;
+            } else if (user != null) {
+                // pass gotta be separated by a colon
+                if (password != null && password.length() != 0) {
+                    userInfo = userInfo.concat(":").concat(password);
+                }
+            }
+            this.uri = new URI(myUri.getScheme(), userInfo, myUri.getHost(),
+                    myUri.getPort(), myUri.getPath(), myUri.getQuery(), myUri
+                            .getFragment());
+        } else {
+            this.uri = myUri;
+        }
     }
 
     public String getUrl() {
@@ -107,25 +130,23 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
         }
         return true;
     }
-    
+
     /**
-     * Create a repository location instance from the given properties.
-     * The supported properties are:
-     *   user The username for the connection (optional)
-     *   password The password used for the connection (optional)
-     *   url The url where the repository resides
-     *   rootUrl The repository root url
-     * @throws MalformedURLException 
+     * Create a repository location instance from the given properties. The
+     * supported properties are: user The username for the connection (optional)
+     * password The password used for the connection (optional) url The url
+     * where the repository resides rootUrl The repository root url
+     * 
+     * @throws MalformedURLException
      */
     public static HgRepositoryLocation fromProperties(Properties configuration)
-        throws HgException, MalformedURLException {
-        // We build a string to allow validation of the components that are provided to us
-    
-        String user = configuration.getProperty("user");  
+            throws HgException, URISyntaxException {
+        
+        String user = configuration.getProperty("user");
         if ((user == null) || (user.length() == 0)) {
             user = null;
         }
-        String password = configuration.getProperty("password");  
+        String password = configuration.getProperty("password");
         if (user == null) {
             password = null;
         }
@@ -133,10 +154,10 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
         if ((rootUrl == null) || (rootUrl.length() == 0)) {
             rootUrl = null;
         }
-        String url = configuration.getProperty("url");  
+        String url = configuration.getProperty("url");
         if (url == null) {
             throw new HgException("URL must not be null.");
-        }                      
+        }
         return new HgRepositoryLocation(url, user, password);
     }
 
@@ -158,22 +179,22 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
     public String toString() {
         return location;
     }
-    
+
     @Override
     public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
         return new HgRepositoryLocation[0];
     }
-    
+
     @Override
-    public ImageDescriptor getImageDescriptor(Object object) {        
+    public ImageDescriptor getImageDescriptor(Object object) {
         return super.getImageDescriptor(object);
     }
 
     /**
-     * @return the urlObject
+     * @return the uri
      */
-    public URL getUrlObject() {
-        return url;
+    public URI getUri() {
+        return uri;
     }
-    
+
 }

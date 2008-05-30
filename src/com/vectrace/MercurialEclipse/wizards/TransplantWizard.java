@@ -10,7 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
@@ -108,7 +108,7 @@ public class TransplantWizard extends HgWizard {
             // It appears good. Stash the repo location.
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
                     repo);
-        } catch (MalformedURLException e) {
+        } catch (URISyntaxException e) {
             MessageDialog
                     .openError(
                             Display.getCurrent().getActiveShell(),

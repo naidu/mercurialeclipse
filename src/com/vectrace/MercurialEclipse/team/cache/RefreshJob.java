@@ -10,7 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -111,7 +111,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
                     MercurialEclipsePlugin.getRepoManager().addRepoLocation(
                             project,
                             new HgRepositoryLocation(repositoryLocation));
-                } catch (MalformedURLException e) {
+                } catch (URISyntaxException e) {
                     MercurialEclipsePlugin.logWarning(
                             "couldn't add repository to location manager", e);
                 }

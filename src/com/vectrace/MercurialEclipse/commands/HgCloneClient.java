@@ -12,11 +12,9 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.core.resources.IWorkspace;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -38,35 +36,30 @@ public class HgCloneClient extends AbstractRepositoryClient {
     public static void clone(String parentDirectory, HgRepositoryLocation repo,
             boolean noUpdate, boolean pull, boolean uncompressed,
             boolean timeout, String rev, String cloneName) throws HgException {
-        try {
-            HgCommand command = new HgCommand("clone",
-                    new File(parentDirectory), false);
+        HgCommand command = new HgCommand("clone", new File(parentDirectory),
+                false);
 
-            if (noUpdate) {
-                command.addOptions("--noupdate");
-            }
-            if (pull) {
-                command.addOptions("--pull");
-            }
-            if (uncompressed) {
-                command.addOptions("--uncompressed");
-            }
-            if (rev != null && rev.length() > 0) {
-                command.addOptions("--rev", rev);
-            }
+        if (noUpdate) {
+            command.addOptions("--noupdate");
+        }
+        if (pull) {
+            command.addOptions("--pull");
+        }
+        if (uncompressed) {
+            command.addOptions("--uncompressed");
+        }
+        if (rev != null && rev.length() > 0) {
+            command.addOptions("--rev", rev);
+        }
 
-            URI uri = getRepositoryURI(repo, repo.getUser(), repo.getPassword());
-            command.addOptions(uri.toASCIIString(), cloneName);
-            if (timeout) {
-                command
-                        .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
-                command.executeToBytes();
-            } else {
-                command.executeToBytes(Integer.MAX_VALUE);
-            }
-        } catch (URISyntaxException e) {
-            MercurialEclipsePlugin.logError(e);
-            throw new HgException("Repository location is invalid.", e);
+        URI uri = repo.getUri();
+        command.addOptions(uri.toASCIIString(), cloneName);
+        if (timeout) {
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
+            command.executeToBytes();
+        } else {
+            command.executeToBytes(Integer.MAX_VALUE);
         }
     }
 }

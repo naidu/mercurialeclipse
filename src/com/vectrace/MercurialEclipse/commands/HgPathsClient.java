@@ -1,7 +1,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,7 +43,7 @@ public class HgPathsClient {
                 HgRepositoryLocation location = new HgRepositoryLocation(url);
                 urlByName.put(name, location);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             // This should never happen
             throw new RuntimeException(e);
         }

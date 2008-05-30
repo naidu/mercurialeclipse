@@ -11,7 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -57,11 +57,11 @@ public class PullPage extends PushPullPage {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
                 incomingPage.setProject(resource.getProject());
                 incomingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
-                        .getText()));
+                        .getText(), getUserCombo().getText(), getPasswordText().getText()));
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
-        } catch (MalformedURLException e) {
+        } catch (URISyntaxException e) {
             MercurialEclipsePlugin.showError(e);
         }
         return false;

@@ -12,7 +12,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -25,27 +24,22 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class HgPushPullClient extends AbstractRepositoryClient {
 
     public static String push(IProject project, HgRepositoryLocation location,
-            String user, String pass, boolean force, String revision,
-            int timeout) throws HgException {
-        try {
-            HgCommand command = new HgCommand("push", project, true);
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
+            boolean force, String revision, int timeout) throws HgException {
+        HgCommand command = new HgCommand("push", project, true);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
-            if (force) {
-                command.addOptions("-f");
-            }
-
-            if (revision != null && revision.length() > 0) {
-                command.addOptions("-r", revision.trim());
-            }
-
-            URI uri = getRepositoryURI(location, user, pass);
-            command.addFiles(uri.toASCIIString());
-            return new String(command.executeToBytes(timeout));
-        } catch (URISyntaxException e) {
-            throw new HgException("URI invalid", e);
+        if (force) {
+            command.addOptions("-f");
         }
+
+        if (revision != null && revision.length() > 0) {
+            command.addOptions("-r", revision.trim());
+        }
+
+        URI uri = location.getUri();
+        command.addFiles(uri.toASCIIString());
+        return new String(command.executeToBytes(timeout));
     }
 
     public static String pull(IResource resource,
@@ -56,37 +50,31 @@ public class HgPushPullClient extends AbstractRepositoryClient {
     public static String pull(IResource resource,
             HgRepositoryLocation location, boolean update, boolean force,
             boolean timeout, ChangeSet changeset) throws HgException {
-        try {
-            IResource workDir = resource;
-            if (resource.getType()==IResource.FILE) {
-                workDir = resource.getParent();
-            }
-            HgCommand command = new HgCommand("pull", workDir.getLocation()
-                    .toFile(), true);
+        IResource workDir = resource;
+        if (resource.getType() == IResource.FILE) {
+            workDir = resource.getParent();
+        }
+        HgCommand command = new HgCommand("pull", workDir.getLocation()
+                .toFile(), true);
 
-            if (update) {
-                command.addOptions("--update");
-            }
-            if (force) {
-                command.addOptions("--force");
-            }
-            if (changeset != null) {
-                command.addOptions("--rev",changeset.getChangeset());
-            }
-            
-            URI uri = getRepositoryURI(location, location.getUser(), location
-                    .getPassword());
-            
-            command.addFiles(uri.toASCIIString());
-            if (timeout) {
-                command
-                        .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-                return new String(command.executeToBytes());
-            }
-            return new String(command.executeToBytes(Integer.MAX_VALUE));
-        } catch (URISyntaxException e) {
-            throw new HgException("URI invalid", e);
+        if (update) {
+            command.addOptions("--update");
+        }
+        if (force) {
+            command.addOptions("--force");
+        }
+        if (changeset != null) {
+            command.addOptions("--rev", changeset.getChangeset());
         }
 
+        URI uri = location.getUri();
+
+        command.addFiles(uri.toASCIIString());
+        if (timeout) {
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+            return new String(command.executeToBytes());
+        }
+        return new String(command.executeToBytes(Integer.MAX_VALUE));
     }
 }

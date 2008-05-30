@@ -17,7 +17,6 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
 
 import org.eclipse.core.internal.resources.ProjectDescription;
 import org.eclipse.core.resources.IProject;
@@ -91,7 +90,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
          * 
          * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
          */
-        @SuppressWarnings("restriction") //$NON-NLS-1$
+        @SuppressWarnings("restriction")//$NON-NLS-1$
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
@@ -99,30 +98,33 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
             IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
                     .getRoot();
 
-            monitor.beginTask(Messages.getString("CloneRepoWizard.operation.name"), 15); //$NON-NLS-1$
+            monitor.beginTask(Messages
+                    .getString("CloneRepoWizard.operation.name"), 15); //$NON-NLS-1$
 
             // set defaults
             if (this.parentDirectory == null || parentDirectory.length() == 0) {
                 parentDirectory = workspaceRoot.getLocation().toOSString();
             }
 
-            monitor.subTask(Messages.getString("CloneRepoWizard.subTaskParentDirectory.name") + parentDirectory); //$NON-NLS-1$
+            monitor
+                    .subTask(Messages
+                            .getString("CloneRepoWizard.subTaskParentDirectory.name") + parentDirectory); //$NON-NLS-1$
             monitor.worked(1);
 
             if (cloneName == null || cloneName.length() == 0) {
-                try {
-                    cloneName = repo.getUrlObject().toURI().getFragment();
-                } catch (URISyntaxException e) {
-                    throw new InvocationTargetException(e);
-                }
+                cloneName = repo.getUri().getFragment();
             }
 
-            monitor.subTask(Messages.getString("CloneRepoWizard.subTaskCloneDirectory.name") + cloneName); //$NON-NLS-1$
+            monitor
+                    .subTask(Messages
+                            .getString("CloneRepoWizard.subTaskCloneDirectory.name") + cloneName); //$NON-NLS-1$
             monitor.worked(1);
 
             try {
 
-                monitor.subTask(Messages.getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
+                monitor
+                        .subTask(Messages
+                                .getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
                 HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,
                         uncompressed, timeout, rev, cloneName);
                 monitor.worked(1);
@@ -134,7 +136,8 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
             project = workspaceRoot.getProject(cloneName);
             IProjectDescription description = new ProjectDescription();
             description.setName(cloneName);
-            description.setComment(Messages.getString("CloneRepoWizard.description.comment") + repo); //$NON-NLS-1$
+            description.setComment(Messages
+                    .getString("CloneRepoWizard.description.comment") + repo); //$NON-NLS-1$
 
             IPath projectLocation = null;
             if (!workspaceRoot.getLocation().toOSString().equals(
@@ -157,8 +160,11 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                 // Register the project with Team. This will bring all the files
                 // that
                 // we cloned into the project.
-                monitor.subTask(Messages.getString("CloneRepoWizard.subTask.registeringProject1") + project.getName() //$NON-NLS-1$
-                        + Messages.getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
+                monitor
+                        .subTask(Messages
+                                .getString("CloneRepoWizard.subTask.registeringProject1") + project.getName() //$NON-NLS-1$
+                                + Messages
+                                        .getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
                 RepositoryProvider.map(project, MercurialTeamProvider.class
                         .getName());
                 RepositoryProvider.getProvider(project,
@@ -171,8 +177,11 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
 
             // It appears good. Stash the repo location.
             try {
-                monitor.subTask(Messages.getString("CloneRepoWizard.subTask.addingRepository.1") + repo //$NON-NLS-1$
-                        + Messages.getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
+                monitor
+                        .subTask(Messages
+                                .getString("CloneRepoWizard.subTask.addingRepository.1") + repo //$NON-NLS-1$
+                                + Messages
+                                        .getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
                 MercurialEclipsePlugin.getRepoManager().addRepoLocation(
                         project, repo);
             } catch (HgException e) {

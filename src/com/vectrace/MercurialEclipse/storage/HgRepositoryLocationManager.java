@@ -21,7 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -82,8 +82,11 @@ public class HgRepositoryLocationManager {
 
             try {
                 while ((line = reader.readLine()) != null) {
-                    addRepoLocation(new HgRepositoryLocation(line));
+                    addRepoLocation(new HgRepositoryLocation(line, null, null));
                 }
+            } catch (URISyntaxException e) {
+                // we don't want to load it - it will be cleaned when saving
+                MercurialEclipsePlugin.logError(e);
             } finally {
                 reader.close();
             }
@@ -192,14 +195,14 @@ public class HgRepositoryLocationManager {
                 String url = getDefaultProjectRepository(project);
                 if (url != null) {
                     HgRepositoryLocation srcRepository = new HgRepositoryLocation(
-                            url);
+                            url, null, null);
                     addRepoLocation(project, srcRepository);
                 } else {
                     createSrcRepository = true;
                 }
-            } catch (CoreException e) {
+            } catch (Exception e) {
+                // log the exception - but don't bother the user
                 MercurialEclipsePlugin.logError(e);
-                throw new HgException(e);
             }
             File file = getProjectLocationFile(project);
 
@@ -211,18 +214,21 @@ public class HgRepositoryLocationManager {
 
                 try {
                     while ((line = reader.readLine()) != null) {
-                        HgRepositoryLocation loc = new HgRepositoryLocation(
-                                line);
-                        addRepoLocation(project, loc);
+                        try {
+                            HgRepositoryLocation loc = new HgRepositoryLocation(
+                                    line, null, null);
+                            addRepoLocation(project, loc);
 
-                        if (createSrcRepository) {
-                            try {
+                            if (createSrcRepository) {
+
                                 setDefaultProjectRepository(project, loc);
-                            } catch (CoreException e) {
-                                MercurialEclipsePlugin.logError(e);
+                                createSrcRepository = false;
                             }
-                            createSrcRepository = false;
+                        } catch (Exception e) {
+                            // log exception, but don't bother the user with it.
+                            MercurialEclipsePlugin.logError(e);
                         }
+
                     }
                 } finally {
                     reader.close();
@@ -346,7 +352,7 @@ public class HgRepositoryLocationManager {
         HgRepositoryLocation location;
         try {
             location = HgRepositoryLocation.fromProperties(configuration);
-        } catch (MalformedURLException e) {
+        } catch (URISyntaxException e) {
             MercurialEclipsePlugin.logError(e);
             throw new HgException("Couldn't create repository location.", e);
         }

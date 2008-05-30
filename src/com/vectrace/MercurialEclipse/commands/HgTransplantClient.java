@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -24,17 +22,6 @@ public class HgTransplantClient extends AbstractRepositoryClient {
 
     /**
      * Cherrypicks given ChangeSets from repository or branch.
-     * 
-     * @param project
-     *            the project
-     * @param nodeIds
-     *            the changeset identifiers
-     * @param source
-     *            the branch or repository
-     * @param branch
-     *            flag, if we want to pick from a branch. true if branch, false
-     *            if repo.
-     * @throws HgException
      */
     public static String transplant(IProject project, List<String> nodeIds,
             HgRepositoryLocation loc, boolean branch, String branchName,
@@ -42,51 +29,45 @@ public class HgTransplantClient extends AbstractRepositoryClient {
             String pruneNodeId, boolean continueLastTransplant,
             boolean filterChangesets, String filter) throws HgException {
 
-        try {
-            HgCommand command = new HgCommand("transplant", project, false);
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-            command.addOptions("--config", "extensions.hgext.transplant=");
-            if (continueLastTransplant) {
-                command.addOptions("--continue");
+        HgCommand command = new HgCommand("transplant", project, false);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        command.addOptions("--config", "extensions.hgext.transplant=");
+        if (continueLastTransplant) {
+            command.addOptions("--continue");
+        } else {
+            command.addOptions("--log");
+            if (branch) {
+                command.addOptions("--branch");
+                command.addOptions(branchName);
+                if (all) {
+                    command.addOptions("--all");
+                }
             } else {
-                command.addOptions("--log");
-                if (branch) {
-                    command.addOptions("--branch");
-                    command.addOptions(branchName);
-                    if (all) {
-                        command.addOptions("--all");
-                    }
-                } else {
-                    command.addOptions("--source");
-                    URI uri = getRepositoryURI(loc, loc.getUser(), loc
-                            .getPassword());
-                    command.addOptions(uri.toASCIIString());
-                }
+                command.addOptions("--source");
+                command.addOptions(loc.getUri().toASCIIString());
+            }
 
-                if (prune) {
-                    command.addOptions("--prune");
-                    command.addOptions(pruneNodeId);
-                }
+            if (prune) {
+                command.addOptions("--prune");
+                command.addOptions(pruneNodeId);
+            }
 
-                if (merge) {
-                    command.addOptions("--merge");
-                    command.addOptions(mergeNodeId);
-                }
+            if (merge) {
+                command.addOptions("--merge");
+                command.addOptions(mergeNodeId);
+            }
 
-                if (nodeIds != null && nodeIds.size() > 0) {
-                    for (String node : nodeIds) {
-                        command.addOptions(node);
-                    }
-                }
-
-                if (filterChangesets) {
-                    command.addOptions("--filter", filter);
+            if (nodeIds != null && nodeIds.size() > 0) {
+                for (String node : nodeIds) {
+                    command.addOptions(node);
                 }
             }
-            return new String(command.executeToBytes());
-        } catch (URISyntaxException e) {
-            throw new HgException("Invalid URI", e);
+
+            if (filterChangesets) {
+                command.addOptions("--filter", filter);
+            }
         }
+        return new String(command.executeToBytes());
     }
 }

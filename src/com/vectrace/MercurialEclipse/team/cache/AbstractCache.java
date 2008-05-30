@@ -10,7 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -79,7 +79,7 @@ public abstract class AbstractCache extends Observable {
                 hgRepositoryLocation = new HgRepositoryLocation(
                         repositoryLocation);
                 repoManager.addRepoLocation(hgRepositoryLocation);
-            } catch (MalformedURLException e) {
+            } catch (URISyntaxException e) {
                 MercurialEclipsePlugin.logError(e);
                 throw new HgException(e.getLocalizedMessage(), e);
             }
