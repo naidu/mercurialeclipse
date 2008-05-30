@@ -23,17 +23,23 @@ public class HgIdentClient {
      * @throws HgException
      * @throws IOException 
      */
-    public static String getCurrentChangesetId(File repository) throws HgException, IOException {
-        String dirstate = repository.getCanonicalPath() + File.separator + ".hg" + File.separator + "dirstate";
+    public static String getCurrentChangesetId(File repository)
+            throws HgException, IOException {
+        String dirstate = repository.getCanonicalPath() + File.separator
+                + ".hg" + File.separator + "dirstate";
         FileInputStream reader = new FileInputStream(dirstate);
-        byte[] nodid = new byte[20];
-        reader.read(nodid);
-        StringBuilder id = new StringBuilder();
-        for (byte b : nodid) {
-            int x = b;
-            x = x & 0xFF;
-            id.append(Integer.toHexString(x));
+        try {
+            byte[] nodid = new byte[20];
+            reader.read(nodid);
+            StringBuilder id = new StringBuilder();
+            for (byte b : nodid) {
+                int x = b;
+                x = x & 0xFF;
+                id.append(Integer.toHexString(x));
+            }
+            return id.toString();
+        } finally {
+            reader.close();
         }
-        return id.toString();
     }
 }
