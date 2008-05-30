@@ -116,7 +116,9 @@
 		<!-- Must be file -->
 		<definition id="com.vectrace.MercurialEclipse.def.file">
 			<iterate>
-				<adapt type="org.eclipse.core.resources.IFile"/>
+				<adapt type="org.eclipse.core.resources.IResource">
+					<adapt type="org.eclipse.core.resources.IFile"/>
+				</adapt>
 			</iterate>
 		</definition>
 		<!-- notInMercurial -->
@@ -293,9 +295,6 @@
 		         class="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler">
 			<enabledWhen>				
 					<count value="1"/>
-					<!--iterate>
-						<adapt type="org.eclipse.core.resources.IFile"/>
-					</iterate-->
 			</enabledWhen>
 		</handler>
 		
@@ -461,7 +460,7 @@
 					<visibleWhen>
 					<and>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-						<!--reference definitionId="com.vectrace.MercurialEclipse.def.file"/-->
+						<reference definitionId="com.vectrace.MercurialEclipse.def.file"/>
 					</and>
 					</visibleWhen>
 				</command>
