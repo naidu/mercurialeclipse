@@ -14,7 +14,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import static com.vectrace.MercurialEclipse.commands.AbstractParseChangesetClient.*;
 
 /*******************************************************************************
  * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
@@ -24,7 +23,7 @@ import static com.vectrace.MercurialEclipse.commands.AbstractParseChangesetClien
  * 
  * Contributors: Bastian Doetsch - implementation
  ******************************************************************************/
-public class HgIncomingClient { 
+public class HgIncomingClient extends AbstractParseChangesetClient {
 
     /**
      * Gets all File Revisions that are incoming and saves them in a bundle
@@ -45,7 +44,7 @@ public class HgIncomingClient {
         try {
             final File bundleFile = File.createTempFile("bundleFile-".concat(proj.getName()).concat("-"), ".tmp",null);
             bundleFile.deleteOnExit();
-            command.addOptions("--debug", "--template", TEMPLATE_WITH_FILES,
+            command.addOptions("--debug", "--style", AbstractParseChangesetClient.getStyleFile(true).getAbsolutePath(),
                     "--bundle", bundleFile.getAbsolutePath(), repository.getUrl());
                         
             String result = command.executeToString();
@@ -53,9 +52,8 @@ public class HgIncomingClient {
                 return null;
             }
             Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, proj, TEMPLATE_WITH_FILES, SEP_CHANGE_SET,
-                    SEP_TEMPLATE_ELEMENT, Direction.INCOMING, repository,
-                    bundleFile, START);
+                    result, proj, true, Direction.INCOMING,
+                    repository, bundleFile);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) {

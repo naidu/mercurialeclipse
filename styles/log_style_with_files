@@ -1,0 +1,10 @@
+changeset = log_style_with_files.tmpl
+start_files = ''
+file = '\n<f>{file|escape}</f>'
+end_files = ''
+start_file_adds = ''
+file_add = '\n<f>{file_add|escape}</f>'
+end_file_adds = ''
+start_file_dels = ''
+file_del = '\n<f>{file_del|escape}</f>'
+end_file_dels = ''

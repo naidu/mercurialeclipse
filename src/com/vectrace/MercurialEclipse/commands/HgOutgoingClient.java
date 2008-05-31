@@ -20,9 +20,8 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import static com.vectrace.MercurialEclipse.commands.AbstractParseChangesetClient.*;
 
-public class HgOutgoingClient {
+public class HgOutgoingClient extends AbstractParseChangesetClient {
 
     public static Map<IResource, SortedSet<ChangeSet>> getOutgoing(
             IResource res, HgRepositoryLocation loc) throws HgException {
@@ -31,8 +30,7 @@ public class HgOutgoingClient {
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-            command.addOptions("--template",
-                    AbstractParseChangesetClient.TEMPLATE_WITH_FILES);
+            command.addOptions("--style",AbstractParseChangesetClient.getStyleFile(true).getAbsolutePath());
 
             command.addOptions(loc.toString());
             String result = command.executeToString();
@@ -40,9 +38,8 @@ public class HgOutgoingClient {
                 return null;
             }
             Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, res.getProject(), TEMPLATE_WITH_FILES,
-                    SEP_CHANGE_SET, SEP_TEMPLATE_ELEMENT, Direction.OUTGOING,
-                    loc, null, START);
+                    result, res.getProject(), true,
+                    Direction.OUTGOING, loc, null);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) {
