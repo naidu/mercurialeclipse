@@ -13,13 +13,13 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.wizards.mq.QInitWizard;
+import com.vectrace.MercurialEclipse.wizards.mq.QRefreshWizard;
 
-public class QInitHandler extends SingleResourceHandler {
+public class QRefreshHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
-        QInitWizard wizard = new QInitWizard(resource);
+        QRefreshWizard wizard = new QRefreshWizard(resource);
         WizardDialog dialog = new WizardDialog(getShell(), wizard);
         dialog.setBlockOnOpen(true);
         dialog.open();        

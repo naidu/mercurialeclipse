@@ -23,6 +23,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.DateTime;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -355,6 +356,16 @@ public class SWTWidgetHelper {
 
     public static Group createGroup(Composite parent, String text, int style) {
         return createGroup(parent, text, 2, style);
+    }
+
+    public static DateTime createDateTime(Composite c, int style) {
+        DateTime dt = new DateTime(c, style);
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.verticalAlignment = GridData.CENTER;
+        data.grabExcessVerticalSpace = false;
+        data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
+        dt.setLayoutData(data);
+        return dt;
     }
 
 }

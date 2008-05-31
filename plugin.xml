@@ -217,8 +217,11 @@
         <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
                  name="Disconnect"/>
         <command id="com.vectrace.MercurialEclipse.menu.QInitHandler"
-                 categoryId="com.vectrace.MercurialEclipse.menu.mq"
-                 name="qinit..."/>                     
+                 name="qinit..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.QNewHandler"
+                 name="qnew..."/>                                         
+        <command id="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
+                 name="qrefresh..."/>
 	</extension>
 
 	<!-- handlers -->
@@ -398,8 +401,27 @@
                 </and>
             </enabledWhen>
         </handler>
+        <!-- QInitHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QInitHandler"
                  class="com.vectrace.MercurialEclipse.menu.QInitHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- QNewHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QNewHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QNewHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+         <!-- QRefreshHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
             <enabledWhen>
                 <and>
                     <count value="1"/>                  
@@ -506,6 +528,16 @@
 				
                 <menu label="mqueue" id="team.main.com.vectrace.MercurialEclipse.menu.mqueue">							
     		        <command commandId="com.vectrace.MercurialEclipse.menu.QInitHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QNewHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
                         <visibleWhen>
                             <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
                         </visibleWhen>

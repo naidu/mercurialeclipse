@@ -8,7 +8,7 @@
  * Contributors:
  * bastian	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.wizards;
+package com.vectrace.MercurialEclipse.wizards.mq;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -20,6 +20,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.mq.HgQInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
  * @author bastian

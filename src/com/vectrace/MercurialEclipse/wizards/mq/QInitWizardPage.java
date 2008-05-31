@@ -8,7 +8,7 @@
  * Contributors:
  * bastian	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.wizards;
+package com.vectrace.MercurialEclipse.wizards.mq;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
 /**
  * @author bastian
