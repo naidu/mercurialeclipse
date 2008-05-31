@@ -77,20 +77,25 @@ public class PullRepoWizard extends HgWizard {
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
             try {
-                monitor.beginTask("Pulling...", 6);
+                monitor.beginTask("Pulling...", 6);                
                 result += performPull(repo, monitor);
                 if (pullPage.getFetchCheckBox().getSelection()) {
                     String mergeResult = performMerge(monitor);
                     result += mergeResult;
-                    if (mergeResult.contains("0 files unresolved")) {
+
+                    if (mergeResult.substring(mergeResult.lastIndexOf("\n"))
+                            .indexOf("U ") == -1) {
+                        monitor.subTask("Committing...");
                         result += CommitMergeHandler.commitMerge(resource);
+                        monitor.worked(1);
                     }
-                    
+
                 }
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
                 throw new InvocationTargetException(e, e.getMessage());
             }
+            monitor.done();
             if (result.length() != 0) {
 
                 IWorkbench workbench = PlatformUI.getWorkbench();
@@ -126,9 +131,11 @@ public class PullRepoWizard extends HgWizard {
     private String performMerge(IProgressMonitor monitor) throws HgException,
             PartInitException, CoreException {
         String r = "";
+        monitor.subTask("Merging...");
         if (HgLogClient.getHeads(resource.getProject()).length > 1) {
             r = MergeHandler.merge(resource, getShell());
         }
+        monitor.worked(1);
         return r;
     }
 
@@ -197,7 +204,8 @@ public class PullRepoWizard extends HgWizard {
     private String performPull(final HgRepositoryLocation repository,
             IProgressMonitor monitor) throws InvocationTargetException {
         try {
-            monitor.subTask("Pulling incoming changesets...");
+            monitor.worked(1);
+            monitor.subTask("Pulling incoming changesets...");            
             ChangeSet cs = null;
             if (incomingPage.getRevisionCheckBox().getSelection()) {
                 cs = incomingPage.getRevision();
