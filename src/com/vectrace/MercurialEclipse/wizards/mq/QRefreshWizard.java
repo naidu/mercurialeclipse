@@ -12,14 +12,12 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -72,9 +70,8 @@ public class QRefreshWizard extends HgWizard {
                                 .getText(), page.getExcludeTextField()
                                 .getText(), page.getUserTextField().getText(),
                                 page.getDate().getText());
-                monitor.worked(1);
-                IFolder hgRoot = AbstractClient.getHgRoot(resource);
-                MercurialStatusCache.getInstance().refreshStatus(hgRoot,
+                monitor.worked(1);                
+                MercurialStatusCache.getInstance().refreshStatus(resource.getProject(),
                         monitor);
                 monitor.done();
             } catch (HgException e) {

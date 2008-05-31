@@ -868,10 +868,15 @@
       </view>
       
       <view
-            name="Repository View"
+            name="Repository View"            
             icon="icons/cview16/repo_rep.gif"
             class="com.vectrace.MercurialEclipse.repository.RepositoriesView"
             id="com.vectrace.MercurialEclipse.repository.RepositoriesView">
+      </view>
+      <view
+            name="Patch Queue View"          
+            class="com.vectrace.MercurialEclipse.views.PatchQueueView"
+            id="com.vectrace.MercurialEclipse.views.PatchQueueView">
       </view>
    </extension>
    

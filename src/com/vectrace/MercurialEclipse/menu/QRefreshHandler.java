@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
+import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.wizards.mq.QRefreshWizard;
 
@@ -19,10 +20,18 @@ public class QRefreshHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
+        openWizard(resource, getShell());
+    }
+
+    /**
+     * @param resource
+     * @param shell
+     */
+    public static void openWizard(IResource resource, Shell shell) {
         QRefreshWizard wizard = new QRefreshWizard(resource);
-        WizardDialog dialog = new WizardDialog(getShell(), wizard);
+        WizardDialog dialog = new WizardDialog(shell, wizard);
         dialog.setBlockOnOpen(true);
-        dialog.open();        
+        dialog.open();    
     }
 
 }
