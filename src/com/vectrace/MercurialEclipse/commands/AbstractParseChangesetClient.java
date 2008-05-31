@@ -182,7 +182,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
          * parser but I haven't worked out how to get a mercurial style file
          * to create a valid XML document (cannot get the closing element output)
          */
-        String[] changeSetStrings = input.split("====+\n");
+        String[] changeSetStrings = input.split("\n====+\n");
 
         for (String changeSet : changeSetStrings) {
             ChangeSet cs;
@@ -288,6 +288,15 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
     }
 
     /**
+     * Remove a leading tab on each line in the string.
+     * 
+     * @param string
+     * @return
+     */
+    private static String untab(String string) {
+        return string.replaceAll("\n\t", "\n");
+    }
+    /**
      * Parse a changeset as output from the log command (see {@link #createMercurialRevisions()}).
      * 
      * @param changeSet
@@ -325,7 +334,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
             cs.setDate(getValue(csn,"di"));
             cs.setAgeDate(getValue(csn,"da"));
             cs.setUser(getValue(csn,"au"));
-            cs.setDescription(unescape(getValue(csn,"de")));
+            cs.setDescription(untab(unescape(getValue(csn,"de"))));
             cs.setParents(splitClean(getValue(csn,"pr"), " "));
             cs.setChangedFiles(getFileStatuses(csn));
             return cs;
