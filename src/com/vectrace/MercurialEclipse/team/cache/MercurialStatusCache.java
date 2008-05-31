@@ -157,7 +157,7 @@ public class MercurialStatusCache extends AbstractCache implements
         AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
         knownStatus = new HashSet<IProject>();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-        //new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
+        // new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }
 
     public static MercurialStatusCache getInstance() {
@@ -288,7 +288,7 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     public void refresh(final IProject project) throws TeamException {
         refreshStatus(project, new NullProgressMonitor());
-    }    
+    }
 
     /**
      * @param project
@@ -383,7 +383,6 @@ public class MercurialStatusCache extends AbstractCache implements
         }
     }
 
-
     /**
      * Refreshes the status for each project in Workspace by questioning
      * Mercurial.
@@ -452,8 +451,8 @@ public class MercurialStatusCache extends AbstractCache implements
                             projects.add(resource.getProject());
                         }
                         for (IProject project : projects) {
-                            refreshStatus(project, new NullProgressMonitor());                            
-                        }                        
+                            refreshStatus(project, new NullProgressMonitor());
+                        }
                     } else {
                         // changed
                         refreshStatus(changed);
@@ -573,6 +572,23 @@ public class MercurialStatusCache extends AbstractCache implements
             }
             members.remove(resource);
             return members.toArray(new IResource[members.size()]);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * @param project
+     */
+    public void clear(IProject project) {
+        ReentrantLock lock = getLock(project);
+        try {
+            lock.lock();
+            Set<IResource> members = getMembers(project);
+            for (IResource resource : members) {
+                statusMap.remove(resource);
+            }
+            statusMap.remove(project);
         } finally {
             lock.unlock();
         }

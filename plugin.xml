@@ -213,7 +213,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.ServeHandler"
                  name="Serve repository..."/>
         <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
-                 name="Add Branch..."/>  
+                 name="Add Branch..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
+                 name="Disconnect"/>  
 	</extension>
 
 	<!-- handlers -->
@@ -384,6 +386,14 @@
                 </and>
             </enabledWhen>
         </handler>
+        <handler commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
+                 class="com.vectrace.MercurialEclipse.menu.DisconnectHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
 	</extension>
 
 	<extension point="org.eclipse.ui.menus">
@@ -514,6 +524,11 @@
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
 				</command>
+				<command commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command>
 			</menu>
 		</menuContribution>
 	</extension>
