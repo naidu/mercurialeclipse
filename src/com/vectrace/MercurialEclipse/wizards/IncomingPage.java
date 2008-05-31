@@ -29,6 +29,7 @@ import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 public class IncomingPage extends HgWizardPage {
@@ -69,7 +70,7 @@ public class IncomingPage extends HgWizardPage {
 
     public void createControl(Composite parent) {
 
-        Composite container = createComposite(parent, 1);
+        Composite container = SWTWidgetHelper.createComposite(parent, 1);
         setControl(container);
 
         changeSetViewer = new TableViewer(container, SWT.SINGLE | SWT.BORDER
@@ -114,8 +115,8 @@ public class IncomingPage extends HgWizardPage {
             column.setWidth(widths[i]);
         }
 
-        Group group = createGroup(container, Messages.getString("IncomingPage.group.title")); //$NON-NLS-1$
-        this.revisionCheckBox = createCheckBox(group,
+        Group group = SWTWidgetHelper.createGroup(container, Messages.getString("IncomingPage.group.title")); //$NON-NLS-1$
+        this.revisionCheckBox = SWTWidgetHelper.createCheckBox(group,
                 Messages.getString("IncomingPage.revisionCheckBox.title")); //$NON-NLS-1$
         makeActions();
     }

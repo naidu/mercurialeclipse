@@ -34,6 +34,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author Bastian Doetsch
@@ -71,10 +72,10 @@ public class SignWizardPage extends HgWizardPage {
      */
     public void createControl(Composite parent) {
 
-        Composite composite = createComposite(parent, 2);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
         // list view of changesets
-        Group changeSetGroup = createGroup(composite,
+        Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
                 Messages.getString("SignWizardPage.changeSetGroup.title"),GridData.FILL_BOTH); //$NON-NLS-1$
         GridData gridData = new GridData(GridData.FILL_BOTH);        
         gridData.heightHint = 200;
@@ -99,37 +100,37 @@ public class SignWizardPage extends HgWizardPage {
         changesetTable.addSelectionListener(listener);
 
         // now the fields for user data
-        Group userGroup = createGroup(composite,
+        Group userGroup = SWTWidgetHelper.createGroup(composite,
                 Messages.getString("SignWizardPage.userGroup.title")); //$NON-NLS-1$
 
-        createLabel(userGroup, Messages.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
-        this.userTextField = createTextField(userGroup);
+        SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
+        this.userTextField = SWTWidgetHelper.createTextField(userGroup);
         this.userTextField.setText(MercurialUtilities.getHGUsername());
 
-        createLabel(userGroup, Messages.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
-        this.keyCombo = createCombo(userGroup);
+        SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
+        this.keyCombo = SWTWidgetHelper.createCombo(userGroup);
 
-        createLabel(userGroup, Messages.getString("SignWizardPage.passphraseLabel.text")); //$NON-NLS-1$
-        this.passTextField = createTextField(userGroup);
+        SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.passphraseLabel.text")); //$NON-NLS-1$
+        this.passTextField = SWTWidgetHelper.createTextField(userGroup);
         // this.passTextField.setEchoChar('*');
         this.passTextField
                 .setText(Messages.getString("SignWizardPage.passTextField.text")); //$NON-NLS-1$
         this.passTextField.setEnabled(false);
 
         // now the options
-        Group optionGroup = createGroup(composite, Messages.getString("SignWizardPage.optionGroup.title")); //$NON-NLS-1$
+        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("SignWizardPage.optionGroup.title")); //$NON-NLS-1$
 
-        this.localCheckBox = createCheckBox(optionGroup,
+        this.localCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 Messages.getString("SignWizardPage.localCheckBox.text")); //$NON-NLS-1$
 
-        this.forceCheckBox = createCheckBox(optionGroup,
+        this.forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 Messages.getString("SignWizardPage.forceCheckBox.text")); //$NON-NLS-1$
 
-        this.noCommitCheckBox = createCheckBox(optionGroup,
+        this.noCommitCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 Messages.getString("SignWizardPage.noCommitCheckBox.text")); //$NON-NLS-1$
 
-        createLabel(optionGroup, Messages.getString("SignWizardPage.commitLabel.text")); //$NON-NLS-1$
-        this.messageTextField = createTextField(optionGroup);
+        SWTWidgetHelper.createLabel(optionGroup, Messages.getString("SignWizardPage.commitLabel.text")); //$NON-NLS-1$
+        this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
         this.messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.defaultText")); //$NON-NLS-1$
 
         populateChangesetTable();

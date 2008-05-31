@@ -12,7 +12,12 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * Base client class
@@ -33,5 +38,15 @@ public abstract class AbstractClient {
     }
 
     public AbstractClient() {
+    }
+    
+    /**
+     * @return
+     * @throws HgException
+     */
+    public static IFolder getHgRoot(IResource res) throws HgException {
+        IPath path = new Path(HgRootClient.getHgRoot(res));
+        IFolder hgRoot = res.getProject().getFolder(path);
+        return hgRoot;
     }
 }

@@ -33,6 +33,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
@@ -65,10 +66,10 @@ public class BackoutWizardPage extends HgWizardPage {
      * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 2);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
         // list view of changesets
-        Group changeSetGroup = createGroup(composite,
+        Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
                 Messages.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
         changesetTable = new ChangesetTable(changeSetGroup);
@@ -97,19 +98,19 @@ public class BackoutWizardPage extends HgWizardPage {
                 
 
         // now the options
-        Group optionGroup = createGroup(composite, Messages.getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
+        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
         
         
-        createLabel(optionGroup, Messages.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
-        this.userTextField = createTextField(optionGroup);
+        SWTWidgetHelper.createLabel(optionGroup, Messages.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
+        this.userTextField = SWTWidgetHelper.createTextField(optionGroup);
         this.userTextField.setText(MercurialUtilities.getHGUsername());
 
         
-        createLabel(optionGroup, Messages.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
-        this.messageTextField = createTextField(optionGroup);
+        SWTWidgetHelper.createLabel(optionGroup, Messages.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
+        this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
         
         // --merge merge with old dirstate parent after backout
-        this.mergeCheckBox = createCheckBox(optionGroup,
+        this.mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
         this.mergeCheckBox.setSelection(true);
         
