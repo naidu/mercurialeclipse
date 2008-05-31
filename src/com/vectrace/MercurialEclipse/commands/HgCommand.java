@@ -24,7 +24,7 @@ public class HgCommand extends AbstractShellCommand {
         super(commands, workingDir, escapeFiles);
     }
 
-    protected HgCommand(String command, File workingDir, boolean escapeFiles) {
+    public HgCommand(String command, File workingDir, boolean escapeFiles) {
         this.command = command;
         this.workingDir = workingDir;
         this.escapeFiles = escapeFiles;

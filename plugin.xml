@@ -215,7 +215,10 @@
         <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
                  name="Add Branch..."/>
         <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
-                 name="Disconnect"/>  
+                 name="Disconnect"/>
+        <command id="com.vectrace.MercurialEclipse.menu.QInitHandler"
+                 categoryId="com.vectrace.MercurialEclipse.menu.mq"
+                 name="qinit..."/>                     
 	</extension>
 
 	<!-- handlers -->
@@ -386,8 +389,17 @@
                 </and>
             </enabledWhen>
         </handler>
+        <!-- DisconnectHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
                  class="com.vectrace.MercurialEclipse.menu.DisconnectHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QInitHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QInitHandler">
             <enabledWhen>
                 <and>
                     <count value="1"/>                  
@@ -490,7 +502,16 @@
                         <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
                     </visibleWhen>
                 </command>				
-				<separator name="group6" visible="true"/>				               
+				<separator name="group6" visible="true"/>
+				
+                <menu label="mqueue" id="team.main.com.vectrace.MercurialEclipse.menu.mqueue">							
+    		        <command commandId="com.vectrace.MercurialEclipse.menu.QInitHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                </menu>      
+                
 				<separator name="group7" visible="true"/>
 				<separator name="group8" visible="true"/>
 				<command commandId="com.vectrace.MercurialEclipse.menu.SignHandler" icon = "icons/clcl16/deadlock_view.gif">

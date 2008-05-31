@@ -475,12 +475,12 @@ public class MercurialUtilities {
         }
 
         @Override
-        protected String executeToString() throws HgException {
+        public String executeToString() throws HgException {
             return super.executeToString();
         }
 
         @Override
-        protected byte[] executeToBytes() throws HgException {
+        public byte[] executeToBytes() throws HgException {
             return super.executeToBytes();
         }
     }
