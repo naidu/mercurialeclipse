@@ -46,7 +46,7 @@ public class MergeHandler extends SingleResourceHandler {
         String result = "";
         if (dialog.open() == IDialogConstants.OK_ID) {
             result = HgIMergeClient.merge(project, dialog.getRevision());
-            project.setPersistentProperty(ResourceProperties.MERGING, dialog.getChangeSet().toString());
+            project.setPersistentProperty(ResourceProperties.MERGING, dialog.getChangeSet().getChangeset());
             // will trigger a FlagManager refresh
             MergeView view = (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
             view.clearView();

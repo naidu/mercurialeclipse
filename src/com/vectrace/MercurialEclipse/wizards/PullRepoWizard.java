@@ -83,8 +83,7 @@ public class PullRepoWizard extends HgWizard {
                     String mergeResult = performMerge(monitor);
                     result += mergeResult;
 
-                    if (mergeResult.substring(mergeResult.lastIndexOf("\n"))
-                            .indexOf("U ") == -1) {
+                    if (mergeResult.contains ("all conflicts resolved")) {
                         monitor.subTask("Committing...");
                         result += CommitMergeHandler.commitMerge(resource);
                         monitor.worked(1);
