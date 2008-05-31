@@ -317,11 +317,13 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         if (changeSet == null) {
             return null;
         }
+        
+        String outputString = changeSet.substring(changeSet.indexOf("<cs>"));
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
                     .newInstance();
             DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Reader ir = new StringReader(changeSet);
+            Reader ir = new StringReader(outputString);
             Document doc = docBuilder.parse(new InputSource(ir));
 
             // normalize text representation
