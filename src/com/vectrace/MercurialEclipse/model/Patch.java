@@ -15,9 +15,8 @@ package com.vectrace.MercurialEclipse.model;
  *
  */
 public class Patch {
+    private String index;
     private String name;
-    private String date;
-    private String author;
     private String summary;
     
     private boolean applied;
@@ -28,12 +27,11 @@ public class Patch {
      * @param author
      * @param applied
      */
-    public Patch(String name, String date, String author, boolean applied, String summary) {
+    public Patch(String name, boolean applied, String summary, String index) {
         this.name = name;
-        this.date = date;
-        this.author = author;
         this.applied = applied;
         this.summary = summary;
+        this.index = index;
     }
 
     public Patch() {        
@@ -51,34 +49,6 @@ public class Patch {
      */
     public void setName(String name) {
         this.name = name;
-    }
-
-    /**
-     * @return the date
-     */
-    public String getDate() {
-        return date;
-    }
-
-    /**
-     * @param date the date to set
-     */
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    /**
-     * @return the author
-     */
-    public String getAuthor() {
-        return author;
-    }
-
-    /**
-     * @param author the author to set
-     */
-    public void setAuthor(String author) {
-        this.author = author;
     }
 
     /**
@@ -151,6 +121,20 @@ public class Patch {
             return false;
         }
         return true;
+    }
+
+    /**
+     * @return the index
+     */
+    public String getIndex() {
+        return index;
+    }
+
+    /**
+     * @param index the index to set
+     */
+    public void setIndex(String index) {
+        this.index = index;
     }
     
 }

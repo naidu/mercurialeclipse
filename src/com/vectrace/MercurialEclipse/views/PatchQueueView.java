@@ -30,7 +30,8 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
-import com.vectrace.MercurialEclipse.commands.mq.HgQAppliedClient;
+import com.vectrace.MercurialEclipse.commands.mq.HgQPopClient;
+import com.vectrace.MercurialEclipse.commands.mq.HgQPushClient;
 import com.vectrace.MercurialEclipse.commands.mq.HgQSeriesClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
@@ -50,6 +51,10 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     private Label statusLabel;
     private Action newAction;
     private Action qrefreshAction;
+    private Action qPushAction;
+    private Action qPushAllAction;
+    private Action qPopAction;
+    private Action qPopAllAction;
     public final static String ID = PatchQueueView.class.getName();
 
     /**
@@ -66,7 +71,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
      */
     @Override
     public void createPartControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 1);
         statusLabel = SWTWidgetHelper.createWrappingLabel(composite,
                 "Repository: ", 0, 350);
         table = new PatchTable(composite);
@@ -105,6 +110,85 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qrefreshAction.setEnabled(true);
         mgr.add(qrefreshAction);
         
+        qPushAction = new Action("qpush") {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.jface.action.Action#run()
+             */
+            @Override
+            public void run() {
+                try {
+                    HgQPushClient.push(resource, false, table.getSelection().getName());
+                    populateTable();
+                } catch (HgException e) {                    
+                    MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
+                }
+            }
+        };
+        qPushAction.setEnabled(true);
+        mgr.add(qPushAction);
+        
+        qPushAllAction = new Action("qpush all") {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.jface.action.Action#run()
+             */
+            @Override
+            public void run() {
+                try {
+                    HgQPushClient.pushAll(resource, false);
+                    populateTable();
+                } catch (HgException e) {                    
+                    MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
+                }
+            }
+        };
+        qPushAllAction.setEnabled(true);
+        mgr.add(qPushAllAction);
+        
+        qPopAction = new Action("qpop") {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.jface.action.Action#run()
+             */
+            @Override
+            public void run() {
+                try {
+                    HgQPopClient.pop(resource, false, table.getSelection().getName());
+                    populateTable();
+                } catch (HgException e) {                    
+                    MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
+                }
+            }
+        };
+        qPopAction.setEnabled(true);
+        mgr.add(qPopAction);
+        
+        qPopAllAction = new Action("qpop all") {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.jface.action.Action#run()
+             */
+            @Override
+            public void run() {
+                try {
+                    HgQPopClient.popAll(resource, false);
+                    populateTable();
+                } catch (HgException e) {                    
+                    MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
+                }
+            }
+        };
+        qPopAllAction.setEnabled(true);
+        mgr.add(qPopAllAction);
     }
 
     /*
@@ -130,15 +214,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     private void populateTable() throws HgException {
         if (resource != null) {
             List<Patch> patches = HgQSeriesClient.getPatchesInSeries(resource);
-            String[] applied = HgQAppliedClient.getAppliedPatches(resource);
-            for (String string : applied) {
-                for (Patch p : patches) {
-                    if (p.getName().trim().equals(string.trim())) {
-                        p.setApplied(true);
-                        break;
-                    }
-                }
-            }
             table.setPatches(patches.toArray(new Patch[patches.size()]));
         }
     }

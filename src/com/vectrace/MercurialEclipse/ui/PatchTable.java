@@ -52,14 +52,15 @@ public class PatchTable extends Composite {
                 | SWT.V_SCROLL | SWT.H_SCROLL);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL, GridData.FILL_VERTICAL,true,true,1,1);
+        GridData data = new GridData(GridData.FILL_HORIZONTAL,
+                GridData.FILL_VERTICAL, true, true, 1, 1);
         data.minimumHeight = 100;
         table.setLayoutData(data);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
 
-        String[] titles = { "Applied", "Name", "Summary" };
-        int[] widths = { 100, 150, 150 };
+        String[] titles = { "#", "Applied", "Name", "Summary" };
+        int[] widths = { 20, 100, 150, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
@@ -74,11 +75,12 @@ public class PatchTable extends Composite {
             TableItem row = new TableItem(table, SWT.NONE);
             if (patch.isApplied()) {
                 row.setFont(APPLIED_FONT);
-                row.setBackground(APPLIED_COLOR);
+                row.setBackground(1, APPLIED_COLOR);
             }
-            row.setText(0, patch.isApplied() ? "APPLIED" : "UNAPPLIED");
-            row.setText(1, patch.getName());
-            row.setText(2, patch.getSummary());
+            row.setText(0, patch.getIndex());
+            row.setText(1, patch.isApplied() ? "APPLIED" : "UNAPPLIED");
+            row.setText(2, patch.getName());
+            row.setText(3, patch.getSummary());
             row.setData(patch);
         }
     }
@@ -93,13 +95,15 @@ public class PatchTable extends Composite {
 
     public void addSelectionListener(SelectionListener listener) {
         table.addSelectionListener(listener);
-    }    
-    
-    /* (non-Javadoc)
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see org.eclipse.swt.widgets.Widget#dispose()
      */
     @Override
-    public void dispose() {     
+    public void dispose() {
         super.dispose();
         APPLIED_COLOR.dispose();
     }

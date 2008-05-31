@@ -29,6 +29,7 @@ public class HgQSeriesClient extends AbstractClient {
             throws HgException {
         HgCommand command = new HgCommand("qseries",
                 getWorkingDirectory(resource), true);
+        command.addOptions("-v");
         command.addOptions("--summary");
         return parse(command.executeToString());
     }
@@ -43,9 +44,13 @@ public class HgQSeriesClient extends AbstractClient {
             String[] patches = executeToString.split("\n");
             for (String string : patches) {
                 String[] components = string.split(":");
+                String[] patchData = components[0].trim().split(" ");
+                String summary = components[1].trim();
                 Patch p = new Patch();
-                p.setName(components[0].trim());
-                p.setSummary(components[1].trim());
+                p.setIndex(patchData[0]);
+                p.setApplied(patchData[1].equals("A") ? true : false);
+                p.setName(patchData[2].trim());
+                p.setSummary(summary);
                 list.add(p);
             }
         }
