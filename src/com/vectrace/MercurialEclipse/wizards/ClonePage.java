@@ -22,6 +22,8 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+
 /**
  * @author bastian
  * 
@@ -60,14 +62,14 @@ public class ClonePage extends PushPullPage {
     private void createOptionsGroup(Composite composite) {
         Group g = optionGroup;        
         
-        this.noUpdateCheckBox = createCheckBox(g,
+        this.noUpdateCheckBox = SWTWidgetHelper.createCheckBox(g,
                 Messages.getString("ClonePage.noUpdateCheckBox.title")); //$NON-NLS-1$
-        this.pullCheckBox = createCheckBox(g,
+        this.pullCheckBox = SWTWidgetHelper.createCheckBox(g,
                 Messages.getString("ClonePage.pullCheckBox.title")); //$NON-NLS-1$
-        this.uncompressedCheckBox = createCheckBox(g,
+        this.uncompressedCheckBox = SWTWidgetHelper.createCheckBox(g,
                 Messages.getString("ClonePage.uncompressedCheckBox.title")); //$NON-NLS-1$
-        createLabel(g, Messages.getString("ClonePage.revisionLabel.title")); //$NON-NLS-1$
-        this.revisionTextField = createTextField(g);
+        SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.revisionLabel.title")); //$NON-NLS-1$
+        this.revisionTextField = SWTWidgetHelper.createTextField(g);
     }
     
     /* (non-Javadoc)
@@ -82,10 +84,10 @@ public class ClonePage extends PushPullPage {
      * @param composite
      */
     private void createDestGroup(Composite composite) {
-        Group g = createGroup(composite, Messages.getString("ClonePage.destinationGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
-        createLabel(g, Messages.getString("ClonePage.destinationDirectoryLabel.title")); //$NON-NLS-1$
-        this.directoryTextField = createTextField(g);
-        this.directoryButton = createPushButton(g, Messages.getString("ClonePage.directoryButton.title"), 1); //$NON-NLS-1$
+        Group g = SWTWidgetHelper.createGroup(composite, Messages.getString("ClonePage.destinationGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+        SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.destinationDirectoryLabel.title")); //$NON-NLS-1$
+        this.directoryTextField = SWTWidgetHelper.createTextField(g);
+        this.directoryButton = SWTWidgetHelper.createPushButton(g, Messages.getString("ClonePage.directoryButton.title"), 1); //$NON-NLS-1$
         this.directoryButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -97,8 +99,8 @@ public class ClonePage extends PushPullPage {
                 }
             }
         });
-        createLabel(g, Messages.getString("ClonePage.cloneDirectoryLabel.title")); //$NON-NLS-1$
-        this.cloneNameTextField = createTextField(g);
+        SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.cloneDirectoryLabel.title")); //$NON-NLS-1$
+        this.cloneNameTextField = SWTWidgetHelper.createTextField(g);
         g.moveAbove(optionGroup);
     }
 

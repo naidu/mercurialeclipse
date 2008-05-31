@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
@@ -71,7 +72,7 @@ public class TransplantOptionsPage extends HgWizardPage {
     }
 
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 2);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
         addContinueOptionGroup(composite);
         addOtherOptionsGroup(composite);
         setControl(composite);
@@ -91,9 +92,9 @@ public class TransplantOptionsPage extends HgWizardPage {
      */
     private void createFilterGroup(Composite composite) {
         // filter
-        Group filterGroup = createGroup(composite, Messages.getString("TransplantOptionsPage.filtergroup.title")); //$NON-NLS-1$
+        Group filterGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.filtergroup.title")); //$NON-NLS-1$
 
-        this.filterChangesetsCheckBox = createCheckBox(filterGroup,
+        this.filterChangesetsCheckBox = SWTWidgetHelper.createCheckBox(filterGroup,
                 Messages.getString("TransplantOptionsPage.filterCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener filterChangesetsCheckBoxListener = new SelectionListener() {
@@ -110,8 +111,8 @@ public class TransplantOptionsPage extends HgWizardPage {
         this.filterChangesetsCheckBox
                 .addSelectionListener(filterChangesetsCheckBoxListener);
 
-        createLabel(filterGroup, Messages.getString("TransplantOptionsPage.filterLabel.title")); //$NON-NLS-1$
-        this.filterTextField = createTextField(filterGroup);
+        SWTWidgetHelper.createLabel(filterGroup, Messages.getString("TransplantOptionsPage.filterLabel.title")); //$NON-NLS-1$
+        this.filterTextField = SWTWidgetHelper.createTextField(filterGroup);
         this.filterTextField.setEnabled(false);
         
         ModifyListener filterListener = new ModifyListener() {
@@ -133,8 +134,8 @@ public class TransplantOptionsPage extends HgWizardPage {
     private void createPruneGroup(Composite composite) {
         GridData gridData;
         // prune
-        Group pruneGroup = createGroup(composite, Messages.getString("TransplantOptionsPage.pruneGroup.title")); //$NON-NLS-1$
-        this.pruneCheckBox = createCheckBox(pruneGroup, Messages.getString("TransplantOptionsPage.pruneCheckBox.title")); //$NON-NLS-1$
+        Group pruneGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.pruneGroup.title")); //$NON-NLS-1$
+        this.pruneCheckBox = SWTWidgetHelper.createCheckBox(pruneGroup, Messages.getString("TransplantOptionsPage.pruneCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener pruneCheckBoxListener = new SelectionListener() {
             public void widgetSelected(SelectionEvent e) {
@@ -175,10 +176,10 @@ public class TransplantOptionsPage extends HgWizardPage {
      */
     private void createMergeGroup(Composite composite) {
         // other options
-        Group mergeGroup = createGroup(composite, Messages.getString("TransplantOptionsPage.mergeGroup.title")); //$NON-NLS-1$
+        Group mergeGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.mergeGroup.title")); //$NON-NLS-1$
 
         // merge at revision
-        this.mergeCheckBox = createCheckBox(mergeGroup, Messages.getString("TransplantOptionsPage.mergeCheckBox.title")); //$NON-NLS-1$
+        this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup, Messages.getString("TransplantOptionsPage.mergeCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener mergeCheckBoxListener = new SelectionListener() {
             public void widgetSelected(SelectionEvent e) {
@@ -245,9 +246,9 @@ public class TransplantOptionsPage extends HgWizardPage {
      */
     private void addContinueOptionGroup(Composite composite) {
         // other options
-        Group continueGroup = createGroup(composite, Messages.getString("TransplantOptionsPage.continueGroup.title")); //$NON-NLS-1$
+        Group continueGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.continueGroup.title")); //$NON-NLS-1$
 
-        this.continueLastTransplantCheckBox = createCheckBox(continueGroup,
+        this.continueLastTransplantCheckBox = SWTWidgetHelper.createCheckBox(continueGroup,
                 Messages.getString("TransplantOptionsPage.continueCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener continueLastTransplantCheckBoxListener = new SelectionListener() {

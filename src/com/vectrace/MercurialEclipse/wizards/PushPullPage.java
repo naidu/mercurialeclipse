@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
@@ -65,13 +66,13 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         Composite composite = (Composite) getControl();
 
         // now the options
-        optionGroup = createGroup(composite, Messages
+        optionGroup = SWTWidgetHelper.createGroup(composite, Messages
                 .getString("PushRepoPage.optionGroup.title")); //$NON-NLS-1$
-        this.timeoutCheckBox = createCheckBox(optionGroup,
+        this.timeoutCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 getTimeoutCheckBoxLabel());
 
         if (showForce) {
-            this.forceCheckBox = createCheckBox(optionGroup,
+            this.forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                     getForceCheckBoxLabel());
         }
         if (showRevisionTable) {
@@ -84,7 +85,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
      * @param composite
      */
     private void createRevisionTable(Composite composite) {
-        this.revCheckBox = createCheckBox(optionGroup, getRevCheckBoxLabel());
+        this.revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, getRevCheckBoxLabel());
 
         Listener revCheckBoxListener = new Listener() {
             public void handleEvent(Event event) {
@@ -111,7 +112,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
         this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
 
-        Group revGroup = createGroup(composite, getRevGroupLabel(),
+        Group revGroup = SWTWidgetHelper.createGroup(composite, getRevGroupLabel(),
                 GridData.FILL_BOTH);
 
         GridData gridData = new GridData(GridData.FILL_BOTH);

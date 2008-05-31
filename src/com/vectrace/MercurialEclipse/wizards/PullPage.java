@@ -25,6 +25,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /*
  * This file implements a wizard page which will allow the user to create a
@@ -95,11 +96,11 @@ public class PullPage extends PushPullPage {
         Composite composite = (Composite) getControl();        
 
         // now the options
-        this.updateCheckBox = createCheckBox(optionGroup, Messages
+        this.updateCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages
                 .getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
         this.updateCheckBox.moveAbove(this.revCheckBox);
         
-        this.fetchCheckBox = createCheckBox(optionGroup, "Merge and, if there are no conflicts, commit after update");
+        this.fetchCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, "Merge and, if there are no conflicts, commit after update");
         this.fetchCheckBox.moveBelow(this.updateCheckBox);
         
         SelectionListener fetchListener = new SelectionListener() {
