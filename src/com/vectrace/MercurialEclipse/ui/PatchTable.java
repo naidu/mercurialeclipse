@@ -11,6 +11,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -48,7 +51,7 @@ public class PatchTable extends Composite {
         this.setLayout(new GridLayout(1, false));
         this.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+        table = new Table(this, SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION
                 | SWT.V_SCROLL | SWT.H_SCROLL);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
@@ -84,12 +87,25 @@ public class PatchTable extends Composite {
         }
     }
 
-    public Patch getSelection() {
+    public Patch getSelection() {        
+        List<Patch>list = getSelections();
+        if (list.size()==0) {
+            return null;
+        }
+        return list.get(0);
+    }
+    
+    public List<Patch> getSelections() {
         TableItem[] selection = table.getSelection();
         if (selection.length == 0) {
             return null;
         }
-        return (Patch) selection[0].getData();
+        List<Patch> list = new ArrayList<Patch>();
+        for (TableItem tableItem : selection) {
+            Patch p = (Patch) tableItem.getData();
+            list.add(p);
+        }
+        return list;
     }
 
     public void addSelectionListener(SelectionListener listener) {
