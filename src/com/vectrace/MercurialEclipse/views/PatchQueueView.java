@@ -99,22 +99,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         newAction.setEnabled(true);
         mgr.add(newAction);
-
-        qDeleteAction = new Action("qdel") {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
-            @Override
-            public void run() {
-                QDeleteHandler.openWizard(resource, getSite().getShell());
-                populateTable();
-            }
-        };
-        qDeleteAction.setEnabled(true);
-        mgr.add(qDeleteAction);
-
+        
         qrefreshAction = new Action("qrefresh") {
             /*
              * (non-Javadoc)
@@ -233,6 +218,22 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qFoldAction.setEnabled(true);
         mgr.add(qFoldAction);
+        
+        qDeleteAction = new Action("qdel") {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see org.eclipse.jface.action.Action#run()
+             */
+            @Override
+            public void run() {
+                QDeleteHandler.openWizard(resource, getSite().getShell());
+                populateTable();
+            }
+        };
+        qDeleteAction.setEnabled(true);
+        mgr.add(qDeleteAction);
+
 
     }
 
