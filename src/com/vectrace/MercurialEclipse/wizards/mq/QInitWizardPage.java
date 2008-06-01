@@ -47,8 +47,8 @@ public class QInitWizardPage extends HgWizardPage {
      */
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 1);
-        Group g = SWTWidgetHelper.createGroup(composite, "Initialize a new queue repository");
-        this.checkBox = SWTWidgetHelper.createCheckBox(g, "Create a separate nested repository for patches");
+        Group g = SWTWidgetHelper.createGroup(composite, Messages.getString("QInitWizardPage.group.title")); //$NON-NLS-1$
+        this.checkBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QInitWizardPage.checkBox.nestedRepo")); //$NON-NLS-1$
         setControl(composite);
     }
 

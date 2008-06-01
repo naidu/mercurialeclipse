@@ -43,7 +43,7 @@ public class QInitWizard extends HgWizard {
          */
         @Override
         protected String getActionDescription() {
-            return "Initializing queue repository...";
+            return Messages.getString("QInitWizard.InitAction.description"); //$NON-NLS-1$
         }
         
         /* (non-Javadoc)
@@ -52,9 +52,9 @@ public class QInitWizard extends HgWizard {
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask("Initializing queue repository", 2);
+            monitor.beginTask(Messages.getString("QInitWizard.beginTask"), 2); //$NON-NLS-1$
             monitor.worked(1);
-            monitor.subTask("Calling Mercurial...");
+            monitor.subTask(Messages.getString("QInitWizard.subTask.callMercurial")); //$NON-NLS-1$
             
             try {
                 HgQInitClient.init(resource, page.getCheckBox().getSelection());
@@ -73,11 +73,11 @@ public class QInitWizard extends HgWizard {
      * @param windowTitle
      */
     public QInitWizard(IResource resource) {
-        super("Mercurial Queue Initialization Wizard");
+        super(Messages.getString("QInitWizard.title")); //$NON-NLS-1$
         this.resource = resource;
         setNeedsProgressMonitor(true);        
-        page = new QInitWizardPage("QInitPage","Initialize queue repository",null,null,resource); 
-        initPage("Initialize a new mercurial queue repository", page);
+        page = new QInitWizardPage(Messages.getString("QInitWizard.pageName"),Messages.getString("QInitWizard.pageTitle"),null,null,resource);  //$NON-NLS-1$ //$NON-NLS-2$
+        initPage(Messages.getString("QInitWizard.pageDescription"), page); //$NON-NLS-1$
         addPage(page);
     }
     

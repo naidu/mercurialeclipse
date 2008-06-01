@@ -46,7 +46,7 @@ public class QRefreshWizard extends HgWizard {
          */
         @Override
         protected String getActionDescription() {
-            return "Refreshing queue...";
+            return Messages.getString("QRefreshWizard.actionDescription"); //$NON-NLS-1$
         }
 
         /*
@@ -57,9 +57,9 @@ public class QRefreshWizard extends HgWizard {
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask("Initializing queue repository", 2);
+            monitor.beginTask(Messages.getString("QRefreshWizard.beginTask"), 2); //$NON-NLS-1$
             monitor.worked(1);
-            monitor.subTask("Calling Mercurial...");
+            monitor.subTask(Messages.getString("QRefreshWizard.subTask.callMercurial")); //$NON-NLS-1$
 
             try {
                 HgQRefreshClient
@@ -87,13 +87,13 @@ public class QRefreshWizard extends HgWizard {
      * @param windowTitle
      */
     public QRefreshWizard(IResource resource) {
-        super("Mercurial Queues Refresh Wizard");
+        super(Messages.getString("QRefreshWizard.title")); //$NON-NLS-1$
         this.resource = resource;
         setNeedsProgressMonitor(true);
-        page = new QNewWizardPage("QRefreshPage", "Update the current patch",
+        page = new QNewWizardPage(Messages.getString("QRefreshWizard.pageName"), Messages.getString("QRefreshWizard.pageTitle"), //$NON-NLS-1$ //$NON-NLS-2$
                 null, null, resource, false);
 
-        initPage("", page);
+        initPage(Messages.getString("QRefreshWizard.pageDescription"), page); //$NON-NLS-1$
         addPage(page);
     }
 

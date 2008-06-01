@@ -64,32 +64,32 @@ public class QNewWizardPage extends HgWizardPage {
      */
     public void createControl(Composite parent) {
         Composite composite = createComposite(parent, 2);
-        Group g = createGroup(composite, "Patch data");
+        Group g = createGroup(composite, Messages.getString("QNewWizardPage.patchDataGroup.title")); //$NON-NLS-1$
 
         if (showPatchName) {
-            createLabel(g, "Patch name");
+            createLabel(g, Messages.getString("QNewWizardPage.patchNameLabel.title")); //$NON-NLS-1$
             this.patchNameTextField = createTextField(g);
         }
 
-        createLabel(g, "User name");
+        createLabel(g, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
         this.userTextField = createTextField(g);
         this.userTextField.setText(MercurialUtilities.getHGUsername());
 
-        createLabel(g, "Date");
+        createLabel(g, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
         this.date = createTextField(g);
 
-        createLabel(g, "Commit message");
+        createLabel(g, Messages.getString("QNewWizardPage.commitMessageLabel.title")); //$NON-NLS-1$
         this.commitMessageTextField = createTextField(g);
 
-        g = createGroup(composite, "Options");
+        g = createGroup(composite, Messages.getString("QNewWizardPage.optionsGroup.title")); //$NON-NLS-1$
         this.forceCheckBox = createCheckBox(g,
-                "Import uncommitted changes into patch");
-        this.gitCheckBox = createCheckBox(g, "Use git extended diff format");
+                Messages.getString("QNewWizardPage.forceCheckBox.title")); //$NON-NLS-1$
+        this.gitCheckBox = createCheckBox(g, Messages.getString("QNewWizardPage.gitCheckBox.title")); //$NON-NLS-1$
 
-        createLabel(g, "Include names matching the given patterns");
+        createLabel(g, Messages.getString("QNewWizardPage.includeLabel.title")); //$NON-NLS-1$
         this.includeTextField = createTextField(g);
 
-        createLabel(g, "Exclude names matching the given patterns");
+        createLabel(g, Messages.getString("QNewWizardPage.excludeLabel.title")); //$NON-NLS-1$
         this.excludeTextField = createTextField(g);
 
         setControl(composite);

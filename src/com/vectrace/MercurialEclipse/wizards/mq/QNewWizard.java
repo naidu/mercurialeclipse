@@ -45,7 +45,7 @@ public class QNewWizard extends HgWizard {
          */
         @Override
         protected String getActionDescription() {
-            return "Creating patch...";
+            return Messages.getString("QNewWizard.actionDescription"); //$NON-NLS-1$
         }
 
         /*
@@ -56,9 +56,9 @@ public class QNewWizard extends HgWizard {
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask("Initializing queue repository", 2);
+            monitor.beginTask(Messages.getString("QNewWizard.beginTask"), 2); //$NON-NLS-1$
             monitor.worked(1);
-            monitor.subTask("Calling Mercurial...");
+            monitor.subTask(Messages.getString("QNewWizard.subTask.callMercurial")); //$NON-NLS-1$
 
             try {
                 HgQNewClient.createNewPatch(resource, page
@@ -85,12 +85,12 @@ public class QNewWizard extends HgWizard {
      * @param windowTitle
      */
     public QNewWizard(IResource resource) {
-        super("Mercurial Queue New Patch Wizard");
+        super(Messages.getString("QNewWizard.title")); //$NON-NLS-1$
         this.resource = resource;
         setNeedsProgressMonitor(true);
-        page = new QNewWizardPage("QNewPage", "Create new patch", null, null,
+        page = new QNewWizardPage(Messages.getString("QNewWizard.pageName"), Messages.getString("QNewWizard.pageTitle"), null, null, //$NON-NLS-1$ //$NON-NLS-2$
                 resource, true);
-        initPage("Creates a new patch on top of the currently-applied patch",
+        initPage(Messages.getString("QNewWizard.pageDescription"), //$NON-NLS-1$
                 page);
         addPage(page);
     }

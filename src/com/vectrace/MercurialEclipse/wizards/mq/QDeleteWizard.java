@@ -48,7 +48,7 @@ public class QDeleteWizard extends HgWizard {
          */
         @Override
         protected String getActionDescription() {
-            return "Creating patch...";
+            return Messages.getString("QDeleteWizard.deleteAction.description"); //$NON-NLS-1$
         }
 
         /*
@@ -56,13 +56,13 @@ public class QDeleteWizard extends HgWizard {
          * 
          * @see com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core.runtime.IProgressMonitor)
          */
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings("unchecked") //$NON-NLS-1$
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask("Initializing queue repository", 2);
+            monitor.beginTask(Messages.getString("QDeleteWizard.deleteAction.beginTask"), 2); //$NON-NLS-1$
             monitor.worked(1);
-            monitor.subTask("Calling Mercurial...");
+            monitor.subTask(Messages.getString("QDeleteWizard.subTask.callMercurial")); //$NON-NLS-1$
 
             try {
                 IStructuredSelection selection = (IStructuredSelection) page
@@ -85,12 +85,12 @@ public class QDeleteWizard extends HgWizard {
      * @param windowTitle
      */
     public QDeleteWizard(IResource resource) {
-        super("Mercurial Queue New Patch Wizard");
+        super(Messages.getString("QDeleteWizard.title")); //$NON-NLS-1$
         this.resource = resource;
         setNeedsProgressMonitor(true);
-        page = new QDeletePage("QDeletePage", "Delete patch from queue", null,
-                "Stop managing the patch with Mercurial Queues", resource);
-        initPage("Creates a new patch on top of the currently-applied patch",
+        page = new QDeletePage(Messages.getString("QDeleteWizard.pageName"), Messages.getString("QDeleteWizard.pageTitle"), null, //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("QDeleteWizard.pageDescription"), resource); //$NON-NLS-1$
+        initPage(Messages.getString("QDeleteWizard.pageDescription"), //$NON-NLS-1$
                 page);
         addPage(page);
     }

@@ -69,7 +69,7 @@ public class QDeletePage extends HgWizardPage {
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 2);
         Group g = SWTWidgetHelper.createGroup(composite,
-                "Select unapplied patch(es) to delete");
+                Messages.getString("QDeletePage.patchGroup.title")); //$NON-NLS-1$
 
         IBaseLabelProvider labelProvider = new LabelProvider() {
             /*
@@ -84,14 +84,14 @@ public class QDeletePage extends HgWizardPage {
 
         };
 
-        this.patchViewer = SWTWidgetHelper.createListViewer(g, "", 100,
+        this.patchViewer = SWTWidgetHelper.createListViewer(g, Messages.getString("QDeletePage.patchViewer.title"), 100, //$NON-NLS-1$
                 labelProvider);
         populatePatchViewer();                
 
-        g = SWTWidgetHelper.createGroup(composite, "Options");
-        this.keepCheckBox = SWTWidgetHelper.createCheckBox(g, "Keep patch file");
+        g = SWTWidgetHelper.createGroup(composite, Messages.getString("QDeletePage.optionGroup.title")); //$NON-NLS-1$
+        this.keepCheckBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QDeletePage.keepCheckBox.title")); //$NON-NLS-1$
         this.revCheckBox = SWTWidgetHelper.createCheckBox(g,
-                "Promote patch changeset to repository");
+                Messages.getString("QDeletePage.revCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener revListener = new SelectionListener() {
 
@@ -124,6 +124,7 @@ public class QDeletePage extends HgWizardPage {
      */
     private void populateChangesetTable() {
         try {
+            LocalChangesetCache.getInstance().clear(resource.getProject());
             SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
                     .getLocalChangeSets(resource.getProject());
             if (changesets != null) {
