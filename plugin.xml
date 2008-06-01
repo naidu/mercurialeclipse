@@ -222,6 +222,8 @@
                  name="qnew..."/>                                         
         <command id="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
                  name="qrefresh..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
+                 name="qdelete..."/>                 
 	</extension>
 
 	<!-- handlers -->
@@ -419,9 +421,18 @@
                 </and>
             </enabledWhen>
         </handler>
-         <!-- QRefreshHandler -->
+        <!-- QRefreshHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
                  class="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- QDeleteHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QDeleteHandler">
             <enabledWhen>
                 <and>
                     <count value="1"/>                  
@@ -538,6 +549,11 @@
                         </visibleWhen>
                     </command>
                     <command commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler">
                         <visibleWhen>
                             <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
                         </visibleWhen>

@@ -36,12 +36,12 @@ public class HgQDeleteClient extends AbstractClient {
         if (keep) {
             command.addOptions("--keep");
         }
-        if (changeset!=null) {
-            command.addOptions("--rev",changeset.getChangeset());
-        }
-        
-        for (Patch patch : patches) {
-            command.addOptions(patch.getIndex());
+        if (changeset != null) {
+            command.addOptions("--rev", changeset.getChangeset());
+        } else {
+            for (Patch patch : patches) {
+                command.addOptions(patch.getName());
+            }
         }
         return command.executeToString();
     }

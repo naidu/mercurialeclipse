@@ -69,7 +69,7 @@ public class QDeletePage extends HgWizardPage {
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 2);
         Group g = SWTWidgetHelper.createGroup(composite,
-                "Select patches to delete");
+                "Select unapplied patch(es) to delete");
 
         IBaseLabelProvider labelProvider = new LabelProvider() {
             /*
@@ -91,7 +91,7 @@ public class QDeletePage extends HgWizardPage {
         g = SWTWidgetHelper.createGroup(composite, "Options");
         this.keepCheckBox = SWTWidgetHelper.createCheckBox(g, "Keep patch file");
         this.revCheckBox = SWTWidgetHelper.createCheckBox(g,
-                "Stop managing a revision");
+                "Promote patch changeset to repository");
 
         SelectionListener revListener = new SelectionListener() {
 
@@ -101,6 +101,7 @@ public class QDeletePage extends HgWizardPage {
 
             public void widgetSelected(SelectionEvent e) {
                 changesetTable.setEnabled(revCheckBox.getSelection());
+                patchViewer.getControl().setEnabled(!revCheckBox.getSelection());
             }
 
         };
