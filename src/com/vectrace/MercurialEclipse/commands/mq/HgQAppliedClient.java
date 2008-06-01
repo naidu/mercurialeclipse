@@ -10,20 +10,35 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.mq;
 
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
  *
  */
 public class HgQAppliedClient extends AbstractClient {
-    public static String[] getAppliedPatches(IResource resource) throws HgException {
-        HgCommand command = new HgCommand("qapplied",getWorkingDirectory(resource),true);        
-        return command.executeToString().split("\n");
+    public static List<Patch> getAppliedPatches(IResource resource) throws HgException {
+        Assert.isNotNull(resource);
+        HgCommand command = new HgCommand("qapplied",getWorkingDirectory(resource),true);      
+        command.addOptions("-v");
+        command.addOptions("-s");
+        return HgQSeriesClient.parse(command.executeToString());
+    }
+    
+    public static List<Patch> getUnappliedPatches(IResource resource) throws HgException{
+        Assert.isNotNull(resource);
+        HgCommand command = new HgCommand("qunapplied",getWorkingDirectory(resource),true);      
+        command.addOptions("-v");
+        command.addOptions("-s");
+        return HgQSeriesClient.parse(command.executeToString());
     }
        
 }

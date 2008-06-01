@@ -12,15 +12,15 @@ package com.vectrace.MercurialEclipse.model;
 
 /**
  * @author bastian
- *
+ * 
  */
 public class Patch {
     private String index;
     private String name;
     private String summary;
-    
+
     private boolean applied;
-    
+
     /**
      * @param name
      * @param date
@@ -34,7 +34,7 @@ public class Patch {
         this.index = index;
     }
 
-    public Patch() {        
+    public Patch() {
     }
 
     /**
@@ -45,7 +45,8 @@ public class Patch {
     }
 
     /**
-     * @param name the name to set
+     * @param name
+     *            the name to set
      */
     public void setName(String name) {
         this.name = name;
@@ -59,7 +60,8 @@ public class Patch {
     }
 
     /**
-     * @param applied the applied to set
+     * @param applied
+     *            the applied to set
      */
     public void setApplied(boolean applied) {
         this.applied = applied;
@@ -73,13 +75,16 @@ public class Patch {
     }
 
     /**
-     * @param summary the summary to set
+     * @param summary
+     *            the summary to set
      */
     public void setSummary(String summary) {
         this.summary = summary;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -91,7 +96,9 @@ public class Patch {
         return result;
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override
@@ -131,10 +138,21 @@ public class Patch {
     }
 
     /**
-     * @param index the index to set
+     * @param index
+     *            the index to set
      */
     public void setIndex(String index) {
         this.index = index;
     }
-    
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return this.name;
+    }
+
 }

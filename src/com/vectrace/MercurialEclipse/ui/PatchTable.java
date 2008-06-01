@@ -45,16 +45,15 @@ public class PatchTable extends Composite {
             APPLIED_COLOR = new Color(getDisplay(), new RGB(225, 255, 172));
         }
 
-        this.setLayout(new GridLayout());
-        this.setLayoutData(new GridData());
+        this.setLayout(new GridLayout(1, false));
+        this.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
                 | SWT.V_SCROLL | SWT.H_SCROLL);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL,
-                GridData.FILL_VERTICAL, true, true, 1, 1);
-        data.minimumHeight = 100;
+        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+        // data.minimumHeight = 100;
         table.setLayoutData(data);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);

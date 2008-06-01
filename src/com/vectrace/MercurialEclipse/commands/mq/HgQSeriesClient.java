@@ -38,19 +38,24 @@ public class HgQSeriesClient extends AbstractClient {
      * @param executeToString
      * @return
      */
-    private static List<Patch> parse(String executeToString) {
+    public static List<Patch> parse(String executeToString) {
         List<Patch> list = new ArrayList<Patch>();
         if (executeToString != null && executeToString.indexOf("\n") >= 0) {
             String[] patches = executeToString.split("\n");
             for (String string : patches) {
                 String[] components = string.split(":");
                 String[] patchData = components[0].trim().split(" ");
-                String summary = components[1].trim();
+                
                 Patch p = new Patch();
                 p.setIndex(patchData[0]);
                 p.setApplied(patchData[1].equals("A") ? true : false);
                 p.setName(patchData[2].trim());
-                p.setSummary(summary);
+                
+                if (components.length>1) {
+                    String summary = components[1].trim();
+                    p.setSummary(summary);
+                }
+                
                 list.add(p);
             }
         }

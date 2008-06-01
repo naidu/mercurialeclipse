@@ -10,41 +10,39 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.mq;
 
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
  * 
  */
-public class HgQPopClient extends AbstractClient {
-    public static String popAll(IResource resource, boolean force)
-            throws HgException {
+public class HgQDeleteClient extends AbstractClient {
+    public static String delete(IResource resource, boolean keep,
+            ChangeSet changeset, List<Patch> patches) throws HgException {
+        Assert.isNotNull(patches);
         Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qpop",
+        HgCommand command = new HgCommand("qdelete",
                 getWorkingDirectory(resource), true);
 
-        command.addOptions("-a");
-        if (force) {
-            command.addOptions("--force");
+        if (keep) {
+            command.addOptions("--keep");
         }
-        return command.executeToString();
-    }
-
-    public static String pop(IResource resource, boolean force, String patchName)
-            throws HgException {
-        HgCommand command = new HgCommand("qpop",
-                getWorkingDirectory(resource), true);
-
-        if (force) {
-            command.addOptions("--force");
+        if (changeset!=null) {
+            command.addOptions("--rev",changeset.getChangeset());
         }
         
-        command.addOptions(patchName);
+        for (Patch patch : patches) {
+            command.addOptions(patch.getIndex());
+        }
         return command.executeToString();
     }
 }

@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.ui;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.ListViewer;
@@ -32,14 +33,14 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 /**
  * @author bastian
- *
+ * 
  */
 public class SWTWidgetHelper {
     public static final int LABEL_WIDTH_HINT = 400;
     public static final int LABEL_INDENT_WIDTH = 32;
     public static final int LIST_HEIGHT_HINT = 100;
     public static final int SPACER_HEIGHT = 8;
-    
+
     /**
      * Creates a new checkbox instance and sets the default layout data.
      * 
@@ -58,7 +59,8 @@ public class SWTWidgetHelper {
         return button;
     }
 
-    public static Button createPushButton(Composite parent, String label, int span) {
+    public static Button createPushButton(Composite parent, String label,
+            int span) {
         Button button = new Button(parent, SWT.PUSH);
         button.setText(label);
         GridData data = new GridData();
@@ -93,12 +95,12 @@ public class SWTWidgetHelper {
      */
     public static Composite createComposite(Composite parent, int numColumns) {
         Composite composite = new Composite(parent, SWT.NULL);
-    
+
         // GridLayout
         GridLayout layout = new GridLayout();
         layout.numColumns = numColumns;
         composite.setLayout(layout);
-    
+
         // GridData
         GridData data = new GridData(GridData.FILL_HORIZONTAL);
         data.verticalAlignment = SWT.FILL;
@@ -206,7 +208,8 @@ public class SWTWidgetHelper {
      *            the number of columns to span
      * @return the created radio button
      */
-    public static Button createRadioButton(Composite parent, String label, int span) {
+    public static Button createRadioButton(Composite parent, String label,
+            int span) {
         Button button = new Button(parent, SWT.RADIO);
         button.setText(label);
         GridData data = new GridData();
@@ -247,8 +250,8 @@ public class SWTWidgetHelper {
      *            the nominal height of the list
      * @return the created list viewer
      */
-    public static ListViewer createFileListViewer(Composite parent, String title,
-            int heightHint) {
+    public static ListViewer createFileListViewer(Composite parent,
+            String title, int heightHint) {
         createLabel(parent, title);
         ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY
                 | SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
@@ -256,10 +259,10 @@ public class SWTWidgetHelper {
             public Object[] getElements(Object inputElement) {
                 return (Object[]) inputElement;
             }
-    
+
             public void dispose() {
             }
-    
+
             public void inputChanged(Viewer viewer, Object oldInput,
                     Object newInput) {
             }
@@ -272,7 +275,7 @@ public class SWTWidgetHelper {
         });
         listViewer
                 .setComparator(new org.eclipse.ui.model.WorkbenchViewerComparator());
-    
+
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = heightHint;
         listViewer.getList().setLayoutData(data);
@@ -301,14 +304,14 @@ public class SWTWidgetHelper {
             public Object[] getElements(Object inputElement) {
                 return (Object[]) inputElement;
             }
-    
+
             public void dispose() {
             }
-    
+
             public void inputChanged(Viewer viewer, Object oldInput,
                     Object newInput) {
             }
-    
+
         });
         listViewer.setLabelProvider(new LabelProvider() {
             @Override
@@ -318,16 +321,57 @@ public class SWTWidgetHelper {
                         "\t").concat(cs.getUser())); //$NON-NLS-1$
             }
         });
-    
+
         ViewerComparator comparator = new org.eclipse.ui.model.WorkbenchViewerComparator() {
             @Override
             public int compare(Viewer viewer, Object e1, Object e2) {
                 return ((ChangeSet) e2).compareTo((ChangeSet) e1);
             }
         };
-    
+
         listViewer.setComparator(comparator);
-    
+
+        GridData data = new GridData(GridData.FILL_BOTH);
+        data.heightHint = heightHint;
+        listViewer.getList().setLayoutData(data);
+        listViewer.setUseHashlookup(true);
+        return listViewer;
+    }
+
+    /**
+     * Creates a ListViewer
+     * 
+     * @param parent
+     *            the parent of the viewer
+     * @param title
+     *            the text for the title label
+     * @param heightHint
+     *            the nominal height of the list
+     * @param the label decorator
+     * @return the created list viewer
+     */
+    public static ListViewer createListViewer(Composite parent, String title,
+            int heightHint, IBaseLabelProvider labelProvider) {
+        if (title != null) {
+            createLabel(parent, title);
+        }
+        ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY
+                | SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER | SWT.MULTI);
+        listViewer.setContentProvider(new IStructuredContentProvider() {
+            public Object[] getElements(Object inputElement) {
+                return (Object[]) inputElement;
+            }
+
+            public void dispose() {
+            }
+
+            public void inputChanged(Viewer viewer, Object oldInput,
+                    Object newInput) {
+            }
+
+        });
+        listViewer.setLabelProvider(labelProvider);        
+
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = heightHint;
         listViewer.getList().setLayoutData(data);
@@ -342,7 +386,7 @@ public class SWTWidgetHelper {
         GridData data = new GridData(style);
         data.horizontalSpan = span;
         // data.widthHint = GROUP_WIDTH;
-    
+
         group.setLayoutData(data);
         GridLayout layout = new GridLayout();
         layout.numColumns = span;
