@@ -14,6 +14,7 @@
 
 package com.vectrace.MercurialEclipse.storage;
 
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -50,7 +51,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
         try {
             myUri = new URI(uri);
         } catch (URISyntaxException e) {
-            myUri = new URI("file:///".concat(location));
+            myUri = new File(location).toURI();
         }
 
         if (myUri.getUserInfo() == null) {
