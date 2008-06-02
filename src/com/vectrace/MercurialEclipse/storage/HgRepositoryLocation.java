@@ -50,9 +50,9 @@ public class HgRepositoryLocation extends AllRootsElement implements
         try {
             myUri = new URI(uri);
         } catch (URISyntaxException e) {
-            
+
             // do nothing. workaround below doesn't work :-(
-            
+
             // this creates an URI like file:/c:/hurz
             // myUri = new File(uri).toURI();
             // normalize
@@ -64,6 +64,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
         }
         this.uri = myUri;
         if (myUri != null && myUri.getUserInfo() == null
+                && myUri.getScheme() != null
                 && !myUri.getScheme().equalsIgnoreCase("file")) {
             String userInfo = user;
             if (user != null && user.length() == 0) {
