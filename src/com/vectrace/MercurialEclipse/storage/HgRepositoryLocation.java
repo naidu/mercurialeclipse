@@ -46,14 +46,26 @@ public class HgRepositoryLocation extends AllRootsElement implements
         this.user = user;
         this.password = password;
 
-        URI myUri;
+        URI myUri = null;
         try {
             myUri = new URI(uri);
         } catch (URISyntaxException e) {
-            myUri = new URI("file:///".concat(location));
-        }
 
-        if (myUri.getUserInfo() == null) {
+            // do nothing. workaround below doesn't work :-(
+
+            // this creates an URI like file:/c:/hurz
+            // myUri = new File(uri).toURI();
+            // normalize
+            // myUri = myUri.normalize();
+            // adding two slashes for Mercurial => file:///c:/hurz
+            // see http://www.selenic.com/mercurial/bts/issue1153
+            // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
+            // + myUri.toASCIIString().substring(5));
+        }
+        this.uri = myUri;
+        if (myUri != null && myUri.getUserInfo() == null
+                && myUri.getScheme() != null
+                && !myUri.getScheme().equalsIgnoreCase("file")) {
             String userInfo = user;
             if (user != null && user.length() == 0) {
                 // URI parts are undefinied, if they are null.
@@ -67,8 +79,6 @@ public class HgRepositoryLocation extends AllRootsElement implements
             this.uri = new URI(myUri.getScheme(), userInfo, myUri.getHost(),
                     myUri.getPort(), myUri.getPath(), myUri.getQuery(), myUri
                             .getFragment());
-        } else {
-            this.uri = myUri;
         }
     }
 
@@ -141,7 +151,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
      */
     public static HgRepositoryLocation fromProperties(Properties configuration)
             throws HgException, URISyntaxException {
-        
+
         String user = configuration.getProperty("user");
         if ((user == null) || (user.length() == 0)) {
             user = null;
@@ -195,6 +205,13 @@ public class HgRepositoryLocation extends AllRootsElement implements
      */
     public URI getUri() {
         return uri;
+    }
+
+    /**
+     * @return the location
+     */
+    public String getLocation() {
+        return location;
     }
 
 }

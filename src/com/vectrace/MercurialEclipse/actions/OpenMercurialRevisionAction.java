@@ -263,7 +263,7 @@ public void run()
         IProgressService progressService = PlatformUI.getWorkbench().getProgressService();
         try 
         {
-          progressService.run(false, false, runnable);
+          progressService.run(true, false, runnable);
         } 
         catch (InvocationTargetException e) 
         {

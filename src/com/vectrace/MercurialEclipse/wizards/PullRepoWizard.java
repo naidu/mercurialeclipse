@@ -173,7 +173,7 @@ public class PullRepoWizard extends HgWizard {
         repo = getLocation();
 
         try {
-            getContainer().run(false, false, new PullOperation(getContainer()));
+            getContainer().run(true, false, new PullOperation(getContainer()));
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e);

@@ -112,7 +112,11 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
             monitor.worked(1);
 
             if (cloneName == null || cloneName.length() == 0) {
-                cloneName = repo.getUri().getFragment();
+                if (repo.getUri()!=null) {
+                    cloneName = repo.getUri().getFragment();
+                } else {
+                    cloneName = null;
+                }
             }
 
             monitor
@@ -260,7 +264,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                     clonePage.getTimeoutCheckBox().getSelection(), clonePage
                             .getRevisionTextField().getText(), clonePage
                             .getCloneNameTextField().getText());
-            getContainer().run(false, false, cloneOperation);
+            getContainer().run(true, false, cloneOperation);
             new RefreshJob(
                     Messages.getString("CloneRepoWizard.refreshJob.name"), null, cloneOperation.getProject()).schedule(); //$NON-NLS-1$
         } catch (Exception e) {
