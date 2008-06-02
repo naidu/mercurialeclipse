@@ -14,7 +14,6 @@
 
 package com.vectrace.MercurialEclipse.storage;
 
-import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -51,17 +50,21 @@ public class HgRepositoryLocation extends AllRootsElement implements
         try {
             myUri = new URI(uri);
         } catch (URISyntaxException e) {
+            
+            // do nothing. workaround below doesn't work :-(
+            
             // this creates an URI like file:/c:/hurz
-            myUri = new File(uri).toURI();
+            // myUri = new File(uri).toURI();
             // normalize
-            myUri = myUri.normalize();
+            // myUri = myUri.normalize();
             // adding two slashes for Mercurial => file:///c:/hurz
             // see http://www.selenic.com/mercurial/bts/issue1153
-            myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
-                    + myUri.toASCIIString().substring(5)); 
-        }        
+            // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
+            // + myUri.toASCIIString().substring(5));
+        }
         this.uri = myUri;
-        if (myUri.getUserInfo() == null) {
+        if (myUri != null && myUri.getUserInfo() == null
+                && !myUri.getScheme().equalsIgnoreCase("file")) {
             String userInfo = user;
             if (user != null && user.length() == 0) {
                 // URI parts are undefinied, if they are null.

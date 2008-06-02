@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -24,7 +25,7 @@ public class HgTransplantClient {
      * Cherrypicks given ChangeSets from repository or branch.
      */
     public static String transplant(IProject project, List<String> nodeIds,
-            HgRepositoryLocation loc, boolean branch, String branchName,
+            HgRepositoryLocation repo, boolean branch, String branchName,
             boolean all, boolean merge, String mergeNodeId, boolean prune,
             String pruneNodeId, boolean continueLastTransplant,
             boolean filterChangesets, String filter) throws HgException {
@@ -45,7 +46,12 @@ public class HgTransplantClient {
                 }
             } else {
                 command.addOptions("--source");
-                command.addOptions(loc.getUri().toASCIIString());
+                URI uri = repo.getUri();
+                if (uri != null ) {
+                    command.addOptions(uri.toASCIIString());
+                } else {
+                    command.addOptions(repo.getLocation());
+                }
             }
 
             if (prune) {

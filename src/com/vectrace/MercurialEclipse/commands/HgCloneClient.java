@@ -53,7 +53,15 @@ public class HgCloneClient {
         }
 
         URI uri = repo.getUri();
-        command.addOptions(uri.toASCIIString(), cloneName);
+        if (uri != null) {
+            command.addOptions(uri.toASCIIString());
+        } else {
+            command.addOptions(repo.getLocation());
+        }
+
+        if (cloneName != null) {
+            command.addOptions(cloneName);
+        }
         if (timeout) {
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);

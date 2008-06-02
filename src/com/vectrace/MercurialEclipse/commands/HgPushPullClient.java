@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgPushPullClient  {
 
-    public static String push(IProject project, HgRepositoryLocation location,
+    public static String push(IProject project, HgRepositoryLocation repo,
             boolean force, String revision, int timeout) throws HgException {
         HgCommand command = new HgCommand("push", project, true);
         command
@@ -37,8 +37,13 @@ public class HgPushPullClient  {
             command.addOptions("-r", revision.trim());
         }
 
-        URI uri = location.getUri();
-        command.addFiles(uri.toASCIIString());
+        URI uri = repo.getUri();
+        if (uri != null ) {
+            command.addOptions(uri.toASCIIString());
+        } else {
+            command.addOptions(repo.getLocation());
+        }
+        
         return new String(command.executeToBytes(timeout));
     }
 
@@ -48,7 +53,7 @@ public class HgPushPullClient  {
     }
 
     public static String pull(IResource resource,
-            HgRepositoryLocation location, boolean update, boolean force,
+            HgRepositoryLocation repo, boolean update, boolean force,
             boolean timeout, ChangeSet changeset) throws HgException {
         IResource workDir = resource;
         if (resource.getType() == IResource.FILE) {
@@ -67,9 +72,13 @@ public class HgPushPullClient  {
             command.addOptions("--rev", changeset.getChangeset());
         }
 
-        URI uri = location.getUri();
-
-        command.addFiles(uri.toASCIIString());
+        URI uri = repo.getUri();
+        if (uri != null ) {
+            command.addOptions(uri.toASCIIString());
+        } else {
+            command.addOptions(repo.getLocation());
+        }
+        
         if (timeout) {
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);

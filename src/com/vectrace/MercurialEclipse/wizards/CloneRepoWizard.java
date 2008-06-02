@@ -112,7 +112,11 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
             monitor.worked(1);
 
             if (cloneName == null || cloneName.length() == 0) {
-                cloneName = repo.getUri().getFragment();
+                if (repo.getUri()!=null) {
+                    cloneName = repo.getUri().getFragment();
+                } else {
+                    cloneName = null;
+                }
             }
 
             monitor
