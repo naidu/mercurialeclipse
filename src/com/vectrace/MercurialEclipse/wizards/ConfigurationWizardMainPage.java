@@ -11,9 +11,6 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -182,7 +179,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                                 .getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
                 String dir = dialog.open();
                 if (dir != null) {                    
-                    urlCombo.setText(new File(dir).toURI().toASCIIString());
+//                    urlCombo.setText(new File(dir).toURI().toASCIIString());
+                    getUrlCombo().setText(dir);
                 }
             }
         });
@@ -199,7 +197,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                             .getString("PullPage.bundleDialog.text")); //$NON-NLS-1$
                     String file = dialog.open();
                     if (file != null) {
-                        getUrlCombo().setText(new File(file).toURI().toASCIIString());
+//                        getUrlCombo().setText(new File(file).toURI().toASCIIString());
+                        getUrlCombo().setText(file);
                     }
                 }
             });
@@ -385,14 +384,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private void validateFields() {
         // first check the url of the repository
-        String url = urlCombo.getText();
-        
-        try {
-            new URI(url);
-        } catch (URISyntaxException e) {
-            setErrorMessage(e.getLocalizedMessage());
-            setPageComplete(false);
-        }
+        String url = urlCombo.getText();                
         
         if (url.length() == 0) {
             setErrorMessage(null);
