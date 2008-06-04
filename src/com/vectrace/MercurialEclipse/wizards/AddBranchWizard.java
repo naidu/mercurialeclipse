@@ -97,7 +97,7 @@ public class AddBranchWizard extends HgWizard {
     public boolean performFinish() {
         AddBranchOperation op = new AddBranchOperation(getContainer());
         try {
-            getContainer().run(true, false, op);
+            getContainer().run(false, false, op);
         } catch (Exception e) {
             branchPage.setErrorMessage(e.getLocalizedMessage());
             return false;
