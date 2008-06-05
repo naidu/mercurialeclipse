@@ -39,6 +39,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * Wizard page for entering information about a Hg repository location. This
@@ -127,7 +128,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      *            the parent of the created widgets
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 1);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 1);
 
         Listener listener = new Listener() {
             public void handleEvent(Event event) {
@@ -155,20 +156,20 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      * @param listener
      */
     private void createUrlControl(Composite composite, Listener listener) {
-        Composite urlComposite = createComposite(composite, 4);
+        Composite urlComposite = SWTWidgetHelper.createComposite(composite, 4);
 
-        Group g = createGroup(urlComposite, Messages
+        Group g = SWTWidgetHelper.createGroup(urlComposite, Messages
                 .getString("ConfigurationWizardMainPage.urlGroup.title"), 4, //$NON-NLS-1$
                 GridData.FILL_HORIZONTAL); //$NON-NLS-1$
 
         // repository Url
-        createLabel(g, Messages
+        SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
         urlCombo = createEditableCombo(g);
         urlCombo.addListener(SWT.Selection, listener);
         urlCombo.addListener(SWT.Modify, listener);
 
-        browseButton = createPushButton(g, Messages
+        browseButton = SWTWidgetHelper.createPushButton(g, Messages
                 .getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -186,7 +187,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         });
 
         if (showBundleButton) {
-            browseFileButton = createPushButton(g, Messages
+            browseFileButton = SWTWidgetHelper.createPushButton(g, Messages
                     .getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
 
             browseFileButton.addSelectionListener(new SelectionAdapter() {
@@ -223,23 +224,23 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private void createAuthenticationControl(Composite composite,
             Listener listener) {
         Group g;
-        Composite authComposite = createComposite(composite, 2);
-        g = createGroup(
+        Composite authComposite = SWTWidgetHelper.createComposite(composite, 2);
+        g = SWTWidgetHelper.createGroup(
                 authComposite,
                 Messages
                         .getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
 
         // User name
-        createLabel(g, Messages
+        SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
         userCombo = createEditableCombo(g);
         userCombo.addListener(SWT.Selection, listener);
         userCombo.addListener(SWT.Modify, listener);
 
         // Password
-        createLabel(g, Messages
+        SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
-        passwordText = createTextField(g);
+        passwordText = SWTWidgetHelper.createTextField(g);
         passwordText.setEchoChar('*');
     }
 

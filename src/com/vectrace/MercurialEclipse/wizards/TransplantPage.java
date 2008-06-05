@@ -38,6 +38,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
@@ -123,7 +124,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
      */
     private void addBranchGroup(Composite composite) {
         // now the branch group
-        Group branchGroup = createGroup(composite, Messages
+        Group branchGroup = SWTWidgetHelper.createGroup(composite, Messages
                 .getString("TransplantPage.branchGroup.title")); //$NON-NLS-1$
         createBranchCheckBox(branchGroup);
         createAllCheckBox(branchGroup);
@@ -134,9 +135,9 @@ public class TransplantPage extends ConfigurationWizardMainPage {
      * @param branchGroup
      */
     private void createBranchNameCombo(Group branchGroup) {
-        createLabel(branchGroup, Messages
+        SWTWidgetHelper.createLabel(branchGroup, Messages
                 .getString("TransplantPage.branchLabel.title")); //$NON-NLS-1$
-        this.branchNameCombo = createCombo(branchGroup);
+        this.branchNameCombo = SWTWidgetHelper.createCombo(branchGroup);
         this.branchNameCombo.setEnabled(false);
         populateBranchNameCombo();
 
@@ -174,7 +175,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
      * @param branchGroup
      */
     private void createAllCheckBox(Group branchGroup) {
-        this.allCheckBox = createCheckBox(branchGroup, Messages
+        this.allCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
                 .getString("TransplantPage.allCheckBox.title.1") //$NON-NLS-1$
                 + Messages.getString("TransplantPage.allCheckBox.title.2")); //$NON-NLS-1$
         this.allCheckBox.setEnabled(false);
@@ -207,7 +208,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
      * @param branchGroup
      */
     private void createBranchCheckBox(Group branchGroup) {
-        this.branchCheckBox = createCheckBox(branchGroup, Messages
+        this.branchCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
                 .getString("TransplantPage.branchCheckBox.title")); //$NON-NLS-1$
 
         SelectionListener branchCheckBoxListener = new SelectionListener() {
@@ -246,7 +247,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
      */
     private void addChangesetGroup(Composite composite) {
         // table of changesets
-        Group changeSetGroup = createGroup(
+        Group changeSetGroup = SWTWidgetHelper.createGroup(
                 composite,
                 Messages.getString("TransplantPage.changesetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 

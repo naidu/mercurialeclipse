@@ -31,6 +31,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
@@ -66,10 +67,10 @@ public class StripWizardPage extends HgWizardPage {
      * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 2);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
         // list view of changesets
-        Group changeSetGroup = createGroup(composite,
+        Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
                 Messages.getString("StripWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
         changesetTable = new ChangesetTable(changeSetGroup);
@@ -94,16 +95,16 @@ public class StripWizardPage extends HgWizardPage {
         changesetTable.setEnabled(true);
 
         // now the options
-        Group optionGroup = createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$
+        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$
 
         // backup
-        this.unrelatedCheckBox = createCheckBox(
+        this.unrelatedCheckBox = SWTWidgetHelper.createCheckBox(
                 optionGroup,
                 Messages.getString("StripWizardPage.unrelatedCheckBox.title")); //$NON-NLS-1$
         this.unrelatedCheckBox.setSelection(true);
-        this.backupCheckBox = createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
+        this.backupCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
         this.backupCheckBox.setSelection(true);
-        this.stripHeadsCheckBox = createCheckBox(optionGroup,
+        this.stripHeadsCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 Messages.getString("StripWizardPage.stripHeadsCheckBox.title")); //$NON-NLS-1$
 
         try {

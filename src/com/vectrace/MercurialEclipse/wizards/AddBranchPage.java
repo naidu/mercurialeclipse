@@ -16,6 +16,8 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+
 /**
  * @author bastian
  *
@@ -40,10 +42,10 @@ public class AddBranchPage extends HgWizardPage {
      * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 2);
-        createLabel(composite, Messages.getString("AddBranchPage.branchNameTextField.title")); //$NON-NLS-1$
-        this.branchNameTextField = createTextField(composite);                
-        this.forceCheckBox = createCheckBox(composite, Messages.getString("AddBranchPage.forceCheckBox.title"));         //$NON-NLS-1$
+        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
+        SWTWidgetHelper.createLabel(composite, Messages.getString("AddBranchPage.branchNameTextField.title")); //$NON-NLS-1$
+        this.branchNameTextField = SWTWidgetHelper.createTextField(composite);                
+        this.forceCheckBox = SWTWidgetHelper.createCheckBox(composite, Messages.getString("AddBranchPage.forceCheckBox.title"));         //$NON-NLS-1$
         setControl(composite);
     }
     

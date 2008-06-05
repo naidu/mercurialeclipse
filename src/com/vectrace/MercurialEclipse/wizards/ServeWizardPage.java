@@ -25,6 +25,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgServeClient;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
@@ -59,46 +60,46 @@ public class ServeWizardPage extends HgWizardPage {
      * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
      */
     public void createControl(Composite parent) {
-        Composite composite = createComposite(parent, 3);
+        Composite composite = SWTWidgetHelper.createComposite(parent, 3);
         // server settings
 
-        final Group defaultsGroup = createGroup(composite, Messages.getString("ServeWizardPage.defaultsGroup.title")); //$NON-NLS-1$
-        final Group settingsGroup = createGroup(composite, Messages.getString("ServeWizardPage.settingsGroup.title")); //$NON-NLS-1$
+        final Group defaultsGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("ServeWizardPage.defaultsGroup.title")); //$NON-NLS-1$
+        final Group settingsGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("ServeWizardPage.settingsGroup.title")); //$NON-NLS-1$
         settingsGroup.setEnabled(false);
 
-        this.defaultCheckBox = createCheckBox(defaultsGroup, Messages.getString("ServeWizardPage.defaultCheckBox.title")); //$NON-NLS-1$
+        this.defaultCheckBox = SWTWidgetHelper.createCheckBox(defaultsGroup, Messages.getString("ServeWizardPage.defaultCheckBox.title")); //$NON-NLS-1$
         this.defaultCheckBox.setSelection(true);        
         
 
-        final Label portLabel = createLabel(settingsGroup,
+        final Label portLabel = SWTWidgetHelper.createLabel(settingsGroup,
                 Messages.getString("ServeWizardPage.portLabel.title")); //$NON-NLS-1$
         portLabel.setEnabled(false);
-        this.portTextField = createTextField(settingsGroup);
+        this.portTextField = SWTWidgetHelper.createTextField(settingsGroup);
         this.portTextField.setEnabled(false);
         this.portTextField.setText(Messages.getString("ServeWizardPage.portTextField.defaultValue")); //$NON-NLS-1$
 
-        final Label nameLabel = createLabel(settingsGroup,
+        final Label nameLabel = SWTWidgetHelper.createLabel(settingsGroup,
                 Messages.getString("ServeWizardPage.nameLabel.title")); //$NON-NLS-1$
         nameLabel.setEnabled(false);
-        this.nameTextField = createTextField(settingsGroup);
+        this.nameTextField = SWTWidgetHelper.createTextField(settingsGroup);
         this.nameTextField.setEnabled(false);
 
-        final Label prefixLabel = createLabel(settingsGroup,
+        final Label prefixLabel = SWTWidgetHelper.createLabel(settingsGroup,
                 Messages.getString("ServeWizardPage.prefixLabel.title")); //$NON-NLS-1$
         prefixLabel.setEnabled(false);
-        this.prefixTextField = createTextField(settingsGroup);
+        this.prefixTextField = SWTWidgetHelper.createTextField(settingsGroup);
         this.prefixTextField.setEnabled(false);
 
-        final Label webdirLabel = createLabel(settingsGroup,
+        final Label webdirLabel = SWTWidgetHelper.createLabel(settingsGroup,
                 Messages.getString("ServeWizardPage.webdirLabel.title")); //$NON-NLS-1$
         webdirLabel.setEnabled(false);
-        this.webdirConfTextField = createTextField(settingsGroup);
+        this.webdirConfTextField = SWTWidgetHelper.createTextField(settingsGroup);
         this.webdirConfTextField.setEnabled(false);
 
-        this.stdioCheckBox = createCheckBox(settingsGroup, Messages.getString("ServeWizardPage.stdioCheckBox.title")); //$NON-NLS-1$
+        this.stdioCheckBox = SWTWidgetHelper.createCheckBox(settingsGroup, Messages.getString("ServeWizardPage.stdioCheckBox.title")); //$NON-NLS-1$
         this.stdioCheckBox.setEnabled(false);
 
-        this.ipv6CheckBox = createCheckBox(settingsGroup,
+        this.ipv6CheckBox = SWTWidgetHelper.createCheckBox(settingsGroup,
                 Messages.getString("ServeWizardPage.ipv6CheckBox.title")); //$NON-NLS-1$
         this.ipv6CheckBox.setEnabled(false);
         

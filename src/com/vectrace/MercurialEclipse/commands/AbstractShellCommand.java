@@ -96,7 +96,7 @@ public abstract class AbstractShellCommand {
     protected AbstractShellCommand() {
     }
 
-    protected AbstractShellCommand(List<String> commands, File workingDir,
+    public AbstractShellCommand(List<String> commands, File workingDir,
             boolean escapeFiles) {
         this.command = null;
         this.escapeFiles = escapeFiles;
@@ -104,13 +104,13 @@ public abstract class AbstractShellCommand {
         this.commands = commands;
     }
 
-    protected void addOptions(String... optionsToAdd) {
+    public void addOptions(String... optionsToAdd) {
         for (String option : optionsToAdd) {
             this.options.add(option);
         }
     }
 
-    protected byte[] executeToBytes() throws HgException {
+    public byte[] executeToBytes() throws HgException {
         int timeout = DEFAULT_TIMEOUT;
         if (this.timeoutConstant != null) {
             String pref = MercurialUtilities.getPreference(
@@ -130,7 +130,7 @@ public abstract class AbstractShellCommand {
         return executeToBytes(timeout);
     }
 
-    protected byte[] executeToBytes(int timeout) throws HgException {
+    public byte[] executeToBytes(int timeout) throws HgException {
         return this.executeToBytes(timeout, true);
     }
 
@@ -142,7 +142,7 @@ public abstract class AbstractShellCommand {
      * @return
      * @throws HgException
      */
-    protected byte[] executeToBytes(int timeout,
+    public byte[] executeToBytes(int timeout,
             boolean expectPositiveReturnValue) throws HgException {
         try {
             long start = System.currentTimeMillis();
@@ -187,7 +187,7 @@ public abstract class AbstractShellCommand {
         }
     }
 
-    protected String executeToString() throws HgException {
+    public String executeToString() throws HgException {
         return new String(executeToBytes());
     }
 

@@ -215,7 +215,15 @@
         <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
                  name="Add Branch..."/>
         <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
-                 name="Disconnect"/>  
+                 name="Disconnect"/>
+        <command id="com.vectrace.MercurialEclipse.menu.QInitHandler"
+                 name="qinit..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.QNewHandler"
+                 name="qnew..."/>                                         
+        <command id="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
+                 name="qrefresh..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
+                 name="qdelete..."/>                 
 	</extension>
 
 	<!-- handlers -->
@@ -386,8 +394,45 @@
                 </and>
             </enabledWhen>
         </handler>
+        <!-- DisconnectHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
                  class="com.vectrace.MercurialEclipse.menu.DisconnectHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- QInitHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QInitHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QInitHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- QNewHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QNewHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QNewHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- QRefreshHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- QDeleteHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QDeleteHandler">
             <enabledWhen>
                 <and>
                     <count value="1"/>                  
@@ -490,7 +535,31 @@
                         <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
                     </visibleWhen>
                 </command>				
-				<separator name="group6" visible="true"/>				               
+				<separator name="group6" visible="true"/>
+				
+                <menu label="mqueue" id="team.main.com.vectrace.MercurialEclipse.menu.mqueue">							
+    		        <command commandId="com.vectrace.MercurialEclipse.menu.QInitHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QNewHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                </menu>      
+                
 				<separator name="group7" visible="true"/>
 				<separator name="group8" visible="true"/>
 				<command commandId="com.vectrace.MercurialEclipse.menu.SignHandler" icon = "icons/clcl16/deadlock_view.gif">
@@ -815,10 +884,15 @@
       </view>
       
       <view
-            name="Repository View"
+            name="Repository View"            
             icon="icons/cview16/repo_rep.gif"
             class="com.vectrace.MercurialEclipse.repository.RepositoriesView"
             id="com.vectrace.MercurialEclipse.repository.RepositoriesView">
+      </view>
+      <view
+            name="Patch Queue View"          
+            class="com.vectrace.MercurialEclipse.views.PatchQueueView"
+            id="com.vectrace.MercurialEclipse.views.PatchQueueView">
       </view>
    </extension>
    
