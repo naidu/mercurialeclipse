@@ -73,24 +73,24 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
     public synchronized void clear() {
-        localChangeSets.clear();        
+        localChangeSets.clear();
     }
-    
+
     public void clear(IResource objectResource) {
         ReentrantLock lock = getLock(objectResource);
         try {
             lock.lock();
-            Set<IResource>members = getMembers(objectResource);
+            Set<IResource> members = getMembers(objectResource);
             members.add(objectResource);
             for (IResource resource : members) {
                 localChangeSets.remove(resource);
-            }            
+            }
             notifyChanged(objectResource);
         } finally {
             lock.unlock();
         }
     }
-    
+
     public SortedSet<ChangeSet> getLocalChangeSets(IResource objectResource)
             throws HgException {
         ReentrantLock lock = getLock(objectResource);
@@ -237,6 +237,30 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
+    public ChangeSet getLocalChangeSet(IResource res, String nodeId)
+            throws HgException {
+        if (null != RepositoryProvider.getProvider(res.getProject(),
+                MercurialTeamProvider.ID)
+                && res.getProject().isOpen()) {
+
+            if (STATUS_CACHE.isSupervised(res)) {
+                ReentrantLock lock = getLock(res);
+                try {
+                    lock.lock();
+                    ChangeSet changeSet = HgLogClient.getChangeset(res, nodeId,
+                            isGetFileInformationForChangesets());
+                    SortedSet<ChangeSet>set = new TreeSet<ChangeSet>();
+                    set.add(changeSet);                    
+                    addChangesToLocalCache(res, set);
+                } finally {
+                    lock.unlock();
+                    notifyChanged(res);
+                }
+            }            
+        }
+        return null;
+    }
+
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
@@ -309,16 +333,7 @@ public class LocalChangesetCache extends AbstractCache {
                                     1, withFiles).get(resource);
                         }
                         // add changes to cache
-                        if (changes != null && changes.size() > 0) {
-                            SortedSet<ChangeSet> existing = localChangeSets
-                                    .get(resource);
-                            if (existing == null) {
-                                existing = new TreeSet<ChangeSet>();
-                            }
-                            existing.addAll(changes);
-                            localChangeSets.put(resource, existing);
-                            addToNodeMap(changes);
-                        }
+                        addChangesToLocalCache(resource, changes);
                     }
 
                 }
@@ -326,6 +341,23 @@ public class LocalChangesetCache extends AbstractCache {
                 lock.unlock();
                 notifyChanged(res);
             }
+        }
+    }
+
+    /**
+     * @param resource
+     * @param changes
+     */
+    private void addChangesToLocalCache(IResource resource,
+            SortedSet<ChangeSet> changes) {
+        if (changes != null && changes.size() > 0) {
+            SortedSet<ChangeSet> existing = localChangeSets.get(resource);
+            if (existing == null) {
+                existing = new TreeSet<ChangeSet>();
+            }
+            existing.addAll(changes);
+            localChangeSets.put(resource, existing);
+            addToNodeMap(changes);
         }
     }
 
@@ -339,11 +371,11 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * @param project
      * @param branchName
-     * @return 
+     * @return
      * @throws HgException
      */
-    public SortedSet<ChangeSet> getLocalChangeSetsByBranch(IProject project, String branchName)
-            throws HgException {
+    public SortedSet<ChangeSet> getLocalChangeSetsByBranch(IProject project,
+            String branchName) throws HgException {
         ReentrantLock lock = getLock(project);
         try {
             lock.lock();
