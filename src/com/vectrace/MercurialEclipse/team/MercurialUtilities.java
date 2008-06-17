@@ -153,6 +153,8 @@ public class MercurialUtilities {
         Object data = null;
         PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell,
                 pageId, dsplIds, data);
+        dlg.setErrorMessage("Mercurial is not configured correctly."
+                + "Run 'hg debuginstall' to analyse.");
         dlg.open();
     }
 
