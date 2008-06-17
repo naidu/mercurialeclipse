@@ -251,7 +251,8 @@ public class LocalChangesetCache extends AbstractCache {
                             isGetFileInformationForChangesets());
                     SortedSet<ChangeSet>set = new TreeSet<ChangeSet>();
                     set.add(changeSet);                    
-                    addChangesToLocalCache(res, set);
+                    addToNodeMap(set);
+                    return changeSet;
                 } finally {
                     lock.unlock();
                     notifyChanged(res);
