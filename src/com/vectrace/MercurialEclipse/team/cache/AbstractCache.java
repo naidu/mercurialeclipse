@@ -140,6 +140,7 @@ public abstract class AbstractCache extends Observable {
         for (ChangeSet changeSet : changes) {
             synchronized (AbstractCache.nodeMap) {
                 AbstractCache.nodeMap.put(changeSet.toString(), changeSet);
+                AbstractCache.nodeMap.put(changeSet.getChangeset(), changeSet);
             }
         }
     }

@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.BitSet;
 import java.util.Observable;
 import java.util.Observer;
@@ -17,6 +19,7 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.IDecoration;
@@ -27,6 +30,8 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -182,11 +187,6 @@ public class ResourceDecorator extends LabelProvider implements
                 decoration.addOverlay(overlay);
             }
 
-            // we want a prefix, even if no changeset is displayed
-            if (prefix != null) {
-                decoration.addPrefix(prefix);
-            }
-
             if (showChangeset) {
 
                 // label info for incoming changesets
@@ -203,59 +203,118 @@ public class ResourceDecorator extends LabelProvider implements
                     } else {
                         prefix = "<" + prefix;
                     }
-                    // decorate new prefix
-                    decoration.addPrefix(prefix);
                 }
 
                 // local changeset info
                 try {
-                    ChangeSet changeSet = null;
-                    // the order is important here as well :-).
-                    if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
-                            && LOCAL_CACHE.isLocallyKnown(project)) {
-                        changeSet = LOCAL_CACHE
-                                .getNewestLocalChangeSet(project);
+                    // init suffix with project changeset information
+                    String suffix = getSuffixForProject(project);
+
+                    // overwrite suffix for files
+                    if (resource.getType() == IResource.FILE) {
+                        suffix = getSuffixForFiles(resource, cs);
                     }
 
-                    if (changeSet != null) {
-                        String hex = ":" + changeSet.getNodeShort();
-                        // suffix for project
-                        String suffix = " [" + changeSet.getChangesetIndex()
-                                + hex + "]";
-
-                        // suffix for files
-                        if (!LOCAL_CACHE.isLocalUpdateInProgress(project)
-                                && !LOCAL_CACHE
-                                        .isLocalUpdateInProgress(resource)
-                                && resource.getType() == IResource.FILE) {
-                            changeSet = LOCAL_CACHE
-                                    .getNewestLocalChangeSet(resource);
-                            if (changeSet != null) {
-                                suffix = " [" + changeSet.getChangesetIndex()
-                                        + "] ";
-
-                                if (cs != null) {
-                                    suffix += "< [" + cs.getChangesetIndex()
-                                            + ":" + cs.getNodeShort() + " "
-                                            + cs.getUser() + "]";
-                                }
-                            }
-                        }
-
-                        // only decorate files and project with suffix
-                        if (resource.getType() != IResource.FOLDER) {
-                            decoration.addSuffix(suffix);
-                        }
+                    // only decorate files and project with suffix
+                    if (resource.getType() != IResource.FOLDER) {
+                        decoration.addSuffix(suffix);
                     }
 
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logWarning(
                             "Couldn't get version of resource " + resource, e);
                 }
+            } else {
+                if (resource.getType() == IResource.PROJECT) {
+                    String suffix = getSuffixForProject(project);
+                    decoration.addSuffix(suffix);
+                }
+            }
+
+            // we want a prefix, even if no changeset is displayed
+            if (prefix != null) {
+                decoration.addPrefix(prefix);
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }
+    }
+
+    /**
+     * @param resource
+     * @param project
+     * @param cs
+     * @param suffix
+     * @return
+     * @throws HgException
+     */
+    private String getSuffixForFiles(IResource resource, ChangeSet cs)
+            throws HgException {
+        String suffix = "";
+        // suffix for files
+        if (!LOCAL_CACHE.isLocalUpdateInProgress(resource.getProject())
+                && !LOCAL_CACHE.isLocalUpdateInProgress(resource)) {
+            ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
+            if (fileCs != null) {
+                suffix = " [" + fileCs.getChangesetIndex() + "] ";
+
+                if (cs != null) {
+                    suffix += "< [" + cs.getChangesetIndex() + ":"
+                            + cs.getNodeShort() + " " + cs.getUser() + "]";
+                }
+            }
+        }
+        return suffix;
+    }
+
+    /**
+     * @param project
+     * @param changeSet
+     * @return
+     * @throws CoreException
+     * @throws IOException
+     */
+    private String getSuffixForProject(IProject project) throws CoreException,
+            IOException {
+        ChangeSet changeSet = null;
+        String suffix = " [ ";
+        // the order is important here as well :-).
+        if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
+            File root = new File(HgRootClient.getHgRoot(project));
+            String nodeId = HgIdentClient.getCurrentChangesetId(root);
+            changeSet = LocalChangesetCache.getInstance().getChangeSet(nodeId);
+            if (changeSet == null) {
+                changeSet = LOCAL_CACHE.getLocalChangeSet(project, nodeId);
+            }
+        }
+
+        if (changeSet != null) {
+            String hex = ":" + changeSet.getNodeShort();
+            String tags = changeSet.getTag();
+            String branch = changeSet.getBranch();
+            String merging = project
+                    .getPersistentProperty(ResourceProperties.MERGING);
+
+            // rev info
+            suffix += changeSet.getChangesetIndex() + hex;
+
+            // branch info
+            if (branch != null && branch.length() > 0) {
+                suffix += " @ " + branch;
+            }
+
+            // tags
+            if (tags != null && tags.length() > 0) {
+                suffix += " (" + tags + ")";
+            }
+
+            // merge info
+            if (merging != null && merging.length() > 0) {
+                suffix += " MERGING " + merging;
+            }
+
+        }
+        return suffix + " ]";
     }
 
     /**

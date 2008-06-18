@@ -185,7 +185,7 @@
 		<command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
 		         name="Merge..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
-		         name="Switch to Another Changeset..."/>
+		         name="Update to another changeset..."/>
 
 		<command id="com.vectrace.MercurialEclipse.menu.GLogHandler"
 		         name="Show Graphical Log"/>
@@ -223,7 +223,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
                  name="qrefresh..."/>
         <command id="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
-                 name="qdelete..."/>                 
+                 name="qdelete..."/>            
+        <command id="com.vectrace.MercurialEclipse.menu.SyncHandler"
+                 name="Synchronize..."/>                      
 	</extension>
 
 	<!-- handlers -->
@@ -326,7 +328,15 @@
 				</and>
 			</enabledWhen>
 		</handler>
-		
+		<!-- SyncHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
+                 class="com.vectrace.MercurialEclipse.menu.SyncHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
 		<!-- RollbackHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
 		         class="com.vectrace.MercurialEclipse.menu.RollbackHandler">
@@ -519,22 +529,31 @@
 					</and>
 					</visibleWhen>
 				</command>
+				<command commandId="com.vectrace.MercurialEclipse.menu.SyncHandler">
+                    <visibleWhen>
+                    <and>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </and>
+                    </visibleWhen>
+                </command>
 				<separator name="group5" visible="true"/>
-				<command commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler" icon="icons/undo_edit.gif">
-                    <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                    </visibleWhen>
-                </command>
-                <command commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler" icon="icons/undo_edit.gif">
-                    <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                    </visibleWhen>
-                </command>
-                <command commandId="com.vectrace.MercurialEclipse.menu.StripHandler" icon="icons/undo_edit.gif">
-                    <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                    </visibleWhen>
-                </command>				
+				<menu label="Undo" id="team.main.com.vectrace.MercurialEclipse.menu.undo" icon="icons/undo_edit.gif">  
+    				<command commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler" icon="icons/undo_edit.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler" icon="icons/undo_edit.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                    <command commandId="com.vectrace.MercurialEclipse.menu.StripHandler" icon="icons/undo_edit.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>
+                </menu>				
 				<separator name="group6" visible="true"/>
 				
                 <menu label="mqueue" id="team.main.com.vectrace.MercurialEclipse.menu.mqueue">							

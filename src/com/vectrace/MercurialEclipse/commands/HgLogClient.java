@@ -8,6 +8,7 @@ import java.util.regex.Pattern;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -51,7 +52,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         command.addOptions("--config", "extensions.hgext.graphlog=");
         command.addOptions(filename);
         return command.executeToString();
-    }        
+    }
 
     /**
      * 
@@ -102,21 +103,26 @@ public class HgLogClient extends AbstractParseChangesetClient {
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getProjectLogBatch(
-            IResource res, int batchSize, int startRev, boolean withFiles) throws HgException {
+            IResource res, int batchSize, int startRev, boolean withFiles)
+            throws HgException {
         return getProjectLog(res, batchSize, startRev, withFiles);
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getRecentProjectLog(
-            IResource res, int limitNumber, boolean withFiles) throws HgException {
+            IResource res, int limitNumber, boolean withFiles)
+            throws HgException {
         return getProjectLogBatch(res, limitNumber, -1, withFiles);
     }
 
     public static Map<IResource, SortedSet<ChangeSet>> getProjectLog(
-            IResource res, int limitNumber, int startRev, boolean withFiles) throws HgException {
+            IResource res, int limitNumber, int startRev, boolean withFiles)
+            throws HgException {
         HgCommand command = new HgCommand("log", res.getProject(), false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("--debug", "--style", AbstractParseChangesetClient.getStyleFile(withFiles).getAbsolutePath());
-       
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+        command.addOptions("--debug", "--style", AbstractParseChangesetClient
+                .getStyleFile(withFiles).getAbsolutePath());
+
         if (startRev >= 0) {
             int last = Math.max(startRev - limitNumber, 0);
             command.addOptions("-r");
@@ -127,7 +133,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             command.addOptions("-l", limitNumber + "");
         }
         if (!(res instanceof IProject)) {
-            //command.addOptions("-f");
+            // command.addOptions("-f");
             command.addOptions(res.getProjectRelativePath().toOSString());
         }
         String result = command.executeToString();
@@ -135,9 +141,34 @@ public class HgLogClient extends AbstractParseChangesetClient {
             return null;
         }
         Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                result, res.getProject(), withFiles, Direction.LOCAL,
-                null, null);
+                result, res.getProject(), withFiles, Direction.LOCAL, null,
+                null);
         return revisions;
+    }
+
+    /**
+     * @param nodeId
+     * @throws HgException
+     */
+    public static ChangeSet getChangeset(IResource res, String nodeId,
+            boolean withFiles) throws HgException {
+        Assert.isNotNull(nodeId);
+        HgCommand command = new HgCommand("log", getWorkingDirectory(res),
+                false);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+        command.addOptions("--debug", "--style", AbstractParseChangesetClient
+                .getStyleFile(withFiles).getAbsolutePath());
+        command.addOptions("--rev", nodeId);
+        String result = command.executeToString();
+        Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                result, res.getProject(), withFiles, Direction.LOCAL, null,
+                null);
+        SortedSet<ChangeSet> set = revisions.get(res);
+        if (set != null) {
+            return set.first();
+        }
+        return null;
     }
 
 }

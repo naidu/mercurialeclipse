@@ -28,6 +28,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgRenameClient;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
@@ -50,6 +51,10 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
         if (MercurialUtilities.isResourceInReposetory(file, false) != true) {
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
+            return false;
+        }
+        
+        if (!MercurialStatusCache.getInstance().isSupervised(file)) {
             return false;
         }
 
