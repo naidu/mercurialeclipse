@@ -22,22 +22,22 @@ public class CommitMergeHandler extends SingleResourceHandler {
         selectedResourceArray[0] = resource;
 
         try {
-        CommitDialog commitDialog = new CommitDialog(getShell(), project,
-                selectedResourceArray,"Merge with "
-                + project.getPersistentProperty(ResourceProperties.MERGING),false);
+            CommitDialog commitDialog = new CommitDialog(getShell(), project,
+                    selectedResourceArray,"Merge with "
+                    + project.getPersistentProperty(ResourceProperties.MERGING),false);
 
-        if (commitDialog.open() == Window.OK) {
+            if (commitDialog.open() == Window.OK) {
             
-            // commit
-            String messageToCommit = commitDialog.getCommitMessage();
+                // commit
+                String messageToCommit = commitDialog.getCommitMessage();
 
-            commitMerge(resource, messageToCommit);
+                commitMerge(resource, messageToCommit);
 
-            new RefreshJob("Refreshing local changesets after commit...", null, project).schedule();           
-        }
+                new RefreshJob("Refreshing local changesets after commit...", null, project).schedule();           
+            }
         }
         catch(CoreException e) {
-            throw new HgException(e);
+            throw new HgException("Failed to set merge status", e);
         }
      }
 

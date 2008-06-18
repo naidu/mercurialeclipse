@@ -47,6 +47,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 /**
  * Caches the Mercurial Status of each file and offers methods for retrieving,
@@ -314,6 +315,12 @@ public class MercurialStatusCache extends AbstractCache implements
                 statusMap.remove(res);
                 String output = HgStatusClient.getStatus(res);
                 parseStatus(res, output);
+                try {
+                    res.getProject().setPersistentProperty(ResourceProperties.MERGING, HgStatusClient.getMergeStatus(res));
+                }
+                catch(CoreException e) {
+                    throw new HgException("Failed to refresh merge status", e);
+                }
             } finally {
                 lock.unlock();
             }
