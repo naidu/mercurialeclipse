@@ -123,7 +123,6 @@ public class ResourceDecorator extends LabelProvider implements
                             "Refreshing changeset decoration", null, resource
                                     .getProject(), showChangeset);
                     job.schedule();
-                    job.join();
                     return;
                 }
             } else {
@@ -135,7 +134,6 @@ public class ResourceDecorator extends LabelProvider implements
                                     + " on behalf of resource "
                                     + resource.getName(), project);
                     job.schedule();
-                    job.join();
                     return;
                 }
             }
@@ -277,8 +275,7 @@ public class ResourceDecorator extends LabelProvider implements
     private String getSuffixForProject(IProject project) throws CoreException,
             IOException {
         ChangeSet changeSet = null;
-        String suffix = " [ ";
-        // the order is important here as well :-).
+        String suffix = null;
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
             File root = new File(HgRootClient.getHgRoot(project));
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
@@ -289,6 +286,7 @@ public class ResourceDecorator extends LabelProvider implements
         }
 
         if (changeSet != null) {
+            suffix = " [ ";
             String hex = ":" + changeSet.getNodeShort();
             String tags = changeSet.getTag();
             String branch = changeSet.getBranch();
@@ -312,9 +310,9 @@ public class ResourceDecorator extends LabelProvider implements
             if (merging != null && merging.length() > 0) {
                 suffix += " MERGING " + merging;
             }
-
+            suffix += " ]";
         }
-        return suffix + " ]";
+        return suffix;
     }
 
     /**
