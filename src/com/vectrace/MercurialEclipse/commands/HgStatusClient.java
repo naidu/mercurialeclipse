@@ -1,6 +1,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
@@ -50,6 +52,22 @@ public class HgStatusClient {
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-mard");// modified, added, removed, deleted
         return command.executeToBytes().length != 0;
+    }
+    
+    public static String getMergeStatus(IResource res) throws HgException {
+        HgCommand command = new HgCommand("id", res.getProject(), true);
+        // Full global IDs
+        command.addOptions("-i","--debug");
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+        command.addOptions(res.getProjectRelativePath().toOSString());
+        String versionIds = command.executeToString().trim();
+        
+        Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE);
+        Matcher m = p.matcher(versionIds);
+        if(m.matches()) {
+            return m.group(1);
+        }
+        return null;
     }
 
     /**
