@@ -37,6 +37,7 @@ public class ClonePage extends PushPullPage {
     private Button pullCheckBox;
     private Button uncompressedCheckBox;
     private Text revisionTextField;
+    private Button searchProjectFilesCheckBox;
 
     public ClonePage(IResource resource, String pageName, String title,
             ImageDescriptor titleImage) {
@@ -53,26 +54,29 @@ public class ClonePage extends PushPullPage {
         Composite composite = (Composite) getControl();
         createOptionsGroup(composite);
         createDestGroup(composite);
-                
+
     }
 
     /**
      * @param composite
      */
     private void createOptionsGroup(Composite composite) {
-        Group g = optionGroup;        
-        
-        this.noUpdateCheckBox = SWTWidgetHelper.createCheckBox(g,
-                Messages.getString("ClonePage.noUpdateCheckBox.title")); //$NON-NLS-1$
-        this.pullCheckBox = SWTWidgetHelper.createCheckBox(g,
-                Messages.getString("ClonePage.pullCheckBox.title")); //$NON-NLS-1$
-        this.uncompressedCheckBox = SWTWidgetHelper.createCheckBox(g,
-                Messages.getString("ClonePage.uncompressedCheckBox.title")); //$NON-NLS-1$
-        SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.revisionLabel.title")); //$NON-NLS-1$
+        Group g = optionGroup;
+
+        this.noUpdateCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+                .getString("ClonePage.noUpdateCheckBox.title")); //$NON-NLS-1$
+        this.pullCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+                .getString("ClonePage.pullCheckBox.title")); //$NON-NLS-1$
+        this.uncompressedCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+                .getString("ClonePage.uncompressedCheckBox.title")); //$NON-NLS-1$
+        SWTWidgetHelper.createLabel(g, Messages
+                .getString("ClonePage.revisionLabel.title")); //$NON-NLS-1$
         this.revisionTextField = SWTWidgetHelper.createTextField(g);
     }
-    
-    /* (non-Javadoc)
+
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getTimeoutCheckBoxLabel()
      */
     @Override
@@ -84,23 +88,33 @@ public class ClonePage extends PushPullPage {
      * @param composite
      */
     private void createDestGroup(Composite composite) {
-        Group g = SWTWidgetHelper.createGroup(composite, Messages.getString("ClonePage.destinationGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
-        SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.destinationDirectoryLabel.title")); //$NON-NLS-1$
+        Group g = SWTWidgetHelper
+                .createGroup(
+                        composite,
+                        Messages.getString("ClonePage.destinationGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+        SWTWidgetHelper.createLabel(g, Messages
+                .getString("ClonePage.destinationDirectoryLabel.title")); //$NON-NLS-1$
         this.directoryTextField = SWTWidgetHelper.createTextField(g);
-        this.directoryButton = SWTWidgetHelper.createPushButton(g, Messages.getString("ClonePage.directoryButton.title"), 1); //$NON-NLS-1$
+        this.directoryButton = SWTWidgetHelper.createPushButton(g, Messages
+                .getString("ClonePage.directoryButton.title"), 1); //$NON-NLS-1$
         this.directoryButton.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 DirectoryDialog dialog = new DirectoryDialog(getShell());
-                dialog.setMessage(Messages.getString("ClonePage.directoryDialog.message")); //$NON-NLS-1$
+                dialog.setMessage(Messages
+                        .getString("ClonePage.directoryDialog.message")); //$NON-NLS-1$
                 String dir = dialog.open();
                 if (dir != null) {
                     directoryTextField.setText(dir);
                 }
             }
         });
-        SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.cloneDirectoryLabel.title")); //$NON-NLS-1$
+        SWTWidgetHelper.createLabel(g, Messages
+                .getString("ClonePage.cloneDirectoryLabel.title")); //$NON-NLS-1$
         this.cloneNameTextField = SWTWidgetHelper.createTextField(g);
+        this.searchProjectFilesCheckBox = SWTWidgetHelper
+                .createCheckBox(g,
+                        Messages.getString("ClonePage.seachProjectFilesCheckBox.title0")); //$NON-NLS-1$
         g.moveAbove(optionGroup);
     }
 
@@ -156,6 +170,13 @@ public class ClonePage extends PushPullPage {
      */
     public Text getDirectoryTextField() {
         return directoryTextField;
+    }
+
+    /**
+     * @return the searchProjectFilesCheckBox
+     */
+    public Button getSearchProjectFilesCheckBox() {
+        return searchProjectFilesCheckBox;
     }
 
 }
