@@ -85,8 +85,9 @@ public class IncomingPage extends HgWizardPage {
         
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        String[] titles = { Messages.getString("IncomingPage.columnHeader.revision"), Messages.getString("IncomingPage.columnHeader.global"), Messages.getString("IncomingPage.columnHeader.date"), Messages.getString("IncomingPage.columnHeader.author") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        int[] widths = { 50, 150, 150, 100 };
+        String[] titles = { Messages.getString("IncomingPage.columnHeader.revision"), Messages.getString("IncomingPage.columnHeader.global"), Messages.getString("IncomingPage.columnHeader.date"), Messages.getString("IncomingPage.columnHeader.author"),
+                            Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.description") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        int[] widths = { 42, 100, 122, 80, 80, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
