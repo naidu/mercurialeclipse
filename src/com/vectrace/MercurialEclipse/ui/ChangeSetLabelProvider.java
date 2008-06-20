@@ -25,6 +25,10 @@ public class ChangeSetLabelProvider
                 return rev.getDate();
             case 3:
                 return rev.getUser();
+            case 4:
+                return rev.getBranch();
+            case 5:
+                return rev.getDescription();
         }
         return null;
     }

@@ -191,7 +191,7 @@ private IResource[] inResources;
     commitFilesLabel.setLayoutData(fd_commitFilesLabel);
     commitFilesLabel.setText("Select Files:");
 
-    commitFilesList = createFilesList(container);
+    commitFilesList = createFilesList(container, selectableFiles);
     Table table = commitFilesList.getTable();
     fd_commitFilesLabel.bottom = new FormAttachment(table, -7, SWT.DEFAULT);
     final FormData fd_table = new FormData();
@@ -200,7 +200,6 @@ private IResource[] inResources;
     fd_table.top = new FormAttachment(0, 189);
     fd_table.left = new FormAttachment(0, 9);
     table.setLayoutData(fd_table);
-    commitFilesList.setAllGrayed(!selectableFiles);
 
     if(selectableFiles) {
         selectAllButton = new Button(container, SWT.CHECK);
@@ -343,9 +342,16 @@ private IResource[] inResources;
     commitTextBox.addKeyListener(commitKeyListener);
   }
 
-  private CheckboxTableViewer createFilesList(Composite container) 
+  private CheckboxTableViewer createFilesList(Composite container, boolean selectable) 
   {
-    Table table = new Table(container, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.MULTI | SWT.CHECK | SWT.BORDER);
+    int flags = SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER;
+    if(selectable) {
+        flags |= SWT.CHECK | SWT.FULL_SELECTION | SWT.MULTI;
+    }
+    else {
+        flags |= SWT.READ_ONLY | SWT.HIDE_SELECTION;
+    }
+    Table table = new Table(container, flags);
     table.setHeaderVisible(true);
     table.setLinesVisible(true);
     TableLayout layout = new TableLayout();
@@ -357,7 +363,6 @@ private IResource[] inResources;
     col.setResizable(false);
     col.setText("");
     layout.addColumnData(new ColumnPixelData(20, false));
-
     // File name
     col = new TableColumn(table, SWT.NONE);
     col.setResizable(true);
