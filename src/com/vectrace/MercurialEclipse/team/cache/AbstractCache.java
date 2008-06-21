@@ -11,10 +11,12 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
@@ -25,7 +27,9 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -55,7 +59,7 @@ public abstract class AbstractCache extends Observable {
      */
     protected void addResourcesToCache(IProject project,
             String repositoryLocation,
-            Map<String, Map<IResource, SortedSet<ChangeSet>>> changeSetMap,
+            Map<String, Map<IPath, SortedSet<ChangeSet>>> changeSetMap,
             Direction direction) throws HgException {
         // load latest outgoing changesets from repository given in
         // parameter
@@ -66,7 +70,7 @@ public abstract class AbstractCache extends Observable {
                 .getRepoLocation(repositoryLocation);
 
         // clear cache of old members
-        final Map<IResource, SortedSet<ChangeSet>> removeMap = changeSetMap
+        final Map<IPath, SortedSet<ChangeSet>> removeMap = changeSetMap
                 .get(repositoryLocation);
 
         if (removeMap != null) {
@@ -86,7 +90,7 @@ public abstract class AbstractCache extends Observable {
         }
 
         // get changesets from hg
-        Map<IResource, SortedSet<ChangeSet>> resources;
+        Map<IPath, SortedSet<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
             resources = HgOutgoingClient.getOutgoing(project,
                     hgRepositoryLocation);
@@ -98,10 +102,10 @@ public abstract class AbstractCache extends Observable {
         // add them to cache(s)
         if (resources != null && resources.size() > 0) {
 
-            for (Iterator<IResource> iter = resources.keySet().iterator(); iter
+            for (Iterator<IPath> iter = resources.keySet().iterator(); iter
                     .hasNext();) {
-                IResource res = iter.next();
-                SortedSet<ChangeSet> changes = resources.get(res);
+                IPath path = iter.next();
+                SortedSet<ChangeSet> changes = resources.get(path);
 
                 if (changes != null && changes.size() > 0) {
                     SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
@@ -116,17 +120,18 @@ public abstract class AbstractCache extends Observable {
                                     nodeMap
                                             .put(changeSet.toString(),
                                                     changeSet);
+                                    nodeMap.put(changeSet.getChangeset(), changeSet);
                                 }
                             }
                         }
                     }
 
-                    Map<IResource, SortedSet<ChangeSet>> map = changeSetMap
+                    Map<IPath, SortedSet<ChangeSet>> map = changeSetMap
                             .get(repositoryLocation);
                     if (map == null) {
-                        map = new HashMap<IResource, SortedSet<ChangeSet>>();
+                        map = new HashMap<IPath, SortedSet<ChangeSet>>();
                     }
-                    map.put(res, revisions);
+                    map.put(path, revisions);
                     changeSetMap.put(repositoryLocation, map);
                 }
             }
@@ -212,6 +217,25 @@ public abstract class AbstractCache extends Observable {
         }
         set.add(r);
         return set;
+    }
+
+    /**
+     * @param resource
+     * @param members
+     * @param changeSets
+     */
+    protected List<IResource> getMembers(IResource resource, Map<IPath, SortedSet<ChangeSet>> changeSets) {
+        List<IResource> members = new ArrayList<IResource>();
+        if (changeSets != null) {
+            IWorkspaceRoot root = resource.getWorkspace().getRoot();                
+            for (Iterator<IPath> i = changeSets.keySet().iterator(); i
+                    .hasNext();) {
+                IPath path = i.next();
+                IResource member = root.findMember(path, false);
+                members.add(member);
+            }
+        }
+        return members;
     }
 
 }

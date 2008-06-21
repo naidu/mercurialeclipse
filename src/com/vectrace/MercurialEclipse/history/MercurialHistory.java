@@ -109,7 +109,7 @@ public class MercurialHistory extends FileHistory {
                     getChangeSetComparator());
 
             SortedSet<ChangeSet> localChangeSets = HgLogClient.getProjectLog(
-                    resource, -1, -1, false).get(resource.getProject());
+                    resource.getLocation(), -1, -1, false).get(resource.getProject().getLocation());
 
             if (localChangeSets != null) {
                 changeSets.addAll(localChangeSets);

@@ -103,16 +103,11 @@ public class ResourceDecorator extends LabelProvider implements
                 return;
             }
 
-            boolean showChangeset = Boolean
-                    .valueOf(
-                            MercurialUtilities
-                                    .getPreference(
-                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                            "false")).booleanValue();
+            boolean showChangeset = isShowChangeset();
             if (showChangeset) {
                 // get recent project versions
-                if (!STATUS_CACHE.getLock(project).isLocked()
-                        && !STATUS_CACHE.getLock(resource).isLocked()
+                if (!STATUS_CACHE.getLock(project.getLocation()).isLocked()
+                        && !STATUS_CACHE.getLock(resource.getLocation()).isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
@@ -123,17 +118,19 @@ public class ResourceDecorator extends LabelProvider implements
                             "Refreshing changeset decoration", null, resource
                                     .getProject(), showChangeset);
                     job.schedule();
+                    job.join();
                     return;
                 }
             } else {
-                if (!STATUS_CACHE.getLock(project).isLocked()
-                        && !STATUS_CACHE.getLock(resource).isLocked()
+                if (!STATUS_CACHE.getLock(project.getLocation()).isLocked()
+                        && !STATUS_CACHE.getLock(resource.getLocation()).isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
                             "Updating status for project " + project.getName()
                                     + " on behalf of resource "
                                     + resource.getName(), project);
                     job.schedule();
+                    job.join();
                     return;
                 }
             }
@@ -176,6 +173,7 @@ public class ResourceDecorator extends LabelProvider implements
                         overlay = DecoratorImages.deletedStillTrackedDescriptor;
                         prefix = ">";
                         break;
+                    // TODO: Add conflict overlay image for merge conflicts
                     }
                 }
             } else {
@@ -188,14 +186,15 @@ public class ResourceDecorator extends LabelProvider implements
             if (showChangeset) {
 
                 // label info for incoming changesets
-                ChangeSet cs = null;
+                ChangeSet newestIncomingChangeSet = null;
                 try {
-                    cs = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
+                    newestIncomingChangeSet = INCOMING_CACHE
+                            .getNewestIncomingChangeSet(resource);
                 } catch (HgException e1) {
                     MercurialEclipsePlugin.logError(e1);
                 }
 
-                if (cs != null) {
+                if (newestIncomingChangeSet != null) {
                     if (prefix == null) {
                         prefix = "<";
                     } else {
@@ -206,11 +205,15 @@ public class ResourceDecorator extends LabelProvider implements
                 // local changeset info
                 try {
                     // init suffix with project changeset information
-                    String suffix = getSuffixForProject(project);
+                    String suffix = "";
+                    if (resource.getType() == IResource.PROJECT) {
+                        suffix = getSuffixForProject(project);
+                    }
 
                     // overwrite suffix for files
                     if (resource.getType() == IResource.FILE) {
-                        suffix = getSuffixForFiles(resource, cs);
+                        suffix = getSuffixForFiles(resource,
+                                newestIncomingChangeSet);
                     }
 
                     // only decorate files and project with suffix
@@ -236,6 +239,19 @@ public class ResourceDecorator extends LabelProvider implements
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }
+    }
+
+    /**
+     * @return
+     */
+    private boolean isShowChangeset() {
+        boolean showChangeset = Boolean
+                .valueOf(
+                        MercurialUtilities
+                                .getPreference(
+                                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                                        "false")).booleanValue();
+        return showChangeset;
     }
 
     /**
@@ -275,42 +291,42 @@ public class ResourceDecorator extends LabelProvider implements
     private String getSuffixForProject(IProject project) throws CoreException,
             IOException {
         ChangeSet changeSet = null;
-        String suffix = null;
+        String suffix = "";
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
             File root = new File(HgRootClient.getHgRoot(project));
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
             changeSet = LocalChangesetCache.getInstance().getChangeSet(nodeId);
             if (changeSet == null) {
-                changeSet = LOCAL_CACHE.getLocalChangeSet(project, nodeId);
+                new RefreshJob("Refreshing changesets for project "
+                        + project.getName() + ".", null, project,
+                        isShowChangeset()).schedule();
+            } else {
+                suffix = " [ ";
+                String hex = ":" + changeSet.getNodeShort();
+                String tags = changeSet.getTag();
+                String branch = changeSet.getBranch();
+                String merging = project
+                        .getPersistentProperty(ResourceProperties.MERGING);
+
+                // rev info
+                suffix += changeSet.getChangesetIndex() + hex;
+
+                // branch info
+                if (branch != null && branch.length() > 0) {
+                    suffix += " @ " + branch;
+                }
+
+                // tags
+                if (tags != null && tags.length() > 0) {
+                    suffix += " (" + tags + ")";
+                }
+
+                // merge info
+                if (merging != null && merging.length() > 0) {
+                    suffix += " MERGING " + merging;
+                }
+                suffix += " ]";
             }
-        }
-
-        if (changeSet != null) {
-            suffix = " [ ";
-            String hex = ":" + changeSet.getNodeShort();
-            String tags = changeSet.getTag();
-            String branch = changeSet.getBranch();
-            String merging = project
-                    .getPersistentProperty(ResourceProperties.MERGING);
-
-            // rev info
-            suffix += changeSet.getChangesetIndex() + hex;
-
-            // branch info
-            if (branch != null && branch.length() > 0) {
-                suffix += " @ " + branch;
-            }
-
-            // tags
-            if (tags != null && tags.length() > 0) {
-                suffix += " (" + tags + ")";
-            }
-
-            // merge info
-            if (merging != null && merging.length() > 0) {
-                suffix += " MERGING " + merging;
-            }
-            suffix += " ]";
         }
         return suffix;
     }

@@ -12,11 +12,9 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
@@ -38,6 +36,18 @@ public abstract class AbstractClient {
         }
         return myWorkDir.getLocation().toFile();
     }
+    
+    /**
+     * @param path
+     * @return
+     */
+    protected static File getWorkingDirectory(IPath path) {
+        Assert.isNotNull(path);
+        if (path.toFile().isFile()) {
+            return path.toFile().getParentFile();
+        }
+        return path.toFile();
+    }
 
     public AbstractClient() {
     }
@@ -46,10 +56,14 @@ public abstract class AbstractClient {
      * @return
      * @throws HgException
      */
-    public static IFolder getHgRoot(IResource res) throws HgException {
+    public static File getHgRoot(IResource res) throws HgException {
         Assert.isNotNull(res);
-        IPath path = new Path(HgRootClient.getHgRoot(res));
-        IFolder hgRoot = res.getProject().getFolder(path);
-        return hgRoot;
+        return HgRootClient.getHgRootAsFile(res);                
+    }
+    
+    public static File getHgRoot(IPath path) throws HgException {
+        Assert.isNotNull(path);
+        File file = HgRootClient.getHgRoot(path.toFile());
+        return file;
     }
 }

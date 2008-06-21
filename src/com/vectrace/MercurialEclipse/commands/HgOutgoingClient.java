@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -23,7 +24,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
 
-    public static Map<IResource, SortedSet<ChangeSet>> getOutgoing(
+    public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(
             IResource res, HgRepositoryLocation loc) throws HgException {
         try {
             HgCommand command = new HgCommand("outgoing", res.getProject(),
@@ -37,8 +38,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             if (result.contains("no changes found")) {
                 return null;
             }
-            Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, res.getProject(), true,
+            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(HgRootClient.getHgRootAsFile(res),
+                    result, true,
                     Direction.OUTGOING, loc, null);
             return revisions;
         } catch (HgException hg) {

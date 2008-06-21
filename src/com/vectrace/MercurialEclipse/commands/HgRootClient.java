@@ -33,9 +33,30 @@ public class HgRootClient {
     }
 
     private static String getHgRoot2(IResource resource) throws HgException {
+        File root = getHgRootAsFile(resource);
+        return root.getAbsolutePath();
+    }
+
+    /**
+     * @param resource
+     * @return
+     * @throws HgException
+     */
+    public static File getHgRootAsFile(IResource resource) throws HgException {
         File root = resource.getLocation().toFile();
-        if (resource.getType() == IResource.FILE) {
-            root = resource.getParent().getLocation().toFile();
+        root = getHgRoot(root);
+        return root;
+    }
+
+    /**
+     * @param root
+     * @return
+     * @throws HgException 
+     */
+    public static File getHgRoot(File file) throws HgException {
+        File root = file;
+        if (root.isFile()) {
+            root = root.getParentFile();
         }
 
         FilenameFilter hg = new FilenameFilter() {
@@ -48,8 +69,12 @@ public class HgRootClient {
             root = root.getParentFile();
         }
         if (root == null) {
-            throw new HgException(resource + " does not have a hg root");
-        }
-        return root.getAbsolutePath();
+            throw new HgException(file.getName() + " does not have a hg root");
+        }        
+        return root;
     }
+    
+    
+    
+    
 }

@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -36,24 +36,27 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      *         Changesets. The sorting is ascending by date.
      * @throws HgException
      */
-    public static Map<IResource, SortedSet<ChangeSet>> getHgIncoming(
-            IProject proj, HgRepositoryLocation repository) throws HgException {
-        HgCommand command = new HgCommand("incoming", proj, false);
+    public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(
+            IResource res, HgRepositoryLocation repository) throws HgException {
+        HgCommand command = new HgCommand("incoming", getWorkingDirectory(res), false);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);                        
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         try {
-            final File bundleFile = File.createTempFile("bundleFile-".concat(proj.getName()).concat("-"), ".tmp",null);
+            final File bundleFile = File.createTempFile("bundleFile-".concat(
+                    res.getProject().getName()).concat("-"), ".tmp", null);
             bundleFile.deleteOnExit();
-            command.addOptions("--debug", "--style", AbstractParseChangesetClient.getStyleFile(true).getAbsolutePath(),
-                    "--bundle", bundleFile.getAbsolutePath(), repository.getUrl());
-                        
+            command.addOptions("--debug", "--style",
+                    AbstractParseChangesetClient.getStyleFile(true)
+                            .getAbsolutePath(), "--bundle", bundleFile
+                            .getAbsolutePath(), repository.getUrl());
+
             String result = command.executeToString();
             if (result.contains("no changes found")) {
                 return null;
             }
-            Map<IResource, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    result, proj, true, Direction.INCOMING,
-                    repository, bundleFile);
+            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                    HgRootClient.getHgRootAsFile(res), result, true,
+                    Direction.INCOMING, repository, bundleFile);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) {

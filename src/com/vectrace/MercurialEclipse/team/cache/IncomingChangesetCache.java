@@ -10,9 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -21,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -42,10 +45,10 @@ public class IncomingChangesetCache extends AbstractCache {
      * The Map has the following structure: RepositoryLocation -> IResource ->
      * Changeset-Set
      */
-    private static Map<String, Map<IResource, SortedSet<ChangeSet>>> incomingChangeSets;
+    private static Map<String, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
 
     private IncomingChangesetCache() {
-        incomingChangeSets = new HashMap<String, Map<IResource, SortedSet<ChangeSet>>>();
+        incomingChangeSets = new HashMap<String, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
     public static IncomingChangesetCache getInstance() {
@@ -116,19 +119,19 @@ public class IncomingChangesetCache extends AbstractCache {
             lock.lock();
             lock.unlock();
         }
-        Map<IResource, SortedSet<ChangeSet>> repoIncoming = incomingChangeSets
+        Map<IPath, SortedSet<ChangeSet>> repoIncoming = incomingChangeSets
                 .get(repositoryLocation);
 
         SortedSet<ChangeSet> revisions = null;
         if (repoIncoming != null) {
-            revisions = repoIncoming.get(objectResource);
+            revisions = repoIncoming.get(objectResource.getLocation());
         }
         if (revisions == null) {
             refreshIncomingChangeSets(objectResource.getProject(),
                     repositoryLocation);
             repoIncoming = incomingChangeSets.get(repositoryLocation);
             if (repoIncoming != null) {
-                revisions = repoIncoming.get(objectResource);
+                revisions = repoIncoming.get(objectResource.getLocation());
             }
         }
 
@@ -150,17 +153,16 @@ public class IncomingChangesetCache extends AbstractCache {
     public IResource[] getIncomingMembers(IResource resource,
             String repositoryLocation) {
         ReentrantLock lock = getLock(resource);
-        if (lock.isLocked()) {
+        try {
             lock.lock();
+            List<IResource> members = new ArrayList<IResource>();
+            Map<IPath, SortedSet<ChangeSet>> changeSets = incomingChangeSets
+                    .get(repositoryLocation);
+            members = getMembers(resource, changeSets);
+            return members.toArray(new IResource[members.size()]);
+        } finally {
             lock.unlock();
         }
-        Map<IResource, SortedSet<ChangeSet>> changeSets = incomingChangeSets
-                .get(repositoryLocation);
-        if (changeSets != null) {
-            return changeSets.keySet()
-                    .toArray(new IResource[changeSets.size()]);
-        }
-        return new IResource[0];
     }
 
     /**
@@ -201,12 +203,12 @@ public class IncomingChangesetCache extends AbstractCache {
 
         if (MercurialStatusCache.getInstance().isSupervised(resource)) {
 
-            Map<IResource, SortedSet<ChangeSet>> repoMap = incomingChangeSets
+            Map<IPath, SortedSet<ChangeSet>> repoMap = incomingChangeSets
                     .get(repositoryLocation);
 
             SortedSet<ChangeSet> revisions = null;
             if (repoMap != null) {
-                revisions = repoMap.get(resource);
+                revisions = repoMap.get(resource.getLocation());
             }
 
             if (revisions != null && revisions.size() > 0) {
@@ -232,9 +234,10 @@ public class IncomingChangesetCache extends AbstractCache {
         if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
             for (Iterator<String> iterator = incomingChangeSets.keySet()
                     .iterator(); iterator.hasNext();) {
-                Map<IResource, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
+                Map<IPath, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
                         .get(iterator.next());
-                if (currLocMap != null && currLocMap.get(project) != null) {
+                if (currLocMap != null
+                        && currLocMap.get(project.getLocation()) != null) {
                     return true;
                 }
             }

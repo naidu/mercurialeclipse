@@ -43,6 +43,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private HgRepositoryLocation repository;
     private Direction direction;
     private String summary;
+    private File hgRoot;
 
     public ChangeSet() {
         super();
@@ -315,5 +316,19 @@ public class ChangeSet implements Comparable<ChangeSet> {
      */
     public void setDirection(Direction direction) {
         this.direction = direction;
+    }
+
+    /**
+     * @return the hgRoot
+     */
+    public File getHgRoot() {
+        return hgRoot;
+    }
+
+    /**
+     * @param hgRoot the hgRoot to set
+     */
+    public void setHgRoot(File hgRoot) {
+        this.hgRoot = hgRoot;
     }
 }

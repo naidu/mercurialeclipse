@@ -13,7 +13,7 @@ package com.vectrace.MercurialEclipse.history;
 import java.util.Map;
 import java.util.SortedSet;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -117,14 +117,14 @@ public class ChangePathsTableProvider extends TableViewer {
             }
 
             MercurialRevision rev = ((MercurialRevision) inputElement);
-            Map<IResource, SortedSet<ChangeSet>> map;
+            Map<IPath, SortedSet<ChangeSet>> map;
             try {
-                map = HgLogClient.getProjectLog(rev.getResource().getProject(),
+                map = HgLogClient.getProjectLog(rev.getResource().getProject().getLocation(),
                         1, rev.getChangeSet().getChangesetIndex(), true);
             } catch (HgException e) {
                 return EMPTY_CHANGE_PATHS;
             }
-            return map.get(rev.getResource()).first().getChangedFiles();
+            return map.get(rev.getResource().getLocation()).first().getChangedFiles();
         }
 
         public void dispose() {

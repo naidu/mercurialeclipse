@@ -29,9 +29,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -45,7 +44,6 @@ import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
@@ -174,12 +172,12 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
      * @throws HgException
      *             TODO
      */
-    protected static Map<IResource, SortedSet<ChangeSet>> createMercurialRevisions(
-            String input, IProject proj, boolean withFiles,
-            Direction direction, HgRepositoryLocation repository,
-            File bundleFile) throws HgException {
+    protected final static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(
+            File hgRoot, String input, boolean withFiles, Direction direction,
+            HgRepositoryLocation repository, File bundleFile)
+            throws HgException {
 
-        Map<IResource, SortedSet<ChangeSet>> fileRevisions = new HashMap<IResource, SortedSet<ChangeSet>>();
+        Map<IPath, SortedSet<ChangeSet>> fileRevisions = new HashMap<IPath, SortedSet<ChangeSet>>();
 
         if (input == null || input.length() == 0) {
             return fileRevisions;
@@ -200,9 +198,10 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
             cs.setRepository(repository);
             cs.setBundleFile(bundleFile);
             cs.setDirection(direction);
+            cs.setHgRoot(hgRoot);
 
             // changeset to resources & project
-            addChangesetToResourceMap(proj, fileRevisions, cs);
+            addChangesetToResourceMap(hgRoot, fileRevisions, cs);
         }
         return fileRevisions;
     }
@@ -211,22 +210,37 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
      * @param proj
      * @param fileRevisions
      * @param cs
+     * @throws HgException 
+     * @throws IOException
      */
-    protected static void addChangesetToResourceMap(IProject proj,
-            Map<IResource, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs) {
-        if (cs.getChangedFiles() != null) {
-            for (FileStatus file : cs.getChangedFiles()) {
-                IResource res = MercurialUtilities.getIResource(proj, file
-                        .getPath());
-                SortedSet<ChangeSet> incomingFileRevs = addChangeSetRevisions(
-                        fileRevisions, cs, res);
-                fileRevisions.put(res, incomingFileRevs);
+    protected final static void addChangesetToResourceMap(File repoRoot,
+            Map<IPath, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs) throws HgException {
+        try {
+            if (cs.getChangedFiles() != null) {
+                for (FileStatus file : cs.getChangedFiles()) {
+                    // doesn't work for hg roots above project level
+                    // IResource res = MercurialUtilities.getIResource(proj,
+                    // file
+                    // .getPath());
 
+                    IPath hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
+                    IPath fileRelPath = new Path(file.getPath());
+                    IPath fileAbsPath = hgRoot.append(fileRelPath);
+
+                    SortedSet<ChangeSet> revs = addChangeSetRevisions(
+                            fileRevisions, cs, fileAbsPath);
+                    fileRevisions.put(fileAbsPath, revs);
+
+                }
             }
+            IPath repoPath = new Path(repoRoot.getCanonicalPath());
+            SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(
+                    fileRevisions, cs, repoPath);
+            fileRevisions.put(repoPath, projectRevs);
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
         }
-        SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(fileRevisions,
-                cs, proj);
-        fileRevisions.put(proj, projectRevs);
     }
 
     /**
@@ -236,9 +250,9 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
      * @return
      */
     private static SortedSet<ChangeSet> addChangeSetRevisions(
-            Map<IResource, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs,
-            IResource res) {
-        SortedSet<ChangeSet> fileRevs = fileRevisions.get(res);
+            Map<IPath, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs,
+            IPath path) {
+        SortedSet<ChangeSet> fileRevs = fileRevisions.get(path);
         if (fileRevs == null) {
             fileRevs = new TreeSet<ChangeSet>();
         }
@@ -317,7 +331,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         if (changeSet == null) {
             return null;
         }
-        
+
         String outputString = changeSet.substring(changeSet.indexOf("<cs>"));
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
