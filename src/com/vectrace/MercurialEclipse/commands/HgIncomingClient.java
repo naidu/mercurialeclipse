@@ -7,6 +7,7 @@ import java.util.SortedSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -36,9 +37,10 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      *         Changesets. The sorting is ascending by date.
      * @throws HgException
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(
-            IResource res, HgRepositoryLocation repository) throws HgException {
-        HgCommand command = new HgCommand("incoming", getWorkingDirectory(res), false);
+    public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
+            HgRepositoryLocation repository) throws HgException {
+        HgCommand command = new HgCommand("incoming", getWorkingDirectory(res),
+                false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         try {
@@ -55,7 +57,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                 return null;
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    HgRootClient.getHgRootAsFile(res), result, true,
+                    new Path(HgRootClient.getHgRootAsFile(res)
+                            .getCanonicalPath()), result, true,
                     Direction.INCOMING, repository, bundleFile);
             return revisions;
         } catch (HgException hg) {

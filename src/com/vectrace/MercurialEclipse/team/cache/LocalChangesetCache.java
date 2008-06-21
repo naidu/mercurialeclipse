@@ -100,15 +100,16 @@ public class LocalChangesetCache extends AbstractCache {
         ReentrantLock lock = getLock(objectResource);
         try {
             lock.lock();
-            SortedSet<ChangeSet> revisions = localChangeSets
-                    .get(objectResource.getLocation());
+            SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource
+                    .getLocation());
             if (revisions == null) {
                 if (objectResource.getType() != IResource.FOLDER
                         && STATUS_CACHE.isSupervised(objectResource)
                         && !STATUS_CACHE.isAdded(objectResource.getProject(),
                                 objectResource.getLocation())) {
                     refreshAllLocalRevisions(objectResource);
-                    revisions = localChangeSets.get(objectResource.getLocation());
+                    revisions = localChangeSets.get(objectResource
+                            .getLocation());
                 }
             }
             if (revisions != null) {
@@ -266,8 +267,10 @@ public class LocalChangesetCache extends AbstractCache {
                     ChangeSet changeSet = HgLogClient.getChangeset(res, nodeId,
                             isGetFileInformationForChangesets());
                     SortedSet<ChangeSet> set = new TreeSet<ChangeSet>();
-                    set.add(changeSet);
-                    addToNodeMap(set);
+                    if (changeSet != null) {
+                        set.add(changeSet);
+                        addToNodeMap(set);
+                    }
                     return changeSet;
                 } finally {
                     lock.unlock();

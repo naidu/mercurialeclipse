@@ -10,12 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -24,22 +27,24 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
 
-    public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(
-            IResource res, HgRepositoryLocation loc) throws HgException {
+    public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
+            HgRepositoryLocation loc) throws HgException {
         try {
             HgCommand command = new HgCommand("outgoing", res.getProject(),
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-            command.addOptions("--style",AbstractParseChangesetClient.getStyleFile(true).getAbsolutePath());
+            command.addOptions("--style", AbstractParseChangesetClient
+                    .getStyleFile(true).getAbsolutePath());
 
             command.addOptions(loc.toString());
             String result = command.executeToString();
             if (result.contains("no changes found")) {
                 return null;
             }
-            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(HgRootClient.getHgRootAsFile(res),
-                    result, true,
+            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                    new Path(HgRootClient.getHgRootAsFile(res)
+                            .getCanonicalPath()), result, true,
                     Direction.OUTGOING, loc, null);
             return revisions;
         } catch (HgException hg) {
@@ -47,6 +52,9 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                 return null;
             }
             throw new HgException(hg.getMessage(), hg);
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
         }
     }
 

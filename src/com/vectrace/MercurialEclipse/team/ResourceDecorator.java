@@ -297,10 +297,9 @@ public class ResourceDecorator extends LabelProvider implements
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
             changeSet = LocalChangesetCache.getInstance().getChangeSet(nodeId);
             if (changeSet == null) {
-                new RefreshJob("Refreshing changesets for project "
-                        + project.getName() + ".", null, project,
-                        isShowChangeset()).schedule();
-            } else {
+              changeSet = LocalChangesetCache.getInstance().getLocalChangeSet(project, nodeId);
+            } 
+            if (changeSet != null) {
                 suffix = " [ ";
                 String hex = ":" + changeSet.getNodeShort();
                 String tags = changeSet.getTag();
