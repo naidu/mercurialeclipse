@@ -137,7 +137,7 @@ public class IncomingChangesetCache extends AbstractCache {
 
         if (revisions != null) {
             return Collections.unmodifiableSortedSet(incomingChangeSets.get(
-                    repositoryLocation).get(objectResource));
+                    repositoryLocation).get(objectResource.getLocation()));
         }
         return null;
     }
