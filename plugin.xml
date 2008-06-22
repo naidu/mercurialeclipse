@@ -174,7 +174,7 @@
 	<!-- commands -->
 	<extension point="org.eclipse.ui.commands">
 		<command id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
-		         name="Commit merge"/>
+		         name="Commit merge..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.CommitHandler"
 		         name="Commit..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
