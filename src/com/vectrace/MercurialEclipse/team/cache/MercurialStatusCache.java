@@ -236,7 +236,8 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     public boolean isSupervised(IResource resource) {
-        return isSupervised(resource.getProject(), resource.getLocation());
+        return MercurialUtilities.isResourceInReposetory(resource, false)
+                && isSupervised(resource.getProject(), resource.getLocation());
     }
 
     public boolean isSupervised(IProject project, IPath path) {
@@ -580,8 +581,10 @@ public class MercurialStatusCache extends AbstractCache implements
                     }
 
                     IContainer container = (IContainer) resource;
-                    IResource foundMember = container.findMember(memberPath, false);
-                    if (foundMember != null && foundMember.getLocation().equals(memberPath)) {
+                    IResource foundMember = container.findMember(memberPath,
+                            false);
+                    if (foundMember != null
+                            && foundMember.getLocation().equals(memberPath)) {
                         members.add(foundMember);
                     }
                 }

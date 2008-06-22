@@ -97,7 +97,7 @@ public class ResourceDecorator extends LabelProvider implements
                 return;
             }
 
-            if (!MercurialUtilities.isResourceInReposetory(resource, true)) {
+            if (!MercurialUtilities.isResourceInReposetory(resource, false)) {
                 // Resource could be inside a link or something do nothing
                 // in the future this could check is this is another repository
                 return;

@@ -158,8 +158,8 @@ public class MercurialUtilities {
         dlg.open();
     }
 
-    /***************************************************************************
-     * Should we handle resource ***********************
+    /**
+     * Should we handle resource
      * 
      * @param dialog
      *            TODO
@@ -168,7 +168,6 @@ public class MercurialUtilities {
      * not folow the link (not now anyway mabe later versions will)
      * 
      */
-
     public static boolean isResourceInReposetory(IResource resource,
             boolean dialog) {
         // System.out.println("isResourceInReposetory(" + resource.toString() +
@@ -196,15 +195,19 @@ public class MercurialUtilities {
         boolean isLinked = linkedParent.isLinked();
 
         if (dialog && isLinked) {
-            Shell shell;
-            IWorkbench workbench;
+            Shell shell = null;
+            IWorkbench workbench = null;
 
             workbench = PlatformUI.getWorkbench();
-            shell = workbench.getActiveWorkbenchWindow().getShell();
-
-            MessageDialog
-                    .openInformation(shell, "Resource in link URI",
-                            "The Selected resource is in a link and can't be handled by this plugin sorry!");
+            if (workbench != null
+                    && workbench.getActiveWorkbenchWindow() != null) {
+                shell = workbench.getActiveWorkbenchWindow().getShell();
+            }
+            if (shell != null) {
+                MessageDialog
+                        .openInformation(shell, "Resource in link URI",
+                                "The Selected resource is in a link and can't be handled by this plugin sorry!");
+            }
         }
 
         // TODO Follow links and see if they point to another reposetory
