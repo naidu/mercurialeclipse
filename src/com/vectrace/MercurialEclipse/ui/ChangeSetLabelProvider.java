@@ -28,7 +28,7 @@ public class ChangeSetLabelProvider
             case 4:
                 return rev.getBranch();
             case 5:
-                return rev.getDescription();
+                return rev.getSummary();
         }
         return null;
     }
