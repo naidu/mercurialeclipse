@@ -43,20 +43,20 @@ public class CreateProjectOperation extends HgOperation {
     private boolean readProjectFile;
     private String projectName;
     private IProject project;
-    private File parentDirectory;
+    private File projectDirectory;
 
     /**
      * @param context
      */
     public CreateProjectOperation(IRunnableContext context,
-            File parentDirectory, File projectFile, HgRepositoryLocation repo,
+            File projectDirectory, File projectFile, HgRepositoryLocation repo,
             boolean readProjectFile, String projectName) {
         super(context);
         this.projectFile = projectFile;
         this.repo = repo;
         this.readProjectFile = readProjectFile;
         this.projectName = projectName;
-        this.parentDirectory = parentDirectory;
+        this.projectDirectory = projectDirectory;
     }
 
     /*
@@ -95,33 +95,37 @@ public class CreateProjectOperation extends HgOperation {
             }
             IWorkspace workspace = ResourcesPlugin.getWorkspace();
             IProjectDescription projectDesc = null;
-            monitor.beginTask(Messages.getString("CreateProjectOperation.beginTask"), 15); //$NON-NLS-1$
+            monitor.beginTask(Messages
+                    .getString("CreateProjectOperation.beginTask"), 15); //$NON-NLS-1$
             if (readProjectFile && projectFile != null) {
                 // load the project description from the retrieved metafile
-                monitor.subTask(Messages.getString("CreateProjectOperation.subTaskReadingProjectFile")); //$NON-NLS-1$
+                monitor
+                        .subTask(Messages
+                                .getString("CreateProjectOperation.subTaskReadingProjectFile")); //$NON-NLS-1$
                 in = new FileInputStream(projectFile);
                 projectDesc = workspace.loadProjectDescription(in);
-                // set location in file system
-                projectDesc.setLocation(new Path(projectFile.getParentFile()
-                        .getAbsolutePath()));
                 monitor.worked(1);
             } else {
                 // create project description
-                monitor.subTask(Messages.getString("CreateProjectOperation.subTaskCreatingProjectFile")); //$NON-NLS-1$
+                monitor
+                        .subTask(Messages
+                                .getString("CreateProjectOperation.subTaskCreatingProjectFile")); //$NON-NLS-1$
                 projectDesc = workspace.newProjectDescription(projectName);
-                // set location in file system (parentdir/projectname)
-                if (!workspace.getRoot().getLocation().toFile()
-                        .getAbsolutePath().equals(
-                                parentDirectory.getAbsolutePath())) {
-                    projectDesc.setLocation(new Path(parentDirectory
-                            .getAbsolutePath()
-                            + File.separatorChar + projectName));
-                }
-
                 projectDesc
                         .setComment(Messages
                                 .getString("CloneRepoWizard.description.comment") + repo); //$NON-NLS-1$                
                 monitor.worked(1);
+            }
+
+            // set location in file system (parentdir/projectname)
+            if (!workspace.getRoot().getLocation().toFile().getAbsolutePath()
+                    .equals(projectDirectory.getParentFile().getAbsolutePath())) {
+                projectDesc.setLocation(new Path(projectDirectory.getAbsolutePath()));
+            } else {
+                projectDesc.setLocation(null);
+                if (projectName != null) {
+                    projectDesc.setName(projectName);
+                }
             }
 
             // now get resource handle and create & open project

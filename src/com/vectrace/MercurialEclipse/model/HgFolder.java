@@ -17,7 +17,7 @@ import java.util.List;
 
 /**
  * @author bastian
- *
+ * 
  */
 public class HgFolder extends File {
     /**
@@ -25,7 +25,7 @@ public class HgFolder extends File {
      */
     private static final long serialVersionUID = 1L;
     private List<File> projectFiles;
-    
+
     /**
      * @param pathname
      */
@@ -55,26 +55,27 @@ public class HgFolder extends File {
     public HgFolder(File parent, String child) {
         super(parent, child);
     }
-    
 
     /**
      * @return the projectFile
      */
     public List<File> getProjectFiles() {
-    	List<File> pFiles = new ArrayList<File>();
-    	File[] subFiles = this.listFiles();
-    	for (File fileString : subFiles) {
-    		HgFolder file = new HgFolder(fileString.toURI());
-            if (file.isDirectory()) {
-            	pFiles.addAll(file.getProjectFiles());
-            } else {
-            	if (file.getName().equals(".project")) {
-            		pFiles.add(file);
-            	}
+        List<File> pFiles = new ArrayList<File>();
+        File[] subFiles = this.listFiles();
+        if (subFiles != null) {
+            for (File fileString : subFiles) {
+                HgFolder file = new HgFolder(fileString.toURI());
+                if (file.isDirectory()) {
+                    pFiles.addAll(file.getProjectFiles());
+                } else {
+                    if (file.getName().equals(".project")) {
+                        pFiles.add(file);
+                    }
+                }
             }
         }
-    	projectFiles = pFiles;
+        projectFiles = pFiles;
         return this.projectFiles;
-    }   
+    }
 
 }
