@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.RepositoryProvider;
@@ -311,13 +312,11 @@ public class LocalChangesetCache extends AbstractCache {
                 lock.lock();
                 Map<IPath, SortedSet<ChangeSet>> revisions = null;
 
-                IPath resourcePath = res.getLocation();
-
                 if (limit) {
-                    revisions = HgLogClient.getRecentProjectLog(resourcePath,
+                    revisions = HgLogClient.getRecentProjectLog(res,
                             limitNumber, withFiles);
                 } else {
-                    revisions = HgLogClient.getCompleteProjectLog(resourcePath,
+                    revisions = HgLogClient.getCompleteProjectLog(res,
                             withFiles);
 
                 }
@@ -350,6 +349,8 @@ public class LocalChangesetCache extends AbstractCache {
                                 .get(rootPath));
                     }
 
+                    IWorkspaceRoot workspaceRoot = res.getWorkspace().getRoot();
+
                     for (Iterator<IPath> iter = revisions.keySet().iterator(); iter
                             .hasNext();) {
                         IPath path = iter.next();
@@ -364,8 +365,12 @@ public class LocalChangesetCache extends AbstractCache {
                                 && !STATUS_CACHE
                                         .isAdded(res.getProject(), path)) {
 
-                            changes = HgLogClient.getRecentProjectLog(path, 1,
-                                    withFiles).get(path);
+                            IResource myResource = workspaceRoot
+                                    .getFileForLocation(path);
+                            if (myResource != null) {
+                                changes = HgLogClient.getRecentProjectLog(
+                                        myResource, 1, withFiles).get(path);
+                            }
                         }
                         // add changes to cache
                         addChangesToLocalCache(path, changes);

@@ -10,15 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -43,8 +40,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                 return null;
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    new Path(HgRootClient.getHgRootAsFile(res)
-                            .getCanonicalPath()), result, true,
+                    res, result, true,
                     Direction.OUTGOING, loc, null);
             return revisions;
         } catch (HgException hg) {
@@ -52,9 +48,6 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                 return null;
             }
             throw new HgException(hg.getMessage(), hg);
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-            throw new HgException(e.getLocalizedMessage(), e);
         }
     }
 

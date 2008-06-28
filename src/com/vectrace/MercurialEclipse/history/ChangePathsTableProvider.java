@@ -119,7 +119,7 @@ public class ChangePathsTableProvider extends TableViewer {
             MercurialRevision rev = ((MercurialRevision) inputElement);
             Map<IPath, SortedSet<ChangeSet>> map;
             try {
-                map = HgLogClient.getProjectLog(rev.getResource().getProject().getLocation(),
+                map = HgLogClient.getProjectLog(rev.getResource(),
                         1, rev.getChangeSet().getChangesetIndex(), true);
             } catch (HgException e) {
                 return EMPTY_CHANGE_PATHS;

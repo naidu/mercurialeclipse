@@ -7,7 +7,6 @@ import java.util.SortedSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -57,8 +56,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                 return null;
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    new Path(HgRootClient.getHgRootAsFile(res)
-                            .getCanonicalPath()), result, true,
+                    res, result, true,
                     Direction.INCOMING, repository, bundleFile);
             return revisions;
         } catch (HgException hg) {
