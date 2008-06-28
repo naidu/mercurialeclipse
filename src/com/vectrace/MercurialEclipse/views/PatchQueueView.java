@@ -39,6 +39,7 @@ import com.vectrace.MercurialEclipse.commands.mq.HgQPushClient;
 import com.vectrace.MercurialEclipse.commands.mq.HgQSeriesClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.QDeleteHandler;
+import com.vectrace.MercurialEclipse.menu.QImportHandler;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
 import com.vectrace.MercurialEclipse.model.Patch;
@@ -61,6 +62,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     private Action qPopAllAction;
     private Action qDeleteAction;
     private Action qFoldAction;
+    private Action qImportAction;
     public final static String ID = PatchQueueView.class.getName();
 
     /**
@@ -87,6 +89,19 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     private void createToolBar() {
         IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
 
+        qImportAction = new Action("qimport") {
+            @Override
+            public void run() {
+                try {
+                    QImportHandler.openWizard(resource, getSite().getShell());
+                } catch (Exception e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+        };
+        qImportAction.setEnabled(true);
+        mgr.add(qImportAction);
+        
         newAction = new Action("qnew") {
             @Override
             public void run() {
@@ -250,7 +265,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     /**
      * @throws HgException
      */
-    private void populateTable() {
+    public void populateTable() {
         if (resource != null) {
             try {
                 List<Patch> patches = HgQSeriesClient

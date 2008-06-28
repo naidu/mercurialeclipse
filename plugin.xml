@@ -215,7 +215,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
                  name="Add Branch..."/>
         <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
-                 name="Disconnect"/>
+                 name="Disconnect"/>        
+        <command id="com.vectrace.MercurialEclipse.menu.QImportHandler"
+                 name="qimport..."/>
         <command id="com.vectrace.MercurialEclipse.menu.QInitHandler"
                  name="qinit..."/>
         <command id="com.vectrace.MercurialEclipse.menu.QNewHandler"
@@ -413,6 +415,15 @@
                 </and>
             </enabledWhen>
         </handler>
+        <!-- QImportHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.QImportHandler"
+                 class="com.vectrace.MercurialEclipse.menu.QImportHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
         <!-- QInitHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QInitHandler"
                  class="com.vectrace.MercurialEclipse.menu.QInitHandler">
@@ -556,7 +567,12 @@
                 </menu>				
 				<separator name="group6" visible="true"/>
 				
-                <menu label="mqueue" id="team.main.com.vectrace.MercurialEclipse.menu.mqueue">							
+                <menu label="mqueue" id="team.main.com.vectrace.MercurialEclipse.menu.mqueue">		
+                    <command commandId="com.vectrace.MercurialEclipse.menu.QImportHandler">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        </visibleWhen>
+                    </command>					
     		        <command commandId="com.vectrace.MercurialEclipse.menu.QInitHandler">
                         <visibleWhen>
                             <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
