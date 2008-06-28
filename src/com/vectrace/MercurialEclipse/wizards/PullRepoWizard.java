@@ -18,7 +18,9 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.widgets.Shell;
@@ -27,6 +29,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
@@ -46,16 +49,32 @@ public class PullRepoWizard extends HgWizard {
     private IncomingPage incomingPage;
     private IResource resource;
     private HgRepositoryLocation repo;
-    private String result = "";
 
     private class PullOperation extends HgOperation {
+        private boolean doUpdate;
+        private IResource resource;
+        private HgRepositoryLocation repo;
+        private boolean force;
+        private ChangeSet pullRevision;
+        private boolean timeout;
+        private boolean merge;
+        private String output;
 
         /**
          * @param context
+         * @param merge
          */
-        public PullOperation(IRunnableContext context) {
+        public PullOperation(IRunnableContext context, boolean doUpdate,
+                IResource resource, boolean force, HgRepositoryLocation repo,
+                ChangeSet pullRevision, boolean timeout, boolean merge) {
             super(context);
-            // TODO Auto-generated constructor stub
+            this.doUpdate = doUpdate;
+            this.resource = resource;
+            this.force = force;
+            this.repo = repo;
+            this.pullRevision = pullRevision;
+            this.timeout = timeout;
+            this.merge = merge;
         }
 
         /*
@@ -68,6 +87,102 @@ public class PullRepoWizard extends HgWizard {
             return "Pulling...";
         }
 
+        /**
+         * @param monitor
+         * @return
+         * @throws CoreException
+         * @throws PartInitException
+         * @throws HgException
+         * @throws InterruptedException
+         */
+        private String performMerge(IProgressMonitor monitor)
+                throws HgException, PartInitException, CoreException,
+                InterruptedException {
+            String r = "";
+            monitor.subTask("Merging...");
+            if (HgLogClient.getHeads(resource.getProject()).length > 1) {
+
+                SafeUiJob job = new SafeUiJob("Merging...") {
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
+                     */
+                    @Override
+                    protected IStatus runSafe(IProgressMonitor m) {
+                        try {
+                            String res = MergeHandler.merge(resource, getShell());
+                            return new Status(IStatus.OK,
+                                    MercurialEclipsePlugin.ID, res);
+                        } catch (Exception e) {
+                            return new Status(IStatus.ERROR,
+                                    MercurialEclipsePlugin.ID, e
+                                            .getLocalizedMessage(), e);
+                        }
+                    }
+                };
+                job.schedule();
+                job.join();
+                IStatus jobResult = job.getResult();
+                if (jobResult.getSeverity() == IStatus.OK) {
+                    r = jobResult.getMessage();
+                } else {
+                    throw new HgException(jobResult.getMessage(), jobResult
+                            .getException());
+                }
+            }
+            monitor.worked(1);
+            return r;
+        }
+
+        private String performPull(final HgRepositoryLocation repository,
+                IProgressMonitor monitor) throws InvocationTargetException {
+            try {
+                monitor.worked(1);
+                monitor.subTask("Pulling incoming changesets...");
+
+                String r = HgPushPullClient.pull(resource, this.repo,
+                        this.doUpdate, this.force, this.timeout, pullRevision);
+
+                monitor.worked(1);
+
+                monitor.subTask("Refreshing local changesets after pull...");
+                IncomingChangesetCache.getInstance().clear();
+                LocalChangesetCache.getInstance().clear(resource.getProject());
+                LocalChangesetCache.getInstance().refreshAllLocalRevisions(
+                        resource.getProject());
+                monitor.worked(1);
+                monitor.subTask("Refreshing status...");
+                new RefreshStatusJob(
+                        Messages.getString("PullRepoWizard.refreshJob.title"), resource.getProject()).schedule(); //$NON-NLS-1$
+                monitor.worked(1);
+                saveRepo(monitor);
+                return r;
+
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(Messages
+                        .getString("PullRepoWizard.pullOperationFailed"), e); //$NON-NLS-1$
+                throw new InvocationTargetException(e, e.getMessage());
+            }
+        }
+
+        /**
+         * @return
+         */
+        private boolean saveRepo(IProgressMonitor monitor) {
+            // It appears good. Stash the repo location.
+            try {
+                monitor.subTask("Adding repository " + this.repo);
+                MercurialEclipsePlugin.getRepoManager().addRepoLocation(
+                        resource.getProject(), repo);
+            } catch (HgException e) {
+                MercurialEclipsePlugin.logError(Messages
+                        .getString("PullRepoWizard.addingRepositoryFailed"), e); //$NON-NLS-1$
+            }
+            monitor.worked(1);
+            return true;
+        }
+
         /*
          * (non-Javadoc)
          * 
@@ -77,15 +192,15 @@ public class PullRepoWizard extends HgWizard {
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
             try {
-                monitor.beginTask("Pulling...", 6);                
-                result += performPull(repo, monitor);
-                if (pullPage.getFetchCheckBox().getSelection()) {
+                monitor.beginTask("Pulling...", 6);
+                this.output += performPull(repo, monitor);
+                if (merge) {
                     String mergeResult = performMerge(monitor);
-                    result += mergeResult;
+                    output += mergeResult;
 
-                    if (mergeResult.contains ("all conflicts resolved")) {
+                    if (mergeResult.contains("all conflicts resolved")) {
                         monitor.subTask("Committing...");
-                        result += CommitMergeHandler.commitMerge(resource);
+                        output += CommitMergeHandler.commitMerge(resource);
                         monitor.worked(1);
                     }
 
@@ -95,18 +210,10 @@ public class PullRepoWizard extends HgWizard {
                 throw new InvocationTargetException(e, e.getMessage());
             }
             monitor.done();
-            if (result.length() != 0) {
-
-                IWorkbench workbench = PlatformUI.getWorkbench();
-                Shell shell = workbench.getActiveWorkbenchWindow().getShell();
-
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages
-                                        .getString("PullRepoWizard.messageDialog.title"), result); //$NON-NLS-1$
-
-            }
+        }
+        
+        public String getOutput() {
+            return output;
         }
 
     }
@@ -120,24 +227,6 @@ public class PullRepoWizard extends HgWizard {
         setNeedsProgressMonitor(true);
     }
 
-    /**
-     * @param monitor
-     * @return
-     * @throws CoreException
-     * @throws PartInitException
-     * @throws HgException
-     */
-    private String performMerge(IProgressMonitor monitor) throws HgException,
-            PartInitException, CoreException {
-        String r = "";
-        monitor.subTask("Merging...");
-        if (HgLogClient.getHeads(resource.getProject()).length > 1) {
-            r = MergeHandler.merge(resource, getShell());
-        }
-        monitor.worked(1);
-        return r;
-    }
-
     @Override
     public void addPages() {
         pullPage = new PullPage(Messages
@@ -146,9 +235,9 @@ public class PullRepoWizard extends HgWizard {
                 Messages.getString("PullRepoWizard.pullPage.description"), //$NON-NLS-1$
                 resource.getProject(), null);
 
-        initPage(pullPage.getDescription(), pullPage);                
+        initPage(pullPage.getDescription(), pullPage);
         addPage(pullPage);
-        
+
         incomingPage = new IncomingPage(Messages
                 .getString("PullRepoWizard.incomingPage.name")); //$NON-NLS-1$
         initPage(incomingPage.getDescription(), incomingPage);
@@ -173,67 +262,42 @@ public class PullRepoWizard extends HgWizard {
         repo = getLocation();
 
         try {
-            getContainer().run(false, false, new PullOperation(getContainer()));
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
-            return false;
-        }
+            doUpdate = pullPage.getUpdateCheckBox().getSelection();
+            boolean force = pullPage.getUpdateCheckBox().getSelection();
 
-        return true;
-    }
-
-    /**
-     * @return
-     */
-    private boolean saveRepo(IProgressMonitor monitor) {
-        // It appears good. Stash the repo location.
-        try {
-            monitor.subTask("Adding repository " + repo);
-            MercurialEclipsePlugin.getRepoManager().addRepoLocation(
-                    resource.getProject(), repo);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(Messages
-                    .getString("PullRepoWizard.addingRepositoryFailed"), e); //$NON-NLS-1$
-        }
-        monitor.worked(1);
-        return true;
-    }
-
-    private String performPull(final HgRepositoryLocation repository,
-            IProgressMonitor monitor) throws InvocationTargetException {
-        try {
-            monitor.worked(1);
-            monitor.subTask("Pulling incoming changesets...");            
             ChangeSet cs = null;
             if (incomingPage.getRevisionCheckBox().getSelection()) {
                 cs = incomingPage.getRevision();
             }
-            this.doUpdate = pullPage.getUpdateCheckBox().getSelection();
-            String r = HgPushPullClient.pull(resource, repository,
-                    isDoUpdate(), pullPage.getForceCheckBox().getSelection(),
-                    pullPage.getTimeoutCheckBox().getSelection(), cs);
 
-            monitor.worked(1);
+            boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
+            boolean merge = pullPage.getFetchCheckBox().getSelection();
 
-            monitor.subTask("Refreshing local changesets after pull...");
-            IncomingChangesetCache.getInstance().clear();
-            LocalChangesetCache.getInstance().clear(resource.getProject());
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(
-                    resource.getProject());
-            monitor.worked(1);
-            monitor.subTask("Refreshing status...");
-            new RefreshStatusJob(
-                    Messages.getString("PullRepoWizard.refreshJob.title"), resource.getProject()).schedule(); //$NON-NLS-1$
-            monitor.worked(1);
-            saveRepo(monitor);
-            return r;
+            PullOperation pullOperation = new PullOperation(getContainer(),
+                    doUpdate, resource, force, repo, cs, timeout, merge);
+            getContainer().run(true, false, pullOperation);
+            
+            String output = pullOperation.getOutput();
+            
+            if (output.length() != 0) {
+                IWorkbench workbench = PlatformUI.getWorkbench();
+                Shell shell = workbench.getActiveWorkbenchWindow().getShell();
+                MessageDialog
+                        .openInformation(
+                                shell,
+                                Messages
+                                        .getString("PullRepoWizard.messageDialog.title"), output); //$NON-NLS-1$
 
+            }
+            
+            
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(Messages
-                    .getString("PullRepoWizard.pullOperationFailed"), e); //$NON-NLS-1$
-            throw new InvocationTargetException(e, e.getMessage());
+            MercurialEclipsePlugin.logError(e); 
+            MercurialEclipsePlugin.showError(e.getCause());
+            return false;
         }
+
+        return true;
     }
 
     private HgRepositoryLocation getLocation() {
@@ -246,20 +310,5 @@ public class PullRepoWizard extends HgWizard {
             MercurialEclipsePlugin.logInfo(e.getMessage(), e);
             return null;
         }
-    }
-
-    /**
-     * @return the doUpdate
-     */
-    public boolean isDoUpdate() {
-        return doUpdate;
-    }
-
-    /**
-     * @param doUpdate
-     *            true if the pull should be followed by an update
-     */
-    public void setDoUpdate(boolean doUpdate) {
-        this.doUpdate = doUpdate;
     }
 }
