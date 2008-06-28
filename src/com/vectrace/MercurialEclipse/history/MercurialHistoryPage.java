@@ -256,6 +256,11 @@ public class MercurialHistoryPage extends HistoryPage {
                 menuMgr1
                         .add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
                 menuMgr1.add(openAction);
+                if (resource == null || resource.getType()!=IResource.FILE) {
+                    openAction.setEnabled(false);
+                } else {
+                    openAction.setEnabled(true);
+                }
                 // TODO This is a HACK but I can't get the menu to update on
                 // selection :-(
                 compareAction.setEnabled(compareAction.isEnabled());
