@@ -42,6 +42,7 @@ import org.eclipse.ui.part.ViewPart;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
@@ -61,6 +62,10 @@ public class MergeView extends ViewPart implements ISelectionListener {
 
     private IProject currentProject;
 
+    private Action markResolvedAction;
+
+    private Action markUnresolvedAction;
+
     @Override
     public void createPartControl(final Composite parent) {
         parent.setLayout(new GridLayout(1, false));
@@ -68,8 +73,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
         statusLabel = new Label(parent, SWT.NONE);
         statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        table = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-                | SWT.H_SCROLL);
+        table = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+                | SWT.V_SCROLL | SWT.H_SCROLL);
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -81,26 +86,29 @@ public class MergeView extends ViewPart implements ISelectionListener {
             public void widgetDefaultSelected(SelectionEvent event) {
                 try {
                     TableItem item = (TableItem) event.item;
-                    FlaggedAdaptable flagged = (FlaggedAdaptable)item.getData();
-                    IFile file = (IFile)flagged.getAdapter(IFile.class);
-                    
-                    String mergeNodeId = currentProject.getPersistentProperty(ResourceProperties.MERGING);
-                    
-                    String[] parents = HgParentClient.getParentNodeIds(currentProject);
-                    int ancestor = HgParentClient.findCommonAncestor(currentProject, parents[0], parents[1]);
-                                        
-                    RevisionNode mergeNode = new RevisionNode(new IStorageMercurialRevision(file, mergeNodeId));
-                    RevisionNode ancestorNode = new RevisionNode(new IStorageMercurialRevision(file, ancestor));
-                    
+                    FlaggedAdaptable flagged = (FlaggedAdaptable) item
+                            .getData();
+                    IFile file = (IFile) flagged.getAdapter(IFile.class);
+
+                    String mergeNodeId = currentProject
+                            .getPersistentProperty(ResourceProperties.MERGING);
+
+                    String[] parents = HgParentClient
+                            .getParentNodeIds(currentProject);
+                    int ancestor = HgParentClient.findCommonAncestor(
+                            currentProject, parents[0], parents[1]);
+
+                    RevisionNode mergeNode = new RevisionNode(
+                            new IStorageMercurialRevision(file, mergeNodeId));
+                    RevisionNode ancestorNode = new RevisionNode(
+                            new IStorageMercurialRevision(file, ancestor));
+
                     HgCompareEditorInput compareInput = new HgCompareEditorInput(
-                            new CompareConfiguration(),
-                            file,
-                            ancestorNode,
-                            mergeNode,
-                            true);
-                    
+                            new CompareConfiguration(), file, ancestorNode,
+                            mergeNode, true);
+
                     CompareUI.openCompareEditor(compareInput);
-                } catch (Exception e) {                    
+                } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     MercurialEclipsePlugin.showError(e);
                 }
@@ -114,7 +122,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             column.setText(titles[i]);
             column.setWidth(widths[i]);
         }
-        
+
         createToolBar();
         getSite().getPage().addSelectionListener(this);
     }
@@ -138,19 +146,52 @@ public class MergeView extends ViewPart implements ISelectionListener {
         };
         abortAction.setEnabled(false);
         mgr.add(abortAction);
+        markResolvedAction = new Action("Mark resolved") {
+            @Override
+            public void run() {
+                try {
+                    HgResolveClient.markResolved(currentProject,
+                            (FlaggedAdaptable) table.getSelection()[0]
+                                    .getData());
+                    populateView();
+                } catch (Exception e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+        };
+        markResolvedAction.setEnabled(HgResolveClient.checkAvailable());
+        mgr.add(markResolvedAction);
+        markUnresolvedAction = new Action("Mark unresolved") {
+            @Override
+            public void run() {
+                try {
+                    HgResolveClient.markUnresolved(currentProject,
+                            (FlaggedAdaptable) table.getSelection()[0]
+                                    .getData());
+                    populateView();
+                } catch (Exception e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+        };
+        markUnresolvedAction.setEnabled(HgResolveClient.checkAvailable());
+        mgr.add(markUnresolvedAction);
     }
 
     private void populateView() throws HgException {
         statusLabel.setText(currentProject.getName());
-
-        List<FlaggedAdaptable> status = HgIMergeClient
-                .getMergeStatus(currentProject);
+        List<FlaggedAdaptable> status = null;
+        if (HgResolveClient.checkAvailable()) {
+            status = HgResolveClient.list(currentProject);
+        } else {
+            status = HgIMergeClient.getMergeStatus(currentProject);
+        }
         table.removeAll();
         for (FlaggedAdaptable flagged : status) {
             TableItem row = new TableItem(table, SWT.NONE);
             row.setText(0, flagged.getFlag() + "");
-            row.setText(1, ((IFile) flagged.getAdapter(IFile.class))
-                    .getProjectRelativePath().toString());
+            IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
+            row.setText(1, iFile.getProjectRelativePath().toString());
             row.setData(flagged);
         }
         abortAction.setEnabled(true);

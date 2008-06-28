@@ -14,6 +14,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -33,10 +34,12 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -111,7 +114,8 @@ public class PullRepoWizard extends HgWizard {
                     @Override
                     protected IStatus runSafe(IProgressMonitor m) {
                         try {
-                            String res = MergeHandler.merge(resource, getShell());
+                            String res = MergeHandler.merge(resource,
+                                    getShell());
                             return new Status(IStatus.OK,
                                     MercurialEclipsePlugin.ID, res);
                         } catch (Exception e) {
@@ -197,13 +201,7 @@ public class PullRepoWizard extends HgWizard {
                 if (merge) {
                     String mergeResult = performMerge(monitor);
                     output += mergeResult;
-
-                    if (mergeResult.contains("all conflicts resolved")) {
-                        monitor.subTask("Committing...");
-                        output += CommitMergeHandler.commitMerge(resource);
-                        monitor.worked(1);
-                    }
-
+                    commitMerge(monitor, mergeResult);
                 }
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
@@ -211,7 +209,39 @@ public class PullRepoWizard extends HgWizard {
             }
             monitor.done();
         }
-        
+
+        /**
+         * @param monitor
+         * @param mergeResult
+         * @throws HgException
+         * @throws CoreException
+         */
+        private void commitMerge(IProgressMonitor monitor, String mergeResult)
+                throws HgException, CoreException {
+            boolean commit = true;
+            if (!HgResolveClient.checkAvailable()) {
+                if (!mergeResult.contains("all conflicts resolved")) {
+                    commit = false;
+                }
+            } else {
+                List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
+                        .list(resource);
+                monitor.subTask("Getting merge status...");
+                for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
+                    if (flaggedAdaptable.getFlag() == 'U') {
+                        commit = false;
+                        break;
+                    }
+                }
+                monitor.worked(1);
+            }
+            if (commit) {
+                monitor.subTask("Committing...");
+                output += CommitMergeHandler.commitMerge(resource);
+                monitor.worked(1);
+            }
+        }
+
         public String getOutput() {
             return output;
         }
@@ -276,9 +306,9 @@ public class PullRepoWizard extends HgWizard {
             PullOperation pullOperation = new PullOperation(getContainer(),
                     doUpdate, resource, force, repo, cs, timeout, merge);
             getContainer().run(true, false, pullOperation);
-            
+
             String output = pullOperation.getOutput();
-            
+
             if (output.length() != 0) {
                 IWorkbench workbench = PlatformUI.getWorkbench();
                 Shell shell = workbench.getActiveWorkbenchWindow().getShell();
@@ -289,10 +319,9 @@ public class PullRepoWizard extends HgWizard {
                                         .getString("PullRepoWizard.messageDialog.title"), output); //$NON-NLS-1$
 
             }
-            
-            
+
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e); 
+            MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e.getCause());
             return false;
         }

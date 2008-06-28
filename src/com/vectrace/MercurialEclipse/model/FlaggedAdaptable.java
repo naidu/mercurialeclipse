@@ -6,6 +6,7 @@ public class FlaggedAdaptable implements IAdaptable {
 
     private final IAdaptable adaptable;
     private final char flag;
+    
 
     public FlaggedAdaptable(IAdaptable adaptable, char flag) {
         this.adaptable = adaptable;
@@ -20,5 +21,5 @@ public class FlaggedAdaptable implements IAdaptable {
     public char getFlag() {
         return this.flag;
     }
-
+    
 }

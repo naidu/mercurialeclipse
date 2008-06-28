@@ -19,6 +19,8 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
+import com.vectrace.MercurialEclipse.commands.HgMergeClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -29,7 +31,7 @@ public class MergeHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
-        merge(resource, getShell());
+        merge(resource, getShell());        
     }
 
     /**
@@ -45,7 +47,12 @@ public class MergeHandler extends SingleResourceHandler {
                 project);
         String result = "";
         if (dialog.open() == IDialogConstants.OK_ID) {
-            result = HgIMergeClient.merge(project, dialog.getRevision());
+            boolean useResolve = isHgResolveAvailable();
+            if (useResolve) {                
+                result = HgMergeClient.merge(resource, dialog.getRevision());
+            } else {
+                result = HgIMergeClient.merge(project, dialog.getRevision());
+            }
             project.setPersistentProperty(ResourceProperties.MERGING, dialog.getChangeSet().getChangeset());
             // will trigger a FlagManager refresh
             MergeView view = (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
@@ -58,6 +65,13 @@ public class MergeHandler extends SingleResourceHandler {
             
         }
         return result;
+    }
+
+    /**
+     * @return
+     */
+    private static boolean isHgResolveAvailable() {
+        return HgResolveClient.checkAvailable();
     }
 
 }
