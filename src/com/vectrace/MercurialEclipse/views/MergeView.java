@@ -32,7 +32,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
@@ -54,12 +53,12 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 public class MergeView extends ViewPart implements ISelectionListener {
 
     public final static String ID = MergeView.class.getName();
-    
+
     private Label statusLabel;
     private Table table;
-    
+
     private Action abortAction;
-    
+
     private IProject currentProject;
 
     @Override
@@ -85,22 +84,25 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     FlaggedAdaptable flagged = (FlaggedAdaptable)item.getData();
                     IFile file = (IFile)flagged.getAdapter(IFile.class);
                     
-                    int[] parents = HgParentClient.getParents(currentProject);
-                    int ancestor = HgParentClient.findCommonAncestor(currentProject, parents[0], parents[1]);
+                    String mergeNodeId = currentProject.getPersistentProperty(ResourceProperties.MERGING);
                     
-                    RevisionNode parent1Node = new RevisionNode(new IStorageMercurialRevision(file, parents[1]));
+                    String[] parents = HgParentClient.getParentNodeIds(currentProject);
+                    int ancestor = HgParentClient.findCommonAncestor(currentProject, parents[0], parents[1]);
+                                        
+                    RevisionNode mergeNode = new RevisionNode(new IStorageMercurialRevision(file, mergeNodeId));
                     RevisionNode ancestorNode = new RevisionNode(new IStorageMercurialRevision(file, ancestor));
                     
                     HgCompareEditorInput compareInput = new HgCompareEditorInput(
                             new CompareConfiguration(),
                             file,
                             ancestorNode,
-                            parent1Node,
+                            mergeNode,
                             true);
                     
                     CompareUI.openCompareEditor(compareInput);
-                } catch (TeamException e) {
+                } catch (Exception e) {                    
                     MercurialEclipsePlugin.logError(e);
+                    MercurialEclipsePlugin.showError(e);
                 }
             }
         });
@@ -119,12 +121,13 @@ public class MergeView extends ViewPart implements ISelectionListener {
 
     private void createToolBar() {
         IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
-        
+
         abortAction = new Action("Abort") {
             @Override
             public void run() {
                 try {
-                    currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
+                    currentProject.setPersistentProperty(
+                            ResourceProperties.MERGING, null);
                     HgUpdateClient.update(currentProject, null, true);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
                     clearView();
@@ -140,12 +143,14 @@ public class MergeView extends ViewPart implements ISelectionListener {
     private void populateView() throws HgException {
         statusLabel.setText(currentProject.getName());
 
-        List<FlaggedAdaptable> status = HgIMergeClient.getMergeStatus(currentProject);
+        List<FlaggedAdaptable> status = HgIMergeClient
+                .getMergeStatus(currentProject);
         table.removeAll();
         for (FlaggedAdaptable flagged : status) {
             TableItem row = new TableItem(table, SWT.NONE);
-            row.setText(0, flagged.getFlag()+"");
-            row.setText(1, ((IFile)flagged.getAdapter(IFile.class)).getProjectRelativePath().toString());
+            row.setText(0, flagged.getFlag() + "");
+            row.setText(1, ((IFile) flagged.getAdapter(IFile.class))
+                    .getProjectRelativePath().toString());
             row.setData(flagged);
         }
         abortAction.setEnabled(true);
@@ -163,7 +168,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
             if (this.currentProject != project) {
                 this.currentProject = project;
                 if (project != null
-                        && project.getPersistentProperty(ResourceProperties.MERGING) != null) {
+                        && project
+                                .getPersistentProperty(ResourceProperties.MERGING) != null) {
                     populateView();
                 } else {
                     clearView();
@@ -178,8 +184,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
         if (selection instanceof IStructuredSelection) {
             IStructuredSelection structured = (IStructuredSelection) selection;
             if (structured.getFirstElement() instanceof IAdaptable) {
-                IResource resource = (IResource) ((IAdaptable) structured.getFirstElement())
-                        .getAdapter(IResource.class);
+                IResource resource = (IResource) ((IAdaptable) structured
+                        .getFirstElement()).getAdapter(IResource.class);
                 if (resource != null) {
                     setCurrentProject(resource.getProject());
                     return;
@@ -207,9 +213,9 @@ public class MergeView extends ViewPart implements ISelectionListener {
         super.dispose();
     }
 
-    public static MergeView getView()
-    {
-      return (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findView(ID);
+    public static MergeView getView() {
+        return (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+                .getActivePage().findView(ID);
     }
 
 }

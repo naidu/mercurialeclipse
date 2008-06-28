@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.SortedSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -46,38 +45,21 @@ public class IStorageMercurialRevision implements IStorage {
     private ChangeSet changeSet;
 
     /**
-     * This method should be deprecated because a revision index is not unique.
-     * Therefore it tries to get the newest ChangeSet with the given revision
-     * index.
-     * 
      * The recommended constructor to use is IStorageMercurialRevision(IResource
      * res, String rev, String global, ChangeSet cs)
      * 
      */
-    public IStorageMercurialRevision(IResource res, String rev) {
+    public IStorageMercurialRevision(IResource res, String changeset) {
         super();
         resource = res;
-        revision = rev;
         try {
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res, true);
-            SortedSet<ChangeSet> changeSets = LocalChangesetCache.getInstance()
-                    .getLocalChangeSets(res);
-            if (changeSets != null) {
-                ChangeSet[] changeSetArray = changeSets
-                        .toArray(new ChangeSet[changeSets.size()]);
-                for (int i = changeSetArray.length - 1; i >= 0; i--) {
-                    ChangeSet cs = changeSetArray[i];
-                    if (String.valueOf(cs.getRevision().getRevision()).equals(
-                            rev)) {
-                        this.changeSet = cs;
-                        break;
-                    }
-                }
-            }
-
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
+            ChangeSet cs = LocalChangesetCache.getInstance().getLocalChangeSet(res, changeset);
+            this.changeSet = cs;
+            this.revision = String.valueOf(cs.getChangesetIndex());
+            this.global = cs.getChangeset();
         } catch (NumberFormatException e) {
+            MercurialEclipsePlugin.logError(e);
+        } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
     }
@@ -92,16 +74,6 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * This constructor is not recommended, as the revision index is not unique.
-     * 
-     * @param res
-     * @param rev
-     */
-    public IStorageMercurialRevision(IResource res, int rev) {
-        this(res, String.valueOf(rev));
-    }
-
-    /**
      * Constructs an {@link IStorageMercurialRevision} with the newest local
      * changeset available.
      * 
@@ -113,7 +85,8 @@ public class IStorageMercurialRevision implements IStorage {
 
         ChangeSet cs = null;
         try {
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res, true);
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res,
+                    true);
             cs = LocalChangesetCache.getInstance().getNewestLocalChangeSet(res);
 
             this.resource = res;
@@ -124,15 +97,7 @@ public class IStorageMercurialRevision implements IStorage {
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
-    }
-
-    @Deprecated
-    public IStorageMercurialRevision(IResource res, int rev, int depth) {
-        super();
-        // project = proj;
-        resource = res;
-        revision = String.valueOf(rev);
-    }
+    }    
 
     /*
      * (non-Javadoc)
@@ -288,5 +253,15 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public void setChangeSet(ChangeSet changeSet) {
         this.changeSet = changeSet;
+    }
+
+    /**
+     * This constructor is not recommended, as the revision index is not unique.
+     * 
+     * @param res
+     * @param rev
+     */
+    public IStorageMercurialRevision(IResource res, int rev) {
+        this(res, String.valueOf(rev));
     }
 }
