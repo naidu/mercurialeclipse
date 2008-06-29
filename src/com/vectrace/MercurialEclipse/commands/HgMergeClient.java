@@ -23,9 +23,12 @@ public class HgMergeClient extends AbstractClient {
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+        
+        command.addOptions("--config","ui.merge=internal:fail");
         if (revision != null) {
             command.addOptions("-r", revision);
         }
+        
         try {
             String result = command.executeToString();
             return result;
