@@ -119,7 +119,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
             String ret = "";//$NON-NLS-1$
             if (fileRevision != null) {
                 ret = fileRevision.getName() + "["
-                        + storage.getChangeSet().toString();
+                        + storage.getChangeSet().toString()+"]";
             } else if (storage != null) {
                 ret = storage.getName()
                         + " "
