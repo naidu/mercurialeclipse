@@ -14,6 +14,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Comparator;
@@ -255,6 +256,17 @@ public class MercurialStatusCache extends AbstractCache implements
                     switch (status.length() - 1) {
                     case MercurialStatusCache.BIT_IGNORE:
                     case MercurialStatusCache.BIT_UNKNOWN:
+                        File fileSystemResource = path.toFile();
+                        if (fileSystemResource.isDirectory()
+                                && status.length() > 1) {                            
+                            // a directory is still supervised if one of the following bits is set 
+                            boolean supervised = status.get(BIT_ADDED)
+                                    || status.get(BIT_CLEAN)
+                                    || status.get(BIT_DELETED)
+                                    || status.get(BIT_MODIFIED)
+                                    || status.get(BIT_REMOVED);
+                            return supervised;
+                        }
                         return false;
                     }
                     return true;
