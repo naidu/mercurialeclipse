@@ -19,11 +19,23 @@ public class HgMergeClient extends AbstractClient {
 
     public static String merge(IResource res, String revision)
             throws HgException {
-        HgCommand command = new HgCommand("merge", getWorkingDirectory(res), false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+        HgCommand command = new HgCommand("merge", getWorkingDirectory(res),
+                false);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         if (revision != null) {
             command.addOptions("-r", revision);
         }
-        return new String(command.executeToBytes());
-    }    
+        try {
+            String result = command.executeToString();
+            return result;
+        } catch (HgException e) {
+            // if conflicts aren't resolved and no merge tool is started, hg
+            // exits with 1
+            if (!e.getMessage().startsWith("Process error, return code: 1")) {
+                throw new HgException(e);
+            }
+            return e.getMessage();
+        }
+    }
 }
