@@ -57,7 +57,11 @@ public class IncomingChangesetCache extends AbstractCache {
         }
         return instance;
     }
-
+    
+    public synchronized void clear(String repo) {
+        incomingChangeSets.remove(repo);
+    }
+    
     public synchronized void clear() {
         incomingChangeSets.clear();
     }
@@ -201,7 +205,7 @@ public class IncomingChangesetCache extends AbstractCache {
             lock.unlock();
         }
 
-        if (MercurialStatusCache.getInstance().isSupervised(resource)) {
+        if (MercurialStatusCache.getInstance().isSupervised(resource) || (!resource.exists())) {
 
             Map<IPath, SortedSet<ChangeSet>> repoMap = incomingChangeSets
                     .get(repositoryLocation);

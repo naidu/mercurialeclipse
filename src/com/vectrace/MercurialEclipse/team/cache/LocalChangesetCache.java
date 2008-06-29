@@ -76,7 +76,7 @@ public class LocalChangesetCache extends AbstractCache {
         }
         return instance;
     }
-
+    
     public synchronized void clear() {
         localChangeSets.clear();
     }

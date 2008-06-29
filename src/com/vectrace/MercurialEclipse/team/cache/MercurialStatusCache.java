@@ -182,8 +182,8 @@ public class MercurialStatusCache extends AbstractCache implements
         statusMap.clear();
         knownStatus.clear();
         projectResources.clear();
-        setChanged();
-        notifyObservers(knownStatus);
+        getInstance().setChanged();
+        getInstance().notifyObservers(knownStatus);
     }
 
     public ReentrantLock getLock(IPath path) {

@@ -33,33 +33,31 @@ public class MercurialResourceVariantComparator implements
     public MercurialResourceVariantComparator() {
     }
 
-    public boolean compare(IResource local, IResourceVariant remote) {
+    public boolean compare(IResource local, IResourceVariant repoRevision) {
         BitSet bitSet = statusCache.getStatus(local);
         if (bitSet != null) {
             int status = bitSet.length() - 1;
             if (status == MercurialStatusCache.BIT_CLEAN) {
-                String localVersion = "0:unknown";
-                String remoteVersion = "0:unknown";
-                try {
-                    IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) remote
+               try {
+                    IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
                             .getStorage(null);
-                    ChangeSet cs = remoteIStorage.getChangeSet();
+                    ChangeSet cs = remoteIStorage.getChangeSet();                   
 
-                    localVersion = cs.getChangeset();
-
-                    // if this is outgoing, it's can't be equal to any other
+                    // if this is outgoing or incoming, it can't be equal to any other
                     // changeset
-                    if (cs.getDirection() == Direction.OUTGOING) {
+                    if (cs.getDirection() == Direction.OUTGOING
+                            || cs.getDirection() == Direction.INCOMING) {
                         return false;
                     }
+                    
+                    // resource is clean and we compare against our local repository
+                    return true;
+                    
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
                 } catch (TeamException e) {
                     MercurialEclipsePlugin.logError(e);
-                }
-                remoteVersion = remote.getContentIdentifier();
-                boolean equal = localVersion.equals(remoteVersion);
-                return equal;
+                }                                              
             }
         }
         return false;

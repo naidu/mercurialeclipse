@@ -220,11 +220,6 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         try {
             if (cs.getChangedFiles() != null) {
                 for (FileStatus file : cs.getChangedFiles()) {
-                    // doesn't work for hg roots above project level
-                    // IResource res = MercurialUtilities.getIResource(proj,
-                    // file
-                    // .getPath());
-
                     IPath hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
                     IPath fileRelPath = new Path(file.getPath());
                     IPath fileAbsPath = hgRoot.append(fileRelPath);

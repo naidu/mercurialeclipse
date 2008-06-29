@@ -120,7 +120,8 @@ public abstract class AbstractCache extends Observable {
                                     nodeMap
                                             .put(changeSet.toString(),
                                                     changeSet);
-                                    nodeMap.put(changeSet.getChangeset(), changeSet);
+                                    nodeMap.put(changeSet.getChangeset(),
+                                            changeSet);
                                 }
                             }
                         }
@@ -195,14 +196,14 @@ public abstract class AbstractCache extends Observable {
         setChanged();
         notifyObservers(resources);
     }
-    
+
     protected Set<IResource> getMembers(IResource r) {
         HashSet<IResource> set = new HashSet<IResource>();
         if (r instanceof IContainer) {
             IContainer cont = (IContainer) r;
             try {
                 IResource[] members = cont.members();
-                if (members!=null) {
+                if (members != null) {
                     for (IResource member : members) {
                         if (member instanceof IContainer) {
                             set.addAll(getMembers(member));
@@ -224,18 +225,28 @@ public abstract class AbstractCache extends Observable {
      * @param members
      * @param changeSets
      */
-    protected List<IResource> getMembers(IResource resource, Map<IPath, SortedSet<ChangeSet>> changeSets) {
+    protected List<IResource> getMembers(IResource resource,
+            Map<IPath, SortedSet<ChangeSet>> changeSets) {
         List<IResource> members = new ArrayList<IResource>();
         if (changeSets != null) {
-            IWorkspaceRoot root = resource.getWorkspace().getRoot();                
+            IWorkspaceRoot root = resource.getWorkspace().getRoot();
             for (Iterator<IPath> i = changeSets.keySet().iterator(); i
                     .hasNext();) {
                 IPath path = i.next();
-                IResource member = root.findMember(path, false);
-                members.add(member);
+                IResource member = root.getFileForLocation(path);
+                if (member != null) {
+                    members.add(member);
+                }
             }
         }
         return members;
+    }
+
+    /**
+     * 
+     */
+    public synchronized static void clearNodeMap() {
+        nodeMap.clear();
     }
 
 }

@@ -51,8 +51,8 @@ public class OutgoingChangesetCache extends AbstractCache {
         return instance;
     }
 
-    public synchronized void clear() {
-        outgoingChangeSets.clear();
+    public synchronized void clear(String repo) {
+        outgoingChangeSets.remove(repo);
     }
 
     public ReentrantLock getLock(IResource objectResource) {
