@@ -203,7 +203,7 @@ public class MercurialHistoryPage extends HistoryPage {
         composite.setLayoutData(data);
 
         viewer = new GraphLogTableViewer(composite, SWT.MULTI | SWT.H_SCROLL
-                | SWT.V_SCROLL);
+                | SWT.V_SCROLL | SWT.FULL_SELECTION);
         Table changeLogTable = viewer.getTable();
 
         changeLogTable.setLinesVisible(true);
