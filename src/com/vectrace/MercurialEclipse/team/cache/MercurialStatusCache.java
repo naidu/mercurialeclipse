@@ -234,7 +234,7 @@ public class MercurialStatusCache extends AbstractCache implements
     public BitSet getStatus(IPath path) {
         ReentrantLock lock = getLock(path);
         try {
-            lock.lock();            
+            lock.lock();
             return statusMap.get(path);
         } finally {
             lock.unlock();
@@ -331,6 +331,9 @@ public class MercurialStatusCache extends AbstractCache implements
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
+            if (res.isTeamPrivateMember()) {
+                return;
+            }
             ReentrantLock lock = getLock(res.getLocation());
             try {
                 lock.lock();
@@ -404,17 +407,16 @@ public class MercurialStatusCache extends AbstractCache implements
                 addToProjectResources(member);
             }
 
-            setStatusToAncestors(res, member, bitSet);    
-            // add conflict status if merging
-            try {
-                if (res.getProject().getPersistentProperty(
-                        ResourceProperties.MERGING) != null
-                        && member.getType() == IResource.FILE) {
-                    checkForConflict(res);
-                }
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
+            setStatusToAncestors(res, member, bitSet);
+        }
+        // add conflict status if merging
+        try {
+            if (res.getProject().getPersistentProperty(
+                    ResourceProperties.MERGING) != null) {
+                checkForConflict(res);
             }
+        } catch (Exception e) {
+            MercurialEclipsePlugin.logError(e);
         }
     }
 
@@ -596,7 +598,9 @@ public class MercurialStatusCache extends AbstractCache implements
             }
 
             // status for single resource is batched
-            currentBatch.add(resource);
+            if (!resource.isTeamPrivateMember()) {
+                currentBatch.add(resource);
+            }
             if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
                 String output = HgStatusClient.getStatus(resource.getProject(),
