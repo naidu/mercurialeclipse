@@ -24,7 +24,7 @@ public class FlaggedResource {
     public final static int BIT_UNKNOWN = 4;
     public final static int BIT_ADDED = 5;
     public final static int BIT_MODIFIED = 6;
-    public final static int BIT_IMPOSSIBLE = 7;
+    public final static int BIT_IMPOSSIBLE = 7;    
 
     private final IResource resource;//FIXME needed?
     private BitSet status;

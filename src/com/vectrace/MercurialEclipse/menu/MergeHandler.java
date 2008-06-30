@@ -24,7 +24,6 @@ import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends SingleResourceHandler {
@@ -58,11 +57,7 @@ public class MergeHandler extends SingleResourceHandler {
             MergeView view = (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
             view.clearView();
             view.setCurrentProject(project);
-            project.refreshLocal(IResource.DEPTH_INFINITE, null);
-            new RefreshJob(
-                    "Refreshing project status and changesets after merge.",
-                    null, resource.getProject()).schedule();
-            
+            project.refreshLocal(IResource.DEPTH_INFINITE, null);            
         }
         return result;
     }

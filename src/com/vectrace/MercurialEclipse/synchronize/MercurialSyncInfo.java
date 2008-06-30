@@ -16,12 +16,14 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+
 /**
  * @author bastian
  * 
  */
 public class MercurialSyncInfo extends SyncInfo {
-//    private final static Differencer DIFFERENCER = new Differencer();
+    // private final static Differencer DIFFERENCER = new Differencer();
 
     /**
      * @param local
@@ -37,25 +39,9 @@ public class MercurialSyncInfo extends SyncInfo {
     @Override
     protected int calculateKind() throws TeamException {
         int result = super.calculateKind();
-
-        // if it's an incoming change, we gotta find out, if it's a conflict
-        if (result == (INCOMING | CHANGE) || result == (CONFLICTING | CHANGE)) {
-            // FIXME: This always shows a conflict, as it compares 
-            // each character. I'd like something like automerge detection.
-            
-//            RevisionNode baseRev = new RevisionNode(
-//                    ((MercurialResourceVariant) getBase()).getRev());
-//            RevisionNode remoteRev = new RevisionNode(
-//                    ((MercurialResourceVariant) getRemote()).getRev());
-//
-//            Object o = MercurialSyncInfo.DIFFERENCER.findDifferences(true,
-//                    null, null, null, baseRev, remoteRev);
-//
-//            if (o != null && o instanceof DiffNode) {
-//                DiffNode node = (DiffNode) o;
-//                int kind = node.getKind();
-//                return kind;
-//            }
+        if (result == (CONFLICTING | CHANGE)) {
+            // add resource conflict to status cache
+            MercurialStatusCache.getInstance().addConflict(getLocal());
         }
         return result;
     }

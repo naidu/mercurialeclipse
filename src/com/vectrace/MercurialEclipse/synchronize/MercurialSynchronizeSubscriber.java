@@ -89,11 +89,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                     && (isSupervised(resource) || (!resource.exists()))) {
 
                 // get newest outgoing changeset
-
                 ChangeSet csOutgoing = OUTGOING_CACHE
                         .getNewestOutgoingChangeSet(resource,
                                 repositoryLocation);
 
+                // get newest incoming changeset
                 ChangeSet csIncoming = INCOMING_CACHE
                         .getNewestIncomingChangeSet(resource,
                                 repositoryLocation);
@@ -101,7 +101,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 IResourceVariant outgoing;
                 IResourceVariant incoming;
 
-                // determine base revision
+                // determine outgoing revision
                 IStorageMercurialRevision outgoingIStorage;
                 if (csOutgoing != null) {
                     outgoingIStorage = new IStorageMercurialRevision(resource,
@@ -111,23 +111,26 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                     outgoing = new MercurialResourceVariant(outgoingIStorage);
                 } else {
                     // if outgoing != null it's our base, else we gotta
-                    // construct
-                    // one
+                    // construct one
                     if (resource.exists()
                             && !STATUS_CACHE.isAdded(resource.getProject(),
                                     resource.getLocation())) {
-                        File root = new File(HgRootClient.getHgRoot(resource));
-                        String nodeId;
-
-                        // Find current repo changeset (not head)
-                        nodeId = HgIdentClient.getCurrentChangesetId(root);
+                        
+                        // Find current working directory changeset (not head)
+                        File root = new File(HgRootClient.getHgRoot(resource));                                                
+                        String nodeId = HgIdentClient.getCurrentChangesetId(root);
+                        
+                        // try to get from cache (without loading)
                         csOutgoing = LocalChangesetCache.getInstance()
                                 .getChangeSet(nodeId);
 
+                        // okay, we gotta load the changeset via hg log
                         if (csOutgoing == null) {
                             csOutgoing = LocalChangesetCache.getInstance()
                                     .getLocalChangeSet(resource, nodeId);
                         }
+                        
+                        // construct base revision
                         outgoingIStorage = new IStorageMercurialRevision(
                                 resource, String.valueOf(csOutgoing
                                         .getChangesetIndex()), csOutgoing
@@ -147,13 +150,14 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 if (csIncoming != null) {
                     incomingIStorage = getIncomingIStorage(resource, csIncoming);
                 } else {
-                    // if no incoming revision, remote = base
+                    // if no incoming revision, incmoing = base/outgoing
                     incomingIStorage = outgoingIStorage;
                 }
 
                 if (incomingIStorage != null) {
                     incoming = new MercurialResourceVariant(incomingIStorage);
                 } else {
+                    // neither base nor outgoing nor incoming revision
                     incoming = null;
                 }
 

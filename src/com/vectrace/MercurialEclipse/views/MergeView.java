@@ -192,7 +192,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             row.setText(0, flagged.getFlag() + "");
             IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
             row.setText(1, iFile.getProjectRelativePath().toString());
-            row.setData(flagged);
+            row.setData(flagged);            
         }
         abortAction.setEnabled(true);
     }
@@ -209,6 +209,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             if (this.currentProject != project) {
                 this.currentProject = project;
                 if (project != null
+                        && project.isAccessible()
                         && project
                                 .getPersistentProperty(ResourceProperties.MERGING) != null) {
                     populateView();

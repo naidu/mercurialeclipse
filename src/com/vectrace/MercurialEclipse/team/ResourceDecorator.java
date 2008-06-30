@@ -173,7 +173,10 @@ public class ResourceDecorator extends LabelProvider implements
                         overlay = DecoratorImages.deletedStillTrackedDescriptor;
                         prefix = ">";
                         break;
-                    // TODO: Add conflict overlay image for merge conflicts
+                    case MercurialStatusCache.BIT_CONFLICT:
+                        overlay = DecoratorImages.conflictDescriptor;
+                        prefix = ">";
+                        break;
                     }
                 }
             } else {

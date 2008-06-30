@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -43,9 +44,12 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
+import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -145,6 +149,7 @@ public class MercurialStatusCache extends AbstractCache implements
     public final static int BIT_ADDED = 5;
     public final static int BIT_MODIFIED = 6;
     public final static int BIT_IMPOSSIBLE = 7;
+    public final static int BIT_CONFLICT = 8;
 
     private static MercurialStatusCache instance;
 
@@ -229,7 +234,7 @@ public class MercurialStatusCache extends AbstractCache implements
     public BitSet getStatus(IPath path) {
         ReentrantLock lock = getLock(path);
         try {
-            lock.lock();
+            lock.lock();            
             return statusMap.get(path);
         } finally {
             lock.unlock();
@@ -258,8 +263,9 @@ public class MercurialStatusCache extends AbstractCache implements
                     case MercurialStatusCache.BIT_UNKNOWN:
                         File fileSystemResource = path.toFile();
                         if (fileSystemResource.isDirectory()
-                                && status.length() > 1) {                            
-                            // a directory is still supervised if one of the following bits is set 
+                                && status.length() > 1) {
+                            // a directory is still supervised if one of the
+                            // following bits is set
                             boolean supervised = status.get(BIT_ADDED)
                                     || status.get(BIT_CLEAN)
                                     || status.get(BIT_DELETED)
@@ -338,9 +344,10 @@ public class MercurialStatusCache extends AbstractCache implements
                 String output = HgStatusClient.getStatus(res);
                 parseStatus(res, output);
                 try {
+                    String mergeNode = HgStatusClient.getMergeStatus(res);
                     res.getProject().setPersistentProperty(
-                            ResourceProperties.MERGING,
-                            HgStatusClient.getMergeStatus(res));
+                            ResourceProperties.MERGING, mergeNode);
+
                 } catch (CoreException e) {
                     throw new HgException("Failed to refresh merge status", e);
                 }
@@ -349,6 +356,27 @@ public class MercurialStatusCache extends AbstractCache implements
             }
         }
         notifyChanged(res);
+    }
+
+    /**
+     * @param res
+     * @throws HgException
+     */
+    private void checkForConflict(final IResource res) throws HgException {
+        List<FlaggedAdaptable> status;
+        if (HgResolveClient.checkAvailable()) {
+            status = HgResolveClient.list(res);
+        } else {
+            status = HgIMergeClient.getMergeStatus(res);
+        }
+        for (FlaggedAdaptable flaggedAdaptable : status) {
+            IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
+            if (flaggedAdaptable.getFlag() == 'U') {
+                addConflict(file);
+            } else {
+                removeConflict(file);
+            }
+        }
     }
 
     /**
@@ -376,17 +404,38 @@ public class MercurialStatusCache extends AbstractCache implements
                 addToProjectResources(member);
             }
 
-            // ancestors
-            for (IResource parent = member.getParent(); parent != null
-                    && parent != res.getParent(); parent = parent.getParent()) {
-                BitSet parentBitSet = statusMap.get(parent.getLocation());
-                if (parentBitSet != null) {
-                    bitSet = (BitSet) bitSet.clone();
-                    bitSet.or(parentBitSet);
+            setStatusToAncestors(res, member, bitSet);    
+            // add conflict status if merging
+            try {
+                if (res.getProject().getPersistentProperty(
+                        ResourceProperties.MERGING) != null
+                        && member.getType() == IResource.FILE) {
+                    checkForConflict(res);
                 }
-                statusMap.put(parent.getLocation(), bitSet);
-                addToProjectResources(parent);
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
             }
+        }
+    }
+
+    /**
+     * @param upperLimitAncestor
+     * @param resource
+     * @param resourceBitSet
+     */
+    private void setStatusToAncestors(IResource upperLimitAncestor,
+            IResource resource, BitSet resourceBitSet) {
+        // ancestors
+        for (IResource parent = resource.getParent(); parent != null
+                && parent != upperLimitAncestor.getParent(); parent = parent
+                .getParent()) {
+            BitSet parentBitSet = statusMap.get(parent.getLocation());
+            if (parentBitSet != null) {
+                BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
+                cloneBitSet.or(parentBitSet);
+            }
+            statusMap.put(parent.getLocation(), resourceBitSet);
+            addToProjectResources(parent);
         }
     }
 
@@ -623,6 +672,30 @@ public class MercurialStatusCache extends AbstractCache implements
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Sets conflict marker on resource status
+     * 
+     * @param local
+     */
+    public void addConflict(IResource local) {
+        BitSet status = getStatus(local.getLocation());
+        status.set(BIT_CONFLICT);
+        setStatusToAncestors(local.getWorkspace().getRoot(), local, status);
+        notifyChanged(local);
+    }
+
+    /**
+     * Removes conflict marker on resource status
+     * 
+     * @param local
+     */
+    public void removeConflict(IResource local) {
+        BitSet status = getStatus(local.getLocation());
+        status.clear(BIT_CONFLICT);
+        setStatusToAncestors(local.getProject(), local, status);
+        notifyChanged(local);
     }
 
 }
