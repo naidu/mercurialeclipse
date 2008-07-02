@@ -40,7 +40,6 @@ public abstract class SingleResourceHandler extends AbstractHandler {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         Object selectionObject = ((EvaluationContext) event.getApplicationContext())
                 .getDefaultVariable();

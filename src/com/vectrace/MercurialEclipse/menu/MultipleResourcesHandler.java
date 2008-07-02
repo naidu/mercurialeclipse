@@ -41,7 +41,6 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 	}
 
     @SuppressWarnings("unchecked")
-    @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         List<IAdaptable> selectionObject = (List<IAdaptable>)((EvaluationContext) event.getApplicationContext())
                 .getDefaultVariable();

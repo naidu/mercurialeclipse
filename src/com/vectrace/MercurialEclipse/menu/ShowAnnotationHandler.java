@@ -29,7 +29,6 @@ public class ShowAnnotationHandler extends AbstractHandler {
     }
 
     @SuppressWarnings("unchecked")
-    @Override
     public Object execute(ExecutionEvent event) throws ExecutionException {
         try {
             IEvaluationContext context = ((IEvaluationContext) event.getApplicationContext());
