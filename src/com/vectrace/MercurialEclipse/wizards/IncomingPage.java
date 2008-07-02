@@ -1,9 +1,13 @@
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -82,11 +86,15 @@ public class IncomingPage extends HgWizardPage {
         gridData.heightHint = 150;
         gridData.minimumHeight = 50;
         table.setLayoutData(gridData);
-        
+
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        String[] titles = { Messages.getString("IncomingPage.columnHeader.revision"), Messages.getString("IncomingPage.columnHeader.global"), Messages.getString("IncomingPage.columnHeader.date"), Messages.getString("IncomingPage.columnHeader.author"),
-                            Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String[] titles = {
+                Messages.getString("IncomingPage.columnHeader.revision"),
+                Messages.getString("IncomingPage.columnHeader.global"),
+                Messages.getString("IncomingPage.columnHeader.date"),
+                Messages.getString("IncomingPage.columnHeader.author"),
+                Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 42, 100, 122, 80, 80, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -116,9 +124,10 @@ public class IncomingPage extends HgWizardPage {
             column.setWidth(widths[i]);
         }
 
-        Group group = SWTWidgetHelper.createGroup(container, Messages.getString("IncomingPage.group.title")); //$NON-NLS-1$
-        this.revisionCheckBox = SWTWidgetHelper.createCheckBox(group,
-                Messages.getString("IncomingPage.revisionCheckBox.title")); //$NON-NLS-1$
+        Group group = SWTWidgetHelper.createGroup(container, Messages
+                .getString("IncomingPage.group.title")); //$NON-NLS-1$
+        this.revisionCheckBox = SWTWidgetHelper.createCheckBox(group, Messages
+                .getString("IncomingPage.revisionCheckBox.title")); //$NON-NLS-1$
         makeActions();
     }
 
@@ -148,15 +157,25 @@ public class IncomingPage extends HgWizardPage {
 
         fileStatusViewer.addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
-                ChangeSet change = getSelectedChangeSet();
+                ChangeSet cs = getSelectedChangeSet();
                 IStructuredSelection sel = (IStructuredSelection) event
                         .getSelection();
                 FileStatus clickedFileStatus = (FileStatus) sel
                         .getFirstElement();
-                if (change != null && clickedFileStatus != null) {
-                    org.eclipse.core.resources.IResource file = project
-                            .findMember(clickedFileStatus.getPath());
-                    CompareUtils.openEditor(file, change, true);
+                if (cs != null && clickedFileStatus != null) {
+                    IPath hgRoot;
+                    try {
+                        hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
+                        IPath fileRelPath = new Path(clickedFileStatus
+                                .getPath());
+                        IPath fileAbsPath = hgRoot.append(fileRelPath);
+                        IResource file = project.getWorkspace().getRoot()
+                                .getFileForLocation(fileAbsPath);
+                        CompareUtils.openEditor(file, cs, true);                        
+                    } catch (IOException e) {
+                        setErrorMessage(e.getLocalizedMessage());
+                        MercurialEclipsePlugin.logError(e);
+                    }
                 }
             }
         });

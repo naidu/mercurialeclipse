@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.compare.ResourceNode;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -38,11 +39,11 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
-
-public class RevertDialog extends Dialog 
-{
+public class RevertDialog extends Dialog {
 
     private Table table;
     private List<CommitResource> resources;
@@ -56,8 +57,7 @@ public class RevertDialog extends Dialog
      * 
      * @param parentShell
      */
-    public RevertDialog(Shell parentShell) 
-    {
+    public RevertDialog(Shell parentShell) {
         super(parentShell);
         setShellStyle(getShellStyle() | SWT.RESIZE);
     }
@@ -68,8 +68,7 @@ public class RevertDialog extends Dialog
      * @param parent
      */
     @Override
-    protected Control createDialogArea(Composite parent) 
-    {
+    protected Control createDialogArea(Composite parent) {
         Composite container = (Composite) super.createDialogArea(parent);
         container.setLayout(new FormLayout());
 
@@ -110,9 +109,9 @@ public class RevertDialog extends Dialog
         return container;
     }
 
-    private void createFilesList(Composite container) 
-    {
-        table = new Table(container, SWT.H_SCROLL | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.MULTI | SWT.CHECK | SWT.BORDER);
+    private void createFilesList(Composite container) {
+        table = new Table(container, SWT.H_SCROLL | SWT.V_SCROLL
+                | SWT.FULL_SELECTION | SWT.MULTI | SWT.CHECK | SWT.BORDER);
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
         TableLayout layout = new TableLayout();
@@ -145,41 +144,45 @@ public class RevertDialog extends Dialog
         selectFilesList.setLabelProvider(new CommitResourceLabelProvider());
         selectFilesList.addFilter(new UntrackedFilesFilter());
         selectFilesList.setInput(resources);
-        
+
         selectFilesList.setAllChecked(true);
     }
 
-    private void makeActions() 
-    {        
-        deselectAllButton.addSelectionListener(new SelectionAdapter() 
-        {
-           @Override
-            public void widgetSelected(SelectionEvent e) 
-            {
-                selectFilesList.setAllChecked(false);
-            } 
-        });
-        
-        selectAllButton.addSelectionListener(new SelectionAdapter() 
-        {
+    private void makeActions() {
+        deselectAllButton.addSelectionListener(new SelectionAdapter() {
             @Override
-             public void widgetSelected(SelectionEvent e) 
-             {
-                 selectFilesList.setAllChecked(true);
-             } 
-         });
-        
-        selectFilesList.addDoubleClickListener(new IDoubleClickListener() 
-        {
-          public void doubleClick(DoubleClickEvent event) 
-          {
-            IStructuredSelection sel = (IStructuredSelection) selectFilesList.getSelection();
-            if (sel.getFirstElement() instanceof CommitResource) 
-            {
-              CommitResource resource = (CommitResource) sel.getFirstElement();
-              CompareUtils.openEditor(resource.getResource(), true);
+            public void widgetSelected(SelectionEvent e) {
+                selectFilesList.setAllChecked(false);
             }
-          }
+        });
+
+        selectAllButton.addSelectionListener(new SelectionAdapter() {
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                selectFilesList.setAllChecked(true);
+            }
+        });
+
+        selectFilesList.addDoubleClickListener(new IDoubleClickListener() {
+            public void doubleClick(DoubleClickEvent event) {
+                IStructuredSelection sel = (IStructuredSelection) selectFilesList
+                        .getSelection();
+                if (sel.getFirstElement() instanceof CommitResource) {
+                    CommitResource resource = (CommitResource) sel
+                            .getFirstElement();
+
+                    // workspace version
+                    ResourceNode leftNode = new ResourceNode(resource
+                            .getResource());
+                    
+                    // mercurial version
+                    RevisionNode rightNode = new RevisionNode(
+                            new IStorageMercurialRevision(resource
+                                    .getResource()));
+                    
+                    CompareUtils.openEditor(leftNode, rightNode, true);
+                }
+            }
         });
 
     }
@@ -190,43 +193,40 @@ public class RevertDialog extends Dialog
      * @param parent
      */
     @Override
-    protected void createButtonsForButtonBar(Composite parent) 
-    {
-        createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL, true);
-        createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+    protected void createButtonsForButtonBar(Composite parent) {
+        createButton(parent, IDialogConstants.OK_ID, IDialogConstants.OK_LABEL,
+                true);
+        createButton(parent, IDialogConstants.CANCEL_ID,
+                IDialogConstants.CANCEL_LABEL, false);
     }
 
     /**
      * Return the initial size of the dialog
      */
     @Override
-    protected Point getInitialSize() 
-    {
+    protected Point getInitialSize() {
         return new Point(500, 375);
     }
 
-    public void setFiles(List<CommitResource> resources) 
-    {
+    public void setFiles(List<CommitResource> resources) {
         this.resources = resources;
 
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    protected void okPressed() 
-    {
-        this.selection = new ArrayList(Arrays.asList(selectFilesList.getCheckedElements()));
+    protected void okPressed() {
+        this.selection = new ArrayList(Arrays.asList(selectFilesList
+                .getCheckedElements()));
         super.okPressed();
 
     }
 
-    public List<CommitResource> getSelection() 
-    {
+    public List<CommitResource> getSelection() {
         return selection;
     }
 
-    public void setFiles(CommitResource[] commitResources) 
-    {
+    public void setFiles(CommitResource[] commitResources) {
         setFiles(Arrays.asList(commitResources));
     }
 }

@@ -14,26 +14,35 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 public class CompareUtils {
 
-    public static void openEditor(IResource file, boolean dialog) {
-        openEditor(null, new IStorageMercurialRevision(file, null,null,null), dialog);
-    }
-
-    public static void openEditor(IResource file, ChangeSet changeset, boolean dialog) {
-        openEditor(null,
-                new IStorageMercurialRevision(file, changeset.getChangesetIndex()+"", changeset.getChangeset(), changeset ), dialog);
-    }
-    
-    public static void openEditor(IResource file, ChangeSet changeset) {    	  	
-        openEditor(null,
-				new IStorageMercurialRevision(file, changeset.getChangesetIndex()+"", changeset.getChangeset(), changeset ), false);
-    }
-
-    public static void openEditor(IStorageMercurialRevision left, IStorageMercurialRevision right,
+    public static void openEditor(IResource file, ChangeSet changeset,
             boolean dialog) {
+        openEditor(file, new IStorageMercurialRevision(file, changeset
+                .getChangesetIndex()
+                + "", changeset.getChangeset(), changeset), dialog);
+    }
+
+    public static void openEditor(IResource file, ChangeSet changeset) {
+        openEditor(file, new IStorageMercurialRevision(file, changeset
+                .getChangesetIndex()
+                + "", changeset.getChangeset(), changeset), false);
+    }
+
+    public static void openEditor(IResource file,
+            IStorageMercurialRevision right, boolean dialog) {
+        ResourceNode leftNode = null;
+        if (file != null) {
+            leftNode = new ResourceNode(file);
+        }
+        openEditor(leftNode, getNode(right), dialog);
+    }
+
+    public static void openEditor(IStorageMercurialRevision left,
+            IStorageMercurialRevision right, boolean dialog) {
         openEditor(getNode(left), getNode(right), dialog);
     }
 
-    public static void openEditor(ResourceNode left, ResourceNode right, boolean dialog) {
+    public static void openEditor(ResourceNode left, ResourceNode right,
+            boolean dialog) {
         Assert.isNotNull(right);
         CompareEditorInput compareInput = getCompareInput(left, right);
         if (compareInput != null) {
@@ -45,13 +54,12 @@ public class CompareUtils {
         }
     }
 
-    public static CompareEditorInput getCompareInput(ResourceNode left, ResourceNode right) {
+    public static CompareEditorInput getCompareInput(ResourceNode left,
+            ResourceNode right) {
         IResource resource = right.getResource();
-        return new HgCompareEditorInput(
-                new CompareConfiguration(),
-                resource,
-                left != null ? left : right,
-                left != null ? right : new ResourceNode(resource));
+        return new HgCompareEditorInput(new CompareConfiguration(), resource,
+                left != null ? left : right, left != null ? right
+                        : new ResourceNode(resource));
     }
 
     private static RevisionNode getNode(IStorageMercurialRevision rev) {

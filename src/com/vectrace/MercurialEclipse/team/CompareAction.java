@@ -10,9 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -23,7 +25,13 @@ public class CompareAction extends SingleFileAction {
 
     @Override
     protected void run(IFile file) throws TeamException {
-        CompareUtils.openEditor(file, false);
+        // workspace version
+        ResourceNode leftNode = new ResourceNode(file);
+
+        // mercurial version
+        RevisionNode rightNode = new RevisionNode(
+                new IStorageMercurialRevision(file));
+        CompareUtils.openEditor(leftNode, rightNode, false);
     }
 
 }

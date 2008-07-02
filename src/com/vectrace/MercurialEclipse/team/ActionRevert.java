@@ -15,9 +15,7 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -32,32 +30,25 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-
-
-public class ActionRevert implements IWorkbenchWindowActionDelegate 
-{
+public class ActionRevert implements IWorkbenchWindowActionDelegate {
     private IWorkbenchWindow window;
     // private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
 
-    public ActionRevert() 
-    {
+    public ActionRevert() {
         super();
     }
 
@@ -67,8 +58,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
      * 
      * @see IWorkbenchWindowActionDelegate#dispose
      */
-    public void dispose() 
-    {
+    public void dispose() {
     }
 
     /**
@@ -77,9 +67,8 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
      * 
      * @see IWorkbenchWindowActionDelegate#init
      */
-    public void init(IWorkbenchWindow w) 
-    {
-      this.window = w;
+    public void init(IWorkbenchWindow w) {
+        this.window = w;
     }
 
     /**
@@ -89,96 +78,86 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
      * @see IWorkbenchWindowActionDelegate#run
      */
 
-    public void run(IAction action) 
-    {
+    public void run(IAction action) {
         Shell shell;
         IWorkbench workbench;
         IProject proj;
         proj = MercurialUtilities.getProject(selection);
 
-        //System.out.println("Revert:");
+        // System.out.println("Revert:");
 
         String repository;
         // IProject proj;
-//        System.out.println("Revert in runnable");
+        // System.out.println("Revert in runnable");
         proj = MercurialUtilities.getProject(selection);
         repository = MercurialUtilities.getRepositoryPath(proj);
-        if (repository == null) 
-        {
+        if (repository == null) {
             repository = "."; // never leave this empty add a . to point to
             // current path
         }
 
         // do the actual work in here
         List<IResource> resources = new ArrayList<IResource>();
-        for (Object obj : selection.toList())
-        {
-            if (obj instanceof IResource) 
-            {
+        for (Object obj : selection.toList()) {
+            if (obj instanceof IResource) {
                 IResource resource = (IResource) obj;
-                if (MercurialUtilities.isResourceInReposetory(resource, true) == true) 
-                {
+                if (MercurialUtilities.isResourceInReposetory(resource, true) == true) {
                     resources.add(resource);
                 }
             }
         }
 
-        CommitResource[] commitResources = new CommitResourceUtil(proj).getCommitResources(resources.toArray(new IResource[resources.size()]));
-     
-        //System.out.println("commitResources.length=" + Integer.toString(commitResources.length));
+        CommitResource[] commitResources = new CommitResourceUtil(proj)
+                .getCommitResources(resources.toArray(new IResource[resources
+                        .size()]));
 
-        //Check to see if there are any that are untracked.
-        int count=0;
-        for(int i=0;i<commitResources.length;i++)
-        {
-          if(!commitResources[i].getStatus().startsWith(CommitDialog.FILE_UNTRACKED))
-          {
-            count++;
-          }
+        // System.out.println("commitResources.length=" +
+        // Integer.toString(commitResources.length));
+
+        // Check to see if there are any that are untracked.
+        int count = 0;
+        for (int i = 0; i < commitResources.length; i++) {
+            if (!commitResources[i].getStatus().startsWith(
+                    CommitDialog.FILE_UNTRACKED)) {
+                count++;
+            }
         }
 
-        if(count!=0)
-        {
-          RevertDialog chooser = new RevertDialog(Display.getCurrent().getActiveShell());
-          chooser.setFiles(commitResources);
-          if (chooser.open() == Window.OK) 
-          {
-              final List<CommitResource> result = chooser.getSelection();
-              new SafeWorkspaceJob("Revert files") 
-              {
-                  @Override
-                  protected IStatus runSafe(IProgressMonitor monitor) 
-                  {
-                      doRevert(monitor,result);
-                      return Status.OK_STATUS;
-                  }
-              }.schedule();
-          }
-        }
-        else
-        {
-          //Get shell & workbench
-          if((window !=null) && (window.getShell() != null))
-          {
-            shell=window.getShell();
-          }
-          else
-          {
-            workbench = PlatformUI.getWorkbench();
-            shell = workbench.getActiveWorkbenchWindow().getShell();
-          }
-          MessageDialog.openInformation(shell, "Mercurial Eclipse hg revert", "No files to revert!");
+        if (count != 0) {
+            RevertDialog chooser = new RevertDialog(Display.getCurrent()
+                    .getActiveShell());
+            chooser.setFiles(commitResources);
+            if (chooser.open() == Window.OK) {
+                final List<CommitResource> result = chooser.getSelection();
+                new SafeWorkspaceJob("Revert files") {
+                    @Override
+                    protected IStatus runSafe(IProgressMonitor monitor) {
+                        doRevert(monitor, result);
+                        return Status.OK_STATUS;
+                    }
+                }.schedule();
+            }
+        } else {
+            // Get shell & workbench
+            if ((window != null) && (window.getShell() != null)) {
+                shell = window.getShell();
+            } else {
+                workbench = PlatformUI.getWorkbench();
+                shell = workbench.getActiveWorkbenchWindow().getShell();
+            }
+            MessageDialog.openInformation(shell, "Mercurial Eclipse hg revert",
+                    "No files to revert!");
         }
     }
 
-    private void doRevert(IProgressMonitor monitor, List<CommitResource> resources) 
-    {
-        
+    private void doRevert(IProgressMonitor monitor,
+            List<CommitResource> resources) {
         // the last argument will be replaced with a path
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert","--no-backup","--","" };
-        for (CommitResource commitResource : resources) 
-        {
-            IResource resource = commitResource.getResource();
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert",
+                "--no-backup", "--", "" };
+        monitor.beginTask("Reverting resources...", resources.size()*2);
+        for (CommitResource revertResource : resources) {
+            IResource resource = revertResource.getResource();
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
 
@@ -187,73 +166,54 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate
             launchCmd[4] = MercurialUtilities.getResourceName(resource);
             // System.out.println("Revert = " + FullPath);
             // IResourceChangeEvent event = new IResourceChangeEvent();
-            try 
-            {
+            try {
+                monitor.subTask("Reverting " + resource.getName() + "...");
                 MercurialUtilities.ExecuteCommand(launchCmd, workingDir, true);
-            } 
-            catch (HgException e) 
-            {
-               MercurialEclipsePlugin.logError(e);
-            } 
-        }
-        
-        final Set<IProject> refreshedProjects = new HashSet<IProject>();  
-        for (CommitResource commitResource : resources) 
-        {
-            IResource resource = commitResource.getResource();            
-            try 
-            {
-                resource.refreshLocal(IResource.DEPTH_ONE, monitor);
-                
-            } 
-            catch (CoreException e) 
-            {
+                monitor.worked(1);
+            } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);
             }
-
-         // notify();
-            
-            if (!refreshedProjects.contains(resource.getProject())) {
-            	final IProject proj = resource.getProject();
-				new SafeUiJob("Updating status") {
-					@Override
-					protected IStatus runSafe(IProgressMonitor monitor1) {
-						try {
-							MercurialStatusCache.getInstance().refresh(
-									proj);							
-						} catch (TeamException e) {
-							MercurialEclipsePlugin.logError(
-									"Unable to refresh project: ", e);
-						}
-						return super.runSafe(monitor1);
-					}
-				}.schedule();
-				refreshedProjects.add(proj);
-			}
-        }                
-
         }
         
-//        // notify();
-//        Set<IProject> projects = new HashSet<IProject>();
-//        for(CommitResource commitResource : resources) {
-//            projects.add(commitResource.getResource().getProject());
-//        }
-//        MercurialEclipsePlugin.refreshProjectsFlags(projects);
-        
-    
+        for (CommitResource commitResource : resources) {
+            monitor.subTask("Refreshing "+commitResource+"...");
+            IResource resource = commitResource.getResource();
+            try {
+                resource.refreshLocal(IResource.DEPTH_ONE, monitor);
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+            monitor.worked(1);
+//            if (!refreshedProjects.contains(resource.getProject())) {
+//                final IProject proj = resource.getProject();
+//                new SafeUiJob("Updating status") {
+//                    @Override
+//                    protected IStatus runSafe(IProgressMonitor monitor1) {
+//                        try {
+//                            MercurialStatusCache.getInstance().refresh(proj);
+//                        } catch (TeamException e) {
+//                            MercurialEclipsePlugin.logError(
+//                                    "Unable to refresh project: ", e);
+//                        }
+//                        return super.runSafe(monitor1);
+//                    }
+//                }.schedule();
+//                refreshedProjects.add(proj);
+//            }
+        }
+        monitor.done();
+    }
 
     /**
-	 * Selection in the workbench has been changed. We can change the state of
-	 * the 'real' action here if we want, but this can only happen after the
-	 * delegate has been created.
-	 * 
-	 * @see IWorkbenchWindowActionDelegate#selectionChanged
-	 */
-    public void selectionChanged(IAction action, ISelection in_selection) 
-    {
-        if (in_selection != null && in_selection instanceof IStructuredSelection) 
-        {
+     * Selection in the workbench has been changed. We can change the state of
+     * the 'real' action here if we want, but this can only happen after the
+     * delegate has been created.
+     * 
+     * @see IWorkbenchWindowActionDelegate#selectionChanged
+     */
+    public void selectionChanged(IAction action, ISelection in_selection) {
+        if (in_selection != null
+                && in_selection instanceof IStructuredSelection) {
             selection = (IStructuredSelection) in_selection;
         }
     }

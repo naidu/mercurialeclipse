@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -27,6 +28,8 @@ import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
+import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -53,7 +56,8 @@ public class IStorageMercurialRevision implements IStorage {
         super();
         resource = res;
         try {
-            ChangeSet cs = LocalChangesetCache.getInstance().getLocalChangeSet(res, changeset);
+            ChangeSet cs = LocalChangesetCache.getInstance().getLocalChangeSet(
+                    res, changeset);
             this.changeSet = cs;
             this.revision = String.valueOf(cs.getChangesetIndex());
             this.global = cs.getChangeset();
@@ -82,22 +86,23 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public IStorageMercurialRevision(IResource res) {
         super();
-
+        this.resource = res;
         ChangeSet cs = null;
-        try {
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res,
-                    true);
-            cs = LocalChangesetCache.getInstance().getNewestLocalChangeSet(res);
-
-            this.resource = res;
+        try {            
+            File root = HgRootClient.getHgRootAsFile(res);
+            String nodeId = HgIdentClient.getCurrentChangesetId(root);
+            cs = LocalChangesetCache.getInstance().getChangeSet(nodeId);
+            if (cs == null) {
+                cs = LocalChangesetCache.getInstance().getLocalChangeSet(res, nodeId);
+            }            
             this.revision = cs.getChangesetIndex() + ""; // should be fetched
             // from id
             this.global = cs.getChangeset();
             this.changeSet = cs;
-        } catch (HgException e) {
+        } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }
-    }    
+    }
 
     /*
      * (non-Javadoc)
@@ -187,17 +192,12 @@ public class IStorageMercurialRevision implements IStorage {
      * @see org.eclipse.core.resources.IStorage#getName()
      */
     public String getName() {
-        // System.out.print("IStorageMercurialRevision(" + resource.toString() +
-        // "," + revision + ")::getName()" );
         String name;
-        if (revision != null) {
-
-            name = "[" + getRevision() + "] " + resource.getName();
+        if (changeSet != null) {
+            name = resource.getName() + " [" + changeSet.toString() + "]";
         } else {
             name = resource.getName();
         }
-        // System.out.println("=" + name );
-
         return name;
     }
 

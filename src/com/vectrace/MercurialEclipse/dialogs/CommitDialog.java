@@ -16,6 +16,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.Dialog;
@@ -51,6 +52,8 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.TableColumnSorter;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -59,229 +62,221 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * message for those files. Untracked files may also be chosen.
  * 
  */
-public class CommitDialog extends Dialog 
-{
-  public static String FILE_MODIFIED = "Modified";
-  public static String FILE_ADDED = "Added";
-  public static String FILE_REMOVED = "Removed";
-  public static String FILE_UNTRACKED = "Untracked";
-  public static String FILE_DELETED = "Already Deleted";
-  
-  class CommittableFilesFilter extends ViewerFilter 
-  {
-    public CommittableFilesFilter() 
-    {
-      super();
+public class CommitDialog extends Dialog {
+    public static String FILE_MODIFIED = "Modified";
+    public static String FILE_ADDED = "Added";
+    public static String FILE_REMOVED = "Removed";
+    public static String FILE_UNTRACKED = "Untracked";
+    public static String FILE_DELETED = "Already Deleted";
+
+    class CommittableFilesFilter extends ViewerFilter {
+        public CommittableFilesFilter() {
+            super();
+        }
+
+        /**
+         * Filter out un commitable files (i.e. ! -> deleted but still tracked)
+         */
+        @Override
+        public boolean select(Viewer viewer, Object parentElement,
+                Object element) {
+            /* TODO should this be deleted from repository also?? */
+            if (element instanceof CommitResource) {
+                String str = ((CommitResource) element).getStatus();
+                return str.startsWith(FILE_DELETED) != true;
+            }
+            return true;
+        }
     }
+
+    private String defaultCommitMessage = "(no commit message)";
+
+    private Text commitTextBox;
+    private Label commitTextLabel;
+    private Label commitFilesLabel;
+    private CheckboxTableViewer commitFilesList;
+    private boolean selectableFiles;
+    private Button showUntrackedFilesButton;
+    private Button selectAllButton;
+    private UntrackedFilesFilter untrackedFilesFilter;
+    private CommittableFilesFilter committableFilesFilter;
+    private IProject project;
+    // CommitResource[] commitResources;
+    private File[] filesToAdd;
+    private List<IResource> resourcesToAdd;
+    private File[] filesToCommit;
+    private IResource[] resourcesToCommit;
+    private String commitMessage;
+    private MouseListener commitMouseListener;
+    private KeyListener commitKeyListener;
+    private IResource[] inResources;
 
     /**
-     * Filter out un commitable files (i.e. ! -> deleted but still tracked)
+     * @param shell
      */
+    public CommitDialog(Shell shell, IProject project, IResource[] inResources) {
+        super(shell);
+        setShellStyle(getShellStyle() | SWT.RESIZE);
+        this.setProject(project);
+        this.inResources = inResources;
+        this.untrackedFilesFilter = new UntrackedFilesFilter();
+        this.committableFilesFilter = new CommittableFilesFilter();
+        this.selectableFiles = true;
+    }
+
+    public CommitDialog(Shell shell, IProject project, IResource[] inResources,
+            String defaultCommitMessage, boolean selectableFiles) {
+        super(shell);
+        setShellStyle(getShellStyle() | SWT.RESIZE);
+        this.setProject(project);
+        this.inResources = inResources;
+        this.untrackedFilesFilter = new UntrackedFilesFilter();
+        this.committableFilesFilter = new CommittableFilesFilter();
+        this.defaultCommitMessage = defaultCommitMessage;
+        this.selectableFiles = selectableFiles;
+    }
+
+    public String getCommitMessage() {
+        return commitMessage;
+    }
+
+    public File[] getFilesToCommit() {
+        return filesToCommit;
+    }
+
+    public IResource[] getResourcesToCommit() {
+        return resourcesToCommit;
+    }
+
+    public File[] getFilesToAdd() {
+        return filesToAdd;
+    }
+
+    public List<IResource> getResourcesToAdd() {
+        return resourcesToAdd;
+    }
+
     @Override
-    public boolean select(Viewer viewer, Object parentElement, Object element) 
-    {
-      /* TODO should this be deleted from repository also?? */
-      if (element instanceof CommitResource) 
-      {
-        String str = ((CommitResource) element).getStatus();
-        return str.startsWith(FILE_DELETED) != true;
-      }
-      return true;
-    }
-  }
+    protected Control createDialogArea(Composite parent) {
+        Composite container = (Composite) super.createDialogArea(parent);
+        container.setLayout(new FormLayout());
 
-  private String defaultCommitMessage = "(no commit message)";
+        commitTextLabel = new Label(container, SWT.NONE);
+        final FormData fd_commitTextLabel = new FormData();
+        fd_commitTextLabel.bottom = new FormAttachment(0, 33);
+        fd_commitTextLabel.top = new FormAttachment(0, 20);
+        fd_commitTextLabel.right = new FormAttachment(0, 95);
+        fd_commitTextLabel.left = new FormAttachment(0, 9);
+        commitTextLabel.setLayoutData(fd_commitTextLabel);
+        commitTextLabel.setText("Commit comments");
 
-  private Text commitTextBox;
-  private Label commitTextLabel;
-  private Label commitFilesLabel;
-  private CheckboxTableViewer commitFilesList;
-  private boolean selectableFiles;
-  private Button showUntrackedFilesButton;
-  private Button selectAllButton;
-  private UntrackedFilesFilter untrackedFilesFilter;
-  private CommittableFilesFilter committableFilesFilter;
-  private IProject project;
-//  CommitResource[] commitResources;
-  private File[] filesToAdd;
-  private List<IResource> resourcesToAdd;
-  private File[] filesToCommit;
-  private IResource[] resourcesToCommit;
-  private String commitMessage;
-  private MouseListener commitMouseListener;
-  private KeyListener commitKeyListener;
-private IResource[] inResources;
+        commitTextBox = new Text(container, SWT.V_SCROLL | SWT.MULTI
+                | SWT.BORDER | SWT.WRAP);
+        final FormData fd_commitTextBox = new FormData();
+        fd_commitTextBox.right = new FormAttachment(100, -9);
+        fd_commitTextBox.top = new FormAttachment(0, 40);
+        fd_commitTextBox.left = new FormAttachment(0, 9);
+        commitTextBox.setLayoutData(fd_commitTextBox);
 
-  /**
-   * @param shell
-   */
-  public CommitDialog(Shell shell, IProject project, IResource[] inResources) 
-  {
-    super(shell);
-    setShellStyle(getShellStyle() | SWT.RESIZE);
-    this.setProject(project);
-    this.inResources = inResources;
-    this.untrackedFilesFilter = new UntrackedFilesFilter();
-    this.committableFilesFilter = new CommittableFilesFilter();
-    this.selectableFiles = true;
-  }
-  public CommitDialog(Shell shell, IProject project, IResource[] inResources, String defaultCommitMessage, boolean selectableFiles) 
-  {
-    super(shell);
-    setShellStyle(getShellStyle() | SWT.RESIZE);
-    this.setProject(project);
-    this.inResources = inResources;
-    this.untrackedFilesFilter = new UntrackedFilesFilter();
-    this.committableFilesFilter = new CommittableFilesFilter();
-    this.defaultCommitMessage = defaultCommitMessage;
-    this.selectableFiles = selectableFiles;
-  }
+        commitFilesLabel = new Label(container, SWT.NONE);
+        fd_commitTextBox.bottom = new FormAttachment(commitFilesLabel, -7,
+                SWT.DEFAULT);
+        final FormData fd_commitFilesLabel = new FormData();
+        fd_commitFilesLabel.right = new FormAttachment(0, 66);
+        fd_commitFilesLabel.left = new FormAttachment(0, 9);
+        commitFilesLabel.setLayoutData(fd_commitFilesLabel);
+        commitFilesLabel.setText("Select Files:");
 
-  public String getCommitMessage() 
-  {
-    return commitMessage;
-  }
+        commitFilesList = createFilesList(container, selectableFiles);
+        Table table = commitFilesList.getTable();
+        fd_commitFilesLabel.bottom = new FormAttachment(table, -7, SWT.DEFAULT);
+        final FormData fd_table = new FormData();
+        fd_table.bottom = new FormAttachment(100, -57);
+        fd_table.right = new FormAttachment(100, -9);
+        fd_table.top = new FormAttachment(0, 189);
+        fd_table.left = new FormAttachment(0, 9);
+        table.setLayoutData(fd_table);
 
-  public File[] getFilesToCommit() 
-  {
-    return filesToCommit;
-  }
+        if (selectableFiles) {
+            selectAllButton = new Button(container, SWT.CHECK);
+            final FormData fd_selectAllButton = new FormData();
+            fd_selectAllButton.bottom = new FormAttachment(100, -11);
+            fd_selectAllButton.right = new FormAttachment(0, 115);
+            fd_selectAllButton.left = new FormAttachment(0, 9);
+            selectAllButton.setLayoutData(fd_selectAllButton);
+            selectAllButton.setText("Check/uncheck all");
 
-  public IResource[] getResourcesToCommit() 
-  {
-    return resourcesToCommit;
-  }
-
-  public File[] getFilesToAdd() 
-  {
-    return filesToAdd;
-  }
-
-  public List<IResource> getResourcesToAdd() 
-  {
-    return resourcesToAdd;
-  }
-@Override
-  protected Control createDialogArea(Composite parent) 
-  {
-    Composite container = (Composite) super.createDialogArea(parent);
-    container.setLayout(new FormLayout());
-
-    commitTextLabel = new Label(container, SWT.NONE);
-    final FormData fd_commitTextLabel = new FormData();
-    fd_commitTextLabel.bottom = new FormAttachment(0, 33);
-    fd_commitTextLabel.top = new FormAttachment(0, 20);
-    fd_commitTextLabel.right = new FormAttachment(0, 95);
-    fd_commitTextLabel.left = new FormAttachment(0, 9);
-    commitTextLabel.setLayoutData(fd_commitTextLabel);
-    commitTextLabel.setText("Commit comments");
-
-    commitTextBox = new Text(container, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
-    final FormData fd_commitTextBox = new FormData();
-    fd_commitTextBox.right = new FormAttachment(100, -9);
-    fd_commitTextBox.top = new FormAttachment(0, 40);
-    fd_commitTextBox.left = new FormAttachment(0, 9);
-    commitTextBox.setLayoutData(fd_commitTextBox);
-
-    commitFilesLabel = new Label(container, SWT.NONE);
-    fd_commitTextBox.bottom = new FormAttachment(commitFilesLabel, -7, SWT.DEFAULT);
-    final FormData fd_commitFilesLabel = new FormData();
-    fd_commitFilesLabel.right = new FormAttachment(0, 66);
-    fd_commitFilesLabel.left = new FormAttachment(0, 9);
-    commitFilesLabel.setLayoutData(fd_commitFilesLabel);
-    commitFilesLabel.setText("Select Files:");
-
-    commitFilesList = createFilesList(container, selectableFiles);
-    Table table = commitFilesList.getTable();
-    fd_commitFilesLabel.bottom = new FormAttachment(table, -7, SWT.DEFAULT);
-    final FormData fd_table = new FormData();
-    fd_table.bottom = new FormAttachment(100, -57);
-    fd_table.right = new FormAttachment(100, -9);
-    fd_table.top = new FormAttachment(0, 189);
-    fd_table.left = new FormAttachment(0, 9);
-    table.setLayoutData(fd_table);
-
-    if(selectableFiles) {
-        selectAllButton = new Button(container, SWT.CHECK);
-        final FormData fd_selectAllButton = new FormData();
-        fd_selectAllButton.bottom = new FormAttachment(100, -11);
-        fd_selectAllButton.right = new FormAttachment(0, 115);
-        fd_selectAllButton.left = new FormAttachment(0, 9);
-        selectAllButton.setLayoutData(fd_selectAllButton);
-        selectAllButton.setText("Check/uncheck all");
-
-        showUntrackedFilesButton = new Button(container, SWT.CHECK);
-        final FormData fd_showUntrackedFilesButton = new FormData();
-        fd_showUntrackedFilesButton.bottom = new FormAttachment(100, -34);
-        fd_showUntrackedFilesButton.right = new FormAttachment(0, 129);
-        fd_showUntrackedFilesButton.left = new FormAttachment(0, 9);
-        showUntrackedFilesButton.setLayoutData(fd_showUntrackedFilesButton);
-        showUntrackedFilesButton.setText("Show untracked files");
-    }
-    makeActions();
-    return container;
-  }
-
-  private void makeActions() 
-  {
-    commitTextBox.setCapture(true);
-    if(selectableFiles) {
-        selectAllButton.setSelection(true); // Start selected
-        showUntrackedFilesButton.setSelection(true); // Start selected.
-
-        showUntrackedFilesButton.addSelectionListener(new SelectionAdapter() 
-        {
-            @Override
-            public void widgetSelected(SelectionEvent e) 
-            {
-                if (showUntrackedFilesButton.getSelection()) 
-                {
-                    commitFilesList.removeFilter(untrackedFilesFilter);
-                } 
-                else 
-                {
-                    commitFilesList.addFilter(untrackedFilesFilter);
-                }
-                commitFilesList.refresh(true);
-            }
-        });
-        selectAllButton.addSelectionListener(new SelectionAdapter() 
-        {
-            @Override
-            public void widgetSelected(SelectionEvent e) 
-            {
-                if (selectAllButton.getSelection()) 
-                {
-                    commitFilesList.setAllChecked(true);
-                } 
-                else 
-                {
-                    commitFilesList.setAllChecked(false);
-                }
-            }
-        });    
-        commitFilesList.addDoubleClickListener(new IDoubleClickListener() 
-        {
-            public void doubleClick(DoubleClickEvent event) 
-            {
-                IStructuredSelection sel = (IStructuredSelection) commitFilesList.getSelection();
-                if (sel.getFirstElement() instanceof CommitResource) 
-                {
-                    CommitResource resource = (CommitResource) sel.getFirstElement();
-                    CompareUtils.openEditor(resource.getResource(), true);
-                }
-            }
-        });
+            showUntrackedFilesButton = new Button(container, SWT.CHECK);
+            final FormData fd_showUntrackedFilesButton = new FormData();
+            fd_showUntrackedFilesButton.bottom = new FormAttachment(100, -34);
+            fd_showUntrackedFilesButton.right = new FormAttachment(0, 129);
+            fd_showUntrackedFilesButton.left = new FormAttachment(0, 9);
+            showUntrackedFilesButton.setLayoutData(fd_showUntrackedFilesButton);
+            showUntrackedFilesButton.setText("Show untracked files");
         }
-    setupDefaultCommitMessage();
-    
-    final Table table = commitFilesList.getTable();
+        makeActions();
+        return container;
+    }
+
+    private void makeActions() {
+        commitTextBox.setCapture(true);
+        if (selectableFiles) {
+            selectAllButton.setSelection(true); // Start selected
+            showUntrackedFilesButton.setSelection(true); // Start selected.
+
+            showUntrackedFilesButton
+                    .addSelectionListener(new SelectionAdapter() {
+                        @Override
+                        public void widgetSelected(SelectionEvent e) {
+                            if (showUntrackedFilesButton.getSelection()) {
+                                commitFilesList
+                                        .removeFilter(untrackedFilesFilter);
+                            } else {
+                                commitFilesList.addFilter(untrackedFilesFilter);
+                            }
+                            commitFilesList.refresh(true);
+                        }
+                    });
+            selectAllButton.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    if (selectAllButton.getSelection()) {
+                        commitFilesList.setAllChecked(true);
+                    } else {
+                        commitFilesList.setAllChecked(false);
+                    }
+                }
+            });
+            commitFilesList.addDoubleClickListener(new IDoubleClickListener() {
+                public void doubleClick(DoubleClickEvent event) {
+                    IStructuredSelection sel = (IStructuredSelection) commitFilesList
+                            .getSelection();
+                    if (sel.getFirstElement() instanceof CommitResource) {
+                        CommitResource resource = (CommitResource) sel
+                                .getFirstElement();
+                        
+                        // workspace version
+                        ResourceNode leftNode = new ResourceNode(resource
+                                .getResource());
+                        
+                        // mercurial version
+                        RevisionNode rightNode = new RevisionNode(
+                                new IStorageMercurialRevision(resource
+                                        .getResource()));
+                        
+                        CompareUtils.openEditor(leftNode,rightNode, true);
+                    }
+                }
+            });
+        }
+        setupDefaultCommitMessage();
+
+        final Table table = commitFilesList.getTable();
         TableColumn[] columns = table.getColumns();
         for (int ci = 0; ci < columns.length; ci++) {
             TableColumn column = columns[ci];
             final int colIdx = ci;
-            new TableColumnSorter(commitFilesList,
-                    column) {
+            new TableColumnSorter(commitFilesList, column) {
                 @Override
                 protected int doCompare(Viewer v, Object e1, Object e2) {
                     StructuredViewer viewer = (StructuredViewer) v;
@@ -295,212 +290,189 @@ private IResource[] inResources;
         }
     }
 
-  private void setupDefaultCommitMessage() 
-  {
-    commitTextBox.setText(defaultCommitMessage);
-    commitMouseListener = new MouseListener() 
-      {
+    private void setupDefaultCommitMessage() {
+        commitTextBox.setText(defaultCommitMessage);
+        commitMouseListener = new MouseListener() {
 
-        public void mouseDown(MouseEvent e) 
-        {
-          // On the first mouse down in the area clear the default commit
-          // message.
-          commitTextBox.setText("");
-          commitTextBox.removeMouseListener(commitMouseListener);
-          commitTextBox.removeKeyListener(commitKeyListener);
+            public void mouseDown(MouseEvent e) {
+                // On the first mouse down in the area clear the default commit
+                // message.
+                commitTextBox.setText("");
+                commitTextBox.removeMouseListener(commitMouseListener);
+                commitTextBox.removeKeyListener(commitKeyListener);
+            }
+
+            public void mouseDoubleClick(MouseEvent e) {
+                // Nothing
+            }
+
+            public void mouseUp(MouseEvent e) {
+                // Nothing
+            }
+        };
+
+        commitKeyListener = new KeyListener() {
+            public void keyPressed(KeyEvent e) {
+                // On the first key press, deleted the default commit message
+                // and
+                // then remove the handlers.
+                commitTextBox.setText("");
+                commitTextBox.removeMouseListener(commitMouseListener);
+                commitTextBox.removeKeyListener(commitKeyListener);
+            }
+
+            public void keyReleased(KeyEvent e) {
+                // Nothing
+            }
+        };
+        commitTextBox.addMouseListener(commitMouseListener);
+        commitTextBox.addKeyListener(commitKeyListener);
+    }
+
+    private CheckboxTableViewer createFilesList(Composite container,
+            boolean selectable) {
+        int flags = SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER;
+        if (selectable) {
+            flags |= SWT.CHECK | SWT.FULL_SELECTION | SWT.MULTI;
+        } else {
+            flags |= SWT.READ_ONLY | SWT.HIDE_SELECTION;
+        }
+        Table table = new Table(container, flags);
+        table.setHeaderVisible(true);
+        table.setLinesVisible(true);
+        TableLayout layout = new TableLayout();
+
+        TableColumn col;
+
+        // Check mark
+        col = new TableColumn(table, SWT.NONE | SWT.BORDER);
+        col.setResizable(false);
+        col.setText("");
+        layout.addColumnData(new ColumnPixelData(20, false));
+        // File name
+        col = new TableColumn(table, SWT.NONE);
+        col.setResizable(true);
+        col.setText("File");
+        layout.addColumnData(new ColumnPixelData(220, true));
+
+        // File status
+        col = new TableColumn(table, SWT.NONE);
+        col.setResizable(true);
+        col.setText("Status");
+        layout.addColumnData(new ColumnPixelData(100, true));
+
+        table.setLayout(layout);
+        commitFilesList = new CheckboxTableViewer(table);
+
+        commitFilesList.setContentProvider(new ArrayContentProvider());
+
+        commitFilesList.setLabelProvider(new CommitResourceLabelProvider());
+
+        commitFilesList.setInput(new CommitResourceUtil(getProject())
+                .getCommitResources(inResources));
+        commitFilesList.addFilter(committableFilesFilter);
+        // commitFilesList.removeFilter(untrackedFilesFilter);
+
+        commitFilesList.setAllChecked(true);
+        // commitFilesList.setAllChecked(false);
+        // commitFilesList.refresh(true);
+        return commitFilesList;
+    }
+
+    private File[] convertToFiles(Object[] objs) {
+        ArrayList<File> list = new ArrayList<File>();
+
+        for (int res = 0; res < objs.length; res++) {
+            if (objs[res] instanceof CommitResource != true) {
+                return null;
+            }
+
+            CommitResource resource = (CommitResource) objs[res];
+            list.add(resource.getPath());
         }
 
-        public void mouseDoubleClick(MouseEvent e) 
-        {
-        // Nothing
+        return list.toArray(new File[0]);
+    }
+
+    private IResource[] convertToResource(Object[] objs) {
+        ArrayList<IResource> list = new ArrayList<IResource>();
+
+        for (int res = 0; res < objs.length; res++) {
+            if (objs[res] instanceof CommitResource != true) {
+                return null;
+            }
+
+            CommitResource resource = (CommitResource) objs[res];
+            IResource thisResource = resource.getResource();
+            if (thisResource != null) {
+                list.add(thisResource);
+            }
         }
 
-        public void mouseUp(MouseEvent e) 
-        {
-        // Nothing
+        return list.toArray(new IResource[0]);
+    }
+
+    private File[] getToAddList(Object[] objs) {
+        ArrayList<File> list = new ArrayList<File>();
+
+        for (int res = 0; res < objs.length; res++) {
+            if (objs[res] instanceof CommitResource != true) {
+                return null;
+            }
+
+            CommitResource resource = (CommitResource) objs[res];
+            if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) {
+                list.add(resource.getPath());
+            }
         }
-      };
 
-    commitKeyListener = new KeyListener() 
-      {  
-        public void keyPressed(KeyEvent e) 
-        {
-          // On the first key press, deleted the default commit message
-          // and
-          // then remove the handlers.
-          commitTextBox.setText("");
-          commitTextBox.removeMouseListener(commitMouseListener);
-          commitTextBox.removeKeyListener(commitKeyListener);
+        return list.toArray(new File[0]);
+    }
+
+    private List<IResource> getToAddResourceList(Object[] objs) {
+        ArrayList<IResource> list = new ArrayList<IResource>();
+
+        for (int res = 0; res < objs.length; res++) {
+            if (objs[res] instanceof CommitResource != true) {
+                return null;
+            }
+
+            CommitResource resource = (CommitResource) objs[res];
+            if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) {
+                list.add(resource.getResource());
+            }
         }
 
-        public void keyReleased(KeyEvent e) 
-        {
-        // Nothing
-        }
-      };
-    commitTextBox.addMouseListener(commitMouseListener);
-    commitTextBox.addKeyListener(commitKeyListener);
-  }
-
-  private CheckboxTableViewer createFilesList(Composite container, boolean selectable) 
-  {
-    int flags = SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER;
-    if(selectable) {
-        flags |= SWT.CHECK | SWT.FULL_SELECTION | SWT.MULTI;
-    }
-    else {
-        flags |= SWT.READ_ONLY | SWT.HIDE_SELECTION;
-    }
-    Table table = new Table(container, flags);
-    table.setHeaderVisible(true);
-    table.setLinesVisible(true);
-    TableLayout layout = new TableLayout();
-
-    TableColumn col;
-
-    // Check mark
-    col = new TableColumn(table, SWT.NONE | SWT.BORDER);
-    col.setResizable(false);
-    col.setText("");
-    layout.addColumnData(new ColumnPixelData(20, false));
-    // File name
-    col = new TableColumn(table, SWT.NONE);
-    col.setResizable(true);
-    col.setText("File");
-    layout.addColumnData(new ColumnPixelData(220, true));
-
-    // File status
-    col = new TableColumn(table, SWT.NONE);
-    col.setResizable(true);
-    col.setText("Status");
-    layout.addColumnData(new ColumnPixelData(100, true));
-
-    table.setLayout(layout);
-    commitFilesList = new CheckboxTableViewer(table);
-
-    commitFilesList.setContentProvider(new ArrayContentProvider());
-
-    commitFilesList.setLabelProvider(new CommitResourceLabelProvider());
-
-    commitFilesList.setInput(new CommitResourceUtil(getProject()).getCommitResources(inResources));
-    commitFilesList.addFilter(committableFilesFilter);
-    // commitFilesList.removeFilter(untrackedFilesFilter);
-
-    commitFilesList.setAllChecked(true);
-    // commitFilesList.setAllChecked(false);
-    // commitFilesList.refresh(true);
-    return commitFilesList;
-  }
-
-  private File[] convertToFiles(Object[] objs) 
-  {
-    ArrayList<File> list = new ArrayList<File>();
-
-    for (int res = 0; res < objs.length; res++) 
-    {
-      if (objs[res] instanceof CommitResource != true) 
-      {
-        return null;
-      }
-
-      CommitResource resource = (CommitResource) objs[res];
-      list.add(resource.getPath());
+        return list;
     }
 
-    return list.toArray(new File[0]);
-  }
+    /**
+     * Override the OK button pressed to capture the info we want first and then
+     * call super.
+     */
+    @Override
+    protected void okPressed() {
+        filesToAdd = getToAddList(commitFilesList.getCheckedElements());
+        resourcesToAdd = getToAddResourceList(commitFilesList
+                .getCheckedElements());
+        filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
+        resourcesToCommit = convertToResource(commitFilesList
+                .getCheckedElements());
+        commitMessage = commitTextBox.getText();
 
-  private IResource[] convertToResource(Object[] objs) 
-  {
-    ArrayList<IResource> list = new ArrayList<IResource>();
-
-    for (int res = 0; res < objs.length; res++) 
-    {
-      if (objs[res] instanceof CommitResource != true) 
-      {
-        return null;
-      }
-
-      CommitResource resource = (CommitResource) objs[res];
-      IResource thisResource = resource.getResource();
-      if (thisResource != null) 
-      {
-        list.add(thisResource);
-      }
+        super.okPressed();
     }
 
-    return list.toArray(new IResource[0]);
-  }
-
-  private File[] getToAddList(Object[] objs) 
-  {
-    ArrayList<File> list = new ArrayList<File>();
-
-    for (int res = 0; res < objs.length; res++) 
-    {
-      if (objs[res] instanceof CommitResource != true) 
-      {
-        return null;
-      }
-
-      CommitResource resource = (CommitResource) objs[res];
-      if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) 
-      {
-        list.add(resource.getPath());
-      }
+    @Override
+    protected Point getInitialSize() {
+        return new Point(477, 562);
     }
 
-    return list.toArray(new File[0]);
-  }
-
-  private List<IResource> getToAddResourceList(Object[] objs) 
-  {
-    ArrayList<IResource> list = new ArrayList<IResource>();
-
-    for (int res = 0; res < objs.length; res++) 
-    {
-      if (objs[res] instanceof CommitResource != true) 
-      {
-        return null;
-      }
-
-      CommitResource resource = (CommitResource) objs[res];
-      if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) 
-      {
-        list.add(resource.getResource());
-      }
+    protected void setProject(IProject project) {
+        this.project = project;
     }
 
-    return list;
-  }
-
-  /**
-   * Override the OK button pressed to capture the info we want first and then
-   * call super.
-   */
-  @Override
-protected void okPressed() 
-  {
-    filesToAdd = getToAddList(commitFilesList.getCheckedElements());
-    resourcesToAdd = getToAddResourceList(commitFilesList.getCheckedElements());
-    filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
-    resourcesToCommit = convertToResource(commitFilesList.getCheckedElements());
-    commitMessage = commitTextBox.getText();
-
-    super.okPressed();
-  }
-
-  @Override
-protected Point getInitialSize() 
-  {
-    return new Point(477, 562);
-  }
-
-  protected void setProject(IProject project) {
-    this.project = project;
-  }
-
-  protected IProject getProject() {
-    return project;
-  }
+    protected IProject getProject() {
+        return project;
+    }
 }
