@@ -29,7 +29,8 @@ public class MercurialPreferenceConstants {
     public static final String LABELDECORATOR_LOGIC = "hg.labeldecorator.logic"; //$NON-NLS-1$
     public static final String LABELDECORATOR_LOGIC_2MM = "2-means-modified"; //$NON-NLS-1$
     public static final String LABELDECORATOR_LOGIC_HB = "high-bit"; //$NON-NLS-1$
-    public static final String RESOURCE_DECORATOR_DEEP_COMPUTATION = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
+    public static final String RESOURCE_DECORATOR_COMPLETE_STATUS = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
+    public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; 
     public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 
     // Timeouts

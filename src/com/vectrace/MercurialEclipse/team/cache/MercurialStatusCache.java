@@ -35,6 +35,7 @@ import org.eclipse.core.resources.IResourceChangeEvent;
 import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
+import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -80,7 +81,7 @@ public class MercurialStatusCache extends AbstractCache implements
         private final Set<IResource> removed;
         private final Set<IResource> changed;
         private final Set<IResource> added;
-        private boolean deepComputation;
+        private boolean completeStatus;
 
         /**
          * @param removed
@@ -92,16 +93,16 @@ public class MercurialStatusCache extends AbstractCache implements
             this.removed = removed;
             this.changed = changed;
             this.added = added;
-            deepComputation = Boolean
+            completeStatus = Boolean
                     .valueOf(MercurialUtilities
                             .getPreference(
-                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_DEEP_COMPUTATION,
+                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
                                     "false"));
         }
 
         private IResource getResource(IResource res) {
             IResource myRes = res;
-            if (deepComputation) {
+            if (completeStatus) {
                 myRes = res.getProject();
             }
             return myRes;
@@ -142,6 +143,35 @@ public class MercurialStatusCache extends AbstractCache implements
         public int compare(ChangeSet arg0, ChangeSet arg1) {
             return arg0.getChangesetIndex() - arg1.getChangesetIndex();
         }
+    }
+
+    private final class MemberStatusVisitor implements IResourceVisitor {
+
+        private BitSet bitSet;
+        private IResource parent;
+
+        public MemberStatusVisitor(IResource parent, BitSet bitSet) {
+            this.bitSet = bitSet;
+            this.parent = parent;
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * org.eclipse.core.resources.IResourceVisitor#visit(org.eclipse.core
+         * .resources.IResource)
+         */
+        public boolean visit(IResource resource) throws CoreException {
+            if (!resource.equals(parent)) {
+                BitSet memberBitSet = statusMap.get(resource.getLocation());
+                if (memberBitSet != null) {
+                    bitSet.or(memberBitSet);
+                }
+            }
+            return true;
+        }
+
     }
 
     public final static int BIT_IGNORE = 0;
@@ -410,7 +440,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 addToProjectResources(member);
             }
 
-            setStatusToAncestors(res, member, bitSet);
+            setStatusToAncestors(member, bitSet);
         }
         // add conflict status if merging
         try {
@@ -428,20 +458,48 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param resource
      * @param resourceBitSet
      */
-    private void setStatusToAncestors(IResource upperLimitAncestor,
-            IResource resource, BitSet resourceBitSet) {
+    private void setStatusToAncestors(IResource resource, BitSet resourceBitSet) {
         // ancestors
         for (IResource parent = resource.getParent(); parent != null
-                && parent != upperLimitAncestor.getParent(); parent = parent
+                && parent != resource.getProject().getParent(); parent = parent
                 .getParent()) {
+            boolean computeDeep = isComputeDeepStatus();
+            boolean completeStatus = Boolean
+                    .valueOf(MercurialUtilities
+                            .getPreference(
+                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                                    "false"));
             BitSet parentBitSet = statusMap.get(parent.getLocation());
+            BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
             if (parentBitSet != null) {
-                BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
-                cloneBitSet.or(parentBitSet);
+                if (resource.getType() != IResource.PROJECT && computeDeep
+                        && !completeStatus) {
+                    IResourceVisitor visitor = new MemberStatusVisitor(parent,
+                            cloneBitSet);
+                    try {
+                        parent.accept(visitor, IResource.DEPTH_ONE, false);
+                    } catch (CoreException e) {
+                        MercurialEclipsePlugin.logError(e);
+                    }
+                } else {
+                    cloneBitSet.or(parentBitSet);
+                }
             }
-            statusMap.put(parent.getLocation(), resourceBitSet);
+            statusMap.put(parent.getLocation(), cloneBitSet);
             addToProjectResources(parent);
         }
+    }
+
+    /**
+     * @return
+     */
+    private boolean isComputeDeepStatus() {
+        boolean computeDeep = Boolean
+                .valueOf(MercurialUtilities
+                        .getPreference(
+                                MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
+                                "false"));
+        return computeDeep;
     }
 
     public int getBitIndex(char status) {
@@ -505,7 +563,9 @@ public class MercurialStatusCache extends AbstractCache implements
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org.eclipse.core.resources.IResourceChangeEvent)
+     * @see
+     * org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org
+     * .eclipse.core.resources.IResourceChangeEvent)
      */
     public void resourceChanged(IResourceChangeEvent event) {
         // FIXME: this is strange: one edit in a file triggers two post_change
@@ -529,35 +589,40 @@ public class MercurialStatusCache extends AbstractCache implements
                             "Refreshing status for changed resources") {
                         @Override
                         protected IStatus runSafe(IProgressMonitor monitor) {
-                            
+
                             // now process gathered changes (they are in the
                             // lists)
                             try {
                                 if (changed.size() + added.size()
-                                        + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {                                    
+                                        + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
                                     changed.addAll(added);
                                     changed.addAll(removed);
                                     Set<IProject> projects = new HashSet<IProject>();
                                     for (IResource resource : changed) {
                                         projects.add(resource.getProject());
                                     }
-                                    monitor.beginTask("Refreshing projects...", projects.size()+2);
-                                    for (IProject project : projects) {                                        
-                                        monitor.subTask("Refreshing project "+project.getName()+"...");
+                                    monitor.beginTask("Refreshing projects...",
+                                            projects.size() + 2);
+                                    for (IProject project : projects) {
+                                        monitor.subTask("Refreshing project "
+                                                + project.getName() + "...");
                                         refreshStatus(project,
                                                 new NullProgressMonitor());
-                                        monitor.worked(1);                                        
+                                        monitor.worked(1);
                                     }
-                                    
+
                                 } else {
-                                    monitor.beginTask("Refreshing resources...",4);
+                                    monitor.beginTask(
+                                            "Refreshing resources...", 4);
                                     // changed
-                                    monitor.subTask("Refreshing changed resources...");
+                                    monitor
+                                            .subTask("Refreshing changed resources...");
                                     refreshStatus(changed);
                                     monitor.worked(1);
-                                                                        
+
                                     // added
-                                    monitor.subTask("Refreshing added resources...");
+                                    monitor
+                                            .subTask("Refreshing added resources...");
                                     refreshStatus(added);
                                     monitor.worked(1);
 
@@ -565,13 +630,15 @@ public class MercurialStatusCache extends AbstractCache implements
                                     // refreshStatus(removed);
                                 }
                                 // notify observers
-                                monitor.subTask("Adding resources for decorator update...");
+                                monitor
+                                        .subTask("Adding resources for decorator update...");
                                 Set<IResource> resources = new HashSet<IResource>();
                                 resources.addAll(changed);
                                 resources.addAll(added);
                                 resources.addAll(removed);
                                 monitor.worked(1);
-                                monitor.subTask("Triggering decorator update...");
+                                monitor
+                                        .subTask("Triggering decorator update...");
                                 notifyChanged(resources);
                                 monitor.worked(1);
                             } catch (HgException e) {
@@ -582,7 +649,7 @@ public class MercurialStatusCache extends AbstractCache implements
                             } finally {
                                 monitor.done();
                             }
-                            
+
                             return super.runSafe(monitor);
                         }
                     }.schedule();
@@ -721,7 +788,7 @@ public class MercurialStatusCache extends AbstractCache implements
     public void addConflict(IResource local) {
         BitSet status = getStatus(local.getLocation());
         status.set(BIT_CONFLICT);
-        setStatusToAncestors(local.getWorkspace().getRoot(), local, status);
+        setStatusToAncestors(local, status);
         notifyChanged(local);
     }
 
@@ -733,7 +800,7 @@ public class MercurialStatusCache extends AbstractCache implements
     public void removeConflict(IResource local) {
         BitSet status = getStatus(local.getLocation());
         status.clear(BIT_CONFLICT);
-        setStatusToAncestors(local.getProject(), local, status);
+        setStatusToAncestors(local, status);
         notifyChanged(local);
     }
 

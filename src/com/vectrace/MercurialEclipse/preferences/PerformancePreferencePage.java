@@ -128,8 +128,13 @@ public class PerformancePreferencePage extends FieldEditorPreferencePage
                 getFieldEditorParent()));
 
         addField(new BooleanFieldEditor(
-                MercurialPreferenceConstants.RESOURCE_DECORATOR_DEEP_COMPUTATION,
-                Messages.getString("PerformancePreferencePage.field.deepComputation"), //$NON-NLS-1$
+                MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                Messages.getString("PerformancePreferencePage.field.completeStatus"), //$NON-NLS-1$
+                getFieldEditorParent()));
+        
+        addField(new BooleanFieldEditor(
+                MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
+                Messages.getString("PerformancePreferencePage.field.computeDeep"), //$NON-NLS-1$
                 getFieldEditorParent()));
 
         addField(new BooleanFieldEditor(

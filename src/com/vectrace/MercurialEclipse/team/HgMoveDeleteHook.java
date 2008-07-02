@@ -167,7 +167,9 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
         // force flag provided in
         // updateFlags.
         try {
+            IResource parent = resource.getParent();
             HgRemoveClient.removeResource(resource, monitor);
+            MercurialStatusCache.getInstance().refreshStatus(parent, monitor);
         } catch (Exception e) {
             System.out.println("Delete failed: " + e.getMessage());
             return true;
