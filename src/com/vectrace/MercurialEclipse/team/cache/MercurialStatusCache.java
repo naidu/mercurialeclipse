@@ -39,11 +39,14 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -522,35 +525,67 @@ public class MercurialStatusCache extends AbstractCache implements
 
                     // walk tree
                     delta.accept(visitor);
+                    new SafeWorkspaceJob(
+                            "Refreshing status for changed resources") {
+                        @Override
+                        protected IStatus runSafe(IProgressMonitor monitor) {
+                            
+                            // now process gathered changes (they are in the
+                            // lists)
+                            try {
+                                if (changed.size() + added.size()
+                                        + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {                                    
+                                    changed.addAll(added);
+                                    changed.addAll(removed);
+                                    Set<IProject> projects = new HashSet<IProject>();
+                                    for (IResource resource : changed) {
+                                        projects.add(resource.getProject());
+                                    }
+                                    monitor.beginTask("Refreshing projects...", projects.size()+2);
+                                    for (IProject project : projects) {                                        
+                                        monitor.subTask("Refreshing project "+project.getName()+"...");
+                                        refreshStatus(project,
+                                                new NullProgressMonitor());
+                                        monitor.worked(1);                                        
+                                    }
+                                    
+                                } else {
+                                    monitor.beginTask("Refreshing resources...",4);
+                                    // changed
+                                    monitor.subTask("Refreshing changed resources...");
+                                    refreshStatus(changed);
+                                    monitor.worked(1);
+                                                                        
+                                    // added
+                                    monitor.subTask("Refreshing added resources...");
+                                    refreshStatus(added);
+                                    monitor.worked(1);
 
-                    // now process gathered changes (they are in the lists)
-                    if (changed.size() + added.size() + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
-                        changed.addAll(added);
-                        changed.addAll(removed);
-                        Set<IProject> projects = new HashSet<IProject>();
-                        for (IResource resource : changed) {
-                            projects.add(resource.getProject());
+                                    // removed not used right now
+                                    // refreshStatus(removed);
+                                }
+                                // notify observers
+                                monitor.subTask("Adding resources for decorator update...");
+                                Set<IResource> resources = new HashSet<IResource>();
+                                resources.addAll(changed);
+                                resources.addAll(added);
+                                resources.addAll(removed);
+                                monitor.worked(1);
+                                monitor.subTask("Triggering decorator update...");
+                                notifyChanged(resources);
+                                monitor.worked(1);
+                            } catch (HgException e) {
+                                MercurialEclipsePlugin.logError(e);
+                                return new Status(IStatus.ERROR,
+                                        MercurialEclipsePlugin.ID, e
+                                                .getLocalizedMessage(), e);
+                            } finally {
+                                monitor.done();
+                            }
+                            
+                            return super.runSafe(monitor);
                         }
-                        for (IProject project : projects) {
-                            refreshStatus(project, new NullProgressMonitor());
-                        }
-                    } else {
-                        // changed
-                        refreshStatus(changed);
-
-                        // added
-                        refreshStatus(added);
-
-                        // removed not used right now
-                        // refreshStatus(removed);
-                    }
-                    // notify observers
-                    Set<IResource> resources = new HashSet<IResource>();
-                    resources.addAll(changed);
-                    resources.addAll(added);
-                    resources.addAll(removed);
-                    notifyChanged(resources);
-
+                    }.schedule();
                 }
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
