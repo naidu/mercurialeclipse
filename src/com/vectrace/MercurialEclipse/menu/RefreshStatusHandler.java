@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Jerome Negre - implementation
+ *     Bastian Doetsch - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
