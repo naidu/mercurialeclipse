@@ -23,7 +23,7 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
-public class HgStatusClient {
+public class HgStatusClient extends AbstractClient {
 
     public static String getStatus(IContainer root) throws HgException {
         HgCommand command = new HgCommand("status", root, true);
@@ -67,11 +67,10 @@ public class HgStatusClient {
     }
     
     public static String getMergeStatus(IResource res) throws HgException {
-        HgCommand command = new HgCommand("id", res.getProject(), true);
+        HgCommand command = new HgCommand("id", getWorkingDirectory(res), true);
         // Full global IDs
         command.addOptions("-i","--debug");
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions(res.getProjectRelativePath().toOSString());
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);        
         String versionIds = command.executeToString().trim();
         
         Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE);
