@@ -29,7 +29,7 @@ public class ResourceAdapterFactory implements IAdapterFactory {
                 IProject project = resource.getProject();
 
                 //abort if not in hg
-                if (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
+                if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
                     return null;
                 }
                 return resource;
