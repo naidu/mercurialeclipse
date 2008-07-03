@@ -29,7 +29,7 @@ class UntrackedFilesFilter extends ViewerFilter
       if (element instanceof CommitResource) 
       {
         String str = ((CommitResource) element).getStatus();
-        return str.startsWith(CommitDialog.FILE_UNTRACKED) != true;
+        return str.startsWith(CommitDialog.FILE_UNTRACKED) || str.startsWith(CommitDialog.FILE_DELETED) != true;
       }
       return true;
     }

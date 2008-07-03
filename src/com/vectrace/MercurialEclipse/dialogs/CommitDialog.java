@@ -80,10 +80,8 @@ public class CommitDialog extends Dialog {
         @Override
         public boolean select(Viewer viewer, Object parentElement,
                 Object element) {
-            /* TODO should this be deleted from repository also?? */
             if (element instanceof CommitResource) {
-                String str = ((CommitResource) element).getStatus();
-                return str.startsWith(FILE_DELETED) != true;
+                return true;
             }
             return true;
         }
@@ -101,7 +99,6 @@ public class CommitDialog extends Dialog {
     private UntrackedFilesFilter untrackedFilesFilter;
     private CommittableFilesFilter committableFilesFilter;
     private IProject project;
-    // CommitResource[] commitResources;
     private File[] filesToAdd;
     private List<IResource> resourcesToAdd;
     private File[] filesToCommit;
@@ -126,13 +123,7 @@ public class CommitDialog extends Dialog {
 
     public CommitDialog(Shell shell, IProject project, IResource[] inResources,
             String defaultCommitMessage, boolean selectableFiles) {
-        super(shell);
-        setShellStyle(getShellStyle() | SWT.RESIZE);
-        this.setProject(project);
-        this.inResources = inResources;
-        this.untrackedFilesFilter = new UntrackedFilesFilter();
-        this.committableFilesFilter = new CommittableFilesFilter();
-        this.defaultCommitMessage = defaultCommitMessage;
+        this(shell, project, inResources);
         this.selectableFiles = selectableFiles;
     }
 
@@ -201,18 +192,18 @@ public class CommitDialog extends Dialog {
             selectAllButton = new Button(container, SWT.CHECK);
             final FormData fd_selectAllButton = new FormData();
             fd_selectAllButton.bottom = new FormAttachment(100, -11);
-            fd_selectAllButton.right = new FormAttachment(0, 115);
+            fd_selectAllButton.right = new FormAttachment(0, 200);
             fd_selectAllButton.left = new FormAttachment(0, 9);
             selectAllButton.setLayoutData(fd_selectAllButton);
-            selectAllButton.setText("Check/uncheck all");
+            selectAllButton.setText("Select/unselect all");
 
             showUntrackedFilesButton = new Button(container, SWT.CHECK);
             final FormData fd_showUntrackedFilesButton = new FormData();
             fd_showUntrackedFilesButton.bottom = new FormAttachment(100, -34);
-            fd_showUntrackedFilesButton.right = new FormAttachment(0, 129);
+            fd_showUntrackedFilesButton.right = new FormAttachment(0, 200);
             fd_showUntrackedFilesButton.left = new FormAttachment(0, 9);
             showUntrackedFilesButton.setLayoutData(fd_showUntrackedFilesButton);
-            showUntrackedFilesButton.setText("Show untracked files");
+            showUntrackedFilesButton.setText("Show added/removed files");
         }
         makeActions();
         return container;
@@ -254,17 +245,17 @@ public class CommitDialog extends Dialog {
                     if (sel.getFirstElement() instanceof CommitResource) {
                         CommitResource resource = (CommitResource) sel
                                 .getFirstElement();
-                        
+
                         // workspace version
                         ResourceNode leftNode = new ResourceNode(resource
                                 .getResource());
-                        
+
                         // mercurial version
                         RevisionNode rightNode = new RevisionNode(
                                 new IStorageMercurialRevision(resource
                                         .getResource()));
-                        
-                        CompareUtils.openEditor(leftNode,rightNode, true);
+
+                        CompareUtils.openEditor(leftNode, rightNode, true);
                     }
                 }
             });
@@ -353,7 +344,7 @@ public class CommitDialog extends Dialog {
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText("File");
-        layout.addColumnData(new ColumnPixelData(220, true));
+        layout.addColumnData(new ColumnPixelData(320, true));
 
         // File status
         col = new TableColumn(table, SWT.NONE);
@@ -371,11 +362,8 @@ public class CommitDialog extends Dialog {
         commitFilesList.setInput(new CommitResourceUtil(getProject())
                 .getCommitResources(inResources));
         commitFilesList.addFilter(committableFilesFilter);
-        // commitFilesList.removeFilter(untrackedFilesFilter);
 
         commitFilesList.setAllChecked(true);
-        // commitFilesList.setAllChecked(false);
-        // commitFilesList.refresh(true);
         return commitFilesList;
     }
 
