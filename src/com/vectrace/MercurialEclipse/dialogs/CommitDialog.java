@@ -107,6 +107,8 @@ public class CommitDialog extends Dialog {
     private MouseListener commitMouseListener;
     private KeyListener commitKeyListener;
     private IResource[] inResources;
+    private File[] filesToRemove;
+    private List<IResource> resourcesToRemove;
 
     /**
      * @param shell
@@ -416,6 +418,23 @@ public class CommitDialog extends Dialog {
 
         return list.toArray(new File[0]);
     }
+    
+    private File[] getToRemoveList(Object[] objs) {
+        ArrayList<File> list = new ArrayList<File>();
+
+        for (int res = 0; res < objs.length; res++) {
+            if (objs[res] instanceof CommitResource != true) {
+                return null;
+            }
+
+            CommitResource resource = (CommitResource) objs[res];
+            if (resource.getStatus() == CommitDialog.FILE_DELETED) {
+                list.add(resource.getPath());
+            }
+        }
+
+        return list.toArray(new File[0]);
+    }
 
     private List<IResource> getToAddResourceList(Object[] objs) {
         ArrayList<IResource> list = new ArrayList<IResource>();
@@ -433,6 +452,23 @@ public class CommitDialog extends Dialog {
 
         return list;
     }
+    
+    private List<IResource> getToRemoveResourceList(Object[] objs) {
+        ArrayList<IResource> list = new ArrayList<IResource>();
+
+        for (int res = 0; res < objs.length; res++) {
+            if (objs[res] instanceof CommitResource != true) {
+                return null;
+            }
+
+            CommitResource resource = (CommitResource) objs[res];
+            if (resource.getStatus() == CommitDialog.FILE_DELETED) {
+                list.add(resource.getResource());
+            }
+        }
+
+        return list;
+    }
 
     /**
      * Override the OK button pressed to capture the info we want first and then
@@ -443,9 +479,13 @@ public class CommitDialog extends Dialog {
         filesToAdd = getToAddList(commitFilesList.getCheckedElements());
         resourcesToAdd = getToAddResourceList(commitFilesList
                 .getCheckedElements());
+        
         filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
         resourcesToCommit = convertToResource(commitFilesList
                 .getCheckedElements());
+
+        filesToRemove = getToRemoveList(commitFilesList.getCheckedElements());
+        resourcesToRemove = getToRemoveResourceList(commitFilesList.getCheckedElements());
         commitMessage = commitTextBox.getText();
 
         super.okPressed();
@@ -462,5 +502,13 @@ public class CommitDialog extends Dialog {
 
     protected IProject getProject() {
         return project;
+    }
+
+    public File[] getFilesToRemove() {
+        return filesToRemove;
+    }
+
+    public List<IResource> getResourcesToRemove() {
+        return resourcesToRemove;
     }
 }
