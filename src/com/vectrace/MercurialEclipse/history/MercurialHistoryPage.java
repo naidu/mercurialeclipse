@@ -57,8 +57,11 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
+import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
@@ -248,6 +251,32 @@ public class MercurialHistoryPage extends HistoryPage {
         final BaseSelectionListenerAction openAction = getOpenAction();
         final Action compareAction = getCompareAction();
 
+        final Action updateAction = new Action("Update to selected changeset") {
+            private MercurialRevision rev;
+
+            @Override
+            public void run() {
+                try {
+                    HgUpdateClient.update(resource.getProject(), rev.getChangeSet().getChangeset(), true);
+                    new RefreshStatusJob("Refresh status after updating working directory.",resource.getProject()).schedule();
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logError(e);
+                } 
+            }
+
+            @Override
+            public boolean isEnabled() {
+                IStructuredSelection selection = (IStructuredSelection) viewer
+                        .getSelection();
+                Object[] revs = selection.toArray();
+                if (revs != null && revs.length == 1) {
+                    rev = (MercurialRevision) revs[0];
+                    return true;
+                }
+                return false;
+            }
+        };
+
         // Contribute actions to popup menu
         final MenuManager menuMgr = new MenuManager();
         Menu menu = menuMgr.createContextMenu(viewer.getTable());
@@ -256,15 +285,17 @@ public class MercurialHistoryPage extends HistoryPage {
                 menuMgr1
                         .add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
                 menuMgr1.add(openAction);
-                if (resource == null || resource.getType()!=IResource.FILE) {
+                if (resource == null || resource.getType() != IResource.FILE) {
                     openAction.setEnabled(false);
                 } else {
                     openAction.setEnabled(true);
                 }
                 // TODO This is a HACK but I can't get the menu to update on
-                // selection :-(
+                // selection :-(                
                 compareAction.setEnabled(compareAction.isEnabled());
                 menuMgr1.add(compareAction);
+                updateAction.setEnabled(updateAction.isEnabled());
+                menuMgr1.add(updateAction);
             }
         });
         menuMgr.setRemoveAllWhenShown(true);
