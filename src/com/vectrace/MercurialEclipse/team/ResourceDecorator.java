@@ -92,7 +92,7 @@ public class ResourceDecorator extends LabelProvider implements
             IResource resource = (IResource) element;
             IProject project = resource.getProject();
 
-            if (null == RepositoryProvider.getProvider(project,
+            if (project == null || null == RepositoryProvider.getProvider(project,
                     MercurialTeamProvider.ID)) {
                 return;
             }
