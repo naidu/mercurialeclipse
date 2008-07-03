@@ -81,11 +81,12 @@ public class QImportWizardPage extends HgWizardPage {
      * @param composite
      */
     private void createOptionGroup(Composite composite) {
-        Group g = SWTWidgetHelper.createGroup(composite, Messages.getString("QImportWizardPage.optionsGroup.title")); //$NON-NLS-1$
-        this.forceCheckBox = SWTWidgetHelper.createCheckBox(g,
-                Messages.getString("QImportWizardPage.forceCheckBox.title")); //$NON-NLS-1$
-        this.gitCheckBox = SWTWidgetHelper.createCheckBox(g,
-                Messages.getString("QImportWizardPage.gitCheckBox.title")); //$NON-NLS-1$
+        Group g = SWTWidgetHelper.createGroup(composite, Messages
+                .getString("QImportWizardPage.optionsGroup.title")); //$NON-NLS-1$
+        this.forceCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+                .getString("QImportWizardPage.forceCheckBox.title")); //$NON-NLS-1$
+        this.gitCheckBox = SWTWidgetHelper.createCheckBox(g, Messages
+                .getString("QImportWizardPage.gitCheckBox.title")); //$NON-NLS-1$
         this.gitCheckBox.setSelection(true);
     }
 
@@ -93,26 +94,28 @@ public class QImportWizardPage extends HgWizardPage {
      * @param composite
      */
     private void createPatchNameGroup(Composite composite) {
-        this.patchNameGroup = SWTWidgetHelper.createGroup(composite,
-                Messages.getString("QImportWizardPage.patchNameGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+        this.patchNameGroup = SWTWidgetHelper
+                .createGroup(
+                        composite,
+                        Messages
+                                .getString("QImportWizardPage.patchNameGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
         this.patchFileLabel = SWTWidgetHelper.createLabel(patchNameGroup,
                 Messages.getString("QImportWizardPage.patchFileLabel.title")); //$NON-NLS-1$
         this.patchFile = SWTWidgetHelper.createTextField(patchNameGroup);
-        
+
         this.patchFile.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                if (patchFile.getText().length()>0) {
+                if (patchFile.getText().length() > 0) {
                     try {
                         File file = new File(patchFile.getText());
                         checkExisting(file);
                     } catch (Exception e1) {
                         setErrorMessage(e1.getCause().getLocalizedMessage());
                     }
-                }                
-            }            
+                }
+            }
         });
-        
-        
+
         this.browseButton = SWTWidgetHelper.createPushButton(patchNameGroup,
                 Messages.getString("QImportWizardPage.browseButton.title"), 1); //$NON-NLS-1$
         browseButton.addSelectionListener(new SelectionAdapter() {
@@ -121,12 +124,12 @@ public class QImportWizardPage extends HgWizardPage {
             public void widgetSelected(SelectionEvent e) {
                 try {
                     FileDialog dialog = new FileDialog(getShell());
-                    dialog.setText(Messages.getString("QImportWizardPage.browseFileDialog.title")); //$NON-NLS-1$
+                    dialog
+                            .setText(Messages
+                                    .getString("QImportWizardPage.browseFileDialog.title")); //$NON-NLS-1$
                     String fileName = dialog.open();
                     if (fileName != null) {
                         File file = new File(fileName);
-
-                        
 
                         checkExisting(file);
 
@@ -145,7 +148,7 @@ public class QImportWizardPage extends HgWizardPage {
      * @param file
      * @param patchDir
      * @throws IOException
-     * @throws HgException 
+     * @throws HgException
      */
     private void checkExisting(File file) throws IOException, HgException {
         setMessage(null);
@@ -156,18 +159,19 @@ public class QImportWizardPage extends HgWizardPage {
         for (File patch : patches) {
             if (patch.getCanonicalPath().equals(file)
                     || patch.getName().equals(file.getName())) {
-                setMessage(Messages.getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
+                setMessage(Messages
+                        .getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
                 existing = true;
             }
         }
     }
 
     private void createRevisionTable(Composite composite) {
-        Group revGroup = SWTWidgetHelper.createGroup(composite,
-                Messages.getString("QImportWizardPage.revGroup.title"), //$NON-NLS-1$
+        Group revGroup = SWTWidgetHelper.createGroup(composite, Messages
+                .getString("QImportWizardPage.revGroup.title"), //$NON-NLS-1$
                 GridData.FILL_BOTH);
-        this.revCheckBox = SWTWidgetHelper.createCheckBox(revGroup,
-                Messages.getString("QImportWizardPage.revCheckBox.title")); //$NON-NLS-1$
+        this.revCheckBox = SWTWidgetHelper.createCheckBox(revGroup, Messages
+                .getString("QImportWizardPage.revCheckBox.title")); //$NON-NLS-1$
 
         Listener revCheckBoxListener = new Listener() {
             public void handleEvent(Event event) {
@@ -207,7 +211,9 @@ public class QImportWizardPage extends HgWizardPage {
             /*
              * (non-Javadoc)
              * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
+             * .swt.events.SelectionEvent)
              */
             public void widgetSelected(SelectionEvent e) {
                 setPageComplete(true);
@@ -217,7 +223,9 @@ public class QImportWizardPage extends HgWizardPage {
             /*
              * (non-Javadoc)
              * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
+             * (org.eclipse.swt.events.SelectionEvent)
              */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
@@ -230,7 +238,9 @@ public class QImportWizardPage extends HgWizardPage {
     /*
      * (non-Javadoc)
      * 
-     * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish
+     * (org.eclipse.core.runtime.IProgressMonitor)
      */
     @Override
     public boolean finish(IProgressMonitor monitor) {
@@ -238,14 +248,20 @@ public class QImportWizardPage extends HgWizardPage {
     }
 
     private void populateChangesetTable() throws HgException {
-        SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
-                .getLocalChangeSets(resource.getProject());
-        if (changesets != null) {
-            TreeSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
-                    Collections.reverseOrder());
-            reverseOrderSet.addAll(changesets);
-            changesetTable.setChangesets(reverseOrderSet
-                    .toArray(new ChangeSet[reverseOrderSet.size()]));
+        if (resource != null && resource.isAccessible()) {
+            setErrorMessage(null);
+            SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
+                    .getLocalChangeSets(resource.getProject());
+            if (changesets != null) {
+                TreeSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
+                        Collections.reverseOrder());
+                reverseOrderSet.addAll(changesets);
+                changesetTable.setChangesets(reverseOrderSet
+                        .toArray(new ChangeSet[reverseOrderSet.size()]));
+            }
+        } else {
+            setErrorMessage("Selected resource can't be accessed. Please select an accessible resource and try again.");
+            revCheckBox.setSelection(false);
         }
     }
 
