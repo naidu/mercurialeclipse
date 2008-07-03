@@ -76,14 +76,7 @@
 	            Label decorations for Mercurial eclipse plugin.
 	         </description>
 	         <enablement>
-               <objectClass name="org.eclipse.core.resources.IResource"/>
-
-               <!-- pluginState
-                 id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-                 value="activated" >
-               </pluginState -->
-                 
-               
+               <objectClass name="org.eclipse.core.resources.IResource"/>                                              
 	         </enablement>
 	    </decorator>
 	</extension>
@@ -187,8 +180,8 @@
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
 		         name="Update to another changeset..."/>
 
-		<command id="com.vectrace.MercurialEclipse.menu.GLogHandler"
-		         name="Show Graphical Log"/>
+		<!--command id="com.vectrace.MercurialEclipse.menu.GLogHandler"
+		         name="Show Graphical Log"/-->
 		<command id="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
 		         name="Show Annotation"/>
 
@@ -299,12 +292,12 @@
 		</handler>
 
 		<!-- GLogHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.GLogHandler"
+		<!--handler commandId="com.vectrace.MercurialEclipse.menu.GLogHandler"
 		         class="com.vectrace.MercurialEclipse.menu.GLogHandler">
 			<enabledWhen>
 				<count value="1"/>
 			</enabledWhen>
-		</handler>
+		</handler-->
 
 		<!-- ShowAnnotationHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
@@ -538,11 +531,11 @@
 					</visibleWhen>
 				</command>				
 				<separator name="group4" visible="true"/>
-				<command commandId="com.vectrace.MercurialEclipse.menu.GLogHandler">
+				<!--command commandId="com.vectrace.MercurialEclipse.menu.GLogHandler">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
-				</command>
+				</command-->
 				<command commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler" icon="icons/annotate.gif">
 					<visibleWhen>
 					<and>
@@ -675,50 +668,7 @@
                tooltip="hg remove"
                menubarPath="team.main/group10"
                id="com.vectrace.MercurialEclipse.team.ActionRemove">
-           </action>
-           <!--action
-               label="Add to Version Control..."
-               class="com.vectrace.MercurialEclipse.team.AddAction"
-               tooltip="hg add"
-               menubarPath="team.main/group10"
-               id="com.vectrace.MercurialEclipse.team.AddAction">
-           </action-->
-           <!--action
-               label="Swith to Another Changeset..."
-               class="com.vectrace.MercurialEclipse.team.SwitchAction"
-               menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.SwitchAction"
-               enablesFor="1">
-           </action-->
-           <!--action
-               label="Merge... (work in progress)"
-               class="com.vectrace.MercurialEclipse.team.MergeAction"
-               icon="icons/branches_rep.gif"
-               menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.MergeAction">
-               <enablement>
-                   <not>
-	               	   <objectState
-	                       name="projectPersistentProperty"
-	                       value="com.vectrace.MercurialEclipse.merging">
-	                   </objectState>
-                   </not>
-               </enablement>
-           </action-->
-           <!--action
-               label="Tag as Version..."
-               class="com.vectrace.MercurialEclipse.team.TagAction"
-               icon="icons/tags.gif"
-               menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.TagAction"
-               enablesFor="1">
-           </action-->
-           <!--action
-               label="Show Graphical Log"
-               class="com.vectrace.MercurialEclipse.team.GLogAction"
-               menubarPath="team.main/group4"
-               id="com.vectrace.MercurialEclipse.team.GLogAction">
-           </action-->
+           </action>           
            <action
                label="Show &amp;History"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
@@ -741,74 +691,8 @@
                tooltip="Import patch from file (hg import)"
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionImport">
-           </action>
-           <!--action
-               label="Pull..."               
-               class="com.vectrace.MercurialEclipse.team.ActionPull"
-               icon="icons/checkout_action.gif"
-               tooltip="pull changes from remote/local repository (hg pull)"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionPull">               
-           </action>
-           <action
-               label="Pull and Update..."               
-               class="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
-               icon="icons/checkout_action.gif"
-               tooltip="pull changes from remote/local repository and update (hg pull -u)"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionPullAndUpdate"
-               enablesFor="1">
-           </action>
-           <action
-               label="Push"
-               class="com.vectrace.MercurialEclipse.team.ActionPush"
-               icon="icons/release_rls.gif"
-               tooltip="push changes to remote/local reposetory (hg push)"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionPush">
-           </action>
-           <action
-               label="Update"
-               class="com.vectrace.MercurialEclipse.team.UpdateAction"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.UpdateAction"
-               enablesFor="1">
-           </action>
-           <action
-               label="Commit... (Slow: repo everyware)"
-               class="com.vectrace.MercurialEclipse.team.ActionCommit"
-               tooltip="Commit files (hg commit)"
-               menubarPath="team.main/group1"
-               id="com.vectrace.MercurialEclipse.team.ActionCommit">
-           </action>
-           <action
-               label="Commit... (fast: repo at proj root)"
-               class="com.vectrace.MercurialEclipse.team.CommitAction"
-               tooltip="Commit files (hg commit)"
-               menubarPath="team.main/group1"
-               id="com.vectrace.MercurialEclipse.team.CommitAction">
-           </action-->
-      </objectContribution>
-      
-
-<!--            Project Team menu                     -->
-      <!--objectContribution
-            adaptable="true"
-            objectClass="org.eclipse.core.resources.IProject"
-            id="com.vectrace.MercurialEclipse.IProjectContributions">
-           <filter
-               name="projectPersistentProperty"
-               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-           </filter>
-
-           <action
-               label="hg &amp;view (All files)"
-               class="com.vectrace.MercurialEclipse.team.ActionView"
-               tooltip="View releases reflect all files (hg view)"
-               menubarPath="team.main/group1"
-               id="com.vectrace.MercurialEclipse.team.ActionView">
-           </action>
-      </objectContribution-->
+           </action>           
+      </objectContribution>    
       
       <!-- File Team Menu -->
       <objectContribution
@@ -818,17 +702,7 @@
            <filter
                name="projectPersistentProperty"
                value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-           </filter>
-                 <!-- Team -->
-            <!--action
-               label="Show Annotation"
-               icon="icons/annotate.gif"
-               class="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
-               tooltip="hg annotate"
-               menubarPath="team.main/group3"
-               id="com.vectrace.MercurialEclipse.team.ShowAnnotationAction"
-               enablesFor="1">
-           </action-->
+           </filter>            
                  <!-- Compare -->
            <action
                label="Another Changeset"
