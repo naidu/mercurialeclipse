@@ -10,13 +10,19 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IContentProvider;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableLayout;
@@ -29,26 +35,53 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangePathsTableProvider extends TableViewer {
 
     public ChangePathsTableProvider(Composite parent,
             IContentProvider contentProvider) {
-        super(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI);
+        super(parent, SWT.H_SCROLL | SWT.V_SCROLL | SWT.MULTI | SWT.FULL_SELECTION);
 
         TableLayout layout = new TableLayout();
         GridData data = new GridData(GridData.FILL_BOTH);
 
-        Table table = (Table) getControl();
+        final Table table = (Table) getControl();
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
         table.setLayoutData(data);
         table.setLayout(layout);
+        
+        this.addDoubleClickListener(new IDoubleClickListener() {
+            public void doubleClick(DoubleClickEvent event) {                
+                IStructuredSelection sel = (IStructuredSelection) event
+                        .getSelection();
+                FileStatus clickedFileStatus = (FileStatus) sel
+                        .getFirstElement();
+                MercurialRevision rev = (MercurialRevision) getInput();
+                if (rev != null && clickedFileStatus != null) {                    
+                    ChangeSet cs = rev.getChangeSet();
+                    IPath hgRoot;
+                    try {
+                        hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
+                        IPath fileRelPath = new Path(clickedFileStatus
+                                .getPath());
+                        IPath fileAbsPath = hgRoot.append(fileRelPath);
+                        IResource file = rev.getResource().getWorkspace().getRoot()
+                                .getFileForLocation(fileAbsPath);
+                        CompareUtils.openEditor(file, cs, true);                        
+                    } catch (IOException e) {
+                        MercurialEclipsePlugin.logError(e);
+                    }
+                }
+            }
+        });
 
         createColumns(table, layout);
 
