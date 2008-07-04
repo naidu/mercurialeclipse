@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.SortedSet;
@@ -24,17 +25,22 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author zingo
  * 
  */
 public class MercurialHistory extends FileHistory {
+    
+    
     private static final class ChangeSetComparator implements
             Comparator<ChangeSet> {
         public int compare(ChangeSet o1, ChangeSet o2) {
@@ -54,13 +60,16 @@ public class MercurialHistory extends FileHistory {
     }
 
     private static ChangeSetComparator comparator = null;
+    
+    
+    
     private IResource resource;
     protected MercurialRevision[] revisions;
     private List<GChangeSet> gLogChangeSets;
 
     public MercurialHistory(IResource resource) {
         super();
-        this.resource = resource;
+        this.resource = resource;        
     }
 
     /*
@@ -71,6 +80,31 @@ public class MercurialHistory extends FileHistory {
      * .team.core.history.IFileRevision)
      */
     public IFileRevision[] getContributors(IFileRevision revision) {
+        try {
+            if (revision instanceof MercurialRevision) {
+                MercurialRevision rev = (MercurialRevision) revision;
+                String[] parents = rev.getChangeSet().getParents();
+                List<MercurialRevision>parentList = new ArrayList<MercurialRevision>(2);
+                for (String parent : parents) {
+                    ChangeSet parentCs = LocalChangesetCache.getInstance().getChangeSet(parent);
+                    if (parentCs == null) {
+                        parentCs = LocalChangesetCache.getInstance().getLocalChangeSet(rev.getResource(), parent);
+                    }
+                    if (parentCs != null) {
+                        for (GChangeSet gcs : gLogChangeSets) {
+                            if (gcs.getIndex()==parentCs.getChangesetIndex()) {
+                                parentList.add(new MercurialRevision(parentCs,null,resource));
+                                break;
+                            }
+                        }
+                        
+                    }
+                }
+                return parentList.toArray(new MercurialRevision[parentList.size()]);
+            }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
         return null;
     }
 
@@ -111,7 +145,7 @@ public class MercurialHistory extends FileHistory {
      * .core.history.IFileRevision)
      */
     public IFileRevision[] getTargets(IFileRevision revision) {        
-        return new MercurialRevision[0];
+        return new IFileRevision[0];
     }
 
     public void refresh(IProgressMonitor monitor) throws CoreException {

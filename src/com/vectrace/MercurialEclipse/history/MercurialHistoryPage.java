@@ -35,6 +35,7 @@ import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -47,12 +48,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
-import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.history.HistoryPage;
-import org.eclipse.team.ui.history.IHistoryPageSite;
 import org.eclipse.ui.IWorkbenchActionConstants;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -96,13 +93,28 @@ public class MercurialHistoryPage extends HistoryPage {
                 } catch (CoreException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
-                // Internal code used for convenience - you can use
-                // your own here
-                Utils.asyncExec(new Runnable() {
+                
+                final Runnable runnable = new Runnable() {
                     public void run() {
                         viewer.setInput(mercurialHistory);
                     }
-                }, viewer);
+                };
+                
+                // Internal code copied here from Utils.asyncExec
+                if(viewer == null) {
+                    return status;
+                }
+                                
+                final Control ctrl = viewer.getControl();
+                if (ctrl != null && !ctrl.isDisposed()) {
+                    ctrl.getDisplay().asyncExec(new Runnable() {
+                        public void run() {
+                            if (!ctrl.isDisposed()) {
+                                BusyIndicator.showWhile(ctrl.getDisplay(), runnable);
+                            }
+                        }
+                    });
+                }
             }
 
             return status;
@@ -379,18 +391,8 @@ public class MercurialHistoryPage extends HistoryPage {
         if (refreshFileHistoryJob.getState() != Job.NONE) {
             refreshFileHistoryJob.cancel();
         }
-        refreshFileHistoryJob.setFileHistory(mercurialHistory);
-        IHistoryPageSite parentSite = getHistoryPageSite();
-        // Internal code used for convenience - you can use your own here
-        IWorkbenchPart part = parentSite.getPart();
-        IWorkbenchPartSite site;
-        if (part != null) {
-            site = part.getSite();
-        } else {
-            site = null;
-        }
-
-        Utils.schedule(refreshFileHistoryJob, site);
+        refreshFileHistoryJob.setFileHistory(mercurialHistory);        
+        refreshFileHistoryJob.schedule();
     }
 
     @SuppressWarnings("unchecked")
