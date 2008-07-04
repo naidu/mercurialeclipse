@@ -55,7 +55,8 @@ public class MercurialHistory extends FileHistory {
 
     private static ChangeSetComparator comparator = null;
     private IResource resource;
-    protected IFileRevision[] revisions;
+    protected MercurialRevision[] revisions;
+    private List<GChangeSet> gLogChangeSets;
 
     public MercurialHistory(IResource resource) {
         super();
@@ -65,7 +66,9 @@ public class MercurialHistory extends FileHistory {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.team.core.history.IFileHistory#getContributors(org.eclipse.team.core.history.IFileRevision)
+     * @see
+     * org.eclipse.team.core.history.IFileHistory#getContributors(org.eclipse
+     * .team.core.history.IFileRevision)
      */
     public IFileRevision[] getContributors(IFileRevision revision) {
         return null;
@@ -74,9 +77,20 @@ public class MercurialHistory extends FileHistory {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.team.core.history.IFileHistory#getFileRevision(java.lang.String)
+     * @see
+     * org.eclipse.team.core.history.IFileHistory#getFileRevision(java.lang.
+     * String)
      */
     public IFileRevision getFileRevision(String id) {
+        if (revisions == null || revisions.length == 0) {
+            return null;
+        }
+
+        for (MercurialRevision rev : revisions) {
+            if (rev.getContentIdentifier().equals(id)) {
+                return rev;
+            }
+        }
         return null;
     }
 
@@ -92,10 +106,12 @@ public class MercurialHistory extends FileHistory {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.team.core.history.IFileHistory#getTargets(org.eclipse.team.core.history.IFileRevision)
+     * @see
+     * org.eclipse.team.core.history.IFileHistory#getTargets(org.eclipse.team
+     * .core.history.IFileRevision)
      */
-    public IFileRevision[] getTargets(IFileRevision revision) {
-        return null;
+    public IFileRevision[] getTargets(IFileRevision revision) {        
+        return new MercurialRevision[0];
     }
 
     public void refresh(IProgressMonitor monitor) throws CoreException {
@@ -115,13 +131,13 @@ public class MercurialHistory extends FileHistory {
                 changeSets.addAll(localChangeSets);
             }
 
-            List<GChangeSet> gChangeSets = new HgGLogClient(resource).update(
+            gLogChangeSets = new HgGLogClient(resource).update(
                     changeSets).getChangeSets();
 
-            revisions = new IFileRevision[changeSets.size()];
+            revisions = new MercurialRevision[changeSets.size()];
             int i = 0;
             for (ChangeSet cs : changeSets) {
-                revisions[i] = new MercurialRevision(cs, gChangeSets.get(i),
+                revisions[i] = new MercurialRevision(cs, gLogChangeSets.get(i),
                         resource);
                 i++;
             }
