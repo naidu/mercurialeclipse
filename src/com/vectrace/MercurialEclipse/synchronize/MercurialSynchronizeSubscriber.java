@@ -250,6 +250,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             toRefresh = ResourcesPlugin.getWorkspace().getRoot().getProjects();
         }
         Set<IProject> refreshed = new HashSet<IProject>(toRefresh.length);
+        monitor.beginTask("Refreshing "+getName()+" for "+repositoryLocation+"...", 10);
         monitor.subTask("Refreshing resources...");
         List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
         for (IResource resource : toRefresh) {
@@ -305,12 +306,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 resourcesToRefresh.addAll(Arrays.asList(outgoingMembers));
             }
 
-            for (IResource res : resourcesToRefresh) {
-                monitor.subTask("Adding members of " + resource.getName()
-                        + " to change.");
+            for (IResource res : resourcesToRefresh) {                
                 changeEvents.add(new SubscriberChangeEvent(this,
                         ISubscriberChangeEvent.SYNC_CHANGED, res));
-                monitor.worked(1);
             }
             monitor.worked(1);
         }
@@ -322,6 +320,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         super.fireTeamResourceChange(changeEvents
                 .toArray(new ISubscriberChangeEvent[changeEvents.size()]));
         monitor.worked(1);
+        monitor.done();
     }
 
     @Override

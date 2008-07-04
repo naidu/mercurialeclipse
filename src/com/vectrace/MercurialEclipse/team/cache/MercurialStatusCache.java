@@ -365,7 +365,7 @@ public class MercurialStatusCache extends AbstractCache implements
             throws HgException {
         Assert.isNotNull(res);
         if (monitor != null) {
-            monitor.beginTask("Refreshing " + res.getName(), 50);
+            monitor.subTask("Refreshing " + res.getName());
         }
         
         if (null != RepositoryProvider.getProvider(res.getProject(),
@@ -380,17 +380,31 @@ public class MercurialStatusCache extends AbstractCache implements
                 // members should contain folders and project, so we clear
                 // status for files, folders and project
                 IResource[] resources = getLocalMembers(res);
+                if (monitor != null) {
+                    monitor.worked(1);
+                }
                 for (IResource resource : resources) {
                     statusMap.remove(resource.getLocation());
                 }
+                if (monitor != null) {
+                    monitor.worked(1);
+                }
                 statusMap.remove(res.getLocation());
                 String output = HgStatusClient.getStatus(res);
+                if (monitor != null) {
+                    monitor.worked(1);
+                }
                 parseStatus(res, output);
+                if (monitor != null) {
+                    monitor.worked(1);
+                }
                 try {
                     String mergeNode = HgStatusClient.getMergeStatus(res);
                     res.getProject().setPersistentProperty(
                             ResourceProperties.MERGING, mergeNode);
-
+                    if (monitor != null) {
+                        monitor.worked(1);
+                    }
                 } catch (CoreException e) {
                     throw new HgException("Failed to refresh merge status", e);
                 }
@@ -399,6 +413,9 @@ public class MercurialStatusCache extends AbstractCache implements
             }
         }
         notifyChanged(res);
+        if (monitor != null) {
+            monitor.worked(1);
+        }        
     }
 
     /**
