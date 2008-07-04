@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.RepositoryProvider;
@@ -232,6 +233,7 @@ public class LocalChangesetCache extends AbstractCache {
      */
     public void refreshAllLocalRevisions(IResource res, boolean limit,
             boolean withFiles) throws HgException {
+        Assert.isNotNull(res);
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
@@ -257,6 +259,8 @@ public class LocalChangesetCache extends AbstractCache {
 
     public ChangeSet getLocalChangeSet(IResource res, String nodeId)
             throws HgException {
+        Assert.isNotNull(res);
+        Assert.isNotNull(nodeId);
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
@@ -299,6 +303,7 @@ public class LocalChangesetCache extends AbstractCache {
      */
     public void refreshAllLocalRevisions(IResource res, boolean limit,
             int limitNumber, boolean withFiles) throws HgException {
+        Assert.isNotNull(res);
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {

@@ -60,7 +60,7 @@ public class FlagManager implements IResourceChangeListener {
     }
 
     public FlaggedProject getFlaggedProject(IProject project) throws CoreException, HgException {
-        if (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
+        if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
             return null;
         }
         if (!projects.containsKey(project)) {
@@ -140,7 +140,7 @@ public class FlagManager implements IResourceChangeListener {
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             IResourceDelta[] children = event.getDelta().getAffectedChildren();
             for (IResourceDelta delta : children) {
-                IProject project = delta.getResource().getProject();
+                IProject project = delta.getResource().getProject();                
                 if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
                     changedProjects.add(project);
                 }

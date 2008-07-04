@@ -92,7 +92,7 @@ public class DecoratorStatus extends LabelProvider implements
 		IResource objectResource = (IResource) element;
 		IProject objectProject = objectResource.getProject();
 
-		if (null == RepositoryProvider.getProvider(objectProject,
+		if (objectProject == null || null == RepositoryProvider.getProvider(objectProject,
 				MercurialTeamProvider.ID)) {
 			return;
 		}

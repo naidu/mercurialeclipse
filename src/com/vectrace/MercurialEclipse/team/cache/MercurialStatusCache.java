@@ -37,6 +37,7 @@ import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IResourceVisitor;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -111,7 +112,7 @@ public class MercurialStatusCache extends AbstractCache implements
         public boolean visit(IResourceDelta delta) throws CoreException {
             IResource res = delta.getResource();
             if (res.isAccessible()
-                    && res.getProject().isOpen()
+                    && res.getProject().isAccessible()
                     && RepositoryProvider.getProvider(res.getProject(),
                             MercurialTeamProvider.ID) != null) {
 
@@ -280,6 +281,8 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     public boolean isSupervised(IProject project, IPath path) {
+        Assert.isNotNull(project);
+        Assert.isNotNull(path);
         ReentrantLock lock = getLock(project.getLocation());
 
         if (null != RepositoryProvider.getProvider(project,
@@ -319,6 +322,8 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     public boolean isAdded(IProject project, IPath path) {
+        Assert.isNotNull(project);
+        Assert.isNotNull(path);
         if (null != RepositoryProvider.getProvider(project,
                 MercurialTeamProvider.ID)) {
             if (path.equals(project.getLocation())) {
@@ -358,9 +363,11 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     public void refreshStatus(final IResource res, IProgressMonitor monitor)
             throws HgException {
+        Assert.isNotNull(res);
         if (monitor != null) {
             monitor.beginTask("Refreshing " + res.getName(), 50);
         }
+        
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {

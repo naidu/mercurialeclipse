@@ -23,6 +23,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.core.RepositoryProvider;
 
@@ -259,6 +260,7 @@ public class IncomingChangesetCache extends AbstractCache {
      */
     public void refreshIncomingChangeSets(IProject project,
             String repositoryLocation) throws HgException {
+        Assert.isNotNull(project);
 
         // check if mercurial is team provider and if we're working on an
         // open project

@@ -82,10 +82,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
     @Override
     public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-        try {
-            if (null != RepositoryProvider.getProvider(resource.getProject(),
+        try {            
+            if (resource != null && null != RepositoryProvider.getProvider(resource.getProject(),
                     MercurialTeamProvider.ID)
-                    && resource.getProject().isOpen()
+                    && resource.getProject().isAccessible()
                     && (isSupervised(resource) || (!resource.exists()))) {
 
                 // get newest outgoing changeset

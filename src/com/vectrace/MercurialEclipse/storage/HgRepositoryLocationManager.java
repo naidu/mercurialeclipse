@@ -33,6 +33,7 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
@@ -376,6 +377,7 @@ public class HgRepositoryLocationManager {
 
     public void disposeRepository(HgRepositoryLocation hgRepositoryLocation)
             throws CoreException {
+        Assert.isNotNull(hgRepositoryLocation);
         synchronized (projectRepos) {
             for (Iterator<IProject> iterator = projectRepos.keySet().iterator(); iterator
                     .hasNext();) {
