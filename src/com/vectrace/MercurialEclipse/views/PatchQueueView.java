@@ -43,6 +43,7 @@ import com.vectrace.MercurialEclipse.menu.QImportHandler;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
 import com.vectrace.MercurialEclipse.model.Patch;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.ui.PatchTable;
 
 /**
@@ -74,7 +75,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets.Composite)
+     * @see
+     * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
+     * .Composite)
      */
     @Override
     public void createPartControl(Composite parent) {
@@ -101,7 +104,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qImportAction.setEnabled(true);
         mgr.add(qImportAction);
-        
+
         newAction = new Action("qnew") {
             @Override
             public void run() {
@@ -114,7 +117,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         newAction.setEnabled(true);
         mgr.add(newAction);
-        
+
         qrefreshAction = new Action("qrefresh") {
             /*
              * (non-Javadoc)
@@ -224,7 +227,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                     if (patches.size() > 0) {
                         HgQFoldClient.fold(resource, true, null, patches);
                         populateTable();
-                    }                    
+                    }
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
                     statusLabel.setText(e.getLocalizedMessage());
@@ -233,7 +236,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qFoldAction.setEnabled(true);
         mgr.add(qFoldAction);
-        
+
         qDeleteAction = new Action("qdel") {
             /*
              * (non-Javadoc)
@@ -248,7 +251,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qDeleteAction.setEnabled(true);
         mgr.add(qDeleteAction);
-
 
     }
 
@@ -283,12 +285,18 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             if (structured.getFirstElement() instanceof IAdaptable) {
                 IResource newResource = (IResource) ((IAdaptable) structured
                         .getFirstElement()).getAdapter(IResource.class);
-                if (resource != null && newResource != null
+                if (resource != null
+                        && resource.isAccessible()
+                        && MercurialUtilities.isResourceInReposetory(resource,
+                                false) && newResource != null
                         && newResource.equals(resource)) {
                     return;
                 }
                 try {
-                    if (newResource != null) {
+                    if (newResource != null
+                            && newResource.isAccessible()
+                            && MercurialUtilities.isResourceInReposetory(
+                                    newResource, false)) {
                         resource = newResource;
                         statusLabel.setText("Repository: "
                                 + HgRootClient.getHgRoot(resource));
