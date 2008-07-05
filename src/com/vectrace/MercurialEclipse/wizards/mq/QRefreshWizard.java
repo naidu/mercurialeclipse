@@ -21,6 +21,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
@@ -112,6 +113,7 @@ public class QRefreshWizard extends HgWizard {
             page.setErrorMessage(e.getLocalizedMessage());
             return false;
         }
+        PatchQueueView.getView().populateTable();
         return true;
     }
 

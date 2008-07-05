@@ -28,6 +28,7 @@ import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.console.ConsolePlugin;
@@ -164,32 +165,29 @@ public class MercurialUtilities {
      * @param dialog
      *            TODO
      * 
-     * Return true if the resource is handled by mercurial. is it a link we do
-     * not folow the link (not now anyway mabe later versions will)
+     *            Return true if the resource is handled by mercurial. is it a
+     *            link we do not folow the link (not now anyway mabe later
+     *            versions will)
      * 
      */
     public static boolean isResourceInReposetory(IResource resource,
             boolean dialog) {
-        // System.out.println("isResourceInReposetory(" + resource.toString() +
-        // ",dialog)" );
-
+        // check, if we're team provider
+        if (resource == null || resource.getProject() == null
+                || RepositoryProvider.getProvider(resource.getProject(),MercurialTeamProvider.ID) == null) {
+            return false;
+        }
+        
         if (resource instanceof IProject) {
             return true;
         }
 
         // Check to se if resource is not in a link
         String linkedParentName = resource.getProjectRelativePath().segment(0);
-        if (linkedParentName == null) {
-            // System.out.println("isResourceInReposetory(" +
-            // resource.toString() +
-            // ",dialog) linkedParentName=null" );
+        if (linkedParentName == null) {            
             return false;
         }
-        // else
-        // {
-        // System.out.println("isResourceInReposetory(" + resource.toString() +
-        // ",dialog) linkedParentName=" + linkedParentName );
-        // }
+
         IFolder linkedParent = resource.getProject()
                 .getFolder(linkedParentName);
         boolean isLinked = linkedParent.isLinked();
@@ -418,7 +416,8 @@ public class MercurialUtilities {
         }
         if (console_out != null) {
             console_out_printstream = new PrintStream(console_out);
-            // console_out_printstream.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
+            // console_out_printstream.setColor(Display.getDefault().
+            // getSystemColor(SWT.COLOR_GREEN));
             return console_out_printstream;
         }
         return null;
@@ -431,8 +430,8 @@ public class MercurialUtilities {
      * IOConsole(UITexts.BazaarConsole_name, null); IConsoleManager manager =
      * ConsolePlugin.getDefault().getConsoleManager(); manager.addConsoles(new
      * IConsole[] { console }); } else { return console; } if (console_in ==
-     * null) { console_in = console.getInputStream(); } if (console_out == null) {
-     * console_out = console.newOutputStream(); //
+     * null) { console_in = console.getInputStream(); } if (console_out == null)
+     * { console_out = console.newOutputStream(); //
      * console_out_printstream.println("Hello word!"); } return console; //
      * Error }
      * 

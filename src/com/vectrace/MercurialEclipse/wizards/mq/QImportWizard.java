@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.operations.QImportOperation;
+import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
@@ -80,6 +81,7 @@ public class QImportWizard extends HgWizard {
             page.setErrorMessage(e.getCause().getLocalizedMessage());
             return false;
         }
+        PatchQueueView.getView().populateTable();
         return true;
     }
 

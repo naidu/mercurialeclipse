@@ -23,6 +23,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.mq.HgQDeleteClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Patch;
+import com.vectrace.MercurialEclipse.views.PatchQueueView;
 import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
@@ -105,6 +106,7 @@ public class QDeleteWizard extends HgWizard {
         DeleteOperation delOperation = new DeleteOperation(getContainer());
         try {
             getContainer().run(false, false, delOperation);
+            PatchQueueView.getView().populateTable();
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
             page.setErrorMessage(e.getLocalizedMessage());
