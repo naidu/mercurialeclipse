@@ -14,7 +14,9 @@ import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ISelection;
@@ -144,10 +146,11 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                     HgQPushClient.push(resource, false, table.getSelection()
                             .getName());
                     populateTable();
-                } catch (HgException e) {
+                    resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+                } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     statusLabel.setText(e.getLocalizedMessage());
-                }
+                } 
             }
         };
         qPushAction.setEnabled(true);
@@ -165,7 +168,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                     HgQPopClient.pop(resource, false, table.getSelection()
                             .getName());
                     populateTable();
-                } catch (HgException e) {
+                    resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+                } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     statusLabel.setText(e.getLocalizedMessage());
                 }
@@ -185,7 +189,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 try {
                     HgQPushClient.pushAll(resource, false);
                     populateTable();
-                } catch (HgException e) {
+                    resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+                } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     statusLabel.setText(e.getLocalizedMessage());
                 }
@@ -205,7 +210,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 try {
                     HgQPopClient.popAll(resource, false);
                     populateTable();
-                } catch (HgException e) {
+                    resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+                } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     statusLabel.setText(e.getLocalizedMessage());
                 }
@@ -247,6 +253,12 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             public void run() {
                 QDeleteHandler.openWizard(resource, getSite().getShell());
                 populateTable();
+                try {
+                    resource.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+                } catch (CoreException e) {
+                    MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
+                }            
             }
         };
         qDeleteAction.setEnabled(true);
