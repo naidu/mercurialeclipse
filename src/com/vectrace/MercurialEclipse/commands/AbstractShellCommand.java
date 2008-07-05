@@ -152,37 +152,49 @@ public abstract class AbstractShellCommand {
             cmdString = cmdString.substring(0, cmdString.length() - 1);
             if (console == null) {
                 console = MercurialUtilities.getMercurialConsole();
-            }            
+            }
             ProcessBuilder builder = new ProcessBuilder(cmd);
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
-            }            
+            }
             process = builder.start();
             consumer = new InputStreamConsumer(process.getInputStream());
             consumer.start();
             console.commandInvoked(cmdString);
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
+                int exitCode = process.waitFor();
+                byte[] returnValue = consumer.getBytes();
 
-                if (process.waitFor() == 0) {
-                    console.commandCompleted(new Status(IStatus.OK,
-                            MercurialEclipsePlugin.ID, new String(consumer
-                                    .getBytes())), null);
+                // everything fine
+                if (exitCode == 0 || !expectPositiveReturnValue) {
+                    console.commandCompleted(
+                            new Status(IStatus.OK, MercurialEclipsePlugin.ID,
+                                    new String(returnValue)), null);
                     return consumer.getBytes();
                 }
-                String msg = new String(consumer.getBytes());
-                if (!expectPositiveReturnValue) {
-                    return msg.getBytes();
+
+                // exit code > 0
+                HgException hgex = new HgException(
+                        "Process error, return code: " + exitCode
+                                + ", message: " + new String(returnValue));
+
+                // exit code == 1 usually isn't fatal.
+                String msg = new String(returnValue);
+                int severity = IStatus.WARNING;
+
+                // exit code > 1 is usually baaaaad
+                if (exitCode != 1) {
+                    msg = hgex.getLocalizedMessage();
+                    severity = IStatus.ERROR;
                 }
 
-                HgException hgex = new HgException(
-                        "Process error, return code: " + process.exitValue()
-                                + ", message: " + msg);
-
-                console.commandCompleted(new Status(IStatus.ERROR,
-                        MercurialEclipsePlugin.ID, hgex.getLocalizedMessage()),
-                        null);
+                IStatus status = new Status(severity,
+                        MercurialEclipsePlugin.ID, msg);
+                
+                // output warning/error
+                console.commandCompleted(status, hgex);
 
                 throw hgex;
             }
