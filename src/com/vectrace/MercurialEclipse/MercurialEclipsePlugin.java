@@ -74,7 +74,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
     public void start(BundleContext context) throws Exception {
         try {
             super.start(context);
-            checkHgInstallation();
+            getPreferenceStore();
+            checkHgInstallation();            
         } catch (Exception e) {
             this.hgUsable = false;
             logError("Unable to start MercurialEclipsePlugin ", e);

@@ -133,7 +133,8 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 	 */
 	@Override
     public boolean performOk() {
+	    boolean ok = super.performOk(); 
 		MercurialEclipsePlugin.getDefault().savePluginPreferences();
-		return super.performOk();
+		return ok;
 	}
 }

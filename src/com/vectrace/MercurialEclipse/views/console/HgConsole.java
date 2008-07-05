@@ -121,14 +121,12 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
      * console page yet.
      */
     public HgConsole() {
-        super("Hg", null); //$NON-NLS-1$
+        super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
         showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
                 MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "false"));
+                "true"));
         document = new ConsoleDocument();
         consoleManager = ConsolePlugin.getDefault().getConsoleManager();
-        //MercurialEclipsePlugin.getDefault().setConsoleListener(HgConsole.this)
-        // ;
         MercurialEclipsePlugin.getDefault().getPreferenceStore()
                 .addPropertyChangeListener(HgConsole.this);
     }
@@ -156,7 +154,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                 dump();
                 return super.runSafe(monitor);
             }
-        }.schedule();
+        }.schedule();        
     }
 
     private void initWrapSetting() {
@@ -213,7 +211,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                                 MercurialPreferenceConstants.PREF_CONSOLE_FONT);
                 setFont(f);
                 initialized = true;
-            }
+            }            
         }
     }
 
@@ -497,6 +495,9 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
      *            ignore preferences if <code>true</code>
      */
     public void show(boolean showNoMatterWhat) {
+        showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
+                MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
+                "false"));
         if (showNoMatterWhat || showOnMessage) {
             if (!visible) {
                 HgConsoleFactory.showConsole();
@@ -512,7 +513,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     public void consolesAdded(IConsole[] consoles) {
         for (IConsole console : consoles) {
             if (console.equals(this)) {
-                show(false);
+                show(true);
                 break;
             }
         }
