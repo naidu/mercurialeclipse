@@ -299,19 +299,20 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     }
 
     public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-        if (selection instanceof IStructuredSelection) {
-            IStructuredSelection structured = (IStructuredSelection) selection;
-            if (structured.getFirstElement() instanceof IAdaptable) {
-                IResource newResource = (IResource) ((IAdaptable) structured
-                        .getFirstElement()).getAdapter(IResource.class);
-                if (resource != null
-                        && resource.isAccessible()
-                        && MercurialUtilities.isResourceInReposetory(resource,
-                                false) && newResource != null
-                        && newResource.equals(resource)) {
-                    return;
-                }
-                try {
+        try {
+            if (selection instanceof IStructuredSelection) {
+                IStructuredSelection structured = (IStructuredSelection) selection;
+                if (structured.getFirstElement() instanceof IAdaptable) {
+                    IResource newResource = (IResource) ((IAdaptable) structured
+                            .getFirstElement()).getAdapter(IResource.class);
+                    if (resource != null
+                            && resource.isAccessible()
+                            && MercurialUtilities.isResourceInReposetory(
+                                    resource, false) && newResource != null
+                            && newResource.equals(resource)) {
+                        return;
+                    }
+
                     if (newResource != null
                             && newResource.isAccessible()
                             && MercurialUtilities.isResourceInReposetory(
@@ -324,29 +325,39 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             statusLabel.setText("Repository: " + currentHgRoot);
                         }
                     }
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    statusLabel.setText(e.getMessage());
+
                 }
             }
-        }
-        if (part instanceof IEditorPart) {
-            IEditorInput input = ((IEditorPart) part).getEditorInput();
-            IFile file = (IFile) input.getAdapter(IFile.class);
-            if (file != null) {
-                resource = file;
-                populateTable();
+            if (part instanceof IEditorPart) {
+                IEditorInput input = ((IEditorPart) part).getEditorInput();
+                IFile file = (IFile) input.getAdapter(IFile.class);
+                if (file != null
+                        && file.isAccessible()
+                        && MercurialUtilities.isResourceInReposetory(file,
+                                false)) {
+                    String newRoot = HgRootClient.getHgRoot(file);
+                    if (!newRoot.equals(currentHgRoot)) {
+                        currentHgRoot = newRoot;
+                        resource = file;
+                        statusLabel.setText("Repository: " + currentHgRoot);
+                    }
+                }
             }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            statusLabel.setText(e.getMessage());
         }
     }
 
     public static PatchQueueView getView() {
         PatchQueueView view = (PatchQueueView) PlatformUI.getWorkbench()
-        .getActiveWorkbenchWindow().getActivePage().findView(ID);
+                .getActiveWorkbenchWindow().getActivePage().findView(ID);
         if (view == null) {
             try {
-                view = (PatchQueueView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(ID);
-            } catch (PartInitException e) {            
+                view = (PatchQueueView) PlatformUI.getWorkbench()
+                        .getActiveWorkbenchWindow().getActivePage()
+                        .showView(ID);
+            } catch (PartInitException e) {
                 MercurialEclipsePlugin.logError(e);
             }
         }
