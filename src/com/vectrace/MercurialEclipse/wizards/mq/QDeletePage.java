@@ -124,9 +124,9 @@ public class QDeletePage extends HgWizardPage {
      */
     private void populateChangesetTable() {
         try {
-            LocalChangesetCache.getInstance().clear(resource);
+            LocalChangesetCache.getInstance().clear(resource.getProject());
             SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
-                    .getLocalChangeSets(resource);
+                    .getLocalChangeSets(resource.getProject());
             if (changesets != null) {
                 TreeSet<ChangeSet> temp = new TreeSet<ChangeSet>(Collections.reverseOrder());
                 temp.addAll(changesets);
