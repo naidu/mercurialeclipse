@@ -32,6 +32,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -75,6 +76,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
         try {
             super.start(context);
             checkHgInstallation();
+            DefaultConfiguration cfg = new DefaultConfiguration();
+            HgClients.initialize(cfg , cfg, cfg);
         } catch (Exception e) {
             this.hgUsable = false;
             logError("Unable to start MercurialEclipsePlugin ", e);

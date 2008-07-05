@@ -21,9 +21,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
@@ -60,26 +58,23 @@ public abstract class AbstractShellCommand {
                 this.output = myOutput.toByteArray();
             } catch (IOException e) {
                 if (!interrupted()) {
-                    MercurialEclipsePlugin.logError(e);
+                    HgClients.logError(e);
                 }
             } finally {
                 try {
                     this.stream.close();
                 } catch (IOException e) {
-                    MercurialEclipsePlugin.logError(e);
+                    HgClients.logError(e);
                 }
                 try {
                     myOutput.close();
                 } catch (IOException e) {
-                    MercurialEclipsePlugin.logError(e);
+                    HgClients.logError(e);
                 }
             }
         }
 
     }
-
-    protected static PrintStream console = new PrintStream(MercurialUtilities
-            .getMercurialConsole().newOutputStream());
 
     public static final int MAX_PARAMS = 120;
     protected String command;
@@ -113,19 +108,8 @@ public abstract class AbstractShellCommand {
     public byte[] executeToBytes() throws HgException {
         int timeout = DEFAULT_TIMEOUT;
         if (this.timeoutConstant != null) {
-            String pref = MercurialUtilities.getPreference(
-                    this.timeoutConstant, String.valueOf(DEFAULT_TIMEOUT));
-            try {
-                timeout = Integer.parseInt(pref);
-                if (timeout < 0) {
-                    throw new NumberFormatException("Timeout < 0");
-                }
-            } catch (NumberFormatException e) {
-                MercurialEclipsePlugin.logWarning(
-                        "Timeout for command " + command
-                                + " not correctly configured in preferences.",
-                        e);
-            }
+            timeout = HgClients.getTimeOut(this.timeoutConstant);
+            
         }
         return executeToBytes(timeout);
     }
@@ -158,7 +142,7 @@ public abstract class AbstractShellCommand {
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
                 if (process.waitFor() == 0) {
-                    console.println("Done in "
+                    getConsole().println("Done in "
                             + (System.currentTimeMillis() - start) + " ms");
                     return consumer.getBytes();
                 }
@@ -203,7 +187,7 @@ public abstract class AbstractShellCommand {
             result.add("--");
         }
         result.addAll(files);
-        console.println("Command: (" + result.size() + ") "
+        getConsole().println("Command: (" + result.size() + ") "
                 + result.toString().replace(",", ""));
         // TODO check that length <= MAX_PARAMS
         return result;
@@ -244,5 +228,12 @@ public abstract class AbstractShellCommand {
             consumer.interrupt();
         }
         process.destroy();
+    }
+
+    /**
+     * @return the console
+     */
+    private static PrintStream getConsole() {
+        return HgClients.getConsole();
     }
 }
