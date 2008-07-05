@@ -85,6 +85,7 @@ public class QNewWizardPage extends HgWizardPage {
         this.forceCheckBox = createCheckBox(g,
                 Messages.getString("QNewWizardPage.forceCheckBox.title")); //$NON-NLS-1$
         this.gitCheckBox = createCheckBox(g, Messages.getString("QNewWizardPage.gitCheckBox.title")); //$NON-NLS-1$
+        this.gitCheckBox.setSelection(true);
 
         createLabel(g, Messages.getString("QNewWizardPage.includeLabel.title")); //$NON-NLS-1$
         this.includeTextField = createTextField(g);
