@@ -118,17 +118,17 @@ public class MercurialStatusCache extends AbstractCache implements
 
                 switch (delta.getKind()) {
                 case IResourceDelta.ADDED:
-                    if (res.getType() == IResource.FILE) {
+                    if (!res.isDerived() && res.getType() == IResource.FILE) {
                         added.add(getResource(res));
                     }
                     break;
                 case IResourceDelta.CHANGED:
-                    if ((isSupervised(res) && res.getType() == IResource.FILE)) {
+                    if (!res.isDerived() && isSupervised(res) && res.getType() == IResource.FILE) {
                         changed.add(getResource(res));
                     }
                     break;
                 case IResourceDelta.REMOVED:
-                    if ((isSupervised(res) && res.getType() == IResource.FILE)) {
+                    if (!res.isDerived() && isSupervised(res) && res.getType() == IResource.FILE) {
                         removed.add(getResource(res));
                     }
                     break;
@@ -285,7 +285,7 @@ public class MercurialStatusCache extends AbstractCache implements
         Assert.isNotNull(path);
         ReentrantLock lock = getLock(project.getLocation());
 
-        if (null != RepositoryProvider.getProvider(project,
+        if (project.isAccessible() && null != RepositoryProvider.getProvider(project,
                 MercurialTeamProvider.ID)) {
             try {
                 lock.lock();
