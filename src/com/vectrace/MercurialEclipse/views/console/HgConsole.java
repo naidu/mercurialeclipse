@@ -124,7 +124,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         super("Hg", null); //$NON-NLS-1$
         showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
                 MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "true"));
+                "false"));
         document = new ConsoleDocument();
         consoleManager = ConsolePlugin.getDefault().getConsoleManager();
         //MercurialEclipsePlugin.getDefault().setConsoleListener(HgConsole.this)
