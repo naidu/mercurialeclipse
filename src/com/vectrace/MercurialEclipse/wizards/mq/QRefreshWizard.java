@@ -72,7 +72,7 @@ public class QRefreshWizard extends HgWizard {
                                 page.getDate().getText());
                 monitor.worked(1);                
                 MercurialStatusCache.getInstance().refreshStatus(resource.getProject(),
-                        monitor);
+                        monitor);                
                 monitor.done();
             } catch (HgException e) {
                 throw new InvocationTargetException(e, e.getLocalizedMessage());
@@ -104,9 +104,9 @@ public class QRefreshWizard extends HgWizard {
      */
     @Override
     public boolean performFinish() {
-        RefreshOperation initOperation = new RefreshOperation(getContainer());
+        RefreshOperation refreshOperation = new RefreshOperation(getContainer());
         try {
-            getContainer().run(false, false, initOperation);
+            getContainer().run(false, false, refreshOperation);
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
             page.setErrorMessage(e.getLocalizedMessage());
