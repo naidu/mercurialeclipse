@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -76,6 +77,7 @@ public class ResourceDecorator extends LabelProvider implements
         INCOMING_CACHE.clear();
         LOCAL_CACHE.deleteObserver(this);
         LOCAL_CACHE.clear();
+        AbstractCache.clearNodeMap();
         super.dispose();
     }
 
@@ -92,8 +94,9 @@ public class ResourceDecorator extends LabelProvider implements
             IResource resource = (IResource) element;
             IProject project = resource.getProject();
 
-            if (project == null || null == RepositoryProvider.getProvider(project,
-                    MercurialTeamProvider.ID)) {
+            if (project == null
+                    || null == RepositoryProvider.getProvider(project,
+                            MercurialTeamProvider.ID)) {
                 return;
             }
 
@@ -107,7 +110,8 @@ public class ResourceDecorator extends LabelProvider implements
             if (showChangeset) {
                 // get recent project versions
                 if (!STATUS_CACHE.getLock(project.getLocation()).isLocked()
-                        && !STATUS_CACHE.getLock(resource.getLocation()).isLocked()
+                        && !STATUS_CACHE.getLock(resource.getLocation())
+                                .isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
@@ -123,7 +127,8 @@ public class ResourceDecorator extends LabelProvider implements
                 }
             } else {
                 if (!STATUS_CACHE.getLock(project.getLocation()).isLocked()
-                        && !STATUS_CACHE.getLock(resource.getLocation()).isLocked()
+                        && !STATUS_CACHE.getLock(resource.getLocation())
+                                .isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
                             "Updating status for project " + project.getName()
@@ -298,10 +303,18 @@ public class ResourceDecorator extends LabelProvider implements
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
             File root = new File(HgRootClient.getHgRoot(project));
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
-            changeSet = LocalChangesetCache.getInstance().getChangeSet(nodeId);
-            if (changeSet == null) {
-              changeSet = LocalChangesetCache.getInstance().getLocalChangeSet(project, nodeId);
-            } 
+            if (nodeId != null
+                    && !nodeId
+                            .equals("0000000000000000000000000000000000000000")) {
+                changeSet = LocalChangesetCache.getInstance().getChangeSet(
+                        nodeId);
+                if (changeSet == null) {
+                    changeSet = LocalChangesetCache.getInstance()
+                            .getLocalChangeSet(project, nodeId);
+                }
+            } else {
+                suffix = " [ new ] ";
+            }
             if (changeSet != null) {
                 suffix = " [ ";
                 String hex = ":" + changeSet.getNodeShort();
