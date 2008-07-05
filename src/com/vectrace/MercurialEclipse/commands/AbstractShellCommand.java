@@ -172,7 +172,7 @@ public abstract class AbstractShellCommand {
                                     .getBytes())), null);
                     return consumer.getBytes();
                 }
-                String msg = "";
+                String msg = new String(consumer.getBytes());
                 if (!expectPositiveReturnValue) {
                     return msg.getBytes();
                 }
