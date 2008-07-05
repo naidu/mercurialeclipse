@@ -105,7 +105,7 @@ public class LocalChangesetCache extends AbstractCache {
             SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource
                     .getLocation());
             if (revisions == null) {
-                if (objectResource.getType() != IResource.FOLDER
+                if (objectResource.getType() == IResource.FILE || objectResource.getType()==IResource.PROJECT
                         && STATUS_CACHE.isSupervised(objectResource)
                         && !STATUS_CACHE.isAdded(objectResource.getProject(),
                                 objectResource.getLocation())) {
