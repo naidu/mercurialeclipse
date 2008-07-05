@@ -123,12 +123,14 @@ public class MercurialStatusCache extends AbstractCache implements
                     }
                     break;
                 case IResourceDelta.CHANGED:
-                    if (!res.isDerived() && isSupervised(res) && res.getType() == IResource.FILE) {
+                    if (!res.isDerived() && isSupervised(res)
+                            && res.getType() == IResource.FILE) {
                         changed.add(getResource(res));
                     }
                     break;
                 case IResourceDelta.REMOVED:
-                    if (!res.isDerived() && isSupervised(res) && res.getType() == IResource.FILE) {
+                    if (!res.isDerived() && isSupervised(res)
+                            && res.getType() == IResource.FILE) {
                         removed.add(getResource(res));
                     }
                     break;
@@ -285,8 +287,9 @@ public class MercurialStatusCache extends AbstractCache implements
         Assert.isNotNull(path);
         ReentrantLock lock = getLock(project.getLocation());
 
-        if (project.isAccessible() && null != RepositoryProvider.getProvider(project,
-                MercurialTeamProvider.ID)) {
+        if (project.isAccessible()
+                && null != RepositoryProvider.getProvider(project,
+                        MercurialTeamProvider.ID)) {
             try {
                 lock.lock();
                 if (path.equals(project.getLocation())) {
@@ -326,9 +329,10 @@ public class MercurialStatusCache extends AbstractCache implements
         Assert.isNotNull(path);
         if (null != RepositoryProvider.getProvider(project,
                 MercurialTeamProvider.ID)) {
-            if (path.equals(project.getLocation())) {
-                return false;
-            }
+//            if (path.equals(project.getLocation())) {
+//                // FIX ME: This breaks on new projects without changelog
+//                return false;
+//            }
             ReentrantLock lock = getLock(path);
             try {
                 lock.lock();
@@ -336,6 +340,19 @@ public class MercurialStatusCache extends AbstractCache implements
                 if (status != null) {
                     switch (status.length() - 1) {
                     case MercurialStatusCache.BIT_ADDED:
+                        File fileSystemResource = path.toFile();
+                        if (fileSystemResource.isDirectory()
+                                && status.length() > 1) {
+                            // a directory is still supervised if one of the
+                            // following bits is set
+                            boolean supervised = status.get(BIT_CLEAN)
+                                    || status.get(BIT_DELETED)
+                                    || status.get(BIT_MODIFIED)
+                                    || status.get(BIT_REMOVED)
+                                    || status.get(BIT_CONFLICT)
+                                    || status.get(BIT_IGNORE);                                    
+                            return !supervised;
+                        }
                         return true;
                     }
                     return false;
@@ -367,7 +384,7 @@ public class MercurialStatusCache extends AbstractCache implements
         if (monitor != null) {
             monitor.subTask("Refreshing " + res.getName());
         }
-        
+
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
@@ -415,7 +432,7 @@ public class MercurialStatusCache extends AbstractCache implements
         notifyChanged(res);
         if (monitor != null) {
             monitor.worked(1);
-        }        
+        }
     }
 
     /**

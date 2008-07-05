@@ -20,43 +20,43 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author zingo
- *
+ * 
  */
-public class MercurialHistoryPageSource extends HistoryPageSource
-{
-   MercurialHistoryProvider fileHistoryProvider;
-   
-  public MercurialHistoryPageSource(MercurialHistoryProvider fileHistoryProvider)
-  {
-    super();
-//    System.out.println("MercurialHistoryPageSource::MercurialHistoryPageSource()");
-    this.fileHistoryProvider = fileHistoryProvider;
-  }
+public class MercurialHistoryPageSource extends HistoryPageSource {
+    MercurialHistoryProvider fileHistoryProvider;
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.IHistoryPageSource#canShowHistoryFor(java.lang.Object)
-   */
-  public boolean canShowHistoryFor(Object object)
-  {
-	if (object instanceof IResource) {
-			return MercurialStatusCache.getInstance().isSupervised(
-					(IResource) object);
-	}
-	return true;
-	
-  }
+    public MercurialHistoryPageSource(
+            MercurialHistoryProvider fileHistoryProvider) {
+        super();
+        this.fileHistoryProvider = fileHistoryProvider;
+    }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.ui.history.IHistoryPageSource#createPage(java.lang.Object)
-   */
-  public Page createPage(Object object)
-  {
-//    System.out.println("MercurialHistoryPageSource::createPage()");
-//    if (object instanceof IResource && ((IResource) object).getType() == IResource.FILE) 
-//    {
-      return new MercurialHistoryPage((IResource) object);
-//    }
-//    return null;
-  }
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.team.ui.history.IHistoryPageSource#canShowHistoryFor(java
+     * .lang.Object)
+     */
+    public boolean canShowHistoryFor(Object object) {
+        if (object instanceof IResource) {
+            IResource resource = (IResource) object;
+            MercurialStatusCache cache = MercurialStatusCache.getInstance();
+            return cache.isSupervised(resource) && !(cache.isAdded(resource.getProject(), resource.getLocation()));
+        }
+        return true;
+
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.team.ui.history.IHistoryPageSource#createPage(java.lang.Object
+     * )
+     */
+    public Page createPage(Object object) {        
+        return new MercurialHistoryPage((IResource) object);
+    }
 
 }
