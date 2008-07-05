@@ -31,10 +31,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleManager;
-import org.eclipse.ui.console.IOConsole;
 import org.eclipse.ui.console.IOConsoleInputStream;
 import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.dialogs.PreferencesUtil;
@@ -43,6 +39,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.views.console.HgConsole;
 
 /**
  * @author zingo
@@ -50,7 +47,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public class MercurialUtilities {
 
-    static IOConsole console;
+    static HgConsole console;
     static IOConsoleInputStream console_in;
     static IOConsoleOutputStream console_out;
     static PrintStream console_out_printstream; // migth be used by threads
@@ -387,41 +384,39 @@ public class MercurialUtilities {
         return st;
     }
 
-    public static synchronized IOConsole getMercurialConsole() {
+    public static synchronized HgConsole getMercurialConsole() {
         if (console != null) {
             return console;
         }
 
-        console = new IOConsole("Mercurial Console", null);
-        IConsoleManager manager = ConsolePlugin.getDefault()
-                .getConsoleManager();
-        manager.addConsoles(new IConsole[] { console });
-
-        if (console_in == null) {
-            console_in = console.getInputStream();
-        }
-        if (console_out == null) {
-            console_out = console.newOutputStream();
-            // console_out_printstream.println("Hello word!");
-        }
+        console = new HgConsole();
+        console.initialize();
+        
+//        if (console_in == null) {
+//            console_in = console.getInputStream();
+//        }
+//        if (console_out == null) {
+//            console_out = console.newOutputStream();
+//            // console_out_printstream.println("Hello word!");
+//        }
         return console;
     }
 
-    static synchronized PrintStream getMercurialConsoleOutPrintStream() {
-        if (console_out_printstream != null) {
-            return console_out_printstream;
-        }
-        if (console == null) {
-            console = getMercurialConsole();
-        }
-        if (console_out != null) {
-            console_out_printstream = new PrintStream(console_out);
-            // console_out_printstream.setColor(Display.getDefault().
-            // getSystemColor(SWT.COLOR_GREEN));
-            return console_out_printstream;
-        }
-        return null;
-    }
+//    static synchronized PrintStream getMercurialConsoleOutPrintStream() {
+//        if (console_out_printstream != null) {
+//            return console_out_printstream;
+//        }
+//        if (console == null) {
+//            console = getMercurialConsole();
+//        }
+//        if (console_out != null) {
+//            console_out_printstream = new PrintStream(console_out);
+//            // console_out_printstream.setColor(Display.getDefault().
+//            // getSystemColor(SWT.COLOR_GREEN));
+//            return console_out_printstream;
+//        }
+//        return null;
+//    }
 
     /*
      * TODO public static synchronized IOConsole getBazaarConsole() {

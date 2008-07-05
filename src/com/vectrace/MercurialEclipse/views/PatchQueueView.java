@@ -316,10 +316,10 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             && newResource.isAccessible()
                             && MercurialUtilities.isResourceInReposetory(
                                     newResource, false)) {
-                        resource = newResource;
-                        String newRoot = HgRootClient.getHgRoot(resource);
+                        String newRoot = HgRootClient.getHgRoot(newResource);
                         if (!newRoot.equals(currentHgRoot)) {
                             currentHgRoot = newRoot;
+                            resource = newResource;
                             populateTable();
                             statusLabel.setText("Repository: " + currentHgRoot);
                         }

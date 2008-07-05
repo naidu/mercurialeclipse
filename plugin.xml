@@ -737,7 +737,11 @@
       <page class="com.vectrace.MercurialEclipse.preferences.PerformancePreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Performance"
             category="com.vectrace.MercurialEclipse.prefspage"
-            name="Performance"/>              
+            name="Performance"/>    
+      <page class="com.vectrace.MercurialEclipse.preferences.ConsolePreferencesPage"
+            id="com.vectrace.MercurialEclipse.prefspage.Console"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="Console"/>     
                       
    </extension>
 
@@ -819,6 +823,14 @@
             class="com.vectrace.MercurialEclipse.views.PatchQueueView"
             id="com.vectrace.MercurialEclipse.views.PatchQueueView">
       </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.console.consoleFactories">
+      <consoleFactory
+            class="com.vectrace.MercurialEclipse.views.console.HgConsoleFactory"
+            icon="icons/mercurialeclipse.png"
+            label="Mercurial Console">
+      </consoleFactory>
    </extension>
    
 </plugin>

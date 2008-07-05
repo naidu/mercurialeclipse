@@ -276,4 +276,11 @@ public void stop(BundleContext context) throws Exception
     public boolean isHgUsable() {
         return hgUsable;
     }
+
+    /**
+     * @return
+     */
+    public static Display getStandardDisplay() {
+        return PlatformUI.getWorkbench().getDisplay();
+    }
 }

@@ -52,5 +52,16 @@ public class MercurialPreferenceConstants {
     
     // synchronize
     public static final String SYNCHRONIZE_FILES = "hg.synchronize.synchronizeOnFileLevel"; //$NON-NLS-1$
+    
+    // console
+    public static final String PREF_CONSOLE_SHOW_ON_MESSAGE = "hg.console.showOnMessage";
+    public static final String PREF_CONSOLE_WRAP = "hg.console.wrap";
+    public static final String PREF_CONSOLE_WIDTH = "hg.console.width";
+    public static final String PREF_CONSOLE_LIMIT_OUTPUT = "hg.console.limitOutput";
+    public static final String PREF_CONSOLE_HIGH_WATER_MARK = "hg.console.highWaterMark";
+    public static final String PREF_CONSOLE_COMMAND_COLOR = "hg.console.command_color";
+    public static final String PREF_CONSOLE_MESSAGE_COLOR = "hg.console.message_color";
+    public static final String PREF_CONSOLE_ERROR_COLOR = "hg.console.error_color";
+    public static final String PREF_CONSOLE_FONT = "hg.console.font";
 
 }

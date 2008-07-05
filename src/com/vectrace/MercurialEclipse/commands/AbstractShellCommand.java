@@ -15,15 +15,17 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.views.console.HgConsole;
 
 /**
  * @author bastian
@@ -78,9 +80,6 @@ public abstract class AbstractShellCommand {
 
     }
 
-    protected static PrintStream console = new PrintStream(MercurialUtilities
-            .getMercurialConsole().newOutputStream());
-
     public static final int MAX_PARAMS = 120;
     protected String command;
     protected List<String> commands;
@@ -92,12 +91,15 @@ public abstract class AbstractShellCommand {
     private String timeoutConstant;
     private InputStreamConsumer consumer;
     private Process process;
+    private HgConsole console;
 
     protected AbstractShellCommand() {
+        this.console = MercurialUtilities.getMercurialConsole();
     }
 
     public AbstractShellCommand(List<String> commands, File workingDir,
             boolean escapeFiles) {
+        this();
         this.command = null;
         this.escapeFiles = escapeFiles;
         this.workingDir = workingDir;
@@ -142,40 +144,54 @@ public abstract class AbstractShellCommand {
      * @return
      * @throws HgException
      */
-    public byte[] executeToBytes(int timeout,
-            boolean expectPositiveReturnValue) throws HgException {
+    public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue)
+            throws HgException {
         try {
-            long start = System.currentTimeMillis();
             List<String> cmd = getCommands();
+            String cmdString = cmd.toString().replace(",", "").substring(1);
+            cmdString = cmdString.substring(0, cmdString.length() - 1);
+            if (console == null) {
+                console = MercurialUtilities.getMercurialConsole();
+            }
+            console.commandInvoked(cmdString);
             ProcessBuilder builder = new ProcessBuilder(cmd);
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
             }
             process = builder.start();
+
             consumer = new InputStreamConsumer(process.getInputStream());
             consumer.start();
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
+
                 if (process.waitFor() == 0) {
-                    console.println("Done in "
-                            + (System.currentTimeMillis() - start) + " ms");
+                    console.commandCompleted(new Status(IStatus.OK,
+                            MercurialEclipsePlugin.ID, new String(consumer
+                                    .getBytes())), null);
                     return consumer.getBytes();
                 }
                 String msg = "";
-                if (consumer.getBytes() != null) {
-                    msg = new String(consumer.getBytes());
-                    System.out.println(msg);
-                }
-
                 if (!expectPositiveReturnValue) {
                     return msg.getBytes();
                 }
 
-                throw new HgException("Process error, return code: "
-                        + process.exitValue() + ", message: " + msg);
+                HgException hgex = new HgException(
+                        "Process error, return code: " + process.exitValue()
+                                + ", message: " + msg);
+
+                console.commandCompleted(new Status(IStatus.ERROR,
+                        MercurialEclipsePlugin.ID, hgex.getLocalizedMessage()),
+                        null);
+
+                throw hgex;
             }
-            throw new HgException("Process timeout");
+            HgException hgEx = new HgException("Process timeout");
+            console.errorLineReceived(hgEx.getMessage(), new Status(
+                    IStatus.ERROR, MercurialEclipsePlugin.ID, new String(
+                            consumer.getBytes()), hgEx));
+            throw hgEx;
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
         } catch (InterruptedException e) {
@@ -203,8 +219,6 @@ public abstract class AbstractShellCommand {
             result.add("--");
         }
         result.addAll(files);
-        console.println("Command: (" + result.size() + ") "
-                + result.toString().replace(",", ""));
         // TODO check that length <= MAX_PARAMS
         return result;
     }
