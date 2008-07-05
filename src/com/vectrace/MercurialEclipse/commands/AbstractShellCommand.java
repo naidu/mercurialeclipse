@@ -152,17 +152,16 @@ public abstract class AbstractShellCommand {
             cmdString = cmdString.substring(0, cmdString.length() - 1);
             if (console == null) {
                 console = MercurialUtilities.getMercurialConsole();
-            }
-            console.commandInvoked(cmdString);
+            }            
             ProcessBuilder builder = new ProcessBuilder(cmd);
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
-            }
+            }            
             process = builder.start();
-
             consumer = new InputStreamConsumer(process.getInputStream());
             consumer.start();
+            console.commandInvoked(cmdString);
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
 

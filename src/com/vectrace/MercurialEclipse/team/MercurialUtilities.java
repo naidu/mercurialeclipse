@@ -40,6 +40,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
+import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
 
 /**
  * @author zingo
@@ -170,18 +171,20 @@ public class MercurialUtilities {
     public static boolean isResourceInReposetory(IResource resource,
             boolean dialog) {
         // check, if we're team provider
-        if (resource == null || resource.getProject() == null
-                || RepositoryProvider.getProvider(resource.getProject(),MercurialTeamProvider.ID) == null) {
+        if (resource == null
+                || resource.getProject() == null
+                || RepositoryProvider.getProvider(resource.getProject(),
+                        MercurialTeamProvider.ID) == null) {
             return false;
         }
-        
+
         if (resource instanceof IProject) {
             return true;
         }
 
         // Check to se if resource is not in a link
         String linkedParentName = resource.getProjectRelativePath().segment(0);
-        if (linkedParentName == null) {            
+        if (linkedParentName == null) {
             return false;
         }
 
@@ -391,75 +394,11 @@ public class MercurialUtilities {
 
         console = new HgConsole();
         console.initialize();
-        
-//        if (console_in == null) {
-//            console_in = console.getInputStream();
-//        }
-//        if (console_out == null) {
-//            console_out = console.newOutputStream();
-//            // console_out_printstream.println("Hello word!");
-//        }
+        HgConsoleFactory.showConsole();
         return console;
     }
 
-//    static synchronized PrintStream getMercurialConsoleOutPrintStream() {
-//        if (console_out_printstream != null) {
-//            return console_out_printstream;
-//        }
-//        if (console == null) {
-//            console = getMercurialConsole();
-//        }
-//        if (console_out != null) {
-//            console_out_printstream = new PrintStream(console_out);
-//            // console_out_printstream.setColor(Display.getDefault().
-//            // getSystemColor(SWT.COLOR_GREEN));
-//            return console_out_printstream;
-//        }
-//        return null;
-//    }
-
-    /*
-     * TODO public static synchronized IOConsole getBazaarConsole() {
-     * 
-     * if (console == null) { console = new
-     * IOConsole(UITexts.BazaarConsole_name, null); IConsoleManager manager =
-     * ConsolePlugin.getDefault().getConsoleManager(); manager.addConsoles(new
-     * IConsole[] { console }); } else { return console; } if (console_in ==
-     * null) { console_in = console.getInputStream(); } if (console_out == null)
-     * { console_out = console.newOutputStream(); //
-     * console_out_printstream.println("Hello word!"); } return console; //
-     * Error }
-     * 
-     * static synchronized PrintStream getBazaarConsoleOutPrintStream(){
-     * if(console == null) { console = getBazaarConsole(); } if (console_out !=
-     * null) { console_out_printstream = new PrintStream(console_out); return
-     * console_out_printstream; } return null; }
-     */
-
-    /*
-     * public void runTest(IOConsole console) { final Display display =
-     * Display.getDefault();
-     * 
-     * final IOConsoleInputStream in = console.getInputStream();
-     * display.asyncExec(new Runnable() { public void run() {
-     * in.setColor(display.getSystemColor(SWT.COLOR_BLUE)); } });
-     * IConsoleManager manager = ConsolePlugin.getDefault().getConsoleManager();
-     * manager.addConsoles(new IConsole[] { console });
-     * 
-     * final IOConsoleOutputStream out = console.newOutputStream();
-     * //$NON-NLS-1$ Display.getDefault().asyncExec(new Runnable() { public void
-     * run() {
-     * out.setColor(Display.getDefault().getSystemColor(SWT.COLOR_GREEN));
-     * out.setFontStyle(SWT.ITALIC); } });
-     * 
-     * PrintStream ps = new PrintStream(out); ps.println("Any text entered
-     * should be echoed back"); //$NON-NLS-1$ for(;;) { byte[] b = new
-     * byte[1024]; int bRead = 0; try { bRead = in.read(b); } catch (IOException
-     * io) { io.printStackTrace(); }
-     * 
-     * try { out.write(b, 0, bRead); ps.println(); } catch (IOException e) {
-     * e.printStackTrace(); } } }
-     */
+    
 
     private static class LegacyAdaptor extends HgCommand {
 
