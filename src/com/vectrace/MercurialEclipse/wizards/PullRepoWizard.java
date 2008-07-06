@@ -243,7 +243,7 @@ public class PullRepoWizard extends HgWizard {
                 if (!showCommitDialog) {
                     output += CommitMergeHandler.commitMerge(resource);
                 } else {
-                    output += new CommitMergeHandler().commitMergeWithCommitDialog(resource);
+                    output += new CommitMergeHandler().commitMergeWithCommitDialog(resource, getShell());
                 }
                 monitor.worked(1);
             }

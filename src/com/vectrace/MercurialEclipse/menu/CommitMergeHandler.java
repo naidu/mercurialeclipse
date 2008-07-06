@@ -5,6 +5,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
@@ -20,7 +21,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
     @Override
     protected void run(IResource resource) throws HgException {
         Assert.isNotNull(resource);
-        commitMergeWithCommitDialog(resource);
+        commitMergeWithCommitDialog(resource, getShell());
     }
 
     /**
@@ -30,7 +31,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
      * @return the hg command output
      * @throws HgException
      */
-    public String commitMergeWithCommitDialog(IResource resource) throws HgException {
+    public String commitMergeWithCommitDialog(IResource resource, Shell shell) throws HgException {
         Assert.isNotNull(resource);
         String result = "";
         try {
@@ -42,7 +43,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
             selectedResourceArray[0] = resource;
 
             CommitDialog commitDialog = new CommitDialog(
-                    getShell(),
+                    shell,
                     project,
                     selectedResourceArray,
                     "Merge with "
