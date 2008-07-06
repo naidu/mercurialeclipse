@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PartInitException;
@@ -57,7 +58,7 @@ public class MergeHandler extends SingleResourceHandler {
             view.clearView();
             view.setCurrentProject(project);
             // trigger refresh of project decoration
-            project.touch(null);
+            project.touch(new NullProgressMonitor());
             project.refreshLocal(IResource.DEPTH_INFINITE, null);
         }
         return result;

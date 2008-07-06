@@ -121,6 +121,7 @@ public class PullRepoWizard extends HgWizard {
                             return new Status(IStatus.OK,
                                     MercurialEclipsePlugin.ID, res);
                         } catch (Exception e) {
+                            MercurialEclipsePlugin.logError(e);
                             return new Status(IStatus.ERROR,
                                     MercurialEclipsePlugin.ID, e
                                             .getLocalizedMessage(), e);
@@ -299,7 +300,7 @@ public class PullRepoWizard extends HgWizard {
 
         try {
             doUpdate = pullPage.getUpdateCheckBox().getSelection();
-            boolean force = pullPage.getUpdateCheckBox().getSelection();
+            boolean force = pullPage.getForceCheckBox().getSelection();
 
             ChangeSet cs = null;
             if (incomingPage.getRevisionCheckBox().getSelection()) {
