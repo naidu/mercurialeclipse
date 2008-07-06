@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,6 +27,9 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgStatusClient extends AbstractClient {
 
     public static String getStatus(IContainer root) throws HgException {
+        return getStatus(root.getLocation().toFile());
+    }
+    public static String getStatus(File root) throws HgException {
         HgCommand command = new HgCommand("status", root, true);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduic");

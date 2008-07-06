@@ -333,7 +333,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
      * org.eclipse.team.internal.cHg.core.client.listeners.IConsoleListener#
      * commandCompleted(org.eclipse.core.runtime.IStatus, java.lang.Exception)
      */
-    public void commandCompleted(IStatus status, Exception exception) {
+    public void commandCompleted(IStatus status, Throwable exception) {
         long commandRuntime = System.currentTimeMillis() - commandStarted;
         String time;
         try {

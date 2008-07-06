@@ -10,10 +10,6 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-
 /**
  * 
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -40,19 +36,12 @@ public class HgCommand extends AbstractShellCommand {
     }
 
     protected String getHgExecutable() {
-
-        if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
-            MercurialUtilities.configureHgExecutable();
-            MercurialEclipsePlugin.getDefault().checkHgInstallation();
-        }
-
-        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
+        return HgClients.getExecutable();
+        
     }
 
     protected String getDefaultUserName() {
-        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
+        return HgClients.getDefaultUserName();
     }
 
     protected void addUserName(String user) {

@@ -19,13 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.views.console.HgConsole;
 
 /**
  * @author bastian
@@ -62,18 +57,18 @@ public abstract class AbstractShellCommand {
                 this.output = myOutput.toByteArray();
             } catch (IOException e) {
                 if (!interrupted()) {
-                    MercurialEclipsePlugin.logError(e);
+                    HgClients.logError(e);
                 }
             } finally {
                 try {
                     this.stream.close();
                 } catch (IOException e) {
-                    MercurialEclipsePlugin.logError(e);
+                    HgClients.logError(e);
                 }
                 try {
                     myOutput.close();
                 } catch (IOException e) {
-                    MercurialEclipsePlugin.logError(e);
+                    HgClients.logError(e);
                 }
             }
         }
@@ -91,10 +86,10 @@ public abstract class AbstractShellCommand {
     private String timeoutConstant;
     private InputStreamConsumer consumer;
     private Process process;
-    private HgConsole console;
+    // private HgConsole console;
 
     protected AbstractShellCommand() {
-        this.console = MercurialUtilities.getMercurialConsole();
+       //  this.console = MercurialUtilities.getMercurialConsole();
     }
 
     public AbstractShellCommand(List<String> commands, File workingDir,
@@ -115,19 +110,8 @@ public abstract class AbstractShellCommand {
     public byte[] executeToBytes() throws HgException {
         int timeout = DEFAULT_TIMEOUT;
         if (this.timeoutConstant != null) {
-            String pref = MercurialUtilities.getPreference(
-                    this.timeoutConstant, String.valueOf(DEFAULT_TIMEOUT));
-            try {
-                timeout = Integer.parseInt(pref);
-                if (timeout < 0) {
-                    throw new NumberFormatException("Timeout < 0");
-                }
-            } catch (NumberFormatException e) {
-                MercurialEclipsePlugin.logWarning(
-                        "Timeout for command " + command
-                                + " not correctly configured in preferences.",
-                        e);
-            }
+            timeout = HgClients.getTimeOut(this.timeoutConstant);
+            
         }
         return executeToBytes(timeout);
     }
@@ -150,9 +134,7 @@ public abstract class AbstractShellCommand {
             List<String> cmd = getCommands();
             String cmdString = cmd.toString().replace(",", "").substring(1);
             cmdString = cmdString.substring(0, cmdString.length() - 1);
-            if (console == null) {
-                console = MercurialUtilities.getMercurialConsole();
-            }
+            
             ProcessBuilder builder = new ProcessBuilder(cmd);
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
@@ -161,7 +143,7 @@ public abstract class AbstractShellCommand {
             process = builder.start();
             consumer = new InputStreamConsumer(process.getInputStream());
             consumer.start();
-            console.commandInvoked(cmdString);
+            getConsole().commandInvoked(cmdString);
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
                 int exitCode = process.waitFor();
@@ -169,9 +151,7 @@ public abstract class AbstractShellCommand {
 
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    console.commandCompleted(
-                            new Status(IStatus.OK, MercurialEclipsePlugin.ID,
-                                    new String(returnValue)), null);
+                    getConsole().commandCompleted(exitCode, new String(returnValue), null);
                     return consumer.getBytes();
                 }
 
@@ -182,26 +162,12 @@ public abstract class AbstractShellCommand {
 
                 // exit code == 1 usually isn't fatal.
                 String msg = new String(returnValue);
-                int severity = IStatus.WARNING;
-
-                // exit code > 1 is usually baaaaad
-                if (exitCode != 1) {
-                    msg = hgex.getLocalizedMessage();
-                    severity = IStatus.ERROR;
-                }
-
-                IStatus status = new Status(severity,
-                        MercurialEclipsePlugin.ID, msg);
-                
-                // output warning/error
-                console.commandCompleted(status, hgex);
+                getConsole().commandCompleted(exitCode, msg, hgex);
 
                 throw hgex;
             }
             HgException hgEx = new HgException("Process timeout");
-            console.errorLineReceived(hgEx.getMessage(), new Status(
-                    IStatus.ERROR, MercurialEclipsePlugin.ID, new String(
-                            consumer.getBytes()), hgEx));
+            getConsole().printError(new String(consumer.getBytes()), hgEx);
             throw hgEx;
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
@@ -269,5 +235,12 @@ public abstract class AbstractShellCommand {
             consumer.interrupt();
         }
         process.destroy();
+    }
+
+    /**
+     * @return the console
+     */
+    private static IConsole getConsole() {
+        return HgClients.getConsole();
     }
 }
