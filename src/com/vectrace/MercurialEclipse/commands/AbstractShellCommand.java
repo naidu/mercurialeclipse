@@ -21,6 +21,8 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
@@ -86,10 +88,11 @@ public abstract class AbstractShellCommand {
     private String timeoutConstant;
     private InputStreamConsumer consumer;
     private Process process;
+
     // private HgConsole console;
 
     protected AbstractShellCommand() {
-       //  this.console = MercurialUtilities.getMercurialConsole();
+        // this.console = MercurialUtilities.getMercurialConsole();
     }
 
     public AbstractShellCommand(List<String> commands, File workingDir,
@@ -111,7 +114,7 @@ public abstract class AbstractShellCommand {
         int timeout = DEFAULT_TIMEOUT;
         if (this.timeoutConstant != null) {
             timeout = HgClients.getTimeOut(this.timeoutConstant);
-            
+
         }
         return executeToBytes(timeout);
     }
@@ -134,7 +137,7 @@ public abstract class AbstractShellCommand {
             List<String> cmd = getCommands();
             String cmdString = cmd.toString().replace(",", "").substring(1);
             cmdString = cmdString.substring(0, cmdString.length() - 1);
-            
+
             ProcessBuilder builder = new ProcessBuilder(cmd);
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
@@ -148,11 +151,15 @@ public abstract class AbstractShellCommand {
             if (!consumer.isAlive()) {
                 int exitCode = process.waitFor();
                 byte[] returnValue = consumer.getBytes();
-
+                String msg = new String(returnValue);
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    getConsole().commandCompleted(exitCode, new String(returnValue), null);
-                    return consumer.getBytes();
+                    getConsole().commandCompleted(0, new String(returnValue),
+                            null);
+                    if (isDebugMode()) {
+                        getConsole().printMessage(msg, null);
+                    }
+                    return returnValue;
                 }
 
                 // exit code > 0
@@ -161,7 +168,6 @@ public abstract class AbstractShellCommand {
                                 + ", message: " + new String(returnValue));
 
                 // exit code == 1 usually isn't fatal.
-                String msg = new String(returnValue);
                 getConsole().commandCompleted(exitCode, msg, hgex);
 
                 throw hgex;
@@ -178,6 +184,16 @@ public abstract class AbstractShellCommand {
                 process.destroy();
             }
         }
+    }
+
+    /**
+     * @return
+     */
+    private boolean isDebugMode() {
+        return Boolean.valueOf(
+                MercurialUtilities.getPreference(
+                        MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
+                        "false")).booleanValue();
     }
 
     public String executeToString() throws HgException {

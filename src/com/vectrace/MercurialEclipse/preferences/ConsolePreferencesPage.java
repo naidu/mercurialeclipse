@@ -26,115 +26,154 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
-public class ConsolePreferencesPage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
+public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
+        IWorkbenchPreferencePage {
 
-	public ConsolePreferencesPage() {
-		super(GRID);
-		setPreferenceStore(MercurialEclipsePlugin.getDefault().getPreferenceStore());
-	}
-	private ColorFieldEditor commandColorEditor;
-	private ColorFieldEditor messageColorEditor;
-	private ColorFieldEditor errorColorEditor;
-	private BooleanFieldEditor showOnMessage;
-	private BooleanFieldEditor restrictOutput;
-	private BooleanFieldEditor wrap;
-	private IntegerFieldEditor highWaterMark;
-	private IntegerFieldEditor width;
+    public ConsolePreferencesPage() {
+        super(GRID);
+        setPreferenceStore(MercurialEclipsePlugin.getDefault()
+                .getPreferenceStore());
+    }
 
-	@Override
+    private ColorFieldEditor commandColorEditor;
+    private ColorFieldEditor messageColorEditor;
+    private ColorFieldEditor errorColorEditor;
+    private BooleanFieldEditor showOnMessage;
+    private BooleanFieldEditor restrictOutput;
+    private BooleanFieldEditor wrap;
+    private IntegerFieldEditor highWaterMark;
+    private IntegerFieldEditor width;
+    private BooleanFieldEditor debug;
+
+    @Override
     protected void createFieldEditors() {
-		final Composite composite = getFieldEditorParent();
-		createLabel(composite, "Console preferences"); 
-		IPreferenceStore store = getPreferenceStore();
-		
-		// ** WRAP
-		wrap = new BooleanFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_WRAP, "Wrap text", composite); 
-		addField(wrap);
-		
-		width = new IntegerFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_WIDTH, "Console width", composite); 
-		width.setValidRange(80, Integer.MAX_VALUE - 1);
-		addField(width);
-		width.setEnabled(store.getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_WRAP), composite);
-		
-		// ** RESTRICT OUTPUT
-		restrictOutput = new BooleanFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT, "Limit output", composite); 
-		addField(restrictOutput);
-		
-		highWaterMark = new IntegerFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK, "High water mark", composite); //)
-		highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
-		addField(highWaterMark);
-		highWaterMark.setEnabled(store.getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT), composite);
-		
-		// ** SHOW AUTOMATICALLY
-		showOnMessage = new BooleanFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "Show console on message", composite); 
-		addField(showOnMessage);
-		
-		createLabel(composite, "Console color preferences"); 
-		
-		//	** COLORS AND FONTS
-		commandColorEditor = createColorFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR,
-			"Command color", composite); 
-		addField(commandColorEditor);
-		
-		messageColorEditor = createColorFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR,
-			"Message color", composite); 
-		addField(messageColorEditor);
-		
-		errorColorEditor = createColorFieldEditor(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR,
-			"Error color", composite); 
-		addField(errorColorEditor);
-		
-		Dialog.applyDialogFont(composite);        
-	}
-	
-	
-	@Override
+        final Composite composite = getFieldEditorParent();
+        createLabel(composite, "Console preferences");
+        IPreferenceStore store = getPreferenceStore();
+
+        // ** WRAP
+        wrap = new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_WRAP, "Wrap text",
+                composite);
+        addField(wrap);
+
+        width = new IntegerFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_WIDTH,
+                "Console width", composite);
+        width.setValidRange(80, Integer.MAX_VALUE - 1);
+        addField(width);
+        width.setEnabled(store
+                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_WRAP),
+                composite);
+
+        // ** RESTRICT OUTPUT
+        restrictOutput = new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT,
+                "Limit output", composite);
+        addField(restrictOutput);
+
+        highWaterMark = new IntegerFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK,
+                "Number of characters", composite); // )
+        highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
+        addField(highWaterMark);
+        highWaterMark
+                .setEnabled(
+                        store
+                                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT),
+                        composite);
+
+        // ** SHOW AUTOMATICALLY
+        showOnMessage = new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
+                "Show console on message", composite);
+        addField(showOnMessage);
+
+        // ** SHOW DEBUG
+        debug = new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
+                "Show all hg messages (debug mode)", composite);
+        addField(debug);
+
+        createLabel(composite, "Console color preferences");
+
+        // ** COLORS AND FONTS
+        commandColorEditor = createColorFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR,
+                "Command color", composite);
+        addField(commandColorEditor);
+
+        messageColorEditor = createColorFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR,
+                "Message color", composite);
+        addField(messageColorEditor);
+
+        errorColorEditor = createColorFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR,
+                "Error color", composite);
+        addField(errorColorEditor);
+
+        Dialog.applyDialogFont(composite);
+    }
+
+    @Override
     public void propertyChange(PropertyChangeEvent event) {
-		super.propertyChange(event);
-		highWaterMark.setEnabled(restrictOutput.getBooleanValue(), getFieldEditorParent());
-		width.setEnabled(wrap.getBooleanValue(), getFieldEditorParent());
-	}
+        super.propertyChange(event);
+        highWaterMark.setEnabled(restrictOutput.getBooleanValue(),
+                getFieldEditorParent());
+        width.setEnabled(wrap.getBooleanValue(), getFieldEditorParent());
+    }
 
-	/**
-	 * Utility method that creates a label instance
-	 * and sets the default layout data.
-	 *
-	 * @param parent  the parent for the new label
-	 * @param text  the text for the new label
-	 * @return the new label
-	 */
-	private Label createLabel(Composite parent, String text) {
-		Label label = new Label(parent, SWT.LEFT);
-		label.setText(text);
-		GridData data = new GridData();
-		data.horizontalSpan = 2;
-		data.horizontalAlignment = GridData.FILL;
-		label.setLayoutData(data);
-		return label;
-	}
-	/**
-	 * Creates a new color field editor.
-	 */
-	private ColorFieldEditor createColorFieldEditor(String preferenceName, String label, Composite parent) {
-		ColorFieldEditor editor = new ColorFieldEditor(preferenceName, label, parent);
-		editor.setPage(this);
-		editor.setPreferenceStore(getPreferenceStore());
-		return editor;
-	}
+    /**
+     * Utility method that creates a label instance and sets the default layout
+     * data.
+     * 
+     * @param parent
+     *            the parent for the new label
+     * @param text
+     *            the text for the new label
+     * @return the new label
+     */
+    private Label createLabel(Composite parent, String text) {
+        Label label = new Label(parent, SWT.LEFT);
+        label.setText(text);
+        GridData data = new GridData();
+        data.horizontalSpan = 2;
+        data.horizontalAlignment = GridData.FILL;
+        label.setLayoutData(data);
+        return label;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
-	 */
-	public void init(IWorkbench workbench) {
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.eclipse.jface.preference.IPreferencePage#performOk()
-	 */
-	@Override
+    /**
+     * Creates a new color field editor.
+     */
+    private ColorFieldEditor createColorFieldEditor(String preferenceName,
+            String label, Composite parent) {
+        ColorFieldEditor editor = new ColorFieldEditor(preferenceName, label,
+                parent);
+        editor.setPage(this);
+        editor.setPreferenceStore(getPreferenceStore());
+        return editor;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
+     */
+    public void init(IWorkbench workbench) {
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.jface.preference.IPreferencePage#performOk()
+     */
+    @Override
     public boolean performOk() {
-	    boolean ok = super.performOk(); 
-		MercurialEclipsePlugin.getDefault().savePluginPreferences();
-		return ok;
-	}
+        boolean ok = super.performOk();
+        MercurialEclipsePlugin.getDefault().savePluginPreferences();
+        return ok;
+    }
 }

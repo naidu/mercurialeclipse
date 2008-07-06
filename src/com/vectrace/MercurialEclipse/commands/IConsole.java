@@ -33,5 +33,7 @@ public interface IConsole {
      * @param hgEx
      */
     void printError(String message, Throwable root);
-
+   
+    void printMessage(String message, Throwable root);
+    
 }

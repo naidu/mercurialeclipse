@@ -94,7 +94,7 @@ public class HgResolveClient extends AbstractClient {
             HgCommand command = new HgCommand("help", ResourcesPlugin
                     .getWorkspace().getRoot(), false);
             command.addOptions("resolve");
-            String result = new String(command.executeToBytes(5000, true));
+            String result = new String(command.executeToBytes(5000, false));
             if (result.startsWith("hg: unknown command 'resolve'")) {
                 return false;
             }

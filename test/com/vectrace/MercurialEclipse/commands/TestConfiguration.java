@@ -70,7 +70,7 @@ public class TestConfiguration  extends TestCase implements IConsole, IErrorHand
     public void commandCompleted(int exitCode, String message, Throwable error) {
         System.out.println(exitCode + " - " + message);
         if(error != null) {
-            error.printStackTrace(System.out);
+            error.printStackTrace(System.err);
         }
     }
 
@@ -85,6 +85,14 @@ public class TestConfiguration  extends TestCase implements IConsole, IErrorHand
      * @see com.vectrace.MercurialEclipse.commands.IConsole#printError(java.lang.String, java.lang.Throwable)
      */
     public void printError(String message, Throwable root) {
+        System.err.println(message);
+        root.printStackTrace(System.err);
+    }
+
+    /* (non-Javadoc)
+     * @see com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang.String, java.lang.Throwable)
+     */
+    public void printMessage(String message, Throwable root) {
         System.out.println(message);
         root.printStackTrace(System.out);
     }

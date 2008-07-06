@@ -85,7 +85,7 @@ public class MercurialUtilities {
      */
     public static String getHGExecutable() {
         return getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
-                "");
+                "hg");
     }
 
     public static String getPreference(String preferenceConstant,

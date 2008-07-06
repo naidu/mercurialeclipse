@@ -63,5 +63,6 @@ public class MercurialPreferenceConstants {
     public static final String PREF_CONSOLE_MESSAGE_COLOR = "hg.console.message_color";
     public static final String PREF_CONSOLE_ERROR_COLOR = "hg.console.error_color";
     public static final String PREF_CONSOLE_FONT = "hg.console.font";
+    public static final String PREF_CONSOLE_DEBUG = "hg.console.debug";
 
 }

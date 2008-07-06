@@ -52,7 +52,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
   // The shared instance.
   private static MercurialEclipsePlugin plugin;
 
-  // TODO: not quite sure this should be static
   private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
   private boolean hgUsable = true;
@@ -76,9 +75,9 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
         try {
             super.start(context);
             getPreferenceStore();
-            checkHgInstallation();            
             DefaultConfiguration cfg = new DefaultConfiguration();
             HgClients.initialize(cfg , cfg, cfg);
+            checkHgInstallation();                        
         } catch (Exception e) {
             this.hgUsable = false;
             logError("Unable to start MercurialEclipsePlugin ", e);

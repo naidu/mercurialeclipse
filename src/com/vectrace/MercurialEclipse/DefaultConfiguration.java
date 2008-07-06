@@ -16,7 +16,6 @@ import org.eclipse.core.runtime.Status;
 import com.vectrace.MercurialEclipse.commands.IConfiguration;
 import com.vectrace.MercurialEclipse.commands.IConsole;
 import com.vectrace.MercurialEclipse.commands.IErrorHandler;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
 
@@ -37,8 +36,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * ()
      */
     public String getDefaultUserName() {
-        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
+        return MercurialUtilities.getHGUsername();
     }
 
     /*
@@ -48,13 +46,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * com.vectrace.MercurialEclipse.commands.IConfiguration#getExecutable()
      */
     public String getExecutable() {
-        if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
-            MercurialUtilities.configureHgExecutable();
-            MercurialEclipsePlugin.getDefault().checkHgInstallation();
-        }
-
-        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
+        return MercurialUtilities.getHGExecutable();
     }
 
     /*
@@ -123,14 +115,18 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
         switch (exitCode) {
         case 0:
             severity = IStatus.OK;
+            break;
         case 1:
-            severity = IStatus.WARNING;
+            severity = IStatus.OK;
+            break;
         default:
             severity = IStatus.ERROR;
         }
         console.commandCompleted(new Status(severity,
                 MercurialEclipsePlugin.ID, message), error);
     }
+    
+    
 
     /*
      * (non-Javadoc)
@@ -154,5 +150,13 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
     public void printError(String message, Throwable root) {
         console.errorLineReceived(root.getMessage(), new Status(IStatus.ERROR,
                 MercurialEclipsePlugin.ID, message, root));
+    }
+
+    /* (non-Javadoc)
+     * @see com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang.String, java.lang.Throwable)
+     */
+    public void printMessage(String message, Throwable root) {        
+        console.messageLineReceived(message, new Status(IStatus.INFO,
+                MercurialEclipsePlugin.ID, message, root));    
     }
 }

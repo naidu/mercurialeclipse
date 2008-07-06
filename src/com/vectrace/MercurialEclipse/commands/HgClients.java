@@ -25,12 +25,12 @@ public final class HgClients {
     private static IConfiguration config;
     private static IErrorHandler error;
 
-    public static void initialize(IConsole console, 
-            IErrorHandler error, 
-            IConfiguration config) {
-                HgClients.console = console;
-                HgClients.error = error;
-                HgClients.config = config;
+    public static void initialize(IConsole c, 
+            IErrorHandler errorHandler, 
+            IConfiguration configuration) {
+                HgClients.console = c;
+                HgClients.error = errorHandler;
+                HgClients.config = configuration;
         
     }
     

@@ -124,7 +124,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
         showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
                 MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "true"));
+                "true")).booleanValue();
         document = new ConsoleDocument();
         consoleManager = ConsolePlugin.getDefault().getConsoleManager();
         MercurialEclipsePlugin.getDefault().getPreferenceStore()
@@ -497,7 +497,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     public void show(boolean showNoMatterWhat) {
         showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
                 MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "false"));
+                "false")).booleanValue();
         if (showNoMatterWhat || showOnMessage) {
             if (!visible) {
                 HgConsoleFactory.showConsole();
