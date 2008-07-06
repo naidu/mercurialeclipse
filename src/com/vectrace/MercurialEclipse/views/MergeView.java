@@ -237,7 +237,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             if (currentProject
                                     .getSessionProperty(QN_commitOffered) == null) {
                                 new CommitMergeHandler()
-                                        .commitMergeWithCommitDialog(this.currentProject);
+                                        .commitMergeWithCommitDialog(this.currentProject, getSite().getShell());
                                 currentProject.setSessionProperty(
                                         QN_commitOffered, "true");
                             }
