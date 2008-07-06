@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ISelection;
@@ -47,6 +48,7 @@ import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -54,6 +56,12 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 public class MergeView extends ViewPart implements ISelectionListener {
 
     public final static String ID = MergeView.class.getName();
+
+    /**
+     * 
+     */
+    private static final QualifiedName QN_commitOffered = new QualifiedName(
+            MercurialEclipsePlugin.ID, ID + ".commitOffered");
 
     private Label statusLabel;
     private Table table;
@@ -137,6 +145,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     currentProject.setPersistentProperty(
                             ResourceProperties.MERGING, null);
                     HgUpdateClient.update(currentProject, null, true);
+                    // trigger update of decorations
+                    currentProject.touch(null);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
                     clearView();
                 } catch (Exception e) {
@@ -192,7 +202,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             row.setText(0, flagged.getFlag() + "");
             IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
             row.setText(1, iFile.getProjectRelativePath().toString());
-            row.setData(flagged);            
+            row.setData(flagged);
         }
         abortAction.setEnabled(true);
     }
@@ -207,14 +217,34 @@ public class MergeView extends ViewPart implements ISelectionListener {
     public void setCurrentProject(IProject project) {
         try {
             if (this.currentProject != project) {
-                this.currentProject = project;
-                if (project != null
-                        && project.isAccessible()
-                        && project
-                                .getPersistentProperty(ResourceProperties.MERGING) != null) {
-                    populateView();
-                } else {
-                    clearView();
+                if (project != null && project.isAccessible()) {
+                    String mergeNode = project
+                            .getPersistentProperty(ResourceProperties.MERGING);
+                    if (mergeNode != null) {
+                        this.currentProject = project;
+                        this.statusLabel.setText("Unresolved files of: "
+                                + project.getName());
+                        populateView();
+
+                        // offer commit of merge exactly once if no conflicts
+                        // are
+                        // found
+                        if (table.getItems().length == 0) {
+                            this.statusLabel
+                                    .setText(currentProject.getName()
+                                            + ": Please commit merge with "
+                                            + mergeNode);
+                            if (currentProject
+                                    .getSessionProperty(QN_commitOffered) == null) {
+                                new CommitMergeHandler()
+                                        .commitMergeWithCommitDialog(this.currentProject);
+                                currentProject.setSessionProperty(
+                                        QN_commitOffered, "true");
+                            }
+                        }
+                    } else {
+                        clearView();
+                    }
                 }
             }
         } catch (Exception e) {

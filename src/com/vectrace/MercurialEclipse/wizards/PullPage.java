@@ -20,6 +20,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -36,7 +37,12 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 public class PullPage extends PushPullPage {
 
     private Button updateCheckBox;
-    private Button fetchCheckBox;
+    private Button mergeCheckBox;
+    private Button commitDialogCheckBox;
+
+    public Button getCommitDialogCheckBox() {
+        return commitDialogCheckBox;
+    }
 
     /**
      * @param pageName
@@ -58,7 +64,8 @@ public class PullPage extends PushPullPage {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
                 incomingPage.setProject(resource.getProject());
                 incomingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
-                        .getText(), getUserCombo().getText(), getPasswordText().getText()));
+                        .getText(), getUserCombo().getText(), getPasswordText()
+                        .getText()));
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
@@ -70,7 +77,9 @@ public class PullPage extends PushPullPage {
 
     @Override
     public boolean isPageComplete() {
-        return super.isPageComplete() && HgRepositoryLocation.validateLocation(getUrlCombo().getText());
+        return super.isPageComplete()
+                && HgRepositoryLocation.validateLocation(getUrlCombo()
+                        .getText());
     }
 
     protected boolean isPageComplete(String url) {
@@ -88,42 +97,64 @@ public class PullPage extends PushPullPage {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
+     * @see
+     * org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets
+     * .Composite)
      */
     @Override
     public void createControl(Composite parent) {
         super.createControl(parent);
-        Composite composite = (Composite) getControl();        
-
+        Composite composite = (Composite) getControl();
+        
         // now the options
-        this.updateCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages
-                .getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-        this.updateCheckBox.moveAbove(this.revCheckBox);
+        Group pullGroup = SWTWidgetHelper.createGroup(composite, "Pull options");
+        this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+                Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
+        this.updateCheckBox.setSelection(true);
+        this.forceCheckBox.setParent(pullGroup);
+        pullGroup.moveAbove(optionGroup);
+
+        Group mergeGroup = SWTWidgetHelper.createGroup(composite, "Merge options");
+        this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
+                "Merge and, if there are no conflicts, commit after update");
         
-        this.fetchCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, "Merge and, if there are no conflicts, commit after update");
-        this.fetchCheckBox.moveBelow(this.updateCheckBox);
+        this.commitDialogCheckBox = SWTWidgetHelper
+                .createCheckBox(mergeGroup,
+                        "Edit commit message before committing merge.");
+
+        this.commitDialogCheckBox.setSelection(true);
+        this.commitDialogCheckBox.setEnabled(false);
         
-        SelectionListener fetchListener = new SelectionListener() {
+        mergeGroup.moveBelow(pullGroup);
+
+        SelectionListener mergeCheckBoxListener = new SelectionListener() {
             /*
              * (non-Javadoc)
              * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
+             * (org.eclipse.swt.events.SelectionEvent)
              */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
+
             /*
              * (non-Javadoc)
              * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
+             * .swt.events.SelectionEvent)
              */
             public void widgetSelected(SelectionEvent e) {
-                if (fetchCheckBox.getSelection()) {
+                commitDialogCheckBox.setEnabled(mergeCheckBox.getSelection());
+                if (mergeCheckBox.getSelection()) {
                     String status;
                     try {
-                        status = HgStatusClient.getStatus(resource.getProject());
-                        if (status.length()>0 && status.indexOf("M ")>=0) {
-                            setErrorMessage("Please commit modified resources before trying to merge.");      
+                        status = HgStatusClient
+                                .getStatus(resource.getProject());
+                        if (status.length() > 0 && status.indexOf("M ") >= 0) {
+                            setErrorMessage("Please commit modified resources before trying to merge.");
                             setPageComplete(false);
                         } else {
                             setErrorMessage(null);
@@ -131,20 +162,19 @@ public class PullPage extends PushPullPage {
                         }
                     } catch (HgException e1) {
                         setErrorMessage("Couldn't get status from Mercurial. Merge disabled.");
-                        fetchCheckBox.setSelection(false);
-                        fetchCheckBox.setEnabled(false);
+                        mergeCheckBox.setSelection(false);
+                        mergeCheckBox.setEnabled(false);
                         setPageComplete(true);
-                    }
-                    
+                    }                    
                 } else {
-                  setErrorMessage(null);
-                  setPageComplete(true);
+                    setErrorMessage(null);
+                    setPageComplete(true);
                 }
             }
         };
-        
-        fetchCheckBox.addSelectionListener(fetchListener);
-        
+
+        mergeCheckBox.addSelectionListener(mergeCheckBoxListener);
+
         setPageComplete(true);
         setControl(composite);
 
@@ -153,7 +183,9 @@ public class PullPage extends PushPullPage {
     /*
      * (non-Javadoc)
      * 
-     * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish
+     * (org.eclipse.core.runtime.IProgressMonitor)
      */
     @Override
     public boolean finish(IProgressMonitor monitor) {
@@ -163,7 +195,9 @@ public class PullPage extends PushPullPage {
     /*
      * (non-Javadoc)
      * 
-     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getForceCheckBoxLabel()
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getForceCheckBoxLabel
+     * ()
      */
     @Override
     protected String getForceCheckBoxLabel() {
@@ -173,7 +207,8 @@ public class PullPage extends PushPullPage {
     /*
      * (non-Javadoc)
      * 
-     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevGroupLabel()
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevGroupLabel()
      */
     @Override
     protected String getRevGroupLabel() {
@@ -183,7 +218,8 @@ public class PullPage extends PushPullPage {
     /*
      * (non-Javadoc)
      * 
-     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevCheckBoxLabel()
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevCheckBoxLabel()
      */
     @Override
     protected String getRevCheckBoxLabel() {
@@ -193,7 +229,9 @@ public class PullPage extends PushPullPage {
     /*
      * (non-Javadoc)
      * 
-     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#getTimeoutCheckBoxLabel()
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getTimeoutCheckBoxLabel
+     * ()
      */
     @Override
     protected String getTimeoutCheckBoxLabel() {
@@ -218,8 +256,8 @@ public class PullPage extends PushPullPage {
     /**
      * @return the mergeCheckBox
      */
-    public Button getFetchCheckBox() {
-        return fetchCheckBox;
+    public Button getMergeCheckBox() {
+        return mergeCheckBox;
     }
 
 }

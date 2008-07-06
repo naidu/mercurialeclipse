@@ -62,6 +62,7 @@ public class PullRepoWizard extends HgWizard {
         private boolean timeout;
         private boolean merge;
         private String output;
+        private boolean showCommitDialog;
 
         /**
          * @param context
@@ -69,7 +70,7 @@ public class PullRepoWizard extends HgWizard {
          */
         public PullOperation(IRunnableContext context, boolean doUpdate,
                 IResource resource, boolean force, HgRepositoryLocation repo,
-                ChangeSet pullRevision, boolean timeout, boolean merge) {
+                ChangeSet pullRevision, boolean timeout, boolean merge, boolean showCommitDialog) {
             super(context);
             this.doUpdate = doUpdate;
             this.resource = resource;
@@ -78,6 +79,7 @@ public class PullRepoWizard extends HgWizard {
             this.pullRevision = pullRevision;
             this.timeout = timeout;
             this.merge = merge;
+            this.showCommitDialog = showCommitDialog;
         }
 
         /*
@@ -237,7 +239,11 @@ public class PullRepoWizard extends HgWizard {
             }
             if (commit) {
                 monitor.subTask("Committing...");
-                output += CommitMergeHandler.commitMerge(resource);
+                if (!showCommitDialog) {
+                    output += CommitMergeHandler.commitMerge(resource);
+                } else {
+                    output += new CommitMergeHandler().commitMergeWithCommitDialog(resource);
+                }
                 monitor.worked(1);
             }
         }
@@ -301,10 +307,11 @@ public class PullRepoWizard extends HgWizard {
             }
 
             boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
-            boolean merge = pullPage.getFetchCheckBox().getSelection();
+            boolean merge = pullPage.getMergeCheckBox().getSelection();
+            boolean showCommitDialog = pullPage.getCommitDialogCheckBox().getSelection();
 
             PullOperation pullOperation = new PullOperation(getContainer(),
-                    doUpdate, resource, force, repo, cs, timeout, merge);
+                    doUpdate, resource, force, repo, cs, timeout, merge, showCommitDialog);
             getContainer().run(true, false, pullOperation);
 
             String output = pullOperation.getOutput();

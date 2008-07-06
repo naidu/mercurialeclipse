@@ -19,7 +19,7 @@ import java.util.List;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnPixelData;
@@ -62,7 +62,7 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * message for those files. Untracked files may also be chosen.
  * 
  */
-public class CommitDialog extends Dialog {
+public class CommitDialog extends TrayDialog {
     public static String FILE_MODIFIED = "Modified";
     public static String FILE_ADDED = "Added";
     public static String FILE_REMOVED = "Removed";
@@ -115,7 +115,7 @@ public class CommitDialog extends Dialog {
      */
     public CommitDialog(Shell shell, IProject project, IResource[] inResources) {
         super(shell);
-        setShellStyle(getShellStyle() | SWT.RESIZE);
+        setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);        
         this.setProject(project);
         this.inResources = inResources;
         this.untrackedFilesFilter = new UntrackedFilesFilter();
@@ -127,6 +127,7 @@ public class CommitDialog extends Dialog {
             String defaultCommitMessage, boolean selectableFiles) {
         this(shell, project, inResources);
         this.selectableFiles = selectableFiles;
+        this.defaultCommitMessage = defaultCommitMessage;
     }
 
     public String getCommitMessage() {
@@ -158,7 +159,7 @@ public class CommitDialog extends Dialog {
         final FormData fd_commitTextLabel = new FormData();
         fd_commitTextLabel.bottom = new FormAttachment(0, 33);
         fd_commitTextLabel.top = new FormAttachment(0, 20);
-        fd_commitTextLabel.right = new FormAttachment(0, 95);
+        fd_commitTextLabel.right = new FormAttachment(0, 200);
         fd_commitTextLabel.left = new FormAttachment(0, 9);
         commitTextLabel.setLayoutData(fd_commitTextLabel);
         commitTextLabel.setText("Commit comments");
@@ -213,6 +214,27 @@ public class CommitDialog extends Dialog {
 
     private void makeActions() {
         commitTextBox.setCapture(true);
+        commitFilesList.addDoubleClickListener(new IDoubleClickListener() {
+            public void doubleClick(DoubleClickEvent event) {
+                IStructuredSelection sel = (IStructuredSelection) commitFilesList
+                        .getSelection();
+                if (sel.getFirstElement() instanceof CommitResource) {
+                    CommitResource resource = (CommitResource) sel
+                            .getFirstElement();
+
+                    // workspace version
+                    ResourceNode leftNode = new ResourceNode(resource
+                            .getResource());
+
+                    // mercurial version
+                    RevisionNode rightNode = new RevisionNode(
+                            new IStorageMercurialRevision(resource
+                                    .getResource()));
+
+                    CompareUtils.openEditor(leftNode, rightNode, true);
+                }
+            }
+        });
         if (selectableFiles) {
             selectAllButton.setSelection(true); // Start selected
             showUntrackedFilesButton.setSelection(true); // Start selected.
@@ -240,27 +262,7 @@ public class CommitDialog extends Dialog {
                     }
                 }
             });
-            commitFilesList.addDoubleClickListener(new IDoubleClickListener() {
-                public void doubleClick(DoubleClickEvent event) {
-                    IStructuredSelection sel = (IStructuredSelection) commitFilesList
-                            .getSelection();
-                    if (sel.getFirstElement() instanceof CommitResource) {
-                        CommitResource resource = (CommitResource) sel
-                                .getFirstElement();
 
-                        // workspace version
-                        ResourceNode leftNode = new ResourceNode(resource
-                                .getResource());
-
-                        // mercurial version
-                        RevisionNode rightNode = new RevisionNode(
-                                new IStorageMercurialRevision(resource
-                                        .getResource()));
-
-                        CompareUtils.openEditor(leftNode, rightNode, true);
-                    }
-                }
-            });
         }
         setupDefaultCommitMessage();
 
