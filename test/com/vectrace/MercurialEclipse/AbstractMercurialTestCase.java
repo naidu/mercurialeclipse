@@ -19,6 +19,9 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.TestConfiguration;
+
 /**
  * Base class for test cases
  * 
@@ -107,6 +110,8 @@ public abstract class AbstractMercurialTestCase extends TestCase {
     @Override
     protected void setUp() throws Exception {
         super.setUp();
+        TestConfiguration cfg = new TestConfiguration();
+        HgClients.initialize(cfg, cfg, cfg);
         // clean up test1 repo
         deleteDirectory(new File(TEST1_LOCAL_NAME));
         // clean up test2 repo
