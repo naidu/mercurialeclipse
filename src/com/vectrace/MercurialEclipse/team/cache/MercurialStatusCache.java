@@ -329,10 +329,10 @@ public class MercurialStatusCache extends AbstractCache implements
         Assert.isNotNull(path);
         if (null != RepositoryProvider.getProvider(project,
                 MercurialTeamProvider.ID)) {
-//            if (path.equals(project.getLocation())) {
-//                // FIX ME: This breaks on new projects without changelog
-//                return false;
-//            }
+            // if (path.equals(project.getLocation())) {
+            // // FIX ME: This breaks on new projects without changelog
+            // return false;
+            // }
             ReentrantLock lock = getLock(path);
             try {
                 lock.lock();
@@ -350,7 +350,7 @@ public class MercurialStatusCache extends AbstractCache implements
                                     || status.get(BIT_MODIFIED)
                                     || status.get(BIT_REMOVED)
                                     || status.get(BIT_CONFLICT)
-                                    || status.get(BIT_IGNORE);                                    
+                                    || status.get(BIT_IGNORE);
                             return !supervised;
                         }
                         return true;
@@ -518,7 +518,9 @@ public class MercurialStatusCache extends AbstractCache implements
                     IResourceVisitor visitor = new MemberStatusVisitor(parent,
                             cloneBitSet);
                     try {
-                        parent.accept(visitor, IResource.DEPTH_ONE, false);
+                        if (parent.isAccessible() && !parent.isDerived()) {
+                            parent.accept(visitor, IResource.DEPTH_ONE, false);
+                        }
                     } catch (CoreException e) {
                         MercurialEclipsePlugin.logError(e);
                     }

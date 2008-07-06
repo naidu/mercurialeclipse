@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PartInitException;
@@ -53,11 +54,12 @@ public class MergeHandler extends SingleResourceHandler {
                 result = HgIMergeClient.merge(project, dialog.getRevision());
             }
             project.setPersistentProperty(ResourceProperties.MERGING, dialog.getChangeSet().getChangeset());
-            // will trigger a FlagManager refresh
             MergeView view = (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
             view.clearView();
             view.setCurrentProject(project);
-            project.refreshLocal(IResource.DEPTH_INFINITE, null);            
+            // trigger refresh of project decoration
+            project.touch(new NullProgressMonitor());
+            project.refreshLocal(IResource.DEPTH_INFINITE, null);
         }
         return result;
     }

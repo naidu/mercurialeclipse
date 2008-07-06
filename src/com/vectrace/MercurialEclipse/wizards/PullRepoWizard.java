@@ -41,6 +41,7 @@ import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
@@ -62,6 +63,7 @@ public class PullRepoWizard extends HgWizard {
         private boolean timeout;
         private boolean merge;
         private String output;
+        private boolean showCommitDialog;
 
         /**
          * @param context
@@ -69,7 +71,8 @@ public class PullRepoWizard extends HgWizard {
          */
         public PullOperation(IRunnableContext context, boolean doUpdate,
                 IResource resource, boolean force, HgRepositoryLocation repo,
-                ChangeSet pullRevision, boolean timeout, boolean merge) {
+                ChangeSet pullRevision, boolean timeout, boolean merge,
+                boolean showCommitDialog) {
             super(context);
             this.doUpdate = doUpdate;
             this.resource = resource;
@@ -78,12 +81,15 @@ public class PullRepoWizard extends HgWizard {
             this.pullRevision = pullRevision;
             this.timeout = timeout;
             this.merge = merge;
+            this.showCommitDialog = showCommitDialog;
         }
 
         /*
          * (non-Javadoc)
          * 
-         * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
+         * @see
+         * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
+         * ()
          */
         @Override
         protected String getActionDescription() {
@@ -109,7 +115,9 @@ public class PullRepoWizard extends HgWizard {
                     /*
                      * (non-Javadoc)
                      * 
-                     * @see com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
+                     * @see
+                     * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse
+                     * .core.runtime.IProgressMonitor)
                      */
                     @Override
                     protected IStatus runSafe(IProgressMonitor m) {
@@ -119,6 +127,7 @@ public class PullRepoWizard extends HgWizard {
                             return new Status(IStatus.OK,
                                     MercurialEclipsePlugin.ID, res);
                         } catch (Exception e) {
+                            MercurialEclipsePlugin.logError(e);
                             return new Status(IStatus.ERROR,
                                     MercurialEclipsePlugin.ID, e
                                             .getLocalizedMessage(), e);
@@ -190,7 +199,9 @@ public class PullRepoWizard extends HgWizard {
         /*
          * (non-Javadoc)
          * 
-         * @see com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core.runtime.IProgressMonitor)
+         * @see
+         * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
+         * .core.runtime.IProgressMonitor)
          */
         @Override
         public void run(IProgressMonitor monitor)
@@ -215,30 +226,72 @@ public class PullRepoWizard extends HgWizard {
          * @param mergeResult
          * @throws HgException
          * @throws CoreException
+         * @throws InterruptedException
          */
         private void commitMerge(IProgressMonitor monitor, String mergeResult)
-                throws HgException, CoreException {
-            boolean commit = true;
-            if (!HgResolveClient.checkAvailable()) {
-                if (!mergeResult.contains("all conflicts resolved")) {
-                    commit = false;
-                }
-            } else {
-                List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
-                        .list(resource);
-                monitor.subTask("Getting merge status...");
-                for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
-                    if (flaggedAdaptable.getFlag() == 'U') {
+                throws HgException, CoreException, InterruptedException {
+            if (resource != null && resource.getProject()!=null &&
+                    resource.getProject().getPersistentProperty(ResourceProperties.MERGING) != null) {
+                boolean commit = true;
+                if (!HgResolveClient.checkAvailable()) {
+                    if (!mergeResult.contains("all conflicts resolved")) {
                         commit = false;
-                        break;
                     }
+                } else {
+                    List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
+                            .list(resource);
+                    monitor.subTask("Getting merge status...");
+                    for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
+                        if (flaggedAdaptable.getFlag() == 'U') {
+                            commit = false;
+                            break;
+                        }
+                    }
+                    monitor.worked(1);
                 }
-                monitor.worked(1);
-            }
-            if (commit) {
-                monitor.subTask("Committing...");
-                output += CommitMergeHandler.commitMerge(resource);
-                monitor.worked(1);
+                if (commit) {
+                    monitor.subTask("Committing...");
+                    if (!showCommitDialog) {
+                        output += CommitMergeHandler.commitMerge(resource);
+                    } else {
+                        SafeUiJob job = new SafeUiJob(
+                                "Opening commit dialog...") {
+                            /*
+                             * (non-Javadoc)
+                             * 
+                             * @see
+                             * com.vectrace.MercurialEclipse.SafeUiJob#runSafe
+                             * (org .eclipse.core.runtime.IProgressMonitor)
+                             */
+                            @Override
+                            protected IStatus runSafe(IProgressMonitor moni) {
+                                try {
+                                    String res = new CommitMergeHandler()
+                                            .commitMergeWithCommitDialog(
+                                                    resource, getShell());
+                                    return new Status(IStatus.OK,
+                                            MercurialEclipsePlugin.ID, res);
+                                } catch (HgException e) {
+                                    MercurialEclipsePlugin.logError(e);
+                                    return new Status(IStatus.ERROR,
+                                            MercurialEclipsePlugin.ID, e
+                                                    .getLocalizedMessage(), e);
+                                }
+
+                            }
+                        };
+                        job.schedule();
+                        job.join();
+                        IStatus jobResult = job.getResult();
+                        if (jobResult.getSeverity() == IStatus.OK) {
+                            output += jobResult.getMessage();
+                        } else {
+                            throw new HgException(jobResult.getMessage(),
+                                    jobResult.getException());
+                        }
+                    }
+                    monitor.worked(1);
+                }
             }
         }
 
@@ -293,7 +346,7 @@ public class PullRepoWizard extends HgWizard {
 
         try {
             doUpdate = pullPage.getUpdateCheckBox().getSelection();
-            boolean force = pullPage.getUpdateCheckBox().getSelection();
+            boolean force = pullPage.getForceCheckBox().getSelection();
 
             ChangeSet cs = null;
             if (incomingPage.getRevisionCheckBox().getSelection()) {
@@ -301,10 +354,13 @@ public class PullRepoWizard extends HgWizard {
             }
 
             boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
-            boolean merge = pullPage.getFetchCheckBox().getSelection();
+            boolean merge = pullPage.getMergeCheckBox().getSelection();
+            boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
+                    .getSelection();
 
             PullOperation pullOperation = new PullOperation(getContainer(),
-                    doUpdate, resource, force, repo, cs, timeout, merge);
+                    doUpdate, resource, force, repo, cs, timeout, merge,
+                    showCommitDialog);
             getContainer().run(true, false, pullOperation);
 
             String output = pullOperation.getOutput();
