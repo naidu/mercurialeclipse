@@ -30,7 +30,7 @@ public class MercurialPreferenceConstants {
     public static final String LABELDECORATOR_LOGIC_2MM = "2-means-modified"; //$NON-NLS-1$
     public static final String LABELDECORATOR_LOGIC_HB = "high-bit"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_COMPLETE_STATUS = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
-    public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; 
+    public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus";
     public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 
     // Timeouts
@@ -49,20 +49,20 @@ public class MercurialPreferenceConstants {
     // batch sizes
     public static final String LOG_BATCH_SIZE = "hg.batchsize.log"; //$NON-NLS-1$
     public static final String STATUS_BATCH_SIZE = "hg.batchsize.status"; //$NON-NLS-1$
-    
+
     // synchronize
     public static final String SYNCHRONIZE_FILES = "hg.synchronize.synchronizeOnFileLevel"; //$NON-NLS-1$
-    
+
     // console
-    public static final String PREF_CONSOLE_SHOW_ON_MESSAGE = "hg.console.showOnMessage";
-    public static final String PREF_CONSOLE_WRAP = "hg.console.wrap";
-    public static final String PREF_CONSOLE_WIDTH = "hg.console.width";
-    public static final String PREF_CONSOLE_LIMIT_OUTPUT = "hg.console.limitOutput";
-    public static final String PREF_CONSOLE_HIGH_WATER_MARK = "hg.console.highWaterMark";
-    public static final String PREF_CONSOLE_COMMAND_COLOR = "hg.console.command_color";
-    public static final String PREF_CONSOLE_MESSAGE_COLOR = "hg.console.message_color";
-    public static final String PREF_CONSOLE_ERROR_COLOR = "hg.console.error_color";
-    public static final String PREF_CONSOLE_FONT = "hg.console.font";
-    public static final String PREF_CONSOLE_DEBUG = "hg.console.debug";
+    public static final String PREF_CONSOLE_SHOW_ON_MESSAGE = "hg.console.showOnMessage"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_WRAP = "hg.console.wrap"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_WIDTH = "hg.console.width"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_LIMIT_OUTPUT = "hg.console.limitOutput"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_HIGH_WATER_MARK = "hg.console.highWaterMark"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_COMMAND_COLOR = "hg.console.command_color"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_MESSAGE_COLOR = "hg.console.message_color"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_ERROR_COLOR = "hg.console.error_color"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_FONT = "hg.console.font"; //$NON-NLS-1$
+    public static final String PREF_CONSOLE_DEBUG = "hg.console.debug"; //$NON-NLS-1$
 
 }

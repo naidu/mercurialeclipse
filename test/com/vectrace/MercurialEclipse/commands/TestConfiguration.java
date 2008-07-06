@@ -11,89 +11,154 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+
 /**
  * @author Stefan
- *
+ * 
  */
-public class TestConfiguration  extends TestCase implements IConsole, IErrorHandler, IConfiguration {
+public class TestConfiguration extends TestCase implements IConsole,
+        IErrorHandler, IConfiguration {
+    private Map<String, String> preferences = new HashMap<String, String>() {
+        {
+            put(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "true");
+        }
+    };
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     * 
      * @see com.vectrace.MercurialEclipse.commands.IConsole#getOutputStream()
      */
     public PrintStream getOutputStream() {
         return System.out;
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IErrorHandler#logError(java.lang.Throwable)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IErrorHandler#logError(java.lang
+     * .Throwable)
      */
     public void logError(Throwable e) {
         fail(e.getMessage());
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IErrorHandler#logWarning(java.lang.String, java.lang.Throwable)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IErrorHandler#logWarning(java.
+     * lang.String, java.lang.Throwable)
      */
     public void logWarning(String message, Throwable e) {
         fail(e.getMessage());
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConfiguration#getDefaultUserName()
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getDefaultUserName
+     * ()
      */
     public String getDefaultUserName() {
         return "foo";
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConfiguration#getExecutable()
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getExecutable()
      */
     public String getExecutable() {
-        String path = "c:/program/mercurial/hg.exe";
+        String path = "hg";
         // path = "hg";
         return path;
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConfiguration#getTimeOut(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getTimeOut(java
+     * .lang.String)
      */
     public int getTimeOut(String commandId) {
         return 12000;
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConsole#commandCompleted(int, java.lang.String, java.lang.Throwable)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConsole#commandCompleted(int,
+     * java.lang.String, java.lang.Throwable)
      */
     public void commandCompleted(int exitCode, String message, Throwable error) {
         System.out.println(exitCode + " - " + message);
-        if(error != null) {
+        if (error != null) {
             error.printStackTrace(System.err);
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConsole#commandInvoked(java.lang.String)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConsole#commandInvoked(java.lang
+     * .String)
      */
     public void commandInvoked(String command) {
         System.out.println(command);
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConsole#printError(java.lang.String, java.lang.Throwable)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConsole#printError(java.lang.
+     * String, java.lang.Throwable)
      */
     public void printError(String message, Throwable root) {
         System.err.println(message);
         root.printStackTrace(System.err);
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang.String, java.lang.Throwable)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang
+     * .String, java.lang.Throwable)
      */
     public void printMessage(String message, Throwable root) {
         System.out.println(message);
-        root.printStackTrace(System.out);
+        if (root != null) {
+            root.printStackTrace(System.out);
+        }
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getPreference(java
+     * .lang.String, java.lang.String)
+     */
+    public String getPreference(String preferenceConstant,
+            String defaultIfNotSet) {
+        String pref = preferences.get(preferenceConstant);
+        if (pref != null) {
+            return pref;
+        }
+        return defaultIfNotSet;
     }
 }

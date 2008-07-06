@@ -31,13 +31,13 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
@@ -65,7 +65,7 @@ public class LocalChangesetCache extends AbstractCache {
     private boolean isGetFileInformationForChangesets() {
         return Boolean
                 .valueOf(
-                        MercurialUtilities
+                        HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
                                         "false")).booleanValue();
@@ -77,7 +77,7 @@ public class LocalChangesetCache extends AbstractCache {
         }
         return instance;
     }
-    
+
     public synchronized void clear() {
         localChangeSets.clear();
     }
@@ -105,7 +105,8 @@ public class LocalChangesetCache extends AbstractCache {
             SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource
                     .getLocation());
             if (revisions == null) {
-                if (objectResource.getType() == IResource.FILE || objectResource.getType()==IResource.PROJECT
+                if (objectResource.getType() == IResource.FILE
+                        || objectResource.getType() == IResource.PROJECT
                         && STATUS_CACHE.isSupervised(objectResource)
                         && !STATUS_CACHE.isAdded(objectResource.getProject(),
                                 objectResource.getLocation())) {
@@ -238,7 +239,7 @@ public class LocalChangesetCache extends AbstractCache {
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
             int defaultLimit = 2000;
-            String pref = MercurialUtilities.getPreference(
+            String pref = HgClients.getPreference(
                     MercurialPreferenceConstants.LOG_BATCH_SIZE, String
                             .valueOf(defaultLimit));
             try {

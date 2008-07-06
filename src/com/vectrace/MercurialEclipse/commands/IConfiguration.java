@@ -12,7 +12,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 /**
  * @author Stefan
- *
+ * 
  */
 public interface IConfiguration {
 
@@ -31,5 +31,12 @@ public interface IConfiguration {
      * @return
      */
     int getTimeOut(String commandId);
+
+    /**
+     * @param preferenceConstant
+     * @param defaultIfNotSet
+     * @return
+     */
+    String getPreference(String preferenceConstant, String defaultIfNotSet);
 
 }

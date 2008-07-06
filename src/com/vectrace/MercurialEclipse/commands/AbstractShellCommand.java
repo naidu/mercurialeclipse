@@ -22,7 +22,6 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
@@ -191,7 +190,7 @@ public abstract class AbstractShellCommand {
      */
     private boolean isDebugMode() {
         return Boolean.valueOf(
-                MercurialUtilities.getPreference(
+                HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
                         "false")).booleanValue();
     }

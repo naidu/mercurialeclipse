@@ -12,7 +12,6 @@
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
-
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
@@ -40,44 +39,41 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 /**
  * The main plugin class to be used in the desktop.
  */
-public class MercurialEclipsePlugin extends AbstractUIPlugin
-{
+public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
-  public static final String ID = "com.vectrace.MercurialEclipse";
+    public static final String ID = "com.vectrace.MercurialEclipse";
 
-  public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView";
+    public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView";
 
-  public static final String BUNDLE_FILE_PREFIX = "bundlefile";
+    public static final String BUNDLE_FILE_PREFIX = "bundlefile";
 
-  // The shared instance.
-  private static MercurialEclipsePlugin plugin;
+    // The shared instance.
+    private static MercurialEclipsePlugin plugin;
 
-  private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
+    private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
-  private boolean hgUsable = true;
+    private boolean hgUsable = true;
 
-//  private FlagManager flagManager;
+    // private FlagManager flagManager;
 
-  /**
-   * The constructor.
-   */
-  public MercurialEclipsePlugin()
-  {
-    plugin = this;
-    // System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
-  }
+    /**
+     * The constructor.
+     */
+    public MercurialEclipsePlugin() {
+        plugin = this;
+        //System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
+    }
 
-  /**
-   * This method is called upon plug-in activation
-   */
-  @Override
+    /**
+     * This method is called upon plug-in activation
+     */
+    @Override
     public void start(BundleContext context) throws Exception {
         try {
             super.start(context);
-            getPreferenceStore();
             DefaultConfiguration cfg = new DefaultConfiguration();
-            HgClients.initialize(cfg , cfg, cfg);
-            checkHgInstallation();                        
+            HgClients.initialize(cfg, cfg, cfg);
+            checkHgInstallation();
         } catch (Exception e) {
             this.hgUsable = false;
             logError("Unable to start MercurialEclipsePlugin ", e);
@@ -114,93 +110,88 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin
     // logError(e);
     // }
     // return Status.OK_STATUS;
-    //            }
-    //        }.schedule();
-    //    }
+    // }
+    // }.schedule();
+    // }
 
-  static public HgRepositoryLocationManager getRepoManager()
-  {
-    return repoManager;
-  }
+    static public HgRepositoryLocationManager getRepoManager() {
+        return repoManager;
+    }
 
-  /**
-   * This method is called when the plug-in is stopped
-   */
-  @Override
-public void stop(BundleContext context) throws Exception
-  {
-//    flagManager.dispose();
-    repoManager.stop();
-    plugin = null;
-    super.stop(context);
-  }
+    /**
+     * This method is called when the plug-in is stopped
+     */
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        // flagManager.dispose();
+        repoManager.stop();
+        plugin = null;
+        super.stop(context);
+    }
 
-  /**
-   * Returns the shared instance.
-   */
-  public static MercurialEclipsePlugin getDefault()
-  {
-    return plugin;
-  }
+    /**
+     * Returns the shared instance.
+     */
+    public static MercurialEclipsePlugin getDefault() {
+        return plugin;
+    }
 
-  /**
-   * Returns an image descriptor for the image file at the given plug-in
-   * relative path.
-   *
-   * @param path
-   *          the path
-   * @return the image descriptor
-   */
-  public static ImageDescriptor getImageDescriptor(String path)
-  {
-    return AbstractUIPlugin.imageDescriptorFromPlugin("com.vectrace.MercurialEclipse", "icons/"+path);
-  }
+    /**
+     * Returns an image descriptor for the image file at the given plug-in
+     * relative path.
+     * 
+     * @param path
+     *            the path
+     * @return the image descriptor
+     */
+    public static ImageDescriptor getImageDescriptor(String path) {
+        return AbstractUIPlugin.imageDescriptorFromPlugin(
+                "com.vectrace.MercurialEclipse", "icons/" + path);
+    }
 
-  public static final void logError(String message, Throwable error)
-  {
-    getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
-  }
+    public static final void logError(String message, Throwable error) {
+        getDefault().getLog().log(
+                createStatus(message, 0, IStatus.ERROR, error));
+    }
 
-  public static void showError(Throwable error) {
-      ErrorDialog.openError(null, "Unexpected Error", error.getMessage(),
-              createStatus(error.getMessage(), 0, IStatus.ERROR, error));
-  }
+    public static void showError(Throwable error) {
+        ErrorDialog.openError(null, "Unexpected Error", error.getMessage(),
+                createStatus(error.getMessage(), 0, IStatus.ERROR, error));
+    }
 
-  public static final void logWarning(String message, Throwable error)
-  {
-    getDefault().getLog().log(createStatus(message, 0, IStatus.WARNING, error));
-  }
+    public static final void logWarning(String message, Throwable error) {
+        getDefault().getLog().log(
+                createStatus(message, 0, IStatus.WARNING, error));
+    }
 
-  public static final void logInfo(String message, Throwable error)
-  {
-    getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
-  }
+    public static final void logInfo(String message, Throwable error) {
+        getDefault().getLog()
+                .log(createStatus(message, 0, IStatus.INFO, error));
+    }
 
-  private static IStatus createStatus(String msg, int code, int severity,
-      Throwable ex)
-  {
-    return new Status(severity, ID, code, msg, ex);
-  }
+    private static IStatus createStatus(String msg, int code, int severity,
+            Throwable ex) {
+        return new Status(severity, ID, code, msg, ex);
+    }
 
-  /**
-   * @param ex
-   */
-  public final static void logError(Throwable ex)
-  {
-    logError(ex.getMessage(), ex);
-  }
+    /**
+     * @param ex
+     */
+    public final static void logError(Throwable ex) {
+        logError(ex.getMessage(), ex);
+    }
 
-  /**
+    /**
      * Creates a busy cursor and runs the specified runnable. May be called from
      * a non-UI thread.
-     *
+     * 
      * @param parent
      *            the parent Shell for the dialog
      * @param cancelable
      *            if true, the dialog will support cancelation
      * @param runnable
      *            the runnable
-     *
+     * 
      * @exception InvocationTargetException
      *                when an exception is thrown from the runnable
      * @exception InterruptedException
@@ -262,11 +253,12 @@ public void stop(BundleContext context) throws Exception
      * the active page may not be the one that the usr perceives as active in
      * some situations so this method of obtaining the activae page should only
      * be used if no other method is available.
-     *
+     * 
      * @return the active workbench page
      */
     public static IWorkbenchPage getActivePage() {
-        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        IWorkbenchWindow window = PlatformUI.getWorkbench()
+                .getActiveWorkbenchWindow();
         if (window == null) {
             return null;
         }

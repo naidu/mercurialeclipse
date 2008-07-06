@@ -18,10 +18,10 @@ import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * Refreshes status, local changesets, incoming changesets and outgoing
@@ -55,7 +55,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
         this.project = project;
         this.withFiles = Boolean
                 .valueOf(
-                        MercurialUtilities
+                        HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
                                         "false")).booleanValue();

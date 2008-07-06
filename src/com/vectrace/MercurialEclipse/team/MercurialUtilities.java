@@ -36,6 +36,7 @@ import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -84,7 +85,7 @@ public class MercurialUtilities {
      * @return false if no hg is defined. True if hg executable is defined
      */
     public static String getHGExecutable() {
-        return getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
+        return HgClients.getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
                 "hg");
     }
 
@@ -142,7 +143,7 @@ public class MercurialUtilities {
      * @return false if no hg is defined. True if hg executable is defined
      */
     public static String getGpgExecutable() {
-        return getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
+        return HgClients.getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
     }
 
     public static void configureHgExecutable() {

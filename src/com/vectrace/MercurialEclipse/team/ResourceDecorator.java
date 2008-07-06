@@ -30,6 +30,7 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -255,7 +256,7 @@ public class ResourceDecorator extends LabelProvider implements
     private boolean isShowChangeset() {
         boolean showChangeset = Boolean
                 .valueOf(
-                        MercurialUtilities
+                        HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
                                         "false")).booleanValue();

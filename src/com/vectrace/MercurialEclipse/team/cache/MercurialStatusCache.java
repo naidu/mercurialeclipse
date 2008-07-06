@@ -49,6 +49,7 @@ import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -95,10 +96,11 @@ public class MercurialStatusCache extends AbstractCache implements
             this.changed = changed;
             this.added = added;
             completeStatus = Boolean
-                    .valueOf(MercurialUtilities
-                            .getPreference(
-                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                    "false"));
+                    .valueOf(
+                            HgClients
+                                    .getPreference(
+                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                                            "false")).booleanValue();
         }
 
         private IResource getResource(IResource res) {
@@ -506,7 +508,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 .getParent()) {
             boolean computeDeep = isComputeDeepStatus();
             boolean completeStatus = Boolean
-                    .valueOf(MercurialUtilities
+                    .valueOf(HgClients
                             .getPreference(
                                     MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
                                     "false"));
@@ -538,10 +540,11 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     private boolean isComputeDeepStatus() {
         boolean computeDeep = Boolean
-                .valueOf(MercurialUtilities
-                        .getPreference(
-                                MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
-                                "false"));
+                .valueOf(
+                        HgClients
+                                .getPreference(
+                                        MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
+                                        "false")).booleanValue();
         return computeDeep;
     }
 
@@ -713,7 +716,7 @@ public class MercurialStatusCache extends AbstractCache implements
     private void refreshStatus(final Set<IResource> resources)
             throws HgException {
 
-        String pref = MercurialUtilities.getPreference(
+        String pref = HgClients.getPreference(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
                         .valueOf(STATUS_BATCH_SIZE));
 

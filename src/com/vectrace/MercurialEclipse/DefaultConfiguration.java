@@ -60,6 +60,19 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * (non-Javadoc)
      * 
      * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getPreference(java
+     * .lang.String, java.lang.String)
+     */
+    public String getPreference(String preferenceConstant,
+            String defaultIfNotSet) {
+        return MercurialUtilities.getPreference(preferenceConstant,
+                defaultIfNotSet);
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
      * com.vectrace.MercurialEclipse.commands.IErrorHandler#logError(java.lang
      * .Throwable)
      */
@@ -88,8 +101,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      */
     public int getTimeOut(String commandId) {
         int timeout = 12000;
-        String pref = MercurialUtilities.getPreference(commandId, String
-                .valueOf(timeout));
+        String pref = getPreference(commandId, String.valueOf(timeout));
         try {
             timeout = Integer.parseInt(pref);
             if (timeout < 0) {
@@ -168,4 +180,5 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
         console.messageLineReceived(message, new Status(IStatus.INFO,
                 MercurialEclipsePlugin.ID, message, root));
     }
+
 }

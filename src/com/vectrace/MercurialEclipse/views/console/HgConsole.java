@@ -121,10 +121,14 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
      * console page yet.
      */
     public HgConsole() {
-        super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
-        showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
-                MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "true")).booleanValue();
+        super(
+                "Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
+        showOnMessage = Boolean
+                .valueOf(
+                        MercurialUtilities
+                                .getPreference(
+                                        MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
+                                        "true")).booleanValue();
         document = new ConsoleDocument();
         consoleManager = ConsolePlugin.getDefault().getConsoleManager();
         MercurialEclipsePlugin.getDefault().getPreferenceStore()
@@ -154,7 +158,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                 dump();
                 return super.runSafe(monitor);
             }
-        }.schedule();        
+        }.schedule();
     }
 
     private void initWrapSetting() {
@@ -211,7 +215,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                                 MercurialPreferenceConstants.PREF_CONSOLE_FONT);
                 setFont(f);
                 initialized = true;
-            }            
+            }
         }
     }
 
@@ -337,7 +341,8 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         long commandRuntime = System.currentTimeMillis() - commandStarted;
         String time;
         try {
-            time = "Done in "+TIME_FORMAT.format(new Date(commandRuntime))+" min.";
+            time = "Done in " + TIME_FORMAT.format(new Date(commandRuntime))
+                    + " min.";
         } catch (RuntimeException e) {
             MercurialEclipsePlugin.logError(e);
             time = "UNKNOWN";
@@ -346,18 +351,18 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         if (status != null) {
             boolean includeRoot = true;
             if (status.getSeverity() == IStatus.ERROR) {
-                statusText = status.getMessage() + "(" + time+")";
+                statusText = status.getMessage() + "(" + time + ")";
                 appendLine(ConsoleDocument.ERROR, statusText);
                 includeRoot = false;
             } else {
                 statusText = time;
                 appendLine(ConsoleDocument.MESSAGE, statusText);
             }
-            
+
             outputStatus(status, includeRoot, includeRoot ? 0 : 1);
         } else if (exception != null) {
             if (exception instanceof OperationCanceledException) {
-                statusText = "Aborted. (" + time +")";
+                statusText = "Aborted. (" + time + ")";
             } else {
                 statusText = time;
             }
@@ -495,9 +500,12 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
      *            ignore preferences if <code>true</code>
      */
     public void show(boolean showNoMatterWhat) {
-        showOnMessage = Boolean.valueOf(MercurialUtilities.getPreference(
-                MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "false")).booleanValue();
+        showOnMessage = Boolean
+                .valueOf(
+                        MercurialUtilities
+                                .getPreference(
+                                        MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
+                                        "false")).booleanValue();
         if (showNoMatterWhat || showOnMessage) {
             if (!visible) {
                 HgConsoleFactory.showConsole();
@@ -507,8 +515,12 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.console.IConsole[])
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.
+     * console.IConsole[])
      */
     public void consolesAdded(IConsole[] consoles) {
         for (IConsole console : consoles) {
@@ -519,10 +531,14 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui.console.IConsole[])
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui
+     * .console.IConsole[])
      */
     public void consolesRemoved(IConsole[] consoles) {
-        
-    }    
+
+    }
 }

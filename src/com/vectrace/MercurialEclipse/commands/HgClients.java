@@ -14,10 +14,9 @@ import java.io.IOException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
-
 /**
  * @author Stefan
- *
+ * 
  */
 public final class HgClients {
 
@@ -25,21 +24,20 @@ public final class HgClients {
     private static IConfiguration config;
     private static IErrorHandler error;
 
-    public static void initialize(IConsole c, 
-            IErrorHandler errorHandler, 
+    public static void initialize(IConsole c, IErrorHandler errorHandler,
             IConfiguration configuration) {
-                HgClients.console = c;
-                HgClients.error = errorHandler;
-                HgClients.config = configuration;
-        
+        HgClients.config = configuration;
+        HgClients.console = c;
+        HgClients.error = errorHandler;
     }
-    
+
     /**
      * @return
      */
     public static String getExecutable() {
-        if(config == null) {
-            throw new IllegalStateException("HgClient has not been initialized with a configuration");
+        if (config == null) {
+            throw new IllegalStateException(
+                    "HgClient has not been initialized with a configuration");
         }
         return config.getExecutable();
     }
@@ -48,8 +46,9 @@ public final class HgClients {
      * @return
      */
     public static String getDefaultUserName() {
-        if(config == null) {
-            throw new IllegalStateException("HgClient has not been initialized with a configuration");
+        if (config == null) {
+            throw new IllegalStateException(
+                    "HgClient has not been initialized with a configuration");
         }
         return config.getDefaultUserName();
     }
@@ -58,8 +57,9 @@ public final class HgClients {
      * @return
      */
     public static IConsole getConsole() {
-        if(console == null) {
-            throw new IllegalStateException("HgClients has not been initialized with a console");
+        if (console == null) {
+            throw new IllegalStateException(
+                    "HgClients has not been initialized with a console");
         }
         return console;
     }
@@ -86,5 +86,10 @@ public final class HgClients {
      */
     public static int getTimeOut(String commandId) {
         return config.getTimeOut(commandId);
+    }
+
+    public static String getPreference(String preferenceConstant,
+            String defaultIfNotSet) {
+        return config.getPreference(preferenceConstant, defaultIfNotSet);
     }
 }
