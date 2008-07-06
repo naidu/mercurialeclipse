@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.Status;
 import com.vectrace.MercurialEclipse.commands.IConfiguration;
 import com.vectrace.MercurialEclipse.commands.IConsole;
 import com.vectrace.MercurialEclipse.commands.IErrorHandler;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
 
@@ -46,7 +47,13 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * com.vectrace.MercurialEclipse.commands.IConfiguration#getExecutable()
      */
     public String getExecutable() {
-        return MercurialUtilities.getHGExecutable();
+        if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
+            MercurialUtilities.configureHgExecutable();
+            MercurialEclipsePlugin.getDefault().checkHgInstallation();
+        }
+
+        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
+                .getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
     }
 
     /*
@@ -125,8 +132,6 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
         console.commandCompleted(new Status(severity,
                 MercurialEclipsePlugin.ID, message), error);
     }
-    
-    
 
     /*
      * (non-Javadoc)
@@ -152,11 +157,15 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
                 MercurialEclipsePlugin.ID, message, root));
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang.String, java.lang.Throwable)
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang
+     * .String, java.lang.Throwable)
      */
-    public void printMessage(String message, Throwable root) {        
+    public void printMessage(String message, Throwable root) {
         console.messageLineReceived(message, new Status(IStatus.INFO,
-                MercurialEclipsePlugin.ID, message, root));    
+                MercurialEclipsePlugin.ID, message, root));
     }
 }
