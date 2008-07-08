@@ -117,12 +117,17 @@ public class HgResolveClient extends AbstractClient {
                 HgCommand command = new HgCommand("help", ResourcesPlugin
                         .getWorkspace().getRoot(), false);
                 command.addOptions("resolve");
-                String result = new String(command.executeToBytes(10000, false));
-                if (result.startsWith("hg: unknown command 'resolve'")) {
+                String result;
+                try {
+                    result = new String(command.executeToBytes(10000, false));
+                    if (result.startsWith("hg: unknown command 'resolve'")) {
+                        returnValue = false;
+                    } else {
+                        returnValue = true;
+                    }
+                } catch (HgException e) {
                     returnValue = false;
-                } else {
-                    returnValue = true;
-                }
+                }                
                 workspaceRoot.setSessionProperty(
                         ResourceProperties.MERGE_USE_RESOLVE, new Boolean(
                                 returnValue));
