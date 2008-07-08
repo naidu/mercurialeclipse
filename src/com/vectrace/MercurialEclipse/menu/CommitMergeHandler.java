@@ -98,6 +98,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
         
         // clear merge status in Eclipse
         project.setPersistentProperty(ResourceProperties.MERGING, null);
+        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
         
         // refresh caches
         project.refreshLocal(IResource.DEPTH_INFINITE, null);

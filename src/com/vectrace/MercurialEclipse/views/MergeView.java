@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ISelection;
@@ -56,12 +55,6 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 public class MergeView extends ViewPart implements ISelectionListener {
 
     public final static String ID = MergeView.class.getName();
-
-    /**
-     * 
-     */
-    private static final QualifiedName QN_commitOffered = new QualifiedName(
-            MercurialEclipsePlugin.ID, ID + ".commitOffered");
 
     private Label statusLabel;
     private Table table;
@@ -235,11 +228,11 @@ public class MergeView extends ViewPart implements ISelectionListener {
                                             + ": Please commit merge with "
                                             + mergeNode);
                             if (currentProject
-                                    .getSessionProperty(QN_commitOffered) == null) {
+                                    .getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
                                 new CommitMergeHandler()
                                         .commitMergeWithCommitDialog(this.currentProject, getSite().getShell());
                                 currentProject.setSessionProperty(
-                                        QN_commitOffered, "true");
+                                        ResourceProperties.MERGE_COMMIT_OFFERED, "true");
                             }
                         }
                     } else {
