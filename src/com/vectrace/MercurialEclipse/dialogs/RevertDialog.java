@@ -180,7 +180,7 @@ public class RevertDialog extends Dialog {
                             new IStorageMercurialRevision(resource
                                     .getResource()));
                     
-                    CompareUtils.openEditor(leftNode, rightNode, true);
+                    CompareUtils.openEditor(leftNode, rightNode, true, getShell(), false);
                 }
             }
         });

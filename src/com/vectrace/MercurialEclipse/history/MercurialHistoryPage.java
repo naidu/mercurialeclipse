@@ -15,7 +15,9 @@
 package com.vectrace.MercurialEclipse.history;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -55,9 +57,9 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -269,9 +271,14 @@ public class MercurialHistoryPage extends HistoryPage {
             @Override
             public void run() {
                 try {
-                    HgUpdateClient.update(resource.getProject(), rev.getChangeSet().getChangeset(), true);
-                    new RefreshStatusJob("Refresh status after updating working directory.",resource.getProject()).schedule();
-                } catch (HgException e) {
+                    IProject project = resource.getProject();
+                    Assert.isNotNull(project);
+                    HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
+                    // update ends merges, so reset merge properties
+                    project.setPersistentProperty(ResourceProperties.MERGING, null);
+                    project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);                    
+                    new RefreshStatusJob("Refresh status after updating working directory.",project).schedule();
+                } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 } 
             }

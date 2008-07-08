@@ -225,7 +225,7 @@ public class CommitDialog extends TrayDialog {
                             new IStorageMercurialRevision(resource
                                     .getResource()));
 
-                    CompareUtils.openEditor(leftNode, rightNode, true);
+                    CompareUtils.openCompareDialog(leftNode, rightNode, getShell(), false);                                        
                 }
             }
         });

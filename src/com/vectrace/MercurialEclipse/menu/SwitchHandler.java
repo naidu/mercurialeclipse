@@ -41,6 +41,7 @@ public class SwitchHandler extends SingleResourceHandler {
         if (result == IDialogConstants.OK_ID) {
             HgUpdateClient.update(project, dialog.getRevision(), true);
             project.setPersistentProperty(ResourceProperties.MERGING, null);
+            project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
             project.refreshLocal(IResource.DEPTH_INFINITE, null);
             MergeView view = MergeView.getView();
             if (view != null) {

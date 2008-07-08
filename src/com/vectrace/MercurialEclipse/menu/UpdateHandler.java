@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class UpdateHandler extends SingleResourceHandler {
 
@@ -21,6 +22,9 @@ public class UpdateHandler extends SingleResourceHandler {
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
         HgUpdateClient.update(project, null, false);
+        // reset merge properties
+        project.setPersistentProperty(ResourceProperties.MERGING, null);
+        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
         // will trigger a FlagManager refresh
     }

@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.views;
 import java.util.List;
 
 import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -22,6 +21,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -51,6 +51,7 @@ import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener {
 
@@ -106,9 +107,12 @@ public class MergeView extends ViewPart implements ISelectionListener {
 
                     HgCompareEditorInput compareInput = new HgCompareEditorInput(
                             new CompareConfiguration(), file, ancestorNode,
-                            mergeNode, true);
+                            mergeNode, true);                    
 
-                    CompareUI.openCompareEditor(compareInput);
+                    int returnValue = CompareUtils.openCompareDialog(getSite().getShell(), compareInput);
+                    if (returnValue == Window.OK && markResolvedAction.isEnabled()) {
+                        markResolvedAction.run();
+                    }
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     MercurialEclipsePlugin.showError(e);
@@ -138,6 +142,9 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     currentProject.setPersistentProperty(
                             ResourceProperties.MERGING, null);
                     HgUpdateClient.update(currentProject, null, true);
+                    // reset merge properties
+                    currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
+                    currentProject.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
                     // trigger update of decorations
                     currentProject.touch(null);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
