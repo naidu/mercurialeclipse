@@ -32,10 +32,6 @@ import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.KeyEvent;
-import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -104,8 +100,6 @@ public class CommitDialog extends TrayDialog {
     private File[] filesToCommit;
     private IResource[] resourcesToCommit;
     private String commitMessage;
-    private MouseListener commitMouseListener;
-    private KeyListener commitKeyListener;
     private IResource[] inResources;
     private File[] filesToRemove;
     private List<IResource> resourcesToRemove;
@@ -287,41 +281,7 @@ public class CommitDialog extends TrayDialog {
 
     private void setupDefaultCommitMessage() {
         commitTextBox.setText(defaultCommitMessage);
-        commitMouseListener = new MouseListener() {
-
-            public void mouseDown(MouseEvent e) {
-                // On the first mouse down in the area clear the default commit
-                // message.
-                commitTextBox.setText("");
-                commitTextBox.removeMouseListener(commitMouseListener);
-                commitTextBox.removeKeyListener(commitKeyListener);
-            }
-
-            public void mouseDoubleClick(MouseEvent e) {
-                // Nothing
-            }
-
-            public void mouseUp(MouseEvent e) {
-                // Nothing
-            }
-        };
-
-        commitKeyListener = new KeyListener() {
-            public void keyPressed(KeyEvent e) {
-                // On the first key press, deleted the default commit message
-                // and
-                // then remove the handlers.
-                commitTextBox.setText("");
-                commitTextBox.removeMouseListener(commitMouseListener);
-                commitTextBox.removeKeyListener(commitKeyListener);
-            }
-
-            public void keyReleased(KeyEvent e) {
-                // Nothing
-            }
-        };
-        commitTextBox.addMouseListener(commitMouseListener);
-        commitTextBox.addKeyListener(commitKeyListener);
+        commitTextBox.setSelection(0, defaultCommitMessage.length());        
     }
 
     private CheckboxTableViewer createFilesList(Composite container,
