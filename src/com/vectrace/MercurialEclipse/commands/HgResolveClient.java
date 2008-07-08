@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +19,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -56,15 +59,18 @@ public class HgResolveClient extends AbstractClient {
      * @return
      * @throws HgException
      */
-    public static String markResolved(IResource res, FlaggedAdaptable adaptable)
-            throws HgException {
-        HgCommand command = new HgCommand("resolve", getWorkingDirectory(res),
-                false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        command.addOptions("-m", ((IFile) adaptable.getAdapter(IFile.class))
-                .getProjectRelativePath().toOSString());
-        return command.executeToString();
+    public static String markResolved(File file) throws HgException {
+        try {
+            HgCommand command = new HgCommand("resolve",
+                    getWorkingDirectory(file), false);
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+            command.addOptions("-m", file.getCanonicalPath());
+            return command.executeToString();
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
@@ -74,15 +80,18 @@ public class HgResolveClient extends AbstractClient {
      * @return
      * @throws HgException
      */
-    public static String markUnresolved(IResource res,
-            FlaggedAdaptable adaptable) throws HgException {
-        HgCommand command = new HgCommand("resolve", getWorkingDirectory(res),
-                false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        command.addOptions("-u", ((IFile) adaptable.getAdapter(IFile.class))
-                .getProjectRelativePath().toOSString());
-        return command.executeToString();
+    public static String markUnresolved(File file) throws HgException {
+        try {
+            HgCommand command = new HgCommand("resolve",
+                    getWorkingDirectory(file), false);
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+            command.addOptions("-u", file.getCanonicalPath());
+            return command.executeToString();
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
@@ -100,7 +109,7 @@ public class HgResolveClient extends AbstractClient {
             }
             return true;
         } catch (HgException e) {
-            //MercurialEclipsePlugin.logError(e);
+            // MercurialEclipsePlugin.logError(e);
             return false;
         }
     }

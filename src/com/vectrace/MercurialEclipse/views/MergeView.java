@@ -107,10 +107,12 @@ public class MergeView extends ViewPart implements ISelectionListener {
 
                     HgCompareEditorInput compareInput = new HgCompareEditorInput(
                             new CompareConfiguration(), file, ancestorNode,
-                            mergeNode, true);                    
+                            mergeNode, true);
 
-                    int returnValue = CompareUtils.openCompareDialog(getSite().getShell(), compareInput);
-                    if (returnValue == Window.OK && markResolvedAction.isEnabled()) {
+                    int returnValue = CompareUtils.openCompareDialog(getSite()
+                            .getShell(), compareInput);
+                    if (returnValue == Window.OK
+                            && markResolvedAction.isEnabled()) {
                         markResolvedAction.run();
                     }
                 } catch (Exception e) {
@@ -143,8 +145,10 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             ResourceProperties.MERGING, null);
                     HgUpdateClient.update(currentProject, null, true);
                     // reset merge properties
-                    currentProject.setPersistentProperty(ResourceProperties.MERGING, null);
-                    currentProject.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+                    currentProject.setPersistentProperty(
+                            ResourceProperties.MERGING, null);
+                    currentProject.setSessionProperty(
+                            ResourceProperties.MERGE_COMMIT_OFFERED, null);
                     // trigger update of decorations
                     currentProject.touch(null);
                     currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
@@ -160,31 +164,35 @@ public class MergeView extends ViewPart implements ISelectionListener {
             @Override
             public void run() {
                 try {
-                    HgResolveClient.markResolved(currentProject,
-                            (FlaggedAdaptable) table.getSelection()[0]
-                                    .getData());
+                    IFile file = getSelection();
+                    if (HgResolveClient.checkAvailable()) {
+                        HgResolveClient.markResolved(file.getLocation().toFile());
+                    } else {
+                        HgIMergeClient.markResolved(file);
+                    }
                     populateView();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
             }
         };
-        markResolvedAction.setEnabled(HgResolveClient.checkAvailable());
         mgr.add(markResolvedAction);
         markUnresolvedAction = new Action("Mark unresolved") {
             @Override
             public void run() {
                 try {
-                    HgResolveClient.markUnresolved(currentProject,
-                            (FlaggedAdaptable) table.getSelection()[0]
-                                    .getData());
+                    IFile file = getSelection();
+                    if (HgResolveClient.checkAvailable()) {
+                        HgResolveClient.markUnresolved(file.getLocation().toFile());
+                    } else {
+                        HgIMergeClient.markUnresolved(file);
+                    }
                     populateView();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
             }
         };
-        markUnresolvedAction.setEnabled(HgResolveClient.checkAvailable());
         mgr.add(markUnresolvedAction);
     }
 
@@ -237,9 +245,13 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             if (currentProject
                                     .getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
                                 new CommitMergeHandler()
-                                        .commitMergeWithCommitDialog(this.currentProject, getSite().getShell());
-                                currentProject.setSessionProperty(
-                                        ResourceProperties.MERGE_COMMIT_OFFERED, "true");
+                                        .commitMergeWithCommitDialog(
+                                                this.currentProject, getSite()
+                                                        .getShell());
+                                currentProject
+                                        .setSessionProperty(
+                                                ResourceProperties.MERGE_COMMIT_OFFERED,
+                                                "true");
                             }
                         }
                     } else {
@@ -283,6 +295,16 @@ public class MergeView extends ViewPart implements ISelectionListener {
     public void dispose() {
         getSite().getPage().removeSelectionListener(this);
         super.dispose();
+    }
+
+    /**
+     * @return
+     */
+    private IFile getSelection() {
+        FlaggedAdaptable fa = (FlaggedAdaptable) table.getSelection()[0]
+                .getData();
+        IFile iFile = ((IFile) fa.getAdapter(IFile.class));
+        return iFile;
     }
 
     public static MergeView getView() {

@@ -56,4 +56,29 @@ public class HgIMergeClient extends AbstractClient {
         return result;
     }
 
+    public static String markResolved(IResource file) throws HgException {
+        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file),
+                false);
+        command.addOptions("--config", "extensions.imerge=");
+        command.addOptions("resolve");
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+
+        command.addFiles(file.getProjectRelativePath().toOSString());
+        String result = command.executeToString();
+        return result;
+    }
+
+    public static String markUnresolved(IResource file) throws HgException {
+        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file),
+                false);
+        command.addOptions("--config", "extensions.imerge=");
+        command.addOptions("unresolve");
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+        command.addFiles(file.getProjectRelativePath().toOSString());
+        String result = command.executeToString();
+        return result;
+    }
+
 }

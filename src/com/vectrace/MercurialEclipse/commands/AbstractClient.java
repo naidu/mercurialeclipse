@@ -48,6 +48,13 @@ public abstract class AbstractClient {
         }
         return path.toFile();
     }
+    
+    protected static File getWorkingDirectory(File file) {        
+        if (file.isFile()) {
+            return file.getParentFile();
+        }
+        return file;
+    }
 
     public AbstractClient() {
     }
@@ -66,4 +73,10 @@ public abstract class AbstractClient {
         File file = HgRootClient.getHgRoot(path.toFile());
         return file;
     }
+    
+    public static File getHgRoot(File file) throws HgException {
+        File root = HgRootClient.getHgRoot(file);
+        return root;
+    }
+    
 }
