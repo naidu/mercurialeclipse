@@ -51,6 +51,14 @@ public class ResourceProperties {
      */
     public static final QualifiedName MERGE_COMMIT_OFFERED = new QualifiedName(
             MercurialEclipsePlugin.ID, MergeView.ID + ".commitOffered");
+    
+    /**
+     * Qualified name for a workspace session property that signifies whether
+     * to use Imerge extension or hg resolve for merging. Makes MercurialEclipse
+     * check exactly once for hg resolve and remember it until Eclipse is restarted.
+     */
+    public static final QualifiedName MERGE_USE_RESOLVE = new QualifiedName(
+            MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve");
 
     private ResourceProperties() {
     }

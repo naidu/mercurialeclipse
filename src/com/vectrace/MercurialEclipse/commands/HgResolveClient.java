@@ -17,12 +17,15 @@ import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class HgResolveClient extends AbstractClient {
 
@@ -95,23 +98,40 @@ public class HgResolveClient extends AbstractClient {
     }
 
     /**
-     * @return
-     * @throws HgException
+     * Checks whether hg resolve is supported. The result is stored in a session property on the
+     * workspace so that the check is only called once a session. Changing hg version while leaving
+     * Eclipse running results in undefined behavior.
+     * @return true if resolve is supported, false if not
      */
-    public static boolean checkAvailable() {
+    public static boolean checkAvailable() throws HgException {
         try {
-            HgCommand command = new HgCommand("help", ResourcesPlugin
-                    .getWorkspace().getRoot(), false);
-            command.addOptions("resolve");
-            String result = new String(command.executeToBytes(5000, false));
-            if (result.startsWith("hg: unknown command 'resolve'")) {
-                return false;
+            boolean returnValue;
+            IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
+                    .getRoot();
+            Object prop = workspaceRoot
+                    .getSessionProperty(ResourceProperties.MERGE_USE_RESOLVE);
+            if (prop != null) {
+                boolean useResolve = ((Boolean) prop).booleanValue();
+                returnValue = useResolve;
+            } else {
+                HgCommand command = new HgCommand("help", ResourcesPlugin
+                        .getWorkspace().getRoot(), false);
+                command.addOptions("resolve");
+                String result = new String(command.executeToBytes(10000, false));
+                if (result.startsWith("hg: unknown command 'resolve'")) {
+                    returnValue = false;
+                } else {
+                    returnValue = true;
+                }
+                workspaceRoot.setSessionProperty(
+                        ResourceProperties.MERGE_USE_RESOLVE, new Boolean(
+                                returnValue));
             }
-            return true;
-        } catch (HgException e) {
-            // MercurialEclipsePlugin.logError(e);
-            return false;
+            return returnValue;
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e);
         }
-    }
 
+    }
 }

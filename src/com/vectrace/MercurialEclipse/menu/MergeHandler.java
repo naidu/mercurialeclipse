@@ -67,7 +67,7 @@ public class MergeHandler extends SingleResourceHandler {
     /**
      * @return
      */
-    private static boolean isHgResolveAvailable() {
+    private static boolean isHgResolveAvailable() throws HgException {
         return HgResolveClient.checkAvailable();
     }
 
