@@ -32,7 +32,6 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -280,7 +279,7 @@ public class ResourceDecorator extends LabelProvider implements
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
                 suffix = " [" + fileCs.getChangesetIndex() + " "
-                        + fileCs.getUser() + " ] ";
+                        + fileCs.getUser() + "]";
 
                 if (cs != null) {
                     suffix += "< [" + cs.getChangesetIndex() + ":"
@@ -303,12 +302,8 @@ public class ResourceDecorator extends LabelProvider implements
         ChangeSet changeSet = null;
         String suffix = "";
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
-            String root = project.getPersistentProperty(ResourceProperties.HG_ROOT);
-            if (root == null) {
-                root = HgRootClient.getHgRoot(project);
-                project.setPersistentProperty(ResourceProperties.HG_ROOT, root);
-            } 
-            String nodeId = HgIdentClient.getCurrentChangesetId(new File(root));
+            File root = MercurialTeamProvider.getHgRoot(project);
+            String nodeId = HgIdentClient.getCurrentChangesetId(root);
             if (nodeId != null
                     && !nodeId
                             .equals("0000000000000000000000000000000000000000")) {
