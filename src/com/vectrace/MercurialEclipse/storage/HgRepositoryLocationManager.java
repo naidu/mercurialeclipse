@@ -68,8 +68,7 @@ public class HgRepositoryLocationManager {
                 REPO_LOCACTION_FILE).toFile();
     }
     
-    public void cleanup(IProject project) {
-        getLocationFile().delete();        
+    public void cleanup(IProject project) {      
         getProjectLocationFile(project).delete();
     }
 
