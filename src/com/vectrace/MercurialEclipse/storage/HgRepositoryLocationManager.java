@@ -67,6 +67,11 @@ public class HgRepositoryLocationManager {
         return MercurialEclipsePlugin.getDefault().getStateLocation().append(
                 REPO_LOCACTION_FILE).toFile();
     }
+    
+    public void cleanup(IProject project) {
+        getLocationFile().delete();        
+        getProjectLocationFile(project).delete();
+    }
 
     /**
      * Load all saved repository locations from the plug-in's default area.

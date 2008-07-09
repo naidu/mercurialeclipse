@@ -80,6 +80,7 @@ public class LocalChangesetCache extends AbstractCache {
 
     public synchronized void clear() {
         localChangeSets.clear();
+        locks.clear();
     }
 
     public void clear(IResource objectResource) throws HgException {

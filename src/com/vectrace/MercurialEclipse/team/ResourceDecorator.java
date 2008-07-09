@@ -101,7 +101,7 @@ public class ResourceDecorator extends LabelProvider implements
                 return;
             }
 
-            if (!MercurialUtilities.isResourceInReposetory(resource, false)) {
+            if (!MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
                 // Resource could be inside a link or something do nothing
                 // in the future this could check is this is another repository
                 return;
@@ -303,8 +303,12 @@ public class ResourceDecorator extends LabelProvider implements
         ChangeSet changeSet = null;
         String suffix = "";
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
-            File root = new File(HgRootClient.getHgRoot(project));
-            String nodeId = HgIdentClient.getCurrentChangesetId(root);
+            String root = project.getPersistentProperty(ResourceProperties.HG_ROOT);
+            if (root == null) {
+                root = HgRootClient.getHgRoot(project);
+                project.setPersistentProperty(ResourceProperties.HG_ROOT, root);
+            } 
+            String nodeId = HgIdentClient.getCurrentChangesetId(new File(root));
             if (nodeId != null
                     && !nodeId
                             .equals("0000000000000000000000000000000000000000")) {

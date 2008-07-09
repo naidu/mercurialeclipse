@@ -225,6 +225,7 @@ public class MercurialStatusCache extends AbstractCache implements
         statusMap.clear();
         knownStatus.clear();
         projectResources.clear();
+        locks.clear();
         getInstance().setChanged();
         getInstance().notifyObservers(knownStatus);
     }
@@ -280,7 +281,7 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     public boolean isSupervised(IResource resource) {
-        return MercurialUtilities.isResourceInReposetory(resource, false)
+        return MercurialUtilities.hgIsTeamProviderFor(resource, false)
                 && isSupervised(resource.getProject(), resource.getLocation());
     }
 

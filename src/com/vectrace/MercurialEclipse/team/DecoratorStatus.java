@@ -97,7 +97,7 @@ public class DecoratorStatus extends LabelProvider implements
 			return;
 		}
 
-		if (MercurialUtilities.isResourceInReposetory(objectResource, true) != true) {
+		if (MercurialUtilities.hgIsTeamProviderFor(objectResource, true) != true) {
 			// Resource could be inside a link or something do nothing
 			// in the future this could check is this is another repository
 			return;

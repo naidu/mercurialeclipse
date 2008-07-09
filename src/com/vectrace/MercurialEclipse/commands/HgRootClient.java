@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 
 import org.eclipse.core.resources.IResource;
 
@@ -34,7 +35,11 @@ public class HgRootClient {
 
     private static String getHgRoot2(IResource resource) throws HgException {
         File root = getHgRootAsFile(resource);
-        return root.getAbsolutePath();
+        try {
+            return root.getCanonicalPath();
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
@@ -51,7 +56,7 @@ public class HgRootClient {
     /**
      * @param root
      * @return
-     * @throws HgException 
+     * @throws HgException
      */
     public static File getHgRoot(File file) throws HgException {
         File root = file;
@@ -70,11 +75,8 @@ public class HgRootClient {
         }
         if (root == null) {
             throw new HgException(file.getName() + " does not have a hg root");
-        }        
+        }
         return root;
     }
-    
-    
-    
-    
+
 }

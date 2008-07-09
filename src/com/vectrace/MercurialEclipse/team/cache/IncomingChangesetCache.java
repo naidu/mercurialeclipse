@@ -65,6 +65,7 @@ public class IncomingChangesetCache extends AbstractCache {
     
     public synchronized void clear() {
         incomingChangeSets.clear();
+        locks.clear();
     }
 
     private ReentrantLock getLock(IResource objectResource) {

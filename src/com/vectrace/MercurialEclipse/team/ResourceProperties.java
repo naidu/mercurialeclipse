@@ -51,14 +51,23 @@ public class ResourceProperties {
      */
     public static final QualifiedName MERGE_COMMIT_OFFERED = new QualifiedName(
             MercurialEclipsePlugin.ID, MergeView.ID + ".commitOffered");
-    
+
     /**
-     * Qualified name for a workspace session property that signifies whether
-     * to use Imerge extension or hg resolve for merging. Makes MercurialEclipse
-     * check exactly once for hg resolve and remember it until Eclipse is restarted.
+     * Qualified name for a workspace session property that signifies whether to
+     * use Imerge extension or hg resolve for merging. Makes MercurialEclipse
+     * check exactly once for hg resolve and remember it until Eclipse is
+     * restarted.
      */
     public static final QualifiedName MERGE_USE_RESOLVE = new QualifiedName(
             MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve");
+
+    /**
+     * Qualified name for a project persistent property that stores the 
+     * canocial path of a hg root. To create a {@link java.io.File} use the
+     * constructor new File(project.getPersistentProperty(ResourceProperties.HG_ROOT))
+     */
+    public static final QualifiedName HG_ROOT = new QualifiedName(
+            MercurialEclipsePlugin.ID, "hgRoot");
 
     private ResourceProperties() {
     }

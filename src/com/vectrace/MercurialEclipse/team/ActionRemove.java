@@ -117,7 +117,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
     	if (obj instanceof IResource)
     	{
         IResource resource=(IResource) obj;
-        if(MercurialUtilities.isResourceInReposetory(resource, true) == true)
+        if(MercurialUtilities.hgIsTeamProviderFor(resource, true) == true)
         {
 
           //Resource could be inside a link or something do nothing

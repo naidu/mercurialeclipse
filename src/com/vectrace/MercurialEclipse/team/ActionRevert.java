@@ -101,7 +101,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         for (Object obj : selection.toList()) {
             if (obj instanceof IResource) {
                 IResource resource = (IResource) obj;
-                if (MercurialUtilities.isResourceInReposetory(resource, true) == true) {
+                if (MercurialUtilities.hgIsTeamProviderFor(resource, true) == true) {
                     resources.add(resource);
                 }
             }
@@ -163,7 +163,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 
             // Setup and run command
             File workingDir = MercurialUtilities.getWorkingDir(resource);
-            launchCmd[4] = MercurialUtilities.getResourceName(resource);
+            launchCmd[4] = resource.getName();
             // System.out.println("Revert = " + FullPath);
             // IResourceChangeEvent event = new IResourceChangeEvent();
             try {

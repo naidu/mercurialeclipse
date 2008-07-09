@@ -38,7 +38,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 /**
  * @author zingo
  * 
- * This is a IStorage subclass that handle file revision
+ * This is a IStorage subclass that can handle file revision
  * 
  */
 public class IStorageMercurialRevision implements IStorage {
@@ -68,6 +68,13 @@ public class IStorageMercurialRevision implements IStorage {
         }
     }
 
+    /**
+     * Constructs a new IStorageMercurialRevision with the given params.
+     * @param res the resource for which we want an IStorage revision
+     * @param rev the changeset index as string
+     * @param global the global hash identifier
+     * @param cs the changeset object
+     */
     public IStorageMercurialRevision(IResource res, String rev, String global,
             ChangeSet cs) {
         super();
@@ -111,8 +118,9 @@ public class IStorageMercurialRevision implements IStorage {
      */
     @SuppressWarnings("unchecked")
     public Object getAdapter(Class adapter) {
-        // System.out.println("IStorageMercurialRevision(" + resource.toString()
-        // + "," + revision + ")::getAdapter()" );
+        if (adapter.equals(IResource.class)) {
+            return resource;
+        }
         return null;
     }
 
@@ -179,8 +187,6 @@ public class IStorageMercurialRevision implements IStorage {
      * @see org.eclipse.core.resources.IStorage#getFullPath()
      */
     public IPath getFullPath() {
-        // System.out.println("IStorageMercurialRevision(" + resource.toString()
-        // + "," + revision + ")::getFullPath()" );
         return resource.getFullPath().append(
                 revision != null ? (" [" + revision + "]")
                         : " [parent changeset]");
@@ -215,8 +221,6 @@ public class IStorageMercurialRevision implements IStorage {
      * 
      */
     public boolean isReadOnly() {
-        // System.out.println("IStorageMercurialRevision(" + resource.toString()
-        // + "," + revision + ")::isReadOnly()" );
         if (revision != null) {
             return true;
         }
@@ -256,7 +260,8 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * This constructor is not recommended, as the revision index is not unique.
+     * This constructor is not recommended, as the revision index is not unique when working with 
+     * other than the local repository.
      * 
      * @param res
      * @param rev

@@ -10,18 +10,17 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     StefanC                   - some updates
  *     Stefan Groschupf          - logError
+ *     Bastian Doetsch           - updates, cleanup and documentation
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -31,8 +30,6 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.IOConsoleInputStream;
-import org.eclipse.ui.console.IOConsoleOutputStream;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -44,21 +41,13 @@ import com.vectrace.MercurialEclipse.views.console.HgConsole;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
 
 /**
+ * Class that offers Utility methods for working with the plug-in.
  * @author zingo
  * 
  */
 public class MercurialUtilities {
 
-    static HgConsole console;
-    static IOConsoleInputStream console_in;
-    static IOConsoleOutputStream console_out;
-    static PrintStream console_out_printstream; // migth be used by threads
-
-    // GetMercurialConsole should be
-    // used to get this, even
-    // internally
-    // GetMercurialConsole() in
-    // synchronized
+    private static HgConsole console;
 
     /**
      * This class is full of utilities metods, useful allover the place
@@ -68,9 +57,12 @@ public class MercurialUtilities {
     }
 
     /**
-     * mercurial command
+     * Determines if the configured Mercurial executable can be called.
+     * 
+     * @return true if no error occurred while calling the executable, false
+     *         otherwise
      */
-    public static boolean isExecutableConfigured() {
+    public static boolean isHgExecutableCallable() {
         try {
             Runtime.getRuntime().exec(getHGExecutable());
             return true;
@@ -80,15 +72,26 @@ public class MercurialUtilities {
     }
 
     /**
-     * Returns the executable for hg. If it's not defined, false is returned
+     * Returns the hg executable stored in the plug-in preferences. If it's not
+     * defined, "hg" is returned as default.
      * 
-     * @return false if no hg is defined. True if hg executable is defined
+     * @return the path to the executable or, if not defined "hg"
      */
     public static String getHGExecutable() {
-        return HgClients.getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
-                "hg");
+        return HgClients.getPreference(
+                MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
     }
 
+    /**
+     * Fetches a preference from the plug-in's preference store. If no
+     * preference could be found in the store, the given default is returned.
+     * 
+     * @param preferenceConstant
+     *            the string identifier for the constant.
+     * @param defaultIfNotSet
+     *            the default to return if no preference was found.
+     * @return the preference or the default
+     */
     public static String getPreference(String preferenceConstant,
             String defaultIfNotSet) {
         IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
@@ -102,8 +105,22 @@ public class MercurialUtilities {
         return defaultIfNotSet;
     }
 
+    /**
+     * Gets the configured executable if it's callable (@see
+     * {@link MercurialUtilities#isHgExecutableCallable()}.
+     * 
+     * If configureIfMissing is set to true, the configuration will be started
+     * and afterwards the executable stored in the preferences will be checked
+     * if it is callable. If true, it is returned, else "hg" will be returned.
+     * If the parameter is set to false, it will returns "hg" if no preference
+     * is set.
+     * 
+     * @param configureIfMissing
+     *            flag if configuration should be started if hg is not callable.
+     * @return the hg executable path
+     */
     public static String getHGExecutable(boolean configureIfMissing) {
-        if (isExecutableConfigured()) {
+        if (isHgExecutableCallable()) {
             return getHGExecutable();
         }
         if (configureIfMissing) {
@@ -113,8 +130,20 @@ public class MercurialUtilities {
         return "hg";
     }
 
+    /**
+     * Checks the GPG Executable is callable and returns it if it is.
+     * 
+     * Otherwise, if configureIfMissing is set to true, configuration will be
+     * started and the new command is tested for callability. If there's no
+     * preference found after configuration, "gpg" will be returned as default.
+     * 
+     * @param configureIfMissing
+     *            flag, if configuration should be started if gpg is not
+     *            callable.
+     * @return the gpg executable path
+     */
     public static String getGpgExecutable(boolean configureIfMissing) {
-        if (isGpgExecutableConfigured()) {
+        if (isGpgExecutableCallable()) {
             return getGpgExecutable();
         }
         if (configureIfMissing) {
@@ -124,11 +153,14 @@ public class MercurialUtilities {
         return "gpg";
     }
 
+    /**
+     * Starts configuration for Gpg executable by opening the preference page.
+     */
     public static void configureGpgExecutable() {
         configureHgExecutable();
     }
 
-    private static boolean isGpgExecutableConfigured() {
+    private static boolean isGpgExecutableCallable() {
         try {
             Runtime.getRuntime().exec(getGpgExecutable());
             return true;
@@ -140,12 +172,17 @@ public class MercurialUtilities {
     /**
      * Returns the executable for gpg. If it's not defined, false is returned
      * 
-     * @return false if no hg is defined. True if hg executable is defined
+     * @return gpg executable path or "gpg", if it's not set.
      */
     public static String getGpgExecutable() {
-        return HgClients.getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
+        return HgClients.getPreference(
+                MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
     }
 
+    /**
+     * Starts the configuration for Mercurial executable by opening the
+     * preference page.
+     */
     public static void configureHgExecutable() {
         Shell shell = Display.getCurrent().getActiveShell();
         String pageId = "com.vectrace.MercurialEclipse.prefspage";
@@ -159,18 +196,19 @@ public class MercurialUtilities {
     }
 
     /**
-     * Should we handle resource
+     * Checks if the given resource is controlled by MercurialEclipse. If the
+     * given resource is linked, it is not controlled by MercurialEclipse and
+     * therefore false is returned. A linked file is not followed, so even if
+     * there might be a hg repository in the linked files original location, we
+     * won't handle such a resource as supervised.
      * 
      * @param dialog
-     *            TODO
-     * 
-     *            Return true if the resource is handled by mercurial. is it a
-     *            link we do not folow the link (not now anyway mabe later
-     *            versions will)
-     * 
+     *            flag to signify that an error message should be displayed if
+     *            the resource is a linked resource Return true if the resource
+     * @return true, if MercurialEclipse provides team functions to this
+     *         resource, false otherwise.
      */
-    public static boolean isResourceInReposetory(IResource resource,
-            boolean dialog) {
+    public static boolean hgIsTeamProviderFor(IResource resource, boolean dialog) {
         // check, if we're team provider
         if (resource == null
                 || resource.getProject() == null
@@ -179,6 +217,7 @@ public class MercurialUtilities {
             return false;
         }
 
+        // if we are team provider, this project can't be linked :-).
         if (resource instanceof IProject) {
             return true;
         }
@@ -193,6 +232,7 @@ public class MercurialUtilities {
                 .getFolder(linkedParentName);
         boolean isLinked = linkedParent.isLinked();
 
+        // open dialog if resource is linked and flag is set to true
         if (dialog && isLinked) {
             Shell shell = null;
             IWorkbench workbench = null;
@@ -214,12 +254,11 @@ public class MercurialUtilities {
         return !isLinked;
     }
 
-    /** ************************* Username *********************** */
-
     /**
-     * Returns the Username for hg. If it's not defined, false is returned
+     * Returns the username for hg as configured in preferences. If it's not
+     * defined in the preference store, null is returned.
      * 
-     * @return false if no hg is defined. True if hg executable is defined
+     * @return hg username or null
      */
     public static String getHGUsername() {
         IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
@@ -230,6 +269,19 @@ public class MercurialUtilities {
         return executable;
     }
 
+    /**
+     * Gets the username for hg as configured in preferences. If there is no
+     * preference set and configureIfMissing is true, start configuration of the
+     * username and afterwards return the new preference. If nothing was
+     * configured this could still be null!
+     * 
+     * If configureIfMissing is false and no preference is set, the systems
+     * property "user.name" is returned (@see {@link System#getProperty(String)}
+     * 
+     * @param configureIfMissing
+     *            true if configuration should be started, otherwise false
+     * @return the username
+     */
     public static String getHGUsername(boolean configureIfMissing) {
         String uname = getHGUsername();
 
@@ -243,6 +295,9 @@ public class MercurialUtilities {
         return System.getProperty("user.name");
     }
 
+    /**
+     * Starts configuration of the hg username by opening preference page.
+     */
     public static void configureUsername() {
         Shell shell = Display.getCurrent().getActiveShell();
         String pageId = "com.vectrace.MercurialEclipse.prefspage";
@@ -254,39 +309,48 @@ public class MercurialUtilities {
     }
 
     /**
-     * ************************* search for a mercurial repository
-     * ***********************
+     * Returns hg root if project != null. Delegates to
+     * {@link MercurialTeamProvider#getHgRoot(IResource)}.
+     * 
+     * @param project
+     *            the project to get root for
+     * @return the canonical file system path of the hg root or null
+     * @throws HgException
      */
-
-    static String search4MercurialRoot(final IProject project) {
+    public static String search4MercurialRoot(final IProject project)
+            throws HgException {
         if (project != null) {
-            if (project.getLocation() != null) {
-                return MercurialUtilities.search4MercurialRoot(project
-                        .getLocation().toFile());
+            try {
+                return MercurialTeamProvider.getHgRoot(project)
+                        .getCanonicalPath();
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new HgException(e.getLocalizedMessage(), e);
             }
         }
         return null;
     }
 
-    static String search4MercurialRoot(final File file) {
-        String path = null;
-        File parent = file;
-        File hgFolder = new File(parent, ".hg");
-        // System.out.println("pathcheck:" + parent.toString());
-        while ((parent != null)
-                && !(hgFolder.exists() && hgFolder.isDirectory())) {
-            parent = parent.getParentFile();
-            if (parent != null) {
-                // System.out.println("pathcheck:" + parent.toString());
-                hgFolder = new File(parent, ".hg");
+    /**
+     * Returns hg root if file != null. Delegates to
+     * {@link MercurialTeamProvider#getHgRoot(File)}.
+     * 
+     * @param file
+     *            file to get root for
+     * @return the canonical file system path of the hg root or null
+     * @throws HgException
+     */
+    public static String search4MercurialRoot(final File file)
+            throws HgException {
+        if (file != null) {
+            try {
+                return MercurialTeamProvider.getHgRoot(file).getCanonicalPath();
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new HgException(e.getLocalizedMessage(), e);
             }
         }
-        if (parent != null) {
-            path = hgFolder.getParentFile().toString();
-        }
-
-        // System.out.println("pathcheck: >" + path + "<");
-        return path;
+        return null;
     }
 
     /**
@@ -304,19 +368,22 @@ public class MercurialUtilities {
         return null;
     }
 
-    /*
+    /**
      * Convenience method to return the OS specific path to the repository.
      */
     static public String getRepositoryPath(IProject project) {
         return project.getLocation().toOSString();
     }
 
-    /*
+    /**
      * Execute a command via the shell. Can throw HgException if the command
      * does not execute correctly. Exception will contain the error stream from
-     * the command execution. @returns String containing the successful
+     * the command execution.
      * 
-     * TODO: Should log failure. TODO: Should not return null for failure.
+     * @returns String containing the successful output
+     * 
+     *          TODO: Should log failure. TODO: Should not return null for
+     *          failure.
      */
     public static String ExecuteCommand(String cmd[], File workingDir,
             boolean consoleOutput) throws HgException {
@@ -333,61 +400,34 @@ public class MercurialUtilities {
     }
 
     /**
-     * @param obj
-     * @return Workingdir of object
+     * Gets the working directory for an IResource
      * 
+     * @param obj
+     *            the resource we need the working directory for
+     * @return Workingdir of object or null if resource neither project, folder
+     *         or file
      */
-    static public File getWorkingDir(IResource obj) {
+    public static File getWorkingDir(IResource obj) {
 
         File workingDir;
         if (obj.getType() == IResource.PROJECT) {
             workingDir = (obj.getLocation()).toFile();
         } else if (obj.getType() == IResource.FOLDER) {
-            // workingDir = (obj.getLocation()).toFile();
             workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
         } else if (obj.getType() == IResource.FILE) {
             workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
         } else {
             workingDir = null;
         }
-
         return workingDir;
-    }
+    }  
 
     /**
-     * @param obj
-     * @return Workingdir of object
+     * Gets the Mercurial console. If it's not already created, we create it
+     * and register it with the ConsoleManager.
      * 
+     * @return the MercurialConsole.
      */
-    static public File getWorkingDir(File obj) {
-        // System.out.println("getWorkingDir( " + obj.toString() + ") = " +
-        // obj.getAbsolutePath());
-        return new File(obj.getPath());
-    }
-
-    static public String getResourceName(IResource obj) {
-        return (obj.getLocation()).lastSegment();
-    }
-
-    static public String getResourceName(IResource obj, File workingDir) {
-
-        String st = obj.getLocation().toOSString();
-        // System.out.println("getResourceName(<" + st + ">,<"+
-        // workingDir.getAbsolutePath() + ">) =<" +
-        // st.substring(workingDir.getAbsolutePath().length()) + ">");
-        if (st.startsWith(workingDir.getAbsolutePath())) {
-            st = st.substring(workingDir.getAbsolutePath().length()); // Cut
-            // of
-            // working dir
-            // it might start with a path separator char that we want to
-            // remove...
-            if (st.startsWith(File.separator)) {
-                st = st.substring(File.separator.length());
-            }
-        }
-        return st;
-    }
-
     public static synchronized HgConsole getMercurialConsole() {
         if (console != null) {
             return console;
@@ -398,8 +438,6 @@ public class MercurialUtilities {
         HgConsoleFactory.showConsole();
         return console;
     }
-
-    
 
     private static class LegacyAdaptor extends HgCommand {
 
@@ -425,27 +463,14 @@ public class MercurialUtilities {
     }
 
     /**
-     * This methods extracts the IResource from the given file path taking into
-     * account, that the repository root might be above project level.
+     * Gets a resources name.
      * 
-     * @param proj
-     * @param file
-     * @param res
-     * @return
+     * @param obj
+     *            an IResource
+     * @return the name
      */
-    public static IResource getIResource(IProject proj, String path) {
-        int projectPathStartIndex = 0;
-        try {
-            if (!MercurialTeamProvider.isRepositoryRootInProject(proj)) {
-                projectPathStartIndex = path.indexOf(proj.getName());
-            }
-        } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
-        }
-        if (projectPathStartIndex >= 0) {
-            return proj.getFile(path.substring(projectPathStartIndex));
-        }
-        return null;
+    public static String getResourceName(IResource obj) {
+        return (obj.getLocation()).lastSegment();
     }
+
 }

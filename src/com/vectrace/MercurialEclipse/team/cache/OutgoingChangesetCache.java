@@ -176,4 +176,12 @@ public class OutgoingChangesetCache extends AbstractCache {
             }
         }
     }
+
+    /**
+     * Clears all maps in cache
+     */
+    public synchronized void clear() {
+        outgoingChangeSets.clear();
+        locks.clear();
+    }
 }

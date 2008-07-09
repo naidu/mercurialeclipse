@@ -307,7 +307,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             .getFirstElement()).getAdapter(IResource.class);
                     if (resource != null
                             && resource.isAccessible()
-                            && MercurialUtilities.isResourceInReposetory(
+                            && MercurialUtilities.hgIsTeamProviderFor(
                                     resource, false) && newResource != null
                             && newResource.equals(resource)) {
                         return;
@@ -315,7 +315,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 
                     if (newResource != null
                             && newResource.isAccessible()
-                            && MercurialUtilities.isResourceInReposetory(
+                            && MercurialUtilities.hgIsTeamProviderFor(
                                     newResource, false)) {
                         String newRoot = HgRootClient.getHgRoot(newResource);
                         if (!newRoot.equals(currentHgRoot)) {
@@ -333,7 +333,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 IFile file = (IFile) input.getAdapter(IFile.class);
                 if (file != null
                         && file.isAccessible()
-                        && MercurialUtilities.isResourceInReposetory(file,
+                        && MercurialUtilities.hgIsTeamProviderFor(file,
                                 false)) {
                     String newRoot = HgRootClient.getHgRoot(file);
                     if (!newRoot.equals(currentHgRoot)) {

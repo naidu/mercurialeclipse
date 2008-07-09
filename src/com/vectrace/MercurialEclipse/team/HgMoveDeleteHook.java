@@ -33,8 +33,8 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 /**
  * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
  * 
- * Hook into Eclipse rename and delete file operations so that the appropriate
- * changes can be tracked in Mercurial as well.
+ *         Hook into Eclipse rename and delete file operations so that the
+ *         appropriate changes can be tracked in Mercurial as well.
  */
 public class HgMoveDeleteHook implements IMoveDeleteHook {
     /**
@@ -43,17 +43,15 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
      */
     private boolean isInMercurialRepo(IFile file, IProgressMonitor monitor) {
         IResource[] fileArray = { file };
-        // System.out.println("HgMoveDeleteHook::isInMercurialRepo()
-        // StatusContainerAction(null,{" + file.toString() + "})");
         StatusContainerAction statusAction = new StatusContainerAction(null,
                 fileArray);
 
-        if (MercurialUtilities.isResourceInReposetory(file, false) != true) {
+        if (MercurialUtilities.hgIsTeamProviderFor(file, false) != true) {
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
             return false;
         }
-        
+
         if (!MercurialStatusCache.getInstance().isSupervised(file)) {
             return false;
         }
@@ -62,19 +60,13 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             statusAction.run(monitor);
             final String result = statusAction.getResult();
             if (result == null) {
-                // System.out.println("HgMoveDeleteHook::isInMercurialRepo()
-                // statusAction.getResult()=null");
                 return false;
             }
             if ((result.length() != 0) && result.startsWith("?")) {
-                // System.out.println("HgMoveDeleteHook::isInMercurialRepo()
-                // false");
                 return false;
             }
         } catch (Exception e) {
-            System.out
-                    .println("HgMoveDeleteHook::isInMercurialRepo() Unable to get status "
-                            + e.getMessage());
+            MercurialEclipsePlugin.logError(e);
             return false;
         }
 
@@ -82,14 +74,14 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
     }
 
     /**
-     * @returns <code>true</code> if there are files under this folder that
-     *          are under Mercurial control.
+     * Determines if a folder has supervised files
+     * 
+     * @returns <code>true</code> if there are files under this folder that are
+     *          under Mercurial control.
      */
     private boolean folderHasMercurialFiles(IFolder folder,
             IProgressMonitor monitor) {
-        // System.out.println("HgMoveDeleteHook::folderHasMercurialFiles("+folder.toString()
-        // + ",monitor)");
-        if (MercurialUtilities.isResourceInReposetory(folder, false) != true) {
+        if (!MercurialUtilities.hgIsTeamProviderFor(folder, false)) {
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
             return false;
@@ -107,9 +99,11 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
                 }
             }
         } catch (CoreException e) {
-            // Let's assume that this means there are no resources under this
-            // one as it probably doesn't
-            // properly exist. Let eclipse do everything.
+            /*
+             * Let's assume that this means there are no resources under this
+             * one as it probably doesn't properly exist. Let eclipse do
+             * everything.
+             */
             return false;
         }
 
@@ -118,11 +112,12 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
     public boolean deleteFile(IResourceTree tree, IFile file, int updateFlags,
             IProgressMonitor monitor) {
-        // Returning false indicates that the caller should invoke
-        // tree.standardDeleteFile to actually
-        // remove the resource from the file system and eclipse.
-        // System.out.println("HgMoveDeleteHook::deleteFile(tree," +
-        // file.toString() + ",updateFlags,monitor)");
+        /*
+         * Returning false indicates that the caller should invoke
+         * tree.standardDeleteFile to actually remove the resource from the file
+         * system and eclipse.
+         */
+
         if (!isInMercurialRepo(file, monitor)) {
             return false;
         }
@@ -132,24 +127,24 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
     public boolean deleteFolder(IResourceTree tree, IFolder folder,
             int updateFlags, IProgressMonitor monitor) {
-        // Mercurial doesn't control directories. However, as a short cut
-        // performing an operation on a
-        // folder will affect all subtending files. Check that there is at least
-        // 1 file and if so there is Mercurial
-        // work to do, otherwise there is no Mercurial work to be done.
-        // System.out.println("HgMoveDeleteHook::deleteFolder(tree," +
-        // folder.toString() + ",updateFlags,monitor)");
+        /*
+         * Mercurial doesn't control directories. However, as a short cut
+         * performing an operation on a folder will affect all subtending files.
+         * Check that there is at least 1 file and if so there is Mercurial work
+         * to do, otherwise there is no Mercurial work to be done.
+         */
         if (!folderHasMercurialFiles(folder, monitor)) {
             return false;
         }
 
-        // NOTE: There are bugs with Mercurial 0.9.1 on Windows and folder
-        // delete/rename operation.
-        // See: http://www.selenic.com/mercurial/bts/issue343,
-        // http://www.selenic.com/mercurial/bts/issue303, etc.
-        // Returning false indicates that the caller should invoke
-        // tree.standardDeleteFile to actually
-        // remove the resource from the file system and eclipse.
+        /*
+         * NOTE: There are bugs with Mercurial 0.9.1 on Windows and folder
+         * delete/rename operation. See:
+         * http://www.selenic.com/mercurial/bts/issue343,
+         * http://www.selenic.com/mercurial/bts/issue303, etc. Returning false
+         * indicates that the caller should invoke tree.standardDeleteFile to
+         * actually remove the resource from the file system and eclipse.
+         */
         return deleteHgFiles(folder, monitor);
     }
 
@@ -171,7 +166,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             HgRemoveClient.removeResource(resource, monitor);
             MercurialStatusCache.getInstance().refreshStatus(parent, monitor);
         } catch (Exception e) {
-            System.out.println("Delete failed: " + e.getMessage());
+            MercurialEclipsePlugin.logError(e);
             return true;
         }
 
@@ -187,8 +182,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             try {
                 folder.delete(updateFlags, monitor);
             } catch (CoreException e) {
-                System.out.println("Unable to delete .hg directory: "
-                        + e.getMessage());
+                MercurialEclipsePlugin.logError(e);
                 return true;
             }
         }
@@ -200,9 +194,6 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
     public boolean moveFile(IResourceTree tree, IFile source,
             IFile destination, int updateFlags, IProgressMonitor monitor) {
-        // System.out.println("HgMoveDeleteHook::moveFile(tree," +
-        // source.toString() + "," + destination.toString() +
-        // "updateFlags,monitor)");
 
         if (!isInMercurialRepo(source, monitor)) {
             return false;
@@ -229,15 +220,12 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
     public boolean moveFolder(IResourceTree tree, IFolder source,
             IFolder destination, int updateFlags, IProgressMonitor monitor) {
-        // Mercurial doesn't control directories. However, as a short cut
-        // performing an operation on a
-        // folder will affect all subtending files. Check that there is at least
-        // 1 file and if so there is Mercurial
-        // work to do, otherwise there is no Mercurial work to be done.
-        // System.out.println("HgMoveDeleteHook::moveFolder(tree," +
-        // source.toString() + "," + destination.toString() +
-        // "updateFlags,monitor)");
-
+        /*
+         * Mercurial doesn't control directories. However, as a short cut
+         * performing an operation on a folder will affect all subtending files.
+         * Check that there is at least 1 file and if so there is Mercurial work
+         * to do, otherwise there is no Mercurial work to be done.
+         */
         if (!folderHasMercurialFiles(source, monitor)) {
             return false;
         }

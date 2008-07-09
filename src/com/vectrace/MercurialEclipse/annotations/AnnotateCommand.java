@@ -50,7 +50,7 @@ public class AnnotateCommand
   public AnnotateBlocks execute() throws HgException
   {
     IFile resource = file.getFile();
-    if (!MercurialUtilities.isResourceInReposetory(resource, true)) {
+    if (!MercurialUtilities.hgIsTeamProviderFor(resource, true)) {
         return null;
     }
     File workingDir = MercurialUtilities.getWorkingDir(resource);

@@ -35,6 +35,11 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -49,24 +54,19 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     // The shared instance.
     private static MercurialEclipsePlugin plugin;
-
+    
+    // the repository manager
     private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
     private boolean hgUsable = true;
-
-    // private FlagManager flagManager;
 
     /**
      * The constructor.
      */
     public MercurialEclipsePlugin() {
         plugin = this;
-        //System.out.println("MercurialEclipsePlugin.MercurialEclipsePlugin()");
     }
 
-    /**
-     * This method is called upon plug-in activation
-     */
     @Override
     public void start(BundleContext context) throws Exception {
         try {
@@ -82,6 +82,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         repoManager.start();
     }
 
+    /**
+     * Checks if Mercurial is configured properly by issuing the hg debuginstall
+     * command.
+     */
     public void checkHgInstallation() {
         try {
             this.hgUsable = true;
@@ -96,37 +100,28 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         }
     }
 
-    // public static void refreshProjectsFlags(final Collection<IProject>
-    // projects) {
-    // new SafeWorkspaceJob("Refresh project state") {
-    // @Override
-    // protected IStatus runSafe(IProgressMonitor monitor) {
-    // try {
-    // for (IProject project : projects) {
-    // //getDefault().getFlagManager().refresh(project);
-    // MercurialStatusCache.getInstance().refreshStatus(project, monitor);
-    // }
-    // } catch (HgException e) {
-    // logError(e);
-    // }
-    // return Status.OK_STATUS;
-    // }
-    // }.schedule();
-    // }
-
+    /**
+     * Gets the repository manager
+     * 
+     * @return
+     */
     static public HgRepositoryLocationManager getRepoManager() {
         return repoManager;
     }
 
-    /**
-     * This method is called when the plug-in is stopped
-     */
     @Override
     public void stop(BundleContext context) throws Exception {
-        // flagManager.dispose();
-        repoManager.stop();
-        plugin = null;
-        super.stop(context);
+        try {
+            MercurialStatusCache.getInstance().clear();
+            AbstractCache.clearNodeMap();
+            LocalChangesetCache.getInstance().clear();
+            IncomingChangesetCache.getInstance().clear();
+            OutgoingChangesetCache.getInstance().clear();
+            repoManager.stop();
+            plugin = null;
+        } finally {
+            super.stop(context);
+        }
     }
 
     /**
@@ -197,7 +192,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      * @exception InterruptedException
      *                when the progress monitor is cancelled
      */
-
     public static void runWithProgress(Shell parent, boolean cancelable,
             final IRunnableWithProgress runnable)
             throws InvocationTargetException, InterruptedException {
