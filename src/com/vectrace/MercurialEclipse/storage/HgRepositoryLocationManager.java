@@ -67,8 +67,8 @@ public class HgRepositoryLocationManager {
         return MercurialEclipsePlugin.getDefault().getStateLocation().append(
                 REPO_LOCACTION_FILE).toFile();
     }
-    
-    public void cleanup(IProject project) {      
+
+    public void cleanup(IProject project) {
         getProjectLocationFile(project).delete();
     }
 
@@ -160,13 +160,12 @@ public class HgRepositoryLocationManager {
             return false;
         }
         synchronized (projectRepos) {
-            if (projectRepos == null) {
-                try {
-                    projectRepos = getProjectRepos();
-                } catch (IOException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
+            try {
+                projectRepos = getProjectRepos();
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
             }
+
             SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
             if (repoSet == null) {
                 repoSet = new TreeSet<HgRepositoryLocation>();

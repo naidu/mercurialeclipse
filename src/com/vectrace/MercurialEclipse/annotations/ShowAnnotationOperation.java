@@ -201,32 +201,30 @@ public class ShowAnnotationOperation extends TeamOperation {
 
         // no existing editor references found, try to open a new editor for the
         // file
-        if (resource instanceof IFile) {
-            try {
-                IEditorDescriptor descrptr = IDE
-                        .getEditorDescriptor((IFile) resource);
-                // try to open the associated editor only if its an internal
-                // editor
-                if (descrptr.isInternal()) {
-                    IEditorPart part = IDE.openEditor(getPart().getSite()
-                            .getPage(), (IFile) resource);
-                    if (part instanceof AbstractDecoratedTextEditor) {
-                        return (AbstractDecoratedTextEditor) part;
-                    }
 
-                    // editor opened is not a text editor - close it
-                    getPart().getSite().getPage().closeEditor(part, false);
-                }
-                // open file in default text editor
+        try {
+            IEditorDescriptor descrptr = IDE
+                    .getEditorDescriptor((IFile) resource);
+            // try to open the associated editor only if its an internal
+            // editor
+            if (descrptr.isInternal()) {
                 IEditorPart part = IDE.openEditor(
-                        getPart().getSite().getPage(), (IFile) resource,
-                        DEFAULT_TEXT_EDITOR_ID);
-                if (part != null && part instanceof AbstractDecoratedTextEditor) {
+                        getPart().getSite().getPage(), (IFile) resource);
+                if (part instanceof AbstractDecoratedTextEditor) {
                     return (AbstractDecoratedTextEditor) part;
                 }
 
-            } catch (PartInitException e) {
+                // editor opened is not a text editor - close it
+                getPart().getSite().getPage().closeEditor(part, false);
             }
+            // open file in default text editor
+            IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
+                    (IFile) resource, DEFAULT_TEXT_EDITOR_ID);
+            if (part != null && part instanceof AbstractDecoratedTextEditor) {
+                return (AbstractDecoratedTextEditor) part;
+            }
+
+        } catch (PartInitException e) {
         }
 
         return null;

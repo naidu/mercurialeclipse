@@ -387,13 +387,13 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         // Include a CoreException in the status
         Throwable t = status.getException();
         if (t instanceof CoreException) {
-            outputStatus(((CoreException) t).getStatus(), true, nestingLevel);
+            outputStatus(((CoreException) t).getStatus(), true, myNestingLevel);
         }
 
         // Include child status
         IStatus[] children = status.getChildren();
         for (int i = 0; i < children.length; i++) {
-            outputStatus(children[i], true, nestingLevel);
+            outputStatus(children[i], true, myNestingLevel);
         }
     }
 

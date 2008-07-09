@@ -131,7 +131,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
           {
             try
             {
-              String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir,false);
+              String output = MercurialUtilities.executeCommand(launchCmd, workingDir,false);
               if (output != null)
               {
                 // output output in a window

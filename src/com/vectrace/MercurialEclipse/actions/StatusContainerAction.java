@@ -74,7 +74,7 @@ protected File getHgWorkingDir()
   @Override
 protected String getActionDescription()
   {
-    return new String("Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.");
+    return "Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.";
   }
 
   public File getWorkingDir()

@@ -90,7 +90,7 @@ public class LocalChangesetCache extends AbstractCache {
             Set<IResource> members = getMembers(objectResource);
             members.add(objectResource);
             for (IResource resource : members) {
-                localChangeSets.remove(resource);
+                localChangeSets.remove(resource.getLocation());
             }
             notifyChanged(objectResource);
         } finally {
@@ -183,7 +183,7 @@ public class LocalChangesetCache extends AbstractCache {
         ReentrantLock lock = getLock(objectResource);
         try {
             lock.lock();
-            return localChangeSets.containsKey(objectResource);
+            return localChangeSets.containsKey(objectResource.getLocation());
         } finally {
             lock.unlock();
         }

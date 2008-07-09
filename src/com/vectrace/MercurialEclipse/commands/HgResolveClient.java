@@ -129,7 +129,7 @@ public class HgResolveClient extends AbstractClient {
                     returnValue = false;
                 }                
                 workspaceRoot.setSessionProperty(
-                        ResourceProperties.MERGE_USE_RESOLVE, new Boolean(
+                        ResourceProperties.MERGE_USE_RESOLVE, Boolean.valueOf(
                                 returnValue));
             }
             return returnValue;

@@ -385,7 +385,7 @@ public class MercurialUtilities {
      *          TODO: Should log failure. TODO: Should not return null for
      *          failure.
      */
-    public static String ExecuteCommand(String cmd[], File workingDir,
+    public static String executeCommand(String cmd[], File workingDir,
             boolean consoleOutput) throws HgException {
         return execute(cmd, workingDir).executeToString();
     }

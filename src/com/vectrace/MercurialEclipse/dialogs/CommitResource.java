@@ -47,7 +47,7 @@ public class CommitResource
       }
       else 
       {
-        return "status error: " + statusToken.toString();
+        return "status error: " + statusToken;
       }
     }
 

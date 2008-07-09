@@ -59,7 +59,7 @@ public class AnnotateCommand
     { MercurialUtilities.getHGExecutable(), "annotate", "--user", "--number",
         "--changeset", "--date", "--", FullPath };
 
-    String output = MercurialUtilities.ExecuteCommand(launchCmd, workingDir, true);
+    String output = MercurialUtilities.executeCommand(launchCmd, workingDir, true);
     if (output == null) {
         return null;
     }

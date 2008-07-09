@@ -89,9 +89,9 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
         IResource[] resources = getScope().getRoots();
         String res = "";
         if (resources != null) {
-            res.concat(" on resources: ");
+            res = res.concat(" on resources: ");
             for (IResource resource : resources) {
-                res.concat("\n\t" + resource.getName());
+                res = res.concat("\n\t" + resource.getName());
             }
         }
         return "Mercurial Synchronization".concat(res).concat("\nRepository: ")

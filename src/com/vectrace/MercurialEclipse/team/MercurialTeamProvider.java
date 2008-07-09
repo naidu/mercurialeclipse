@@ -97,7 +97,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
             root = HgRootClient.getHgRoot(resource);
         }
         if (root != null && root.length() != 0) {
-            MercurialTeamProvider.HG_ROOTS.put(project, new Boolean(false));
+            MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));
         } else {
             throw new HgException(project.getName()
                     + " does not belong to a Hg repository.");

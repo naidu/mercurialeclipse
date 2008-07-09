@@ -63,7 +63,7 @@ public abstract class HgOperation extends TeamOperation {
         monitor.beginTask(getActionDescription(), 1);
 
         try {
-            result = MercurialUtilities.ExecuteCommand(getHgCommand(),
+            result = MercurialUtilities.executeCommand(getHgCommand(),
                     getHgWorkingDir(), true);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(

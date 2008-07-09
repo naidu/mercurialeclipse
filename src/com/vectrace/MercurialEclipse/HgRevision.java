@@ -10,48 +10,55 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
-public class HgRevision
-{
-  public static final HgRevision TIP = new HgRevision("tip");
-  private final String changeset;
-  private final int revision;
+public class HgRevision {
+    public static final HgRevision TIP = new HgRevision("tip");
+    private final String changeset;
+    private final int revision;
 
-  protected HgRevision(String changeset) {
-    this(changeset, -1);
-  }
-  
-  public HgRevision(String changeset, int revision)
-  {
-    this.changeset = changeset;
-    this.revision = revision;
-  }
-  
-  public String getChangeset()
-  {
-    return changeset;
-  }
-  
-  public int getRevision()
-  {
-    return revision;
-  }
-  
-  @Override
-  public boolean equals(Object obj)
-  {
-    HgRevision r = (HgRevision)obj;
-    return r.revision == revision || r.changeset.equals(changeset);
-  }
-  
-  @Override
-  public String toString()
-  {
-    return revision + ":" + changeset;
-  }
-  
-  public static HgRevision parse(String s) 
-  {
-    int i = s.indexOf(':');
-    return new HgRevision(s.substring(i+1), Integer.parseInt(s.substring(0, i)));
-  }
+    protected HgRevision(String changeset) {
+        this(changeset, -1);
+    }
+
+    public HgRevision(String changeset, int revision) {
+        this.changeset = changeset;
+        this.revision = revision;
+    }
+
+    public String getChangeset() {
+        return changeset;
+    }
+
+    public int getRevision() {
+        return revision;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof HgRevision) {
+            HgRevision r = (HgRevision) obj;
+            return r.revision == revision || r.changeset.equals(changeset);
+        }
+        return false;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see java.lang.Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
+        return changeset.hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return revision + ":" + changeset;
+    }
+
+    public static HgRevision parse(String s) {
+        int i = s.indexOf(':');
+        return new HgRevision(s.substring(i + 1), Integer.parseInt(s.substring(
+                0, i)));
+    }
 }

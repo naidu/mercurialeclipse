@@ -164,7 +164,7 @@ public class IncomingChangesetCache extends AbstractCache {
             List<IResource> members = new ArrayList<IResource>();
             Map<IPath, SortedSet<ChangeSet>> changeSets = incomingChangeSets
                     .get(repositoryLocation);
-            members = getMembers(resource, changeSets);
+            members.addAll(getMembers(resource, changeSets));
             return members.toArray(new IResource[members.size()]);
         } finally {
             lock.unlock();

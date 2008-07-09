@@ -373,7 +373,7 @@ public class CommitDialog extends TrayDialog {
             }
 
             CommitResource resource = (CommitResource) objs[res];
-            if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) {
+            if (resource.getStatus().equals(CommitDialog.FILE_UNTRACKED)) {
                 list.add(resource.getPath());
             }
         }
@@ -390,7 +390,7 @@ public class CommitDialog extends TrayDialog {
             }
 
             CommitResource resource = (CommitResource) objs[res];
-            if (resource.getStatus() == CommitDialog.FILE_DELETED) {
+            if (resource.getStatus().equals(CommitDialog.FILE_DELETED)) {
                 list.add(resource.getPath());
             }
         }
@@ -407,7 +407,7 @@ public class CommitDialog extends TrayDialog {
             }
 
             CommitResource resource = (CommitResource) objs[res];
-            if (resource.getStatus() == CommitDialog.FILE_UNTRACKED) {
+            if (resource.getStatus().equals(CommitDialog.FILE_UNTRACKED)) {
                 list.add(resource.getResource());
             }
         }
@@ -424,7 +424,7 @@ public class CommitDialog extends TrayDialog {
             }
 
             CommitResource resource = (CommitResource) objs[res];
-            if (resource.getStatus() == CommitDialog.FILE_DELETED) {
+            if (resource.getStatus().equals(CommitDialog.FILE_DELETED)) {
                 list.add(resource.getResource());
             }
         }

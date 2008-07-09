@@ -63,8 +63,9 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 		if (result != 0) {
 			return result;
 		}
-		return result = o.getStop().getChangeSet().getChangesetIndex()
+		result = o.getStop().getChangeSet().getChangesetIndex()
 				- stop.getChangeSet().getChangesetIndex();
+		return result;
 
 	}
 	
@@ -92,23 +93,30 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (!(obj instanceof HistoryPainterEdge))
-			return false;
+		if (this == obj) {
+            return true;
+        }
+		if (obj == null) {
+            return false;
+        }
+		if (!(obj instanceof HistoryPainterEdge)) {
+            return false;
+        }
 		final HistoryPainterEdge other = (HistoryPainterEdge) obj;
 		if (start == null) {
-			if (other.start != null)
-				return false;
-		} else if (!start.equals(other.start))
-			return false;
+			if (other.start != null) {
+                return false;
+            }
+		} else if (!start.equals(other.start)) {
+            return false;
+        }
 		if (stop == null) {
-			if (other.stop != null)
-				return false;
-		} else if (!stop.equals(other.stop))
-			return false;
+			if (other.stop != null) {
+                return false;
+            }
+		} else if (!stop.equals(other.stop)) {
+            return false;
+        }
 		return true;
 	}
 }

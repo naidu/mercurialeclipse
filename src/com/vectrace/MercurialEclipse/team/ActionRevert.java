@@ -168,7 +168,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             // IResourceChangeEvent event = new IResourceChangeEvent();
             try {
                 monitor.subTask("Reverting " + resource.getName() + "...");
-                MercurialUtilities.ExecuteCommand(launchCmd, workingDir, true);
+                MercurialUtilities.executeCommand(launchCmd, workingDir, true);
                 monitor.worked(1);
             } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);

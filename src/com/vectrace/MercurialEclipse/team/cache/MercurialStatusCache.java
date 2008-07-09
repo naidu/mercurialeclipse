@@ -819,9 +819,9 @@ public class MercurialStatusCache extends AbstractCache implements
             lock.lock();
             Set<IResource> members = getMembers(project);
             for (IResource resource : members) {
-                statusMap.remove(resource);
+                statusMap.remove(resource.getLocation());
             }
-            statusMap.remove(project);
+            statusMap.remove(project.getLocation());
         } finally {
             lock.unlock();
         }
