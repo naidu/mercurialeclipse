@@ -20,10 +20,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class SignWizard extends Wizard {
     SignWizardPage page = null;
-    IProject project = null;
 
-    public SignWizard(IProject proj) {
-        this.project = proj;
+    public SignWizard(IProject proj) {        
         ImageDescriptor image = MercurialEclipsePlugin
                 .getImageDescriptor(Messages.getString("SignWizard.signWizardPage.image")); //$NON-NLS-1$
         page = new SignWizardPage(Messages.getString("SignWizard.signWizardPage.name"), Messages.getString("SignWizard.signWizardPage.title"), image, //$NON-NLS-1$ //$NON-NLS-2$

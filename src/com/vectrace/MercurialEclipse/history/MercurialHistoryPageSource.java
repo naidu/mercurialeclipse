@@ -22,13 +22,11 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * @author zingo
  * 
  */
-public class MercurialHistoryPageSource extends HistoryPageSource {
-    MercurialHistoryProvider fileHistoryProvider;
+public class MercurialHistoryPageSource extends HistoryPageSource {    
 
     public MercurialHistoryPageSource(
             MercurialHistoryProvider fileHistoryProvider) {
         super();
-        this.fileHistoryProvider = fileHistoryProvider;
     }
 
     /*

@@ -98,15 +98,17 @@ public final class HgBisectClient {
      * Gets a Status by Changeset map containing marked bisect statuses.
      * @param repository
      * @return
+     * @throws HgException 
      */
-    public static Map<String, Status> getBisectStatus(File repository) {
+    public static Map<String, Status> getBisectStatus(File repository) throws HgException {
         HashMap<String, Status> statusByRevision = new HashMap<String, Status>();
         if(!isBisecting(repository)) {
             return statusByRevision;
         }
+        BufferedReader reader = null;
         try {
             File file = getStatusFile(repository);
-            BufferedReader reader = new BufferedReader(new FileReader(file));
+            reader = new BufferedReader(new FileReader(file));
             String line = null;
             while(null != (line = reader.readLine())) {
                 String[] statusChangeset = line.split("\\s");
@@ -116,9 +118,18 @@ public final class HgBisectClient {
                     statusByRevision.put(statusChangeset[1].trim(), Status.GOOD);
                 }
             }
-            reader.close();
+            
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
+            MercurialEclipsePlugin.logError(e);  
+            throw new HgException(e.getLocalizedMessage(),e);
+        } finally {
+            try {
+                if (reader != null) {
+                    reader.close();
+                }
+            } catch (IOException e) {            
+                MercurialEclipsePlugin.logError(e);
+            }
         }
         return statusByRevision;
     }

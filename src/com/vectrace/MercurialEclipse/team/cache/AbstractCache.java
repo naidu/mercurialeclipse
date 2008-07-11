@@ -46,9 +46,9 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
  */
 public abstract class AbstractCache extends Observable {
 
-    protected static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
+    protected final static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
     protected static Comparator<ChangeSet> changeSetIndexComparator;
-    protected static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
+    protected final static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
 
     /**
      * @param repositoryLocation

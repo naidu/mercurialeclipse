@@ -59,13 +59,13 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * 
  */
 public class CommitDialog extends TrayDialog {
-    public static String FILE_MODIFIED = "Modified";
-    public static String FILE_ADDED = "Added";
-    public static String FILE_REMOVED = "Removed";
-    public static String FILE_UNTRACKED = "Untracked";
-    public static String FILE_DELETED = "Already Deleted";
+    public static final String FILE_MODIFIED = "Modified";
+    public static final String FILE_ADDED = "Added";
+    public static final String FILE_REMOVED = "Removed";
+    public static final String FILE_UNTRACKED = "Untracked";
+    public static final String FILE_DELETED = "Already Deleted";
 
-    class CommittableFilesFilter extends ViewerFilter {
+    private class CommittableFilesFilter extends ViewerFilter {
         public CommittableFilesFilter() {
             super();
         }
