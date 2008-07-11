@@ -167,8 +167,14 @@ public class MercurialTeamProvider extends RepositoryProvider {
         IProject project = getProject();
         assert (project != null);
         // cleanup
+/* 
+ * 
+ * Since Eclipse 3.4
+ * I guess we have to rely on the GC here until we drop support for Eclipse 3.3
+        
         project.getPersistentProperties().clear();
         project.getSessionProperties().clear();
+*/
         HG_ROOTS.remove(project);
     }
 
