@@ -293,6 +293,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                         .getPatchesInSeries(resource);
                 table.setPatches(patches.toArray(new Patch[patches.size()]));
             } catch (HgException e) {
+                statusLabel.setText(e.getLocalizedMessage());
                 MercurialEclipsePlugin.logError(e);
             }
         }
