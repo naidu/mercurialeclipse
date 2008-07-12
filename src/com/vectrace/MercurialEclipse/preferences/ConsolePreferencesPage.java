@@ -60,11 +60,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
         width = new IntegerFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_WIDTH,
                 "Console width", composite);
-        width.setValidRange(80, Integer.MAX_VALUE - 1);
         addField(width);
-        width.setEnabled(store
-                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_WRAP),
-                composite);
 
         // ** RESTRICT OUTPUT
         restrictOutput = new BooleanFieldEditor(
@@ -75,13 +71,8 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
         highWaterMark = new IntegerFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK,
                 "Number of characters", composite); // )
-        highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
+
         addField(highWaterMark);
-        highWaterMark
-                .setEnabled(
-                        store
-                                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT),
-                        composite);
 
         // ** SHOW AUTOMATICALLY
         showOnMessage = new BooleanFieldEditor(
@@ -113,15 +104,41 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
                 "Error color", composite);
         addField(errorColorEditor);
 
+        //initIntegerFields();        
+        width.setEnabled(store
+                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_WRAP),
+                composite);        
+        highWaterMark
+                .setEnabled(
+                        store
+                                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT),
+                        composite);
         Dialog.applyDialogFont(composite);
     }
 
     @Override
     public void propertyChange(PropertyChangeEvent event) {
         super.propertyChange(event);
+        initIntegerFields();
         highWaterMark.setEnabled(restrictOutput.getBooleanValue(),
                 getFieldEditorParent());
         width.setEnabled(wrap.getBooleanValue(), getFieldEditorParent());
+    }
+
+    /**
+     * 
+     */
+    private void initIntegerFields() {
+        int currWatermark = highWaterMark.getIntValue();
+        if (currWatermark < 1000) {
+            highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
+            highWaterMark.setStringValue("1000");            
+        }
+        int currWidth = width.getIntValue();
+        if (currWidth < 80) {            
+            width.setStringValue("80");
+            width.setValidRange(80, Integer.MAX_VALUE - 1);
+        }        
     }
 
     /**
