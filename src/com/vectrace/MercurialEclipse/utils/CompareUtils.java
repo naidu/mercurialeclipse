@@ -13,7 +13,11 @@ import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
-@SuppressWarnings("restriction")
+/**
+ * This class helps to invoke the compare facilities of Eclipse.
+ * @author bastian
+ *
+ */
 public class CompareUtils {
 
     public static void openEditor(IResource file, ChangeSet changeset,

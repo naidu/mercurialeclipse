@@ -61,7 +61,6 @@ public class CloneOperation extends HgOperation {
      * 
      * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
      */
-    @SuppressWarnings("restriction")//$NON-NLS-1$
     @Override
     public void run(IProgressMonitor m) throws InvocationTargetException,
             InterruptedException {
