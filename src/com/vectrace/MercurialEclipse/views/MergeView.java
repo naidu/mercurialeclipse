@@ -155,6 +155,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     clearView();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
                 }
             }
         };
@@ -165,34 +166,44 @@ public class MergeView extends ViewPart implements ISelectionListener {
             public void run() {
                 try {
                     IFile file = getSelection();
-                    if (HgResolveClient.checkAvailable()) {
-                        HgResolveClient.markResolved(file.getLocation().toFile());
-                    } else {
-                        HgIMergeClient.markResolved(file);
+                    if (file != null) {
+                        if (HgResolveClient.checkAvailable()) {
+                            HgResolveClient.markResolved(file.getLocation()
+                                    .toFile());
+                        } else {
+                            HgIMergeClient.markResolved(file);
+                        }
+                        populateView();
                     }
-                    populateView();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
                 }
             }
         };
+        markResolvedAction.setEnabled(false);
         mgr.add(markResolvedAction);
         markUnresolvedAction = new Action("Mark unresolved") {
             @Override
             public void run() {
                 try {
                     IFile file = getSelection();
-                    if (HgResolveClient.checkAvailable()) {
-                        HgResolveClient.markUnresolved(file.getLocation().toFile());
-                    } else {
-                        HgIMergeClient.markUnresolved(file);
+                    if (file != null) {
+                        if (HgResolveClient.checkAvailable()) {
+                            HgResolveClient.markUnresolved(file.getLocation()
+                                    .toFile());
+                        } else {
+                            HgIMergeClient.markUnresolved(file);
+                        }
+                        populateView();
                     }
-                    populateView();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
+                    statusLabel.setText(e.getLocalizedMessage());
                 }
             }
         };
+        markUnresolvedAction.setEnabled(false);
         mgr.add(markUnresolvedAction);
     }
 
@@ -213,6 +224,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
             row.setData(flagged);
         }
         abortAction.setEnabled(true);
+        markResolvedAction.setEnabled(true);
+        markUnresolvedAction.setEnabled(true);
     }
 
     public void clearView() {
@@ -220,6 +233,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
         table.removeAll();
         currentProject = null;
         abortAction.setEnabled(false);
+        markResolvedAction.setEnabled(false);
+        markUnresolvedAction.setEnabled(false);
     }
 
     public void setCurrentProject(IProject project) {
@@ -301,10 +316,14 @@ public class MergeView extends ViewPart implements ISelectionListener {
      * @return
      */
     private IFile getSelection() {
-        FlaggedAdaptable fa = (FlaggedAdaptable) table.getSelection()[0]
-                .getData();
-        IFile iFile = ((IFile) fa.getAdapter(IFile.class));
-        return iFile;
+        TableItem[] selection = table.getSelection();
+        if (selection != null && selection.length > 0) {
+            FlaggedAdaptable fa = (FlaggedAdaptable) table.getSelection()[0]
+                    .getData();
+            IFile iFile = ((IFile) fa.getAdapter(IFile.class));
+            return iFile;
+        }
+        return null;
     }
 
     public static MergeView getView() {
