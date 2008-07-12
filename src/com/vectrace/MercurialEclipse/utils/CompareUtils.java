@@ -4,13 +4,9 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.ResourceNode;
-import org.eclipse.compare.internal.CompareDialog;
-import org.eclipse.compare.internal.CompareUIPlugin;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.window.Window;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
@@ -21,38 +17,38 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 public class CompareUtils {
 
     public static void openEditor(IResource file, ChangeSet changeset,
-            boolean dialog) {
+            boolean dialog, boolean localEditable) {
         openEditor(file, new IStorageMercurialRevision(file, changeset
                 .getChangesetIndex()
-                + "", changeset.getChangeset(), changeset), dialog);
+                + "", changeset.getChangeset(), changeset), dialog, localEditable);
     }
 
-    public static void openEditor(IResource file, ChangeSet changeset) {
+    public static void openEditor(IResource file, ChangeSet changeset, boolean localEditable) {
         openEditor(file, new IStorageMercurialRevision(file, changeset
                 .getChangesetIndex()
-                + "", changeset.getChangeset(), changeset), false);
+                + "", changeset.getChangeset(), changeset), false, localEditable);
     }
 
     public static void openEditor(IResource file,
-            IStorageMercurialRevision right, boolean dialog) {
+            IStorageMercurialRevision right, boolean dialog, boolean localEditable) {
         ResourceNode leftNode = null;
         if (file != null) {
             leftNode = new ResourceNode(file);
         }
-        openEditor(leftNode, getNode(right), dialog, null, false);
+        openEditor(leftNode, getNode(right), dialog, localEditable);
     }
 
     public static void openEditor(IStorageMercurialRevision left,
-            IStorageMercurialRevision right, boolean dialog) {
-        openEditor(getNode(left), getNode(right), dialog, null, false);
+            IStorageMercurialRevision right, boolean dialog, boolean localEditable) {
+        openEditor(getNode(left), getNode(right), dialog, localEditable);
     }
 
     public static void openEditor(ResourceNode left, ResourceNode right,
-            boolean dialog, Shell shell, boolean localEditable) {
+            boolean dialog, boolean localEditable) {
         Assert.isNotNull(right);
 
         if (dialog) {
-            openCompareDialog(left, right, shell, localEditable);
+            openCompareDialog(left, right, localEditable);
         } else {
             CompareEditorInput compareInput = getCompareInput(left, right,
                     localEditable);
@@ -74,30 +70,21 @@ public class CompareUtils {
      *            the shell to use for opening the dialog
      */
     public static int openCompareDialog(ResourceNode left, ResourceNode right,
-            Shell shell, boolean localEditable) {
-        Shell myShell = shell;
-        if (shell == null) {
-            myShell = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-                    .getShell();
-        }
+            boolean localEditable) {
         CompareEditorInput compareInput = getCompareInput(left, right,
                 localEditable);
-        return openCompareDialog(myShell, compareInput);
+        return openCompareDialog(compareInput);
     }
 
     /**
-     * Opens a compare dialog using the given input. This method uses 
-     * internal Eclipse API, so it might break in future revisions.
+     * Opens a compare dialog using the given input.
+     * 
      * @param myShell
      * @param compareInput
      * @return
      */
-    public static int openCompareDialog(Shell myShell,
-            CompareEditorInput compareInput) {
-        if (CompareUIPlugin.getDefault().compareResultOK(compareInput, null)) {
-            CompareDialog dialog = new CompareDialog(myShell, compareInput);
-            return dialog.open();
-        }
+    public static int openCompareDialog(CompareEditorInput compareInput) {
+        CompareUI.openCompareDialog(compareInput);
         return Window.CANCEL;
     }
 

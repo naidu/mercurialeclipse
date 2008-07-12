@@ -109,8 +109,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             new CompareConfiguration(), file, ancestorNode,
                             mergeNode, true);
 
-                    int returnValue = CompareUtils.openCompareDialog(getSite()
-                            .getShell(), compareInput);
+                    int returnValue = CompareUtils.openCompareDialog(compareInput);
                     if (returnValue == Window.OK
                             && markResolvedAction.isEnabled()) {
                         markResolvedAction.run();

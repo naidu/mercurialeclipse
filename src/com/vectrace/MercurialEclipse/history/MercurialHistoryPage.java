@@ -341,7 +341,7 @@ public class MercurialHistoryPage extends HistoryPage {
             public void run() {
                 try {
                     CompareUtils
-                            .openEditor(getStorage(0), getStorage(1), false);
+                            .openEditor(getStorage(0), getStorage(1), false, false);
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }

@@ -174,13 +174,13 @@ public class RevertDialog extends Dialog {
                     // workspace version
                     ResourceNode leftNode = new ResourceNode(resource
                             .getResource());
-                    
+
                     // mercurial version
                     RevisionNode rightNode = new RevisionNode(
                             new IStorageMercurialRevision(resource
                                     .getResource()));
-                    
-                    CompareUtils.openEditor(leftNode, rightNode, true, getShell(), false);
+
+                    CompareUtils.openCompareDialog(leftNode, rightNode, false);
                 }
             }
         });

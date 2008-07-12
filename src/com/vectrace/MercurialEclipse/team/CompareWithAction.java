@@ -30,7 +30,7 @@ public class CompareWithAction extends CompareAction {
 				"Compare With Revision...", file);
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			CompareUtils.openEditor(file, dialog.getChangeSet());
+			CompareUtils.openEditor(file, dialog.getChangeSet(), true);
 		}
 	}
 
