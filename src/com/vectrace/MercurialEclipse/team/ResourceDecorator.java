@@ -275,6 +275,8 @@ public class ResourceDecorator extends LabelProvider implements
         String suffix = "";
         // suffix for files
         if (!LOCAL_CACHE.isLocalUpdateInProgress(resource.getProject())
+                && !STATUS_CACHE.isAdded(resource.getProject(), resource
+                        .getLocation())
                 && !LOCAL_CACHE.isLocalUpdateInProgress(resource)) {
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
@@ -310,8 +312,15 @@ public class ResourceDecorator extends LabelProvider implements
                 changeSet = LocalChangesetCache.getInstance().getChangeSet(
                         nodeId);
                 if (changeSet == null) {
-                    changeSet = LocalChangesetCache.getInstance()
-                            .getLocalChangeSet(project, nodeId);
+                    if (isShowChangeset()) {
+                        LocalChangesetCache.getInstance().getLocalChangeSets(
+                                project);
+                        changeSet = LocalChangesetCache.getInstance()
+                                .getChangeSet(nodeId);
+                    } else {
+                        changeSet = LocalChangesetCache.getInstance()
+                                .getLocalChangeSet(project, nodeId);
+                    }
                 }
             } else {
                 suffix = " [ new ] ";

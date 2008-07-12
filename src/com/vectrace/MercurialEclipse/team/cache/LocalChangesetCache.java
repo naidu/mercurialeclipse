@@ -26,6 +26,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.RepositoryProvider;
@@ -156,19 +157,24 @@ public class LocalChangesetCache extends AbstractCache {
     public ReentrantLock getLock(IResource objectResource) throws HgException {
         ReentrantLock lock;
         IPath hgRoot;
-        if (objectResource.isAccessible()) {
-            hgRoot = new Path(HgRootClient.getHgRootAsFile(objectResource)
-                    .getAbsolutePath());
-        } else {
-            hgRoot = new Path(objectResource.getProject().getLocation()
-                    .toOSString());
+        try {
+            if (objectResource.isAccessible()) {
+                hgRoot = new Path(MercurialTeamProvider.getHgRoot(
+                        objectResource).getAbsolutePath());
+            } else {
+                hgRoot = new Path(objectResource.getProject().getLocation()
+                        .toOSString());
+            }
+            lock = locks.get(hgRoot);
+            if (lock == null) {
+                lock = new ReentrantLock();
+                locks.put(hgRoot, lock);
+            }
+            return lock;
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
         }
-        lock = locks.get(hgRoot);
-        if (lock == null) {
-            lock = new ReentrantLock();
-            locks.put(hgRoot, lock);
-        }
-        return lock;
     }
 
     /**

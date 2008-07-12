@@ -117,7 +117,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
      *            the {@link java.io.File} to get the hg root for
      * @return the canonical file path of the HgRoot or null if no resource
      *         could be found in workspace that matches the file
-     * @throws HgException if no hg root was found or a critical error occurred.
+     * @throws HgException
+     *             if no hg root was found or a critical error occurred.
      */
     private static String getAndStoreHgRootPath(File file) throws CoreException {
         assert (file != null);
@@ -126,9 +127,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
             IResource resource = ResourcesPlugin.getWorkspace().getRoot()
                     .getFileForLocation(new Path(file.getCanonicalPath()));
             return getAndStoreHgRootPath(resource);
-        } catch (IOException e) {            
+        } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
-            throw new HgException(e.getLocalizedMessage(),e);
+            throw new HgException(e.getLocalizedMessage(), e);
         }
     }
 
@@ -138,11 +139,16 @@ public class MercurialTeamProvider extends RepositoryProvider {
      * @param resource
      *            the resource to get the hg root for
      * @return the {@link java.io.File} referencing the hg root directory
-     * @throws CoreException
+     * @throws HgException
      */
-    public static File getHgRoot(IResource resource) throws CoreException {
+    public static File getHgRoot(IResource resource) throws HgException {
         assert (resource != null);
-        return new File(getAndStoreHgRootPath(resource));
+        try {
+            return new File(getAndStoreHgRootPath(resource));
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
     }
 
     /**
@@ -167,14 +173,14 @@ public class MercurialTeamProvider extends RepositoryProvider {
         IProject project = getProject();
         assert (project != null);
         // cleanup
-/* 
- * 
- * Since Eclipse 3.4
- * I guess we have to rely on the GC here until we drop support for Eclipse 3.3
-        
-        project.getPersistentProperties().clear();
-        project.getSessionProperties().clear();
-*/
+        /*
+         * 
+         * Since Eclipse 3.4 I guess we have to rely on the GC here until we
+         * drop support for Eclipse 3.3
+         * 
+         * project.getPersistentProperties().clear();
+         * project.getSessionProperties().clear();
+         */
         HG_ROOTS.remove(project);
     }
 
