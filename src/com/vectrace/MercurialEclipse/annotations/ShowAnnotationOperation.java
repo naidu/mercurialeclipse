@@ -113,12 +113,12 @@ public class ShowAnnotationOperation extends TeamOperation {
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
             InterruptedException {
         monitor.beginTask(null, 100);
-        if (!MercurialStatusCache.getInstance().isSupervised(
-                remoteFile.getFile())) {
-            return;
-        }
-
         try {
+            if (!MercurialStatusCache.getInstance().isSupervised(
+                    remoteFile.getFile())) {
+                return;
+            }
+
             final AnnotateBlocks annotateBlocks = new AnnotateCommand(
                     remoteFile).execute();
 

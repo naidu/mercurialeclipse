@@ -52,11 +52,11 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             return false;
         }
 
-        if (!MercurialStatusCache.getInstance().isSupervised(file)) {
-            return false;
-        }
-
         try {
+            if (!MercurialStatusCache.getInstance().isSupervised(file)) {
+                return false;
+            }
+
             statusAction.run(monitor);
             final String result = statusAction.getResult();
             if (result == null) {

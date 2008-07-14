@@ -46,206 +46,220 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * 
  */
 public class DecoratorStatus extends LabelProvider implements
-		ILightweightLabelDecorator, Observer {
+        ILightweightLabelDecorator, Observer {
 
-	// set to true when having 2 different statuses in a folder flags it has
-	// modified
-	private static boolean folder_logic_2MM;
-	private static MercurialStatusCache statusCache;
+    // set to true when having 2 different statuses in a folder flags it has
+    // modified
+    private static boolean folder_logic_2MM;
+    private static MercurialStatusCache statusCache;
 
-	/**
+    /**
 	 * 
 	 */
-	public DecoratorStatus() {
-		configureFromPreferences();		
-		statusCache = MercurialStatusCache.getInstance();
-		statusCache.addObserver(this);
-	}
+    public DecoratorStatus() {
+        configureFromPreferences();
+        statusCache = MercurialStatusCache.getInstance();
+        statusCache.addObserver(this);
+    }
 
-	private static void configureFromPreferences() {
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault()
-				.getPreferenceStore();
-		folder_logic_2MM = MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM
-				.equals(store
-						.getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
-	}
+    private static void configureFromPreferences() {
+        IPreferenceStore store = MercurialEclipsePlugin.getDefault()
+                .getPreferenceStore();
+        folder_logic_2MM = MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM
+                .equals(store
+                        .getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
+    }
 
-	/**
-	 * Clears the known status of all resources and projects. and calls for a
-	 * update of decoration
-	 * 
-	 */
-	public static void refresh() {
-		/*
-		 * While this clearing of status is a "naive" implementation, it is
-		 * simple.
-		 */
-		configureFromPreferences();
-		// try {
-		// statusCache.refresh();
-		// } catch (TeamException e) {
-		// MercurialEclipsePlugin.logError(e);
-		// }
-	}
+    /**
+     * Clears the known status of all resources and projects. and calls for a
+     * update of decoration
+     * 
+     */
+    public static void refresh() {
+        /*
+         * While this clearing of status is a "naive" implementation, it is
+         * simple.
+         */
+        configureFromPreferences();
+        // try {
+        // statusCache.refresh();
+        // } catch (TeamException e) {
+        // MercurialEclipsePlugin.logError(e);
+        // }
+    }
 
-	public void decorate(Object element, IDecoration decoration) {
-		IResource objectResource = (IResource) element;
-		IProject objectProject = objectResource.getProject();
+    public void decorate(Object element, IDecoration decoration) {
+        IResource objectResource = (IResource) element;
+        IProject objectProject = objectResource.getProject();
 
-		if (objectProject == null || null == RepositoryProvider.getProvider(objectProject,
-				MercurialTeamProvider.ID)) {
-			return;
-		}
+        if (objectProject == null
+                || null == RepositoryProvider.getProvider(objectProject,
+                        MercurialTeamProvider.ID)) {
+            return;
+        }
 
-		if (MercurialUtilities.hgIsTeamProviderFor(objectResource, true) != true) {
-			// Resource could be inside a link or something do nothing
-			// in the future this could check is this is another repository
-			return;
-		}
+        if (MercurialUtilities.hgIsTeamProviderFor(objectResource, true) != true) {
+            // Resource could be inside a link or something do nothing
+            // in the future this could check is this is another repository
+            return;
+        }
+        try {
+            if (!statusCache.isStatusKnown((objectProject))) {
 
-		if (!statusCache.isStatusKnown((objectProject))) {
-			try {
-				statusCache.refreshStatus(objectProject,null);
-			} catch (TeamException ex) {
-				MercurialEclipsePlugin.logError(ex);
-				return;
-			}
-		}
+                statusCache.refreshStatus(objectProject, null);
 
-		BitSet output = statusCache.getStatus(objectResource);
-		ImageDescriptor overlay = null;
-		String prefix = null;
-		if (output != null) {
-			// "ignore" does not really count as modified
-			if (folder_logic_2MM
-					&& (output.cardinality() > 2 || (output.cardinality() == 2 && !output
-							.get(MercurialStatusCache.BIT_IGNORE)))) {
-				overlay = DecoratorImages.modifiedDescriptor;
-				prefix = ">";
-			} else {
-				switch (output.length() - 1) {
-				case MercurialStatusCache.BIT_MODIFIED:
-					overlay = DecoratorImages.modifiedDescriptor;
-					prefix = ">";
-					break;
-				case MercurialStatusCache.BIT_ADDED:
-					overlay = DecoratorImages.addedDescriptor;
-					prefix = ">";
-					break;
-				case MercurialStatusCache.BIT_UNKNOWN:
-					overlay = DecoratorImages.notTrackedDescriptor;
-					prefix = ">";
-					break;
-				case MercurialStatusCache.BIT_CLEAN:
-					overlay = DecoratorImages.managedDescriptor;
-					break;
-				// case BIT_IGNORE:
-				// do nothing
-				case MercurialStatusCache.BIT_REMOVED:
-					overlay = DecoratorImages.removedDescriptor;
-					prefix = ">";
-					break;
-				case MercurialStatusCache.BIT_DELETED:
-					overlay = DecoratorImages.deletedStillTrackedDescriptor;
-					prefix = ">";
-					break;
-				}
-			}
-		} else {
-			// empty folder, do nothing
-		}
-		if (overlay != null) {
-			decoration.addOverlay(overlay);
-		}
+            }
+        } catch (TeamException ex) {
+            MercurialEclipsePlugin.logError(ex);
+            return;
+        }
 
-		ChangeSet cs = null;
-		try {
-			cs = IncomingChangesetCache.getInstance().getNewestIncomingChangeSet(objectResource);
-		} catch (HgException e1) {
-			MercurialEclipsePlugin.logError(e1);
-		}
+        BitSet output;
+        try {
+            output = statusCache.getStatus(objectResource);
+        } catch (HgException e2) {
+            MercurialEclipsePlugin.logError(e2);
+            return;
+        }
+        ImageDescriptor overlay = null;
+        String prefix = null;
+        if (output != null) {
+            // "ignore" does not really count as modified
+            if (folder_logic_2MM
+                    && (output.cardinality() > 2 || (output.cardinality() == 2 && !output
+                            .get(MercurialStatusCache.BIT_IGNORE)))) {
+                overlay = DecoratorImages.modifiedDescriptor;
+                prefix = ">";
+            } else {
+                switch (output.length() - 1) {
+                case MercurialStatusCache.BIT_MODIFIED:
+                    overlay = DecoratorImages.modifiedDescriptor;
+                    prefix = ">";
+                    break;
+                case MercurialStatusCache.BIT_ADDED:
+                    overlay = DecoratorImages.addedDescriptor;
+                    prefix = ">";
+                    break;
+                case MercurialStatusCache.BIT_UNKNOWN:
+                    overlay = DecoratorImages.notTrackedDescriptor;
+                    prefix = ">";
+                    break;
+                case MercurialStatusCache.BIT_CLEAN:
+                    overlay = DecoratorImages.managedDescriptor;
+                    break;
+                // case BIT_IGNORE:
+                // do nothing
+                case MercurialStatusCache.BIT_REMOVED:
+                    overlay = DecoratorImages.removedDescriptor;
+                    prefix = ">";
+                    break;
+                case MercurialStatusCache.BIT_DELETED:
+                    overlay = DecoratorImages.deletedStillTrackedDescriptor;
+                    prefix = ">";
+                    break;
+                }
+            }
+        } else {
+            // empty folder, do nothing
+        }
+        if (overlay != null) {
+            decoration.addOverlay(overlay);
+        }
 
-		if (cs != null) {
-			if (prefix == null) {
-				prefix = "<";
-			} else {
-				prefix = "<" + prefix;
-			}
-		}
+        ChangeSet cs = null;
+        try {
+            cs = IncomingChangesetCache.getInstance()
+                    .getNewestIncomingChangeSet(objectResource);
+        } catch (HgException e1) {
+            MercurialEclipsePlugin.logError(e1);
+        }
 
-		if (prefix != null) {
-			decoration.addPrefix(prefix);
-		}
+        if (cs != null) {
+            if (prefix == null) {
+                prefix = "<";
+            } else {
+                prefix = "<" + prefix;
+            }
+        }
 
-		try {
-			ChangeSet changeSet = LocalChangesetCache.getInstance().getNewestLocalChangeSet(objectResource);
-			if (changeSet != null) {
-				String hex = ":" + changeSet.getNodeShort();
-				String suffix = " [" + changeSet.getChangesetIndex() + hex
-						+ "]";
+        if (prefix != null) {
+            decoration.addPrefix(prefix);
+        }
 
-				if (objectResource.getType() == IResource.FILE) {
-					suffix = " [" + changeSet.getChangesetIndex() +"] ";
+        try {
+            ChangeSet changeSet = LocalChangesetCache.getInstance()
+                    .getNewestLocalChangeSet(objectResource);
+            if (changeSet != null) {
+                String hex = ":" + changeSet.getNodeShort();
+                String suffix = " [" + changeSet.getChangesetIndex() + hex
+                        + "]";
 
-					if (cs != null) {
-						suffix += "< [" + cs.getChangesetIndex() + ":"
-								+ cs.getNodeShort() + " " + cs.getUser() + "]";
-					}
-				}
+                if (objectResource.getType() == IResource.FILE) {
+                    suffix = " [" + changeSet.getChangesetIndex() + "] ";
 
-				if (objectResource.getType() != IResource.FOLDER) {
-					decoration.addSuffix(suffix);
-				}
-			}
+                    if (cs != null) {
+                        suffix += "< [" + cs.getChangesetIndex() + ":"
+                                + cs.getNodeShort() + " " + cs.getUser() + "]";
+                    }
+                }
 
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logWarning(
-					"Couldn't get version of resource " + objectResource, e);
-		}
+                if (objectResource.getType() != IResource.FOLDER) {
+                    decoration.addSuffix(suffix);
+                }
+            }
 
-	}
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logWarning(
+                    "Couldn't get version of resource " + objectResource, e);
+        }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.jface.viewers.ILabelProviderListener)
-	 */
-	@Override
-	public void addListener(ILabelProviderListener listener) {
-	}
-	
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang.Object,
-	 *      java.lang.String)
-	 */
-	@Override
-	public boolean isLabelProperty(Object element, String property) {
-		return false;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.jface.viewers.IBaseLabelProvider#addListener(org.eclipse.
+     * jface.viewers.ILabelProviderListener)
+     */
+    @Override
+    public void addListener(ILabelProviderListener listener) {
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse.jface.viewers.ILabelProviderListener)
-	 */
-	@Override
-	public void removeListener(ILabelProviderListener listener) {
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.jface.viewers.IBaseLabelProvider#isLabelProperty(java.lang
+     * .Object, java.lang.String)
+     */
+    @Override
+    public boolean isLabelProperty(Object element, String property) {
+        return false;
+    }
 
-	public void update(Observable o, Object updatedObject) {
-		if (o == statusCache) {
-			final IWorkbench workbench = PlatformUI.getWorkbench();
-			final String decoratorId = DecoratorStatus.class.getName();
-			new SafeUiJob("Update Decorations") {
-				@Override
-				protected IStatus runSafe(IProgressMonitor monitor) {
-					workbench.getDecoratorManager().update(decoratorId);
-					return super.runSafe(monitor);
-				}
-			}.schedule();
-		}
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.jface.viewers.IBaseLabelProvider#removeListener(org.eclipse
+     * .jface.viewers.ILabelProviderListener)
+     */
+    @Override
+    public void removeListener(ILabelProviderListener listener) {
+    }
+
+    public void update(Observable o, Object updatedObject) {
+        if (o == statusCache) {
+            final IWorkbench workbench = PlatformUI.getWorkbench();
+            final String decoratorId = DecoratorStatus.class.getName();
+            new SafeUiJob("Update Decorations") {
+                @Override
+                protected IStatus runSafe(IProgressMonitor monitor) {
+                    workbench.getDecoratorManager().update(decoratorId);
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
+        }
+    }
 }

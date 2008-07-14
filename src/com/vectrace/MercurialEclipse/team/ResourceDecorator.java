@@ -109,8 +109,8 @@ public class ResourceDecorator extends LabelProvider implements
             boolean showChangeset = isShowChangeset();
             if (showChangeset) {
                 // get recent project versions
-                if (!STATUS_CACHE.getLock(project.getLocation()).isLocked()
-                        && !STATUS_CACHE.getLock(resource.getLocation())
+                if (!STATUS_CACHE.getLock(project).isLocked()
+                        && !STATUS_CACHE.getLock(resource)
                                 .isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(project)
@@ -126,8 +126,8 @@ public class ResourceDecorator extends LabelProvider implements
                     return;
                 }
             } else {
-                if (!STATUS_CACHE.getLock(project.getLocation()).isLocked()
-                        && !STATUS_CACHE.getLock(resource.getLocation())
+                if (!STATUS_CACHE.getLock(project).isLocked()
+                        && !STATUS_CACHE.getLock(resource)
                                 .isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(

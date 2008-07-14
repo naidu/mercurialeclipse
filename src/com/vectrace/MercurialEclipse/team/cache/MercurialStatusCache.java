@@ -43,6 +43,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -230,11 +231,25 @@ public class MercurialStatusCache extends AbstractCache implements
         getInstance().notifyObservers(knownStatus);
     }
 
-    public ReentrantLock getLock(IPath path) {
-        ReentrantLock lock = locks.get(path);
-        if (lock == null) {
+    /**
+     * Sets lock on HgRoot of given resource
+     * @param resource
+     * @return
+     * @throws HgException
+     */
+    public ReentrantLock getLock(IResource resource) throws HgException {
+        IPath hgRoot;
+        if (resource.isAccessible()) {
+            hgRoot = new Path(MercurialTeamProvider.getHgRoot(resource)
+                    .getAbsolutePath());
+        } else {
+            hgRoot = new Path(resource.getProject().getLocation()
+                    .toOSString());
+        }
+        ReentrantLock lock = locks.get(hgRoot);
+        if (lock == null) {        
             lock = new ReentrantLock();
-            locks.put(path, lock);
+            locks.put(hgRoot, lock);
         }
         return lock;
     }
@@ -245,20 +260,17 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param project
      *            the project to be checked
      * @return true if known, false if not.
+     * @throws HgException 
      */
-    public boolean isStatusKnown(IProject project) {
-        ReentrantLock lock = getLock(project.getLocation());
+    public boolean isStatusKnown(IProject project) throws HgException {
+        ReentrantLock lock = getLock(project);
         try {
             lock.lock();
             return knownStatus.contains(project);
         } finally {
             lock.unlock();
         }
-    }
-
-    public BitSet getStatus(IResource res) {
-        return getStatus(res.getLocation());
-    }
+    }    
 
     /**
      * Gets the status of the given resource from cache. The returned BitSet
@@ -269,36 +281,37 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param objectResource
      *            the resource to get status for.
      * @return the BitSet with status flags.
+     * @throws HgException 
      */
-    public BitSet getStatus(IPath path) {
-        ReentrantLock lock = getLock(path);
+    public BitSet getStatus(IResource resource) throws HgException {
+        ReentrantLock lock = getLock(resource);
         try {
             lock.lock();
-            return statusMap.get(path);
+            return statusMap.get(resource.getLocation());
         } finally {
             lock.unlock();
         }
     }
 
-    public boolean isSupervised(IResource resource) {
+    public boolean isSupervised(IResource resource) throws HgException {
         return MercurialUtilities.hgIsTeamProviderFor(resource, false)
                 && isSupervised(resource.getProject(), resource.getLocation());
     }
 
-    public boolean isSupervised(IProject project, IPath path) {
-        Assert.isNotNull(project);
+    public boolean isSupervised(IResource resource, IPath path) throws HgException {
+        Assert.isNotNull(resource);
         Assert.isNotNull(path);
-        ReentrantLock lock = getLock(project.getLocation());
+        ReentrantLock lock = getLock(resource);
 
-        if (project.isAccessible()
-                && null != RepositoryProvider.getProvider(project,
+        if (resource.getProject().isAccessible()
+                && null != RepositoryProvider.getProvider(resource.getProject(),
                         MercurialTeamProvider.ID)) {
             try {
                 lock.lock();
-                if (path.equals(project.getLocation())) {
+                if (path.equals(resource.getProject().getLocation())) {
                     return true;
                 }
-                BitSet status = getStatus(path);
+                BitSet status = statusMap.get(path);
                 if (status != null) {
                     switch (status.length() - 1) {
                     case MercurialStatusCache.BIT_IGNORE:
@@ -327,19 +340,19 @@ public class MercurialStatusCache extends AbstractCache implements
 
     }
 
-    public boolean isAdded(IProject project, IPath path) {
-        Assert.isNotNull(project);
+    public boolean isAdded(IResource resource, IPath path) throws HgException {
+        Assert.isNotNull(resource);
         Assert.isNotNull(path);
-        if (null != RepositoryProvider.getProvider(project,
+        if (null != RepositoryProvider.getProvider(resource.getProject(),
                 MercurialTeamProvider.ID)) {
             // if (path.equals(project.getLocation())) {
             // // FIX ME: This breaks on new projects without changelog
             // return false;
             // }
-            ReentrantLock lock = getLock(path);
+            ReentrantLock lock = getLock(resource);
             try {
                 lock.lock();
-                BitSet status = getStatus(path);
+                BitSet status = statusMap.get(path);
                 if (status != null) {
                     switch (status.length() - 1) {
                     case MercurialStatusCache.BIT_ADDED:
@@ -394,7 +407,7 @@ public class MercurialStatusCache extends AbstractCache implements
             if (res.isTeamPrivateMember()) {
                 return;
             }
-            ReentrantLock lock = getLock(res.getLocation());
+            ReentrantLock lock = getLock(res);
             try {
                 lock.lock();
                 // members should contain folders and project, so we clear
@@ -593,8 +606,9 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param resource
      *            the resource to be checked
      * @return true if known, false if not
+     * @throws HgException 
      */
-    public boolean isStatusKnown(IResource resource) {
+    public boolean isStatusKnown(IResource resource) throws HgException {
         return getStatus(resource) != null;
     }
 
@@ -765,9 +779,10 @@ public class MercurialStatusCache extends AbstractCache implements
      * 
      * @param resource
      * @return
+     * @throws HgException 
      */
-    public IResource[] getLocalMembers(IResource resource) {
-        ReentrantLock lock = getLock(resource.getLocation());
+    public IResource[] getLocalMembers(IResource resource) throws HgException {
+        ReentrantLock lock = getLock(resource);
         try {
             lock.lock();
 
@@ -812,9 +827,10 @@ public class MercurialStatusCache extends AbstractCache implements
 
     /**
      * @param project
+     * @throws HgException 
      */
-    public void clear(IProject project) {
-        ReentrantLock lock = getLock(project.getLocation());
+    public void clear(IProject project) throws HgException {
+        ReentrantLock lock = getLock(project);
         try {
             lock.lock();
             Set<IResource> members = getMembers(project);
@@ -831,9 +847,10 @@ public class MercurialStatusCache extends AbstractCache implements
      * Sets conflict marker on resource status
      * 
      * @param local
+     * @throws HgException 
      */
-    public void addConflict(IResource local) {
-        BitSet status = getStatus(local.getLocation());
+    public void addConflict(IResource local) throws HgException {
+        BitSet status = getStatus(local);
         status.set(BIT_CONFLICT);
         setStatusToAncestors(local, status);
         notifyChanged(local);
@@ -843,9 +860,10 @@ public class MercurialStatusCache extends AbstractCache implements
      * Removes conflict marker on resource status
      * 
      * @param local
+     * @throws HgException 
      */
-    public void removeConflict(IResource local) {
-        BitSet status = getStatus(local.getLocation());
+    public void removeConflict(IResource local) throws HgException {
+        BitSet status = getStatus(local);
         status.clear(BIT_CONFLICT);
         setStatusToAncestors(local, status);
         notifyChanged(local);

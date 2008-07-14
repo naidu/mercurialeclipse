@@ -34,31 +34,34 @@ public class MercurialResourceVariantComparator implements
     }
 
     public boolean compare(IResource local, IResourceVariant repoRevision) {
-        BitSet bitSet = statusCache.getStatus(local);
-        if (bitSet != null) {
-            int status = bitSet.length() - 1;
-            if (status == MercurialStatusCache.BIT_CLEAN) {
-               try {
+        try {
+            BitSet bitSet = statusCache.getStatus(local);
+            if (bitSet != null) {
+                int status = bitSet.length() - 1;
+                if (status == MercurialStatusCache.BIT_CLEAN) {
+
                     IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
                             .getStorage(null);
-                    ChangeSet cs = remoteIStorage.getChangeSet();                   
+                    ChangeSet cs = remoteIStorage.getChangeSet();
 
-                    // if this is outgoing or incoming, it can't be equal to any other
+                    // if this is outgoing or incoming, it can't be equal to any
+                    // other
                     // changeset
                     if (cs.getDirection() == Direction.OUTGOING
                             || cs.getDirection() == Direction.INCOMING) {
                         return false;
                     }
-                    
-                    // resource is clean and we compare against our local repository
+
+                    // resource is clean and we compare against our local
+                    // repository
                     return true;
-                    
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                } catch (TeamException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }                                              
+
+                }
             }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        } catch (TeamException e) {
+            MercurialEclipsePlugin.logError(e);
         }
         return false;
 
