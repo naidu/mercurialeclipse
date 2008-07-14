@@ -150,57 +150,67 @@ public class CommitDialog extends TrayDialog {
         container.setLayout(new FormLayout());
 
         commitTextLabel = new Label(container, SWT.NONE);
-        final FormData fd_commitTextLabel = new FormData();
-        fd_commitTextLabel.bottom = new FormAttachment(0, 33);
-        fd_commitTextLabel.top = new FormAttachment(0, 20);
-        fd_commitTextLabel.right = new FormAttachment(0, 200);
-        fd_commitTextLabel.left = new FormAttachment(0, 9);
-        commitTextLabel.setLayoutData(fd_commitTextLabel);
         commitTextLabel.setText("Commit comments");
-
+        
         commitTextBox = new Text(container, SWT.V_SCROLL | SWT.MULTI
                 | SWT.BORDER | SWT.WRAP);
-        final FormData fd_commitTextBox = new FormData();
-        fd_commitTextBox.right = new FormAttachment(100, -9);
-        fd_commitTextBox.top = new FormAttachment(0, 40);
-        fd_commitTextBox.left = new FormAttachment(0, 9);
-        commitTextBox.setLayoutData(fd_commitTextBox);
 
         commitFilesLabel = new Label(container, SWT.NONE);
-        fd_commitTextBox.bottom = new FormAttachment(commitFilesLabel, -7,
-                SWT.DEFAULT);
-        final FormData fd_commitFilesLabel = new FormData();
-        fd_commitFilesLabel.right = new FormAttachment(0, 66);
-        fd_commitFilesLabel.left = new FormAttachment(0, 9);
-        commitFilesLabel.setLayoutData(fd_commitFilesLabel);
         commitFilesLabel.setText("Select Files:");
 
         commitFilesList = createFilesList(container, selectableFiles);
+
+        
+        
+        final FormData fd_commitTextLabel = new FormData();
+        fd_commitTextLabel.top = new FormAttachment(0, 20);
+        fd_commitTextLabel.left = new FormAttachment(0, 9);
+        fd_commitTextLabel.right = new FormAttachment(100, -9);
+        commitTextLabel.setLayoutData(fd_commitTextLabel);
+
+        final FormData fd_commitTextBox = new FormData();
+        fd_commitTextBox.top = new FormAttachment(commitTextLabel, 3, SWT.BOTTOM);
+        fd_commitTextBox.left = new FormAttachment(0, 9);
+        fd_commitTextBox.bottom = new FormAttachment(0, 200);
+        fd_commitTextBox.right = new FormAttachment(100, -9);
+        commitTextBox.setLayoutData(fd_commitTextBox);
+
+        final FormData fd_commitFilesLabel = new FormData();
+        fd_commitFilesLabel.top = new FormAttachment(commitTextBox, 3);
+        fd_commitFilesLabel.left = new FormAttachment(0, 9);
+        fd_commitFilesLabel.right = new FormAttachment(100, -9);
+        commitFilesLabel.setLayoutData(fd_commitFilesLabel);
+
+        
         Table table = commitFilesList.getTable();
-        fd_commitFilesLabel.bottom = new FormAttachment(table, -7, SWT.DEFAULT);
         final FormData fd_table = new FormData();
-        fd_table.bottom = new FormAttachment(100, -57);
-        fd_table.right = new FormAttachment(100, -9);
-        fd_table.top = new FormAttachment(0, 189);
+        fd_table.top = new FormAttachment(commitFilesLabel, 3);
         fd_table.left = new FormAttachment(0, 9);
+        fd_table.right = new FormAttachment(100, -9);
+        fd_table.bottom = new FormAttachment(100, -9);
         table.setLayoutData(fd_table);
 
         if (selectableFiles) {
-            selectAllButton = new Button(container, SWT.CHECK);
-            final FormData fd_selectAllButton = new FormData();
-            fd_selectAllButton.bottom = new FormAttachment(100, -11);
-            fd_selectAllButton.right = new FormAttachment(0, 200);
-            fd_selectAllButton.left = new FormAttachment(0, 9);
-            selectAllButton.setLayoutData(fd_selectAllButton);
-            selectAllButton.setText("Select/unselect all");
 
+            selectAllButton = new Button(container, SWT.CHECK);
+            selectAllButton.setText("Select/unselect all");
+        
             showUntrackedFilesButton = new Button(container, SWT.CHECK);
+            showUntrackedFilesButton.setText("Show added/removed files");
+
+            fd_table.bottom = new FormAttachment(selectAllButton, -9);
+
+            final FormData fd_selectAllButton = new FormData();
+            fd_selectAllButton.bottom = new FormAttachment(showUntrackedFilesButton);
+            fd_selectAllButton.left = new FormAttachment(0, 9);
+            fd_selectAllButton.right = new FormAttachment(100, -9);
+            selectAllButton.setLayoutData(fd_selectAllButton);
+
             final FormData fd_showUntrackedFilesButton = new FormData();
             fd_showUntrackedFilesButton.bottom = new FormAttachment(100, -34);
             fd_showUntrackedFilesButton.right = new FormAttachment(0, 200);
             fd_showUntrackedFilesButton.left = new FormAttachment(0, 9);
             showUntrackedFilesButton.setLayoutData(fd_showUntrackedFilesButton);
-            showUntrackedFilesButton.setText("Show added/removed files");
         }
         makeActions();
         return container;
