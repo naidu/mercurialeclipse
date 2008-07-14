@@ -75,7 +75,7 @@ public class ChangePathsTableProvider extends TableViewer {
                         IPath fileAbsPath = hgRoot.append(fileRelPath);
                         IResource file = rev.getResource().getWorkspace().getRoot()
                                 .getFileForLocation(fileAbsPath);
-                        CompareUtils.openEditor(file, cs, true);                        
+                        CompareUtils.openEditor(file, cs, true, true);                        
                     } catch (IOException e) {
                         MercurialEclipsePlugin.logError(e);
                     }

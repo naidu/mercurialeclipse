@@ -171,7 +171,7 @@ public class IncomingPage extends HgWizardPage {
                         IPath fileAbsPath = hgRoot.append(fileRelPath);
                         IResource file = project.getWorkspace().getRoot()
                                 .getFileForLocation(fileAbsPath);
-                        CompareUtils.openEditor(file, cs, true);                        
+                        CompareUtils.openEditor(file, cs, true, true);                        
                     } catch (IOException e) {
                         setErrorMessage(e.getLocalizedMessage());
                         MercurialEclipsePlugin.logError(e);
