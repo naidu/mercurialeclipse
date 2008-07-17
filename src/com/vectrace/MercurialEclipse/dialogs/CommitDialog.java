@@ -208,7 +208,7 @@ public class CommitDialog extends TrayDialog {
 
             final FormData fd_showUntrackedFilesButton = new FormData();
             fd_showUntrackedFilesButton.bottom = new FormAttachment(100, -34);
-            fd_showUntrackedFilesButton.right = new FormAttachment(0, 200);
+            fd_showUntrackedFilesButton.right = new FormAttachment(100, -9);
             fd_showUntrackedFilesButton.left = new FormAttachment(0, 9);
             showUntrackedFilesButton.setLayoutData(fd_showUntrackedFilesButton);
         }
