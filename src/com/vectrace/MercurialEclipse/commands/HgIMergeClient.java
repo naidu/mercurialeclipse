@@ -28,7 +28,18 @@ public class HgIMergeClient extends AbstractClient {
         HgCommand command = new HgCommand("imerge", project, false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        command.addOptions("--config", "extensions.imerge=");
+        
+        boolean useExternalMergeTool = Boolean.valueOf(
+                HgClients.getPreference(
+                        MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+                        "false")).booleanValue();
+        
+        command.addOptions("--config", "extensions.imerge=");       
+        
+        if (!useExternalMergeTool) {
+            command.addOptions("--config","ui.merge=internal:merge");
+        }
+        
         if (revision != null) {
             command.addOptions("-r", revision);
         }
