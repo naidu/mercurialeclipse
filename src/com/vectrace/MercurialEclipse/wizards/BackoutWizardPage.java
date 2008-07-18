@@ -63,17 +63,22 @@ public class BackoutWizardPage extends HgWizardPage {
     /*
      * (non-Javadoc)
      * 
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
+     * @see
+     * org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets
+     * .Composite)
      */
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
         // list view of changesets
-        Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
-                Messages.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
+        Group changeSetGroup = SWTWidgetHelper
+                .createGroup(
+                        composite,
+                        Messages
+                                .getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
         changesetTable = new ChangesetTable(changeSetGroup);
-        GridData gridData = new GridData(GridData.FILL_BOTH);        
+        GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 200;
         gridData.minimumHeight = 50;
         changesetTable.setLayoutData(gridData);
@@ -81,7 +86,8 @@ public class BackoutWizardPage extends HgWizardPage {
         SelectionListener listener = new SelectionListener() {
             public void widgetSelected(SelectionEvent e) {
                 backoutRevision = changesetTable.getSelection();
-                messageTextField.setText(Messages.getString("BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
+                messageTextField.setText(Messages.getString(
+                        "BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
                         .concat(backoutRevision.toString()));
                 setPageComplete(true);
             }
@@ -90,52 +96,54 @@ public class BackoutWizardPage extends HgWizardPage {
                 widgetSelected(e);
             }
 
-            
         };
 
         changesetTable.addSelectionListener(listener);
         changesetTable.setEnabled(true);
-                
 
         // now the options
-        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
-        
-        
-        SWTWidgetHelper.createLabel(optionGroup, Messages.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
+        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages
+                .getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
+
+        SWTWidgetHelper.createLabel(optionGroup, Messages
+                .getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
         this.userTextField = SWTWidgetHelper.createTextField(optionGroup);
         this.userTextField.setText(MercurialUtilities.getHGUsername());
 
-        
-        SWTWidgetHelper.createLabel(optionGroup, Messages.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
+        SWTWidgetHelper.createLabel(optionGroup, Messages
+                .getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
         this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
-        
+
         // --merge merge with old dirstate parent after backout
         this.mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
         this.mergeCheckBox.setSelection(true);
-        
+
         try {
             populateBackoutChangesetTable();
         } catch (HgException e) {
-            MessageDialog.openInformation(getShell(),
-                    Messages.getString("BackoutWizardPage.changesetLoadingError"), e //$NON-NLS-1$
-                            .getMessage());
+            MessageDialog.openInformation(getShell(), Messages
+                    .getString("BackoutWizardPage.changesetLoadingError"), e //$NON-NLS-1$
+                    .getMessage());
             MercurialEclipsePlugin.logError(e);
         }
         setControl(composite);
-    }    
-    
+    }
+
     protected void populateBackoutChangesetTable() throws HgException {
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,true);
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
+                true);
 
         SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
                 .getLocalChangeSets(project);
-        
-        SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+
+        SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
+                Collections.reverseOrder());
         reverseOrderSet.addAll(changesets);
-        
+
         if (changesets != null) {
-            changesetTable.setChangesets(reverseOrderSet.toArray(new ChangeSet[changesets.size()]));
+            changesetTable.setChangesets(reverseOrderSet
+                    .toArray(new ChangeSet[changesets.size()]));
         }
     }
 
@@ -144,13 +152,15 @@ public class BackoutWizardPage extends HgWizardPage {
         String msg = messageTextField.getText();
         boolean merge = mergeCheckBox.getSelection();
         backoutRevision = changesetTable.getSelection();
-        try {
+        try {           
             String result = HgBackoutClient.backout(project, backoutRevision,
                     merge, msg, userTextField.getText());
-            MessageDialog.openInformation(getShell(), Messages.getString("BackoutWizardPage.backoutOutput"), //$NON-NLS-1$
+            MessageDialog.openInformation(getShell(), Messages
+                    .getString("BackoutWizardPage.backoutOutput"), //$NON-NLS-1$
                     result);
         } catch (HgException e) {
-            MessageDialog.openError(getShell(), Messages.getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
+            MessageDialog.openError(getShell(), Messages
+                    .getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
                     .getMessage());
             MercurialEclipsePlugin.logError(e);
             return false;

@@ -196,7 +196,11 @@ public abstract class AbstractShellCommand {
     }
 
     public String executeToString() throws HgException {
-        return new String(executeToBytes());
+        byte[] bytes = executeToBytes();
+        if (bytes != null) {
+            return new String(bytes);
+        }
+        return "";
     }
 
     protected List<String> getCommands() {

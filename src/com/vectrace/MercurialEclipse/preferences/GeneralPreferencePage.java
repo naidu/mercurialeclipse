@@ -14,6 +14,7 @@
 
 package com.vectrace.MercurialEclipse.preferences;
 
+import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
@@ -117,6 +118,10 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         addField(new StringFieldEditor(
                 MercurialPreferenceConstants.MERCURIAL_USERNAME,
                 Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
+        
+        addField(new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+                "Use external merge tool for resolving conflicts", getFieldEditorParent()));
 
         addField(new LabelDecoratorRadioGroupFieldEditor(
                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC,

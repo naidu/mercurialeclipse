@@ -19,19 +19,21 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends SingleResourceHandler {
 
     @Override
-    protected void run(IResource resource) throws Exception {
-        merge(resource, getShell());        
+    protected void run(IResource resource) throws Exception {        
+        merge(resource, getShell());
     }
 
     /**
@@ -43,18 +45,26 @@ public class MergeHandler extends SingleResourceHandler {
     public static String merge(IResource resource, Shell shell) throws HgException, CoreException,
             PartInitException {
         IProject project = resource.getProject();
-        RevisionChooserDialog dialog = new RevisionChooserDialog(shell, "Merge With...",
-                project);
+        RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
+                "Merge With...", project);
         String result = "";
+        boolean useExternalMergeTool = Boolean.valueOf(
+                HgClients.getPreference(
+                        MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+                        "false")).booleanValue();
         if (dialog.open() == IDialogConstants.OK_ID) {
             boolean useResolve = isHgResolveAvailable();
-            if (useResolve) {                
-                result = HgMergeClient.merge(resource, dialog.getRevision());
+            if (useResolve) {
+                result = HgMergeClient.merge(resource, dialog.getRevision(),
+                        useExternalMergeTool);
             } else {
                 result = HgIMergeClient.merge(project, dialog.getRevision());
             }
-            project.setPersistentProperty(ResourceProperties.MERGING, dialog.getChangeSet().getChangeset());
-            MergeView view = (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
+            project.setPersistentProperty(ResourceProperties.MERGING, dialog
+                    .getChangeSet().getChangeset());
+            MergeView view = (MergeView) PlatformUI.getWorkbench()
+                    .getActiveWorkbenchWindow().getActivePage().showView(
+                            MergeView.ID);
             view.clearView();
             view.setCurrentProject(project);
             // trigger refresh of project decoration

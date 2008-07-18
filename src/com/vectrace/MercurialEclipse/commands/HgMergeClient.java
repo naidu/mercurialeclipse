@@ -17,14 +17,16 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgMergeClient extends AbstractClient {
 
-    public static String merge(IResource res, String revision)
+    public static String merge(IResource res, String revision, boolean useExternalMergeTool)
             throws HgException {
         HgCommand command = new HgCommand("merge", getWorkingDirectory(res),
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+        if (!useExternalMergeTool) {
+            command.addOptions("--config","ui.merge=internal:merge");
+        }
         
-        command.addOptions("--config","ui.merge=internal:fail");
         if (revision != null) {
             command.addOptions("-r", revision);
         }

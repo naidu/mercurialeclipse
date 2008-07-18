@@ -65,4 +65,7 @@ public class MercurialPreferenceConstants {
     public static final String PREF_CONSOLE_FONT = "hg.console.font"; //$NON-NLS-1$
     public static final String PREF_CONSOLE_DEBUG = "hg.console.debug"; //$NON-NLS-1$
 
+    // merge
+    public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal";
+
 }

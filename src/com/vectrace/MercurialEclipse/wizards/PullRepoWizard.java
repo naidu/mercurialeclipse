@@ -230,8 +230,10 @@ public class PullRepoWizard extends HgWizard {
          */
         private void commitMerge(IProgressMonitor monitor, String mergeResult)
                 throws HgException, CoreException, InterruptedException {
-            if (resource != null && resource.getProject()!=null &&
-                    resource.getProject().getPersistentProperty(ResourceProperties.MERGING) != null) {
+            if (resource != null
+                    && resource.getProject() != null
+                    && resource.getProject().getPersistentProperty(
+                            ResourceProperties.MERGING) != null) {
                 boolean commit = true;
                 if (!HgResolveClient.checkAvailable()) {
                     if (!mergeResult.contains("all conflicts resolved")) {
