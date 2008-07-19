@@ -70,8 +70,12 @@ public class HgRootClient {
             }
         };
 
-        while (root != null && root.list(hg).length < 1) {
-            root = root.getParentFile();
+        if (root != null) {
+            String[] rootContent = root.list(hg);
+            while (rootContent != null && rootContent.length < 1) {
+                root = root.getParentFile();
+                rootContent = root.list(hg);
+            }
         }
         if (root == null) {
             throw new HgException(file.getName() + " does not have a hg root");
