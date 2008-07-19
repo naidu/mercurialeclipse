@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.net.URISyntaxException;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -37,19 +35,20 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public final class RefreshJob extends SafeWorkspaceJob {
     private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
             .getInstance();
-    private final String repositoryLocation;
+    private final HgRepositoryLocation repositoryLocation;
     private final IProject project;
     private boolean withFiles = false;
 
-    public RefreshJob(String name, String repositoryLocation, IProject project,
-            boolean withFiles) {
+    public RefreshJob(String name, HgRepositoryLocation repositoryLocation,
+            IProject project, boolean withFiles) {
         super(name);
         this.repositoryLocation = repositoryLocation;
         this.project = project;
         this.withFiles = withFiles;
     }
 
-    public RefreshJob(String name, String repositoryLocation, IProject project) {
+    public RefreshJob(String name, HgRepositoryLocation repositoryLocation,
+            IProject project) {
         super(name);
         this.repositoryLocation = repositoryLocation;
         this.project = project;
@@ -107,14 +106,9 @@ public final class RefreshJob extends SafeWorkspaceJob {
                     monitor
                             .subTask("Adding remote repository to project repositories...");
                 }
-                try {
-                    MercurialEclipsePlugin.getRepoManager().addRepoLocation(
-                            project,
-                            new HgRepositoryLocation(repositoryLocation));
-                } catch (URISyntaxException e) {
-                    MercurialEclipsePlugin.logWarning(
-                            "couldn't add repository to location manager", e);
-                }
+
+                MercurialEclipsePlugin.getRepoManager().addRepoLocation(
+                        project, repositoryLocation);
                 if (monitor != null) {
                     monitor.worked(1);
                 }

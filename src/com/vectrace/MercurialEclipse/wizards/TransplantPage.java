@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,7 @@ import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -75,7 +77,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                 try {
                     SortedSet<ChangeSet> changes = IncomingChangesetCache
                             .getInstance().getIncomingChangeSets(project,
-                                    getUrlCombo().getText());
+                                    new HgRepositoryLocation(getUrlCombo()
+                                            .getText()));
                     if (changes != null) {
                         changesets.clear();
                         changesets.addAll(changes);
@@ -85,6 +88,9 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                     setErrorMessage(Messages
                             .getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$)
                     MercurialEclipsePlugin.logError(e1);
+                } catch (URISyntaxException e1) {
+                    MercurialEclipsePlugin.logError(e1);
+                    setErrorMessage(e1.getLocalizedMessage());
                 }
 
             }

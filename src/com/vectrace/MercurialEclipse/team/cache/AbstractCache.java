@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -38,7 +37,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * @author bastian
@@ -58,16 +56,9 @@ public abstract class AbstractCache extends Observable {
      * @throws HgException
      */
     protected void addResourcesToCache(IProject project,
-            String repositoryLocation,
-            Map<String, Map<IPath, SortedSet<ChangeSet>>> changeSetMap,
+            HgRepositoryLocation repositoryLocation,
+            Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> changeSetMap,
             Direction direction) throws HgException {
-        // load latest outgoing changesets from repository given in
-        // parameter
-        HgRepositoryLocationManager repoManager = MercurialEclipsePlugin
-                .getRepoManager();
-
-        HgRepositoryLocation hgRepositoryLocation = repoManager
-                .getRepoLocation(repositoryLocation);
 
         // clear cache of old members
         final Map<IPath, SortedSet<ChangeSet>> removeMap = changeSetMap
@@ -76,27 +67,16 @@ public abstract class AbstractCache extends Observable {
         if (removeMap != null) {
             removeMap.clear();
             changeSetMap.remove(repositoryLocation);
-        }
-
-        if (hgRepositoryLocation == null) {
-            try {
-                hgRepositoryLocation = new HgRepositoryLocation(
-                        repositoryLocation);
-                repoManager.addRepoLocation(hgRepositoryLocation);
-            } catch (URISyntaxException e) {
-                MercurialEclipsePlugin.logError(e);
-                throw new HgException(e.getLocalizedMessage(), e);
-            }
-        }
+        }        
 
         // get changesets from hg
         Map<IPath, SortedSet<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
             resources = HgOutgoingClient.getOutgoing(project,
-                    hgRepositoryLocation);
+                    repositoryLocation);
         } else {
             resources = HgIncomingClient.getHgIncoming(project,
-                    hgRepositoryLocation);
+                    repositoryLocation);
         }
 
         // add them to cache(s)

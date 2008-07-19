@@ -55,6 +55,32 @@ public class HgPushPullClient  {
     public static String pull(IResource resource,
             HgRepositoryLocation repo, boolean update, boolean force,
             boolean timeout, ChangeSet changeset) throws HgException {
+        
+
+        URI uri = repo.getUri();
+        String pullSource;
+        if (uri != null) {
+            pullSource = uri.toASCIIString();
+        } else {
+            pullSource = repo.getLocation();
+        }
+
+        return pull(resource, update, force, timeout, changeset, pullSource);
+    }
+
+    /**
+     * @param resource
+     * @param update
+     * @param force
+     * @param timeout
+     * @param changeset
+     * @param pullSource
+     * @return
+     * @throws HgException
+     */
+    public static String pull(IResource resource, boolean update,
+            boolean force, boolean timeout, ChangeSet changeset,
+            String pullSource) throws HgException {
         IResource workDir = resource;
         if (resource.getType() == IResource.FILE) {
             workDir = resource.getParent();
@@ -71,13 +97,8 @@ public class HgPushPullClient  {
         if (changeset != null) {
             command.addOptions("--rev", changeset.getChangeset());
         }
-
-        URI uri = repo.getUri();
-        if (uri != null ) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repo.getLocation());
-        }
+        
+        command.addOptions(pullSource);
         
         if (timeout) {
             command

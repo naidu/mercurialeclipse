@@ -36,6 +36,7 @@ import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
@@ -57,11 +58,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
     private ISynchronizeScope myScope;
     private IResource[] myRoots;
-    private String repositoryLocation;
+    private HgRepositoryLocation repositoryLocation;
     private IResourceVariantComparator comparator;
 
     public MercurialSynchronizeSubscriber(ISynchronizeScope scope,
-            String repositoryLocation) {
+            HgRepositoryLocation repositoryLocation) {
         this.myScope = scope;
         this.repositoryLocation = repositoryLocation;
         this.comparator = getResourceComparator();

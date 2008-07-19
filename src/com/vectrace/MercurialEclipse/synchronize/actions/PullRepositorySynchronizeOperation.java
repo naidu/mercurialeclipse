@@ -53,9 +53,8 @@ public class PullRepositorySynchronizeOperation extends SynchronizeModelOperatio
             @Override
             protected IStatus runSafe(IProgressMonitor moni) {
                 try {
-                    HgRepositoryLocation loc = MercurialEclipsePlugin
-                            .getRepoManager().getRepoLocation(
-                                    participant.getRepositoryLocation());
+                    HgRepositoryLocation loc = participant
+                            .getRepositoryLocation();
 
                     if (loc != null) {
                         HgPushPullClient.pull(project, loc, update);

@@ -1,13 +1,16 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -27,6 +30,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
@@ -44,33 +48,88 @@ public class IncomingPage extends HgWizardPage {
     private HgRepositoryLocation location;
     private Button revisionCheckBox;
     private ChangeSet revision;
+    private SortedSet<ChangeSet> incoming;
 
+
+    private class GetIncomingOperation extends HgOperation {
+
+        
+        
+        /**
+         * @param context
+         */
+        public GetIncomingOperation(IRunnableContext context) {
+            super(context);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
+         * ()
+         */
+        @Override
+        protected String getActionDescription() {
+            return "Getting incoming changesets...";
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see
+         * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
+         * .core.runtime.IProgressMonitor)
+         */
+        @Override
+        public void run(IProgressMonitor monitor)
+                throws InvocationTargetException, InterruptedException {
+            monitor.beginTask("Getting incoming changesets...", 1);
+            monitor.subTask("Calling Mercurial...");
+            incoming = getIncomingInternal();
+            monitor.worked(1);
+            monitor.done();
+        }
+
+        private SortedSet<ChangeSet> getIncomingInternal() {
+            try {
+                HgRepositoryLocation remote = location;
+                incoming = IncomingChangesetCache.getInstance()
+                        .getIncomingChangeSets(project, remote);
+                return incoming;
+            } catch (HgException e) {
+                MercurialEclipsePlugin.showError(e);
+            }
+            return new TreeSet<ChangeSet>();
+        }
+
+    }
+    
     protected IncomingPage(String pageName) {
         super(pageName);
         this.setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
         this.setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
     }
+    
+    
 
     @Override
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if (visible) {
-            changeSetViewer.setInput(getIncoming());
+            try {
+                getContainer().run(true, false,
+                        new GetIncomingOperation(getContainer()));
+                changeSetViewer.setInput(incoming);
+            } catch (InvocationTargetException e) {
+                MercurialEclipsePlugin.logError(e);
+                setErrorMessage(e.getLocalizedMessage());
+            } catch (InterruptedException e) {
+                MercurialEclipsePlugin.logError(e);
+                setErrorMessage(e.getLocalizedMessage());
+            }
         }
-    }
-
-    private SortedSet<ChangeSet> getIncoming() {
-        try {
-            HgRepositoryLocation remote = location;
-            SortedSet<ChangeSet> incoming = IncomingChangesetCache
-                    .getInstance().getIncomingChangeSets(project,
-                            remote.getUrl());
-            return incoming;
-        } catch (HgException e) {
-            MercurialEclipsePlugin.showError(e);
-        }
-        return new TreeSet<ChangeSet>();
-    }
+    }    
 
     public void createControl(Composite parent) {
 
@@ -229,5 +288,9 @@ public class IncomingPage extends HgWizardPage {
      */
     public ChangeSet getRevision() {
         return revision;
+    }
+
+    public SortedSet<ChangeSet> getIncoming() {
+        return incoming;
     }
 }

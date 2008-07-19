@@ -13,6 +13,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
@@ -64,6 +65,7 @@ public class PullRepoWizard extends HgWizard {
         private boolean merge;
         private String output;
         private boolean showCommitDialog;
+        private File bundleFile;
 
         /**
          * @param context
@@ -72,7 +74,7 @@ public class PullRepoWizard extends HgWizard {
         public PullOperation(IRunnableContext context, boolean doUpdate,
                 IResource resource, boolean force, HgRepositoryLocation repo,
                 ChangeSet pullRevision, boolean timeout, boolean merge,
-                boolean showCommitDialog) {
+                boolean showCommitDialog, File bundleFile) {
             super(context);
             this.doUpdate = doUpdate;
             this.resource = resource;
@@ -82,6 +84,7 @@ public class PullRepoWizard extends HgWizard {
             this.timeout = timeout;
             this.merge = merge;
             this.showCommitDialog = showCommitDialog;
+            this.bundleFile = bundleFile;
         }
 
         /*
@@ -153,9 +156,16 @@ public class PullRepoWizard extends HgWizard {
             try {
                 monitor.worked(1);
                 monitor.subTask("Pulling incoming changesets...");
-
-                String r = HgPushPullClient.pull(resource, this.repo,
-                        this.doUpdate, this.force, this.timeout, pullRevision);
+                String r;
+                if (bundleFile == null) {
+                    r = HgPushPullClient.pull(resource, this.repo,
+                            this.doUpdate, this.force, this.timeout,
+                            pullRevision);
+                } else {
+                    r = HgPushPullClient.pull(resource, this.doUpdate,
+                            this.force, this.timeout, pullRevision, bundleFile
+                                    .getCanonicalPath());
+                }
 
                 monitor.worked(1);
 
@@ -358,11 +368,16 @@ public class PullRepoWizard extends HgWizard {
             boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
             boolean merge = pullPage.getMergeCheckBox().getSelection();
             boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
-                    .getSelection();
+                    .getSelection();            
+            File bundleFile = null;
+            if (incomingPage.getIncoming() != null
+                    && incomingPage.getIncoming().size() > 0) {
+                bundleFile = incomingPage.getIncoming().first().getBundleFile();
+            }
 
             PullOperation pullOperation = new PullOperation(getContainer(),
                     doUpdate, resource, force, repo, cs, timeout, merge,
-                    showCommitDialog);
+                    showCommitDialog, bundleFile);
             getContainer().run(true, false, pullOperation);
 
             String output = pullOperation.getOutput();

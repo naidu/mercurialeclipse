@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.net.URISyntaxException;
 import java.util.Date;
 
 import org.eclipse.core.resources.IResource;
@@ -19,16 +20,17 @@ import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
 public class MercurialSynchronizeParticipant extends SubscriberParticipant {
     private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION";
     private String secondaryId;
-    private String repositoryLocation;
+    private HgRepositoryLocation repositoryLocation;
     private MercurialSynchronizeSubscriber subscriber = null;
 
     public MercurialSynchronizeParticipant(ISynchronizeScope scope,
-            String repositoryLocation) {
+            HgRepositoryLocation repositoryLocation) {
         super(scope);
         this.repositoryLocation = repositoryLocation;
         subscriber = new MercurialSynchronizeSubscriber(scope,
@@ -44,7 +46,13 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
         IMemento myMemento = memento.getChild(MercurialSynchronizeParticipant.class.getName());
         
         this.secondaryId = secId;
-        this.repositoryLocation = myMemento.getString(REPOSITORY_LOCATION);
+        String uri = myMemento.getString(REPOSITORY_LOCATION);
+
+        try {
+            this.repositoryLocation = new HgRepositoryLocation(uri, null, null);
+        } catch (URISyntaxException e) {
+            throw new PartInitException(e.getLocalizedMessage(), e);
+        }
             
         subscriber = new MercurialSynchronizeSubscriber(getScope(), repositoryLocation);
         setSubscriber(subscriber);            
@@ -57,7 +65,8 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
     public void saveState(IMemento memento) {        
         super.saveState(memento);
         IMemento myMemento = memento.createChild(MercurialSynchronizeParticipant.class.getName());
-        myMemento.putString(REPOSITORY_LOCATION, repositoryLocation);
+        myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getUri()
+                .toString());
     }
 
     @Override
@@ -106,7 +115,7 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
     /**
      * @return the repositoryLocation
      */
-    public String getRepositoryLocation() {
+    public HgRepositoryLocation getRepositoryLocation() {
         return repositoryLocation;
     }
 

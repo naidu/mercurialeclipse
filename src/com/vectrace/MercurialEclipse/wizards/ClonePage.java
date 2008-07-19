@@ -45,6 +45,7 @@ public class ClonePage extends PushPullPage {
         this.resource = resource;
         setShowBundleButton(false);
         setShowRevisionTable(false);
+        setShowCredentials(true);
         setShowForce(false);
     }
 

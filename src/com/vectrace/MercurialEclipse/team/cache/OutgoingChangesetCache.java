@@ -26,6 +26,7 @@ import org.eclipse.team.core.RepositoryProvider;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -38,11 +39,11 @@ public class OutgoingChangesetCache extends AbstractCache {
      * The Map has the following structure: RepositoryLocation -> IResource ->
      * Changeset-Set
      */
-    private static Map<String, Map<IPath, SortedSet<ChangeSet>>> outgoingChangeSets;
+    private static Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> outgoingChangeSets;
     private static Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
 
     private OutgoingChangesetCache() {
-        outgoingChangeSets = new HashMap<String, Map<IPath, SortedSet<ChangeSet>>>();
+        outgoingChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
     public static OutgoingChangesetCache getInstance() {
@@ -52,7 +53,7 @@ public class OutgoingChangesetCache extends AbstractCache {
         return instance;
     }
 
-    public synchronized void clear(String repo) {
+    public synchronized void clear(HgRepositoryLocation repo) {
         outgoingChangeSets.remove(repo);
     }
 
@@ -66,7 +67,7 @@ public class OutgoingChangesetCache extends AbstractCache {
     }
 
     public ChangeSet getNewestOutgoingChangeSet(IResource resource,
-            String repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) throws HgException {
 
         ReentrantLock lock = getLock(resource);
         if (lock.isLocked()) {
@@ -101,7 +102,7 @@ public class OutgoingChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public SortedSet<ChangeSet> getOutgoingChangeSets(IResource objectResource,
-            String repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) throws HgException {
         ReentrantLock lock = getLock(objectResource);
         if (lock.isLocked()) {
             lock.lock();
@@ -135,7 +136,7 @@ public class OutgoingChangesetCache extends AbstractCache {
      * @return
      */
     public IResource[] getOutgoingMembers(IResource resource,
-            String repositoryLocation) {
+            HgRepositoryLocation repositoryLocation) {
         ReentrantLock lock = getLock(resource);
         if (lock.isLocked()) {
             lock.lock();
@@ -157,7 +158,7 @@ public class OutgoingChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public void refreshOutgoingChangeSets(IProject project,
-            String repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) throws HgException {
         Assert.isNotNull(project);
         // check if mercurial is team provider and if we're working on an
         // open project

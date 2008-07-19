@@ -2,6 +2,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Map;
 import java.util.SortedSet;
 
@@ -46,10 +47,19 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             final File bundleFile = File.createTempFile("bundleFile-".concat(
                     res.getProject().getName()).concat("-"), ".tmp", null);
             bundleFile.deleteOnExit();
+            
+            
             command.addOptions("--debug", "--style",
                     AbstractParseChangesetClient.getStyleFile(true)
                             .getAbsolutePath(), "--bundle", bundleFile
-                            .getAbsolutePath(), repository.getUrl());
+                            .getAbsolutePath());
+
+            URI uri = repository.getUri();
+            if (uri != null) {
+                command.addOptions(uri.toASCIIString());
+            } else {
+                command.addOptions(repository.getLocation());
+            }            
 
             String result = command.executeToString();
             if (result.contains("no changes found")) {

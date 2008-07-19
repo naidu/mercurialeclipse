@@ -46,10 +46,10 @@ public class IncomingChangesetCache extends AbstractCache {
      * The Map has the following structure: RepositoryLocation -> IResource ->
      * Changeset-Set
      */
-    private static Map<String, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
+    private static Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
 
     private IncomingChangesetCache() {
-        incomingChangeSets = new HashMap<String, Map<IPath, SortedSet<ChangeSet>>>();
+        incomingChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
     public static IncomingChangesetCache getInstance() {
@@ -59,7 +59,7 @@ public class IncomingChangesetCache extends AbstractCache {
         return instance;
     }
     
-    public synchronized void clear(String repo) {
+    public synchronized void clear(HgRepositoryLocation repo) {
         incomingChangeSets.remove(repo);
     }
     
@@ -101,7 +101,7 @@ public class IncomingChangesetCache extends AbstractCache {
                 .hasNext();) {
             HgRepositoryLocation hgRepositoryLocation = iterator.next();
             SortedSet<ChangeSet> repoChanges = getIncomingChangeSets(
-                    objectResource, hgRepositoryLocation.getUrl());
+                    objectResource, hgRepositoryLocation);
             if (repoChanges != null) {
                 allChanges.addAll(repoChanges);
             }
@@ -119,7 +119,7 @@ public class IncomingChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource,
-            String repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) throws HgException {
         ReentrantLock lock = getLock(objectResource);
         if (lock.isLocked()) {
             lock.lock();
@@ -157,7 +157,7 @@ public class IncomingChangesetCache extends AbstractCache {
      * @return
      */
     public IResource[] getIncomingMembers(IResource resource,
-            String repositoryLocation) {
+            HgRepositoryLocation repositoryLocation) {
         ReentrantLock lock = getLock(resource);
         try {
             lock.lock();
@@ -187,7 +187,7 @@ public class IncomingChangesetCache extends AbstractCache {
         SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>();
         for (HgRepositoryLocation hgRepositoryLocation : locs) {
             ChangeSet candidate = getNewestIncomingChangeSet(objectResource,
-                    hgRepositoryLocation.getUrl());
+                    hgRepositoryLocation);
             if (candidate != null) {
                 changeSets.add(candidate);
             }
@@ -199,7 +199,7 @@ public class IncomingChangesetCache extends AbstractCache {
     }
 
     public ChangeSet getNewestIncomingChangeSet(IResource resource,
-            String repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) throws HgException {
 
         ReentrantLock lock = getLock(resource);
         if (lock.isLocked()) {
@@ -238,7 +238,8 @@ public class IncomingChangesetCache extends AbstractCache {
             lock.unlock();
         }
         if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
-            for (Iterator<String> iterator = incomingChangeSets.keySet()
+            for (Iterator<HgRepositoryLocation> iterator = incomingChangeSets
+                    .keySet()
                     .iterator(); iterator.hasNext();) {
                 Map<IPath, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
                         .get(iterator.next());
@@ -260,7 +261,7 @@ public class IncomingChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public void refreshIncomingChangeSets(IProject project,
-            String repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) throws HgException {
         Assert.isNotNull(project);
 
         // check if mercurial is team provider and if we're working on an

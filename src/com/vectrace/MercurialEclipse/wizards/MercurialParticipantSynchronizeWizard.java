@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.URISyntaxException;
 import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
@@ -23,6 +24,7 @@ import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.team.ui.synchronize.SubscriberParticipantWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -50,8 +52,18 @@ public class MercurialParticipantSynchronizeWizard extends
 
     @Override
     protected SubscriberParticipant createParticipant(ISynchronizeScope scope) {
-        return new MercurialSynchronizeParticipant(scope, pageProperties
-                .getProperty("url")); //$NON-NLS-1$
+        String url = pageProperties.getProperty("url"); //$NON-NLS-1$
+        String user = pageProperties.getProperty("user"); //$NON-NLS-1$
+        String pass = pageProperties.getProperty("password"); //$NON-NLS-1$
+        HgRepositoryLocation repo;
+        try {
+            repo = new HgRepositoryLocation(url, user, pass);
+            return new MercurialSynchronizeParticipant(scope, repo);
+        } catch (URISyntaxException e) {
+            MercurialEclipsePlugin.logError(e);
+            page.setErrorMessage(e.getLocalizedMessage());
+        }
+        return null;
     }
 
     @Override
@@ -85,6 +97,7 @@ public class MercurialParticipantSynchronizeWizard extends
                                     .getString("MercurialParticipantSynchronizeWizard.repositoryPage.image"))); //$NON-NLS-1$
 
             mainPage.setShowBundleButton(false);
+            mainPage.setShowCredentials(true);
             page = mainPage;
             page
                     .setDescription(Messages
