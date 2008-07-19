@@ -28,18 +28,21 @@ public class HgIMergeClient extends AbstractClient {
         HgCommand command = new HgCommand("imerge", project, false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        
+
         boolean useExternalMergeTool = Boolean.valueOf(
                 HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
                         "false")).booleanValue();
-        
-        command.addOptions("--config", "extensions.imerge=");       
-        
+
+        command.addOptions("--config", "extensions.imerge=");
+
         if (!useExternalMergeTool) {
-            command.addOptions("--config","ui.merge=internal:merge");
+            // we use an non-existent UI Merge tool, so no tool is started. We
+            // need this option, though, as we still want the Mercurial merge to
+            // take place.
+            command.addOptions("--config", "ui.merge=MercurialEclipse");
         }
-        
+
         if (revision != null) {
             command.addOptions("-r", revision);
         }

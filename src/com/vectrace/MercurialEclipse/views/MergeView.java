@@ -210,6 +210,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
         statusLabel.setText(currentProject.getName());
         List<FlaggedAdaptable> status = null;
         if (HgResolveClient.checkAvailable()) {
+            //HgResolveClient.resolveAll(currentProject.getLocation().toFile());
             status = HgResolveClient.list(currentProject);
         } else {
             status = HgIMergeClient.getMergeStatus(currentProject);

@@ -77,6 +77,33 @@ public class HgResolveClient extends AbstractClient {
     }
 
     /**
+     * Try to resolve all unresolved files
+     * 
+     * @param file
+     * @return
+     * @throws HgException
+     */
+    public static String resolveAll(File file) throws HgException {
+        HgCommand command = new HgCommand("resolve", getWorkingDirectory(file),
+                false);
+        
+        boolean useExternalMergeTool = Boolean.valueOf(
+                HgClients.getPreference(
+                        MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+                        "false")).booleanValue();
+        if (!useExternalMergeTool) {
+            // we use an non-existent UI Merge tool, so no tool is started. We
+            // need this option, though, as we still want the Mercurial merge to
+            // take place.
+            command.addOptions("--config", "ui.merge=MercurialEclipse");
+        }
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+        return command.executeToString();
+
+    }
+
+    /**
      * Mark a resource as unresolved ("U")
      * 
      * @param res
@@ -98,9 +125,11 @@ public class HgResolveClient extends AbstractClient {
     }
 
     /**
-     * Checks whether hg resolve is supported. The result is stored in a session property on the
-     * workspace so that the check is only called once a session. Changing hg version while leaving
-     * Eclipse running results in undefined behavior.
+     * Checks whether hg resolve is supported. The result is stored in a session
+     * property on the workspace so that the check is only called once a
+     * session. Changing hg version while leaving Eclipse running results in
+     * undefined behavior.
+     * 
      * @return true if resolve is supported, false if not
      */
     public static boolean checkAvailable() throws HgException {
@@ -127,10 +156,10 @@ public class HgResolveClient extends AbstractClient {
                     }
                 } catch (HgException e) {
                     returnValue = false;
-                }                
+                }
                 workspaceRoot.setSessionProperty(
-                        ResourceProperties.MERGE_USE_RESOLVE, Boolean.valueOf(
-                                returnValue));
+                        ResourceProperties.MERGE_USE_RESOLVE, Boolean
+                                .valueOf(returnValue));
             }
             return returnValue;
         } catch (CoreException e) {

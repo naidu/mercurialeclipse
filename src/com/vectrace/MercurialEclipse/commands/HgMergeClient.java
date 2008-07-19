@@ -24,7 +24,10 @@ public class HgMergeClient extends AbstractClient {
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         if (!useExternalMergeTool) {
-            command.addOptions("--config","ui.merge=internal:merge");
+            // we use an non-existent UI Merge tool, so no tool is started. We
+            // need this option, though, as we still want the Mercurial merge to
+            // take place.
+            command.addOptions("--config", "ui.merge=MercurialEclipse");
         }
         
         if (revision != null) {
