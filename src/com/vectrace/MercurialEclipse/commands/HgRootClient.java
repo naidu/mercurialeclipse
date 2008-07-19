@@ -74,6 +74,9 @@ public class HgRootClient {
             String[] rootContent = root.list(hg);
             while (rootContent != null && rootContent.length < 1) {
                 root = root.getParentFile();
+                if (root == null) {
+                    break;
+                }
                 rootContent = root.list(hg);
             }
         }
