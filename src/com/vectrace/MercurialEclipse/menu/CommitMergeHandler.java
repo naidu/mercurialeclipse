@@ -101,9 +101,9 @@ public class CommitMergeHandler extends SingleResourceHandler {
         project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
         
         // refresh caches
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        new RefreshJob("Refresh status and changesets after merge", null,
+        new RefreshJob("Refresh status and changesets after merge commit...", null,
                 project).schedule();
+        project.touch(null);
         return result;
     }
 
