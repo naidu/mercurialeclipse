@@ -109,7 +109,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             new CompareConfiguration(), file, ancestorNode,
                             mergeNode, true);
 
-                    int returnValue = CompareUtils.openCompareDialog(compareInput);
+                    int returnValue = CompareUtils
+                            .openCompareDialog(compareInput);
                     if (returnValue == Window.OK
                             && markResolvedAction.isEnabled()) {
                         markResolvedAction.run();
@@ -245,14 +246,22 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             .getPersistentProperty(ResourceProperties.MERGING);
                     if (mergeNode != null) {
                         this.currentProject = project;
-                        this.statusLabel.setText("Unresolved files of: "
+                        this.statusLabel.setText("Merged files of: "
                                 + project.getName());
                         populateView();
-
                         // offer commit of merge exactly once if no conflicts
                         // are
                         // found
-                        if (table.getItems().length == 0) {
+                        boolean allResolved = true;
+                        if (table.getItems() != null
+                                && table.getItems().length > 0) {
+                            for (TableItem item : table.getItems()) {
+                                FlaggedAdaptable fa = (FlaggedAdaptable) item
+                                        .getData();
+                                allResolved &= fa.getFlag() == 'R';
+                            }
+                        }
+                        if (allResolved) {
                             this.statusLabel
                                     .setText(currentProject.getName()
                                             + ": Please commit merge with "

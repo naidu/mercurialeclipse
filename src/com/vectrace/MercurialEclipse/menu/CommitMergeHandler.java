@@ -4,9 +4,12 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -105,7 +108,21 @@ public class CommitMergeHandler extends SingleResourceHandler {
         new RefreshJob("Refresh status and changesets after merge commit...", null,
                 project).schedule();
         project.touch(null);
-        MergeView.getView().clearView();
+        new SafeUiJob("Clearing merge view...") {
+            /*
+             * (non-Javadoc)
+             * 
+             * @see
+             * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core
+             * .runtime.IProgressMonitor)
+             */
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                MergeView.getView().clearView();
+                return super.runSafe(monitor);
+            }
+        }.schedule();
+        
         return result;
     }
 
