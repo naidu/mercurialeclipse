@@ -525,7 +525,7 @@ public class MercurialStatusCache extends AbstractCache implements
                     .valueOf(HgClients
                             .getPreference(
                                     MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                    "false"));
+                                    "false")).booleanValue();
             BitSet parentBitSet = statusMap.get(parent.getLocation());
             BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
             if (parentBitSet != null) {
