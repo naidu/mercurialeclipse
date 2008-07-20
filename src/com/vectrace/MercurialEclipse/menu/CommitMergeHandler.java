@@ -12,6 +12,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class CommitMergeHandler extends SingleResourceHandler {
     
@@ -104,6 +105,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
         new RefreshJob("Refresh status and changesets after merge commit...", null,
                 project).schedule();
         project.touch(null);
+        MergeView.getView().clearView();
         return result;
     }
 
