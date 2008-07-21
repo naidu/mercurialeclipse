@@ -144,12 +144,13 @@ public abstract class AbstractShellCommand {
             }
             process = builder.start();
             consumer = new InputStreamConsumer(process.getInputStream());
+            byte[] returnValue = null;
             consumer.start();
             getConsole().commandInvoked(cmdString);
             consumer.join(timeout); // 30 seconds timeout
             if (!consumer.isAlive()) {
                 int exitCode = process.waitFor();
-                byte[] returnValue = consumer.getBytes();
+                returnValue = consumer.getBytes();
                 String msg = new String(returnValue);
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
@@ -171,8 +172,13 @@ public abstract class AbstractShellCommand {
 
                 throw hgex;
             }
+            returnValue = consumer.getBytes();
             HgException hgEx = new HgException("Process timeout");
-            getConsole().printError(new String(consumer.getBytes()), hgEx);
+            if (returnValue != null) {
+                getConsole().printError(new String(returnValue), hgEx);
+            } else {
+                getConsole().printError(hgEx.getMessage(), hgEx);
+            }
             throw hgEx;
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
