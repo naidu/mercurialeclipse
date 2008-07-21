@@ -118,6 +118,10 @@ public class OutgoingChangesetCache extends AbstractCache {
         if (revisions == null) {
             refreshOutgoingChangeSets(objectResource.getProject(),
                     repositoryLocation);
+            repoOutgoing = outgoingChangeSets.get(repositoryLocation);
+            if (repoOutgoing != null) {
+                revisions = repoOutgoing.get(objectResource.getLocation());
+            }
         }
 
         if (revisions != null) {

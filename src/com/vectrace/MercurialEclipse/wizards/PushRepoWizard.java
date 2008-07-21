@@ -26,6 +26,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
@@ -36,6 +37,7 @@ public class PushRepoWizard extends HgWizard {
 
     private IProject project;
     private String projectName;
+    private OutgoingPage outgoingPage;
 
     private PushRepoWizard() {
         super(Messages.getString("PushRepoWizard.title")); //$NON-NLS-1$
@@ -58,6 +60,10 @@ public class PushRepoWizard extends HgWizard {
         myPage.setShowCredentials(true);
         page = myPage;
         addPage(page);
+        outgoingPage = new OutgoingPage("OutgoingPage");
+        initPage(outgoingPage.getDescription(), outgoingPage);
+        outgoingPage.setProject(project);
+        addPage(outgoingPage);
     }
 
     /*
@@ -88,9 +94,17 @@ public class PushRepoWizard extends HgWizard {
             if (!pushRepoPage.isTimeout()) {
                 timeout = Integer.MAX_VALUE;
             }
-
+            
+            String changeset = null;
+            if (outgoingPage.getRevisionCheckBox().getSelection()) {
+                ChangeSet cs = outgoingPage.getRevision();
+                if (cs != null) {
+                    changeset = cs.getChangeset();
+                }
+            }
+            
             String result = HgPushPullClient.push(project, repo, pushRepoPage.isForce(),
-                    pushRepoPage.getRevision(), timeout);
+                    changeset, timeout);
 
             if (result.length() != 0) {
                 Shell shell;

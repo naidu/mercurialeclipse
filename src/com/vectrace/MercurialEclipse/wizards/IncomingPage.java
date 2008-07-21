@@ -2,6 +2,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -42,13 +43,31 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 public class IncomingPage extends HgWizardPage {
 
-    private TableViewer changeSetViewer;
+    public IProject getProject() {
+        return project;
+    }
+
+    public HgRepositoryLocation getLocation() {
+        return location;
+    }
+
+    public void setRevision(ChangeSet revision) {
+        this.revision = revision;
+    }
+
+
+
+    public void setChangesets(SortedSet<ChangeSet> changesets) {
+        this.changesets = changesets;
+    }
+
+    TableViewer changeSetViewer;
     private TableViewer fileStatusViewer;
     private IProject project;
     private HgRepositoryLocation location;
     private Button revisionCheckBox;
     private ChangeSet revision;
-    private SortedSet<ChangeSet> incoming;
+    private SortedSet<ChangeSet> changesets;
 
 
     private class GetIncomingOperation extends HgOperation {
@@ -86,7 +105,7 @@ public class IncomingPage extends HgWizardPage {
                 throws InvocationTargetException, InterruptedException {
             monitor.beginTask("Getting incoming changesets...", 1);
             monitor.subTask("Calling Mercurial...");
-            incoming = getIncomingInternal();
+            changesets = getIncomingInternal();
             monitor.worked(1);
             monitor.done();
         }
@@ -94,9 +113,14 @@ public class IncomingPage extends HgWizardPage {
         private SortedSet<ChangeSet> getIncomingInternal() {
             try {
                 HgRepositoryLocation remote = location;
-                incoming = IncomingChangesetCache.getInstance()
+                SortedSet<ChangeSet> set = IncomingChangesetCache.getInstance()
                         .getIncomingChangeSets(project, remote);
-                return incoming;
+                if (set != null) {
+                SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
+                        Collections.reverseOrder());
+                revertedSet.addAll(set);
+                return revertedSet;
+                }
             } catch (HgException e) {
                 MercurialEclipsePlugin.showError(e);
             }
@@ -118,9 +142,8 @@ public class IncomingPage extends HgWizardPage {
         super.setVisible(visible);
         if (visible) {
             try {
-                getContainer().run(true, false,
-                        new GetIncomingOperation(getContainer()));
-                changeSetViewer.setInput(incoming);
+                getInputForPage();
+                changeSetViewer.setInput(changesets);
             } catch (InvocationTargetException e) {
                 MercurialEclipsePlugin.logError(e);
                 setErrorMessage(e.getLocalizedMessage());
@@ -129,6 +152,16 @@ public class IncomingPage extends HgWizardPage {
                 setErrorMessage(e.getLocalizedMessage());
             }
         }
+    }
+
+    /**
+     * @throws InvocationTargetException
+     * @throws InterruptedException
+     */
+    protected void getInputForPage() throws InvocationTargetException,
+            InterruptedException {
+        getContainer().run(true, false,
+                new GetIncomingOperation(getContainer()));
     }    
 
     public void createControl(Composite parent) {
@@ -240,7 +273,7 @@ public class IncomingPage extends HgWizardPage {
         });
     }
 
-    private static class FileStatusLabelProvider extends LabelProvider
+    static class FileStatusLabelProvider extends LabelProvider
             implements ITableLabelProvider {
 
         public Image getColumnImage(Object element, int columnIndex) {
@@ -290,7 +323,7 @@ public class IncomingPage extends HgWizardPage {
         return revision;
     }
 
-    public SortedSet<ChangeSet> getIncoming() {
-        return incoming;
+    public SortedSet<ChangeSet> getChangesets() {
+        return changesets;
     }
 }

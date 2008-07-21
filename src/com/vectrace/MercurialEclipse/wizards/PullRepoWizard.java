@@ -370,9 +370,9 @@ public class PullRepoWizard extends HgWizard {
             boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
                     .getSelection();            
             File bundleFile = null;
-            if (incomingPage.getIncoming() != null
-                    && incomingPage.getIncoming().size() > 0) {
-                bundleFile = incomingPage.getIncoming().first().getBundleFile();
+            if (incomingPage.getChangesets() != null
+                    && incomingPage.getChangesets().size() > 0) {
+                bundleFile = incomingPage.getChangesets().first().getBundleFile();
             }
 
             PullOperation pullOperation = new PullOperation(getContainer(),
