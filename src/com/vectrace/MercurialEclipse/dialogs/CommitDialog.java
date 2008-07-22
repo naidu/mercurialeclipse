@@ -333,11 +333,18 @@ public class CommitDialog extends TrayDialog {
 
         commitFilesList.setLabelProvider(new CommitResourceLabelProvider());
 
-        commitFilesList.setInput(new CommitResourceUtil(getProject())
-                .getCommitResources(inResources));
+        CommitResource[] commitResources = new CommitResourceUtil(getProject())
+                .getCommitResources(inResources);
+        commitFilesList.setInput(commitResources);
         commitFilesList.addFilter(committableFilesFilter);
-
-        commitFilesList.setAllChecked(true);
+        // auto-check all tracked elements
+        List<CommitResource> tracked = new ArrayList<CommitResource>();
+        for (CommitResource commitResource : commitResources) {
+            if ( commitResource.getStatus() != CommitDialog.FILE_UNTRACKED) {
+                tracked.add(commitResource);
+            }
+        }
+        commitFilesList.setCheckedElements(tracked.toArray());
         return commitFilesList;
     }
 
