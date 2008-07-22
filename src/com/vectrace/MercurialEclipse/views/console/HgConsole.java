@@ -177,12 +177,16 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                 .getPreferenceStore();
         if (store
                 .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT)) {
+            int highWaterMark = store
+                    .getInt(MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK);
+            if (highWaterMark < 1000) {
+                highWaterMark = 1000;
+            }
             setWaterMarks(
-                    1000,
-                    store
-                            .getInt(MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK));
+                    0,
+                    highWaterMark);
         } else {
-            setWaterMarks(-1, 0);
+            setWaterMarks(0, 1000);
         }
     }
 
