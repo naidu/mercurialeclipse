@@ -166,11 +166,15 @@
 
 	<!-- commands -->
 	<extension point="org.eclipse.ui.commands">
-		<command id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
-		         name="Commit merge..."/>
+		<command
+        		category="com.vectrace.MercurialEclipse.commandCategory"
+		        id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
+		        name="Commit merge..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.CommitHandler"
+				 category="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Commit..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
+				category="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Update"/>
 
 		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
@@ -192,8 +196,10 @@
 		<command id="com.vectrace.MercurialEclipse.menu.RollbackHandler"
 		         name="Rollback"/>		
 		<command id="com.vectrace.MercurialEclipse.menu.PullHandler"
+				category="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Pull..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.PushHandler"
+				category="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Push..."/>		
 		<command id="com.vectrace.MercurialEclipse.menu.SignHandler"
 		         name="Sign..."/>	                  
@@ -222,7 +228,11 @@
         <command id="com.vectrace.MercurialEclipse.menu.SyncHandler"
                  name="Synchronize..."/>                      
         <command id="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
-                 name="Refresh status"/>                                       
+                 name="Refresh status"/>
+        <category
+              id="com.vectrace.MercurialEclipse.commandCategory"
+              name="Mercurial">
+        </category>                                       
 	</extension>
 
 	<!-- handlers -->
