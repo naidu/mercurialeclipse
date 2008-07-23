@@ -240,7 +240,7 @@ public class CommitDialog extends TrayDialog {
             }
         });
         if (selectableFiles) {
-            selectAllButton.setSelection(true); // Start selected
+            selectAllButton.setSelection(false); // Start not selected
             showUntrackedFilesButton.setSelection(true); // Start selected.
 
             showUntrackedFilesButton
