@@ -46,6 +46,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -115,6 +116,7 @@ public class MercurialStatusCache extends AbstractCache implements
         public boolean visit(IResourceDelta delta) throws CoreException {
             IResource res = delta.getResource();
             if (res.isAccessible()
+                    && !Team.isIgnoredHint(res)
                     && res.getProject().isAccessible()
                     && RepositoryProvider.getProvider(res.getProject(),
                             MercurialTeamProvider.ID) != null) {
@@ -301,6 +303,12 @@ public class MercurialStatusCache extends AbstractCache implements
     public boolean isSupervised(IResource resource, IPath path) throws HgException {
         Assert.isNotNull(resource);
         Assert.isNotNull(path);
+        
+        // check for Eclipse ignore settings
+        if (Team.isIgnoredHint(resource)) {
+            return false;
+        }
+        
         ReentrantLock lock = getLock(resource);
 
         if (resource.getProject().isAccessible()
@@ -489,7 +497,11 @@ public class MercurialStatusCache extends AbstractCache implements
             IResource member = res.getProject().getFile(localName.trim());
 
             BitSet bitSet = new BitSet();
-            bitSet.set(getBitIndex(status.charAt(0)));
+            if (Team.isIgnoredHint(member)) {
+                bitSet.set(BIT_IGNORE);
+            } else {
+                bitSet.set(getBitIndex(status.charAt(0)));
+            }
             statusMap.put(member.getLocation(), bitSet);
 
             if (member.getType() == IResource.FILE
