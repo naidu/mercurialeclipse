@@ -241,6 +241,9 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     public ReentrantLock getLock(IResource resource) throws HgException {
         IPath hgRoot;
+         if (!MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
+            return new ReentrantLock();
+        }
         if (resource.isAccessible()) {
             hgRoot = new Path(MercurialTeamProvider.getHgRoot(resource)
                     .getAbsolutePath());
@@ -254,6 +257,7 @@ public class MercurialStatusCache extends AbstractCache implements
             locks.put(hgRoot, lock);
         }
         return lock;
+                
     }
 
     /**
