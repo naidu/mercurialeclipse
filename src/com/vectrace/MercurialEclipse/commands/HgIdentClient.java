@@ -2,6 +2,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.eclipse.core.resources.IContainer;
@@ -43,7 +44,12 @@ public class HgIdentClient extends AbstractClient {
             throws HgException, IOException {
         String dirstate = repository.getCanonicalPath() + File.separator
                 + ".hg" + File.separator + "dirstate";
-        FileInputStream reader = new FileInputStream(dirstate);
+        FileInputStream reader;
+        try {
+            reader = new FileInputStream(dirstate);
+        } catch (FileNotFoundException e) {
+            return null;
+        }
         try {
             byte[] nodid = new byte[20];
             reader.read(nodid);
