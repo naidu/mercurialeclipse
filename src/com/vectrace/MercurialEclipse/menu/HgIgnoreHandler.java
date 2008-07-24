@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
@@ -57,7 +58,14 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					break;
 			}
 			try {
-				MercurialStatusCache.getInstance().refreshStatus(resource,
+			    IProject project = resource.getProject();
+			    // if there is a .hgignore at project level, get it via a
+                // refresh.
+                IResource hgIgnoreFile = project.getFile(".hgignore");
+                hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, null);			        			    
+		
+                // refresh status of newly ignored resource
+                MercurialStatusCache.getInstance().refreshStatus(resource,
                         new NullProgressMonitor());
 			} catch (TeamException e) {
 				MercurialEclipsePlugin.logError("Unable to refresh project: ",
