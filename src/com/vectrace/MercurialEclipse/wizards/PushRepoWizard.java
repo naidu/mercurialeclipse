@@ -28,6 +28,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
  * @author zingo
@@ -123,6 +124,8 @@ public class PushRepoWizard extends HgWizard {
             // It appears good. Stash the repo location.
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
                     repo);
+            
+            OutgoingChangesetCache.getInstance().clear(repo);
         } catch (URISyntaxException e) {
             MessageDialog
                     .openError(
