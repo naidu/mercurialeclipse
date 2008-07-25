@@ -62,9 +62,10 @@ public class ResourceProperties {
             MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve");
 
     /**
-     * Qualified name for a project persistent property that stores the 
-     * canocial path of a hg root. To create a {@link java.io.File} use the
-     * constructor new File(project.getPersistentProperty(ResourceProperties.HG_ROOT))
+     * Qualified name for a project persistent property that stores the
+     * canonical path of a hg root. To create a {@link java.io.File} use the
+     * constructor new
+     * File(project.getPersistentProperty(ResourceProperties.HG_ROOT))
      */
     public static final QualifiedName HG_ROOT = new QualifiedName(
             MercurialEclipsePlugin.ID, "hgRoot");
