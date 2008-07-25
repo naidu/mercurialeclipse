@@ -69,7 +69,7 @@ public class HgQSeriesClient extends AbstractClient {
             throws HgException {
         HgCommand command = new HgCommand("qseries",
                 getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.mq=");
+        command.addOptions("--config", "extensions.hgext.mq=");
         
         command.addOptions("--summary", "--missing");
         return parse(command.executeToString());
