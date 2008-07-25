@@ -42,6 +42,7 @@ import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
 
 /**
  * Class that offers Utility methods for working with the plug-in.
+ * 
  * @author zingo
  * 
  */
@@ -316,14 +317,20 @@ public class MercurialUtilities {
      *            the project to get root for
      * @return the canonical file system path of the hg root or null
      * @throws HgException
+     *             if error occurred
      */
     public static String search4MercurialRoot(final IProject project)
             throws HgException {
         if (project != null) {
             try {
-                return MercurialTeamProvider.getHgRoot(project)
-                        .getCanonicalPath();
-            } catch (Exception e) {
+                File file = MercurialTeamProvider.getHgRoot(project);
+                if (file != null) {
+                    return file.getCanonicalPath();
+                }
+            } catch (HgException e) {
+                // do nothing - no root available
+                MercurialEclipsePlugin.logInfo(e.getLocalizedMessage(), e);
+            } catch (IOException e) {
                 MercurialEclipsePlugin.logError(e);
                 throw new HgException(e.getLocalizedMessage(), e);
             }
@@ -420,11 +427,11 @@ public class MercurialUtilities {
             workingDir = null;
         }
         return workingDir;
-    }  
+    }
 
     /**
-     * Gets the Mercurial console. If it's not already created, we create it
-     * and register it with the ConsoleManager.
+     * Gets the Mercurial console. If it's not already created, we create it and
+     * register it with the ConsoleManager.
      * 
      * @return the MercurialConsole.
      */
