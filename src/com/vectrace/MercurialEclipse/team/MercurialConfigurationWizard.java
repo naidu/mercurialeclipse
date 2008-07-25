@@ -50,6 +50,7 @@ import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -170,20 +171,20 @@ public class MercurialConfigurationWizard extends Wizard implements
     //
     @Override
     public void addPages() {
-        String MercurialRootDir = null;
+        String mercurialRootDir = null;
         try {
-            MercurialRootDir = MercurialUtilities.search4MercurialRoot(project);
+            mercurialRootDir = MercurialUtilities.search4MercurialRoot(project);
         } catch (HgException e) {
             // do nothing
         }
-        if (MercurialRootDir == null) {
+        if (mercurialRootDir == null) {
             foundhgPath = null;
             hgPathOrginal = project.getLocation().toString();
             hgPath = hgPathOrginal;
             addPage(new NewWizardPage(true));
         } else {
-            foundhgPath = MercurialRootDir;
-            hgPathOrginal = MercurialRootDir;
+            foundhgPath = mercurialRootDir;
+            hgPathOrginal = mercurialRootDir;
             hgPath = hgPathOrginal;
             addPage(new NewWizardPage(false));
         }
@@ -206,11 +207,12 @@ public class MercurialConfigurationWizard extends Wizard implements
                 BufferedReader input = new BufferedReader(
                         new InputStreamReader(process.getInputStream()));
                 while ((line = input.readLine()) != null) {
-                    // TODO output this text nice:er
-                    System.out.println(line);
+                    HgClients.getConsole().printMessage(line, null);
                 }
                 input.close();
                 process.waitFor();
+                
+                
             } catch (IOException e) {
                 MercurialEclipsePlugin.logError(e);
                 return false;
@@ -218,6 +220,7 @@ public class MercurialConfigurationWizard extends Wizard implements
                 MercurialEclipsePlugin.logError(e);
                 return false;
             }
+                        
         }
         try {
             RepositoryProvider.map(project, MercurialTeamProvider.class

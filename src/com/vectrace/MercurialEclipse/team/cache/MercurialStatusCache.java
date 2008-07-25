@@ -123,18 +123,21 @@ public class MercurialStatusCache extends AbstractCache implements
 
                 switch (delta.getKind()) {
                 case IResourceDelta.ADDED:
-                    if (!res.isDerived() && res.getType() == IResource.FILE) {
+                    if (!res.isTeamPrivateMember() && !res.isDerived()
+                            && res.getType() == IResource.FILE) {
                         added.add(getResource(res));
                     }
                     break;
                 case IResourceDelta.CHANGED:
-                    if (!res.isDerived() && isSupervised(res)
+                    if (!res.isTeamPrivateMember() && !res.isDerived()
+                            && isSupervised(res)
                             && res.getType() == IResource.FILE) {
                         changed.add(getResource(res));
                     }
                     break;
                 case IResourceDelta.REMOVED:
-                    if (!res.isDerived() && isSupervised(res)
+                    if (!res.isTeamPrivateMember() && !res.isDerived()
+                            && isSupervised(res)
                             && res.getType() == IResource.FILE) {
                         removed.add(getResource(res));
                     }
@@ -163,14 +166,17 @@ public class MercurialStatusCache extends AbstractCache implements
             this.parent = parent;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * org.eclipse.core.resources.IResourceVisitor#visit(org.eclipse.core
-         * .resources.IResource)
-         */
         public boolean visit(IResource resource) throws CoreException {
+            if (parent.isTeamPrivateMember()) {
+                resource.setTeamPrivateMember(true);
+                return false;
+            }
+
+            if (parent.isDerived()) {
+                resource.setDerived(true);
+                return false;
+            }
+
             if (!resource.equals(parent)) {
                 BitSet memberBitSet = statusMap.get(resource.getLocation());
                 if (memberBitSet != null) {
@@ -180,7 +186,7 @@ public class MercurialStatusCache extends AbstractCache implements
             return true;
         }
 
-    }
+    }        
 
     public final static int BIT_IGNORE = 0;
     public final static int BIT_CLEAN = 1;
@@ -235,29 +241,29 @@ public class MercurialStatusCache extends AbstractCache implements
 
     /**
      * Sets lock on HgRoot of given resource
+     * 
      * @param resource
      * @return
      * @throws HgException
      */
     public ReentrantLock getLock(IResource resource) throws HgException {
         IPath hgRoot;
-         if (!MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
+        if (!MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
             return new ReentrantLock();
         }
         if (resource.isAccessible()) {
             hgRoot = new Path(MercurialTeamProvider.getHgRoot(resource)
                     .getAbsolutePath());
         } else {
-            hgRoot = new Path(resource.getProject().getLocation()
-                    .toOSString());
+            hgRoot = new Path(resource.getProject().getLocation().toOSString());
         }
         ReentrantLock lock = locks.get(hgRoot);
-        if (lock == null) {        
+        if (lock == null) {
             lock = new ReentrantLock();
             locks.put(hgRoot, lock);
         }
         return lock;
-                
+
     }
 
     /**
@@ -266,7 +272,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param project
      *            the project to be checked
      * @return true if known, false if not.
-     * @throws HgException 
+     * @throws HgException
      */
     public boolean isStatusKnown(IProject project) throws HgException {
         ReentrantLock lock = getLock(project);
@@ -276,7 +282,7 @@ public class MercurialStatusCache extends AbstractCache implements
         } finally {
             lock.unlock();
         }
-    }    
+    }
 
     /**
      * Gets the status of the given resource from cache. The returned BitSet
@@ -287,7 +293,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param objectResource
      *            the resource to get status for.
      * @return the BitSet with status flags.
-     * @throws HgException 
+     * @throws HgException
      */
     public BitSet getStatus(IResource resource) throws HgException {
         ReentrantLock lock = getLock(resource);
@@ -304,20 +310,21 @@ public class MercurialStatusCache extends AbstractCache implements
                 && isSupervised(resource.getProject(), resource.getLocation());
     }
 
-    public boolean isSupervised(IResource resource, IPath path) throws HgException {
+    public boolean isSupervised(IResource resource, IPath path)
+            throws HgException {
         Assert.isNotNull(resource);
         Assert.isNotNull(path);
-        
+
         // check for Eclipse ignore settings
         if (Team.isIgnoredHint(resource)) {
             return false;
         }
-        
+
         ReentrantLock lock = getLock(resource);
 
         if (resource.getProject().isAccessible()
-                && null != RepositoryProvider.getProvider(resource.getProject(),
-                        MercurialTeamProvider.ID)) {
+                && null != RepositoryProvider.getProvider(
+                        resource.getProject(), MercurialTeamProvider.ID)) {
             try {
                 lock.lock();
                 if (path.equals(resource.getProject().getLocation())) {
@@ -416,7 +423,8 @@ public class MercurialStatusCache extends AbstractCache implements
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
-            if (res.isTeamPrivateMember()) {
+
+            if (res.isTeamPrivateMember() || res.isDerived()) {
                 return;
             }
             ReentrantLock lock = getLock(res);
@@ -538,10 +546,11 @@ public class MercurialStatusCache extends AbstractCache implements
                 .getParent()) {
             boolean computeDeep = isComputeDeepStatus();
             boolean completeStatus = Boolean
-                    .valueOf(HgClients
-                            .getPreference(
-                                    MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                    "false")).booleanValue();
+                    .valueOf(
+                            HgClients
+                                    .getPreference(
+                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                                            "false")).booleanValue();
             BitSet parentBitSet = statusMap.get(parent.getLocation());
             BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
             if (parentBitSet != null) {
@@ -550,7 +559,8 @@ public class MercurialStatusCache extends AbstractCache implements
                     IResourceVisitor visitor = new MemberStatusVisitor(parent,
                             cloneBitSet);
                     try {
-                        if (parent.isAccessible() && !parent.isDerived()) {
+                        if (parent.isAccessible() && !parent.isDerived()
+                                && !parent.isTeamPrivateMember()) {
                             parent.accept(visitor, IResource.DEPTH_ONE, false);
                         }
                     } catch (CoreException e) {
@@ -622,7 +632,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param resource
      *            the resource to be checked
      * @return true if known, false if not
-     * @throws HgException 
+     * @throws HgException
      */
     public boolean isStatusKnown(IResource resource) throws HgException {
         return getStatus(resource) != null;
@@ -795,7 +805,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * 
      * @param resource
      * @return
-     * @throws HgException 
+     * @throws HgException
      */
     public IResource[] getLocalMembers(IResource resource) throws HgException {
         ReentrantLock lock = getLock(resource);
@@ -843,7 +853,7 @@ public class MercurialStatusCache extends AbstractCache implements
 
     /**
      * @param project
-     * @throws HgException 
+     * @throws HgException
      */
     public void clear(IProject project) throws HgException {
         ReentrantLock lock = getLock(project);
@@ -863,7 +873,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * Sets conflict marker on resource status
      * 
      * @param local
-     * @throws HgException 
+     * @throws HgException
      */
     public void addConflict(IResource local) throws HgException {
         BitSet status = getStatus(local);
@@ -876,7 +886,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * Removes conflict marker on resource status
      * 
      * @param local
-     * @throws HgException 
+     * @throws HgException
      */
     public void removeConflict(IResource local) throws HgException {
         BitSet status = getStatus(local);

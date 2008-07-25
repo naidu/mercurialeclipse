@@ -72,6 +72,13 @@ public class MercurialTeamProvider extends RepositoryProvider {
     public void configureProject() throws CoreException {
         getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
         getHgRoot(getProject());
+
+        // try to find .hg directory to set it as private member
+        IResource hgDir = getProject().findMember(".hg");
+        if (hgDir != null && hgDir.exists()) {
+            hgDir.setTeamPrivateMember(true);
+            hgDir.setDerived(true);
+        }
     }
 
     /**
@@ -140,6 +147,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
      *            the resource to get the hg root for
      * @return the {@link java.io.File} referencing the hg root directory
      * @throws HgException
+     *             if an error occurred (e.g. no root could be found)
      */
     public static File getHgRoot(IResource resource) throws HgException {
         assert (resource != null);
@@ -172,15 +180,12 @@ public class MercurialTeamProvider extends RepositoryProvider {
         IProject project = getProject();
         assert (project != null);
         // cleanup
-        /*
-         * 
-         * Since Eclipse 3.4 I guess we have to rely on the GC here until we
-         * drop support for Eclipse 3.3
-         * 
-         * project.getPersistentProperties().clear();
-         * project.getSessionProperties().clear();
-         */
         HG_ROOTS.remove(project);
+        project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
+        project.setPersistentProperty(ResourceProperties.MERGING, null);
+        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED,
+                null);
+
     }
 
     /*
