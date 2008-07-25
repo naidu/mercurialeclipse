@@ -146,7 +146,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
         try {
             return new File(getAndStoreHgRootPath(resource));
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
