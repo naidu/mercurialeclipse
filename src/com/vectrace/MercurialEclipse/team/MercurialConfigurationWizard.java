@@ -27,10 +27,10 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -211,12 +211,8 @@ public class MercurialConfigurationWizard extends Wizard implements
                 }
                 input.close();
                 process.waitFor();
-                
-                
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
-                return false;
-            } catch (InterruptedException e) {
+                project.refreshLocal(IResource.DEPTH_INFINITE, null);
+            } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
                 return false;
             }
