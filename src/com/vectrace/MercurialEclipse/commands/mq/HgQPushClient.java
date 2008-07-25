@@ -25,7 +25,9 @@ public class HgQPushClient extends AbstractClient {
             throws HgException {
         HgCommand command = new HgCommand("qpush",
                 getWorkingDirectory(resource), true);
-
+        
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         command.addOptions("-a");
         if (force) {
             command.addOptions("--force");
@@ -38,6 +40,8 @@ public class HgQPushClient extends AbstractClient {
         HgCommand command = new HgCommand("qpush",
                 getWorkingDirectory(resource), true);
 
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         if (force) {
             command.addOptions("--force");
         }

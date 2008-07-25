@@ -27,6 +27,9 @@ public class HgQRefreshClient extends AbstractClient {
             throws HgException {
         HgCommand command = new HgCommand("qrefresh",
                 getWorkingDirectory(resource), true);
+        
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
 
         if (commitMessage != null && commitMessage.length() > 0) {
             command.addOptions("--message", commitMessage);

@@ -38,6 +38,9 @@ public class HgStripClient {
         HgCommand command = new HgCommand("strip", proj, true);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+        
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         if (saveUnrelated) {
             command.addOptions("--backup");
         }

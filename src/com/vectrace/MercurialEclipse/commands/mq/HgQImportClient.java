@@ -31,7 +31,9 @@ public class HgQImportClient extends AbstractClient {
         HgCommand command = new HgCommand("qimport",
                 getWorkingDirectory(resource), true);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
-
+        
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         if (force) {
             command.addOptions("--force");
         }

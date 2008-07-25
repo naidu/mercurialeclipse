@@ -31,7 +31,8 @@ public class HgQFoldClient extends AbstractClient {
         Assert.isNotNull(resource);
         HgCommand command = new HgCommand("qfold",
                 getWorkingDirectory(resource), true);
-
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         if (keep) {
             command.addOptions("--keep");
         }

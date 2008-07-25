@@ -23,6 +23,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgQInitClient extends AbstractClient {
     public static String init(IResource resource, boolean repository) throws HgException {
         HgCommand command = new HgCommand("qinit",getWorkingDirectory(resource),true);
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         if (repository) {
             command.addOptions("--create-repo");
         }

@@ -28,6 +28,8 @@ public class HgQNewClient extends AbstractClient {
         HgCommand command = new HgCommand("qnew",
                 getWorkingDirectory(resource), true);
 
+        command.addOptions("--config", "extensions.hgext.mq=");
+        
         if (commitMessage != null && commitMessage.length() > 0) {
             command.addOptions("--message", commitMessage);
         }
