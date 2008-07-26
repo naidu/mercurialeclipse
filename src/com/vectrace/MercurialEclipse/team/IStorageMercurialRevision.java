@@ -38,7 +38,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 /**
  * @author zingo
  * 
- * This is a IStorage subclass that can handle file revision
+ *         This is a IStorage subclass that can handle file revision
  * 
  */
 public class IStorageMercurialRevision implements IStorage {
@@ -70,10 +70,15 @@ public class IStorageMercurialRevision implements IStorage {
 
     /**
      * Constructs a new IStorageMercurialRevision with the given params.
-     * @param res the resource for which we want an IStorage revision
-     * @param rev the changeset index as string
-     * @param global the global hash identifier
-     * @param cs the changeset object
+     * 
+     * @param res
+     *            the resource for which we want an IStorage revision
+     * @param rev
+     *            the changeset index as string
+     * @param global
+     *            the global hash identifier
+     * @param cs
+     *            the changeset object
      */
     public IStorageMercurialRevision(IResource res, String rev, String global,
             ChangeSet cs) {
@@ -95,13 +100,11 @@ public class IStorageMercurialRevision implements IStorage {
         super();
         this.resource = res;
         ChangeSet cs = null;
-        try {            
+        try {
             File root = HgRootClient.getHgRootAsFile(res);
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
-            cs = LocalChangesetCache.getInstance().getChangeSet(nodeId);
-            if (cs == null) {
-                cs = LocalChangesetCache.getInstance().getLocalChangeSet(res, nodeId);
-            }            
+            cs = LocalChangesetCache.getInstance().getLocalChangeSet(res,
+                    nodeId);
             this.revision = cs.getChangesetIndex() + ""; // should be fetched
             // from id
             this.global = cs.getChangeset();
@@ -131,7 +134,6 @@ public class IStorageMercurialRevision implements IStorage {
      * 
      * generate data content of the so called "file" in this case a revision,
      * e.g. a hg cat --rev "rev" <file>
-     * 
      */
     public InputStream getContents() throws CoreException {
         // Setup and run command
@@ -218,7 +220,6 @@ public class IStorageMercurialRevision implements IStorage {
      * 
      * You can't write to other revisions then the current selected e.g.
      * ReadOnly
-     * 
      */
     public boolean isReadOnly() {
         if (revision != null) {
@@ -260,8 +261,8 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * This constructor is not recommended, as the revision index is not unique when working with 
-     * other than the local repository.
+     * This constructor is not recommended, as the revision index is not unique
+     * when working with other than the local repository.
      * 
      * @param res
      * @param rev

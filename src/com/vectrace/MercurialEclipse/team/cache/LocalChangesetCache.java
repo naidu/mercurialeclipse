@@ -277,8 +277,12 @@ public class LocalChangesetCache extends AbstractCache {
                 ReentrantLock lock = getLock(res);
                 try {
                     lock.lock();
-                    ChangeSet changeSet = HgLogClient.getChangeset(res, nodeId,
-                            isGetFileInformationForChangesets());
+
+                    ChangeSet changeSet = getChangeSet(nodeId);
+                    if (changeSet == null) {
+                        changeSet = HgLogClient.getChangeset(res, nodeId,
+                                isGetFileInformationForChangesets());
+                    }
                     SortedSet<ChangeSet> set = new TreeSet<ChangeSet>();
                     if (changeSet != null) {
                         set.add(changeSet);
