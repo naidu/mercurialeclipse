@@ -25,7 +25,7 @@ public class MercurialResourceVariant implements IResourceVariant {
 	}
 
 	public byte[] asBytes() {
-		return rev.getName().getBytes();
+		return getContentIdentifier().getBytes();
 	}
 
 	public String getContentIdentifier() {
