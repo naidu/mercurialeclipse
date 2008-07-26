@@ -17,6 +17,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 public class HgParentClient extends AbstractClient {
 
@@ -47,6 +48,21 @@ public class HgParentClient extends AbstractClient {
         return parents;
     }
 
+    public static String[] getParentNodeIds(IResource resource, ChangeSet cs)
+            throws HgException {
+        HgCommand command = new HgCommand("parents",
+                getWorkingDirectory(resource), false);
+        command
+                .addOptions("--template", "{node}\n", "--rev", cs
+                        .getChangeset());
+        String[] lines = command.executeToString().split("\n");
+        String[] parents = new String[lines.length];
+        for (int i = 0; i < lines.length; i++) {
+            parents[i] = lines[i].trim();
+        }
+        return parents;
+    }
+
     public static int findCommonAncestor(IProject project, int r1, int r2)
             throws HgException {
         HgCommand command = new HgCommand("debugancestor", project, false);
@@ -59,14 +75,28 @@ public class HgParentClient extends AbstractClient {
         throw new HgException("Parse exception: '" + result + "'");
     }
 
-    public static int findCommonAncestor(IResource resource, String node1, String node2)
-            throws HgException {
-        HgCommand command = new HgCommand("debugancestor", getWorkingDirectory(resource), false);
+    public static int findCommonAncestor(IResource resource, String node1,
+            String node2) throws HgException {
+        HgCommand command = new HgCommand("debugancestor",
+                getWorkingDirectory(resource), false);
         command.addOptions(node1, node2);
         String result = command.executeToString().trim();
         Matcher m = ANCESTOR_PATTERN.matcher(result);
         if (m.matches()) {
             return Integer.parseInt(m.group(1));
+        }
+        throw new HgException("Parse exception: '" + result + "'");
+    }
+    
+    public static String findCommonAncestorNodeId(IResource resource,
+            String node1, String node2) throws HgException {
+        HgCommand command = new HgCommand("debugancestor",
+                getWorkingDirectory(resource), false);
+        command.addOptions(node1, node2);
+        String result = command.executeToString().trim();
+        Matcher m = ANCESTOR_PATTERN.matcher(result);
+        if (m.matches()) {
+            return m.group(2);
         }
         throw new HgException("Parse exception: '" + result + "'");
     }
