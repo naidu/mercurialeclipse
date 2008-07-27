@@ -69,6 +69,7 @@ public class PullRepoWizard extends HgWizard {
         private boolean showCommitDialog;
         private File bundleFile;
         private boolean forest;
+        private File snapFile;
 
         /**
          * @param context
@@ -77,7 +78,8 @@ public class PullRepoWizard extends HgWizard {
         public PullOperation(IRunnableContext context, boolean doUpdate,
                 IResource resource, boolean force, HgRepositoryLocation repo,
                 ChangeSet pullRevision, boolean timeout, boolean merge,
-                boolean showCommitDialog, File bundleFile, boolean forest) {
+                boolean showCommitDialog, File bundleFile, boolean forest,
+                File snapFile) {
             super(context);
             this.doUpdate = doUpdate;
             this.resource = resource;
@@ -89,6 +91,7 @@ public class PullRepoWizard extends HgWizard {
             this.showCommitDialog = showCommitDialog;
             this.bundleFile = bundleFile;
             this.forest = forest;
+            this.snapFile = snapFile;
         }
 
         /*
@@ -167,10 +170,8 @@ public class PullRepoWizard extends HgWizard {
                                 resource.getLocation().toFile())
                                 .getParentFile();
                         r = HgFpushPullClient.fpull(forestRoot, this.repo,
-                                this.doUpdate,
-                                this.timeout, this.pullRevision,
-                                true, null,
-                                false);
+                                this.doUpdate, this.timeout, this.pullRevision,
+                                true, snapFile, false);
                     } else {
                         r = HgPushPullClient.pull(resource, this.repo,
                                 this.doUpdate, this.force, this.timeout,
@@ -384,7 +385,14 @@ public class PullRepoWizard extends HgWizard {
             boolean merge = pullPage.getMergeCheckBox().getSelection();
             boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
                     .getSelection();
+
             boolean forest = pullPage.getForestCheckBox().getSelection();
+            File snapFile = null;
+            String snapFileText = pullPage.getSnapFileCombo().getText();
+            if (snapFileText.length() > 0) {
+                snapFile = new File(snapFileText);
+            }
+
             File bundleFile = null;
             if (incomingPage.getChangesets() != null
                     && incomingPage.getChangesets().size() > 0) {
@@ -394,7 +402,7 @@ public class PullRepoWizard extends HgWizard {
 
             PullOperation pullOperation = new PullOperation(getContainer(),
                     doUpdate, resource, force, repo, cs, timeout, merge,
-                    showCommitDialog, bundleFile, forest);
+                    showCommitDialog, bundleFile, forest, snapFile);
             getContainer().run(true, false, pullOperation);
 
             String output = pullOperation.getOutput();

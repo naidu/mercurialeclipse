@@ -47,6 +47,7 @@ public class ClonePage extends PushPullPage {
         setShowRevisionTable(false);
         setShowCredentials(true);
         setShowForce(false);
+        setShowSnapFile(false);
     }
 
     @Override
@@ -72,7 +73,7 @@ public class ClonePage extends PushPullPage {
                 .getString("ClonePage.uncompressedCheckBox.title")); //$NON-NLS-1$
         SWTWidgetHelper.createLabel(g, Messages
                 .getString("ClonePage.revisionLabel.title")); //$NON-NLS-1$
-        this.revisionTextField = SWTWidgetHelper.createTextField(g);
+        this.revisionTextField = SWTWidgetHelper.createTextField(g);        
     }
 
     /*

@@ -113,8 +113,14 @@ public class PushRepoWizard extends HgWizard {
             } else {
                 File forestRoot = MercurialTeamProvider.getHgRoot(
                         project.getLocation().toFile()).getParentFile();
+                
+                File snapFile = null;
+                String snapFileText = pushRepoPage.getSnapFileCombo().getText();
+                if (snapFileText.length() > 0) {
+                    snapFile = new File(snapFileText);
+                }
                 result = HgFpushPullClient.fpush(forestRoot, repo, changeset,
-                        timeout, null);
+                        timeout, snapFile);
             }
             if (result.length() != 0) {
                 Shell shell;

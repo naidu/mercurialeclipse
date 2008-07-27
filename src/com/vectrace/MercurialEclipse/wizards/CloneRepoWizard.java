@@ -176,7 +176,11 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
             }
 
         } catch (Exception e) {
-            clonePage.setErrorMessage(e.getCause().getLocalizedMessage());
+            if (e.getCause() != null) {
+                clonePage.setErrorMessage(e.getCause().getLocalizedMessage());
+            } else {
+                clonePage.setErrorMessage(e.getLocalizedMessage());
+            }
             MercurialEclipsePlugin.logError(Messages
                     .getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
             return false;
