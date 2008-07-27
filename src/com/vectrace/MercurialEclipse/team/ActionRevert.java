@@ -47,6 +47,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     private IWorkbenchWindow window;
     // private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
+    private HgRoot root;
 
     public ActionRevert() {
         super();
@@ -83,7 +84,6 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         IWorkbench workbench;
         
         // do the actual work in here
-        HgRoot root;
         List<IResource> resources;
         try {
             root = null;
@@ -158,7 +158,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             // in the future this could check is this is another repository
 
             // Setup and run command
-            File workingDir = MercurialUtilities.getWorkingDir(resource);
+            File workingDir = resource.getParent().getLocation().toFile();
             launchCmd[4] = resource.getName();
             // System.out.println("Revert = " + FullPath);
             // IResourceChangeEvent event = new IResourceChangeEvent();

@@ -88,7 +88,7 @@ public final class CommitResourceUtil {
                 // just return that they're untracked.
 
                 try {
-                    statusResource = MercurialUtilities.convert(root
+                    statusResource = MercurialUtilities.convert(workingDir
                             .getCanonicalPath()
                             + File.separator + fileName);
                 } catch (Exception e) {

@@ -423,7 +423,7 @@ public class MercurialStatusCache extends AbstractCache implements
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
-
+            Set<IResource> changed;
             if (res.isTeamPrivateMember() || res.isDerived()) {
                 return;
             }
@@ -447,7 +447,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 if (monitor != null) {
                     monitor.worked(1);
                 }
-                parseStatus(res, output);
+                changed = parseStatus(res, output);
                 if (monitor != null) {
                     monitor.worked(1);
                 }
@@ -464,8 +464,9 @@ public class MercurialStatusCache extends AbstractCache implements
             } finally {
                 lock.unlock();
             }
+            notifyChanged(changed);
         }
-        notifyChanged(res);
+        
         if (monitor != null) {
             monitor.worked(1);
         }
@@ -498,12 +499,13 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param ctrParent
      * @throws HgException
      */
-    private void parseStatus(IResource res, String output) throws HgException {
+    private Set<IResource> parseStatus(IResource res, String output)
+            throws HgException {
         if (res.getType() == IResource.PROJECT) {
             knownStatus.add(res.getProject());
         }
+        Set<IResource> changed = new HashSet<IResource>();
         Scanner scanner = new Scanner(output);
-        
         while (scanner.hasNext()) {
             String status = scanner.next();
             String localName = scanner.nextLine().trim();
@@ -515,7 +517,7 @@ public class MercurialStatusCache extends AbstractCache implements
                         res.getProjectRelativePath().toOSString()
                                 + File.separator + localName);
             } else {
-                member = res;
+                member = res.getParent().getFile(new Path(localName));
             }
 
             BitSet bitSet = new BitSet();
@@ -523,6 +525,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 bitSet.set(BIT_IGNORE);
             } else {
                 bitSet.set(getBitIndex(status.charAt(0)));
+                changed.add(member);
             }
             statusMap.put(member.getLocation(), bitSet);
 
@@ -532,7 +535,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 addToProjectResources(member);
             }
 
-            setStatusToAncestors(member, bitSet);
+            changed.addAll(setStatusToAncestors(member, bitSet));
         }
         // add conflict status if merging
         try {
@@ -543,15 +546,19 @@ public class MercurialStatusCache extends AbstractCache implements
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }
+        return changed;
     }
 
     /**
      * @param upperLimitAncestor
      * @param resource
      * @param resourceBitSet
+     * @return
      */
-    private void setStatusToAncestors(IResource resource, BitSet resourceBitSet) {
+    private Set<IResource> setStatusToAncestors(IResource resource,
+            BitSet resourceBitSet) {
         // ancestors
+        Set<IResource> ancestors = new HashSet<IResource>();
         for (IResource parent = resource.getParent(); parent != null
                 && parent != resource.getProject().getParent(); parent = parent
                 .getParent()) {
@@ -582,8 +589,10 @@ public class MercurialStatusCache extends AbstractCache implements
                 }
             }
             statusMap.put(parent.getLocation(), cloneBitSet);
+            ancestors.add(parent);
             addToProjectResources(parent);
         }
+        return ancestors;
     }
 
     /**
@@ -850,7 +859,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 // call hg with batch
                 String output = HgStatusClient.getStatus(resource.getLocation()
                         .toFile(), currentBatch);
-                parseStatus(resource.getProject(), output);
+                parseStatus(resource, output);
                 currentBatch.clear();
             }
         }
@@ -951,4 +960,13 @@ public class MercurialStatusCache extends AbstractCache implements
         notifyChanged(local);
     }
 
+    /**
+     * @param resources
+     */
+    @Override
+    protected void notifyChanged(Set<IResource> resources) {
+        setChanged();
+        notifyObservers(resources);
+    }
+    
 }

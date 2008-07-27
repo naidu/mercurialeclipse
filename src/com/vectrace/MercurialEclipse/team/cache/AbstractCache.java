@@ -164,17 +164,19 @@ public abstract class AbstractCache extends Observable {
         Set<IResource> resources = new HashSet<IResource>();
         resources.add(resource);
         notifyChanged(resources);
-    }
+    }      
 
     /**
      * @param resources
      */
     protected void notifyChanged(Set<IResource> resources) {
+        HashSet<IResource> set = new HashSet<IResource>();
+        set.addAll(resources);
         for (IResource r : resources) {
-            resources.addAll(getMembers(r));
+            set.addAll(getMembers(r));
         }
         setChanged();
-        notifyObservers(resources);
+        notifyObservers(set);
     }
 
     protected Set<IResource> getMembers(IResource r) {
