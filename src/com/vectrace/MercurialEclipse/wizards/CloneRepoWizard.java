@@ -106,7 +106,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
 
         File parDirFile = new File(parentDirectory);
         final File[] filesBefore = parDirFile.listFiles();
-
+        boolean forest = clonePage.getForestCheckBox().getSelection();
         try {
             // run clone
             CloneOperation cloneOperation = new CloneOperation(getContainer(),
@@ -115,7 +115,8 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                             .getSelection(), clonePage
                             .getUncompressedCheckBox().getSelection(),
                     clonePage.getTimeoutCheckBox().getSelection(), clonePage
-                            .getRevisionTextField().getText(), cloneName);
+                            .getRevisionTextField().getText(), cloneName,
+                    forest);
             getContainer().run(true, false, cloneOperation);
 
             File cloneDirectory = null;

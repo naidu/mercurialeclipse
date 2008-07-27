@@ -21,6 +21,7 @@ import org.eclipse.jface.operation.IRunnableContext;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgCloneClient;
+import com.vectrace.MercurialEclipse.commands.forest.HgFcloneClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -37,6 +38,7 @@ public class CloneOperation extends HgOperation {
     private String cloneName;
     private List<File> projectFiles;
     private Path projectLocation;
+    private boolean forest;
 
     /**
      * @param name
@@ -44,7 +46,7 @@ public class CloneOperation extends HgOperation {
     public CloneOperation(IRunnableContext context, String parentDirectory,
             HgRepositoryLocation repo, boolean noUpdate, boolean pull,
             boolean uncompressed, boolean timeout, String rev,
-            String cloneName) {
+            String cloneName, boolean forest) {
         super(context);
         this.parentDirectory = parentDirectory;
         this.repo = repo;
@@ -54,6 +56,7 @@ public class CloneOperation extends HgOperation {
         this.timeout = timeout;
         this.rev = rev;
         this.cloneName = cloneName;
+        this.forest = forest;
     }
 
     /*
@@ -81,8 +84,13 @@ public class CloneOperation extends HgOperation {
 
             m.subTask(Messages
                     .getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
-            HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,
+            if (!forest) {
+                HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,                    
                     uncompressed, timeout, rev, cloneName);
+            } else {                 
+                HgFcloneClient.fclone(parentDirectory, repo, noUpdate, pull,
+                        uncompressed, timeout, rev, cloneName);
+            }
             m.worked(1);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
