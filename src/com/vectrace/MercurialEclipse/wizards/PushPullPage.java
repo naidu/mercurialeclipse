@@ -42,6 +42,14 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * 
  */
 public class PushPullPage extends ConfigurationWizardMainPage {
+    public Button getForestCheckBox() {
+        return forestCheckBox;
+    }
+
+    public void setForestCheckBox(Button forestCheckBox) {
+        this.forestCheckBox = forestCheckBox;
+    }
+
     protected IResource resource;
     protected Button forceCheckBox;
     protected boolean force;
@@ -52,7 +60,9 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     protected boolean timeout;
     protected Group optionGroup;
     protected boolean showRevisionTable = true;
-    private boolean showForce = true;
+    protected boolean showForce = true;
+    protected Button forestCheckBox;
+    protected boolean showForest = true;
 
     public PushPullPage(IResource resource, String pageName, String title,
             ImageDescriptor titleImage) {
@@ -78,6 +88,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         if (showRevisionTable) {
             createRevisionTable(composite);
         }
+
+        if (showForest) {
+            this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+                    "Repository is a forest");
+        }
+
         setDefaultLocation();
     }
 
@@ -85,7 +101,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
      * @param composite
      */
     private void createRevisionTable(Composite composite) {
-        this.revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, getRevCheckBoxLabel());
+        this.revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+                getRevCheckBoxLabel());
 
         Listener revCheckBoxListener = new Listener() {
             public void handleEvent(Event event) {
@@ -112,8 +129,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
         this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
 
-        Group revGroup = SWTWidgetHelper.createGroup(composite, getRevGroupLabel(),
-                GridData.FILL_BOTH);
+        Group revGroup = SWTWidgetHelper.createGroup(composite,
+                getRevGroupLabel(), GridData.FILL_BOTH);
 
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 150;
@@ -126,7 +143,9 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             /*
              * (non-Javadoc)
              * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
+             * .swt.events.SelectionEvent)
              */
             public void widgetSelected(SelectionEvent e) {
                 setPageComplete(true);
@@ -136,7 +155,9 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             /*
              * (non-Javadoc)
              * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
+             * (org.eclipse.swt.events.SelectionEvent)
              */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
@@ -294,7 +315,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     }
 
     /**
-     * @param showForce the showForce to set
+     * @param showForce
+     *            the showForce to set
      */
     public void setShowForce(boolean showForce) {
         this.showForce = showForce;

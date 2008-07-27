@@ -36,12 +36,14 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
+import com.vectrace.MercurialEclipse.commands.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -66,6 +68,7 @@ public class PullRepoWizard extends HgWizard {
         private String output;
         private boolean showCommitDialog;
         private File bundleFile;
+        private boolean forest;
 
         /**
          * @param context
@@ -74,7 +77,7 @@ public class PullRepoWizard extends HgWizard {
         public PullOperation(IRunnableContext context, boolean doUpdate,
                 IResource resource, boolean force, HgRepositoryLocation repo,
                 ChangeSet pullRevision, boolean timeout, boolean merge,
-                boolean showCommitDialog, File bundleFile) {
+                boolean showCommitDialog, File bundleFile, boolean forest) {
             super(context);
             this.doUpdate = doUpdate;
             this.resource = resource;
@@ -85,6 +88,7 @@ public class PullRepoWizard extends HgWizard {
             this.merge = merge;
             this.showCommitDialog = showCommitDialog;
             this.bundleFile = bundleFile;
+            this.forest = forest;
         }
 
         /*
@@ -158,9 +162,20 @@ public class PullRepoWizard extends HgWizard {
                 monitor.subTask("Pulling incoming changesets...");
                 String r;
                 if (bundleFile == null) {
-                    r = HgPushPullClient.pull(resource, this.repo,
-                            this.doUpdate, this.force, this.timeout,
-                            pullRevision);
+                    if (forest) {
+                        File forestRoot = MercurialTeamProvider.getHgRoot(
+                                resource.getLocation().toFile())
+                                .getParentFile();
+                        r = HgFpushPullClient.fpull(forestRoot, this.repo,
+                                this.doUpdate,
+                                this.timeout, this.pullRevision,
+                                true, null,
+                                false);
+                    } else {
+                        r = HgPushPullClient.pull(resource, this.repo,
+                                this.doUpdate, this.force, this.timeout,
+                                pullRevision);
+                    }
                 } else {
                     r = HgPushPullClient.pull(resource, this.doUpdate,
                             this.force, this.timeout, pullRevision, bundleFile
@@ -368,16 +383,18 @@ public class PullRepoWizard extends HgWizard {
             boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
             boolean merge = pullPage.getMergeCheckBox().getSelection();
             boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
-                    .getSelection();            
+                    .getSelection();
+            boolean forest = pullPage.getForestCheckBox().getSelection();
             File bundleFile = null;
             if (incomingPage.getChangesets() != null
                     && incomingPage.getChangesets().size() > 0) {
-                bundleFile = incomingPage.getChangesets().first().getBundleFile();
+                bundleFile = incomingPage.getChangesets().first()
+                        .getBundleFile();
             }
 
             PullOperation pullOperation = new PullOperation(getContainer(),
                     doUpdate, resource, force, repo, cs, timeout, merge,
-                    showCommitDialog, bundleFile);
+                    showCommitDialog, bundleFile, forest);
             getContainer().run(true, false, pullOperation);
 
             String output = pullOperation.getOutput();

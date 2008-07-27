@@ -13,6 +13,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Properties;
 
@@ -26,8 +27,10 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
@@ -95,7 +98,7 @@ public class PushRepoWizard extends HgWizard {
             if (!pushRepoPage.isTimeout()) {
                 timeout = Integer.MAX_VALUE;
             }
-            
+
             String changeset = null;
             if (outgoingPage.getRevisionCheckBox().getSelection()) {
                 ChangeSet cs = outgoingPage.getRevision();
@@ -103,10 +106,16 @@ public class PushRepoWizard extends HgWizard {
                     changeset = cs.getChangeset();
                 }
             }
-            
-            String result = HgPushPullClient.push(project, repo, pushRepoPage.isForce(),
-                    changeset, timeout);
-
+            String result = "";
+            if (!pushRepoPage.getForestCheckBox().getSelection()) {
+                result = HgPushPullClient.push(project, repo, pushRepoPage
+                        .isForce(), changeset, timeout);
+            } else {
+                File forestRoot = MercurialTeamProvider.getHgRoot(
+                        project.getLocation().toFile()).getParentFile();
+                result = HgFpushPullClient.fpush(forestRoot, repo, changeset,
+                        timeout, null);
+            }
             if (result.length() != 0) {
                 Shell shell;
                 IWorkbench workbench;
@@ -124,7 +133,7 @@ public class PushRepoWizard extends HgWizard {
             // It appears good. Stash the repo location.
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
                     repo);
-            
+
             OutgoingChangesetCache.getInstance().clear(repo);
         } catch (URISyntaxException e) {
             MessageDialog
