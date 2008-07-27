@@ -1,14 +1,18 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * 
@@ -49,14 +53,16 @@ public class HgCommand extends AbstractShellCommand {
         this.options.add(user != null ? user : getDefaultUserName());
     }
 
-    protected static Map<IProject, List<IResource>> groupByProject(
-            List<IResource> resources) {
-        Map<IProject, List<IResource>> result = new HashMap<IProject, List<IResource>>();
+    protected static Map<HgRoot, List<IResource>> groupByRoot(
+            List<IResource> resources) throws HgException, IOException {
+        Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
         for (IResource resource : resources) {
-            List<IResource> list = result.get(resource.getProject());
+            HgRoot root = new HgRoot(MercurialTeamProvider.getHgRoot(resource)
+                    .getCanonicalPath());
+            List<IResource> list = result.get(root);
             if (list == null) {
-                list = new ArrayList<IResource>();
-                result.put(resource.getProject(), list);
+                list = new ArrayList<IResource>();                
+                result.put(root, list);
             }
             list.add(resource);
         }

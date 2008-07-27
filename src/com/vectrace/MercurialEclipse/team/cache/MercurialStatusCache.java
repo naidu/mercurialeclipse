@@ -186,7 +186,7 @@ public class MercurialStatusCache extends AbstractCache implements
             return true;
         }
 
-    }        
+    }
 
     public final static int BIT_IGNORE = 0;
     public final static int BIT_CLEAN = 1;
@@ -496,17 +496,26 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param res
      * @param output
      * @param ctrParent
+     * @throws HgException
      */
-    private void parseStatus(IResource res, String output) {
+    private void parseStatus(IResource res, String output) throws HgException {
         if (res.getType() == IResource.PROJECT) {
             knownStatus.add(res.getProject());
         }
         Scanner scanner = new Scanner(output);
+        
         while (scanner.hasNext()) {
             String status = scanner.next();
-            String localName = scanner.nextLine();
+            String localName = scanner.nextLine().trim();
 
-            IResource member = res.getProject().getFile(localName.trim());
+            IResource member = null;
+            if (res.getType() == IResource.FOLDER
+                    || res.getType() == IResource.PROJECT) {
+                member = MercurialUtilities.convert(res.getLocation()
+                        + File.separator + localName);
+            } else {
+                member = res;
+            }
 
             BitSet bitSet = new BitSet();
             if (Team.isIgnoredHint(member)) {
@@ -605,10 +614,55 @@ public class MercurialStatusCache extends AbstractCache implements
         case 'M':
             return BIT_MODIFIED;
         default:
-            MercurialEclipsePlugin.logWarning("Unknown status: '" + status
-                    + "'", null);
+            String msg = "Unknown status: '" + status + "'";
+            MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
             return BIT_IMPOSSIBLE;
         }
+    }
+
+    /**
+     * Converts the given bit index to the status character Mercurial uses.
+     * 
+     * @param bitIndex
+     * @return
+     */
+    public char getStatusChar(int bitIndex) {
+        switch (bitIndex) {
+        case BIT_DELETED:
+            return '!';
+        case BIT_REMOVED:
+            return 'R';
+        case BIT_IGNORE:
+            return 'I';
+        case BIT_CLEAN:
+            return 'C';
+        case BIT_UNKNOWN:
+            return '?';
+        case BIT_ADDED:
+            return 'A';
+        case BIT_MODIFIED:
+            return 'M';
+        default:
+            String msg = "Unknown status: '" + bitIndex + "'";
+            MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
+            return BIT_IMPOSSIBLE;
+        }
+    }
+
+    /**
+     * Returns the status character used by Mercurial that applies to this
+     * resource
+     * 
+     * @param resource
+     *            the resource to query the status for
+     * @return ! (deleted), R (removed), I (ignored), C (clean), ? (unknown), A
+     *         (added) or M (modified)
+     * @throws HgException
+     */
+    public char getStatusChar(IResource resource) throws HgException {
+        BitSet status = getStatus(resource);
+        char statusChar = getStatusChar(status.length() - 1);
+        return statusChar;
     }
 
     /**
@@ -756,7 +810,7 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     private void refreshStatus(final Set<IResource> resources)
             throws HgException {
-
+        // TODO: group batches by repo root
         String pref = HgClients.getPreference(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
                         .valueOf(STATUS_BATCH_SIZE));
@@ -792,8 +846,8 @@ public class MercurialStatusCache extends AbstractCache implements
             }
             if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
-                String output = HgStatusClient.getStatus(resource.getProject(),
-                        currentBatch);
+                String output = HgStatusClient.getStatus(resource.getLocation()
+                        .toFile(), currentBatch);
                 parseStatus(resource.getProject(), output);
                 currentBatch.clear();
             }

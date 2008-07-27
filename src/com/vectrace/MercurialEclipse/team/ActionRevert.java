@@ -17,7 +17,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -42,6 +41,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class ActionRevert implements IWorkbenchWindowActionDelegate {
     private IWorkbenchWindow window;
@@ -81,39 +81,31 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     public void run(IAction action) {
         Shell shell;
         IWorkbench workbench;
-        IProject proj;
-        proj = MercurialUtilities.getProject(selection);
-
-        // System.out.println("Revert:");
-
-        String repository;
-        // IProject proj;
-        // System.out.println("Revert in runnable");
-        proj = MercurialUtilities.getProject(selection);
-        repository = MercurialUtilities.getRepositoryPath(proj);
-        if (repository == null) {
-            repository = "."; // never leave this empty add a . to point to
-            // current path
-        }
-
+        
         // do the actual work in here
-        List<IResource> resources = new ArrayList<IResource>();
-        for (Object obj : selection.toList()) {
-            if (obj instanceof IResource) {
-                IResource resource = (IResource) obj;
-                if (MercurialUtilities.hgIsTeamProviderFor(resource, true) == true) {
-                    resources.add(resource);
+        HgRoot root;
+        List<IResource> resources;
+        try {
+            root = null;
+            resources = new ArrayList<IResource>();
+            for (Object obj : selection.toList()) {
+                if (obj instanceof IResource) {
+                    IResource resource = (IResource) obj;
+                    if (MercurialUtilities.hgIsTeamProviderFor(resource, true) == true) {
+                        resources.add(resource);
+                        if (root == null) {
+                            root = new HgRoot(MercurialUtilities
+                                    .search4MercurialRoot(resources.get(0)
+                                            .getLocation().toFile()));
+                        }
+                    }
                 }
-            }
-        }
-
-        CommitResource[] commitResources = new CommitResourceUtil(proj)
+            }       
+        
+        CommitResource[] commitResources = new CommitResourceUtil(root)
                 .getCommitResources(resources.toArray(new IResource[resources
                         .size()]));
-
-        // System.out.println("commitResources.length=" +
-        // Integer.toString(commitResources.length));
-
+        
         // Check to see if there are any that are untracked.
         int count = 0;
         for (int i = 0; i < commitResources.length; i++) {
@@ -147,6 +139,10 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             }
             MessageDialog.openInformation(shell, "Mercurial Eclipse hg revert",
                     "No files to revert!");
+        }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            MercurialEclipsePlugin.showError(e);
         }
     }
 

@@ -38,11 +38,14 @@ public class HgStatusClient extends AbstractClient {
     }
 
     public static String getStatus(IResource res) throws HgException {
-        HgCommand command = new HgCommand("status", res.getProject(), true);
+        HgCommand command = new HgCommand("status", getWorkingDirectory(res),
+                true);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduic");
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions(res.getProjectRelativePath().toOSString());
+        if (res.getType() == IResource.FILE) {
+            command.addOptions(res.getName());
+        }
         return command.executeToString();
     }
 
@@ -90,8 +93,10 @@ public class HgStatusClient extends AbstractClient {
      * @return
      * @throws HgException 
      */
-    public static String getStatus(IProject proj, List<IResource> files) throws HgException {
-        HgCommand command = new HgCommand("status", proj, true);
+    public static String getStatus(File file, List<IResource> files)
+            throws HgException {
+        HgCommand command = new HgCommand("status", getWorkingDirectory(file),
+                true);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduic");

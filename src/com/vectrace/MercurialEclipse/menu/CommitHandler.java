@@ -12,6 +12,8 @@ import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class CommitHandler extends MultipleResourcesHandler {
@@ -28,8 +30,9 @@ public class CommitHandler extends MultipleResourcesHandler {
         }
 
         IResource[] selectedResourceArray = resources.toArray(new IResource[0]);
-
-        CommitDialog commitDialog = new CommitDialog(getShell(), project,
+        HgRoot root = new HgRoot(MercurialUtilities
+                .search4MercurialRoot(resources.get(0).getLocation().toFile()));
+        CommitDialog commitDialog = new CommitDialog(getShell(), root,
                 selectedResourceArray);
 
         if (commitDialog.open() == Window.OK) {

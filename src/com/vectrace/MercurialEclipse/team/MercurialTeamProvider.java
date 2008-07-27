@@ -15,21 +15,17 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
@@ -129,15 +125,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
      */
     private static String getAndStoreHgRootPath(File file) throws CoreException {
         assert (file != null);
-
-        try {
-            IResource resource = ResourcesPlugin.getWorkspace().getRoot()
-                    .getFileForLocation(new Path(file.getCanonicalPath()));
-            return getAndStoreHgRootPath(resource);
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
+        IResource resource = MercurialUtilities.convert(file);
+        return getAndStoreHgRootPath(resource);
     }
 
     /**

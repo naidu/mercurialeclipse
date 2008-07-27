@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.compare.ResourceNode;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -49,6 +48,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
@@ -94,7 +94,7 @@ public class CommitDialog extends TrayDialog {
     private Button selectAllButton;
     private UntrackedFilesFilter untrackedFilesFilter;
     private CommittableFilesFilter committableFilesFilter;
-    private IProject project;
+    private HgRoot root;
     private File[] filesToAdd;
     private List<IResource> resourcesToAdd;
     private File[] filesToCommit;
@@ -107,19 +107,19 @@ public class CommitDialog extends TrayDialog {
     /**
      * @param shell
      */
-    public CommitDialog(Shell shell, IProject project, IResource[] inResources) {
+    public CommitDialog(Shell shell, HgRoot root, IResource[] inResources) {
         super(shell);
         setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);        
-        this.setProject(project);
+        this.root = root;
         this.inResources = inResources;
         this.untrackedFilesFilter = new UntrackedFilesFilter();
         this.committableFilesFilter = new CommittableFilesFilter();
         this.selectableFiles = true;
     }
 
-    public CommitDialog(Shell shell, IProject project, IResource[] inResources,
+    public CommitDialog(Shell shell, HgRoot root, IResource[] inResources,
             String defaultCommitMessage, boolean selectableFiles) {
-        this(shell, project, inResources);
+        this(shell, root, inResources);
         this.selectableFiles = selectableFiles;
         this.defaultCommitMessage = defaultCommitMessage;
     }
@@ -333,7 +333,7 @@ public class CommitDialog extends TrayDialog {
 
         commitFilesList.setLabelProvider(new CommitResourceLabelProvider());
 
-        CommitResource[] commitResources = new CommitResourceUtil(getProject())
+        CommitResource[] commitResources = new CommitResourceUtil(getRoot())
                 .getCommitResources(inResources);
         commitFilesList.setInput(commitResources);
         commitFilesList.addFilter(committableFilesFilter);
@@ -475,12 +475,12 @@ public class CommitDialog extends TrayDialog {
         return new Point(477, 562);
     }
 
-    protected void setProject(IProject project) {
-        this.project = project;
+    protected void setRoot(HgRoot root) {
+        this.root = root;
     }
 
-    protected IProject getProject() {
-        return project;
+    protected HgRoot getRoot() {
+        return root;
     }
 
     public File[] getFilesToRemove() {

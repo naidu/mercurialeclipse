@@ -13,6 +13,8 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -40,18 +42,18 @@ public class CommitMergeHandler extends SingleResourceHandler {
         String result = "";
         try {
             // FIXME let's pray that all resources are in the same project...
-            IProject project = resource.getProject();
-            Assert.isNotNull(project);
 
             IResource[] selectedResourceArray = new IResource[1];
             selectedResourceArray[0] = resource;
+            HgRoot root = new HgRoot(MercurialUtilities
+                    .search4MercurialRoot(resource.getLocation().toFile()));
 
             CommitDialog commitDialog = new CommitDialog(
                     shell,
-                    project,
+                    root,
                     selectedResourceArray,
                     "Merge with "
-                            + project
+                            + resource.getProject()
                                     .getPersistentProperty(ResourceProperties.MERGING),
                     false);
 

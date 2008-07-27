@@ -366,17 +366,7 @@ public class ResourceDecorator extends LabelProvider implements
     }
 
     @SuppressWarnings("unchecked")
-    public void update(Observable o, Object updatedObject) {
-        // final IWorkbench workbench = PlatformUI.getWorkbench();
-        // final String decoratorId = ResourceDecorator.class.getName();
-        // new SafeUiJob("Update Decorations") {
-        // @Override
-        // protected IStatus runSafe(IProgressMonitor monitor) {
-        // // FIXME: fire events for the changed resources instead!
-        // workbench.getDecoratorManager().update(decoratorId);
-        // return super.runSafe(monitor);
-        // }
-        // }.schedule();
+    public void update(Observable o, Object updatedObject) {        
         if (updatedObject instanceof Set) {
             Set changed = (Set) updatedObject;
             LabelProviderChangedEvent event = new LabelProviderChangedEvent(

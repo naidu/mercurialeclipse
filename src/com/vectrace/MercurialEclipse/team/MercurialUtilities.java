@@ -21,6 +21,9 @@ import java.io.IOException;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -478,6 +481,47 @@ public class MercurialUtilities {
      */
     public static String getResourceName(IResource obj) {
         return (obj.getLocation()).lastSegment();
+    }
+
+    /**
+     * Converts a {@link java.io.File} to a workspace resource
+     * 
+     * @param file
+     * @return
+     * @throws HgException
+     */
+    public static IResource convert(File file) throws HgException {
+        try {
+            IResource resource;
+            IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+            if (file.isDirectory()) {
+                resource = root.getContainerForLocation(new Path(file
+                        .getCanonicalPath()));
+            } else {
+                resource = root.getFileForLocation(new Path(file
+                        .getCanonicalPath()));
+            }
+            return resource;
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    /**
+     * Converts a path to a workspace resource
+     * 
+     * @param file
+     * @return the resource or null
+     * @throws HgException
+     */
+    public static IResource convert(String path) throws HgException {
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        IResource resource = root.getFileForLocation(new Path(path));
+        if (resource == null) {
+            resource = root.getContainerForLocation(new Path(path));
+        }
+        return resource;
     }
 
 }

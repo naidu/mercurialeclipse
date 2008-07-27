@@ -1,5 +1,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -8,6 +9,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgCommitClient {
@@ -15,17 +17,21 @@ public class HgCommitClient {
 	public static void commitResources(List<IResource> resources, String user,
 			String message, IProgressMonitor monitor) throws HgException {
 		
-		Map<IProject, List<IResource>> resourcesByProject = HgCommand
-				.groupByProject(resources);
-		for (IProject project : resourcesByProject.keySet()) {
+		Map<HgRoot, List<IResource>> resourcesByRoot;
+        try {
+            resourcesByRoot = HgCommand.groupByRoot(resources);
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
+        for (HgRoot root : resourcesByRoot.keySet()) {
 			if (monitor != null) {
-				monitor.subTask("Committing resources from " + project.getName());
+				monitor.subTask("Committing resources from " + root.getName());
 			}
-			HgCommand command = new HgCommand("commit", project, true);
+			HgCommand command = new HgCommand("commit", root, true);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 			command.addUserName(user);
 			command.addOptions("-m", message);
-			command.addFiles(resourcesByProject.get(project));
+			command.addFiles(resourcesByRoot.get(root));
 			command.executeToBytes();
 		}
 	}
