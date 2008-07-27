@@ -511,8 +511,9 @@ public class MercurialStatusCache extends AbstractCache implements
             IResource member = null;
             if (res.getType() == IResource.FOLDER
                     || res.getType() == IResource.PROJECT) {
-                member = MercurialUtilities.convert(res.getLocation()
-                        + File.separator + localName);
+                member = res.getProject().getFile(
+                        res.getProjectRelativePath().toOSString()
+                                + File.separator + localName);
             } else {
                 member = res;
             }
@@ -526,7 +527,8 @@ public class MercurialStatusCache extends AbstractCache implements
             statusMap.put(member.getLocation(), bitSet);
 
             if (member.getType() == IResource.FILE
-                    && getBitIndex(status.charAt(0)) != BIT_IGNORE) {
+                    && getBitIndex(status.charAt(0)) != BIT_IGNORE
+                    && !Team.isIgnoredHint(member)) {
                 addToProjectResources(member);
             }
 
