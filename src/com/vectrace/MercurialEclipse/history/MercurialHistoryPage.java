@@ -65,6 +65,10 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
+    public MercurialHistory getMercurialHistory() {
+        return mercurialHistory;
+    }
+
     private GraphLogTableViewer viewer;
     private IResource resource;
     private ChangeLogContentProvider changeLogViewContentProvider;
@@ -73,11 +77,14 @@ public class MercurialHistoryPage extends HistoryPage {
     private RefreshMercurialHistory refreshFileHistoryJob;
     private ChangedPathsPage changedPaths;
 
-    private class RefreshMercurialHistory extends Job {
+    class RefreshMercurialHistory extends Job {
         MercurialHistory mercurialHistory;
+        private int from;
 
-        public RefreshMercurialHistory() {
+        public RefreshMercurialHistory(int from, MercurialHistory fileHistory) {
             super("Fetching Mercurial revisions..."); //$NON-NLS-1$
+            this.from = from;
+            this.mercurialHistory = fileHistory;
         }
 
         public void setFileHistory(MercurialHistory mercurialHistory) {
@@ -91,28 +98,29 @@ public class MercurialHistoryPage extends HistoryPage {
 
             if (mercurialHistory != null) {
                 try {
-                    mercurialHistory.refresh(monitor);
+                    mercurialHistory.refresh(monitor, from);
                 } catch (CoreException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
-                
+
                 final Runnable runnable = new Runnable() {
                     public void run() {
                         viewer.setInput(mercurialHistory);
                     }
                 };
-                
+
                 // Internal code copied here from Utils.asyncExec
-                if(viewer == null) {
+                if (viewer == null) {
                     return status;
                 }
-                                
+
                 final Control ctrl = viewer.getControl();
                 if (ctrl != null && !ctrl.isDisposed()) {
                     ctrl.getDisplay().asyncExec(new Runnable() {
                         public void run() {
                             if (!ctrl.isDisposed()) {
-                                BusyIndicator.showWhile(ctrl.getDisplay(), runnable);
+                                BusyIndicator.showWhile(ctrl.getDisplay(),
+                                        runnable);
                             }
                         }
                     });
@@ -155,7 +163,7 @@ public class MercurialHistoryPage extends HistoryPage {
             }
 
             MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
-            ChangeSet changeSet = mercurialFileRevision.getChangeSet();
+            ChangeSet changeSet = mercurialFileRevision.getChangeSet();            
 
             switch (index) {
             case 1:
@@ -220,7 +228,7 @@ public class MercurialHistoryPage extends HistoryPage {
         composite.setLayoutData(data);
 
         viewer = new GraphLogTableViewer(composite, SWT.MULTI | SWT.H_SCROLL
-                | SWT.V_SCROLL | SWT.FULL_SELECTION);
+                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.VIRTUAL, this);
         Table changeLogTable = viewer.getTable();
 
         changeLogTable.setLinesVisible(true);
@@ -273,14 +281,19 @@ public class MercurialHistoryPage extends HistoryPage {
                 try {
                     IProject project = resource.getProject();
                     Assert.isNotNull(project);
-                    HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
+                    HgUpdateClient.update(project, rev.getChangeSet()
+                            .getChangeset(), true);
                     // update ends merges, so reset merge properties
-                    project.setPersistentProperty(ResourceProperties.MERGING, null);
-                    project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);                    
-                    new RefreshStatusJob("Refresh status after updating working directory.",project).schedule();
+                    project.setPersistentProperty(ResourceProperties.MERGING,
+                            null);
+                    project.setSessionProperty(
+                            ResourceProperties.MERGE_COMMIT_OFFERED, null);
+                    new RefreshStatusJob(
+                            "Refresh status after updating working directory.",
+                            project).schedule();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
-                } 
+                }
             }
 
             @Override
@@ -310,7 +323,7 @@ public class MercurialHistoryPage extends HistoryPage {
                     openAction.setEnabled(true);
                 }
                 // TODO This is a HACK but I can't get the menu to update on
-                // selection :-(                
+                // selection :-(
                 compareAction.setEnabled(compareAction.isEnabled());
                 menuMgr1.add(compareAction);
                 updateAction.setEnabled(updateAction.isEnabled());
@@ -340,8 +353,8 @@ public class MercurialHistoryPage extends HistoryPage {
             @Override
             public void run() {
                 try {
-                    CompareUtils
-                            .openEditor(getStorage(0), getStorage(1), false, false);
+                    CompareUtils.openEditor(getStorage(0), getStorage(1),
+                            false, false);
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
@@ -392,13 +405,14 @@ public class MercurialHistoryPage extends HistoryPage {
 
     public void refresh() {
         if (refreshFileHistoryJob == null) {
-            refreshFileHistoryJob = new RefreshMercurialHistory();
+            refreshFileHistoryJob = new RefreshMercurialHistory(-1,
+                    mercurialHistory);
         }
 
         if (refreshFileHistoryJob.getState() != Job.NONE) {
             refreshFileHistoryJob.cancel();
         }
-        refreshFileHistoryJob.setFileHistory(mercurialHistory);        
+        refreshFileHistoryJob.setFileHistory(mercurialHistory);
         refreshFileHistoryJob.schedule();
     }
 

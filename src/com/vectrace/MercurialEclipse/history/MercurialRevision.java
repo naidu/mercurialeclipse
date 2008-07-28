@@ -29,7 +29,47 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
  */
 public class MercurialRevision extends FileRevision
 {
-  private IResource resource; 
+  @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result
+                + ((changeSet == null) ? 0 : changeSet.hashCode());
+        result = prime * result
+                + ((resource == null) ? 0 : resource.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (!(obj instanceof MercurialRevision)) {
+            return false;
+        }
+        MercurialRevision other = (MercurialRevision) obj;
+        if (changeSet == null) {
+            if (other.changeSet != null) {
+                return false;
+            }
+        } else if (!changeSet.equals(other.changeSet)) {
+            return false;
+        }
+        if (resource == null) {
+            if (other.resource != null) {
+                return false;
+            }
+        } else if (!resource.equals(other.resource)) {
+            return false;
+        }
+        return true;
+    }
+
+    private IResource resource; 
   private ChangeSet changeSet; 
   private IStorageMercurialRevision iStorageMercurialRevision; //Cached data
   private final GChangeSet gChangeSet;

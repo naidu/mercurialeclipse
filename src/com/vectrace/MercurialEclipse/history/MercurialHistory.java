@@ -31,7 +31,9 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
@@ -58,10 +60,31 @@ public class MercurialHistory extends FileHistory {
         }
     }
 
-    private static ChangeSetComparator comparator = null;
+    private static final class RevisionComparator implements
+            Comparator<MercurialRevision> {
+        public int compare(MercurialRevision o1, MercurialRevision o2) {
+            int result = o2.getChangeSet().getChangesetIndex()
+                    - o1.getChangeSet().getChangesetIndex();
+
+            // we need to cover the situation when repo-indices are the same
+            if (result == 0 && o1.getChangeSet().getRealDate() != null
+                    && o2.getChangeSet().getRealDate() != null) {
+                int dateCompare = o1.getChangeSet().getRealDate().compareTo(
+                        o2.getChangeSet().getRealDate());
+                if (dateCompare != 0) {
+                    result = dateCompare;
+                }
+            }
+
+            return result;
+        }
+    }
+
+    private static ChangeSetComparator csComparator = null;
+    private static RevisionComparator revComparator = null;
 
     private IResource resource;
-    protected MercurialRevision[] revisions;
+    protected SortedSet<MercurialRevision> revisions;
     private List<GChangeSet> gLogChangeSets;
 
     public MercurialHistory(IResource resource) {
@@ -115,7 +138,7 @@ public class MercurialHistory extends FileHistory {
      * String)
      */
     public IFileRevision getFileRevision(String id) {
-        if (revisions == null || revisions.length == 0) {
+        if (revisions == null || revisions.size() == 0) {
             return null;
         }
 
@@ -133,7 +156,7 @@ public class MercurialHistory extends FileHistory {
      * @see org.eclipse.team.core.history.IFileHistory#getFileRevisions()
      */
     public IFileRevision[] getFileRevisions() {
-        return revisions;
+        return revisions.toArray(new MercurialRevision[revisions.size()]);
     }
 
     /*
@@ -147,7 +170,8 @@ public class MercurialHistory extends FileHistory {
         return new IFileRevision[0];
     }
 
-    public void refresh(IProgressMonitor monitor) throws CoreException {
+    public void refresh(IProgressMonitor monitor, int from)
+            throws CoreException {
         RepositoryProvider provider = RepositoryProvider.getProvider(resource
                 .getProject());
         if (provider != null && provider instanceof MercurialTeamProvider) {
@@ -157,22 +181,32 @@ public class MercurialHistory extends FileHistory {
             SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(
                     getChangeSetComparator());
 
+            int logBatchSize = Integer.parseInt(MercurialUtilities
+                    .getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
+                            "500"));
+
             SortedSet<ChangeSet> localChangeSets = HgLogClient.getProjectLog(
-                    resource, -1, -1, false).get(resource.getLocation());
+                    resource, logBatchSize, from, false).get(
+                    resource.getLocation());
 
             if (localChangeSets != null) {
                 changeSets.addAll(localChangeSets);
             }
 
-            gLogChangeSets = new HgGLogClient(resource).update(changeSets)
-                    .getChangeSets();
+            if (revisions == null || revisions.size() == 0
+                    || !(revisions.first().getResource().equals(resource))) {
+                revisions = new TreeSet<MercurialRevision>(
+                        getRevisionComparator());
+                gLogChangeSets = new HgGLogClient(resource).update(changeSets)
+                        .getChangeSets();
+            }
 
-            revisions = new MercurialRevision[changeSets.size()];
-            int i = 0;
             for (ChangeSet cs : changeSets) {
-                revisions[i] = new MercurialRevision(cs, gLogChangeSets.get(i),
-                        resource);
-                i++;
+                revisions.add(new MercurialRevision(cs, gLogChangeSets
+                        .get((gLogChangeSets.size() - 1)
+                                - cs
+                        .getChangesetIndex()),
+                        resource));
             }
         }
     }
@@ -181,10 +215,17 @@ public class MercurialHistory extends FileHistory {
      * @return
      */
     private ChangeSetComparator getChangeSetComparator() {
-        if (comparator == null) {
-            comparator = new ChangeSetComparator();
+        if (csComparator == null) {
+            csComparator = new ChangeSetComparator();
         }
-        return comparator;
+        return csComparator;
+    }
+    
+    private RevisionComparator getRevisionComparator() {
+        if (revComparator == null) {
+            revComparator = new RevisionComparator();
+        }
+        return revComparator;
     }
 
 }
