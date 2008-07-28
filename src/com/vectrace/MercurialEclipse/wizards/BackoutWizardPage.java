@@ -10,10 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -31,7 +27,6 @@ import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -77,7 +72,7 @@ public class BackoutWizardPage extends HgWizardPage {
                         Messages
                                 .getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-        changesetTable = new ChangesetTable(changeSetGroup);
+        changesetTable = new ChangesetTable(changeSetGroup, project);
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 200;
         gridData.minimumHeight = 50;
@@ -119,32 +114,8 @@ public class BackoutWizardPage extends HgWizardPage {
                 Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
         this.mergeCheckBox.setSelection(true);
 
-        try {
-            populateBackoutChangesetTable();
-        } catch (HgException e) {
-            MessageDialog.openInformation(getShell(), Messages
-                    .getString("BackoutWizardPage.changesetLoadingError"), e //$NON-NLS-1$
-                    .getMessage());
-            MercurialEclipsePlugin.logError(e);
-        }
+        
         setControl(composite);
-    }
-
-    protected void populateBackoutChangesetTable() throws HgException {
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
-                true);
-
-        SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
-                .getLocalChangeSets(project);
-
-        SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
-                Collections.reverseOrder());
-        reverseOrderSet.addAll(changesets);
-
-        if (changesets != null) {
-            changesetTable.setChangesets(reverseOrderSet
-                    .toArray(new ChangeSet[changesets.size()]));
-        }
     }
 
     @Override

@@ -11,10 +11,6 @@
 
 package com.vectrace.MercurialEclipse.dialogs;
 
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
@@ -32,12 +28,10 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
 
@@ -202,8 +196,8 @@ public class TagDialog extends Dialog {
         Button otherButton = new Button(composite, SWT.RADIO);
         otherButton.setText("Tag another changeset");
 
-        final ChangesetTable table = new ChangesetTable(composite);
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+        final ChangesetTable table = new ChangesetTable(composite, project);
+        table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
         table.setEnabled(false);
         table.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -222,33 +216,14 @@ public class TagDialog extends Dialog {
         });
 
         otherButton.addSelectionListener(new SelectionAdapter() {
-            private SortedSet<ChangeSet> changesets;
-
             @Override
             public void widgetSelected(SelectionEvent e) {
-                try {
                     table.setEnabled(true);
-                    if (!revisionsLoaded) {
-                        changesets = new TreeSet<ChangeSet>(Collections
-                                .reverseOrder());
-                        changesets.addAll(LocalChangesetCache.getInstance()
-                                .getLocalChangeSets(project));
-
-                        table.highlightParents(HgParentClient
-                                .getParents(project));
-                        table.setChangesets(changesets
-                                .toArray(new ChangeSet[0]));
-                        revisionsLoaded = true;
-                    } else {
-                        ChangeSet changeset = table.getSelection();
-                        if (changeset != null) {
-                            targetRevision = Integer.toString(changeset
-                                    .getChangesetIndex());
-                        }
-                    }
-                } catch (HgException ex) {
-                    MercurialEclipsePlugin.logError(ex);
-                }
+                    ChangeSet changeset = table.getSelection();
+                    if (changeset != null) {
+                    targetRevision = Integer.toString(changeset
+                            .getChangesetIndex());
+                }                
             }
         });
 

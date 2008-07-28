@@ -261,7 +261,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         gridData.heightHint = 200;
         gridData.minimumHeight = 50;
         this.changesetTable = new ChangesetTable(changeSetGroup, SWT.MULTI
-                | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
+                | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
+                        | SWT.H_SCROLL, project, false);
         this.changesetTable.setLayoutData(gridData);
         this.changesetTable.setEnabled(true);
 

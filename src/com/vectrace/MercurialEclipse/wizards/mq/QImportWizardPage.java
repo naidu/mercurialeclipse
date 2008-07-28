@@ -13,9 +13,6 @@ package com.vectrace.MercurialEclipse.wizards.mq;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -40,7 +37,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
@@ -178,13 +174,7 @@ public class QImportWizardPage extends HgWizardPage {
                 if (revCheckBox.getSelection()) {
                     if (changesetTable.getChangesets() == null
                             || changesetTable.getChangesets().length == 0) {
-                        try {
-                            setErrorMessage(null);
-                            populateChangesetTable();
-                        } catch (HgException e) {
-                            setErrorMessage(e.getCause().getLocalizedMessage());
-                            MercurialEclipsePlugin.logError(e);
-                        }
+                        setErrorMessage(null);              
                     }
                 }
                 // en-/disable patch file text field
@@ -202,7 +192,8 @@ public class QImportWizardPage extends HgWizardPage {
         gridData.heightHint = 150;
         gridData.minimumHeight = 50;
         this.changesetTable = new ChangesetTable(revGroup, SWT.MULTI
-                | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
+                | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
+                        | SWT.H_SCROLL, resource);
         this.changesetTable.setLayoutData(gridData);
         this.changesetTable.setEnabled(false);
 
@@ -247,23 +238,7 @@ public class QImportWizardPage extends HgWizardPage {
         return super.finish(monitor);
     }
 
-    private void populateChangesetTable() throws HgException {
-        if (resource != null && resource.isAccessible()) {
-            setErrorMessage(null);
-            SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
-                    .getLocalChangeSets(resource.getProject());
-            if (changesets != null) {
-                TreeSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
-                        Collections.reverseOrder());
-                reverseOrderSet.addAll(changesets);
-                changesetTable.setChangesets(reverseOrderSet
-                        .toArray(new ChangeSet[reverseOrderSet.size()]));
-            }
-        } else {
-            setErrorMessage("Selected resource can't be accessed. Please select an accessible resource and try again.");
-            revCheckBox.setSelection(false);
-        }
-    }
+    
 
     /**
      * @return the revisions

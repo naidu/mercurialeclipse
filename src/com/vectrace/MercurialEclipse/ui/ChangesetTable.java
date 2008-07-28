@@ -11,6 +11,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import java.util.Collections;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -18,11 +23,18 @@ import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * 
@@ -35,21 +47,36 @@ public class ChangesetTable extends Composite {
 
     private Table table;
     private int[] parents;
+    private IResource resource;
 
-    private ChangeSet[] changesets;
-    
+    private ChangeSet[] changesets = new ChangeSet[0];
+    private int logBatchSize;
+    private boolean autoFetch = true;
 
-    public ChangesetTable(Composite parent) {
+    public ChangesetTable(Composite parent, IResource resource) {
         this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
-                | SWT.V_SCROLL | SWT.H_SCROLL);
+                | SWT.V_SCROLL | SWT.H_SCROLL, resource);
+    }
+
+    public ChangesetTable(Composite parent, IResource resource,
+            boolean autoFetch) {
+        this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+                | SWT.V_SCROLL | SWT.H_SCROLL, resource);
+        this.autoFetch = autoFetch;
+    }
+
+    public ChangesetTable(Composite parent, int tableStyle, IResource resource,
+            boolean autoFetch) {
+        this(parent, tableStyle, resource);
+        this.autoFetch = autoFetch;
     }
 
     /**
      * 
      */
-    public ChangesetTable(Composite parent, int tableStyle) {
+    public ChangesetTable(Composite parent, int tableStyle, IResource resource) {
         super(parent, SWT.NONE);
-
+        this.resource = resource;
         this.setLayout(new GridLayout());
         this.setLayoutData(new GridData());
 
@@ -66,17 +93,66 @@ public class ChangesetTable extends Composite {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
             column.setWidth(widths[i]);
-        }        
+        }
+        Listener paintListener = new Listener() {
+
+            public void paintControl(Event e) {
+                TableItem tableItem = (TableItem) e.item;
+                ChangeSet cs = (ChangeSet) tableItem.getData();
+                if (tableItem
+                        .equals(table.getItems()[table.getItemCount() - 1])
+                        && cs.getChangesetIndex() > 0) {
+                    logBatchSize = Integer
+                            .parseInt(MercurialUtilities
+                                    .getPreference(
+                                            MercurialPreferenceConstants.LOG_BATCH_SIZE,
+                                            "200"));
+                    try {
+                        int startRev = cs.getChangesetIndex() - 1;
+                        updateTable(startRev);
+                    } catch (HgException e1) {
+                        MercurialEclipsePlugin.logError(e1);
+                    }
+                }
+            }
+
+            public void handleEvent(Event event) {
+                paintControl(event);
+            }
+        };
+        table.addListener(SWT.PaintItem, paintListener);
+
     }
 
     public void highlightParents(int[] newParents) {
         this.parents = newParents;
     }
 
+    /**
+     * @param startRev
+     * @throws HgException
+     */
+    private void updateTable(int startRev) throws HgException {
+        if (autoFetch) {
+            if (startRev > 0) {
+                LocalChangesetCache.getInstance().refreshAllLocalRevisions(
+                        resource, true, logBatchSize, startRev, false);
+            }
+            SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
+                    .getLocalChangeSets(resource);
+            SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
+                    Collections.reverseOrder());
+            reverseOrderSet.addAll(set);
+            setChangesets(reverseOrderSet.toArray(new ChangeSet[reverseOrderSet
+                    .size()]));
+        }
+    }
+
     public void setChangesets(ChangeSet[] sets) {
         this.changesets = sets;
-        table.removeAll();
-        for (ChangeSet rev : sets) {
+        // table.removeAll();
+        for (int i = Math.max(0, table.getItemCount() - 1); i < sets.length; i++) {
+            ChangeSet rev = sets[i];
             TableItem row = new TableItem(table, SWT.NONE);
             if (parents != null && isParent(rev.getChangesetIndex())) {
                 row.setFont(PARENT_FONT);
@@ -91,7 +167,7 @@ public class ChangesetTable extends Composite {
         }
         table.setItemCount(sets.length);
 
-    }    
+    }
 
     public ChangeSet[] getSelections() {
         TableItem[] selection = table.getSelection();
@@ -120,6 +196,13 @@ public class ChangesetTable extends Composite {
     @Override
     public void setEnabled(boolean enabled) {
         table.setEnabled(enabled);
+        try {
+            if (enabled) {
+                updateTable(-1);
+            }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
     }
 
     private boolean isParent(int r) {
@@ -142,6 +225,21 @@ public class ChangesetTable extends Composite {
      */
     public ChangeSet[] getChangesets() {
         return changesets;
+    }
+
+    /**
+     * @param autoFetch
+     *            the autoFetch to set
+     */
+    public void setAutoFetch(boolean autoFetch) {
+        this.autoFetch = autoFetch;
+    }
+
+    /**
+     * @return the autoFetch
+     */
+    public boolean isAutoFetch() {
+        return autoFetch;
     }
 
 }

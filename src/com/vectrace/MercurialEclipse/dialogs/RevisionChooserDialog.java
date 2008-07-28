@@ -107,7 +107,8 @@ public class RevisionChooserDialog extends Dialog {
         text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL | GridData.FILL_VERTICAL);
+        GridData data = new GridData(GridData.FILL_HORIZONTAL
+                | GridData.FILL_VERTICAL);
         data.heightHint = 200;
         tabFolder.setLayoutData(data);
         createRevisionTabItem(tabFolder);
@@ -150,7 +151,9 @@ public class RevisionChooserDialog extends Dialog {
         item.setText("Revisions");
 
 
-        final ChangesetTable table = new ChangesetTable(folder);
+        final ChangesetTable table = new ChangesetTable(folder, dataLoader
+                .getProject());
+        table.setEnabled(true);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
         table.highlightParents(parents);
 
@@ -163,21 +166,7 @@ public class RevisionChooserDialog extends Dialog {
                 changeSet = table.getSelection();
             }
         });
-
-        new SafeUiJob("Fetching revisions from repository") {
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                try {                    
-                    ChangeSet[] revisions = dataLoader.getRevisions();
-                    table.setChangesets(revisions);
-                    return Status.OK_STATUS;
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return Status.CANCEL_STATUS;
-                }
-            }
-        }.schedule();
-
+        table.setEnabled(true);
         item.setControl(table);
         return item;
     }
@@ -268,10 +257,11 @@ public class RevisionChooserDialog extends Dialog {
         TabItem item = new TabItem(folder, SWT.NONE);
         item.setText("Heads");
 
-        final ChangesetTable table = new ChangesetTable(folder);
+        final ChangesetTable table = new ChangesetTable(folder, dataLoader
+                .getProject(), false);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
         table.highlightParents(parents);
-
+        
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -289,6 +279,8 @@ public class RevisionChooserDialog extends Dialog {
                     @Override
                     protected IStatus runSafe(IProgressMonitor monitor) {
                         try {
+                            table.setAutoFetch(false);
+                            
                             ChangeSet[] revisions = dataLoader.getHeads();
                             table.setChangesets(revisions);
                             return Status.OK_STATUS;

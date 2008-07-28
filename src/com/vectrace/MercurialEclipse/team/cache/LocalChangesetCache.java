@@ -298,6 +298,11 @@ public class LocalChangesetCache extends AbstractCache {
         return null;
     }
 
+    public void refreshAllLocalRevisions(IResource res, boolean limit,
+            int limitNumber, boolean withFiles) throws HgException {
+        refreshAllLocalRevisions(res, limit, limitNumber, -1, withFiles);
+    }
+
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
@@ -306,15 +311,18 @@ public class LocalChangesetCache extends AbstractCache {
      * revisions of this file (10% of limit number) are obtained via additional
      * calls.
      * 
-     * @param project
+     * @param res
      * @param limit
      *            whether to limit or to have full project log
      * @param limitNumber
      *            if limit is set, how many revisions should be fetched
+     * @param startRev
+     *            the revision to start with
      * @throws HgException
      */
     public void refreshAllLocalRevisions(IResource res, boolean limit,
-            int limitNumber, boolean withFiles) throws HgException {
+            int limitNumber, int startRev, boolean withFiles)
+            throws HgException {
         Assert.isNotNull(res);
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
@@ -330,8 +338,8 @@ public class LocalChangesetCache extends AbstractCache {
                 Map<IPath, SortedSet<ChangeSet>> revisions = null;
 
                 if (limit) {
-                    revisions = HgLogClient.getRecentProjectLog(res,
-                            limitNumber, withFiles);
+                    revisions = HgLogClient.getProjectLog(res, limitNumber,
+                            startRev, withFiles);
                 } else {
                     revisions = HgLogClient.getCompleteProjectLog(res,
                             withFiles);

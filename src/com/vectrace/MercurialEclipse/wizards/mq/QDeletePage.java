@@ -10,10 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
-import java.util.Collections;
 import java.util.List;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -30,9 +27,7 @@ import org.eclipse.swt.widgets.Group;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.mq.HgQAppliedClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Patch;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
@@ -111,33 +106,12 @@ public class QDeletePage extends HgWizardPage {
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 150;
         gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(g);
+        this.changesetTable = new ChangesetTable(g, resource);
         this.changesetTable.setLayoutData(gridData);
         this.changesetTable.setEnabled(false);
-        populateChangesetTable();
         setControl(composite);
 
-    }
-
-    /**
-     * 
-     */
-    private void populateChangesetTable() {
-        try {
-            LocalChangesetCache.getInstance().clear(resource.getProject());
-            SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
-                    .getLocalChangeSets(resource.getProject());
-            if (changesets != null) {
-                TreeSet<ChangeSet> temp = new TreeSet<ChangeSet>(Collections.reverseOrder());
-                temp.addAll(changesets);
-                changesetTable.setChangesets(temp.toArray(new ChangeSet[temp.size()]));
-            }
-        } catch (HgException e) {
-           MercurialEclipsePlugin.logError(e);
-           setErrorMessage(e.getLocalizedMessage());
-        }
-
-    }
+    }    
 
     /**
      * 

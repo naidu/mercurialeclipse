@@ -10,13 +10,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.Collections;
 import java.util.Map;
-import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -35,9 +31,7 @@ import org.eclipse.swt.widgets.Listener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -179,23 +173,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 getRevCheckBoxLabel());
 
         Listener revCheckBoxListener = new Listener() {
-            public void handleEvent(Event event) {
-                if (revCheckBox.getSelection()) {
-                    if (changesetTable.getChangesets() == null
-                            || changesetTable.getChangesets().length == 0) {
-                        try {
-                            populateChangesetTable();
-                        } catch (HgException e) {
-                            MessageDialog
-                                    .openInformation(
-                                            getShell(),
-                                            Messages
-                                                    .getString("PushRepoPage.errorLoadingChangesets"), e //$NON-NLS-1$
-                                                    .getMessage());
-                            MercurialEclipsePlugin.logError(e);
-                        }
-                    }
-                }
+            public void handleEvent(Event event) {                
                 // en-/disable list view
                 changesetTable.setEnabled(revCheckBox.getSelection());
             }
@@ -209,7 +187,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 150;
         gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(revGroup);
+        this.changesetTable = new ChangesetTable(revGroup, resource);
         this.changesetTable.setLayoutData(gridData);
         this.changesetTable.setEnabled(false);
 
@@ -288,19 +266,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
      */
     protected String getTimeoutCheckBoxLabel() {
         return Messages.getString("PushRepoPage.timeoutCheckBox.text");//$NON-NLS-1$
-    }
-
-    private void populateChangesetTable() throws HgException {
-        SortedSet<ChangeSet> changesets = LocalChangesetCache.getInstance()
-                .getLocalChangeSets(resource.getProject());
-        if (changesets != null) {
-            TreeSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
-                    Collections.reverseOrder());
-            reverseOrderSet.addAll(changesets);
-            changesetTable.setChangesets(reverseOrderSet
-                    .toArray(new ChangeSet[reverseOrderSet.size()]));
-        }
-    }
+    }   
 
     /**
      * @return the force

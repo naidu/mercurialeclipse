@@ -76,7 +76,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
                 monitor.subTask("Loading local revisions...");
             }
             LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
-                    false, withFiles);
+                    true, withFiles);
             if (monitor != null) {
                 monitor.worked(1);
             }

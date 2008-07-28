@@ -150,7 +150,7 @@ public class TransplantOptionsPage extends HgWizardPage {
 
         this.pruneCheckBox.addSelectionListener(pruneCheckBoxListener);
 
-        this.pruneNodeIdTable = new ChangesetTable(pruneGroup);
+        this.pruneNodeIdTable = new ChangesetTable(pruneGroup, project);
         gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 200;
         gridData.minimumHeight = 50;
@@ -193,7 +193,7 @@ public class TransplantOptionsPage extends HgWizardPage {
         };
 
         this.mergeCheckBox.addSelectionListener(mergeCheckBoxListener);
-        this.mergeNodeIdTable = new ChangesetTable(mergeGroup);
+        this.mergeNodeIdTable = new ChangesetTable(mergeGroup, project);
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 200;
         gridData.minimumHeight = 50;
