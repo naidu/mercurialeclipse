@@ -151,7 +151,7 @@ public class ChangesetTable extends Composite {
     public void setChangesets(ChangeSet[] sets) {
         this.changesets = sets;
         // table.removeAll();
-        for (int i = Math.max(0, table.getItemCount() - 1); i < sets.length; i++) {
+        for (int i = Math.max(0, table.getItemCount()); i < sets.length; i++) {
             ChangeSet rev = sets[i];
             TableItem row = new TableItem(table, SWT.NONE);
             if (parents != null && isParent(rev.getChangesetIndex())) {
