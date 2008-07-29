@@ -325,6 +325,28 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
     private static String untab(String string) {
         return string.replaceAll("\n\t", "\n");
     }
+    
+    /**
+     * Clean the string of special chars that might be invalid for the
+     * XML parser.  Return the cleaned string (special chars replaced by
+     * ordinary spaces).
+     * 
+     * @param str the string to clean
+     * @return the cleaned string
+     */
+    private static String cleanControlChars(String str) {
+        final StringBuilder buf = new StringBuilder();
+        final int len = str.length();
+        for (int i = 0; i < len; i++) {
+            final int ch = str.codePointAt(i);
+            if (Character.isISOControl(ch)) {
+                buf.append(' ');
+            } else {
+                buf.appendCodePoint(ch);
+            }
+        }
+        return buf.toString();
+    }
 
     /**
      * Parse a changeset as output from the log command (see
@@ -340,6 +362,7 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         }
 
         String outputString = changeSet.substring(changeSet.indexOf("<cs>"));
+        outputString = cleanControlChars(outputString);
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
                     .newInstance();
