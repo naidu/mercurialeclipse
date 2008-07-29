@@ -18,13 +18,12 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgGLogClient extends HgCommand {
     private List<GChangeSet> sets = new ArrayList<GChangeSet>();
 
-    public HgGLogClient(IResource resource)
-            throws HgException {
+    public HgGLogClient(IResource resource) throws HgException {
         super("glog", (resource instanceof IFile) ? resource.getParent()
                 : (IContainer) resource, false);
         addOptions("--config", "extensions.graphlog=");
-        addOptions("--template", "{}"); // Removes everything
-        
+        addOptions("--template", "*{rev}\n"); // Removes everything
+
         if (resource instanceof IFile) {
             addFiles(resource.getName());
         }
@@ -39,14 +38,17 @@ public class HgGLogClient extends HgCommand {
 
     public void load(String s) {
         String[] split = s.split("\n");
+        // real changeset count as glog inserts a line between two changesets
         int length = split.length / 2;
         int lengthp1 = length + 1;
         RowCount rowCount = new RowCount();
-        GChangeSet last = null;
+        GChangeSet last = null;        
         for (int i = 0; i < lengthp1; i++) {
-            int j = i * 2;
-            sets.add(last = new GChangeSet(rowCount, i, split[j],
-                    i != length ? split[j + 1] : "").clean(last));
+            // adjust index for spacing
+            int changeset = i * 2;
+            // add current changeset and next line
+            sets.add(last = new GChangeSet(rowCount, i, split[changeset],
+                    i != length ? split[changeset + 1] : "").clean(last));
         }
     }
 
