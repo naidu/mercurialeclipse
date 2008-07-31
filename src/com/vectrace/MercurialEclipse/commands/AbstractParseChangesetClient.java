@@ -364,13 +364,25 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         }
 
         String outputString = changeSet.substring(changeSet.indexOf("<cs>"));
-        outputString = cleanControlChars(outputString);
+        
         try {
             DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
                     .newInstance();
             DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Reader ir = new StringReader(outputString);
-            Document doc = docBuilder.parse(new InputSource(ir));
+            Document doc;
+            Reader ir = null;
+            try {
+                ir = new StringReader(outputString);
+                doc = docBuilder.parse(new InputSource(ir));
+            } catch (SAXException e) {
+                outputString = cleanControlChars(outputString);
+                ir = new StringReader(outputString);
+                doc = docBuilder.parse(new InputSource(ir));
+            } finally {
+                if (ir != null) {
+                    ir.close();
+                }
+            }
 
             // normalize text representation
             doc.getDocumentElement().normalize();
