@@ -339,7 +339,9 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         final int len = str.length();
         for (int i = 0; i < len; i++) {
             final int ch = str.codePointAt(i);
-            if (Character.isISOControl(ch)) {
+            if (ch == '\r' || ch == '\n' || ch == '\t') {
+                buf.appendCodePoint(ch);
+            } else if (Character.isISOControl(ch)) {
                 buf.append(' ');
             } else {
                 buf.appendCodePoint(ch);
