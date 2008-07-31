@@ -165,7 +165,7 @@ public class MercurialHistory extends FileHistory {
             int logBatchSize = Integer.parseInt(MercurialUtilities
                     .getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
                             "500"));
-            
+
             // check if we have reached the bottom (initially = 0)
             if (from == this.bottom) {
                 return;
@@ -195,7 +195,9 @@ public class MercurialHistory extends FileHistory {
                     gChangeSets = new HashMap<Integer, GChangeSet>(
                             gLogChangeSets.size());
                     for (GChangeSet gs : gLogChangeSets) {
-                        gChangeSets.put(Integer.valueOf(gs.getRev()), gs);
+                        if (gs != null) {
+                            gChangeSets.put(Integer.valueOf(gs.getRev()), gs);
+                        }
                     }
                 }
                 for (ChangeSet cs : changeSets) {

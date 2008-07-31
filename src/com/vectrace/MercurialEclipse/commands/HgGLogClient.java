@@ -24,8 +24,8 @@ public class HgGLogClient extends HgCommand {
         addOptions("--config", "extensions.graphlog=");
         addOptions("--template", "*{rev}\n"); // Removes everything
 
-        if (resource instanceof IFile) {
-            addFiles(resource.getName());
+        if (resource.getType() != IResource.PROJECT) {
+           addOptions(resource.getName());
         }
         setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         load(executeToString());
@@ -36,7 +36,7 @@ public class HgGLogClient extends HgCommand {
         load(text);
     }
 
-    public void load(String s) {
+    public void load(String s) {        
         String[] split = s.split("\n");
         // real changeset count as glog inserts a line between two changesets
         int length = split.length / 2;

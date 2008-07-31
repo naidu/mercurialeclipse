@@ -37,8 +37,11 @@ public class GChangeSet {
         this.index = index;
         middle.parse(middleS);
         after.parse(afterS);
-        this.rev = Integer
+        if (middleS != null && middleS.length() > 0) {
+            this.rev = Integer
                 .parseInt(middleS.substring(middleS.indexOf('*') + 1));
+        }
+            
     }
 
     public GChangeSet clean(GChangeSet last) {
