@@ -193,13 +193,17 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         File hgRoot = HgRootClient.getHgRoot(res.getLocation().toFile());
         for (String changeSet : changeSetStrings) {
             ChangeSet cs;
-            cs = getChangeSet(changeSet);
+            cs = getChangeSet(repository,
+                    bundleFile,
+                    direction,
+                    hgRoot, 
+                    changeSet);
 
             // add bundle file for being able to look into the bundle.
-            cs.setRepository(repository);
-            cs.setBundleFile(bundleFile);
-            cs.setDirection(direction);
-            cs.setHgRoot(hgRoot);
+            // cs.setRepository(repository);
+            // cs.setBundleFile(bundleFile);
+            // cs.setDirection(direction);
+            // cs.setHgRoot(hgRoot);
 
             // changeset to resources & project
             addChangesetToResourceMap(res.getLocation(), fileRevisions, cs);
@@ -353,11 +357,19 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
     /**
      * Parse a changeset as output from the log command (see
      * {@link #createMercurialRevisions()}).
+     * @param hgRoot 
+     * @param direction 
+     * @param bundleFile 
+     * @param repository 
      * 
      * @param changeSet
      * @return
      */
-    private static ChangeSet getChangeSet(String changeSet) throws HgException {
+    private static ChangeSet getChangeSet(HgRepositoryLocation repository, 
+            File bundleFile, 
+            Direction direction, 
+            File hgRoot, 
+            String changeSet) throws HgException {
 
         if (changeSet == null) {
             return null;
@@ -407,6 +419,8 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
             csb.description(untab(unescape(getValue(csn, "de"))));
             csb.parents(splitClean(getValue(csn, "pr"), " "));
             csb.changedFiles(getFileStatuses(csn));
+            
+            csb.hgRoot(hgRoot).bundleFile(bundleFile).repository(repository).direction(direction);
             return csb.build();
         } catch (ParserConfigurationException e) {
             throw new HgException("Changeset parser Configuration error", e);

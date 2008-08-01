@@ -182,14 +182,6 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     /**
-     * @param changedFiles
-     *            the changedFiles to set
-     */
-    public void setChangedFiles(FileStatus[] changedFiles) {
-        this.changedFiles = changedFiles;
-    }
-
-    /**
      * @return the ageDate
      */
     public String getAgeDate() {
@@ -197,26 +189,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     /**
-     * @param ageDate
-     *            the ageDate to set
-     */
-    public void setAgeDate(String ageDate) {
-        this.ageDate = ageDate;
-    }
-
-    /**
      * @return the nodeShort
      */
     public String getNodeShort() {
         return nodeShort;
-    }
-
-    /**
-     * @param nodeShort
-     *            the nodeShort to set
-     */
-    public void setNodeShort(String nodeShort) {
-        this.nodeShort = nodeShort;
     }
 
     public int compareTo(ChangeSet o) {
@@ -266,19 +242,11 @@ public class ChangeSet implements Comparable<ChangeSet> {
         return bundleFile;
     }
 
-    /**
-     * @param bundleFile
-     *            the bundleFile to set
-     */
-    public void setBundleFile(File bundleFile) {
-        this.bundleFile = bundleFile;
-    }
-
     public String[] getParents() {
         return parents;
     }
 
-    public void setParents(String[] parents) {
+    private void setParents(String[] parents) {
         // filter null parents (hg uses -1 to signify a null parent)
         if (parents != null) {
             List<String> temp = new ArrayList<String>(parents.length);
@@ -292,31 +260,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
         }
     }
 
-    public void setChangesetIndex(int changesetIndex) {
-        this.changesetIndex = changesetIndex;
-    }
-
-    public void setChangeset(String changeset) {
-        this.changeset = changeset;
-    }
-
-    public void setTag(String tag) {
-        this.tag = tag;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = branch;
-    }
-
-    public void setUser(String user) {
-        this.user = user;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
-
-    public void setDescription(String description) {
+    private void setDescription(String description) {
         if (description != null) {
             int i = description.indexOf('\n');
             if (i > 0) {
@@ -327,10 +271,6 @@ public class ChangeSet implements Comparable<ChangeSet> {
             }
             this.description = description;
         }
-    }
-
-    public void setRealDate(Date realDate) {
-        this.realDate = realDate;
     }
 
     public String getSummary() {
@@ -345,14 +285,6 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     /**
-     * @param repositoryLocation
-     *            the repository to set
-     */
-    public void setRepository(HgRepositoryLocation repositoryLocation) {
-        this.repository = repositoryLocation;
-    }
-
-    /**
      * @return the direction
      */
     public Direction getDirection() {
@@ -360,24 +292,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     /**
-     * @param direction
-     *            the direction to set
-     */
-    public void setDirection(Direction direction) {
-        this.direction = direction;
-    }
-
-    /**
      * @return the hgRoot
      */
     public File getHgRoot() {
         return hgRoot;
-    }
-
-    /**
-     * @param hgRoot the hgRoot to set
-     */
-    public void setHgRoot(File hgRoot) {
-        this.hgRoot = hgRoot;
     }
 }
