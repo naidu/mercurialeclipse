@@ -45,6 +45,18 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private String summary;
     private File hgRoot;
 
+    /**
+     * This class is getting too tangled up with everything else, has a a large amount of fields (17) and worse is
+     * that it is not immutable, which makes the entanglement even more dangerous.
+     * 
+     * My plan is to make it immutable by using the builder pattern and remove all setters.
+     * FileStatus fetching may(or may not) be feasable to put elsewhere or fetched "on-demand" by
+     * this class itself. Currently, it has no operations and it purely a data class which isn't 
+     * very OO efficent.
+     * 
+     * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing, isLocal)
+     * 
+     */
     public ChangeSet() {
         super();
     }
