@@ -53,7 +53,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * @author Bastian Doetsch
  * 
  */
-public abstract class AbstractParseChangesetClient extends AbstractClient {
+abstract class AbstractParseChangesetClient extends AbstractClient {
 
     private static final String STYLE_SRC = "/styles/log_style";
     private static final String STYLE = "/log_style";
