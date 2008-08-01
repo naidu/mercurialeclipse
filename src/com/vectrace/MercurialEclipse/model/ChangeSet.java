@@ -82,11 +82,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
         public Builder repository(HgRepositoryLocation repository) { this.cs.repository = repository; return this; }
         public Builder hgRoot(File hgRoot) { this.cs.hgRoot = hgRoot; return this; }
         
-        
+        // what is ageDate? Can it be derived from date and now()
         public Builder ageDate(String ageDate) { this.cs.ageDate = ageDate; return this; }
+        // nodeShort should be first X of changeset, this is superflous
         public Builder nodeShort(String nodeShort) { this.cs.nodeShort = nodeShort; return this; }
-        public Builder realDate(Date realDate) { this.cs.realDate = realDate; return this; }
-        public Builder summary(String summary) { this.cs.summary = summary; return this; }
         
         public ChangeSet build() {
             ChangeSet result = this.cs;
