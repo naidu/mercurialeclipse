@@ -5,7 +5,6 @@ import java.util.SortedSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -21,15 +20,6 @@ public class HgLogClient extends AbstractParseChangesetClient {
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$");
     
-    public static ChangeSet[] getRevisions(IFile file) throws HgException {
-        HgCommand command = new HgCommand("log", file.getParent(), true);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("-f");
-        command.addFiles(file.getName());
-        return getRevisions(command);
-    }
-
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         HgCommand command = new HgCommand("heads", project, true);
         command
