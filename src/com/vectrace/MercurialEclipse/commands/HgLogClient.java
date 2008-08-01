@@ -37,17 +37,6 @@ public class HgLogClient extends AbstractParseChangesetClient {
         return getRevisions(command);
     }
 
-    public static String getGraphicalLog(IProject project, String template,
-            String filename) throws HgException {
-        HgCommand command = new HgCommand("glog", project, false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("--template", template);
-        command.addOptions("--config", "extensions.hgext.graphlog=");
-        command.addOptions(filename);
-        return command.executeToString();
-    }
-
     /**
      * 
      * @param command
