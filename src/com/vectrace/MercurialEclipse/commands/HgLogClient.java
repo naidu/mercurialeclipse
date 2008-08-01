@@ -20,14 +20,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$");
-
-    public static ChangeSet[] getRevisions(IProject project) throws HgException {
-        HgCommand command = new HgCommand("log", project, true);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        return getRevisions(command);
-    }
-
+    
     public static ChangeSet[] getRevisions(IFile file) throws HgException {
         HgCommand command = new HgCommand("log", file.getParent(), true);
         command
