@@ -85,9 +85,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
         for (int i = 0; i < length; i++) {
             Matcher m = GET_REVISIONS_PATTERN.matcher(lines[i]);
             if (m.matches()) {
-                ChangeSet changeSet = new ChangeSet(Integer
-                        .parseInt(m.group(1)), m.group(2), m.group(4), m
-                        .group(3), m.group(5));
+                ChangeSet changeSet = new ChangeSet.Builder(
+                        Integer.parseInt(m.group(1)), // revisions
+                        m.group(2), // changeset
+                        m.group(5), // branch
+                        m.group(3), // date
+                        m.group(4) // user
+                        ).build();
+                
                 changeSets[i] = changeSet;
             } else {
                 throw new HgException("Parse exception: '" + lines[i] + "'");

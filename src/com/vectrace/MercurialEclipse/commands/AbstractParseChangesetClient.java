@@ -396,20 +396,18 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
             }
             Element csn = (Element) csnl.item(0);
 
-            ChangeSet cs = new ChangeSet();
-
-            cs.setTag(getValue(csn, "tg"));
-            cs.setBranch(getValue(csn, "br"));
-            cs.setChangesetIndex(Integer.parseInt(getValue(csn, "rv")));
-            cs.setNodeShort(getValue(csn, "ns"));
-            cs.setChangeset(getValue(csn, "nl"));
-            cs.setDate(getValue(csn, "di"));
-            cs.setAgeDate(getValue(csn, "da"));
-            cs.setUser(getValue(csn, "au"));
-            cs.setDescription(untab(unescape(getValue(csn, "de"))));
-            cs.setParents(splitClean(getValue(csn, "pr"), " "));
-            cs.setChangedFiles(getFileStatuses(csn));
-            return cs;
+            ChangeSet.Builder csb = new ChangeSet.Builder(Integer.parseInt(getValue(csn, "rv")),
+                    getValue(csn, "nl"),
+                    getValue(csn, "au"),
+                    getValue(csn, "di"),
+                    getValue(csn, "br"));
+            csb.tag(getValue(csn, "tg"));
+            csb.nodeShort(getValue(csn, "ns"));
+            csb.ageDate(getValue(csn, "da"));
+            csb.description(untab(unescape(getValue(csn, "de"))));
+            csb.parents(splitClean(getValue(csn, "pr"), " "));
+            csb.changedFiles(getFileStatuses(csn));
+            return csb.build();
         } catch (ParserConfigurationException e) {
             throw new HgException("Changeset parser Configuration error", e);
         } catch (SAXException e) {
