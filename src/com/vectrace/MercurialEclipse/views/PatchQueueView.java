@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -26,6 +27,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.team.core.Team;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
@@ -58,8 +60,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     private IResource resource;
     private PatchTable table;
     private Label statusLabel;
-    private Action newAction;
-    private Action qrefreshAction;
+    private Action qNewAction;
+    private Action qRefreshAction;
     private Action qPushAction;
     private Action qPushAllAction;
     private Action qPopAction;
@@ -89,13 +91,29 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         statusLabel = new Label(parent, SWT.NONE);
         statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
         table = new PatchTable(parent);
+        createActions();
         createToolBar();
+        createMenus();
         getSite().getPage().addSelectionListener(this);
     }
 
     private void createToolBar() {
         IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+        mgr.add(qImportAction);
+        mgr.add(qNewAction);
+        mgr.add(qRefreshAction);
+        mgr.add(qPushAction);
+        mgr.add(qPopAction);
+        mgr.add(qPushAllAction);
+        mgr.add(qPopAllAction);
+        mgr.add(qFoldAction);
+        mgr.add(qDeleteAction);
+    }
 
+    /**
+     * 
+     */
+    private void createActions() {
         qImportAction = new Action("qimport") {
             @Override
             public void run() {
@@ -107,9 +125,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qImportAction.setEnabled(true);
-        mgr.add(qImportAction);
 
-        newAction = new Action("qnew") {
+        qNewAction = new Action("qnew") {
             @Override
             public void run() {
                 try {
@@ -119,10 +136,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 }
             }
         };
-        newAction.setEnabled(true);
-        mgr.add(newAction);
+        qNewAction.setEnabled(true);
 
-        qrefreshAction = new Action("qrefresh") {
+        qRefreshAction = new Action("qrefresh") {
             /*
              * (non-Javadoc)
              * 
@@ -133,8 +149,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 QRefreshHandler.openWizard(resource, getSite().getShell());
             }
         };
-        qrefreshAction.setEnabled(true);
-        mgr.add(qrefreshAction);
+        qRefreshAction.setEnabled(true);
 
         qPushAction = new Action("qpush") {
             /*
@@ -145,7 +160,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             @Override
             public void run() {
                 try {
-                    HgQPushClient.push(resource, false, table.getSelection()
+                    HgQPushClient.push(resource, false, table
+                            .getSelection()
                             .getName());
                     populateTable();
                     resource.refreshLocal(IResource.DEPTH_INFINITE,
@@ -157,7 +173,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qPushAction.setEnabled(true);
-        mgr.add(qPushAction);
 
         qPopAction = new Action("qpop") {
             /*
@@ -168,7 +183,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             @Override
             public void run() {
                 try {
-                    HgQPopClient.pop(resource, false, table.getSelection()
+                    HgQPopClient.pop(resource, false, table
+                            .getSelection()
                             .getName());
                     populateTable();
                     resource.refreshLocal(IResource.DEPTH_INFINITE,
@@ -180,7 +196,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qPopAction.setEnabled(true);
-        mgr.add(qPopAction);
 
         qPushAllAction = new Action("qpush all") {
             /*
@@ -202,7 +217,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qPushAllAction.setEnabled(true);
-        mgr.add(qPushAllAction);
 
         qPopAllAction = new Action("qpop all") {
             /*
@@ -224,7 +238,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qPopAllAction.setEnabled(true);
-        mgr.add(qPopAllAction);
 
         qFoldAction = new Action("qfold") {
             /*
@@ -247,7 +260,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qFoldAction.setEnabled(true);
-        mgr.add(qFoldAction);
 
         qDeleteAction = new Action("qdel") {
             /*
@@ -269,8 +281,23 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             }
         };
         qDeleteAction.setEnabled(true);
-        mgr.add(qDeleteAction);
+    }
 
+    /**
+     * 
+     */
+    private void createMenus() {
+        final IMenuManager menuMgr = getViewSite().getActionBars()
+                .getMenuManager();
+        menuMgr.add(qImportAction);
+        menuMgr.add(qNewAction);
+        menuMgr.add(qRefreshAction);
+        menuMgr.add(qPushAction);
+        menuMgr.add(qPopAction);
+        menuMgr.add(qPushAllAction);
+        menuMgr.add(qPopAllAction);
+        menuMgr.add(qFoldAction);
+        menuMgr.add(qDeleteAction);
     }
 
     /*
@@ -287,7 +314,9 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
      * @throws HgException
      */
     public void populateTable() {
-        if (resource != null && resource.isAccessible()) {
+        if (resource != null && resource.isAccessible()
+                && !resource.isDerived() && !resource.isLinked()
+                && !Team.isIgnoredHint(resource)) {
             try {
                 List<Patch> patches = HgQSeriesClient
                         .getPatchesInSeries(resource);
@@ -308,8 +337,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             .getFirstElement()).getAdapter(IResource.class);
                     if (resource != null
                             && resource.isAccessible()
-                            && MercurialUtilities.hgIsTeamProviderFor(
-                                    resource, false) && newResource != null
+                            && MercurialUtilities.hgIsTeamProviderFor(resource,
+                                    false) && newResource != null
                             && newResource.equals(resource)) {
                         return;
                     }
@@ -332,10 +361,8 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
             if (part instanceof IEditorPart) {
                 IEditorInput input = ((IEditorPart) part).getEditorInput();
                 IFile file = (IFile) input.getAdapter(IFile.class);
-                if (file != null
-                        && file.isAccessible()
-                        && MercurialUtilities.hgIsTeamProviderFor(file,
-                                false)) {
+                if (file != null && file.isAccessible()
+                        && MercurialUtilities.hgIsTeamProviderFor(file, false)) {
                     String newRoot = HgRootClient.getHgRoot(file);
                     if (!newRoot.equals(currentHgRoot)) {
                         currentHgRoot = newRoot;
