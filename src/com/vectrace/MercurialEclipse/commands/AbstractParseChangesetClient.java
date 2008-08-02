@@ -410,9 +410,10 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
             ChangeSet.Builder csb = new ChangeSet.Builder(Integer.parseInt(getValue(csn, "rv")),
                     getValue(csn, "nl"),
-                    getValue(csn, "au"),
+                    getValue(csn, "br"),
                     getValue(csn, "di"),
-                    getValue(csn, "br"));
+                    getValue(csn,
+                            "au"));
             csb.tag(getValue(csn, "tg"));
             csb.nodeShort(getValue(csn, "ns"));
             csb.ageDate(getValue(csn, "da"));
