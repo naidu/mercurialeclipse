@@ -11,6 +11,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -77,6 +79,22 @@ public abstract class AbstractClient {
     public static File getHgRoot(File file) throws HgException {
         File root = HgRootClient.getHgRoot(file);
         return root;
+    }
+    
+    static List<File> toFiles(List<IResource> files) {
+        List<File> toFiles = new ArrayList<File>();
+        for (IResource r : files) {
+            toFiles.add(r.getLocation().toFile());
+        }
+        return toFiles;
+    }
+    
+    static List<String> toPaths(List<File> files) {
+        List<String> paths = new ArrayList<String>();
+        for (File f : files) {
+            paths.add(f.getAbsolutePath());
+        }
+        return paths;
     }
     
 }
