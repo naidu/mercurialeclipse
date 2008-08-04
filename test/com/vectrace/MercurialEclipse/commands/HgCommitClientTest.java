@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,7 +30,7 @@ public class HgCommitClientTest extends AbstractCommandTest {
         File root = getRepository();
         File newFile = new File(root.getAbsolutePath() + File.separator + "dummy.txt");
         assertTrue("Unable to create commit file", newFile.createNewFile());
-        Runtime.getRuntime().exec("hg add " + newFile.getAbsolutePath()).waitFor();
+        addToRepository(newFile);
         HgRoot hgroot = new HgRoot(root.getAbsolutePath());
         List<File> files = new ArrayList<File>();
         files.add(newFile);
@@ -43,12 +44,16 @@ public class HgCommitClientTest extends AbstractCommandTest {
         File newFile = new File(root.getAbsolutePath() + File.separator + "dummy.txt");
         assertTrue("Unable to create commit file", newFile.createNewFile());
 
-        Runtime.getRuntime().exec("hg add " + newFile.getAbsolutePath()).waitFor();
+        addToRepository(newFile);
         
         HgRoot hgroot = new HgRoot(root.getAbsolutePath());
         List<File> files = new ArrayList<File>();
         files.add(newFile);
         HgCommitClient.commit(hgroot, files, "Trasan 'O Banarne", "is this message \" really escaped?");
         HgCommitClient.commit(hgroot, files, "Simple", "the message");
+    }
+    private void addToRepository(File newFile) throws InterruptedException, IOException {
+        Runtime runtime = Runtime.getRuntime();
+        runtime.exec("hg add " + newFile.getAbsolutePath(), null, getRepository()).waitFor();
     }
 }
