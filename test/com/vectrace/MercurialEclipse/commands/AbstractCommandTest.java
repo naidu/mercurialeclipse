@@ -77,7 +77,8 @@ public class AbstractCommandTest extends TestCase {
     }
 
     public final File getRepository() {
-        String testRepoRoot = "test/repo";
+        
+        String testRepoRoot = System.getProperty("java.io.tmpdir") + File.separator + "test/repo";
         File where = new File(testRepoRoot);
         return where;
     }
