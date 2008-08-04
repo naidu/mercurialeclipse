@@ -53,7 +53,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * @author Bastian Doetsch
  * 
  */
-public abstract class AbstractParseChangesetClient extends AbstractClient {
+abstract class AbstractParseChangesetClient extends AbstractClient {
 
     private static final String STYLE_SRC = "/styles/log_style";
     private static final String STYLE = "/log_style";
@@ -193,13 +193,17 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
         File hgRoot = HgRootClient.getHgRoot(res.getLocation().toFile());
         for (String changeSet : changeSetStrings) {
             ChangeSet cs;
-            cs = getChangeSet(changeSet);
+            cs = getChangeSet(repository,
+                    bundleFile,
+                    direction,
+                    hgRoot, 
+                    changeSet);
 
             // add bundle file for being able to look into the bundle.
-            cs.setRepository(repository);
-            cs.setBundleFile(bundleFile);
-            cs.setDirection(direction);
-            cs.setHgRoot(hgRoot);
+            // cs.setRepository(repository);
+            // cs.setBundleFile(bundleFile);
+            // cs.setDirection(direction);
+            // cs.setHgRoot(hgRoot);
 
             // changeset to resources & project
             addChangesetToResourceMap(res.getLocation(), fileRevisions, cs);
@@ -353,11 +357,19 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
     /**
      * Parse a changeset as output from the log command (see
      * {@link #createMercurialRevisions()}).
+     * @param hgRoot 
+     * @param direction 
+     * @param bundleFile 
+     * @param repository 
      * 
      * @param changeSet
      * @return
      */
-    private static ChangeSet getChangeSet(String changeSet) throws HgException {
+    private static ChangeSet getChangeSet(HgRepositoryLocation repository, 
+            File bundleFile, 
+            Direction direction, 
+            File hgRoot, 
+            String changeSet) throws HgException {
 
         if (changeSet == null) {
             return null;
@@ -396,20 +408,21 @@ public abstract class AbstractParseChangesetClient extends AbstractClient {
             }
             Element csn = (Element) csnl.item(0);
 
-            ChangeSet cs = new ChangeSet();
-
-            cs.setTag(getValue(csn, "tg"));
-            cs.setBranch(getValue(csn, "br"));
-            cs.setChangesetIndex(Integer.parseInt(getValue(csn, "rv")));
-            cs.setNodeShort(getValue(csn, "ns"));
-            cs.setChangeset(getValue(csn, "nl"));
-            cs.setDate(getValue(csn, "di"));
-            cs.setAgeDate(getValue(csn, "da"));
-            cs.setUser(getValue(csn, "au"));
-            cs.setDescription(untab(unescape(getValue(csn, "de"))));
-            cs.setParents(splitClean(getValue(csn, "pr"), " "));
-            cs.setChangedFiles(getFileStatuses(csn));
-            return cs;
+            ChangeSet.Builder csb = new ChangeSet.Builder(Integer.parseInt(getValue(csn, "rv")),
+                    getValue(csn, "nl"),
+                    getValue(csn, "br"),
+                    getValue(csn, "di"),
+                    getValue(csn,
+                            "au"));
+            csb.tag(getValue(csn, "tg"));
+            csb.nodeShort(getValue(csn, "ns"));
+            csb.ageDate(getValue(csn, "da"));
+            csb.description(untab(unescape(getValue(csn, "de"))));
+            csb.parents(splitClean(getValue(csn, "pr"), " "));
+            csb.changedFiles(getFileStatuses(csn));
+            
+            csb.hgRoot(hgRoot).bundleFile(bundleFile).repository(repository).direction(direction);
+            return csb.build();
         } catch (ParserConfigurationException e) {
             throw new HgException("Changeset parser Configuration error", e);
         } catch (SAXException e) {

@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -228,6 +230,10 @@ public abstract class AbstractShellCommand {
     protected abstract String getExecutable();
 
     protected void addFiles(String... myFiles) {
+        addFiles(Arrays.asList(myFiles));
+    }
+
+    protected void addFiles(Collection<String> myFiles) {
         for (String file : myFiles) {
             this.files.add(file);
         }

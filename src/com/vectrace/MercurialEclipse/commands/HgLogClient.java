@@ -5,7 +5,6 @@ import java.util.SortedSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -20,39 +19,12 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$");
-
-    public static ChangeSet[] getRevisions(IProject project) throws HgException {
-        HgCommand command = new HgCommand("log", project, true);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        return getRevisions(command);
-    }
-
-    public static ChangeSet[] getRevisions(IFile file) throws HgException {
-        HgCommand command = new HgCommand("log", file.getParent(), true);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("-f");
-        command.addFiles(file.getName());
-        return getRevisions(command);
-    }
-
+    
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         HgCommand command = new HgCommand("heads", project, true);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         return getRevisions(command);
-    }
-
-    public static String getGraphicalLog(IProject project, String template,
-            String filename) throws HgException {
-        HgCommand command = new HgCommand("glog", project, false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("--template", template);
-        command.addOptions("--config", "extensions.hgext.graphlog=");
-        command.addOptions(filename);
-        return command.executeToString();
     }
 
     /**
@@ -85,9 +57,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
         for (int i = 0; i < length; i++) {
             Matcher m = GET_REVISIONS_PATTERN.matcher(lines[i]);
             if (m.matches()) {
-                ChangeSet changeSet = new ChangeSet(Integer
-                        .parseInt(m.group(1)), m.group(2), m.group(4), m
-                        .group(3), m.group(5));
+                ChangeSet changeSet = new ChangeSet.Builder(
+                        Integer.parseInt(m.group(1)), // revisions
+                        m.group(2), // changeset
+                        m.group(5), // branch
+                        m.group(3), // date
+                        m.group(4) // user
+                        ).build();
+                
                 changeSets[i] = changeSet;
             } else {
                 throw new HgException("Parse exception: '" + lines[i] + "'");
