@@ -1,5 +1,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -14,29 +15,46 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgCommitClient {
 
-	public static void commitResources(List<IResource> resources, String user,
-			String message, IProgressMonitor monitor) throws HgException {
-		
-		Map<HgRoot, List<IResource>> resourcesByRoot;
+    public static void commitResources(List<IResource> resources, String user,
+            String message, IProgressMonitor monitor) throws HgException {
+
+        Map<HgRoot, List<IResource>> resourcesByRoot;
         try {
             resourcesByRoot = HgCommand.groupByRoot(resources);
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
         for (HgRoot root : resourcesByRoot.keySet()) {
-			if (monitor != null) {
-				monitor.subTask("Committing resources from " + root.getName());
-			}
-			HgCommand command = new HgCommand("commit", root, true);
-			command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-			command.addUserName(user);
-			command.addOptions("-m", message);
-			command.addFiles(resourcesByRoot.get(root));
-			command.executeToBytes();
-		}
-	}
-	
-	public static String commitProject(IProject project, String user, String message)
+            if (monitor != null) {
+                monitor.subTask("Committing resources from " + root.getName());
+            }
+            List<IResource> files = resourcesByRoot.get(root);
+            commitRepository(root, files, user, message);
+        }
+    }
+
+    private static void commitRepository(HgRoot root,
+            List<IResource> files,
+            String user,
+            String message) throws HgException {
+        commit(root, AbstractClient.toFiles(files), user, message);
+        
+    }
+ 
+    public static void commit(HgRoot root,
+            List<File> files,
+            String user,
+            String message) throws HgException {
+        
+        HgCommand command = new HgCommand("commit", root, true);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+        command.addUserName(user);
+        command.addOptions("-m", message);
+        command.addFiles(AbstractClient.toPaths(files));
+        command.executeToBytes();
+    }
+
+    public static String commitProject(IProject project, String user, String message)
             throws HgException {
         HgCommand command = new HgCommand("commit", project, false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
@@ -44,5 +62,5 @@ public class HgCommitClient {
         command.addOptions("-m", message);
         return new String(command.executeToBytes());
     }
-	
+
 }
