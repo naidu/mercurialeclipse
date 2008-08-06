@@ -14,6 +14,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.Iterator;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -38,6 +40,9 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.BusyIndicator;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
@@ -52,6 +57,7 @@ import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -215,6 +221,13 @@ public class MercurialHistoryPage extends HistoryPage {
         changedPaths = new ChangedPathsPage(this, parent);
         createTableHistory(changedPaths.getControl());
         changedPaths.createControl();
+        getSite().setSelectionProvider(viewer);
+        getSite().getActionBars().setGlobalActionHandler(ActionFactory.COPY.getId(), new Action() {
+            @Override
+            public void run() {
+                copyToClipboard();
+            }
+        });
     }
 
     private void createTableHistory(Composite parent) {
@@ -267,6 +280,28 @@ public class MercurialHistoryPage extends HistoryPage {
         viewer.setContentProvider(changeLogViewContentProvider);
 
         contributeActions();
+    }
+    
+    private void copyToClipboard() {
+        IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+        Iterator iterator = selection.iterator();
+        StringBuilder text = new StringBuilder();
+        for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
+            text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
+        }
+        
+        text.append(System.getProperty("line.separator"));
+
+        while(iterator.hasNext()) {
+            Object next = iterator.next();
+            ITableLabelProvider labelProvider = (ITableLabelProvider) viewer.getLabelProvider();
+            for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
+                text.append(labelProvider.getColumnText(next, columnIndex)).append('\t');
+            }
+            text.append(System.getProperty("line.separator"));
+        }
+        new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()}, 
+                new Transfer[]{ TextTransfer.getInstance() });
     }
 
     private void contributeActions() {
