@@ -18,6 +18,7 @@ public class HgCatClient {
             command.addOptions("--rev", revision);
 
         }
+        command.addOptions("--decode");
         command.addOptions(file.getProjectRelativePath().toOSString());
         return command.executeToString();
     }
@@ -33,7 +34,7 @@ public class HgCatClient {
             command.add("-r");
             command.add("tip");
         }
-        command.add("--debug");
+        command.add("--decode");
         command.add(file.getProjectRelativePath().toOSString());
         HgCommand hgCommand = new HgCommand(command, file.getProject()
                 .getLocation().toFile(), true);
