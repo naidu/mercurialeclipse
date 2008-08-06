@@ -33,6 +33,7 @@ public class HgCatClient {
             command.add("-r");
             command.add("tip");
         }
+        command.add("--debug");
         command.add(file.getProjectRelativePath().toOSString());
         HgCommand hgCommand = new HgCommand(command, file.getProject()
                 .getLocation().toFile(), true);
