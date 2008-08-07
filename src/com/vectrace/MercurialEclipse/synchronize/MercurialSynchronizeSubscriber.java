@@ -33,7 +33,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -118,7 +117,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                                     resource.getLocation())) {
                         
                         // Find current working directory changeset (not head)
-                        File root = new File(HgRootClient.getHgRoot(resource));                                                
+                        File root = MercurialTeamProvider.getHgRoot(resource);                                                
                         String nodeId = HgIdentClient.getCurrentChangesetId(root);
                         
                         // try to get from cache (without loading)
