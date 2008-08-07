@@ -46,47 +46,81 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private File hgRoot;
 
     /**
-     * This class is getting too tangled up with everything else, has a a large amount of fields (17) and worse is
-     * that it is not immutable, which makes the entanglement even more dangerous.
+     * This class is getting too tangled up with everything else, has a a large
+     * amount of fields (17) and worse is that it is not immutable, which makes
+     * the entanglement even more dangerous.
      * 
-     * My plan is to make it immutable by using the builder pattern and remove all setters.
-     * FileStatus fetching may(or may not) be feasable to put elsewhere or fetched "on-demand" by
-     * this class itself. Currently, it has no operations and it purely a data class which isn't 
-     * very OO efficent.
+     * My plan is to make it immutable by using the builder pattern and remove
+     * all setters. FileStatus fetching may(or may not) be feasable to put
+     * elsewhere or fetched "on-demand" by this class itself. Currently, it has
+     * no operations and it purely a data class which isn't very OO efficent.
      * 
-     * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing, isLocal)
+     * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing,
+     * isLocal)
      * 
      */
-    
+
     public static class Builder {
         private ChangeSet cs;
-        public Builder(int revision, 
-                String changeSet,
-                String branch,
-                String date, 
-                String user) {
-         
+
+        public Builder(int revision, String changeSet, String branch,
+                String date, String user) {
+
             this.cs = new ChangeSet(revision, changeSet, user, date, branch);
         }
-        
+
         public Builder tag(String tag) {
             this.cs.tag = tag;
             return this;
         }
-        public Builder description(String description) { this.cs.description = description; return this; }
-        public Builder parents(String[] parents) { this.cs.parents = parents; return this; }
-        public Builder direction(Direction direction) { this.cs.direction = direction; return this; }
 
-        public Builder changedFiles(FileStatus[] changedFiles) { this.cs.changedFiles = changedFiles; return this; }
-        public Builder bundleFile(File bundleFile) { this.cs.bundleFile = bundleFile; return this; }
-        public Builder repository(HgRepositoryLocation repository) { this.cs.repository = repository; return this; }
-        public Builder hgRoot(File hgRoot) { this.cs.hgRoot = hgRoot; return this; }
-        
+        public Builder description(String description) {
+            cs.setDescription(description);
+            return this;
+        }
+
+        public Builder parents(String[] parents) {
+            this.cs.setParents(parents);
+            return this;
+        }
+
+        public Builder direction(Direction direction) {
+            this.cs.direction = direction;
+            return this;
+        }
+
+        public Builder changedFiles(FileStatus[] changedFiles) {
+            this.cs.changedFiles = changedFiles;
+            return this;
+        }
+
+        public Builder bundleFile(File bundleFile) {
+            this.cs.bundleFile = bundleFile;
+            return this;
+        }
+
+        public Builder repository(HgRepositoryLocation repository) {
+            this.cs.repository = repository;
+            return this;
+        }
+
+        public Builder hgRoot(File hgRoot) {
+            this.cs.hgRoot = hgRoot;
+            return this;
+        }
+
         // what is ageDate? Can it be derived from date and now()
-        public Builder ageDate(String ageDate) { this.cs.ageDate = ageDate; return this; }
+        public Builder ageDate(String ageDate) {
+            this.cs.ageDate = ageDate;
+            return this;
+        }
+
         // nodeShort should be first X of changeset, this is superflous
-        public Builder nodeShort(String nodeShort) { this.cs.nodeShort = nodeShort; return this; }
-        
+        public Builder nodeShort(String nodeShort) {
+            this.cs.nodeShort = nodeShort;
+            return this;
+        }
+
         public ChangeSet build() {
             ChangeSet result = this.cs;
             this.cs = null;
@@ -95,7 +129,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     private ChangeSet(int changesetIndex, String changeSet, String tag,
-            String branch, String user, String date, String description, String[] parents) {
+            String branch, String user, String date, String description,
+            String[] parents) {
         this.changesetIndex = changesetIndex;
         this.changeset = changeSet;
         this.tag = tag;
@@ -114,11 +149,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
         }
     }
 
-    private ChangeSet(int changesetIndex, 
-            String changeSet, 
-            String user,
-            String date, 
-            String branch) {
+    private ChangeSet(int changesetIndex, String changeSet, String user,
+            String date, String branch) {
         this(changesetIndex, changeSet, null, branch, user, date, "", null);
     }
 
@@ -136,9 +168,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
         }
         return tag;
     }
-    
+
     public String getBranch() {
-        if(branch==null) {
+        if (branch == null) {
             return "";
         }
         return branch;
@@ -173,7 +205,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
      * @return the changedFiles
      */
     public FileStatus[] getChangedFiles() {
-        if( changedFiles != null) {
+        if (changedFiles != null) {
             // Don't let clients manipulate the array in-place
             return changedFiles.clone();
         }
@@ -218,7 +250,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     /*
      * (non-Javadoc)
-     *
+     * 
      * @see java.lang.Object#hashCode()
      */
     @Override
