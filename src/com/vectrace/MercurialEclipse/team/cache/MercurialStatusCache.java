@@ -505,6 +505,9 @@ public class MercurialStatusCache extends AbstractCache implements
         if (res.getType() == IResource.PROJECT) {
             knownStatus.add(res.getProject());
         }
+        // we need the project for performance reasons - gotta hand it to
+        // addToProjectResources
+        IProject project = res.getProject();
         Set<IResource> changed = new HashSet<IResource>();
         Scanner scanner = new Scanner(output);
         while (scanner.hasNext()) {
@@ -533,7 +536,7 @@ public class MercurialStatusCache extends AbstractCache implements
             if (member.getType() == IResource.FILE
                     && getBitIndex(status.charAt(0)) != BIT_IGNORE
                     && !Team.isIgnoredHint(member)) {
-                addToProjectResources(member);
+                addToProjectResources(project, member);
             }
 
             changed.addAll(setStatusToAncestors(member, bitSet));
@@ -559,6 +562,7 @@ public class MercurialStatusCache extends AbstractCache implements
     private Set<IResource> setStatusToAncestors(IResource resource,
             BitSet resourceBitSet) {
         // ancestors
+        IProject project = resource.getProject();
         Set<IResource> ancestors = new HashSet<IResource>();
         boolean computeDeep = isComputeDeepStatus();
         boolean completeStatus = Boolean
@@ -592,7 +596,7 @@ public class MercurialStatusCache extends AbstractCache implements
             }
             statusMap.put(parent.getLocation(), cloneBitSet);
             ancestors.add(parent);
-            addToProjectResources(parent);
+            addToProjectResources(project, parent);
         }
         return ancestors;
     }
