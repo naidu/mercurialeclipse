@@ -10,6 +10,7 @@
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - some updates
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Bastian Doetsch           - make map operation asynchronous
  *******************************************************************************/
 
 /**
@@ -26,11 +27,8 @@
  */
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
@@ -44,15 +42,12 @@ import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.operations.InitOperation;
 
 /**
  * @author zingo
@@ -61,7 +56,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class MercurialConfigurationWizard extends Wizard implements
         IConfigurationWizard {
-    public class NewWizardPage extends WizardPage implements SelectionListener {
+    private class NewWizardPage extends WizardPage implements SelectionListener {
         Button changeDirButton;
         Button restoreDefaultDirButton;
         Button restoreExistingDirButton;
@@ -157,13 +152,15 @@ public class MercurialConfigurationWizard extends Wizard implements
     }
 
     private IProject project;
-    private String hgPath; // TODO: Not sure if this is required.
+    private String hgPath; 
     private String hgPathOrginal;
     private String foundhgPath;
     private Text directoryText;
+    private NewWizardPage page;
 
     public MercurialConfigurationWizard() {
         setWindowTitle("MercurialConfigurationWizard");
+        setNeedsProgressMonitor(true);
     }
 
     // (non-Javadoc)
@@ -181,7 +178,8 @@ public class MercurialConfigurationWizard extends Wizard implements
             foundhgPath = null;
             hgPathOrginal = project.getLocation().toString();
             hgPath = hgPathOrginal;
-            addPage(new NewWizardPage(true));
+            page = new NewWizardPage(true);
+            addPage(page);
         } else {
             foundhgPath = mercurialRootDir;
             hgPathOrginal = mercurialRootDir;
@@ -198,38 +196,14 @@ public class MercurialConfigurationWizard extends Wizard implements
         if (directoryText != null) {
             hgPath = directoryText.getText();
         }
-        if ((foundhgPath == null) || (!foundhgPath.equals(hgPath))) {
-            String launchCmd[] = { MercurialUtilities.getHGExecutable(true),
-                    "init", hgPath };
-            try {
-                String line;
-                Process process = Runtime.getRuntime().exec(launchCmd);
-                BufferedReader input = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()));
-                while ((line = input.readLine()) != null) {
-                    HgClients.getConsole().printMessage(line, null);
-                }
-                input.close();
-                process.waitFor();
-                project.refreshLocal(IResource.DEPTH_INFINITE, null);
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-                return false;
-            }
-                        
-        }
         try {
-            RepositoryProvider.map(project, MercurialTeamProvider.class
-                    .getName());
-        } catch (TeamException e) {
+            getContainer().run(true, false,
+                    new InitOperation(getContainer(), project, foundhgPath,
+                            hgPath));
+        } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
+            page.setErrorMessage(e.getCause().getLocalizedMessage());
             return false;
-        }
-
-        try {
-            MercurialStatusCache.getInstance().refresh(project);
-        } catch (TeamException e) {
-            MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
         }
         return true;
     }
