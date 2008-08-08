@@ -10,33 +10,30 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
+import org.xml.sax.Attributes;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
+import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -45,6 +42,7 @@ import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
@@ -55,11 +53,267 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 abstract class AbstractParseChangesetClient extends AbstractClient {
 
+    /**
+     * @author bastian
+     * 
+     */
+    private static final class ChangesetContentHandler implements
+            ContentHandler {
+
+        private String br;
+        private String tg;
+        private int rv;
+        private String ns;
+        private String nl;
+        private String di;
+        private String da;
+        private String au;
+        private String pr;
+        private String de;
+        private static IResource res;
+        private Direction direction;
+        private HgRepositoryLocation repository;
+        private File bundleFile;
+        private File hgRoot;
+        private static Map<IPath, SortedSet<ChangeSet>> fileRevisions;
+        private Set<String> filesModified = new TreeSet<String>();
+        private Set<String> filesAdded = new TreeSet<String>();
+        private Set<String> filesRemoved = new TreeSet<String>();
+        private Action action;
+
+        /**
+         * @param res
+         * @param direction
+         * @param repository
+         * @param bundleFile
+         * @param hgRoot
+         * @param fileRevisions
+         */
+        public ChangesetContentHandler(IResource res, Direction direction,
+                HgRepositoryLocation repository, File bundleFile, File hgRoot,
+                Map<IPath, SortedSet<ChangeSet>> fileRevisions) {
+            ChangesetContentHandler.res = res;
+            this.direction = direction;
+            this.repository = repository;
+            this.bundleFile = bundleFile;
+            this.hgRoot = hgRoot;
+            ChangesetContentHandler.fileRevisions = fileRevisions;
+        }
+
+        private static String unescape(String string) {
+            return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">")
+                    .replaceAll("&amp;", "&");
+        }
+
+        /**
+         * Remove a leading tab on each line in the string.
+         * 
+         * @param string
+         * @return
+         */
+        private static String untab(String string) {
+            return string.replaceAll("\n\t", "\n");
+        }
+
+        private static String[] splitClean(String string, String sep) {
+            if (string == null || string.length() == 0) {
+                return new String[] {};
+            }
+            return string.split(sep);
+        }
+
+        public void characters(char[] ch, int start, int length)
+                throws SAXException {
+        }
+
+        public void endDocument() throws SAXException {
+        }
+
+        public void endElement(String uri, String localName, String name)
+                throws SAXException {
+            if (name.equals("cs")) {
+
+                ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di,
+                        au);
+                csb.tag(tg);
+                csb.nodeShort(ns);
+                csb.ageDate(da);
+                csb.description(untab(unescape(de)));
+                csb.parents(splitClean(pr, " "));
+
+                csb.hgRoot(hgRoot).bundleFile(bundleFile)
+                        .repository(repository).direction(direction);
+
+                csb.bundleFile(bundleFile);
+                csb.direction(direction);
+                csb.hgRoot(hgRoot);
+                csb.repository(repository);
+                
+                List<FileStatus> list = new ArrayList<FileStatus>();
+                for (String file : filesModified) {
+                    list.add(new FileStatus(FileStatus.Action.MODIFIED, file));
+                }
+                for (String file : filesAdded) {
+                    list.add(new FileStatus(FileStatus.Action.ADDED, file));
+                }
+                for (String file : filesRemoved) {
+                    list.add(new FileStatus(FileStatus.Action.REMOVED, file));
+                }
+                csb.changedFiles(list.toArray(new FileStatus[list.size()]));
+                
+                ChangeSet changeSet = csb.build();
+
+                // changeset to resources & project
+                try {
+                    addChangesetToResourceMap(changeSet);
+                } catch (HgException e) {
+                    throw new SAXException(e);
+                }
+                filesModified.clear();
+                filesAdded.clear();
+                filesRemoved.clear();
+            }
+        }
+
+        public void endPrefixMapping(String prefix) throws SAXException {
+        }
+
+        public void ignorableWhitespace(char[] ch, int start, int length)
+                throws SAXException {
+        }
+
+        public void processingInstruction(String target, String data)
+                throws SAXException {
+        }
+
+        public void setDocumentLocator(Locator locator) {
+        }
+
+        public void skippedEntity(String name) throws SAXException {
+        }
+
+        public void startDocument() throws SAXException {
+        }
+
+        public void startElement(String uri, String localName, String name,
+                Attributes atts) throws SAXException {
+            /*
+             * <br v="{branches}"/> <tg v="{tags}"/> <rv v="{rev}"/> <ns
+             * v="{node|short}"/> <nl v="{node}"/> <di v="{date|isodate}"/> <da
+             * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
+             * <de v="{desc|escape|tabindent}"/>
+             */
+            if (name.equals("br")) {
+                this.br = atts.getValue(0);
+            } else if (name.equals("tg")) {
+                this.tg = atts.getValue(0);
+            } else if (name.equals("rv")) {
+                this.rv = Integer.parseInt(atts.getValue(0));
+            } else if (name.equals("ns")) {
+                this.ns = atts.getValue(0);
+            } else if (name.equals("nl")) {
+                this.nl = atts.getValue(0);
+            } else if (name.equals("di")) {
+                this.di = atts.getValue(0);
+            } else if (name.equals("da")) {
+                this.da = atts.getValue(0);
+            } else if (name.equals("au")) {
+                this.au = atts.getValue(0);
+            } else if (name.equals("pr")) {
+                this.pr = atts.getValue(0);
+            } else if (name.equals("de")) {
+                this.de = untab(unescape(atts.getValue(0)));
+            } else if (name.equals("fl")) {
+                this.action = FileStatus.Action.MODIFIED;
+            } else if (name.equals("fa")) {
+                this.action = FileStatus.Action.ADDED;
+            } else if (name.equals("fd")) {
+                this.action = FileStatus.Action.REMOVED;
+            } else if (name.equals("f")) {
+                if (this.action == Action.ADDED) {
+                    filesAdded.add(atts.getValue(0));
+                    filesModified.remove(atts.getValue(0));
+                } else if (this.action == Action.MODIFIED) {
+                    filesModified.add(atts.getValue(0));                    
+                } else if (this.action == Action.REMOVED) {
+                    filesRemoved.add(atts.getValue(0));
+                    filesModified.remove(atts.getValue(0));
+                }
+            }
+        }
+
+        public void startPrefixMapping(String prefix, String uri)
+                throws SAXException {
+        }
+
+        /**
+         * @param proj
+         * @param fileRevisions
+         * @param cs
+         * @throws HgException
+         * @throws IOException
+         */
+        private final static void addChangesetToResourceMap(ChangeSet cs)
+                throws HgException {
+            try {
+                if (cs.getChangedFiles() != null) {
+                    for (FileStatus file : cs.getChangedFiles()) {
+                        IPath hgRoot = new Path(cs.getHgRoot()
+                                .getCanonicalPath());
+                        IPath fileRelPath = new Path(file.getPath());
+                        IPath fileAbsPath = hgRoot.append(fileRelPath);
+
+                        SortedSet<ChangeSet> revs = addChangeSetRevisions(cs,
+                                fileAbsPath);
+                        fileRevisions.put(fileAbsPath, revs);
+
+                    }
+                }
+
+                // hg root
+                IPath repoPath = new Path(cs.getHgRoot().getCanonicalPath());
+
+                SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(cs,
+                        repoPath);
+
+                fileRevisions.put(repoPath, projectRevs);
+
+                // given path
+                IPath path = res.getLocation();
+                SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, path);
+                fileRevisions.put(path, pathRevs);
+
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new HgException(e.getLocalizedMessage(), e);
+            }
+        }
+
+        /**
+         * @param fileRevisions
+         * @param cs
+         * @param res
+         * @return
+         */
+        private static SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs,
+                IPath path) {
+            SortedSet<ChangeSet> fileRevs = fileRevisions.get(path);
+            if (fileRevs == null) {
+                fileRevs = new TreeSet<ChangeSet>();
+            }
+            fileRevs.add(cs);
+            return fileRevs;
+        }
+
+    }
+
     private static final String STYLE_SRC = "/styles/log_style";
     private static final String STYLE = "/log_style";
     private static final String STYLE_WITH_FILES_SRC = "/styles/log_style_with_files";
     private static final String STYLE_WITH_FILES = "/log_style_with_files";
     private static final String STYLE_TEMP_EXTN = ".tmpl";
+
+    private static ContentHandler handler;
 
     /**
      * Return a File reference to a copy of the required mercurial style file.
@@ -131,31 +385,24 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * Parse log output into a set of changesets.
      * <p>
      * Format of input is defined in the two style files in /styles and is as
-     * follows for each changeset. The changesets are separated by a line of '='
-     * characters "^=+$". <br>
+     * follows for each changeset.
      * 
      * <pre>
      * &lt;cs&gt;
-     * &lt;br&gt;b2_1_5&lt;/br&gt;
-     * &lt;tg&gt;&lt;/tg&gt;
-     * &lt;rv&gt;3624&lt;/rv&gt;
-     * &lt;ns&gt;209208fad980&lt;/ns&gt;
-     * &lt;nl&gt;209208fad980102b98ca438b79b78c64e03b6c29&lt;/nl&gt;
-     * &lt;di&gt;2008-04-24 05:04 +0000&lt;/di&gt;
-     * &lt;da&gt;4 weeks&lt;/da&gt;
-     * &lt;au&gt;abuckley&lt;/au&gt;
-     * &lt;pr&gt;3621:dc5cbf08f0d2640c334855b3ce1a38002850d65b -1:0000000000000000000000000000000000000000 &lt;/pr&gt;
-     * &lt;de&gt;Updated document mapping file with custom validation items
-     * Sent updated document mapping file and configuration files to customer&lt;/de&gt;
-     * &lt;fl&gt;
-     * &lt;f&gt;Products/overlay/config/application/documentmapping.csv&lt;/f&gt;
-     * &lt;/fl&gt;
-     * &lt;fa&gt;
-     * &lt;/fa&gt;
-     * &lt;fd&gt;
-     * &lt;/fd&gt;
+     * &lt;br v=&quot;{branches}&quot;/&gt;
+     * &lt;tg v=&quot;{tags}&quot;/&gt;
+     * &lt;rv v=&quot;{rev}&quot;/&gt;
+     * &lt;ns v=&quot;{node|short}&quot;/&gt;
+     * &lt;nl v=&quot;{node}&quot;/&gt;
+     * &lt;di v=&quot;{date|isodate}&quot;/&gt;
+     * &lt;da v=&quot;{date|age}&quot;/&gt;
+     * &lt;au v=&quot;{author|person}&quot;/&gt;
+     * &lt;pr v=&quot;{parents}&quot;/&gt;
+     * &lt;de v=&quot;{desc|escape|tabindent}&quot;/&gt;
+     * &lt;fl v=&quot;{files}&quot;/&gt;
+     * &lt;fa v=&quot;{file_adds}&quot;/&gt;
+     * &lt;fd v=&quot;{file_dels}&quot;/&gt;
      * &lt;/cs&gt;
-     * ================
      * </pre>
      * 
      * <br>
@@ -184,158 +431,54 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             return fileRevisions;
         }
 
-        /*
-         * Would be nice to do this as a single XML document using the SAX
-         * parser but I haven't worked out how to get a mercurial style file to
-         * create a valid XML document (cannot get the closing element output)
-         */
-        String[] changeSetStrings = input.split("\n====+\n");
-        File hgRoot = HgRootClient.getHgRoot(res.getLocation().toFile());
-        for (String changeSet : changeSetStrings) {
-            ChangeSet cs;
-            cs = getChangeSet(repository,
-                    bundleFile,
-                    direction,
-                    hgRoot, 
-                    changeSet);
-
-            // add bundle file for being able to look into the bundle.
-            // cs.setRepository(repository);
-            // cs.setBundleFile(bundleFile);
-            // cs.setDirection(direction);
-            // cs.setHgRoot(hgRoot);
-
-            // changeset to resources & project
-            addChangesetToResourceMap(res.getLocation(), fileRevisions, cs);
+        File hgRoot = MercurialTeamProvider.getHgRoot(res);
+        String myInput = "<top>".concat(input).concat("</top>");
+        try {
+            XMLReader reader = XMLReaderFactory.createXMLReader();
+            reader.setContentHandler(getHandler(res, direction, repository,
+                    bundleFile, hgRoot, fileRevisions));
+            reader.parse(new InputSource(new ByteArrayInputStream(myInput
+                    .getBytes())));
+        } catch (Exception e) {
+            String nextTry = cleanControlChars(myInput);
+            try {
+                XMLReader reader = XMLReaderFactory.createXMLReader();
+                reader.setContentHandler(getHandler(res, direction, repository,
+                        bundleFile, hgRoot, fileRevisions));
+                reader.parse(new InputSource(new ByteArrayInputStream(nextTry
+                        .getBytes())));
+            } catch (Exception e1) {
+                throw new HgException(e1.getLocalizedMessage(), e);
+            }
         }
         return fileRevisions;
     }
 
     /**
-     * @param proj
-     * @param fileRevisions
-     * @param cs
-     * @throws HgException
-     * @throws IOException
-     */
-    protected final static void addChangesetToResourceMap(IPath path,
-            Map<IPath, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs)
-            throws HgException {
-        try {
-            if (cs.getChangedFiles() != null) {
-                for (FileStatus file : cs.getChangedFiles()) {
-                    IPath hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
-                    IPath fileRelPath = new Path(file.getPath());
-                    IPath fileAbsPath = hgRoot.append(fileRelPath);
-
-                    SortedSet<ChangeSet> revs = addChangeSetRevisions(
-                            fileRevisions, cs, fileAbsPath);
-                    fileRevisions.put(fileAbsPath, revs);
-
-                }
-            }
-
-            // hg root
-            IPath repoPath = new Path(cs.getHgRoot().getCanonicalPath());
-
-            SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(
-                    fileRevisions, cs, repoPath);
-
-            fileRevisions.put(repoPath, projectRevs);
-
-            // given path
-            SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(
-                    fileRevisions, cs, path);
-            fileRevisions.put(path, pathRevs);
-
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
-    }
-
-    /**
-     * @param fileRevisions
-     * @param cs
+     * @param hgRoot
+     * @param bundleFile
+     * @param repository
+     * @param direction
      * @param res
+     * @param fileRevisions
      * @return
      */
-    private static SortedSet<ChangeSet> addChangeSetRevisions(
-            Map<IPath, SortedSet<ChangeSet>> fileRevisions, ChangeSet cs,
-            IPath path) {
-        SortedSet<ChangeSet> fileRevs = fileRevisions.get(path);
-        if (fileRevs == null) {
-            fileRevs = new TreeSet<ChangeSet>();
-        }
-        fileRevs.add(cs);
-        return fileRevs;
-    }
-
-    private static FileStatus[] getFileStatuses(Element csn) {
-        HashSet<String> files = getFilesValue(csn, "fl");
-        HashSet<String> adds = getFilesValue(csn, "fa");
-        HashSet<String> del = getFilesValue(csn, "fd");
-
-        files.removeAll(adds);
-        files.removeAll(del);
-
-        List<FileStatus> statuses = new ArrayList<FileStatus>(files.size());
-        addFiles(statuses, files, Action.MODIFIED);
-        addFiles(statuses, adds, Action.ADDED);
-        addFiles(statuses, del, Action.REMOVED);
-
-        return statuses.toArray(new FileStatus[statuses.size()]);
-    }
-
-    private static HashSet<String> getFilesValue(Element csn, String name) {
-        NodeList nl = csn.getElementsByTagName(name);
-        if (nl.getLength() == 0) {
-            return new HashSet<String>(0);
-        }
-        NodeList files = ((Element) nl.item(0)).getElementsByTagName("f");
-        HashSet<String> ret = new HashSet<String>(files.getLength());
-        for (int i = 0; i < files.getLength(); i++) {
-            ret.add(files.item(i).getTextContent());
-        }
-
-        return ret;
-    }
-
-    private static void addFiles(List<FileStatus> statuses,
-            HashSet<String> files, Action action) {
-        for (String f : files) {
-            statuses.add(new FileStatus(action, f));
-        }
-    }
-
-    private static String[] splitClean(String string, String sep) {
-        if (string == null || string.length() == 0) {
-            return new String[] {};
-        }
-        return string.split(sep);
-    }
-
-    private static String unescape(String string) {
-        return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">")
-                .replaceAll("&amp;", "&");
+    private static ContentHandler getHandler(IResource res,
+            Direction direction, HgRepositoryLocation repository,
+            File bundleFile, File hgRoot,
+            Map<IPath, SortedSet<ChangeSet>> fileRevisions) {
+        handler = new ChangesetContentHandler(res, direction, repository,
+                bundleFile, hgRoot, fileRevisions);
+        return handler;
     }
 
     /**
-     * Remove a leading tab on each line in the string.
+     * Clean the string of special chars that might be invalid for the XML
+     * parser. Return the cleaned string (special chars replaced by ordinary
+     * spaces).
      * 
-     * @param string
-     * @return
-     */
-    private static String untab(String string) {
-        return string.replaceAll("\n\t", "\n");
-    }
-    
-    /**
-     * Clean the string of special chars that might be invalid for the
-     * XML parser.  Return the cleaned string (special chars replaced by
-     * ordinary spaces).
-     * 
-     * @param str the string to clean
+     * @param str
+     *            the string to clean
      * @return the cleaned string
      */
     private static String cleanControlChars(String str) {
@@ -353,93 +496,4 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         }
         return buf.toString();
     }
-
-    /**
-     * Parse a changeset as output from the log command (see
-     * {@link #createMercurialRevisions()}).
-     * @param hgRoot 
-     * @param direction 
-     * @param bundleFile 
-     * @param repository 
-     * 
-     * @param changeSet
-     * @return
-     */
-    private static ChangeSet getChangeSet(HgRepositoryLocation repository, 
-            File bundleFile, 
-            Direction direction, 
-            File hgRoot, 
-            String changeSet) throws HgException {
-
-        if (changeSet == null) {
-            return null;
-        }
-
-        String outputString = changeSet.substring(changeSet.indexOf("<cs>"));
-        
-        try {
-            DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory
-                    .newInstance();
-            DocumentBuilder docBuilder = docBuilderFactory.newDocumentBuilder();
-            Document doc;
-            Reader ir = null;
-            try {
-                ir = new StringReader(outputString);
-                doc = docBuilder.parse(new InputSource(ir));
-            } catch (SAXException e) {
-                outputString = cleanControlChars(outputString);
-                ir = new StringReader(outputString);
-                doc = docBuilder.parse(new InputSource(ir));
-            } finally {
-                if (ir != null) {
-                    ir.close();
-                }
-            }
-
-            // normalize text representation
-            doc.getDocumentElement().normalize();
-
-            NodeList csnl = doc.getElementsByTagName("cs");
-            int totalCs = csnl.getLength();
-            if (totalCs != 1) {
-                // Something screwy going on, should have 1 and 1 only.
-                throw new HgException(
-                        "Cannot parse changeset, bad log output?: " + changeSet);
-            }
-            Element csn = (Element) csnl.item(0);
-
-            ChangeSet.Builder csb = new ChangeSet.Builder(Integer.parseInt(getValue(csn, "rv")),
-                    getValue(csn, "nl"),
-                    getValue(csn, "br"),
-                    getValue(csn, "di"),
-                    getValue(csn,
-                            "au"));
-            csb.tag(getValue(csn, "tg"));
-            csb.nodeShort(getValue(csn, "ns"));
-            csb.ageDate(getValue(csn, "da"));
-            csb.description(untab(unescape(getValue(csn, "de"))));
-            csb.parents(splitClean(getValue(csn, "pr"), " "));
-            csb.changedFiles(getFileStatuses(csn));
-            
-            csb.hgRoot(hgRoot).bundleFile(bundleFile).repository(repository).direction(direction);
-            return csb.build();
-        } catch (ParserConfigurationException e) {
-            throw new HgException("Changeset parser Configuration error", e);
-        } catch (SAXException e) {
-            throw new HgException("Changeset parsing error for \"" + changeSet
-                    + "\"", e);
-        } catch (IOException e) {
-            throw new HgException("Error parsing changeset \"" + changeSet
-                    + "\"", e);
-        }
-    }
-
-    /**
-     * @param csn
-     * @return
-     */
-    private static String getValue(Element csn, String name) {
-        return csn.getElementsByTagName(name).item(0).getTextContent();
-    }
-
 }
