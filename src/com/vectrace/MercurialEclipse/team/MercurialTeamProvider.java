@@ -95,13 +95,14 @@ public class MercurialTeamProvider extends RepositoryProvider {
         assert (resource != null);
         IProject project = resource.getProject();
         assert (project != null);
-        String root = project.getPersistentProperty(ResourceProperties.HG_ROOT);
+        String root = (String) project
+                .getSessionProperty(ResourceProperties.HG_ROOT);
         if (root == null) {
             root = HgRootClient.getHgRoot(resource);
+            project.setSessionProperty(ResourceProperties.HG_ROOT, root);
         }
         if (root != null && root.length() != 0) {
-            MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));
-            project.setPersistentProperty(ResourceProperties.HG_ROOT, root);
+            MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));            
         } else {
             throw new HgException(project.getName()
                     + " does not belong to a Hg repository.");

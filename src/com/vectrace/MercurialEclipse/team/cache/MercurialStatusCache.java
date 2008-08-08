@@ -206,7 +206,7 @@ public class MercurialStatusCache extends AbstractCache implements
     /** Used to store which projects have already been parsed */
     private static Set<IProject> knownStatus;
 
-    private static Map<IPath, ReentrantLock> locks = new HashMap<IPath, ReentrantLock>();
+    private static Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
 
     private MercurialStatusCache() {
         AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
@@ -246,21 +246,22 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return
      * @throws HgException
      */
-    public ReentrantLock getLock(IResource resource) throws HgException {
-        IPath hgRoot;
-        if (!MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
+    public ReentrantLock getLock(IResource resource) throws HgException {        
+        if (!resource.isAccessible() || resource.isDerived()
+                || resource.isLinked()
+                || !MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
             return new ReentrantLock();
         }
-        if (resource.isAccessible()) {
-            hgRoot = new Path(MercurialTeamProvider.getHgRoot(resource)
-                    .getAbsolutePath());
-        } else {
-            hgRoot = new Path(resource.getProject().getLocation().toOSString());
-        }
-        ReentrantLock lock = locks.get(hgRoot);
+        // if (resource.isAccessible()) {
+        // hgRoot = new Path(MercurialTeamProvider.getHgRoot(resource)
+        // .getAbsolutePath());
+        // } else {
+        // hgRoot = new Path(resource.getProject().getLocation().toOSString());
+        // }
+        ReentrantLock lock = locks.get(resource.getProject());
         if (lock == null) {
             lock = new ReentrantLock();
-            locks.put(hgRoot, lock);
+            locks.put(resource.getProject(), lock);
         }
         return lock;
 
@@ -466,7 +467,7 @@ public class MercurialStatusCache extends AbstractCache implements
             }
             notifyChanged(changed);
         }
-        
+
         if (monitor != null) {
             monitor.worked(1);
         }
@@ -559,16 +560,17 @@ public class MercurialStatusCache extends AbstractCache implements
             BitSet resourceBitSet) {
         // ancestors
         Set<IResource> ancestors = new HashSet<IResource>();
+        boolean computeDeep = isComputeDeepStatus();
+        boolean completeStatus = Boolean
+                .valueOf(
+                        HgClients
+                                .getPreference(
+                                        MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                                        "false")).booleanValue();
+
         for (IResource parent = resource.getParent(); parent != null
                 && parent != resource.getProject().getParent(); parent = parent
                 .getParent()) {
-            boolean computeDeep = isComputeDeepStatus();
-            boolean completeStatus = Boolean
-                    .valueOf(
-                            HgClients
-                                    .getPreference(
-                                            MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                            "false")).booleanValue();
             BitSet parentBitSet = statusMap.get(parent.getLocation());
             BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
             if (parentBitSet != null) {
@@ -968,5 +970,5 @@ public class MercurialStatusCache extends AbstractCache implements
         setChanged();
         notifyObservers(resources);
     }
-    
+
 }
