@@ -187,12 +187,9 @@ public class CommitDialog extends TrayDialog {
         decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
                 null, new DefaultMarkerAnnotationAccess(), EditorsUI
                         .getSharedTextColors());
-                
-        AnnotationPreference pref = new AnnotationPreference();
-        pref.setAnnotationType(SpellingAnnotation.TYPE);
-        pref.setColorPreferenceKey("spellingIndicationColor");
-        pref.setHighlightPreferenceKey("spellingIndicationHighlighting");                
-        pref.setTextPreferenceKey("spellingIndication");
+
+        AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
+                .getAnnotationPreference(SpellingAnnotation.TYPE); 
         
         decorationSupport.setAnnotationPreference(pref);
         decorationSupport.install(EditorsUI.getPreferenceStore());                       
