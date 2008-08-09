@@ -54,7 +54,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
@@ -205,12 +204,6 @@ public class CommitDialog extends TrayDialog {
             private TextSpellingProblemCollector collector;
 
             public void textChanged(TextEvent event) {
-                // reset foreground color
-                commitTextBox.setTextColor(PlatformUI.getWorkbench()
-                        .getDisplay().getSystemColor(
-                                SWT.COLOR_WIDGET_FOREGROUND), 0,
-                        commitTextDocument.getLength(), false);
-
                 // connect to spell service if necessary
                 if (spellService == null) {
                     spellService = EditorsUI.getSpellingService();
@@ -296,7 +289,6 @@ public class CommitDialog extends TrayDialog {
     }
 
     private void makeActions() {
-        // commitTextBox.setCapture(true);
         commitFilesList.addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
                 IStructuredSelection sel = (IStructuredSelection) commitFilesList
