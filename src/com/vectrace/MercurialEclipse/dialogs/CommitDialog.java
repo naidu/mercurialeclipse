@@ -18,14 +18,9 @@ import java.util.List;
 
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.Platform;
-import org.eclipse.core.runtime.content.IContentType;
-import org.eclipse.core.runtime.content.IContentTypeManager;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.jface.text.ITextListener;
-import org.eclipse.jface.text.TextEvent;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
@@ -41,6 +36,8 @@ import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -55,18 +52,16 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.texteditor.AnnotationPreference;
 import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
 import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
-import org.eclipse.ui.texteditor.spelling.SpellingContext;
-import org.eclipse.ui.texteditor.spelling.SpellingService;
 
 import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
-import com.vectrace.MercurialEclipse.ui.TextSpellingProblemCollector;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -180,10 +175,6 @@ public class CommitDialog extends TrayDialog {
         commitTextBox.setEditable(true);
 
         // set up spell-check annotations
-        
-        AnnotationModel annotationModel = new AnnotationModel();
-        commitTextBox.setDocument(commitTextDocument, annotationModel);        
-        
         decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
                 null, new DefaultMarkerAnnotationAccess(), EditorsUI
                         .getSharedTextColors());
@@ -192,37 +183,19 @@ public class CommitDialog extends TrayDialog {
                 .getAnnotationPreference(SpellingAnnotation.TYPE); 
         
         decorationSupport.setAnnotationPreference(pref);
-        decorationSupport.install(EditorsUI.getPreferenceStore());                       
+        decorationSupport.install(EditorsUI.getPreferenceStore());
 
-        ITextListener textListener = new ITextListener() {
+        commitTextBox.configure(new TextSourceViewerConfiguration(EditorsUI
+                .getPreferenceStore()));
+        AnnotationModel annotationModel = new AnnotationModel();
+        commitTextBox.setDocument(commitTextDocument, annotationModel);       
+        commitTextBox.getTextWidget().addDisposeListener(new DisposeListener() {
 
-            private SpellingService spellService;
-            private SpellingContext spellContext;
-            private TextSpellingProblemCollector collector;
-
-            public void textChanged(TextEvent event) {
-                // connect to spell service if necessary
-                if (spellService == null) {
-                    spellService = EditorsUI.getSpellingService();
-                }
-
-                if (spellContext == null) {
-                    spellContext = new SpellingContext();
-                    IContentType contentType = Platform.getContentTypeManager()
-                            .getContentType(IContentTypeManager.CT_TEXT);
-                    spellContext.setContentType(contentType);
-                }
-
-                if (collector == null) {
-                    collector = new TextSpellingProblemCollector(commitTextBox);
-                }
-
-                // check and highlight errors
-                spellService.check(commitTextDocument, spellContext, collector,
-                        null);
+            public void widgetDisposed(DisposeEvent e) {
+                decorationSupport.uninstall();
             }
-        };
-        commitTextBox.addTextListener(textListener);
+
+        });
 
         commitFilesLabel = new Label(container, SWT.NONE);
         commitFilesLabel.setText("Select Files:");
