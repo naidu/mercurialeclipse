@@ -285,7 +285,8 @@ public class ResourceDecorator extends LabelProvider implements
 
                 if (cs != null) {
                     suffix += "< [" + cs.getChangesetIndex() + ":"
-                            + cs.getNodeShort() + " " + cs.getUser() + "]";
+                            + cs.getNodeShort() + " " + cs.getUser() + " "
+                            + cs.getAgeDate() + "]";
                 }
             }
         }
