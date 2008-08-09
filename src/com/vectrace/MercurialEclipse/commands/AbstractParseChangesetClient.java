@@ -351,6 +351,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         if (stylefile.canRead() && tmplfile.canRead()) {
             // Already have copies, return the file reference to the style file
+            stylefile.deleteOnExit();
+            tmplfile.deleteOnExit();
             return stylefile;
         }
         // Need to make copies into the state directory from the jar file.
@@ -359,8 +361,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         InputStream styleistr = cl.getResourceAsStream(style_src);
         InputStream tmplistr = cl.getResourceAsStream(style_tmpl_src);
         try {
-            OutputStream styleostr = new FileOutputStream(stylefile);
-            stylefile.deleteOnExit();
+            OutputStream styleostr = new FileOutputStream(stylefile);            
             OutputStream tmplostr = new FileOutputStream(tmplfile);
             tmplfile.deleteOnExit();
 
