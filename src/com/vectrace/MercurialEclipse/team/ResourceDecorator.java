@@ -280,13 +280,13 @@ public class ResourceDecorator extends LabelProvider implements
                 && !LOCAL_CACHE.isLocalUpdateInProgress(resource)) {
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
-                suffix = " [" + fileCs.getChangesetIndex() + " "
-                        + fileCs.getUser() + "]";
+                suffix = " [" + fileCs.getChangesetIndex() + " - "
+                        + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
 
                 if (cs != null) {
                     suffix += "< [" + cs.getChangesetIndex() + ":"
-                            + cs.getNodeShort() + " " + cs.getUser() + " "
-                            + cs.getAgeDate() + "]";
+                            + cs.getNodeShort() + " - " + cs.getAgeDate()
+                            + " - " + cs.getUser() + "]";
                 }
             }
         }
