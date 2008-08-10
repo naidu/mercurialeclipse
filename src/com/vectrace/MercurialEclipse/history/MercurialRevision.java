@@ -21,15 +21,21 @@ import org.eclipse.team.core.history.provider.FileRevision;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 /**
  * @author zingo
- *
+ * 
  */
-public class MercurialRevision extends FileRevision
-{
-  @Override
+public class MercurialRevision extends FileRevision {
+    
+
+    public Signature getSignature() {
+        return signature;
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
@@ -69,115 +75,116 @@ public class MercurialRevision extends FileRevision
         return true;
     }
 
-    private IResource resource; 
-  private ChangeSet changeSet; 
-  private IStorageMercurialRevision iStorageMercurialRevision; //Cached data
-  private final GChangeSet gChangeSet;
-  private String revision;
-  private String hash;
-
-  public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet, IResource resource)
-  {
-    super();
-    this.changeSet = changeSet;    
-    this.gChangeSet = gChangeSet;
+    private IResource resource;
+    private ChangeSet changeSet;
+    private IStorageMercurialRevision iStorageMercurialRevision; // Cached data
+    private final GChangeSet gChangeSet;
+    private String revision;
+    private String hash;
+    private Signature signature;
     
-	this.revision = changeSet.getChangesetIndex()+"";
-	this.hash = changeSet.getChangeset();
-    this.resource=resource;
-  }
-  
-  public ChangeSet getChangeSet()
-  {
-    return changeSet;
-  }
+    public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet,
+            IResource resource, Signature sig) {
+        super();
+        this.changeSet = changeSet;
+        this.gChangeSet = gChangeSet;
 
-  public GChangeSet getGChangeSet()
-  {
-    return gChangeSet;
-  }
+        this.revision = changeSet.getChangesetIndex() + "";
+        this.hash = changeSet.getChangeset();
+        this.resource = resource;
+        this.signature = sig;
+    }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.core.history.IFileRevision#getName()
-   */
-  public String getName()
-  {
-    return resource.getName();
-  }
+    public ChangeSet getChangeSet() {
+        return changeSet;
+    }
 
-  @Override
-  public String getContentIdentifier() 
-  {
-    return changeSet.getChangeset();
-  }
-  
-  /* (non-Javadoc)
-   * @see org.eclipse.team.core.history.IFileRevision#getStorage(org.eclipse.core.runtime.IProgressMonitor)
-   */
-  public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
-		if (iStorageMercurialRevision == null) {			
-			iStorageMercurialRevision = new IStorageMercurialRevision(resource,
-					revision, hash, changeSet);
-		}
-		return iStorageMercurialRevision;
-	}
+    public GChangeSet getGChangeSet() {
+        return gChangeSet;
+    }
 
-  /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.eclipse.team.core.history.IFileRevision#isPropertyMissing()
-	 */
-  public boolean isPropertyMissing()
-  {
-    return false;
-  }
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.team.core.history.IFileRevision#getName()
+     */
+    public String getName() {
+        return resource.getName();
+    }
 
-  /* (non-Javadoc)
-   * @see org.eclipse.team.core.history.IFileRevision#withAllProperties(org.eclipse.core.runtime.IProgressMonitor)
-   */
-  public IFileRevision withAllProperties(IProgressMonitor monitor) throws CoreException
-  {
-    return null;
-  }
+    @Override
+    public String getContentIdentifier() {
+        return changeSet.getChangeset();
+    }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.team.core.history.IFileRevision#getStorage(org.eclipse.core
+     * .runtime.IProgressMonitor)
+     */
+    public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
+        if (iStorageMercurialRevision == null) {
+            iStorageMercurialRevision = new IStorageMercurialRevision(resource,
+                    revision, hash, changeSet);
+        }
+        return iStorageMercurialRevision;
+    }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.team.core.history.IFileRevision#isPropertyMissing()
+     */
+    public boolean isPropertyMissing() {
+        return false;
+    }
 
-/**
- * @return the revision
- */
-public String getRevision() {
-	return revision;
-}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.team.core.history.IFileRevision#withAllProperties(org.eclipse
+     * .core.runtime.IProgressMonitor)
+     */
+    public IFileRevision withAllProperties(IProgressMonitor monitor)
+            throws CoreException {
+        return null;
+    }
 
+    /**
+     * @return the revision
+     */
+    public String getRevision() {
+        return revision;
+    }
 
+    /**
+     * @param revision
+     *            the revision to set
+     */
+    public void setRevision(String revision) {
+        this.revision = revision;
+    }
 
-/**
- * @param revision the revision to set
- */
-public void setRevision(String revision) {
-	this.revision = revision;
-}
+    /**
+     * @return the hash
+     */
+    public String getHash() {
+        return hash;
+    }
 
+    /**
+     * @param hash
+     *            the hash to set
+     */
+    public void setHash(String hash) {
+        this.hash = hash;
+    }
 
-
-/**
- * @return the hash
- */
-public String getHash() {
-	return hash;
-}
-
-
-
-/**
- * @param hash the hash to set
- */
-public void setHash(String hash) {
-	this.hash = hash;
-}
-
-public IResource getResource() {
-	return resource;
-}
+    public IResource getResource() {
+        return resource;
+    }
 
 }

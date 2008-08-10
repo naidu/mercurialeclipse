@@ -165,7 +165,8 @@ public class SignWizardPage extends HgWizardPage {
         boolean force = forceCheckBox.getSelection();
         boolean noCommit = noCommitCheckBox.getSelection();
         try {
-            HgSignClient.sign(project, cs, key, msg, user, local, force,
+            HgSignClient.sign(project.getLocation().toFile(), cs, key, msg,
+                    user, local, force,
                     noCommit, pass);
         } catch (HgException e) {
             MessageDialog.openInformation(getShell(), Messages.getString("SignWizardPage.errorSigning"), //$NON-NLS-1$

@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -29,8 +30,10 @@ import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgSigsClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -183,6 +186,14 @@ public class MercurialHistory extends FileHistory {
             SortedSet<ChangeSet> localChangeSets = map.get(resource
                     .getLocation());
             if (localChangeSets != null) {
+                // get signatures
+                File file = resource.getLocation().toFile();
+                List<Signature> sigs = HgSigsClient.getSigs(file);
+                Map<String, Signature> sigMap = new HashMap<String, Signature>();
+                for (Signature signature : sigs) {
+                    sigMap.put(signature.getNodeId(), signature);
+                }
+
                 changeSets.addAll(localChangeSets);
 
                 if (revisions == null || revisions.size() == 0
@@ -201,9 +212,10 @@ public class MercurialHistory extends FileHistory {
                     }
                 }
                 for (ChangeSet cs : changeSets) {
+                    Signature sig = sigMap.get(cs.getChangeset());
                     revisions.add(new MercurialRevision(cs, gChangeSets
                             .get(Integer.valueOf(cs.getChangesetIndex())),
-                            resource));
+                            resource, sig));
                 }
             }
         }

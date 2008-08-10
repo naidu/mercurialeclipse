@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -32,12 +31,14 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  */
 public class HgSignClient {
 
+    
+    
     /**
      * Calls hg sign. add a signature for the current or given revision If no
      * revision is given, the parent of the working directory is used, or tip if
      * no revision is checked out.
      * 
-     * @param project
+     * @param directory
      *            the current project (working directory)
      * @param cs
      *            ChangeSet, may be null
@@ -60,10 +61,10 @@ public class HgSignClient {
      * @return
      * 
      */
-    public static String sign(IProject project, ChangeSet cs, String key,
+    public static String sign(File directory, ChangeSet cs, String key,
             String message, String user, boolean local, boolean force,
             boolean noCommit, String passphrase) throws HgException {
-        HgCommand command = new HgCommand("sign", project, true);
+        HgCommand command = new HgCommand("sign", directory, true);
         File file = new File("me.gpg.tmp");
         String cmd = "gpg.cmd=".concat(
                 MercurialUtilities.getGpgExecutable(true)).concat(

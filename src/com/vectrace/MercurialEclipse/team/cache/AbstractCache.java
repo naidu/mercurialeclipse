@@ -149,7 +149,7 @@ public abstract class AbstractCache extends Observable {
      * Gets Changeset by its identifier
      * 
      * @param changeSet
-     *            string in format rev:nodeshort
+     *            string in format rev:nodeshort or rev:node
      * @return
      */
     public ChangeSet getChangeSet(String changeSet) {
