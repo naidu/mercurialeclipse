@@ -188,10 +188,13 @@ public class MercurialHistory extends FileHistory {
             if (localChangeSets != null) {
                 // get signatures
                 File file = resource.getLocation().toFile();
+
                 List<Signature> sigs = HgSigsClient.getSigs(file);
                 Map<String, Signature> sigMap = new HashMap<String, Signature>();
-                for (Signature signature : sigs) {
-                    sigMap.put(signature.getNodeId(), signature);
+                if (!MercurialUtilities.getGpgExecutable().equals("false")) {
+                    for (Signature signature : sigs) {
+                        sigMap.put(signature.getNodeId(), signature);
+                    }
                 }
 
                 changeSets.addAll(localChangeSets);
