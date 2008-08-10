@@ -75,7 +75,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private HgRepositoryLocation repository;
         private File bundleFile;
         private File hgRoot;
-        private static Map<IPath, SortedSet<ChangeSet>> fileRevisions;
+        private Map<IPath, SortedSet<ChangeSet>> fileRevisions;
         private Set<String> filesModified = new TreeSet<String>();
         private Set<String> filesAdded = new TreeSet<String>();
         private Set<String> filesRemoved = new TreeSet<String>();
@@ -97,10 +97,10 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             this.repository = repository;
             this.bundleFile = bundleFile;
             this.hgRoot = hgRoot;
-            ChangesetContentHandler.fileRevisions = fileRevisions;
+            this.fileRevisions = fileRevisions;
         }
 
-        private static String unescape(String string) {
+        private String unescape(String string) {
             return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">")
                     .replaceAll("&amp;", "&");
         }
@@ -111,11 +111,11 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
          * @param string
          * @return
          */
-        private static String untab(String string) {
+        private String untab(String string) {
             return string.replaceAll("\n\t", "\n");
         }
 
-        private static String[] splitClean(String string, String sep) {
+        private String[] splitClean(String string, String sep) {
             if (string == null || string.length() == 0) {
                 return new String[] {};
             }
@@ -253,15 +253,15 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
          * @throws HgException
          * @throws IOException
          */
-        private final static void addChangesetToResourceMap(ChangeSet cs)
+        private final void addChangesetToResourceMap(ChangeSet cs)
                 throws HgException {
             try {
                 if (cs.getChangedFiles() != null) {
                     for (FileStatus file : cs.getChangedFiles()) {
-                        IPath hgRoot = new Path(cs.getHgRoot()
+                        IPath root = new Path(cs.getHgRoot()
                                 .getCanonicalPath());
                         IPath fileRelPath = new Path(file.getPath());
-                        IPath fileAbsPath = hgRoot.append(fileRelPath);
+                        IPath fileAbsPath = root.append(fileRelPath);
 
                         SortedSet<ChangeSet> revs = addChangeSetRevisions(cs,
                                 fileAbsPath);
@@ -295,7 +295,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
          * @param res
          * @return
          */
-        private static SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs,
+        private SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs,
                 IPath path) {
             SortedSet<ChangeSet> fileRevs = fileRevisions.get(path);
             if (fileRevs == null) {
