@@ -56,7 +56,7 @@ public class HgCommitClient {
         if (str == null || str.length() == 0) {
             return str;
         }
-        return "\"" + str.replaceAll("\"", "\\\\\"") + "\"";
+        return str.replaceAll("\"", "\\\\\"");
     }
 
     public static String commitProject(IProject project, String user,
