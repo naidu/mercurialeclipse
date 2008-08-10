@@ -134,7 +134,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             if (name.equals("cs")) {
 
                 ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di,
-                        au);
+                        unescape(au));
                 csb.tag(tg);
                 csb.nodeShort(ns);
                 csb.ageDate(da);
@@ -148,7 +148,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 csb.direction(direction);
                 csb.hgRoot(hgRoot);
                 csb.repository(repository);
-                
+
                 List<FileStatus> list = new ArrayList<FileStatus>();
                 for (String file : filesModified) {
                     list.add(new FileStatus(FileStatus.Action.MODIFIED, file));
@@ -160,7 +160,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                     list.add(new FileStatus(FileStatus.Action.REMOVED, file));
                 }
                 csb.changedFiles(list.toArray(new FileStatus[list.size()]));
-                
+
                 ChangeSet changeSet = csb.build();
 
                 // changeset to resources & project
@@ -234,7 +234,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                     filesAdded.add(atts.getValue(0));
                     filesModified.remove(atts.getValue(0));
                 } else if (this.action == Action.MODIFIED) {
-                    filesModified.add(atts.getValue(0));                    
+                    filesModified.add(atts.getValue(0));
                 } else if (this.action == Action.REMOVED) {
                     filesRemoved.add(atts.getValue(0));
                     filesModified.remove(atts.getValue(0));
@@ -258,8 +258,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             try {
                 if (cs.getChangedFiles() != null) {
                     for (FileStatus file : cs.getChangedFiles()) {
-                        IPath root = new Path(cs.getHgRoot()
-                                .getCanonicalPath());
+                        IPath root = new Path(cs.getHgRoot().getCanonicalPath());
                         IPath fileRelPath = new Path(file.getPath());
                         IPath fileAbsPath = root.append(fileRelPath);
 
@@ -361,7 +360,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         InputStream styleistr = cl.getResourceAsStream(style_src);
         InputStream tmplistr = cl.getResourceAsStream(style_tmpl_src);
         try {
-            OutputStream styleostr = new FileOutputStream(stylefile);            
+            OutputStream styleostr = new FileOutputStream(stylefile);
             OutputStream tmplostr = new FileOutputStream(tmplfile);
             tmplfile.deleteOnExit();
 
