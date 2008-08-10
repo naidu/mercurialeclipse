@@ -179,8 +179,12 @@ public class MercurialUtilities {
      * @return gpg executable path or "gpg", if it's not set.
      */
     public static String getGpgExecutable() {
-        return HgClients.getPreference(
+        String executable = HgClients.getPreference(
                 MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
+        if (executable == null || executable.length() == 0) {
+            return "false";
+        }
+        return executable;
     }
 
     /**
