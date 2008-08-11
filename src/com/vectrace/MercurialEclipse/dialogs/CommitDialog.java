@@ -19,6 +19,11 @@ import java.util.List;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.TrayDialog;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.source.AnnotationModel;
+import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnPixelData;
@@ -31,6 +36,8 @@ import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -44,7 +51,12 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
+import org.eclipse.ui.texteditor.AnnotationPreference;
+import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
+import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
 import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
@@ -85,7 +97,7 @@ public class CommitDialog extends TrayDialog {
 
     private String defaultCommitMessage = "(no commit message)";
 
-    private Text commitTextBox;
+    private ISourceViewer commitTextBox;
     private Label commitTextLabel;
     private Label commitFilesLabel;
     private CheckboxTableViewer commitFilesList;
@@ -103,18 +115,21 @@ public class CommitDialog extends TrayDialog {
     private IResource[] inResources;
     private File[] filesToRemove;
     private List<IResource> resourcesToRemove;
+    private IDocument commitTextDocument;
+    private SourceViewerDecorationSupport decorationSupport;
 
     /**
      * @param shell
      */
     public CommitDialog(Shell shell, HgRoot root, IResource[] inResources) {
         super(shell);
-        setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);        
+        setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
         this.root = root;
         this.inResources = inResources;
         this.untrackedFilesFilter = new UntrackedFilesFilter();
         this.committableFilesFilter = new CommittableFilesFilter();
         this.selectableFiles = true;
+        this.commitTextDocument = new Document();
     }
 
     public CommitDialog(Shell shell, HgRoot root, IResource[] inResources,
@@ -151,17 +166,42 @@ public class CommitDialog extends TrayDialog {
 
         commitTextLabel = new Label(container, SWT.NONE);
         commitTextLabel.setText("Commit comments");
+
+        // commitTextBox = new Text(container, SWT.V_SCROLL | SWT.MULTI
+        // | SWT.BORDER | SWT.WRAP);
+
+        commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL
+                | SWT.MULTI | SWT.BORDER | SWT.WRAP);
+        commitTextBox.setEditable(true);
+
+        // set up spell-check annotations
+        decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
+                null, new DefaultMarkerAnnotationAccess(), EditorsUI
+                        .getSharedTextColors());
+
+        AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
+                .getAnnotationPreference(SpellingAnnotation.TYPE); 
         
-        commitTextBox = new Text(container, SWT.V_SCROLL | SWT.MULTI
-                | SWT.BORDER | SWT.WRAP);
+        decorationSupport.setAnnotationPreference(pref);
+        decorationSupport.install(EditorsUI.getPreferenceStore());
+
+        commitTextBox.configure(new TextSourceViewerConfiguration(EditorsUI
+                .getPreferenceStore()));
+        AnnotationModel annotationModel = new AnnotationModel();
+        commitTextBox.setDocument(commitTextDocument, annotationModel);       
+        commitTextBox.getTextWidget().addDisposeListener(new DisposeListener() {
+
+            public void widgetDisposed(DisposeEvent e) {
+                decorationSupport.uninstall();
+            }
+
+        });
 
         commitFilesLabel = new Label(container, SWT.NONE);
         commitFilesLabel.setText("Select Files:");
 
         commitFilesList = createFilesList(container, selectableFiles);
 
-        
-        
         final FormData fd_commitTextLabel = new FormData();
         fd_commitTextLabel.top = new FormAttachment(0, 20);
         fd_commitTextLabel.left = new FormAttachment(0, 9);
@@ -169,19 +209,20 @@ public class CommitDialog extends TrayDialog {
         commitTextLabel.setLayoutData(fd_commitTextLabel);
 
         final FormData fd_commitTextBox = new FormData();
-        fd_commitTextBox.top = new FormAttachment(commitTextLabel, 3, SWT.BOTTOM);
+        fd_commitTextBox.top = new FormAttachment(commitTextLabel, 3,
+                SWT.BOTTOM);
         fd_commitTextBox.left = new FormAttachment(0, 9);
         fd_commitTextBox.bottom = new FormAttachment(0, 200);
         fd_commitTextBox.right = new FormAttachment(100, -9);
-        commitTextBox.setLayoutData(fd_commitTextBox);
+        commitTextBox.getTextWidget().setLayoutData(fd_commitTextBox);
 
         final FormData fd_commitFilesLabel = new FormData();
-        fd_commitFilesLabel.top = new FormAttachment(commitTextBox, 3);
+        fd_commitFilesLabel.top = new FormAttachment(commitTextBox
+                .getTextWidget(), 3);
         fd_commitFilesLabel.left = new FormAttachment(0, 9);
         fd_commitFilesLabel.right = new FormAttachment(100, -9);
         commitFilesLabel.setLayoutData(fd_commitFilesLabel);
 
-        
         Table table = commitFilesList.getTable();
         final FormData fd_table = new FormData();
         fd_table.top = new FormAttachment(commitFilesLabel, 3);
@@ -194,14 +235,15 @@ public class CommitDialog extends TrayDialog {
 
             selectAllButton = new Button(container, SWT.CHECK);
             selectAllButton.setText("Select/unselect all");
-        
+
             showUntrackedFilesButton = new Button(container, SWT.CHECK);
             showUntrackedFilesButton.setText("Show added/removed files");
 
             fd_table.bottom = new FormAttachment(selectAllButton, -9);
 
             final FormData fd_selectAllButton = new FormData();
-            fd_selectAllButton.bottom = new FormAttachment(showUntrackedFilesButton);
+            fd_selectAllButton.bottom = new FormAttachment(
+                    showUntrackedFilesButton);
             fd_selectAllButton.left = new FormAttachment(0, 9);
             fd_selectAllButton.right = new FormAttachment(100, -9);
             selectAllButton.setLayoutData(fd_selectAllButton);
@@ -217,7 +259,6 @@ public class CommitDialog extends TrayDialog {
     }
 
     private void makeActions() {
-        commitTextBox.setCapture(true);
         commitFilesList.addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
                 IStructuredSelection sel = (IStructuredSelection) commitFilesList
@@ -235,7 +276,7 @@ public class CommitDialog extends TrayDialog {
                             new IStorageMercurialRevision(resource
                                     .getResource()));
 
-                    CompareUtils.openCompareDialog(leftNode, rightNode, false);                                        
+                    CompareUtils.openCompareDialog(leftNode, rightNode, false);
                 }
             }
         });
@@ -290,8 +331,8 @@ public class CommitDialog extends TrayDialog {
     }
 
     private void setupDefaultCommitMessage() {
-        commitTextBox.setText(defaultCommitMessage);
-        commitTextBox.setSelection(0, defaultCommitMessage.length());        
+        commitTextDocument.set(defaultCommitMessage);
+        commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
     }
 
     private CheckboxTableViewer createFilesList(Composite container,
@@ -340,7 +381,7 @@ public class CommitDialog extends TrayDialog {
         // auto-check all tracked elements
         List<CommitResource> tracked = new ArrayList<CommitResource>();
         for (CommitResource commitResource : commitResources) {
-            if ( commitResource.getStatus() != CommitDialog.FILE_UNTRACKED) {
+            if (commitResource.getStatus() != CommitDialog.FILE_UNTRACKED) {
                 tracked.add(commitResource);
             }
         }
@@ -397,7 +438,7 @@ public class CommitDialog extends TrayDialog {
 
         return list.toArray(new File[0]);
     }
-    
+
     private File[] getToRemoveList(Object[] objs) {
         ArrayList<File> list = new ArrayList<File>();
 
@@ -431,7 +472,7 @@ public class CommitDialog extends TrayDialog {
 
         return list;
     }
-    
+
     private List<IResource> getToRemoveResourceList(Object[] objs) {
         ArrayList<IResource> list = new ArrayList<IResource>();
 
@@ -458,14 +499,15 @@ public class CommitDialog extends TrayDialog {
         filesToAdd = getToAddList(commitFilesList.getCheckedElements());
         resourcesToAdd = getToAddResourceList(commitFilesList
                 .getCheckedElements());
-        
+
         filesToCommit = convertToFiles(commitFilesList.getCheckedElements());
         resourcesToCommit = convertToResource(commitFilesList
                 .getCheckedElements());
 
         filesToRemove = getToRemoveList(commitFilesList.getCheckedElements());
-        resourcesToRemove = getToRemoveResourceList(commitFilesList.getCheckedElements());
-        commitMessage = commitTextBox.getText();
+        resourcesToRemove = getToRemoveResourceList(commitFilesList
+                .getCheckedElements());
+        commitMessage = commitTextDocument.get();
 
         super.okPressed();
     }

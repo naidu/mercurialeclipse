@@ -131,18 +131,17 @@ public abstract class AbstractCache extends Observable {
         }
     }
 
-    protected void addToProjectResources(IResource member) {
+    protected void addToProjectResources(IProject project, IResource member) {
         if (member.getType() == IResource.PROJECT) {
             return;
-        }
+        }        
         synchronized (projectResources) {
-            Set<IResource> set = AbstractCache.projectResources.get(member
-                    .getProject());
+            Set<IResource> set = AbstractCache.projectResources.get(project);
             if (set == null) {
                 set = new HashSet<IResource>();
             }
             set.add(member);
-            AbstractCache.projectResources.put(member.getProject(), set);
+            AbstractCache.projectResources.put(project, set);
         }
     }
 
@@ -150,7 +149,7 @@ public abstract class AbstractCache extends Observable {
      * Gets Changeset by its identifier
      * 
      * @param changeSet
-     *            string in format rev:nodeshort
+     *            string in format rev:nodeshort or rev:node
      * @return
      */
     public ChangeSet getChangeSet(String changeSet) {

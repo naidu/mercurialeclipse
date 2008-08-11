@@ -119,4 +119,10 @@ public class AbstractCommandTest extends TestCase {
 
     }
 
+    protected void addToRepository(File newFile) throws InterruptedException,
+            IOException {
+                Runtime runtime = Runtime.getRuntime();
+                runtime.exec("hg add " + newFile.getAbsolutePath(), null, getRepository()).waitFor();
+            }
+
 }

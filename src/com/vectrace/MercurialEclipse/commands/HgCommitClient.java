@@ -1,3 +1,15 @@
+/*******************************************************************************
+ * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Jerome Negre              - implementation
+ *     Bastian Doetsch
+ *     StefanC
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
@@ -34,39 +46,41 @@ public class HgCommitClient {
         }
     }
 
-    private static void commitRepository(HgRoot root,
-            List<IResource> files,
-            String user,
-            String message) throws HgException {
+    private static void commitRepository(HgRoot root, List<IResource> files,
+            String user, String message) throws HgException {
         commit(root, AbstractClient.toFiles(files), user, message);
-        
+
     }
- 
-    public static String commit(HgRoot root,
-            List<File> files,
-            String user,
+
+    public static String commit(HgRoot root, List<File> files, String user,
             String message) throws HgException {
-        
+
         HgCommand command = new HgCommand("commit", root, true);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         command.addUserName(quote(user));
         command.addOptions("-m", quote(message));
         command.addFiles(AbstractClient.toPaths(files));
         return command.executeToString();
     }
+
     static String quote(String str) {
-        return "\"" + str.replaceAll("\"", "\\\\\"") + "\"";
+        if (str == null || str.length() == 0) {
+            return str;
+        }
+        return str.replaceAll("\"", "\\\\\"");
     }
 
-    public static String commitProject(IProject project, String user, String message)
-            throws HgException {
+    public static String commitProject(IProject project, String user,
+            String message) throws HgException {
         HgRoot hgroot = new HgRoot(HgRootClient.getHgRoot(project));
         return commit(hgroot, new ArrayList<File>(), user, message);
-//        HgCommand command = new HgCommand("commit", project, false);
-//        command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-//        command.addUserName(user);
-//        command.addOptions("-m", message);
-//        return new String(command.executeToBytes());
+        // HgCommand command = new HgCommand("commit", project, false);
+        // command.setUsePreferenceTimeout(MercurialPreferenceConstants.
+        // COMMIT_TIMEOUT);
+        // command.addUserName(user);
+        // command.addOptions("-m", message);
+        // return new String(command.executeToBytes());
     }
 
 }

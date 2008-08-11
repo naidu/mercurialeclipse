@@ -13,6 +13,8 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
 
@@ -25,6 +27,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * 
  */
 public class HgRootClient {
+
+    private final static Map<String, File> roots = new HashMap<String, File>();
+
     public static String getHgRoot(IResource resource) throws HgException {
         return getHgRoot2(resource);
         // HgCommand command = new HgCommand("root", proj, true);
@@ -52,13 +57,26 @@ public class HgRootClient {
         root = getHgRoot(root);
         return root;
     }
-
+    
     /**
      * @param root
      * @return
      * @throws HgException
      */
     public static File getHgRoot(File file) throws HgException {
+        String canonicalPath=null;
+        try {
+            canonicalPath = file.getCanonicalPath();
+            if(!file.isDirectory()) {
+                canonicalPath = file.getParentFile().getCanonicalPath();
+            }
+            if(roots.containsKey(canonicalPath)) {
+                return roots.get(canonicalPath);
+            }
+        }
+        catch(IOException e) {
+            throw new HgException("Cannot get cannonical path for file"+file.getName());
+        }
         File root = file;
         if (root.isFile()) {
             root = root.getParentFile();
@@ -83,6 +101,7 @@ public class HgRootClient {
         if (root == null) {
             throw new HgException(file.getName() + " does not have a hg root");
         }
+        roots.put(canonicalPath, root);
         return root;
     }
 
