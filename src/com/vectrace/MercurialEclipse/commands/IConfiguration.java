@@ -10,6 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
+
+import org.eclipse.core.runtime.CoreException;
+
 /**
  * @author Stefan
  * 
@@ -38,5 +42,7 @@ public interface IConfiguration {
      * @return
      */
     String getPreference(String preferenceConstant, String defaultIfNotSet);
+    
+    File getHgRoot(File file) throws CoreException;
 
 }
