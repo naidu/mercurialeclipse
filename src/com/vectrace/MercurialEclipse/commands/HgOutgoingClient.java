@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.SortedSet;
@@ -33,7 +34,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
             command.addOptions("--style", AbstractParseChangesetClient
-                    .getStyleFile(true).getAbsolutePath());
+                    .getStyleFile(true).getCanonicalPath());
 
             URI uri = repository.getUri();
             if (uri != null) {
@@ -55,6 +56,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                 return null;
             }
             throw new HgException(hg.getMessage(), hg);
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
         }
     }
 

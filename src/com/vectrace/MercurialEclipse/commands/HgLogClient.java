@@ -1,5 +1,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.regex.Matcher;
@@ -94,38 +95,43 @@ public class HgLogClient extends AbstractParseChangesetClient {
     public static Map<IPath, SortedSet<ChangeSet>> getProjectLog(IResource res,
             int limitNumber, int startRev, boolean withFiles)
             throws HgException {
-        HgCommand command = new HgCommand("log", getWorkingDirectory(res),
-                false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("--debug", "--style", AbstractParseChangesetClient
-                .getStyleFile(withFiles).getAbsolutePath());
+        try {
+            HgCommand command = new HgCommand("log", getWorkingDirectory(res),
+                    false);
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+            command.addOptions("--debug", "--style",
+                    AbstractParseChangesetClient.getStyleFile(withFiles)
+                            .getCanonicalPath());
 
-        if (startRev >= 0) {
-            int last = Math.max(startRev - limitNumber, 0);
-            command.addOptions("-r");
-            command.addOptions(startRev + ":" + last);
-        }
+            if (startRev >= 0) {
+                int last = Math.max(startRev - limitNumber, 0);
+                command.addOptions("-r");
+                command.addOptions(startRev + ":" + last);
+            }
 
-        if (limitNumber > -1) {
-            command.addOptions("-l", limitNumber + "");
-        }
+            if (limitNumber > -1) {
+                command.addOptions("-l", limitNumber + "");
+            }
 
-        if (res.getType()==IResource.FILE) {
-            command.addOptions("-f");            
-        }
-        
-        if (res.getType()!=IResource.PROJECT) {
-            command.addOptions(res.getLocation().toOSString());
-        }
+            if (res.getType() == IResource.FILE) {
+                command.addOptions("-f");
+            }
 
-        String result = command.executeToString();
-        if (result.length() == 0) {
-            return null;
+            if (res.getType() != IResource.PROJECT) {
+                command.addOptions(res.getLocation().toOSString());
+            }
+
+            String result = command.executeToString();
+            if (result.length() == 0) {
+                return null;
+            }
+            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                    res, result, withFiles, Direction.LOCAL, null, null);
+            return revisions;
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
         }
-        Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                res, result, withFiles, Direction.LOCAL, null, null);
-        return revisions;
     }
        
 
@@ -136,23 +142,27 @@ public class HgLogClient extends AbstractParseChangesetClient {
     public static ChangeSet getChangeset(IResource res, String nodeId,
             boolean withFiles) throws HgException {
 
-        Assert.isNotNull(nodeId);
+        try {
+            Assert.isNotNull(nodeId);
 
-        HgCommand command = new HgCommand("log", getWorkingDirectory(res),
-                false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-        command.addOptions("--debug", "--style", AbstractParseChangesetClient
-                .getStyleFile(withFiles).getAbsolutePath());
-        command.addOptions("--rev", nodeId);
-        String result = command.executeToString();
+            HgCommand command = new HgCommand("log", getWorkingDirectory(res),
+                    false);
+            command
+                    .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+            command.addOptions("--debug", "--style", AbstractParseChangesetClient
+                    .getStyleFile(withFiles).getCanonicalPath());
+            command.addOptions("--rev", nodeId);
+            String result = command.executeToString();
 
-        Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                res, result, withFiles, Direction.LOCAL, null, null);
-        SortedSet<ChangeSet> set = revisions.get(res.getLocation());
-        if (set != null) {
-            return set.first();
+            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                    res, result, withFiles, Direction.LOCAL, null, null);
+            SortedSet<ChangeSet> set = revisions.get(res.getLocation());
+            if (set != null) {
+                return set.first();
+            }
+            return null;
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
         }
-        return null;
     }
 }

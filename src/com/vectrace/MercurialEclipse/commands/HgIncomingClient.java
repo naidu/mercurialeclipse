@@ -51,8 +51,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             
             command.addOptions("--debug", "--style",
                     AbstractParseChangesetClient.getStyleFile(true)
-                            .getAbsolutePath(), "--bundle", bundleFile
-                            .getAbsolutePath());
+                            .getCanonicalPath(), "--bundle", bundleFile
+                            .getCanonicalPath());
 
             URI uri = repository.getUri();
             if (uri != null) {
