@@ -39,17 +39,17 @@ public class MercurialResourceVariantComparator implements
             if (bitSet != null) {
                 int status = bitSet.length() - 1;
                 if (status == MercurialStatusCache.BIT_CLEAN) {
+                    if (repoRevision != null) {
+                        IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
+                                .getStorage(null);
+                        ChangeSet cs = remoteIStorage.getChangeSet();
 
-                    IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
-                            .getStorage(null);
-                    ChangeSet cs = remoteIStorage.getChangeSet();
-
-                    // if this is outgoing or incoming, it can't be equal to any
-                    // other
-                    // changeset
-                    if (cs.getDirection() == Direction.OUTGOING
-                            || cs.getDirection() == Direction.INCOMING) {
-                        return false;
+                        // if this is outgoing or incoming, it can't be equal to
+                        // any other changeset
+                        if (cs.getDirection() == Direction.OUTGOING
+                                || cs.getDirection() == Direction.INCOMING) {
+                            return false;
+                        }
                     }
 
                     // resource is clean and we compare against our local

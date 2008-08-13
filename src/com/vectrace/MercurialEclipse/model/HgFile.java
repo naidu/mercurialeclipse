@@ -9,30 +9,21 @@
  *     Charles O'Farrell - implementation
  *******************************************************************************/
 
-package com.vectrace.MercurialEclipse;
+package com.vectrace.MercurialEclipse.model;
 
-import org.eclipse.core.resources.IFile;
+import java.io.File;
+import java.io.IOException;
 
-public class HgFile
-{
-  private IFile file;
-  
-  public HgFile(IFile file) {
-    this.file = file;
-  }
-  
-  public IFile getFile()
-  {
-    return file;
-  }
+import org.eclipse.core.runtime.CoreException;
 
-  public String getName()
-  {
-    return file.getName();
-  }
+public class HgFile extends HgFilesystemObject {
+    private static final long serialVersionUID = 1L;
 
-  public boolean exists()
-  {
-    return file.exists();
-  }
+    public HgFile(File file) throws IOException, CoreException {
+        super(file);
+    }
+
+    public File getFile() {
+        return this;
+    }    
 }

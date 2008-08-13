@@ -215,7 +215,10 @@ public abstract class AbstractCache extends Observable {
                     .hasNext();) {
                 IPath path = i.next();
                 IResource member = root.getFileForLocation(path);
-                if (member != null) {
+                if (member != null
+                        && member.getType() != IResource.FOLDER
+                        && resource.getLocation().isPrefixOf(
+                                member.getLocation())) {
                     members.add(member);
                 }
             }
