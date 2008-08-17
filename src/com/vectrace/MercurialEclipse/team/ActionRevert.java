@@ -169,6 +169,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);
             }
+            if(monitor.isCanceled()) {
+                break;
+            }
         }
         
         for (CommitResource commitResource : resources) {
