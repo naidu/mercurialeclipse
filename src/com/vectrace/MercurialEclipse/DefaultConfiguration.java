@@ -10,6 +10,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
+import java.io.File;
+
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
@@ -17,6 +20,7 @@ import com.vectrace.MercurialEclipse.commands.IConfiguration;
 import com.vectrace.MercurialEclipse.commands.IConsole;
 import com.vectrace.MercurialEclipse.commands.IErrorHandler;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
 
@@ -179,6 +183,17 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
     public void printMessage(String message, Throwable root) {
         console.messageLineReceived(message, new Status(IStatus.INFO,
                 MercurialEclipsePlugin.ID, message, root));
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getHgRoot(java.
+     * io.File)
+     */
+    public File getHgRoot(File file) throws CoreException {
+        return MercurialTeamProvider.getHgRoot(file);
     }
 
 }

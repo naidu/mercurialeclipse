@@ -23,18 +23,18 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
-import org.eclipse.team.ui.synchronize.ISynchronizeScope;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
+import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -55,16 +55,16 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
             .getInstance();
 
-    private ISynchronizeScope myScope;
+    private ISynchronizationScope myScope;
     private IResource[] myRoots;
     private HgRepositoryLocation repositoryLocation;
     private IResourceVariantComparator comparator;
 
-    public MercurialSynchronizeSubscriber(ISynchronizeScope scope,
+    public MercurialSynchronizeSubscriber(
+            ISynchronizationScope synchronizationScope,
             HgRepositoryLocation repositoryLocation) {
-        this.myScope = scope;
+        this.myScope = synchronizationScope;
         this.repositoryLocation = repositoryLocation;
-        this.comparator = getResourceComparator();
     }
 
     @Override
@@ -117,7 +117,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                                     resource.getLocation())) {
                         
                         // Find current working directory changeset (not head)
-                        File root = MercurialTeamProvider.getHgRoot(resource);                                                
+                        File root = new File(HgRootClient.getHgRoot(resource));                                                
                         String nodeId = HgIdentClient.getCurrentChangesetId(root);
                         
                         // try to get from cache (without loading)
@@ -185,25 +185,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
      */
     private IStorageMercurialRevision getIncomingIStorage(IResource resource,
             ChangeSet csRemote) {
-        IStorageMercurialRevision incomingIStorage;
-        FileStatus[] files = csRemote.getChangedFiles();
-        FileStatus fileStatus = files[0];
-        for (FileStatus fs : files) {
-            if (fs.getPath().equals(
-                    resource.getProjectRelativePath().toOSString())) {
-                fileStatus = fs;
-                break;
-            }
-        }
-        // only if not removed
-        if (!fileStatus.getAction().toString().equals(
-                String.valueOf(FileStatus.Action.REMOVED))) {
-            incomingIStorage = new IStorageMercurialRevision(resource, csRemote
-                    .getRevision().getRevision()
-                    + "", csRemote.getChangeset(), csRemote);
-        } else {
-            incomingIStorage = null;
-        }
+        IStorageMercurialRevision incomingIStorage = new IStorageMercurialRevision(
+                resource, csRemote.getRevision().getRevision() + "", csRemote
+                        .getChangeset(), csRemote);
         return incomingIStorage;
     }
 
@@ -250,7 +234,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             toRefresh = ResourcesPlugin.getWorkspace().getRoot().getProjects();
         }
         Set<IProject> refreshed = new HashSet<IProject>(toRefresh.length);
-        monitor.beginTask("Refreshing "+getName()+" for "+repositoryLocation+"...", 10);
+        monitor.beginTask("Refreshing " + getName() + " for "
+                + repositoryLocation + "...", 10);
         monitor.subTask("Refreshing resources...");
         List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
         for (IResource resource : toRefresh) {
@@ -306,7 +291,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 resourcesToRefresh.addAll(Arrays.asList(outgoingMembers));
             }
 
-            for (IResource res : resourcesToRefresh) {                
+            for (IResource res : resourcesToRefresh) {
                 changeEvents.add(new SubscriberChangeEvent(this,
                         ISubscriberChangeEvent.SYNC_CHANGED, res));
             }

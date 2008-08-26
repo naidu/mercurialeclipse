@@ -22,6 +22,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class MercurialResourceVariantComparator implements
@@ -29,27 +30,35 @@ public class MercurialResourceVariantComparator implements
 
     private static MercurialStatusCache statusCache = MercurialStatusCache
             .getInstance();
+    private ChangeSet csWorkDir;
 
     public MercurialResourceVariantComparator() {
     }
 
     public boolean compare(IResource local, IResourceVariant repoRevision) {
         try {
+
+            if (csWorkDir == null) {
+                csWorkDir = LocalChangesetCache.getInstance()
+                        .getCurrentWorkDirChangeset(local);
+            }
+
             BitSet bitSet = statusCache.getStatus(local);
             if (bitSet != null) {
                 int status = bitSet.length() - 1;
                 if (status == MercurialStatusCache.BIT_CLEAN) {
+                    if (repoRevision != null) {
+                        IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
+                                .getStorage(null);
+                        ChangeSet cs = remoteIStorage.getChangeSet();
 
-                    IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
-                            .getStorage(null);
-                    ChangeSet cs = remoteIStorage.getChangeSet();
-
-                    // if this is outgoing or incoming, it can't be equal to any
-                    // other
-                    // changeset
-                    if (cs.getDirection() == Direction.OUTGOING
-                            || cs.getDirection() == Direction.INCOMING) {
-                        return false;
+                        // if this is outgoing or incoming, it can't be equal to
+                        // any other changeset
+                        if ((cs.getDirection() == Direction.INCOMING || cs
+                                .getDirection() == Direction.OUTGOING)
+                                && cs.getBranch().equals(csWorkDir.getBranch())) {
+                            return false;
+                        }
                     }
 
                     // resource is clean and we compare against our local
@@ -68,8 +77,13 @@ public class MercurialResourceVariantComparator implements
     }
 
     public boolean compare(IResourceVariant base, IResourceVariant remote) {
-        return base.getContentIdentifier()
-                .equals(remote.getContentIdentifier());
+        MercurialResourceVariant mrv = (MercurialResourceVariant) remote;
+        if (mrv.getRev().getChangeSet().getBranch().equals(
+                csWorkDir.getBranch())) {
+            return base.getContentIdentifier().equals(
+                    remote.getContentIdentifier());
+        }
+        return true;
     }
 
     public boolean isThreeWay() {

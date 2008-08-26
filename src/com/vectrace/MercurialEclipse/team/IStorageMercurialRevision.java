@@ -13,7 +13,6 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,8 +27,6 @@ import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -100,11 +97,9 @@ public class IStorageMercurialRevision implements IStorage {
         super();
         this.resource = res;
         ChangeSet cs = null;
-        try {
-            File root = HgRootClient.getHgRootAsFile(res);
-            String nodeId = HgIdentClient.getCurrentChangesetId(root);
-            cs = LocalChangesetCache.getInstance().getLocalChangeSet(res,
-                    nodeId);
+        try {            
+            cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(
+                    res);
             this.revision = cs.getChangesetIndex() + ""; // should be fetched
             // from id
             this.global = cs.getChangeset();

@@ -11,13 +11,14 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 
 /**
  * @author bastian
  *
  */
-public class HgRoot extends HgFolder {
+public class HgRoot extends File {
 
     private static final long serialVersionUID = 1L;
 
@@ -26,6 +27,10 @@ public class HgRoot extends HgFolder {
      */
     public HgRoot(String pathname) {
         super(pathname);        
+    }
+    
+    public HgRoot(File file) throws IOException {
+        this(file.getCanonicalPath());
     }
 
     /**

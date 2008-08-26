@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * 
  */
 public class MercurialSyncInfo extends SyncInfo {
-    // private final static Differencer DIFFERENCER = new Differencer();
+
 
     /**
      * @param local
@@ -37,13 +37,13 @@ public class MercurialSyncInfo extends SyncInfo {
     }
 
     @Override
-    protected int calculateKind() throws TeamException {
-        int result = super.calculateKind();
-        if (result == (CONFLICTING | CHANGE)) {
+    protected int calculateKind() throws TeamException {       
+        int description = super.calculateKind();
+
+        if (description == (CONFLICTING | CHANGE)) {
             // add resource conflict to status cache
             MercurialStatusCache.getInstance().addConflict(getLocal());
         }
-        return result;
+        return description;
     }
-
 }

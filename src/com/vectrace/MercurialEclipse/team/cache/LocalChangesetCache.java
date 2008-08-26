@@ -33,6 +33,7 @@ import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -267,33 +268,56 @@ public class LocalChangesetCache extends AbstractCache {
 
     public ChangeSet getLocalChangeSet(IResource res, String nodeId)
             throws HgException {
+        return getLocalChangeSet(res, nodeId, true);
+    }
+
+    public ChangeSet getLocalChangeSet(IResource res, String nodeId,
+            boolean redecorate) throws HgException {
         Assert.isNotNull(res);
         Assert.isNotNull(nodeId);
-        if (null != RepositoryProvider.getProvider(res.getProject(),
-                MercurialTeamProvider.ID)
-                && res.getProject().isOpen()) {
+        if (STATUS_CACHE.isSupervised(res)) {
+            ReentrantLock lock = getLock(res);
+            try {
+                lock.lock();
 
-            if (STATUS_CACHE.isSupervised(res)) {
-                ReentrantLock lock = getLock(res);
-                try {
-                    lock.lock();
-
-                    ChangeSet changeSet = getChangeSet(nodeId);
-                    if (changeSet == null) {
-                        changeSet = HgLogClient.getChangeset(res, nodeId,
-                                isGetFileInformationForChangesets());
-                    }
-                    SortedSet<ChangeSet> set = new TreeSet<ChangeSet>();
-                    if (changeSet != null) {
-                        set.add(changeSet);
-                        addToNodeMap(set);
-                    }
-                    return changeSet;
-                } finally {
-                    lock.unlock();
+                ChangeSet changeSet = getChangeSet(nodeId);
+                if (changeSet == null) {
+                    changeSet = HgLogClient.getChangeset(res, nodeId,
+                            isGetFileInformationForChangesets());
+                }
+                SortedSet<ChangeSet> set = new TreeSet<ChangeSet>();
+                if (changeSet != null) {
+                    set.add(changeSet);
+                    addToNodeMap(set);
+                }
+                return changeSet;
+            } finally {
+                lock.unlock();
+                if (redecorate) {
                     notifyChanged(res);
                 }
             }
+
+        }
+        return null;
+    }        
+
+    public ChangeSet getCurrentWorkDirChangeset(IResource res)
+            throws HgException {
+        try {
+            File root = HgClients.getHgRoot(res.getLocation().toFile());
+            String nodeId = HgIdentClient.getCurrentChangesetId(root);
+            if (nodeId != null
+                    && !nodeId
+                            .equals("0000000000000000000000000000000000000000")) {
+                return getLocalChangeSet(res, nodeId, false);
+            }
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
         }
         return null;
     }

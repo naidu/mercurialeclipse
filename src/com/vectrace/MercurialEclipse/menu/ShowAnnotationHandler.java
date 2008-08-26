@@ -14,8 +14,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 
-import com.vectrace.MercurialEclipse.HgFile;
 import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 /**
  * 
@@ -28,6 +28,7 @@ public class ShowAnnotationHandler extends AbstractHandler {
         return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Object execute(ExecutionEvent event) throws ExecutionException {
         try {
@@ -39,7 +40,8 @@ public class ShowAnnotationHandler extends AbstractHandler {
 
             IWorkbenchPart part = (IWorkbenchPart) context.getVariable("activePart");
 
-            new ShowAnnotationOperation(part, new HgFile(file)).run();
+            new ShowAnnotationOperation(part, new HgFile(file.getLocation()
+                    .toFile())).run();
         } catch (Exception e) {
             MessageDialog.openError(getShell(), "Hg says...", e.getMessage()
                     + "\nSee Error Log for more details.");

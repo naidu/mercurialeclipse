@@ -11,15 +11,18 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.eclipse.core.runtime.CoreException;
 
 /**
  * @author bastian
  * 
  */
-public class HgFolder extends File {
+public class HgFolder extends HgFilesystemObject {
     /**
      * 
      */
@@ -28,38 +31,59 @@ public class HgFolder extends File {
 
     /**
      * @param pathname
+     * @throws CoreException
+     * @throws IOException
      */
-    public HgFolder(String pathname) {
+    public HgFolder(String pathname) throws IOException, CoreException {
         super(pathname);
     }
 
     /**
      * @param uri
+     * @throws CoreException
+     * @throws IOException
      */
-    public HgFolder(URI uri) {
+    public HgFolder(URI uri) throws IOException, CoreException {
         super(uri);
     }
 
     /**
      * @param parent
      * @param child
+     * @throws CoreException
+     * @throws IOException
      */
-    public HgFolder(String parent, String child) {
+    public HgFolder(String parent, String child) throws IOException,
+            CoreException {
         super(parent, child);
     }
 
     /**
      * @param parent
      * @param child
+     * @throws CoreException
+     * @throws IOException
      */
-    public HgFolder(File parent, String child) {
+    public HgFolder(File parent, String child) throws IOException,
+            CoreException {
         super(parent, child);
     }
 
     /**
-     * @return the projectFile
+     * @param file
+     * @throws CoreException
+     * @throws IOException
      */
-    public List<File> getProjectFiles() {
+    public HgFolder(File file) throws IOException, CoreException {
+        super(file);
+    }
+
+    /**
+     * @return the projectFile
+     * @throws CoreException
+     * @throws IOException
+     */
+    public List<File> getProjectFiles() throws IOException, CoreException {
         List<File> pFiles = new ArrayList<File>();
         File[] subFiles = this.listFiles();
         if (subFiles != null) {

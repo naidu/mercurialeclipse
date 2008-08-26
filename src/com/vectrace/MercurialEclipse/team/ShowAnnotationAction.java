@@ -5,8 +5,8 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
-import com.vectrace.MercurialEclipse.HgFile;
 import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
+import com.vectrace.MercurialEclipse.model.HgFile;
 
 /**
  * 
@@ -23,7 +23,8 @@ public class ShowAnnotationAction extends SingleFileAction implements IObjectAct
 
 	@Override
 	protected void run(IFile file) throws Exception {
-		new ShowAnnotationOperation(part, new HgFile(file)).run();
+		new ShowAnnotationOperation(part, new HgFile(file.getLocation()
+                .toFile())).run();
 	}
 
 }

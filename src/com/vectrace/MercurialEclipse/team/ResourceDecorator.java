@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.Observable;
@@ -31,7 +30,6 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -95,8 +93,9 @@ public class ResourceDecorator extends LabelProvider implements
             IProject project = resource.getProject();
 
             if (project == null
-                    || null == RepositoryProvider.getProvider(project,
-                            MercurialTeamProvider.ID)) {
+                    || RepositoryProvider.getProvider(project,
+                            MercurialTeamProvider.ID) == null
+                    || !project.isAccessible()) {
                 return;
             }
 
@@ -110,8 +109,7 @@ public class ResourceDecorator extends LabelProvider implements
             if (showChangeset) {
                 // get recent project versions
                 if (!STATUS_CACHE.getLock(project).isLocked()
-                        && !STATUS_CACHE.getLock(resource)
-                                .isLocked()
+                        && !STATUS_CACHE.getLock(resource).isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(project)
                         && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
@@ -127,8 +125,7 @@ public class ResourceDecorator extends LabelProvider implements
                 }
             } else {
                 if (!STATUS_CACHE.getLock(project).isLocked()
-                        && !STATUS_CACHE.getLock(resource)
-                                .isLocked()
+                        && !STATUS_CACHE.getLock(resource).isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
                             "Updating status for project " + project.getName()
@@ -305,54 +302,40 @@ public class ResourceDecorator extends LabelProvider implements
         ChangeSet changeSet = null;
         String suffix = "";
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
-            File root = MercurialTeamProvider.getHgRoot(project);
-            String nodeId = HgIdentClient.getCurrentChangesetId(root);
-            if (nodeId != null
-                    && !nodeId
-                            .equals("0000000000000000000000000000000000000000")) {
-                changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        nodeId);
-                if (changeSet == null) {
-                    if (isShowChangeset()) {
-                        LocalChangesetCache.getInstance().getLocalChangeSets(
-                                project);
-                        changeSet = LocalChangesetCache.getInstance()
-                                .getChangeSet(nodeId);
-                    } else {
-                        changeSet = LocalChangesetCache.getInstance()
-                                .getLocalChangeSet(project, nodeId);
-                    }
-                }
-            } else {
-                suffix = " [ new ] ";
+            if (isShowChangeset()) {
+                LocalChangesetCache.getInstance().getLocalChangeSets(project);
             }
-            if (changeSet != null) {
-                suffix = " [ ";
-                String hex = ":" + changeSet.getNodeShort();
-                String tags = changeSet.getTag();
-                String branch = changeSet.getBranch();
-                String merging = project
-                        .getPersistentProperty(ResourceProperties.MERGING);
+            changeSet = LocalChangesetCache.getInstance()
+                    .getCurrentWorkDirChangeset(project);
+        } else {
+            suffix = " [ new ] ";
+        }
+        if (changeSet != null) {
+            suffix = " [ ";
+            String hex = ":" + changeSet.getNodeShort();
+            String tags = changeSet.getTag();
+            String branch = changeSet.getBranch();
+            String merging = project
+                    .getPersistentProperty(ResourceProperties.MERGING);
 
-                // rev info
-                suffix += changeSet.getChangesetIndex() + hex;
+            // rev info
+            suffix += changeSet.getChangesetIndex() + hex;
 
-                // branch info
-                if (branch != null && branch.length() > 0) {
-                    suffix += " @ " + branch;
-                }
-
-                // tags
-                if (tags != null && tags.length() > 0) {
-                    suffix += " (" + tags + ")";
-                }
-
-                // merge info
-                if (merging != null && merging.length() > 0) {
-                    suffix += " MERGING " + merging;
-                }
-                suffix += " ]";
+            // branch info
+            if (branch != null && branch.length() > 0) {
+                suffix += " @ " + branch;
             }
+
+            // tags
+            if (tags != null && tags.length() > 0) {
+                suffix += " (" + tags + ")";
+            }
+
+            // merge info
+            if (merging != null && merging.length() > 0) {
+                suffix += " MERGING " + merging;
+            }
+            suffix += " ]";
         }
         return suffix;
     }
@@ -367,7 +350,7 @@ public class ResourceDecorator extends LabelProvider implements
     }
 
     @SuppressWarnings("unchecked")
-    public void update(Observable o, Object updatedObject) {        
+    public void update(Observable o, Object updatedObject) {
         if (updatedObject instanceof Set) {
             Set changed = (Set) updatedObject;
             LabelProviderChangedEvent event = new LabelProviderChangedEvent(

@@ -10,11 +10,14 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 
 import junit.framework.TestCase;
+
+import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
@@ -160,5 +163,16 @@ public class TestConfiguration extends TestCase implements IConsole,
             return pref;
         }
         return defaultIfNotSet;
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.commands.IConfiguration#getHgRoot(java.
+     * io.File)
+     */
+    public File getHgRoot(File file) throws CoreException {
+        return HgRootClient.getHgRoot(file);
     }
 }

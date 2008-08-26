@@ -10,6 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,6 +22,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class HgParentClient extends AbstractClient {
 
@@ -75,10 +80,10 @@ public class HgParentClient extends AbstractClient {
         throw new HgException("Parse exception: '" + result + "'");
     }
 
-    public static int findCommonAncestor(IResource resource, String node1,
-            String node2) throws HgException {
+    public static int findCommonAncestor(File file, String node1, String node2)
+            throws HgException {
         HgCommand command = new HgCommand("debugancestor",
-                getWorkingDirectory(resource), false);
+                getWorkingDirectory(file), false);
         command.addOptions(node1, node2);
         String result = command.executeToString().trim();
         Matcher m = ANCESTOR_PATTERN.matcher(result);
@@ -87,7 +92,54 @@ public class HgParentClient extends AbstractClient {
         }
         throw new HgException("Parse exception: '" + result + "'");
     }
-    
+
+    /**
+     * This methods finds the common ancestor of two changesets, supporting
+     * overlays for using incoming changesets. Only one changeset may be
+     * incoming.
+     * 
+     * @param file
+     *            workingDirectory
+     * @param cs1
+     *            first changeset
+     * @param cs2
+     *            second changeset
+     * @return the id of the ancestor
+     * @throws HgException
+     */
+    public static int findCommonAncestor(File file, ChangeSet cs1, ChangeSet cs2)
+            throws HgException {
+        String result;
+        try {
+            List<String> commands = new ArrayList<String>();
+            commands.add(MercurialUtilities.getHGExecutable());
+            if (cs1.getBundleFile() != null || cs2.getBundleFile() != null) {
+                commands.add("-R");
+                if (cs1.getBundleFile() != null) {
+                    commands.add(cs1.getBundleFile().getCanonicalPath());
+                } else {
+                    commands.add(cs2.getBundleFile().getCanonicalPath());
+                }
+            }
+            commands.add("debugancestor");
+            commands.add(cs1.getChangeset());
+            commands.add(cs2.getChangeset());
+            
+            HgCommand command = new HgCommand(commands, getWorkingDirectory(file),
+                    false);            
+            result = command.executeToString().trim();
+            Matcher m = ANCESTOR_PATTERN.matcher(result);
+            if (m.matches()) {
+                return Integer.parseInt(m.group(1));
+            }
+            throw new HgException("Parse exception: '" + result + "'");
+        } catch (NumberFormatException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
+    }
+
     public static String findCommonAncestorNodeId(IResource resource,
             String node1, String node2) throws HgException {
         HgCommand command = new HgCommand("debugancestor",
@@ -108,6 +160,5 @@ public class HgParentClient extends AbstractClient {
         command.addOptions("-r", node);
         String[] lines = command.executeToString().split("\n");
         return lines;
-    }
-
+    }    
 }

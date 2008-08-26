@@ -13,38 +13,47 @@ package com.vectrace.MercurialEclipse.synchronize;
 import java.net.URISyntaxException;
 import java.util.Date;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.team.core.mapping.provider.MergeContext;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.team.ui.synchronize.ISynchronizeScope;
-import org.eclipse.team.ui.synchronize.SubscriberParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
+import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
-public class MercurialSynchronizeParticipant extends SubscriberParticipant {
+public class MercurialSynchronizeParticipant extends
+        ModelSynchronizeParticipant {
     private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION";
     private String secondaryId;
     private HgRepositoryLocation repositoryLocation;
-    private MercurialSynchronizeSubscriber subscriber = null;
 
-    public MercurialSynchronizeParticipant(ISynchronizeScope scope,
+    public MercurialSynchronizeParticipant(
+            MergeContext ctx,
             HgRepositoryLocation repositoryLocation) {
-        super(scope);
-        this.repositoryLocation = repositoryLocation;
-        subscriber = new MercurialSynchronizeSubscriber(scope,
-                repositoryLocation);
-        setSubscriber(subscriber);
-        this.secondaryId = new Date().toString();        
+        super(ctx);
+        this.repositoryLocation = repositoryLocation;        
+        this.secondaryId = new Date().toString();
     }
 
     @Override
     public void init(String secId, IMemento memento) throws PartInitException {
         super.init(secondaryId, memento);
-        
-        IMemento myMemento = memento.getChild(MercurialSynchronizeParticipant.class.getName());
-        
+        try {
+            ISynchronizeParticipantDescriptor descriptor = TeamUI
+                    .getSynchronizeManager().getParticipantDescriptor(getId());
+            setInitializationData(descriptor);
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
+
+        IMemento myMemento = memento
+                .getChild(MercurialSynchronizeParticipant.class.getName());
+
         this.secondaryId = secId;
         String uri = myMemento.getString(REPOSITORY_LOCATION);
 
@@ -53,18 +62,16 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
         } catch (URISyntaxException e) {
             throw new PartInitException(e.getLocalizedMessage(), e);
         }
-            
-        subscriber = new MercurialSynchronizeSubscriber(getScope(), repositoryLocation);
-        setSubscriber(subscriber);            
     }
-
+        
     public MercurialSynchronizeParticipant() {
     }
-    
+
     @Override
-    public void saveState(IMemento memento) {        
+    public void saveState(IMemento memento) {
         super.saveState(memento);
-        IMemento myMemento = memento.createChild(MercurialSynchronizeParticipant.class.getName());
+        IMemento myMemento = memento
+                .createChild(MercurialSynchronizeParticipant.class.getName());
         myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getUri()
                 .toString());
     }
@@ -89,28 +96,10 @@ public class MercurialSynchronizeParticipant extends SubscriberParticipant {
     }
 
     @Override
-    public IResource[] getResources() {
-        return subscriber.roots();
-    }
-
-    @Override
     public String getName() {
-        IResource[] resources = getScope().getRoots();
-        String res = "";
-        if (resources != null) {
-            res = res.concat(" on resources: ");
-            for (IResource resource : resources) {
-                res = res.concat("\n\t" + resource.getName());
-            }
-        }
-        return "Mercurial Synchronization".concat(res).concat("\nRepository: ")
-                .concat(""+repositoryLocation);
-    }
-
-    @Override
-    protected String getLongTaskName(IResource[] resources) {
-        return "Mercurial: Refreshing resources for synchronization...";
-    }
+        return "Mercurial Synchronization on Repository: ".concat(""
+                + repositoryLocation);
+    }    
 
     /**
      * @return the repositoryLocation

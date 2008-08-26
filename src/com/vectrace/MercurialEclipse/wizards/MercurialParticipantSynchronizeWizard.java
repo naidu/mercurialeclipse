@@ -16,16 +16,21 @@ import java.util.Properties;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.wizard.IWizard;
-import org.eclipse.team.ui.synchronize.ISynchronizeScope;
-import org.eclipse.team.ui.synchronize.SubscriberParticipant;
-import org.eclipse.team.ui.synchronize.SubscriberParticipantWizard;
+import org.eclipse.team.core.mapping.ISynchronizationScope;
+import org.eclipse.team.core.mapping.provider.MergeContext;
+import org.eclipse.team.core.subscribers.SubscriberScopeManager;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ModelParticipantWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -33,7 +38,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * 
  */
 public class MercurialParticipantSynchronizeWizard extends
-        SubscriberParticipantWizard implements IWizard {
+        ModelParticipantWizard implements IWizard {
     private final IWizard importWizard = new CloneRepoWizard();
     private HgWizardPage page;
     private Properties pageProperties = null;
@@ -48,22 +53,6 @@ public class MercurialParticipantSynchronizeWizard extends
                     .addNewSection("MercurialParticipantSynchronizeWizard"); //$NON-NLS-1$
         }
         setDialogSettings(section);
-    }
-
-    @Override
-    protected SubscriberParticipant createParticipant(ISynchronizeScope scope) {
-        String url = pageProperties.getProperty("url"); //$NON-NLS-1$
-        String user = pageProperties.getProperty("user"); //$NON-NLS-1$
-        String pass = pageProperties.getProperty("password"); //$NON-NLS-1$
-        HgRepositoryLocation repo;
-        try {
-            repo = new HgRepositoryLocation(url, user, pass);
-            return new MercurialSynchronizeParticipant(scope, repo);
-        } catch (URISyntaxException e) {
-            MercurialEclipsePlugin.logError(e);
-            page.setErrorMessage(e.getLocalizedMessage());
-        }
-        return null;
     }
 
     @Override
@@ -113,6 +102,41 @@ public class MercurialParticipantSynchronizeWizard extends
         page.finish(new NullProgressMonitor());
         this.pageProperties = page.getProperties();
         return super.performFinish();
+    }
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.team.ui.synchronize.ModelParticipantWizard#createParticipant
+     * (org.eclipse.core.resources.mapping.ResourceMapping[])
+     */
+    @Override
+    protected ISynchronizeParticipant createParticipant(
+            ResourceMapping[] selectedMappings) {
+        String url = pageProperties.getProperty("url"); //$NON-NLS-1$
+        String user = pageProperties.getProperty("user"); //$NON-NLS-1$
+        String pass = pageProperties.getProperty("password"); //$NON-NLS-1$
+        HgRepositoryLocation repo;
+        try {
+            repo = new HgRepositoryLocation(url, user, pass);
+            ISynchronizationScope scope = null; // TODO
+
+            MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(
+                    scope, repo);
+
+            SubscriberScopeManager manager = new SubscriberScopeManager(
+                    "HgSubscriberScopeManager", selectedMappings, subscriber,
+                    false);
+
+            MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);           
+            
+            return new MercurialSynchronizeParticipant(ctx, repo);
+        } catch (URISyntaxException e) {
+            MercurialEclipsePlugin.logError(e);
+            page.setErrorMessage(e.getLocalizedMessage());
+        }
+        return null;
     }
 
 }
