@@ -10,12 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
@@ -55,7 +53,8 @@ public abstract class AbstractCache extends Observable {
      * @param changeSetMap
      * @throws HgException
      */
-    protected void addResourcesToCache(IProject project,
+    protected void addResourcesToCache(
+            IProject project,
             HgRepositoryLocation repositoryLocation,
             Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> changeSetMap,
             Direction direction) throws HgException {
@@ -67,7 +66,7 @@ public abstract class AbstractCache extends Observable {
         if (removeMap != null) {
             removeMap.clear();
             changeSetMap.remove(repositoryLocation);
-        }        
+        }
 
         // get changesets from hg
         Map<IPath, SortedSet<ChangeSet>> resources;
@@ -134,7 +133,7 @@ public abstract class AbstractCache extends Observable {
     protected void addToProjectResources(IProject project, IResource member) {
         if (member.getType() == IResource.PROJECT) {
             return;
-        }        
+        }
         synchronized (projectResources) {
             Set<IResource> set = AbstractCache.projectResources.get(project);
             if (set == null) {
@@ -163,7 +162,7 @@ public abstract class AbstractCache extends Observable {
         Set<IResource> resources = new HashSet<IResource>();
         resources.add(resource);
         notifyChanged(resources);
-    }      
+    }
 
     /**
      * @param resources
@@ -206,9 +205,9 @@ public abstract class AbstractCache extends Observable {
      * @param members
      * @param changeSets
      */
-    protected List<IResource> getMembers(IResource resource,
+    protected Set<IResource> getMembers(IResource resource,
             Map<IPath, SortedSet<ChangeSet>> changeSets) {
-        List<IResource> members = new ArrayList<IResource>();
+        Set<IResource> members = new HashSet<IResource>();
         if (changeSets != null) {
             IWorkspaceRoot root = resource.getWorkspace().getRoot();
             for (Iterator<IPath> i = changeSets.keySet().iterator(); i

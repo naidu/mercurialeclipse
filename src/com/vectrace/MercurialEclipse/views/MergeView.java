@@ -98,7 +98,8 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     String[] parents = HgParentClient
                             .getParentNodeIds(currentProject);
                     int ancestor = HgParentClient.findCommonAncestor(
-                            currentProject, parents[0], parents[1]);
+                            currentProject.getLocation().toFile(), parents[0],
+                            parents[1]);
 
                     RevisionNode mergeNode = new RevisionNode(
                             new IStorageMercurialRevision(file, mergeNodeId));

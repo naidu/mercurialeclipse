@@ -12,8 +12,8 @@ package com.vectrace.MercurialEclipse.team.cache;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -148,8 +148,7 @@ public class OutgoingChangesetCache extends AbstractCache {
         }
         Map<IPath, SortedSet<ChangeSet>> changeSets = outgoingChangeSets
                 .get(repositoryLocation);
-        List<IResource> members = getMembers(resource, changeSets);
-
+        Set<IResource> members = getMembers(resource, changeSets);
         return members.toArray(new IResource[members.size()]);
     }
 
