@@ -15,8 +15,8 @@ import java.util.Date;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.mapping.provider.MergeContext;
+import org.eclipse.team.core.mapping.provider.SynchronizationContext;
 import org.eclipse.team.ui.TeamUI;
-import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
 import org.eclipse.ui.IMemento;
@@ -24,7 +24,6 @@ import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
 public class MercurialSynchronizeParticipant extends
         ModelSynchronizeParticipant {
@@ -74,15 +73,19 @@ public class MercurialSynchronizeParticipant extends
                 .createChild(MercurialSynchronizeParticipant.class.getName());
         myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getUri()
                 .toString());
+        
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#initializeContext
+     * (org.eclipse.team.core.mapping.provider.SynchronizationContext)
+     */
     @Override
-    protected void initializeConfiguration(
-            final ISynchronizePageConfiguration configuration) {
-        super.initializeConfiguration(configuration);
-
-        MercurialSynchronizePageActionGroup syncPageActionGroup = new MercurialSynchronizePageActionGroup();
-        configuration.addActionContribution(syncPageActionGroup);
+    protected void initializeContext(SynchronizationContext context) {
+        super.initializeContext(context);
     }
 
     @Override
