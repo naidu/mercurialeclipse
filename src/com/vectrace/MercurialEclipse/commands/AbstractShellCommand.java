@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
 
@@ -140,6 +141,12 @@ public abstract class AbstractShellCommand {
             cmdString = cmdString.substring(0, cmdString.length() - 1);
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
+            
+            // set locale to english have deterministic output
+            Map<String, String> env = builder.environment();
+            env.put("LC_ALL", "en_EN");
+            
+            
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
