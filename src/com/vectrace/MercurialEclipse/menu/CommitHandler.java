@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.window.Window;
 
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
@@ -39,7 +41,7 @@ public class CommitHandler extends MultipleResourcesHandler {
             // add new resources
             List<IResource> filesToAdd = commitDialog.getResourcesToAdd();
             HgAddClient.addResources(filesToAdd, null);
-            
+
             // remove deleted resources
             List<IResource> filesToRemove = commitDialog.getResourcesToRemove();
             HgRemoveClient.removeResources(filesToRemove);
@@ -47,14 +49,13 @@ public class CommitHandler extends MultipleResourcesHandler {
             // commit all
             IResource[] resourcesToCommit = commitDialog.getResourcesToCommit();
             String messageToCommit = commitDialog.getCommitMessage();
-            
-            
 
             HgCommitClient.commitResources(Arrays.asList(resourcesToCommit),
-                    null, // user
-                    messageToCommit, null); // monitor
+                    HgClients.getDefaultUserName(), messageToCommit,
+                    new NullProgressMonitor());
 
-            new RefreshJob("Refreshing local changesets after commit...", null, project).schedule();           
+            new RefreshJob("Refreshing local changesets after commit...", null,
+                    project).schedule();
         }
     }
 

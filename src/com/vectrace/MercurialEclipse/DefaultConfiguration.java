@@ -41,7 +41,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * ()
      */
     public String getDefaultUserName() {
-        return MercurialUtilities.getHGUsername();
+        return MercurialUtilities.getHGUsername(false);
     }
 
     /*

@@ -38,6 +38,7 @@ import org.eclipse.ui.dialogs.PreferencesUtil;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
@@ -293,14 +294,19 @@ public class MercurialUtilities {
     public static String getHGUsername(boolean configureIfMissing) {
         String uname = getHGUsername();
 
-        if (uname != null) {
+        if (uname != null && uname.length() != 0) {
             return uname;
         }
         if (configureIfMissing) {
             configureUsername();
             return getHGUsername();
         }
-        return System.getProperty("user.name");
+        try {
+            return HgConfigClient.getHgConfig(ResourcesPlugin.getWorkspace()
+                    .getRoot().getLocation().toFile(), "ui.username");
+        } catch (HgException e) {
+            return System.getProperty("user.name");
+        }
     }
 
     /**
