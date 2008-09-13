@@ -93,7 +93,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 if (obj instanceof IResource) {
                     IResource resource = (IResource) obj;
                     boolean merging = resource.getProject()
-                            .getPersistentProperty(ResourceProperties.MERGING) == null;
+                            .getPersistentProperty(ResourceProperties.MERGING) != null;
                     boolean supervised = MercurialUtilities
                             .hgIsTeamProviderFor(resource, false) == true;
                     
