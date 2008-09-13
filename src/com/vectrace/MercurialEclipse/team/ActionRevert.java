@@ -82,16 +82,22 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     public void run(IAction action) {
         Shell shell;
         IWorkbench workbench;
-        
+
         // do the actual work in here
         List<IResource> resources;
         try {
             root = null;
             resources = new ArrayList<IResource>();
+
             for (Object obj : selection.toList()) {
                 if (obj instanceof IResource) {
                     IResource resource = (IResource) obj;
-                    if (MercurialUtilities.hgIsTeamProviderFor(resource, true) == true) {
+                    boolean merging = resource.getProject()
+                            .getPersistentProperty(ResourceProperties.MERGING) == null;
+                    boolean supervised = MercurialUtilities
+                            .hgIsTeamProviderFor(resource, false) == true;
+                    
+                    if (supervised && !merging) {
                         resources.add(resource);
                         if (root == null) {
                             root = new HgRoot(MercurialUtilities
@@ -100,47 +106,47 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                         }
                     }
                 }
-            }       
-        
-        CommitResource[] commitResources = new CommitResourceUtil(root)
-                .getCommitResources(resources.toArray(new IResource[resources
-                        .size()]));
-        
-        // Check to see if there are any that are untracked.
-        int count = 0;
-        for (int i = 0; i < commitResources.length; i++) {
-            if (!commitResources[i].getStatus().startsWith(
-                    CommitDialog.FILE_UNTRACKED)) {
-                count++;
             }
-        }
 
-        if (count != 0) {
-            RevertDialog chooser = new RevertDialog(Display.getCurrent()
-                    .getActiveShell());
-            chooser.setFiles(commitResources);
-            if (chooser.open() == Window.OK) {
-                final List<CommitResource> result = chooser.getSelection();
-                new SafeWorkspaceJob("Revert files") {
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        doRevert(monitor, result);
-                        return Status.OK_STATUS;
-                    }
-                }.schedule();
+            CommitResource[] commitResources = new CommitResourceUtil(root)
+                    .getCommitResources(resources
+                            .toArray(new IResource[resources.size()]));
+
+            // Check to see if there are any that are untracked.
+            int count = 0;
+            for (int i = 0; i < commitResources.length; i++) {
+                if (!commitResources[i].getStatus().startsWith(
+                        CommitDialog.FILE_UNTRACKED)) {
+                    count++;
+                }
             }
-        } else {
-            // Get shell & workbench
-            if ((window != null) && (window.getShell() != null)) {
-                shell = window.getShell();
+
+            if (count != 0) {
+                RevertDialog chooser = new RevertDialog(Display.getCurrent()
+                        .getActiveShell());
+                chooser.setFiles(commitResources);
+                if (chooser.open() == Window.OK) {
+                    final List<CommitResource> result = chooser.getSelection();
+                    new SafeWorkspaceJob("Revert files") {
+                        @Override
+                        protected IStatus runSafe(IProgressMonitor monitor) {
+                            doRevert(monitor, result);
+                            return Status.OK_STATUS;
+                        }
+                    }.schedule();
+                }
             } else {
-                workbench = PlatformUI.getWorkbench();
-                shell = workbench.getActiveWorkbenchWindow().getShell();
+                // Get shell & workbench
+                if ((window != null) && (window.getShell() != null)) {
+                    shell = window.getShell();
+                } else {
+                    workbench = PlatformUI.getWorkbench();
+                    shell = workbench.getActiveWorkbenchWindow().getShell();
+                }
+                MessageDialog.openInformation(shell,
+                        "Mercurial Eclipse hg revert", "No files to revert!");
             }
-            MessageDialog.openInformation(shell, "Mercurial Eclipse hg revert",
-                    "No files to revert!");
-        }
-        } catch (HgException e) {
+        } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e);
         }
@@ -151,7 +157,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         // the last argument will be replaced with a path
         String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert",
                 "--no-backup", "--", "" };
-        monitor.beginTask("Reverting resources...", resources.size()*2);
+        monitor.beginTask("Reverting resources...", resources.size() * 2);
         for (CommitResource revertResource : resources) {
             IResource resource = revertResource.getResource();
             // Resource could be inside a link or something do nothing
@@ -169,13 +175,13 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);
             }
-            if(monitor.isCanceled()) {
+            if (monitor.isCanceled()) {
                 break;
             }
         }
-        
+
         for (CommitResource commitResource : resources) {
-            monitor.subTask("Refreshing "+commitResource+"...");
+            monitor.subTask("Refreshing " + commitResource + "...");
             IResource resource = commitResource.getResource();
             try {
                 resource.refreshLocal(IResource.DEPTH_ONE, monitor);
@@ -183,22 +189,22 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 MercurialEclipsePlugin.logError(e);
             }
             monitor.worked(1);
-//            if (!refreshedProjects.contains(resource.getProject())) {
-//                final IProject proj = resource.getProject();
-//                new SafeUiJob("Updating status") {
-//                    @Override
-//                    protected IStatus runSafe(IProgressMonitor monitor1) {
-//                        try {
-//                            MercurialStatusCache.getInstance().refresh(proj);
-//                        } catch (TeamException e) {
-//                            MercurialEclipsePlugin.logError(
-//                                    "Unable to refresh project: ", e);
-//                        }
-//                        return super.runSafe(monitor1);
-//                    }
-//                }.schedule();
-//                refreshedProjects.add(proj);
-//            }
+            // if (!refreshedProjects.contains(resource.getProject())) {
+            // final IProject proj = resource.getProject();
+            // new SafeUiJob("Updating status") {
+            // @Override
+            // protected IStatus runSafe(IProgressMonitor monitor1) {
+            // try {
+            // MercurialStatusCache.getInstance().refresh(proj);
+            // } catch (TeamException e) {
+            // MercurialEclipsePlugin.logError(
+            // "Unable to refresh project: ", e);
+            // }
+            // return super.runSafe(monitor1);
+            // }
+            // }.schedule();
+            // refreshedProjects.add(proj);
+            // }
         }
         monitor.done();
     }
