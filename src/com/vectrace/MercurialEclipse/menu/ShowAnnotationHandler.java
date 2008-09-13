@@ -28,7 +28,7 @@ public class ShowAnnotationHandler extends AbstractHandler {
         return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
     }
 
-    @Override
+    
     @SuppressWarnings("unchecked")
     public Object execute(ExecutionEvent event) throws ExecutionException {
         try {
