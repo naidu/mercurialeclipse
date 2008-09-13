@@ -140,7 +140,10 @@ public class MercurialHistory extends FileHistory {
      * @see org.eclipse.team.core.history.IFileHistory#getFileRevisions()
      */
     public IFileRevision[] getFileRevisions() {
-        return revisions.toArray(new MercurialRevision[revisions.size()]);
+        if (revisions != null) {
+            return revisions.toArray(new MercurialRevision[revisions.size()]);
+        }
+        return new IFileRevision[0];
     }
 
     /*
