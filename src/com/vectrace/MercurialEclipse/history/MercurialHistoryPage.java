@@ -440,7 +440,8 @@ public class MercurialHistoryPage extends HistoryPage {
 
     public void refresh() {
         if (refreshFileHistoryJob == null) {
-            refreshFileHistoryJob = new RefreshMercurialHistory(-1,
+            refreshFileHistoryJob = new RefreshMercurialHistory(
+                    Integer.MAX_VALUE,
                     mercurialHistory);
         }
 

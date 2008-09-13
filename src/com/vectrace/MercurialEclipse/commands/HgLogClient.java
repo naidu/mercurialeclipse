@@ -104,13 +104,13 @@ public class HgLogClient extends AbstractParseChangesetClient {
                     AbstractParseChangesetClient.getStyleFile(withFiles)
                             .getCanonicalPath());
 
-            if (startRev >= 0) {
+            if (startRev >= 0 && startRev != Integer.MAX_VALUE) {                
                 int last = Math.max(startRev - limitNumber, 0);
                 command.addOptions("-r");
                 command.addOptions(startRev + ":" + last);
             }
 
-            if (limitNumber > -1) {
+            if (limitNumber > 0) {
                 command.addOptions("-l", limitNumber + "");
             }
 
