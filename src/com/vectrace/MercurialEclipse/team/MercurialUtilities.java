@@ -302,7 +302,7 @@ public class MercurialUtilities {
             return getHGUsername();
         }
         try {
-            return HgConfigClient.getHgConfig(ResourcesPlugin.getWorkspace()
+            return HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace()
                     .getRoot().getLocation().toFile(), "ui.username");
         } catch (HgException e) {
             return System.getProperty("user.name");
