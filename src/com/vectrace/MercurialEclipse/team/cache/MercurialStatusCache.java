@@ -43,14 +43,17 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -743,11 +746,8 @@ public class MercurialStatusCache extends AbstractCache implements
 
                     // walk tree
                     delta.accept(visitor);
-                    ISchedulingRule rule = ResourcesPlugin.getWorkspace()
-                            .getRuleFactory().modifyRule(
-                                    ResourcesPlugin.getWorkspace().getRoot());
-
-                    IWorkspaceRunnable job = new IWorkspaceRunnable() {
+                    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+                    final IWorkspaceRunnable job = new IWorkspaceRunnable() {
 
                         public void run(IProgressMonitor monitor)
                                 throws CoreException {
@@ -768,8 +768,7 @@ public class MercurialStatusCache extends AbstractCache implements
                                     for (IProject project : projects) {
                                         monitor.subTask("Refreshing project "
                                                 + project.getName() + "...");
-                                        refreshStatus(project,
-                                                new NullProgressMonitor());
+                                        refreshStatus(project, monitor);
                                         monitor.worked(1);
                                     }
 
@@ -807,9 +806,24 @@ public class MercurialStatusCache extends AbstractCache implements
                                 monitor.done();
                             }
                         }
-                    };
-                    ResourcesPlugin.getWorkspace().run(job, rule,
-                            IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
+                    };                    
+                    new SafeWorkspaceJob("Refresh status...") {
+                        @Override
+                        protected IStatus runSafe(IProgressMonitor monitor) {
+                            ISchedulingRule rule = workspace.getRuleFactory()
+                                    .modifyRule(workspace.getRoot());
+                            try {
+                                workspace.run(job, rule,
+                                        IWorkspace.AVOID_UPDATE, monitor);
+                            } catch (CoreException e) {
+                                MercurialEclipsePlugin.logError(e);
+                                return new Status(IStatus.ERROR,
+                                        MercurialEclipsePlugin.ID, e
+                                                .getLocalizedMessage(), e);                                
+                            }
+                            return super.runSafe(monitor);
+                        }
+                    }.schedule();
                 }
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
