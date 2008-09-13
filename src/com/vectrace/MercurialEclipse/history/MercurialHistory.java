@@ -170,7 +170,7 @@ public class MercurialHistory extends FileHistory {
                             "500"));
 
             // check if we have reached the bottom (initially = 0)
-            if (from == this.bottom) {
+            if (from == this.bottom || from < 0) {
                 return;
             }
             Map<IPath, SortedSet<ChangeSet>> map = HgLogClient.getProjectLog(

@@ -53,6 +53,8 @@ public class ChangesetTable extends Composite {
     private int logBatchSize;
     private boolean autoFetch = true;
 
+    private boolean bottomNotFetched = true;
+
     public ChangesetTable(Composite parent, IResource resource) {
         this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
                 | SWT.V_SCROLL | SWT.H_SCROLL, resource);
@@ -134,12 +136,18 @@ public class ChangesetTable extends Composite {
      */
     private void updateTable(int startRev) throws HgException {
         if (autoFetch) {
-            if (startRev > 0) {
+            if (startRev - logBatchSize > 0 || bottomNotFetched) {
                 LocalChangesetCache.getInstance().refreshAllLocalRevisions(
                         resource, true, logBatchSize, startRev, false);
             }
             SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
                     .getLocalChangeSets(resource);
+            
+            // only fetch rev 0:0+logbatchsize once
+            if (set.size() == 0 || set.first().getChangesetIndex() == 0) {
+                bottomNotFetched = false;            
+            }
+            
             SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
                     Collections.reverseOrder());
             reverseOrderSet.addAll(set);

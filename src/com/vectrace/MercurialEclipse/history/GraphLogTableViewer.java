@@ -63,11 +63,11 @@ public class GraphLogTableViewer extends TableViewer {
             paint(event, gcs.getAfter(), 2);
         }
         Table table = tableItem.getParent();
+        int from = rev.getChangeSet().getChangesetIndex() - 1;
         if (tableItem.equals(table.getItems()[table.getItemCount() - 1])
-                && rev.getChangeSet().getChangesetIndex() - 1 != mhp
-                        .getMercurialHistory().getBottom()) {
+                && from != mhp.getMercurialHistory().getBottom() && from >= 0) {
             MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
-                    rev.getChangeSet().getChangesetIndex() - 1, mhp
+                    from, mhp
                             .getMercurialHistory());
             refreshJob.schedule();
             try {
