@@ -49,9 +49,8 @@ public class HgQImportClient extends AbstractClient {
             if (existing) {
                 command.addOptions("--existing");
             } else {
-                command.addOptions("--name");
-            }
-            patchFile.toOSString();
+                command.addOptions("--name", patchFile.toOSString());
+            }            
         }
         
         return command.executeToString();

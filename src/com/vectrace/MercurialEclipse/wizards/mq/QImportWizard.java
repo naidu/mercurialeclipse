@@ -78,7 +78,7 @@ public class QImportWizard extends HgWizard {
             getContainer().run(true, false, impOperation);
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
-            page.setErrorMessage(e.getCause().getLocalizedMessage());
+            page.setErrorMessage(e.getLocalizedMessage());
             return false;
         }
         PatchQueueView.getView().populateTable();

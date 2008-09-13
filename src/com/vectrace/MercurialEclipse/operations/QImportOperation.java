@@ -15,9 +15,11 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.mq.HgQImportClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -69,7 +71,20 @@ public class QImportOperation extends HgOperation {
                     patchFile);
             monitor.worked(1);
             monitor.subTask("Refreshing Patch Queue View...");
-            PatchQueueView.getView().populateTable();
+            new SafeUiJob("Refreshing PatchQueueView...") {
+                /*
+                 * (non-Javadoc)
+                 * 
+                 * @see
+                 * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse
+                 * .core.runtime.IProgressMonitor)
+                 */
+                @Override
+                protected IStatus runSafe(IProgressMonitor monitor) {
+                    PatchQueueView.getView().populateTable();
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
             monitor.worked(1);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);

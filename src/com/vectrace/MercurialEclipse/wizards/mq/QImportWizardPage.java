@@ -132,11 +132,15 @@ public class QImportWizardPage extends HgWizardPage {
                         patchFile.setText(file.getCanonicalPath());
                     }
                 } catch (Exception e1) {
-                    setErrorMessage(e1.getCause().getLocalizedMessage());
-                    MercurialEclipsePlugin.logError(e1);
+                    String msg = e1.getLocalizedMessage();
+                    if (e1.getCause() != null) {
+                        msg = e1.getCause().getLocalizedMessage();
+                        setErrorMessage(msg);
+                        MercurialEclipsePlugin.logError(e1);
+                    }
                 }
-            }
 
+            }
         });
     }
 
@@ -152,12 +156,14 @@ public class QImportWizardPage extends HgWizardPage {
         File patchDir = new File(hgRoot + File.separator
                 + ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
         File[] patches = patchDir.listFiles();
-        for (File patch : patches) {
-            if (patch.getCanonicalPath().equals(file.getCanonicalPath())
-                    || patch.getName().equals(file.getName())) {
-                setMessage(Messages
-                        .getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
-                existing = true;
+        if (patches != null) {
+            for (File patch : patches) {
+                if (patch.getCanonicalPath().equals(file.getCanonicalPath())
+                        || patch.getName().equals(file.getName())) {
+                    setMessage(Messages
+                            .getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
+                    existing = true;
+                }
             }
         }
     }
@@ -174,7 +180,7 @@ public class QImportWizardPage extends HgWizardPage {
                 if (revCheckBox.getSelection()) {
                     if (changesetTable.getChangesets() == null
                             || changesetTable.getChangesets().length == 0) {
-                        setErrorMessage(null);              
+                        setErrorMessage(null);
                     }
                 }
                 // en-/disable patch file text field
@@ -191,8 +197,8 @@ public class QImportWizardPage extends HgWizardPage {
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 150;
         gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(revGroup, SWT.MULTI
-                | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
+        this.changesetTable = new ChangesetTable(revGroup,
+                SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
                         | SWT.H_SCROLL, resource);
         this.changesetTable.setLayoutData(gridData);
         this.changesetTable.setEnabled(false);
@@ -237,8 +243,6 @@ public class QImportWizardPage extends HgWizardPage {
     public boolean finish(IProgressMonitor monitor) {
         return super.finish(monitor);
     }
-
-    
 
     /**
      * @return the revisions
