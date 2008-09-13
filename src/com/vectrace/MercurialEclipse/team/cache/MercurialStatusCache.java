@@ -36,21 +36,21 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -246,7 +246,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return
      * @throws HgException
      */
-    public ReentrantLock getLock(IResource resource) throws HgException {        
+    public ReentrantLock getLock(IResource resource) throws HgException {
         if (!resource.isAccessible() || resource.isDerived()
                 || resource.isLinked()
                 || !MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
@@ -743,10 +743,14 @@ public class MercurialStatusCache extends AbstractCache implements
 
                     // walk tree
                     delta.accept(visitor);
-                    new SafeWorkspaceJob(
-                            "Refreshing status for changed resources") {
-                        @Override
-                        protected IStatus runSafe(IProgressMonitor monitor) {
+                    ISchedulingRule rule = ResourcesPlugin.getWorkspace()
+                            .getRuleFactory().modifyRule(
+                                    ResourcesPlugin.getWorkspace().getRoot());
+
+                    IWorkspaceRunnable job = new IWorkspaceRunnable() {
+
+                        public void run(IProgressMonitor monitor)
+                                throws CoreException {
 
                             // now process gathered changes (they are in the
                             // lists)
@@ -799,18 +803,13 @@ public class MercurialStatusCache extends AbstractCache implements
                                         .subTask("Triggering decorator update...");
                                 notifyChanged(resources);
                                 monitor.worked(1);
-                            } catch (HgException e) {
-                                MercurialEclipsePlugin.logError(e);
-                                return new Status(IStatus.ERROR,
-                                        MercurialEclipsePlugin.ID, e
-                                                .getLocalizedMessage(), e);
                             } finally {
                                 monitor.done();
                             }
-
-                            return super.runSafe(monitor);
                         }
-                    }.schedule();
+                    };
+                    ResourcesPlugin.getWorkspace().run(job, rule,
+                            IWorkspace.AVOID_UPDATE, new NullProgressMonitor());
                 }
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
