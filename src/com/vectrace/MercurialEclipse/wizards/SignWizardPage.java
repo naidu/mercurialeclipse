@@ -46,6 +46,7 @@ public class SignWizardPage extends HgWizardPage {
     private ChangesetTable changesetTable;
     private Text messageTextField;
     private Text passTextField;
+    private boolean gotGPGkeys;
 
     /**
      * @param pageName
@@ -84,7 +85,9 @@ public class SignWizardPage extends HgWizardPage {
                 ChangeSet cs = changesetTable.getSelection();
                 messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.text") //$NON-NLS-1$
                         .concat(cs.toString()));
-                setPageComplete(true);
+                if (gotGPGkeys) {
+                    setPageComplete(true);
+                }
             }
 
             public void widgetDefaultSelected(SelectionEvent e) {
@@ -145,7 +148,9 @@ public class SignWizardPage extends HgWizardPage {
                     }
                 }
             }
+            gotGPGkeys = true;
         } catch (HgException e) {
+            gotGPGkeys = false;
             combo.add(Messages.getString("SignWizardPage.errorLoadingGpgKeys")); //$NON-NLS-1$
             setPageComplete(false);
             MercurialEclipsePlugin.logError(e);
