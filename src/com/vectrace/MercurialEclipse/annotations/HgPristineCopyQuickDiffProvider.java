@@ -40,6 +40,7 @@ import org.eclipse.ui.texteditor.quickdiff.IQuickDiffReferenceProvider;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * 
@@ -313,7 +314,8 @@ public class HgPristineCopyQuickDiffProvider implements
     private HgFile getManagedHgFile() {
         if (editor != null) {
             IFile file = getFileFromEditor();
-            if (file != null) {
+            if (file != null
+                    && MercurialUtilities.hgIsTeamProviderFor(file, false)) {
                 HgFile hgFile;
                 try {
                     hgFile = new HgFile(file.getLocation().toFile());
