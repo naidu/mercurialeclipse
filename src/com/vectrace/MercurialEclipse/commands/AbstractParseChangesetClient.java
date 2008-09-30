@@ -70,6 +70,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private String au;
         private String pr;
         private String de;
+        private StringBuilder chars;
         private static IResource res;
         private Direction direction;
         private HgRepositoryLocation repository;
@@ -124,6 +125,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         public void characters(char[] ch, int start, int length)
                 throws SAXException {
+            for (int i = start; i < start+length; i++) chars.append(ch[i]);
         }
 
         public void endDocument() throws SAXException {
@@ -131,7 +133,11 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         public void endElement(String uri, String localName, String name)
                 throws SAXException {
-            if (name.equals("cs")) {
+
+            if (name.equals("de")) {
+                de = chars.toString();
+            } else if (name.equals("cs")) {
+
 
                 ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di,
                         unescape(au));
@@ -201,8 +207,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
              * <br v="{branches}"/> <tg v="{tags}"/> <rv v="{rev}"/> <ns
              * v="{node|short}"/> <nl v="{node}"/> <di v="{date|isodate}"/> <da
              * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
-             * <de v="{desc|escape|tabindent}"/>
+             * <de>{desc|escape|tabindent}</de>
              */
+            this.chars = new StringBuilder();
             if (name.equals("br")) {
                 this.br = atts.getValue(0);
             } else if (name.equals("tg")) {
@@ -221,8 +228,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 this.au = atts.getValue(0);
             } else if (name.equals("pr")) {
                 this.pr = atts.getValue(0);
-            } else if (name.equals("de")) {
-                this.de = untab(unescape(atts.getValue(0)));
+          /*  } else if (name.equals("de")) {
+                this.de = untab(unescape(atts.getValue(0))); */
             } else if (name.equals("fl")) {
                 this.action = FileStatus.Action.MODIFIED;
             } else if (name.equals("fa")) {
