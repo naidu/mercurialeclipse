@@ -144,10 +144,10 @@ public abstract class AbstractShellCommand {
             
             // set locale to english have deterministic output
             Map<String, String> env = builder.environment();
-            env.put("LC_ALL", "en_EN");
-            env.put("LANG", "en_EN");
-            env.put("LANGUAGE", "en_EN");
-            env.put("LC_MESSAGES", "en_EN");
+            env.put("LC_ALL", "en_US.utf8");
+            env.put("LANG", "en_US.utf8");
+            env.put("LANGUAGE", "en_US.utf8");
+            env.put("LC_MESSAGES", "en_US.utf8");
             
             
             builder.redirectErrorStream(true); // makes my life easier
