@@ -76,6 +76,13 @@ public class ResourceProperties {
     public static final QualifiedName HG_ROOT = new QualifiedName(
             MercurialEclipsePlugin.ID, "hgRoot");
 
+    /**
+     * Qualified name for a workspace session property that signifies whether
+     * the forest extension is available.
+     */
+    public static QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(
+            MercurialEclipsePlugin.ID, "extForestAvailable");
+
     private ResourceProperties() {
     }
 

@@ -32,6 +32,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -44,8 +46,10 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         return showForest;
     }
 
-    public void setShowForest(boolean showForest) {
-        this.showForest = showForest;
+    public void setShowForest(boolean showForest) throws HgException {
+        this.showForest = showForest
+                && MercurialUtilities.isCommandAvailable("fpull",
+                        ResourceProperties.EXT_FOREST_AVAILABLE);
     }
 
     public Combo getSnapFileCombo() {
@@ -84,7 +88,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     protected boolean showRevisionTable = true;
     protected boolean showForce = true;
     protected Button forestCheckBox;
-    protected boolean showForest = true;
+    protected boolean showForest = false;
     protected Combo snapFileCombo;
     protected Button snapFileButton;
     protected boolean showSnapFile = true;
@@ -93,6 +97,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             ImageDescriptor titleImage) {
         super(pageName, title, titleImage);
         this.resource = resource;
+        try {
+            setShowForest(true);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            setErrorMessage(e.getMessage());
+        }
     }
 
     @Override
