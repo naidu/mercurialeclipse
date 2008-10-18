@@ -23,7 +23,9 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -36,6 +38,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
@@ -532,6 +535,29 @@ public class MercurialUtilities {
             resource = root.getContainerForLocation(new Path(path));
         }
         return resource;
+    }
+    
+    public static boolean isCommandAvailable(String command,
+            QualifiedName sessionPropertyName) throws HgException {
+        try {
+            boolean returnValue;
+            IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
+                    .getRoot();
+            Object prop = workspaceRoot
+                    .getSessionProperty(sessionPropertyName);
+            if (prop != null) {
+                returnValue = ((Boolean) prop).booleanValue();
+            } else {
+                returnValue = AbstractClient.isCommandAvailable(command);
+                workspaceRoot.setSessionProperty(sessionPropertyName, Boolean
+                        .valueOf(returnValue));
+            }
+            return returnValue;
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e);
+        }
+
     }
 
 }

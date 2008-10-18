@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
@@ -95,6 +96,34 @@ public abstract class AbstractClient {
             paths.add(f.getAbsolutePath());
         }
         return paths;
+    }
+    
+    /**
+     * Checks whether a command is available in installed Mercurial version by
+     * issuing hg help <commandName>. If Mercurial doesn't answer with
+     * "hg: unknown command", it's available
+     * 
+     * @param commandName
+     *            the name of the command, e.g. "rebase"
+     * @return true, if command is available
+     */
+    public static boolean isCommandAvailable(String commandName) {
+        boolean returnValue = false;
+        HgCommand command = new HgCommand("help", ResourcesPlugin
+                .getWorkspace().getRoot(), false);
+        command.addOptions(commandName);
+        String result;
+        try {
+            result = new String(command.executeToBytes(10000, false));
+            if (result.startsWith("hg: unknown command")) {
+                returnValue = false;
+            } else {
+                returnValue = true;
+            }
+        } catch (HgException e) {
+            returnValue = false;
+        }
+        return returnValue;
     }
     
 }

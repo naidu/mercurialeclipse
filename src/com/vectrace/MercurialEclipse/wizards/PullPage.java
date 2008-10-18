@@ -26,6 +26,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /*
@@ -36,9 +38,14 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 public class PullPage extends PushPullPage {
 
+    public Button getRebaseCheckBox() {
+        return rebaseCheckBox;
+    }
+
     private Button updateCheckBox;
     private Button mergeCheckBox;
     private Button commitDialogCheckBox;
+    private Button rebaseCheckBox;
 
     public Button getCommitDialogCheckBox() {
         return commitDialogCheckBox;
@@ -105,26 +112,92 @@ public class PullPage extends PushPullPage {
     public void createControl(Composite parent) {
         super.createControl(parent);
         Composite composite = (Composite) getControl();
-        
+
         // now the options
-        Group pullGroup = SWTWidgetHelper.createGroup(composite, "Pull options");
+        Group pullGroup = SWTWidgetHelper
+                .createGroup(composite, "Pull options");
         this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
                 Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
         this.updateCheckBox.setSelection(true);
+
+        try {
+            if (MercurialUtilities.isCommandAvailable("rebase",
+                    ResourceProperties.REBASE_AVAILABLE)) {
+                this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+                        "Rebase after pull");
+                SelectionListener rebaseCheckBoxListener = new SelectionListener() {
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @seeorg.eclipse.swt.events.SelectionListener#
+                     * widgetDefaultSelected
+                     * (org.eclipse.swt.events.SelectionEvent)
+                     */
+                    public void widgetDefaultSelected(SelectionEvent e) {
+                        widgetSelected(e);
+                    }
+
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see
+                     * org.eclipse.swt.events.SelectionListener#widgetSelected
+                     * (org.eclipse.swt.events.SelectionEvent)
+                     */
+                    public void widgetSelected(SelectionEvent e) {
+                        if (rebaseCheckBox.getSelection()) {
+                            updateCheckBox.setSelection(!rebaseCheckBox
+                                    .getSelection());
+                        }
+                    }
+                };
+                SelectionListener updateCheckBoxListener = new SelectionListener() {
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @seeorg.eclipse.swt.events.SelectionListener#
+                     * widgetDefaultSelected
+                     * (org.eclipse.swt.events.SelectionEvent)
+                     */
+                    public void widgetDefaultSelected(SelectionEvent e) {
+                        widgetSelected(e);
+                    }
+
+                    /*
+                     * (non-Javadoc)
+                     * 
+                     * @see
+                     * org.eclipse.swt.events.SelectionListener#widgetSelected
+                     * (org.eclipse.swt.events.SelectionEvent)
+                     */
+                    public void widgetSelected(SelectionEvent e) {
+                        if (updateCheckBox.getSelection()) {
+                            rebaseCheckBox.setSelection(!updateCheckBox
+                                    .getSelection());
+                        }
+                    }
+                };
+                rebaseCheckBox.addSelectionListener(rebaseCheckBoxListener);
+                updateCheckBox.addSelectionListener(updateCheckBoxListener);
+            }
+        } catch (HgException e2) {
+            MercurialEclipsePlugin.logError(e2);
+        }
+
         this.forceCheckBox.setParent(pullGroup);
         pullGroup.moveAbove(optionGroup);
 
-        Group mergeGroup = SWTWidgetHelper.createGroup(composite, "Merge options");
+        Group mergeGroup = SWTWidgetHelper.createGroup(composite,
+                "Merge options");
         this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
                 "Merge and, if there are no conflicts, commit after update");
-        
-        this.commitDialogCheckBox = SWTWidgetHelper
-                .createCheckBox(mergeGroup,
-                        "Edit commit message before committing merge.");
+
+        this.commitDialogCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
+                "Edit commit message before committing merge.");
 
         this.commitDialogCheckBox.setSelection(true);
         this.commitDialogCheckBox.setEnabled(false);
-        
+
         mergeGroup.moveBelow(pullGroup);
 
         SelectionListener mergeCheckBoxListener = new SelectionListener() {
@@ -165,7 +238,7 @@ public class PullPage extends PushPullPage {
                         mergeCheckBox.setSelection(false);
                         mergeCheckBox.setEnabled(false);
                         setPageComplete(true);
-                    }                    
+                    }
                 } else {
                     setErrorMessage(null);
                     setPageComplete(true);

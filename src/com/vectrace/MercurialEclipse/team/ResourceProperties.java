@@ -60,6 +60,13 @@ public class ResourceProperties {
      */
     public static final QualifiedName MERGE_USE_RESOLVE = new QualifiedName(
             MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve");
+    
+    /**
+     * Qualified name for a workspace session property that signifies whether
+     * rebase is available.
+     */
+    public static final QualifiedName REBASE_AVAILABLE = new QualifiedName(
+            MercurialEclipsePlugin.ID, "rebaseAvailable");
 
     /**
      * Qualified name for a project session property that stores the canonical
