@@ -167,7 +167,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                 for (File file : projectFiles) {
                     CreateProjectOperation op = new CreateProjectOperation(
                             getContainer(), file.getParentFile(), file, repo,
-                            true, cloneName);
+                            true, null);
                     getContainer().run(true, false, op);
                     new RefreshJob(
                             Messages
