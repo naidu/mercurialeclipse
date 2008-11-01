@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgPushPullClient  {
+public class HgPushPullClient extends AbstractClient {
 
     public static String push(IProject project, HgRepositoryLocation repo,
             boolean force, String revision, int timeout) throws HgException {
@@ -37,13 +37,7 @@ public class HgPushPullClient  {
             command.addOptions("-r", revision.trim());
         }
 
-        URI uri = repo.getUri();
-        if (uri != null ) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repo.getLocation());
-        }
-        
+        addRepoToHgCommand(repo, command);
         return new String(command.executeToBytes(timeout));
     }
 
@@ -52,11 +46,9 @@ public class HgPushPullClient  {
         return pull(resource, location, update, false, false, null, false);
     }
 
-    public static String pull(IResource resource,
-            HgRepositoryLocation repo, boolean update, boolean force,
-            boolean timeout,
+    public static String pull(IResource resource, HgRepositoryLocation repo,
+            boolean update, boolean force, boolean timeout,
             ChangeSet changeset, boolean rebase) throws HgException {
-        
 
         URI uri = repo.getUri();
         String pullSource;
@@ -95,16 +87,16 @@ public class HgPushPullClient  {
         } else if (rebase) {
             command.addOptions("--rebase");
         }
-        
+
         if (force) {
             command.addOptions("--force");
         }
         if (changeset != null) {
             command.addOptions("--rev", changeset.getChangeset());
         }
-        
+
         command.addOptions(pullSource);
-        
+
         if (timeout) {
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);

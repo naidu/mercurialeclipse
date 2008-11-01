@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * Base client class
@@ -124,6 +126,19 @@ public abstract class AbstractClient {
             returnValue = false;
         }
         return returnValue;
+    }
+
+    /**
+     * @param repo
+     * @param cmd
+     */
+    protected static void addRepoToHgCommand(HgRepositoryLocation repo, HgCommand cmd) {
+        URI uri = repo.getUri();
+        if (uri != null ) {
+            cmd.addOptions(uri.toASCIIString());
+        } else {
+            cmd.addOptions(repo.getLocation());
+        }
     }
     
 }

@@ -42,39 +42,6 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * 
  */
 public class PushPullPage extends ConfigurationWizardMainPage {
-    public boolean isShowForest() {
-        return showForest;
-    }
-
-    public void setShowForest(boolean showForest) throws HgException {
-        this.showForest = showForest
-                && MercurialUtilities.isCommandAvailable("fpull",
-                        ResourceProperties.EXT_FOREST_AVAILABLE);
-    }
-
-    public Combo getSnapFileCombo() {
-        return snapFileCombo;
-    }
-
-    public void setSnapFileCombo(Combo snapFileCombo) {
-        this.snapFileCombo = snapFileCombo;
-    }
-
-    public boolean isShowSnapFile() {
-        return showSnapFile;
-    }
-
-    public void setShowSnapFile(boolean showSnapFile) {
-        this.showSnapFile = showSnapFile;
-    }
-
-    public Button getForestCheckBox() {
-        return forestCheckBox;
-    }
-
-    public void setForestCheckBox(Button forestCheckBox) {
-        this.forestCheckBox = forestCheckBox;
-    }
 
     protected IResource resource;
     protected Button forceCheckBox;
@@ -92,6 +59,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     protected Combo snapFileCombo;
     protected Button snapFileButton;
     protected boolean showSnapFile = true;
+    protected boolean showSvn = false;
+    protected Button svnCheckBox;
 
     public PushPullPage(IResource resource, String pageName, String title,
             ImageDescriptor titleImage) {
@@ -99,6 +68,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         this.resource = resource;
         try {
             setShowForest(true);
+            setShowSvn(true);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             setErrorMessage(e.getMessage());
@@ -124,9 +94,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             createRevisionTable(composite);
         }
 
-        if (showForest) {
-            createForestControls();
-        }
+        createExtensionControls();
 
         setDefaultLocation();
     }
@@ -134,44 +102,53 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     /**
      * 
      */
-    private void createForestControls() {
-        this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                "Repository is a forest");
+    private void createExtensionControls() {
+        if (showForest) {
+            this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+                    "Repository is a forest");
 
-        if (showSnapFile) {
-            Composite c = SWTWidgetHelper.createComposite(optionGroup, 3);
-            final Label forestLabel = SWTWidgetHelper
-                    .createLabel(c, "Snapfile");
-            forestLabel.setEnabled(false);
-            this.snapFileCombo = createEditableCombo(c);
-            snapFileCombo.setEnabled(false);
-            this.snapFileButton = SWTWidgetHelper.createPushButton(c,
-                    "Browse...", 1);
-            snapFileButton.setEnabled(false);
-            this.snapFileButton.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    FileDialog dialog = new FileDialog(getShell());
-                    dialog.setText("Please select snapfile");
-                    String file = dialog.open();
-                    if (file != null) {
-                        snapFileCombo.setText(file);
+            if (showSnapFile) {
+                Composite c = SWTWidgetHelper.createComposite(optionGroup, 3);
+                final Label forestLabel = SWTWidgetHelper.createLabel(c,
+                        "Snapfile");
+                forestLabel.setEnabled(false);
+                this.snapFileCombo = createEditableCombo(c);
+                snapFileCombo.setEnabled(false);
+                this.snapFileButton = SWTWidgetHelper.createPushButton(c,
+                        "Browse...", 1);
+                snapFileButton.setEnabled(false);
+                this.snapFileButton
+                        .addSelectionListener(new SelectionAdapter() {
+                            @Override
+                            public void widgetSelected(SelectionEvent e) {
+                                FileDialog dialog = new FileDialog(getShell());
+                                dialog.setText("Please select snapfile");
+                                String file = dialog.open();
+                                if (file != null) {
+                                    snapFileCombo.setText(file);
+                                }
+                            }
+                        });
+
+                SelectionListener forestCheckBoxListener = new SelectionListener() {
+                    public void widgetSelected(SelectionEvent e) {
+                        forestLabel.setEnabled(forestCheckBox.getSelection());
+                        snapFileButton
+                                .setEnabled(forestCheckBox.getSelection());
+                        snapFileCombo.setEnabled(forestCheckBox.getSelection());
                     }
-                }
-            });
 
-            SelectionListener forestCheckBoxListener = new SelectionListener() {
-                public void widgetSelected(SelectionEvent e) {
-                    forestLabel.setEnabled(forestCheckBox.getSelection());
-                    snapFileButton.setEnabled(forestCheckBox.getSelection());
-                    snapFileCombo.setEnabled(forestCheckBox.getSelection());
-                }
+                    public void widgetDefaultSelected(SelectionEvent e) {
+                        widgetSelected(e);
+                    }
+                };
+                forestCheckBox.addSelectionListener(forestCheckBoxListener);
+            }
+        }
 
-                public void widgetDefaultSelected(SelectionEvent e) {
-                    widgetSelected(e);
-                }
-            };
-            forestCheckBox.addSelectionListener(forestCheckBoxListener);
+        if (showSvn) {
+            this.svnCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+                    "Use Subversion extension");
         }
     }
 
@@ -183,7 +160,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 getRevCheckBoxLabel());
 
         Listener revCheckBoxListener = new Listener() {
-            public void handleEvent(Event event) {                
+            public void handleEvent(Event event) {
                 // en-/disable list view
                 changesetTable.setEnabled(revCheckBox.getSelection());
             }
@@ -276,7 +253,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
      */
     protected String getTimeoutCheckBoxLabel() {
         return Messages.getString("PushRepoPage.timeoutCheckBox.text");//$NON-NLS-1$
-    }   
+    }
 
     /**
      * @return the force
@@ -370,6 +347,58 @@ public class PushPullPage extends ConfigurationWizardMainPage {
      */
     public void setShowForce(boolean showForce) {
         this.showForce = showForce;
+    }
+
+    public boolean isShowForest() {
+        return showForest;
+    }
+
+    public void setShowForest(boolean showForest) throws HgException {
+        this.showForest = showForest
+                && MercurialUtilities.isCommandAvailable("fpull",
+                        ResourceProperties.EXT_FOREST_AVAILABLE);
+    }
+
+    public Combo getSnapFileCombo() {
+        return snapFileCombo;
+    }
+
+    public void setSnapFileCombo(Combo snapFileCombo) {
+        this.snapFileCombo = snapFileCombo;
+    }
+
+    public boolean isShowSnapFile() {
+        return showSnapFile;
+    }
+
+    public void setShowSnapFile(boolean showSnapFile) {
+        this.showSnapFile = showSnapFile;
+    }
+
+    public Button getForestCheckBox() {
+        return forestCheckBox;
+    }
+
+    public void setForestCheckBox(Button forestCheckBox) {
+        this.forestCheckBox = forestCheckBox;
+    }
+
+    public boolean isShowSvn() {
+        return showSvn;
+    }
+
+    public void setShowSvn(boolean showSvn) throws HgException {
+        this.showSvn = showSvn
+                && MercurialUtilities.isCommandAvailable("svn",
+                        ResourceProperties.EXT_HGSUBVERSION_AVAILABLE);
+    }
+
+    public Button getSvnCheckBox() {
+        return svnCheckBox;
+    }
+
+    public void setSvnCheckBox(Button svnCheckBox) {
+        this.svnCheckBox = svnCheckBox;
     }
 
 }
