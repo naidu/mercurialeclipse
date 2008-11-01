@@ -15,6 +15,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,6 +27,7 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
@@ -109,6 +111,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
         }
         return root;
     }
+    
+    private static File getHgRootFile(File file) throws HgException {
+        assert (file != null);
+        return HgRootClient.getHgRoot(file);
+    }
 
     /**
      * Determines if the resources hg root is known. If it isn't known,
@@ -128,8 +135,18 @@ public class MercurialTeamProvider extends RepositoryProvider {
     private static String getAndStoreHgRootPath(File file) throws CoreException {
         assert (file != null);
         IResource resource = MercurialUtilities.convert(file);
-        return getAndStoreHgRootPath(resource);
+        if (resource != null) {
+            return getAndStoreHgRootPath(resource);
+        }
+        try {
+            return getHgRootFile(file).getCanonicalPath();
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
     }
+    
+    
 
     /**
      * Gets the hg root of a resource as {@link java.io.File}.
