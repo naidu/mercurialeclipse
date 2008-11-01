@@ -122,10 +122,7 @@ public class CreateProjectOperation extends HgOperation {
                     .equals(projectDirectory.getParentFile().getAbsolutePath())) {
                 projectDesc.setLocation(new Path(projectDirectory.getAbsolutePath()));
             } else {
-                projectDesc.setLocation(null);
-                if (projectName != null) {
-                    projectDesc.setName(projectName);
-                }
+                projectDesc.setLocation(null);                
             }
 
             // now get resource handle and create & open project
