@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PartInitException;
@@ -391,7 +392,11 @@ public class PullRepoWizard extends HgWizard {
 
             boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
             boolean merge = pullPage.getMergeCheckBox().getSelection();
-            boolean rebase = pullPage.getRebaseCheckBox().getSelection();
+            boolean rebase = false;
+            Button rebase_button = pullPage.getRebaseCheckBox();
+            if (rebase_button != null ) {
+                rebase = rebase_button.getSelection();
+            }
             boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
                     .getSelection();
             boolean svn = false;
