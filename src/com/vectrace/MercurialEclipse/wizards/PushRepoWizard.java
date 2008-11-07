@@ -107,11 +107,10 @@ public class PushRepoWizard extends HgWizard {
                     changeset = cs.getChangeset();
                 }
             }
-            String result = "";
+            String result = "Push output:\n";
             if (pushRepoPage.isShowSvn()
                     && pushRepoPage.getSvnCheckBox().getSelection()) {
-                result = HgSvnClient.rebase(project.getLocation().toFile());
-                result = HgSvnClient.push(project.getLocation().toFile());
+                result += HgSvnClient.push(project.getLocation().toFile());
             } else if (pushRepoPage.isShowForest()
                     && pushRepoPage.getForestCheckBox().getSelection()) {
                 File forestRoot = MercurialTeamProvider.getHgRoot(
@@ -122,10 +121,10 @@ public class PushRepoWizard extends HgWizard {
                 if (snapFileText.length() > 0) {
                     snapFile = new File(snapFileText);
                 }
-                result = HgFpushPullClient.fpush(forestRoot, repo, changeset,
+                result += HgFpushPullClient.fpush(forestRoot, repo, changeset,
                         timeout, snapFile);
             } else {
-                result = HgPushPullClient.push(project, repo, pushRepoPage
+                result += HgPushPullClient.push(project, repo, pushRepoPage
                         .isForce(), changeset, timeout);
             }
             if (result.length() != 0) {

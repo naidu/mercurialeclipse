@@ -148,7 +148,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
         if (showSvn) {
             this.svnCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                    "Use Subversion extension");
+                    "Use Subversion extension");            
         }
     }
 

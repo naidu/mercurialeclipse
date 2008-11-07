@@ -67,12 +67,15 @@ public class PullPage extends PushPullPage {
     public boolean canFlipToNextPage() {
         try {
             if (getUrlCombo().getText() != null
-                    && getUrlCombo().getText() != null) {
+                    && getUrlCombo().getText() != null && svnCheckBox != null
+                    && svnCheckBox.getSelection() == false) {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
                 incomingPage.setProject(resource.getProject());
                 incomingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
                         .getText(), getUserCombo().getText(), getPasswordText()
                         .getText()));
+                incomingPage.setSvn(getSvnCheckBox() != null
+                        && getSvnCheckBox().getSelection());
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }

@@ -67,7 +67,7 @@ public class PullRepoWizard extends HgWizard {
         private ChangeSet pullRevision;
         private boolean timeout;
         private boolean merge;
-        private String output;
+        private String output = "";
         private boolean showCommitDialog;
         private File bundleFile;
         private boolean forest;
@@ -124,7 +124,7 @@ public class PullRepoWizard extends HgWizard {
         private String performMerge(IProgressMonitor monitor)
                 throws HgException, PartInitException, CoreException,
                 InterruptedException {
-            String r = "";
+            String r = "Output of Merge:\n";
             monitor.subTask("Merging...");
             if (HgLogClient.getHeads(resource.getProject()).length > 1) {
 
@@ -155,7 +155,7 @@ public class PullRepoWizard extends HgWizard {
                 job.join();
                 IStatus jobResult = job.getResult();
                 if (jobResult.getSeverity() == IStatus.OK) {
-                    r = jobResult.getMessage();
+                    r += jobResult.getMessage();
                 } else {
                     throw new HgException(jobResult.getMessage(), jobResult
                             .getException());
@@ -170,24 +170,28 @@ public class PullRepoWizard extends HgWizard {
             try {
                 monitor.worked(1);
                 monitor.subTask("Pulling incoming changesets...");
-                String r;
+                String r = "Output of Pull:\n";
                 if (svn) {
-                    r = HgSvnClient.pull(resource.getLocation().toFile());
+                    r += HgSvnClient.pull(resource.getLocation().toFile());
+                    if (rebase) {
+                        r += HgSvnClient
+                                .rebase(resource.getLocation().toFile());
+                    }
                 } else if (bundleFile == null) {
                     if (forest) {
                         File forestRoot = MercurialTeamProvider.getHgRoot(
                                 resource.getLocation().toFile())
                                 .getParentFile();
-                        r = HgFpushPullClient.fpull(forestRoot, this.repo,
+                        r += HgFpushPullClient.fpull(forestRoot, this.repo,
                                 this.doUpdate, this.timeout, this.pullRevision,
                                 true, snapFile, false);
                     } else {
-                        r = HgPushPullClient.pull(resource, this.repo,
+                        r += HgPushPullClient.pull(resource, this.repo,
                                 this.doUpdate, this.force, this.timeout,
                                 pullRevision, rebase);
                     }
                 } else {
-                    r = HgPushPullClient.pull(resource, this.doUpdate,
+                    r += HgPushPullClient.pull(resource, this.doUpdate,
                             this.force, this.timeout, pullRevision, bundleFile
                                     .getCanonicalPath(), rebase);
                 }
@@ -288,6 +292,7 @@ public class PullRepoWizard extends HgWizard {
                 }
                 if (commit) {
                     monitor.subTask("Committing...");
+                    output += "Output of Commit:\n";
                     if (!showCommitDialog) {
                         output += CommitMergeHandler.commitMerge(resource);
                     } else {

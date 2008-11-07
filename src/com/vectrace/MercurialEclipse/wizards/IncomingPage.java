@@ -55,8 +55,6 @@ public class IncomingPage extends HgWizardPage {
         this.revision = revision;
     }
 
-
-
     public void setChangesets(SortedSet<ChangeSet> changesets) {
         this.changesets = changesets;
     }
@@ -68,12 +66,10 @@ public class IncomingPage extends HgWizardPage {
     private Button revisionCheckBox;
     private ChangeSet revision;
     private SortedSet<ChangeSet> changesets;
-
+    private boolean svn;
 
     private class GetIncomingOperation extends HgOperation {
 
-        
-        
         /**
          * @param context
          */
@@ -112,14 +108,17 @@ public class IncomingPage extends HgWizardPage {
 
         private SortedSet<ChangeSet> getIncomingInternal() {
             try {
-                HgRepositoryLocation remote = location;
-                SortedSet<ChangeSet> set = IncomingChangesetCache.getInstance()
-                        .getIncomingChangeSets(project, remote);
-                if (set != null) {
-                SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
-                        Collections.reverseOrder());
-                revertedSet.addAll(set);
-                return revertedSet;
+                if (isSvn()) {
+                    HgRepositoryLocation remote = location;
+                    SortedSet<ChangeSet> set = IncomingChangesetCache
+                            .getInstance().getIncomingChangeSets(project,
+                                    remote);
+                    if (set != null) {
+                        SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
+                                Collections.reverseOrder());
+                        revertedSet.addAll(set);
+                        return revertedSet;
+                    }
                 }
             } catch (HgException e) {
                 MercurialEclipsePlugin.showError(e);
@@ -128,14 +127,12 @@ public class IncomingPage extends HgWizardPage {
         }
 
     }
-    
+
     protected IncomingPage(String pageName) {
         super(pageName);
         this.setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
         this.setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
     }
-    
-    
 
     @Override
     public void setVisible(boolean visible) {
@@ -162,7 +159,7 @@ public class IncomingPage extends HgWizardPage {
             InterruptedException {
         getContainer().run(true, false,
                 new GetIncomingOperation(getContainer()));
-    }    
+    }
 
     public void createControl(Composite parent) {
 
@@ -263,7 +260,7 @@ public class IncomingPage extends HgWizardPage {
                         IPath fileAbsPath = hgRoot.append(fileRelPath);
                         IResource file = project.getWorkspace().getRoot()
                                 .getFileForLocation(fileAbsPath);
-                        CompareUtils.openEditor(file, cs, true, true);                        
+                        CompareUtils.openEditor(file, cs, true, true);
                     } catch (IOException e) {
                         setErrorMessage(e.getLocalizedMessage());
                         MercurialEclipsePlugin.logError(e);
@@ -273,8 +270,8 @@ public class IncomingPage extends HgWizardPage {
         });
     }
 
-    static class FileStatusLabelProvider extends LabelProvider
-            implements ITableLabelProvider {
+    static class FileStatusLabelProvider extends LabelProvider implements
+            ITableLabelProvider {
 
         public Image getColumnImage(Object element, int columnIndex) {
             return null;
@@ -325,5 +322,20 @@ public class IncomingPage extends HgWizardPage {
 
     public SortedSet<ChangeSet> getChangesets() {
         return changesets;
+    }
+
+    /**
+     * @param svn
+     *            the svn to set
+     */
+    public void setSvn(boolean svn) {
+        this.svn = svn;
+    }
+
+    /**
+     * @return the svn
+     */
+    public boolean isSvn() {
+        return svn;
     }
 }
