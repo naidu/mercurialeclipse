@@ -108,7 +108,7 @@ public class IncomingPage extends HgWizardPage {
 
         private SortedSet<ChangeSet> getIncomingInternal() {
             try {
-                if (isSvn()) {
+                if (!isSvn()) {
                     HgRepositoryLocation remote = location;
                     SortedSet<ChangeSet> set = IncomingChangesetCache
                             .getInstance().getIncomingChangeSets(project,
