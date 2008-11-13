@@ -12,32 +12,27 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.ui.IWorkbench;
+import java.util.List;
+
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgImportExportClient;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
-public class ExportWizard extends SyncRepoWizard {
+public class ExportWizard extends HgWizard {
 
-    IProject project;
+    private ExportPage sourcePage;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
-     * org.eclipse.jface.viewers.IStructuredSelection)
+    /**
+     * @param resource
      */
-    @Override
-    public void init(IWorkbench workbench, IStructuredSelection selection) {
-        project = MercurialUtilities.getProject(selection);
-        projectName = project.getName();
-        setWindowTitle(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
+    public ExportWizard(List<IResource> resources) {
+        super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
-        super.syncRepoLocationPage = new ExportPage(
-                Messages.getString("ExportWizard.pageName"), Messages.getString("ExportWizard.pageTitle"), Messages.getString("ExportWizard.pageDescription"), projectName, null); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        this.sourcePage = new ExportPage(resources); //$NON-NLS-1$ //$NON-NLS-2$ 
+        addPage(sourcePage);
+        this.initPage(Messages.getString("ExportWizard.pageDescription"),
+                sourcePage);
     }
 
     /*
@@ -47,42 +42,20 @@ public class ExportWizard extends SyncRepoWizard {
      */
     @Override
     public boolean performFinish() {
-        // final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-        // final IProject project = workspace.getRoot().getProject(projectName);
-        final String exportFile = locationUrl;
-
-        // Check that this project exist.
-        if (project.getLocation() == null) {
-            // System.out.println( "Project " + projectName +
-            // " don't exists why pull?");
-            return false;
-        }
-
         try {
-            HgImportExportClient.exportPatch(project, null,
-                    exportFile);
-            project.refreshLocal(1, null);
-/*
-            if (result.length() != 0) {
-                Shell shell;
-                IWorkbench workbench;
-
-                workbench = PlatformUI.getWorkbench();
-                shell = workbench.getActiveWorkbenchWindow().getShell();
-                
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages
-                                        .getString("ExportWizard.outputMessageDialog.title"), result); //$NON-NLS-1$
-            }
-*/
+            if (sourcePage.getLocationType() == ExportPage.CLIPBOARD)
+                HgImportExportClient.exportPatch(sourcePage
+                        .getSelectedResources());
+            else
+                HgImportExportClient.exportPatch(sourcePage
+                        .getSelectedResources(), sourcePage.getPatchFile());
+            if (sourcePage.getLocationType() == ExportPage.WORKSPACE)
+                sourcePage.getWorkspaceFile().refreshLocal(0, null);// TODO
+            // progress
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(Messages
                     .getString("ExportWizard.exportOperationFailed"), e); //$NON-NLS-1$
         }
-
         return true;
     }
-
 }

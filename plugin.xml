@@ -245,6 +245,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"        
                  name="Refresh status"/>
+        <command id="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 name="E&amp;xport Patch..."/>
         <category
               id="com.vectrace.MercurialEclipse.commandCategory"
               name="Mercurial">
@@ -490,6 +493,8 @@
                 </and>
             </enabledWhen>
         </handler>
+        <handler commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
+                 class="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"/>
 	</extension>
 
 	<extension point="org.eclipse.ui.menus">
@@ -535,6 +540,12 @@
 				</command>
 				
 				<separator name="group2" visible="false"/><!-- TODO visible="true" -->
+				<command commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
+					icon="icons/export.gif">
+					<visibleWhen>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+					</visibleWhen>
+				</command>
 				<separator name="group3" visible="true"/>
 				<command commandId="com.vectrace.MercurialEclipse.menu.TagHandler" icon="icons/tags.gif">
 					<visibleWhen>
@@ -712,11 +723,11 @@
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
            <action
-               label="E&amp;xport patch..."
-               class="com.vectrace.MercurialEclipse.team.ActionExport"
+               label="E&amp;xport patch0..."
+               class="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
                tooltip="Export patch to file (hg diff)"
                menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionExport">
+               id="com.vectrace.MercurialEclipse.menu.ExportPatchHandler">
            </action>           
            <action
                label="&amp;Import patch..."

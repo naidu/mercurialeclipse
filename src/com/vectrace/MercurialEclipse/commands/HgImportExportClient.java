@@ -10,12 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.File;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
@@ -28,29 +28,21 @@ public class HgImportExportClient {
         return command.executeToString();
     }
 
-    public static String exportPatch(IProject project,
-            List<IResource> resources, String patchLocation) throws HgException {
-        HgCommand command = new HgCommand("diff", project, true);
-        // TODO command.addFiles(resources);
-        byte[] result = command.executeToBytes();
-        if (patchLocation != null)
-            saveFile(patchLocation, result);
-        return new String(result);
+    public static boolean exportPatch(List<IResource> resources, File patchFile)
+            throws HgException {
+        HgCommand command = new HgCommand("diff", ResourcesPlugin
+                .getWorkspace().getRoot(), true);
+        command.addFiles(resources);
+        return command.executeToFile(patchFile, 0, false);
     }
 
-    private static void saveFile(String patchLocation, byte[] result) throws HgException {
-        FileOutputStream stream = null;
-        try {
-            stream = new FileOutputStream(patchLocation);
-            stream.write(result);
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        } finally {
-            if (stream != null)
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                }
-        }
+    public static boolean exportPatch(List<IResource> resources)
+            throws HgException {
+        HgCommand command = new HgCommand("diff", ResourcesPlugin
+                .getWorkspace().getRoot(), true);
+        command.addFiles(resources);
+        // String result = command.executeToString();
+        // TODO Clip.copy
+        return true;
     }
 }
