@@ -202,7 +202,10 @@
 		         name="Pull..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.PushHandler"
 				 categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="Push..."/>		
+		         name="Push..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.RebaseHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="Rebase..."/>       		         		
 		<command id="com.vectrace.MercurialEclipse.menu.SignHandler"
 		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Sign..."/>	                  
@@ -281,6 +284,14 @@
 				<count value="1"/>
 			</enabledWhen>
 		</handler>
+		
+		<!-- RebaseHandler -->
+		<handler commandId="com.vectrace.MercurialEclipse.menu.RebaseHandler"
+                 class="com.vectrace.MercurialEclipse.menu.RebaseHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
 		
 		<!-- PullHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.PullHandler"
@@ -534,6 +545,15 @@
 					</visibleWhen>
 				</command>
 				
+				<command commandId="com.vectrace.MercurialEclipse.menu.RebaseHandler" icon="icons/checkout_action.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+                        </and>
+                    </visibleWhen>
+                </command>
+                
 				<separator name="group2" visible="false"/><!-- TODO visible="true" -->
 				<separator name="group3" visible="true"/>
 				<command commandId="com.vectrace.MercurialEclipse.menu.TagHandler" icon="icons/tags.gif">

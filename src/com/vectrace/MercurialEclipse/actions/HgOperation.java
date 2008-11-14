@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public abstract class HgOperation extends TeamOperation {
 
-    private String result;
+    protected String result;
 
     /**
      * @param part
