@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PartInitException;
@@ -36,6 +37,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
+import com.vectrace.MercurialEclipse.commands.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
@@ -65,22 +67,24 @@ public class PullRepoWizard extends HgWizard {
         private ChangeSet pullRevision;
         private boolean timeout;
         private boolean merge;
-        private String output;
+        private String output = "";
         private boolean showCommitDialog;
         private File bundleFile;
         private boolean forest;
         private File snapFile;
         private boolean rebase;
+        private boolean svn;
 
         /**
          * @param context
          * @param merge
+         * @param svn
          */
         public PullOperation(IRunnableContext context, boolean doUpdate,
                 IResource resource, boolean force, HgRepositoryLocation repo,
                 ChangeSet pullRevision, boolean timeout, boolean merge,
                 boolean showCommitDialog, File bundleFile, boolean forest,
-                File snapFile, boolean rebase) {
+                File snapFile, boolean rebase, boolean svn) {
             super(context);
             this.doUpdate = doUpdate;
             this.resource = resource;
@@ -94,6 +98,7 @@ public class PullRepoWizard extends HgWizard {
             this.forest = forest;
             this.snapFile = snapFile;
             this.rebase = rebase;
+            this.svn = svn;
         }
 
         /*
@@ -119,7 +124,7 @@ public class PullRepoWizard extends HgWizard {
         private String performMerge(IProgressMonitor monitor)
                 throws HgException, PartInitException, CoreException,
                 InterruptedException {
-            String r = "";
+            String r = "Output of Merge:\n";
             monitor.subTask("Merging...");
             if (HgLogClient.getHeads(resource.getProject()).length > 1) {
 
@@ -150,7 +155,7 @@ public class PullRepoWizard extends HgWizard {
                 job.join();
                 IStatus jobResult = job.getResult();
                 if (jobResult.getSeverity() == IStatus.OK) {
-                    r = jobResult.getMessage();
+                    r += jobResult.getMessage();
                 } else {
                     throw new HgException(jobResult.getMessage(), jobResult
                             .getException());
@@ -165,22 +170,28 @@ public class PullRepoWizard extends HgWizard {
             try {
                 monitor.worked(1);
                 monitor.subTask("Pulling incoming changesets...");
-                String r;
-                if (bundleFile == null) {
+                String r = "Output of Pull:\n";
+                if (svn) {
+                    r += HgSvnClient.pull(resource.getLocation().toFile());
+                    if (rebase) {
+                        r += HgSvnClient
+                                .rebase(resource.getLocation().toFile());
+                    }
+                } else if (bundleFile == null) {
                     if (forest) {
                         File forestRoot = MercurialTeamProvider.getHgRoot(
                                 resource.getLocation().toFile())
                                 .getParentFile();
-                        r = HgFpushPullClient.fpull(forestRoot, this.repo,
+                        r += HgFpushPullClient.fpull(forestRoot, this.repo,
                                 this.doUpdate, this.timeout, this.pullRevision,
                                 true, snapFile, false);
                     } else {
-                        r = HgPushPullClient.pull(resource, this.repo,
+                        r += HgPushPullClient.pull(resource, this.repo,
                                 this.doUpdate, this.force, this.timeout,
                                 pullRevision, rebase);
                     }
                 } else {
-                    r = HgPushPullClient.pull(resource, this.doUpdate,
+                    r += HgPushPullClient.pull(resource, this.doUpdate,
                             this.force, this.timeout, pullRevision, bundleFile
                                     .getCanonicalPath(), rebase);
                 }
@@ -281,6 +292,7 @@ public class PullRepoWizard extends HgWizard {
                 }
                 if (commit) {
                     monitor.subTask("Committing...");
+                    output += "Output of Commit:\n";
                     if (!showCommitDialog) {
                         output += CommitMergeHandler.commitMerge(resource);
                     } else {
@@ -385,15 +397,25 @@ public class PullRepoWizard extends HgWizard {
 
             boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
             boolean merge = pullPage.getMergeCheckBox().getSelection();
-            boolean rebase = pullPage.getRebaseCheckBox().getSelection();
+            boolean rebase = false;
+            Button rebase_button = pullPage.getRebaseCheckBox();
+            if (rebase_button != null ) {
+                rebase = rebase_button.getSelection();
+            }
             boolean showCommitDialog = pullPage.getCommitDialogCheckBox()
                     .getSelection();
-
-            boolean forest = pullPage.getForestCheckBox().getSelection();
+            boolean svn = false;
+            if (pullPage.isShowSvn()) {
+                svn = pullPage.getSvnCheckBox().getSelection();
+            }
+            boolean forest = false;
             File snapFile = null;
-            String snapFileText = pullPage.getSnapFileCombo().getText();
-            if (snapFileText.length() > 0) {
-                snapFile = new File(snapFileText);
+            if (pullPage.isShowForest()) {
+                forest = pullPage.getForestCheckBox().getSelection();                
+                String snapFileText = pullPage.getSnapFileCombo().getText();
+                if (snapFileText.length() > 0) {
+                    snapFile = new File(snapFileText);
+                }
             }
 
             File bundleFile = null;
@@ -405,7 +427,7 @@ public class PullRepoWizard extends HgWizard {
 
             PullOperation pullOperation = new PullOperation(getContainer(),
                     doUpdate, resource, force, repo, cs, timeout, merge,
-                    showCommitDialog, bundleFile, forest, snapFile, rebase);
+                    showCommitDialog, bundleFile, forest, snapFile, rebase, svn);
             getContainer().run(true, false, pullOperation);
 
             String output = pullOperation.getOutput();

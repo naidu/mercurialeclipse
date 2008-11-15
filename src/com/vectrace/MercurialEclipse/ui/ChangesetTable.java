@@ -101,7 +101,8 @@ public class ChangesetTable extends Composite {
             public void paintControl(Event e) {
                 TableItem tableItem = (TableItem) e.item;
                 ChangeSet cs = (ChangeSet) tableItem.getData();
-                if (tableItem
+                if (table.isEnabled()
+                        && tableItem
                         .equals(table.getItems()[table.getItemCount() - 1])
                         && cs.getChangesetIndex() > 0) {
                     logBatchSize = Integer
@@ -135,7 +136,7 @@ public class ChangesetTable extends Composite {
      * @throws HgException
      */
     private void updateTable(int startRev) throws HgException {
-        if (autoFetch) {
+        if (table.isEnabled() && autoFetch) {
             if (startRev - logBatchSize > 0 || bottomNotFetched) {
                 LocalChangesetCache.getInstance().refreshAllLocalRevisions(
                         resource, true, logBatchSize, startRev, false);

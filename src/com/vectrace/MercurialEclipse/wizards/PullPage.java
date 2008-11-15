@@ -73,6 +73,8 @@ public class PullPage extends PushPullPage {
                 incomingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
                         .getText(), getUserCombo().getText(), getPasswordText()
                         .getText()));
+                incomingPage.setSvn(getSvnCheckBox() != null
+                        && getSvnCheckBox().getSelection());
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }

@@ -27,6 +27,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -106,21 +107,25 @@ public class PushRepoWizard extends HgWizard {
                     changeset = cs.getChangeset();
                 }
             }
-            String result = "";
-            if (!pushRepoPage.getForestCheckBox().getSelection()) {
-                result = HgPushPullClient.push(project, repo, pushRepoPage
-                        .isForce(), changeset, timeout);
-            } else {
+            String result = "Push output:\n";
+            if (pushRepoPage.isShowSvn()
+                    && pushRepoPage.getSvnCheckBox().getSelection()) {
+                result += HgSvnClient.push(project.getLocation().toFile());
+            } else if (pushRepoPage.isShowForest()
+                    && pushRepoPage.getForestCheckBox().getSelection()) {
                 File forestRoot = MercurialTeamProvider.getHgRoot(
                         project.getLocation().toFile()).getParentFile();
-                
+
                 File snapFile = null;
                 String snapFileText = pushRepoPage.getSnapFileCombo().getText();
                 if (snapFileText.length() > 0) {
                     snapFile = new File(snapFileText);
                 }
-                result = HgFpushPullClient.fpush(forestRoot, repo, changeset,
+                result += HgFpushPullClient.fpush(forestRoot, repo, changeset,
                         timeout, snapFile);
+            } else {
+                result += HgPushPullClient.push(project, repo, pushRepoPage
+                        .isForce(), changeset, timeout);
             }
             if (result.length() != 0) {
                 Shell shell;

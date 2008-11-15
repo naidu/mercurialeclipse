@@ -106,7 +106,17 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
 
         File parDirFile = new File(parentDirectory);
         final File[] filesBefore = parDirFile.listFiles();
-        boolean forest = clonePage.getForestCheckBox().getSelection();
+        boolean forest = false;
+        
+        if (clonePage.isShowForest()) {
+            forest = clonePage.getForestCheckBox().getSelection();
+        }
+        
+        boolean svn = false;
+        if (clonePage.isShowSvn()) {
+            svn = clonePage.getSvnCheckBox().getSelection();
+        }
+        
         try {
             // run clone
             CloneOperation cloneOperation = new CloneOperation(getContainer(),
@@ -116,7 +126,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                             .getUncompressedCheckBox().getSelection(),
                     clonePage.getTimeoutCheckBox().getSelection(), clonePage
                             .getRevisionTextField().getText(), cloneName,
-                    forest);
+                    forest, svn);
             getContainer().run(true, false, cloneOperation);
 
             File cloneDirectory = null;
@@ -167,7 +177,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                 for (File file : projectFiles) {
                     CreateProjectOperation op = new CreateProjectOperation(
                             getContainer(), file.getParentFile(), file, repo,
-                            true, cloneName);
+                            true, null);
                     getContainer().run(true, false, op);
                     new RefreshJob(
                             Messages

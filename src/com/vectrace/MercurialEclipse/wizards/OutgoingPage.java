@@ -31,8 +31,9 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
  * 
  */
 public class OutgoingPage extends IncomingPage {
+    private boolean svn;
     private class GetOutgoingOperation extends HgOperation {
-
+        
         /**
          * @param context
          */
@@ -65,15 +66,17 @@ public class OutgoingPage extends IncomingPage {
 
         private SortedSet<ChangeSet> getOutgoingInternal() {
             try {
-                HgRepositoryLocation remote = getLocation();
-                SortedSet<ChangeSet> changesets = OutgoingChangesetCache
-                        .getInstance().getOutgoingChangeSets(getProject(),
-                                remote);
-                if (changesets != null) {
-                    SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
-                            Collections.reverseOrder());
-                    revertedSet.addAll(changesets);
-                    return revertedSet;
+                if (!isSvn()) {
+                    HgRepositoryLocation remote = getLocation();
+                    SortedSet<ChangeSet> changesets = OutgoingChangesetCache
+                            .getInstance().getOutgoingChangeSets(getProject(),
+                                    remote);
+                    if (changesets != null) {
+                        SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
+                                Collections.reverseOrder());
+                        revertedSet.addAll(changesets);
+                        return revertedSet;
+                    }
                 }
             } catch (HgException e) {
                 MercurialEclipsePlugin.showError(e);
@@ -133,5 +136,22 @@ public class OutgoingPage extends IncomingPage {
     public void createControl(Composite parent) {
         super.createControl(parent);
         getRevisionCheckBox().setText("Push changes up to selected revision");
+    }
+
+    /**
+     * @return the svn
+     */
+    @Override
+    public boolean isSvn() {
+        return svn;
+    }
+
+    /**
+     * @param svn
+     *            the svn to set
+     */
+    @Override
+    public void setSvn(boolean svn) {
+        this.svn = svn;
     }
 }

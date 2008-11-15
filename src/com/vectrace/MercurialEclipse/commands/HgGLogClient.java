@@ -22,7 +22,7 @@ public class HgGLogClient extends HgCommand {
         super("glog", (resource instanceof IFile) ? resource.getParent()
                 : (IContainer) resource, false);
         addOptions("--config", "extensions.graphlog=");
-        addOptions("--template", "*{rev}\n"); // Removes everything
+        addOptions("--template", "*{rev}\\n"); // Removes everything
 
         if (resource.getType() != IResource.PROJECT) {
            addOptions(resource.getName());
