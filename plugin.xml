@@ -179,7 +179,10 @@
 		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
 		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Tag as Version..."/>
-		<command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
+		<command id="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="Manage bookmarks..."/>
+        <command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
 		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Merge..."/>
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
@@ -307,6 +310,14 @@
 				<count value="1"/>
 			</enabledWhen>
 		</handler>
+		
+		<!-- BookmarkHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
+                 class="com.vectrace.MercurialEclipse.menu.BookmarkHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
 
 		<!-- MergeHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
@@ -560,6 +571,11 @@
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 					</visibleWhen>
 				</command>
+				<command commandId="com.vectrace.MercurialEclipse.menu.BookmarkHandler" icon="icons/tags.gif">
+                    <visibleWhen>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                    </visibleWhen>
+                </command>
 				<command commandId="com.vectrace.MercurialEclipse.menu.MergeHandler" icon="icons/branches_rep.gif">
 					<visibleWhen>
 						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>

@@ -538,7 +538,8 @@ public class MercurialUtilities {
     }
     
     public static boolean isCommandAvailable(String command,
-            QualifiedName sessionPropertyName) throws HgException {
+            QualifiedName sessionPropertyName, String extensionEnabler)
+            throws HgException {
         try {
             boolean returnValue;
             IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
@@ -548,7 +549,8 @@ public class MercurialUtilities {
             if (prop != null) {
                 returnValue = ((Boolean) prop).booleanValue();
             } else {
-                returnValue = AbstractClient.isCommandAvailable(command);
+                returnValue = AbstractClient.isCommandAvailable(command,
+                        extensionEnabler);
                 workspaceRoot.setSessionProperty(sessionPropertyName, Boolean
                         .valueOf(returnValue));
             }

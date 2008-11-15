@@ -36,13 +36,17 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.FileDataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.BranchTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
@@ -60,6 +64,7 @@ public class RevisionChooserDialog extends Dialog {
 	private String revision;
 	private Tag tag;
     private Branch branch;
+    private Bookmark bookmark;
 	
 	private final int[] parents;
 
@@ -112,8 +117,17 @@ public class RevisionChooserDialog extends Dialog {
         data.heightHint = 200;
         tabFolder.setLayoutData(data);
         createRevisionTabItem(tabFolder);
+        try {
+            if (MercurialUtilities.isCommandAvailable("bookmarks",
+                    ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
+                    "hgext.bookmarks=")) {
+                createBookmarkTabItem(tabFolder);
+            }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
         createTagTabItem(tabFolder);
-        createBranchTabItem(tabFolder);
+        createBranchTabItem(tabFolder);        
         createHeadTabItem(tabFolder);
 
         return composite;
@@ -133,6 +147,11 @@ public class RevisionChooserDialog extends Dialog {
 			else if(branch != null) {
 			    changeSet = LocalChangesetCache.getInstance().getChangeSet(
                         branch.getRevision() + ":"+branch.getGlobalId());     
+			} else if (bookmark != null) {
+                changeSet = LocalChangesetCache.getInstance().getChangeSet(
+                        bookmark.getRevision() + ":"
+                                + bookmark.getShortNodeId());
+                this.revision = changeSet.getChangesetIndex() + "";
 			}
 		}
 		
@@ -227,6 +246,7 @@ public class RevisionChooserDialog extends Dialog {
                 text.setText(table.getSelection().getName());
                 branch = table.getSelection(); 
                 tag = null;
+                bookmark = null;
             }
         });
 
@@ -246,6 +266,29 @@ public class RevisionChooserDialog extends Dialog {
                         }
                     }
                 }.schedule();
+            }
+        });
+
+        item.setControl(table);
+        return item;
+    }
+    
+    protected TabItem createBookmarkTabItem(TabFolder folder) {
+        TabItem item = new TabItem(folder, SWT.NONE);
+        item.setText("Bookmarks");
+
+        final BookmarkTable table = new BookmarkTable(folder, dataLoader
+                .getProject());
+        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+        table.addSelectionListener(new SelectionAdapter() {
+
+            @Override
+            public void widgetSelected(SelectionEvent e) {
+                text.setText(table.getSelection().getName());
+                bookmark = table.getSelection();
+                tag = null;
+                branch = null;
             }
         });
 

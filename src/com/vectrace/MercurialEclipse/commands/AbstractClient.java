@@ -99,7 +99,7 @@ public abstract class AbstractClient {
         }
         return paths;
     }
-    
+
     /**
      * Checks whether a command is available in installed Mercurial version by
      * issuing hg help <commandName>. If Mercurial doesn't answer with
@@ -107,12 +107,19 @@ public abstract class AbstractClient {
      * 
      * @param commandName
      *            the name of the command, e.g. "rebase"
+     * @param extensionEnabler
+     *            the enablement string for an extension, e.g.
+     *            "hgext.bookmarks="
      * @return true, if command is available
      */
-    public static boolean isCommandAvailable(String commandName) {
+    public static boolean isCommandAvailable(String commandName,
+            String extensionEnabler) {
         boolean returnValue = false;
         HgCommand command = new HgCommand("help", ResourcesPlugin
                 .getWorkspace().getRoot(), false);
+        if (extensionEnabler != null && extensionEnabler.length() != 0) {
+            command.addOptions("--config", "extensions." + extensionEnabler);
+        }
         command.addOptions(commandName);
         String result;
         try {

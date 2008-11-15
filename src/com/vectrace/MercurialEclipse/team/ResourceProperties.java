@@ -78,6 +78,13 @@ public class ResourceProperties {
 
     /**
      * Qualified name for a workspace session property that signifies whether
+     * the bookmarks extension is available.
+     */
+    public static final QualifiedName EXT_BOOKMARKS_AVAILABLE = new QualifiedName(
+            MercurialEclipsePlugin.ID, "extBookmarksAvailable");
+
+    /**
+     * Qualified name for a workspace session property that signifies whether
      * the forest extension is available.
      */
     public static QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(

@@ -10,7 +10,8 @@ public class HgUpdateClient {
     public static void update(IProject project, String revision, boolean clean)
             throws HgException {
         HgCommand command = new HgCommand("update", project, false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);        
         if (revision != null) {
             command.addOptions("-r", revision);
         }

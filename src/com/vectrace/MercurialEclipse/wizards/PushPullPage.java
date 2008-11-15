@@ -356,7 +356,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     public void setShowForest(boolean showForest) throws HgException {
         this.showForest = showForest
                 && MercurialUtilities.isCommandAvailable("fpull",
-                        ResourceProperties.EXT_FOREST_AVAILABLE);
+                        ResourceProperties.EXT_FOREST_AVAILABLE, null);
     }
 
     public Combo getSnapFileCombo() {
@@ -390,7 +390,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     public void setShowSvn(boolean showSvn) throws HgException {
         this.showSvn = showSvn
                 && MercurialUtilities.isCommandAvailable("svn",
-                        ResourceProperties.EXT_HGSUBVERSION_AVAILABLE);
+                        ResourceProperties.EXT_HGSUBVERSION_AVAILABLE, null);
     }
 
     public Button getSvnCheckBox() {

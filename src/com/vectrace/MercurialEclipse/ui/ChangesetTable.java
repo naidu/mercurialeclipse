@@ -86,6 +86,8 @@ public class ChangesetTable extends Composite {
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+        data.heightHint = 150;
+        data.minimumHeight = 50;
         table.setLayoutData(data);
 
         String[] titles = { "Rev", "Global", "Date", "Author", "Branch",
