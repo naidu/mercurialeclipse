@@ -176,7 +176,6 @@
 		<command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
 				categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Update"/>
-
 		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
 		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="Tag as Version..."/>
@@ -223,7 +222,7 @@
                  name="Serve repository..."/>
         <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"        
-                 name="Add Branch..."/>
+                 name="Add named branch..."/>
         <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"        
                  name="Disconnect"/>        
