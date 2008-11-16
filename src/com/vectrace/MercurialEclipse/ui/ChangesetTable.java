@@ -64,7 +64,7 @@ public class ChangesetTable extends Composite {
             boolean autoFetch) {
         this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
                 | SWT.V_SCROLL | SWT.H_SCROLL, resource);
-        this.autoFetch = autoFetch;
+        this.autoFetch = autoFetch;        
     }
 
     public ChangesetTable(Composite parent, int tableStyle, IResource resource,
@@ -78,6 +78,7 @@ public class ChangesetTable extends Composite {
      */
     public ChangesetTable(Composite parent, int tableStyle, IResource resource) {
         super(parent, SWT.NONE);
+        this.logBatchSize = LocalChangesetCache.getInstance().getLogBatchSize();
         this.resource = resource;
         this.setLayout(new GridLayout());
         this.setLayoutData(new GridData());
@@ -92,7 +93,7 @@ public class ChangesetTable extends Composite {
 
         String[] titles = { "Rev", "Global", "Date", "Author", "Branch",
                 "Summary" };
-        int[] widths = { 50, 150, 150, 100, 100, 150 };
+        int[] widths = { 50, 150, 150, 100, 100, 300 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);

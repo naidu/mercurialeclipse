@@ -245,24 +245,34 @@ public class LocalChangesetCache extends AbstractCache {
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
                 && res.getProject().isOpen()) {
-            int defaultLimit = 2000;
-            String pref = HgClients.getPreference(
-                    MercurialPreferenceConstants.LOG_BATCH_SIZE, String
-                            .valueOf(defaultLimit));
-            try {
-                defaultLimit = Integer.parseInt(pref);
-                if (defaultLimit < 0) {
-                    throw new NumberFormatException("Limit < 0");
-                }
-            } catch (NumberFormatException e) {
-                MercurialEclipsePlugin
-                        .logWarning(
-                                "Log limit not correctly configured in preferences.",
-                                e);
-            }
+            int defaultLimit = getLogBatchSize();
 
             this.refreshAllLocalRevisions(res, limit, defaultLimit, withFiles);
         }
+    }
+
+    /**
+     * Gets the configured log batch size.
+     * 
+     * @return
+     */
+    public int getLogBatchSize() {
+        int defaultLimit = 2000;
+        String pref = HgClients.getPreference(
+                MercurialPreferenceConstants.LOG_BATCH_SIZE, String
+                        .valueOf(defaultLimit));
+        try {
+            defaultLimit = Integer.parseInt(pref);
+            if (defaultLimit < 0) {
+                throw new NumberFormatException("Limit < 0");
+            }
+        } catch (NumberFormatException e) {
+            MercurialEclipsePlugin
+                    .logWarning(
+                            "Log limit not correctly configured in preferences.",
+                            e);
+        }
+        return defaultLimit;
     }
 
     public ChangeSet getLocalChangeSet(IResource res, String nodeId)
