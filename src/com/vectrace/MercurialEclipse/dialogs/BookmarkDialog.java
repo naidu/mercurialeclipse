@@ -11,7 +11,6 @@
 
 package com.vectrace.MercurialEclipse.dialogs;
 
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.swt.SWT;
@@ -70,10 +69,10 @@ public class BookmarkDialog extends TrayDialog {
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 1);
+        composite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-        TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
-        tabFolder.setLayoutData(new GridData(GridData.FILL_HORIZONTAL
-                | GridData.FILL_VERTICAL));
+        TabFolder tabFolder = new TabFolder(composite, SWT.FILL);
+        tabFolder.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
         createCreateTabItem(tabFolder);
         createModifyTabItem(tabFolder);
@@ -83,9 +82,11 @@ public class BookmarkDialog extends TrayDialog {
 
     protected TabItem createCreateTabItem(TabFolder folder) {
         // setup control
-        TabItem item = new TabItem(folder, SWT.NONE);
+        TabItem item = new TabItem(folder, folder.getStyle());
         item.setText("Create bookmark");
         Composite c = SWTWidgetHelper.createComposite(folder, 2);
+        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        c.setLayoutData(layoutData);
         item.setControl(c);
 
         Listener tabSl = new Listener() {
@@ -104,14 +105,16 @@ public class BookmarkDialog extends TrayDialog {
         };
 
         item.addListener(SWT.Show, tabSl);
-        
+
         // create widgets
         Group tipGroup = SWTWidgetHelper.createGroup(c, "Create new bookmark");
         SWTWidgetHelper.createLabel(tipGroup, "Bookmark name");
         this.bmNameTextBox = SWTWidgetHelper.createTextField(tipGroup);
         Group revGroup = SWTWidgetHelper.createGroup(c,
                 "Select revision (or don't select to set bookmark to tip)");
+        revGroup.setLayoutData(layoutData);
         this.csTable = new ChangesetTable(revGroup, project, true);
+        csTable.setLayoutData(layoutData);
         this.csTable.setEnabled(true);
 
         SelectionListener sl = new SelectionListener() {
@@ -135,12 +138,14 @@ public class BookmarkDialog extends TrayDialog {
     }
 
     protected TabItem createModifyTabItem(TabFolder folder) {
-     // setup control
-        TabItem item = new TabItem(folder, SWT.NONE);
+        // setup control
+        TabItem item = new TabItem(folder, folder.getStyle());
         item.setText("Modify bookmark");
         Composite c = SWTWidgetHelper.createComposite(folder, 2);
+        GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
+        c.setLayoutData(layoutData);
         item.setControl(c);
-        
+
         Listener tabSl = new Listener() {
             /*
              * (non-Javadoc)
@@ -157,27 +162,34 @@ public class BookmarkDialog extends TrayDialog {
         };
 
         item.addListener(SWT.Show, tabSl);
-       
+
         // create widgets
         Group selGroup = SWTWidgetHelper.createGroup(c, "Select bookmark");
+        selGroup.setLayoutData(layoutData);
         this.bookmarkTable = new BookmarkTable(selGroup, project);
+        this.bookmarkTable.setLayoutData(layoutData);
         SelectionListener sl = new SelectionListener() {
-            /* (non-Javadoc)
-             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
+            /*
+             * (non-Javadoc)
+             * 
+             * @see
+             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
+             * (org.eclipse.swt.events.SelectionEvent)
              */
             public void widgetDefaultSelected(SelectionEvent e) {
-                widgetSelected(e);                
+                widgetSelected(e);
             }
+
             public void widgetSelected(SelectionEvent e) {
                 modifyTab = true;
             }
         };
         this.bookmarkTable.addSelectionListener(sl);
-        
+
         Group renameGroup = SWTWidgetHelper.createGroup(c, "Modify action");
         this.deleteCheckBox(SWTWidgetHelper.createCheckBox(renameGroup,
                 "Delete selected bookmark"));
-        
+
         SelectionListener delSl = new SelectionListener() {
             /*
              * (non-Javadoc)
@@ -211,7 +223,7 @@ public class BookmarkDialog extends TrayDialog {
         this.deleteCheckBox.addSelectionListener(delSl);
         this.renameCheckBox = SWTWidgetHelper.createCheckBox(renameGroup,
                 "Rename selected bookmark");
-         renameLabel = SWTWidgetHelper.createLabel(renameGroup,
+        renameLabel = SWTWidgetHelper.createLabel(renameGroup,
                 "New name of bookmark");
         this.newBmNameTextBox = SWTWidgetHelper.createTextField(renameGroup);
         this.newBmNameTextBox.setEnabled(false);
@@ -243,7 +255,7 @@ public class BookmarkDialog extends TrayDialog {
                     modifyTab = true;
                 }
                 renameLabel.setEnabled(selection);
-                newBmNameTextBox.setEnabled(selection);                
+                newBmNameTextBox.setEnabled(selection);
             }
         };
         renameCheckBox.addSelectionListener(renSl);
