@@ -1,5 +1,7 @@
 package com.vectrace.MercurialEclipse.menu;
 
+import java.util.ArrayList;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -43,15 +45,15 @@ public class CommitMergeHandler extends SingleResourceHandler {
         try {
             // FIXME let's pray that all resources are in the same project...
 
-            IResource[] selectedResourceArray = new IResource[1];
-            selectedResourceArray[0] = resource;
+            ArrayList<IResource> selectedResource = new ArrayList<IResource>(1);
+            selectedResource.add(resource);
             HgRoot root = new HgRoot(MercurialUtilities
                     .search4MercurialRoot(resource.getLocation().toFile()));
 
             CommitDialog commitDialog = new CommitDialog(
                     shell,
                     root,
-                    selectedResourceArray,
+                    selectedResource,
                     "Merge with "
                             + resource.getProject()
                                     .getPersistentProperty(ResourceProperties.MERGING),

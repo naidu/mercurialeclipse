@@ -249,7 +249,8 @@
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"        
                  name="Refresh status"/>
         <command id="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 description="Export patch to file (hg diff)"
                  name="E&amp;xport Patch..."/>
         <category
               id="com.vectrace.MercurialEclipse.commandCategory"
@@ -742,13 +743,6 @@
                menubarPath="team.main/group5"
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
-           <action
-               label="E&amp;xport patch0..."
-               class="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
-               tooltip="Export patch to file (hg diff)"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.menu.ExportPatchHandler">
-           </action>           
            <action
                label="&amp;Import patch..."
                class="com.vectrace.MercurialEclipse.team.ActionImport"

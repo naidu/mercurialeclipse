@@ -1,6 +1,5 @@
 package com.vectrace.MercurialEclipse.menu;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -23,19 +22,11 @@ public class CommitHandler extends MultipleResourcesHandler {
     @Override
     public void run(final List<IResource> resources) throws HgException {
         // FIXME let's pray that all resources are in the same project...
-        final IProject project = resources.get(0).getProject();
-        for (IResource res : resources) {
-            if (!res.getProject().equals(project)) {
-                throw new HgException(
-                        "All resources must be in the same project. It will be fixed soon ;)");
-            }
-        }
-
-        IResource[] selectedResourceArray = resources.toArray(new IResource[0]);
+        IProject project = ensureSameProject();
         HgRoot root = new HgRoot(MercurialUtilities
-                .search4MercurialRoot(resources.get(0).getLocation().toFile()));
+                .search4MercurialRoot(project));
         CommitDialog commitDialog = new CommitDialog(getShell(), root,
-                selectedResourceArray);
+                resources);
 
         if (commitDialog.open() == Window.OK) {
             // add new resources
@@ -47,11 +38,11 @@ public class CommitHandler extends MultipleResourcesHandler {
             HgRemoveClient.removeResources(filesToRemove);
 
             // commit all
-            IResource[] resourcesToCommit = commitDialog.getResourcesToCommit();
+            List<IResource> resourcesToCommit = commitDialog.getResourcesToCommit();
             String messageToCommit = commitDialog.getCommitMessage();
 
-            HgCommitClient.commitResources(Arrays.asList(resourcesToCommit),
-                    HgClients.getDefaultUserName(), messageToCommit,
+            HgCommitClient.commitResources(resourcesToCommit, HgClients
+                    .getDefaultUserName(), messageToCommit,
                     new NullProgressMonitor());
 
             new RefreshJob("Refreshing local changesets after commit...", null,

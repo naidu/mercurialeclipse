@@ -10,219 +10,109 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.window.Window;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.viewers.CheckStateChangedEvent;
+import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.FocusAdapter;
-import org.eclipse.swt.events.FocusEvent;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.dialogs.SaveAsDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
+import com.vectrace.MercurialEclipse.ui.LocationChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 
 /*
  * A wizard page which will allow the user to choose location to export patch.
  * 
  */
 
-public class ExportPage extends HgWizardPage implements Listener {
-
-    public final static int CLIPBOARD = 1;
-    public final static int FILESYSTEM = 2;
-    public final static int WORKSPACE = 3;
+public class ExportPage extends HgWizardPage implements Listener,
+        ICheckStateListener {
 
     protected final List<IResource> resources;
 
-    private Button btnClipboard;
+    private HgRoot root;
+    private CommitFilesChooser commitFiles;
 
-    private Button btnFilesystem;
-    private Text txtSystemFile;
-    private Button btnBrowseFileSystem;
+    private LocationChooser locationChooser;
 
-    private Button btnWorkspace;
-    private Text txtWorkspaceFile;
-    private Button btnBrowseWorkspace;
-
-    public ExportPage(List<IResource> resources) {
+    public ExportPage(List<IResource> resources, HgRoot root) {
         super(Messages.getString("ExportWizard.pageName"), Messages
                 .getString("ExportWizard.pageTitle"), null); // TODO icon
         this.resources = resources;
+        this.root = root;
         setPageComplete(false);
     }
 
-    @Override
-    public boolean isPageComplete() {
-        return validatePage();
-    }
-
     protected boolean validatePage() {
-        boolean valid = false;
-        switch (getLocationType()) {
-        case WORKSPACE:
-            valid = isValidWorkSpaceLocation(getWorkspaceFile());
-            break;
-        case FILESYSTEM:
-            valid = isValidFile(getPatchFile());
-            break;
-        case CLIPBOARD:
-            valid = true;
-            break;
-        }
-
-        if (valid) {
+        String msg = locationChooser.validate();
+        if (msg == null && getCheckedResources().size() == 0)
+            msg = "Please choose files to export patch";
+        if (msg == null)
             setMessage(null);
-            setErrorMessage(null);
-        } else {
-            setErrorMessage("Please input valid file name or choose clipperboard");
-        }
-        // setPageComplete(valid && getSelectedResources().size() > 0);
-        return valid;
-    }
-
-    public List<IResource> getSelectedResources() {
-        return resources;
-    }
-
-    private boolean isValidFile(File file) {
-        if (!file.isAbsolute())
-            return false;
-        if (file.isDirectory())
-            return false;
-        File parent = file.getParentFile();
-        if (parent == null)
-            return false;
-        if (!parent.exists())
-            return false;
-        if (!parent.isDirectory())
-            return false;
-        return true;
-    }
-
-    public File getPatchFile() {
-        switch (getLocationType()) {
-        case FILESYSTEM:
-            return btnFilesystem.getSelection() ? new File(txtSystemFile
-                    .getText()) : null;
-        case CLIPBOARD:
-            return null;
-        case WORKSPACE:
-            IFile file = getWorkspaceFile();
-            return file == null ? null : file.getLocation().toFile();
-        default:
-            return null;
-        }
-    }
-
-    public IFile getWorkspaceFile() {
-        if (!btnWorkspace.getSelection() || txtWorkspaceFile.getText() == null
-                || txtWorkspaceFile.getText().length() == 0)
-            return null;
-        IPath parentToWorkspace = new Path(txtWorkspaceFile.getText());
-        return ResourcesPlugin.getWorkspace().getRoot().getFile(
-                parentToWorkspace);
-    }
-
-    private boolean isValidWorkSpaceLocation(IFile file) {
-        return file != null && file.getParent().exists();
-    }
-
-    public int getLocationType() {
-        if (btnClipboard.getSelection())
-            return CLIPBOARD;
-        else if (btnFilesystem.getSelection())
-            return FILESYSTEM;
-        else if (btnWorkspace.getSelection())
-            return WORKSPACE;
-        return 0;
+        setErrorMessage(msg);
+        setPageComplete(msg == null);
+        return msg == null;
     }
 
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 1);
         // TODO help
+
         Group group = SWTWidgetHelper.createGroup(composite, "Patch Location");
-        System.out.println(group);
-        createLocationControl(group);
+        locationChooser = new LocationChooser(group, true, getDialogSettings());
+        locationChooser.addStateListener(this);
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.horizontalAlignment = SWT.FILL;
+        locationChooser.setLayoutData(data);
+
+        // TODO no diff for untracked files, bug?
+        commitFiles = new CommitFilesChooser(composite, true, resources, root,
+                false);
+        commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
+        commitFiles.getViewer().addCheckStateListener(this);
+
         setControl(composite);
     }
 
-    protected void createLocationControl(Group group) {
-        Composite composite = SWTWidgetHelper.createComposite(group, 3);
+    public ArrayList<IResource> getCheckedResources() {
+        return commitFiles.getCheckedResources();
+    }
 
-        btnClipboard = SWTWidgetHelper.createRadioButton(composite,
-                "&Clipboard", 3);
-        btnClipboard.addListener(SWT.Selection, this);
-
-        btnFilesystem = SWTWidgetHelper.createRadioButton(composite,
-                "&File System", 1);
-        btnFilesystem.addListener(SWT.Selection, this);
-        txtSystemFile = SWTWidgetHelper.createTextField(composite);
-        txtSystemFile.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
-                validatePage();
-            }
-        });
-        txtSystemFile.addFocusListener(new FocusAdapter() {
-            @Override
-            public void focusGained(FocusEvent e) {
-                ((Text) e.getSource()).selectAll();
-            }
-        });
-        btnBrowseFileSystem = SWTWidgetHelper.createPushButton(composite,
-                "...", 1);
-        btnBrowseFileSystem.addListener(SWT.Selection, this);
-
-        btnWorkspace = SWTWidgetHelper.createRadioButton(composite,
-                "&Workspace", 1);
-        btnWorkspace.addListener(SWT.Selection, this);
-        txtWorkspaceFile = SWTWidgetHelper.createTextField(composite);
-        txtWorkspaceFile.setEditable(false);
-        btnBrowseWorkspace = SWTWidgetHelper.createPushButton(composite, "...",
-                1);
-        btnBrowseWorkspace.addListener(SWT.Selection, this);
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.jface.viewers.ICheckStateListener#checkStateChanged(org.eclipse
+     * .jface.viewers.CheckStateChangedEvent)
+     */
+    public void checkStateChanged(CheckStateChangedEvent event) {
+        validatePage();
     }
 
     public void handleEvent(Event event) {
-        if (event.widget == btnBrowseFileSystem) {
-            FileDialog dialog = new FileDialog(getShell(), SWT.PRIMARY_MODAL
-                    | SWT.SAVE);
-            dialog.setText(getTitle());
-            dialog.setFileName(txtSystemFile.getText());
-            String file = dialog.open();
-            if (file != null)
-                txtSystemFile.setText(new Path(file).toOSString());
-        } else if (event.widget == btnBrowseWorkspace) {
-            SaveAsDialog dialog = new SaveAsDialog(getShell());
-            dialog.setOriginalFile(getWorkspaceFile());
-            dialog.setTitle(getTitle());
-            if (dialog.open() == Window.OK)
-                txtWorkspaceFile.setText(dialog.getResult().toPortableString());
-        } else if (event.widget == btnClipboard
-                || event.widget == btnFilesystem
-                || event.widget == btnWorkspace) {
-            validatePage();
-            updateBtnStatus();
-        }
+        validatePage();
     }
 
-    private void updateBtnStatus() {
-        int type = getLocationType();
-        txtSystemFile.setEnabled(type == FILESYSTEM);
-        btnBrowseFileSystem.setEnabled(type == FILESYSTEM);
-        btnBrowseWorkspace.setEnabled(type == WORKSPACE);
+    public Location getLocation() {
+        return locationChooser.getCheckedLocation();
+    }
+    
+    /* (non-Javadoc)
+     * @see com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+     */
+    @Override
+    public boolean finish(IProgressMonitor monitor) {
+        locationChooser.saveSettings();
+        return super.finish(monitor);
     }
 }

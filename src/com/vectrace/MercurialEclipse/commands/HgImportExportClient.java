@@ -36,13 +36,12 @@ public class HgImportExportClient {
         return command.executeToFile(patchFile, 0, false);
     }
 
-    public static boolean exportPatch(List<IResource> resources)
+    public static String exportPatch(List<IResource> resources)
             throws HgException {
         HgCommand command = new HgCommand("diff", ResourcesPlugin
                 .getWorkspace().getRoot(), true);
         command.addFiles(resources);
-        // String result = command.executeToString();
-        // TODO Clip.copy
-        return true;
+        String result = command.executeToString();
+        return result;
     }
 }
