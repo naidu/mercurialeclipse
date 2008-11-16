@@ -63,7 +63,7 @@ public class QNewWizard extends HgWizard {
 
             try {
                 HgQNewClient.createNewPatch(resource, page
-                        .getCommitMessageTextField().getText(), page
+                        .getCommitTextDocument().get(), page
                         .getForceCheckBox().getSelection(), page
                         .getGitCheckBox().getSelection(), page
                         .getIncludeTextField().getText(), page
