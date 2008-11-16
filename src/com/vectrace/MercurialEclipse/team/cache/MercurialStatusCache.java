@@ -54,6 +54,7 @@ import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -451,7 +452,8 @@ public class MercurialStatusCache extends AbstractCache implements
                 if (monitor != null) {
                     monitor.worked(1);
                 }
-                changed = parseStatus(res, output);
+                File root = AbstractClient.getHgRoot(res);
+                changed = parseStatus(root, res, output);
                 if (monitor != null) {
                     monitor.worked(1);
                 }
@@ -498,12 +500,13 @@ public class MercurialStatusCache extends AbstractCache implements
     }
 
     /**
+     * @param root
      * @param res
      * @param output
      * @param ctrParent
      * @throws HgException
      */
-    private Set<IResource> parseStatus(IResource res, String output)
+    private Set<IResource> parseStatus(File root, IResource res, String output)
             throws HgException {
         if (res.getType() == IResource.PROJECT) {
             knownStatus.add(res.getProject());
@@ -517,14 +520,22 @@ public class MercurialStatusCache extends AbstractCache implements
             String status = scanner.next();
             String localName = scanner.nextLine().trim();
 
-            IResource member = null;
-            if (res.getType() == IResource.FOLDER
-                    || res.getType() == IResource.PROJECT) {
-                member = res.getProject().getFile(
-                        res.getProjectRelativePath().toOSString()
-                                + File.separator + localName);
-            } else {
-                member = res.getParent().getFile(new Path(localName));
+            // determine absolute path
+            String resourceLocation = root.getAbsolutePath() + File.separator
+                    + localName;                       
+            
+            IPath path = new Path(resourceLocation);
+            
+            // determine project relative path
+            int equalSegments = path.matchingFirstSegments(project
+                    .getLocation());
+            path = path.removeFirstSegments(equalSegments);
+            IResource member = project.findMember(path);
+            
+            // doesn't belong to our project (can happen if root is above
+            // project level)
+            if (member == null) {
+                continue;
             }
 
             BitSet bitSet = new BitSet();
@@ -876,9 +887,10 @@ public class MercurialStatusCache extends AbstractCache implements
             }
             if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
+                File root = AbstractClient.getHgRoot(resource);
                 String output = HgStatusClient.getStatus(resource.getLocation()
                         .toFile(), currentBatch);
-                parseStatus(resource, output);
+                parseStatus(root, resource, output);
                 currentBatch.clear();
             }
         }
