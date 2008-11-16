@@ -38,6 +38,8 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 
+import com.vectrace.MercurialEclipse.wizards.Messages;
+
 /**
  * control for choose location: clipboard, file or workspace file
  * 
@@ -79,10 +81,10 @@ public class LocationChooser extends Composite implements Listener {
     }
 
     protected void createLocationControl() {
-        btnClipboard = SWTWidgetHelper.createRadioButton(this, "&Clipboard", 3);
+        btnClipboard = SWTWidgetHelper.createRadioButton(this, Messages.getString("ExportWizard.Clipboard"), 3); //$NON-NLS-1$
         btnClipboard.addListener(SWT.Selection, this);
 
-        btnFilesystem = SWTWidgetHelper.createRadioButton(this, "&File System",
+        btnFilesystem = SWTWidgetHelper.createRadioButton(this, Messages.getString("ExportWizard.FileSystem"), //$NON-NLS-1$
                 1);
         btnFilesystem.addListener(SWT.Selection, this);
         txtSystemFile = SWTWidgetHelper.createTextField(this);
@@ -97,14 +99,14 @@ public class LocationChooser extends Composite implements Listener {
                 ((Text) e.getSource()).selectAll();
             }
         });
-        btnBrowseFileSystem = SWTWidgetHelper.createPushButton(this, "...", 1);
+        btnBrowseFileSystem = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
         btnBrowseFileSystem.addListener(SWT.Selection, this);
 
-        btnWorkspace = SWTWidgetHelper.createRadioButton(this, "&Workspace", 1);
+        btnWorkspace = SWTWidgetHelper.createRadioButton(this, Messages.getString("ExportWizard.Workspace"), 1); //$NON-NLS-1$
         btnWorkspace.addListener(SWT.Selection, this);
         txtWorkspaceFile = SWTWidgetHelper.createTextField(this);
         txtWorkspaceFile.setEditable(false);
-        btnBrowseWorkspace = SWTWidgetHelper.createPushButton(this, "...", 1);
+        btnBrowseWorkspace = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
         btnBrowseWorkspace.addListener(SWT.Selection, this);
     }
 
@@ -159,7 +161,7 @@ public class LocationChooser extends Composite implements Listener {
         }
         if (valid)
             return null;
-        return "Please input valid file name or choose clipperboard";
+        return Messages.getString("ExportWizard.InvalidFileName"); //$NON-NLS-1$
     }
 
     private boolean validateClipboard() {
@@ -300,7 +302,7 @@ public class LocationChooser extends Composite implements Listener {
     protected void restoreSettings() {
         if (settings == null)
             return;
-        String val = settings.get("LocationType");
+        String val = settings.get("LocationType"); //$NON-NLS-1$
         if (val != null)
             setLocationType(LocationType.valueOf(val));
     }
@@ -308,7 +310,7 @@ public class LocationChooser extends Composite implements Listener {
     public void saveSettings() {
         if (settings == null)
             return;
-        settings.put("LocationType", getLocationType().name());
+        settings.put("LocationType", getLocationType().name()); //$NON-NLS-1$
     }
 
     private void setLocationType(LocationType type) {

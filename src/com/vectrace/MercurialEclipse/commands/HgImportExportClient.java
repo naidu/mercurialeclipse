@@ -23,14 +23,14 @@ public class HgImportExportClient {
 
     public static String importPatch(IProject project, String patchLocation)
             throws HgException {
-        HgCommand command = new HgCommand("import", project, true);
+        HgCommand command = new HgCommand("import", project, true); //$NON-NLS-1$
         command.addFiles(patchLocation);
         return command.executeToString();
     }
 
     public static boolean exportPatch(List<IResource> resources, File patchFile)
             throws HgException {
-        HgCommand command = new HgCommand("diff", ResourcesPlugin
+        HgCommand command = new HgCommand("diff", ResourcesPlugin //$NON-NLS-1$
                 .getWorkspace().getRoot(), true);
         command.addFiles(resources);
         return command.executeToFile(patchFile, 0, false);
@@ -38,7 +38,7 @@ public class HgImportExportClient {
 
     public static String exportPatch(List<IResource> resources)
             throws HgException {
-        HgCommand command = new HgCommand("diff", ResourcesPlugin
+        HgCommand command = new HgCommand("diff", ResourcesPlugin //$NON-NLS-1$
                 .getWorkspace().getRoot(), true);
         command.addFiles(resources);
         String result = command.executeToString();

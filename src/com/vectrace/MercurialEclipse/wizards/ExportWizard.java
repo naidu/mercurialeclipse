@@ -44,10 +44,10 @@ public class ExportWizard extends HgWizard {
     public ExportWizard(List<IResource> resources, HgRoot root) {
         super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
-        this.sourcePage = new ExportPage(resources, root); //$NON-NLS-1$ //$NON-NLS-2$ 
+        this.sourcePage = new ExportPage(resources, root);
         addPage(sourcePage);
-        this.initPage(Messages.getString("ExportWizard.pageDescription"),
-                sourcePage); //$NON-NLS-1$
+        this.initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
+                sourcePage);
     }
 
     /*
@@ -63,8 +63,13 @@ public class ExportWizard extends HgWizard {
             location = sourcePage.getLocation();
             if (location.getLocationType() != LocationType.Clipboard
                     && location.getFile().exists())
-                if (!MessageDialog.openConfirm(getShell(), "Overwrite Confirm",
-                        "Are you sure to overwrite existing file?"))
+                if (!MessageDialog
+                        .openConfirm(
+                                getShell(),
+                                Messages
+                                        .getString("ExportWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
+                                Messages
+                                        .getString("ExportWizard.OverwriteConfirmDescription"))) //$NON-NLS-1$
                     return false;
             ExportOperation operation = new ExportOperation(getContainer());
             getContainer().run(true, false, operation);
@@ -76,7 +81,7 @@ public class ExportWizard extends HgWizard {
                 cb.dispose();
             }
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(getWindowTitle(), e); //$NON-NLS-1$
+            MercurialEclipsePlugin.logError(getWindowTitle(), e);
             MercurialEclipsePlugin.showError(e.getCause());
             return false;
         }
@@ -93,13 +98,13 @@ public class ExportWizard extends HgWizard {
 
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask(Messages.getString("ExportWizard.pageTitle"), 1);
+            monitor.beginTask(Messages.getString("ExportWizard.pageTitle"), 1); //$NON-NLS-1$
             try {
                 result = doExport();
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(Messages
-                        .getString("ExportWizard.pageTitle")
-                        + " failed:", e);
+                        .getString("ExportWizard.pageTitle") //$NON-NLS-1$
+                        + " failed:", e); //$NON-NLS-1$
             } finally {
                 monitor.done();
             }

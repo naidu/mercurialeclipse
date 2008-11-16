@@ -44,6 +44,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * TODO enable tree/flat view switch
@@ -116,18 +117,18 @@ public class CommitFilesChooser extends Composite {
         // Check mark
         col = new TableColumn(table, SWT.NONE | SWT.BORDER);
         col.setResizable(false);
-        col.setText("");
+        col.setText(""); //$NON-NLS-1$
         layout.addColumnData(new ColumnPixelData(20, false));
         // File name
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
-        col.setText("File");
+        col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
         layout.addColumnData(new ColumnPixelData(320, true));
 
         // File status
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
-        col.setText("Status");
+        col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
         layout.addColumnData(new ColumnPixelData(100, true));
 
         table.setLayout(layout);
@@ -140,13 +141,13 @@ public class CommitFilesChooser extends Composite {
         if (!selectable)
             return;
         selectAllButton = new Button(this, SWT.CHECK);
-        selectAllButton.setText("Select/unselect all");
+        selectAllButton.setText(Messages.getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
         selectAllButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         if (!untracked)
             return;
         showUntrackedFilesButton = new Button(this, SWT.CHECK);
-        showUntrackedFilesButton.setText("Show added/removed files");
+        showUntrackedFilesButton.setText(Messages.getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
         showUntrackedFilesButton.setLayoutData(new GridData(
                 GridData.FILL_HORIZONTAL));
     }
