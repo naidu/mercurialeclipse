@@ -79,7 +79,7 @@ public class RebasePage extends HgWizardPage {
         setControl(comp);
         try {
             if (!MercurialUtilities.isCommandAvailable("rebase",
-                    ResourceProperties.REBASE_AVAILABLE, null)) {
+                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) {
                 setErrorMessage("Rebase not available. Please update to a newer Mercurial version.");
             }
         } catch (HgException e) {

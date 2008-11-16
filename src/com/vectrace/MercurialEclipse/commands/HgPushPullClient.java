@@ -81,10 +81,11 @@ public class HgPushPullClient extends AbstractClient {
         }
         HgCommand command = new HgCommand("pull", workDir.getLocation()
                 .toFile(), true);
-
+                
         if (update) {
             command.addOptions("--update");
         } else if (rebase) {
+            command.addOptions("--config", "extensions.hgext.rebase=");
             command.addOptions("--rebase");
         }
 

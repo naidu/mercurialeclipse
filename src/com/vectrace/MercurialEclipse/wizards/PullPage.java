@@ -124,7 +124,7 @@ public class PullPage extends PushPullPage {
 
         try {
             if (MercurialUtilities.isCommandAvailable("rebase",
-                    ResourceProperties.REBASE_AVAILABLE, null)) {
+                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) {
                 this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
                         "Rebase after pull");
                 SelectionListener rebaseCheckBoxListener = new SelectionListener() {

@@ -44,36 +44,35 @@ public class HgRebaseClient extends AbstractClient {
     public static String rebase(File repoResource, int sourceRev, int baseRev,
             int destRev, boolean collapse, boolean cont, boolean abort)
             throws HgException {
-        HgCommand command = new HgCommand("rebase",
+        HgCommand c = new HgCommand("rebase",
                 getWorkingDirectory(repoResource), false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-
+        c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        c.addOptions("--config", "extensions.hgext.rebase=");
         if (!cont && !abort) {
             if (sourceRev >= 0 && baseRev <= 0) {
-                command.addOptions("--source", "" + sourceRev);
+                c.addOptions("--source", "" + sourceRev);
             }
 
             if (sourceRev < 0 && baseRev >= 0) {
-                command.addOptions("--base", "" + baseRev);
+                c.addOptions("--base", "" + baseRev);
             }
 
             if (destRev >= 0) {
-                command.addOptions("--dest", "" + destRev);
+                c.addOptions("--dest", "" + destRev);
             }
 
             if (collapse) {
-                command.addOptions("--collapse");
+                c.addOptions("--collapse");
             }
         }
 
         if (cont && !abort) {
-            command.addOptions("--continue");
+            c.addOptions("--continue");
         }
         if (abort && !cont) {
-            command.addOptions("--abort");
+            c.addOptions("--abort");
         }
-        return command.executeToString();
+        return c.executeToString();
     }
 
 }

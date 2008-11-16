@@ -43,6 +43,7 @@ public class HgSvnClient extends AbstractClient {
         HgCommand cmd = new HgCommand("svn",
                 getWorkingDirectory(currentWorkingDirectory), false);
         cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
+        cmd.addOptions("--config", "extensions.hgext.rebase=");
         cmd.addOptions("rebase");
         return cmd.executeToString();
     }
