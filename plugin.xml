@@ -747,6 +747,7 @@
                label="&amp;Import patch..."
                class="com.vectrace.MercurialEclipse.team.ActionImport"
                tooltip="Import patch from file (hg import)"
+               icon="icons/import.gif"
                menubarPath="team.main/group2"
                id="com.vectrace.MercurialEclipse.team.ActionImport">
            </action>           
