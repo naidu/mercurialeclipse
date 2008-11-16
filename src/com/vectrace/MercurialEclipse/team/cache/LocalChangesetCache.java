@@ -24,7 +24,6 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -377,7 +376,8 @@ public class LocalChangesetCache extends AbstractCache {
                 }
 
                 Set<IPath> concernedPaths = new HashSet<IPath>();
-
+                File root = HgRootClient.getHgRootAsFile(res);
+                
                 if (revisions != null && revisions.size() > 0) {
 
                     concernedPaths.add(res.getLocation());
@@ -391,14 +391,10 @@ public class LocalChangesetCache extends AbstractCache {
                     } else {
                         // every changeset is at least stored for the repository
                         // root
-
-                        File root = HgRootClient.getHgRootAsFile(res);
                         IPath rootPath = new Path(root.getCanonicalPath());
                         localChangeSets.put(res.getLocation(), revisions
                                 .get(rootPath));
                     }
-
-                    IWorkspaceRoot workspaceRoot = res.getWorkspace().getRoot();
 
                     for (Iterator<IPath> iter = revisions.keySet().iterator(); iter
                             .hasNext();) {
@@ -414,8 +410,8 @@ public class LocalChangesetCache extends AbstractCache {
                                 && !STATUS_CACHE
                                         .isAdded(res.getProject(), path)) {
 
-                            IResource myResource = workspaceRoot
-                                    .getFileForLocation(path);
+                            IResource myResource = super.convertRepoRelPath(
+                                    root, res.getProject(), path.toOSString());
                             if (myResource != null) {
                                 changes = HgLogClient.getRecentProjectLog(
                                         myResource, 1, withFiles).get(path);

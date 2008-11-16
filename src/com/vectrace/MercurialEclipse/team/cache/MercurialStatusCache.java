@@ -45,7 +45,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.RepositoryProvider;
@@ -520,17 +519,7 @@ public class MercurialStatusCache extends AbstractCache implements
             String status = scanner.next();
             String localName = scanner.nextLine().trim();
 
-            // determine absolute path
-            String resourceLocation = root.getAbsolutePath() + File.separator
-                    + localName;                       
-            
-            IPath path = new Path(resourceLocation);
-            
-            // determine project relative path
-            int equalSegments = path.matchingFirstSegments(project
-                    .getLocation());
-            path = path.removeFirstSegments(equalSegments);
-            IResource member = project.findMember(path);
+            IResource member = convertRepoRelPath(root, project, localName);
             
             // doesn't belong to our project (can happen if root is above
             // project level)

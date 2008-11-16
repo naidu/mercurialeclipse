@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -223,6 +225,27 @@ public abstract class AbstractCache extends Observable {
             }
         }
         return members;
+    }
+
+    /**
+     * @param hgRoot
+     * @param project
+     * @param repoRelPath
+     * @return
+     */
+    public IResource convertRepoRelPath(File hgRoot, IProject project, String repoRelPath) {
+        // determine absolute path
+        String resourceLocation = hgRoot.getAbsolutePath() + File.separator
+                + repoRelPath;                       
+        
+        IPath path = new Path(resourceLocation);
+        
+        // determine project relative path
+        int equalSegments = path.matchingFirstSegments(project
+                .getLocation());
+        path = path.removeFirstSegments(equalSegments);
+        IResource member = project.findMember(path);
+        return member;
     }
 
     /**
