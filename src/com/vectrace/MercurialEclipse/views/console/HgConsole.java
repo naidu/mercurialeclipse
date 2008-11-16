@@ -74,9 +74,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     private static final DateFormat TIME_FORMAT;
 
     static {
-        DateFormat format;
-        format = new SimpleDateFormat("m:ss.SSS");
-        TIME_FORMAT = format;
+        TIME_FORMAT = new SimpleDateFormat("m:ss.SSS");        
     }
 
     // Indicates whether the console is visible in the Console view
