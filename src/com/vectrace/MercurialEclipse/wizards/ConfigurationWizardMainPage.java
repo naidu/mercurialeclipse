@@ -69,8 +69,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
     // Dialog store id constants
     private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
-    private static final String STORE_URL_ID = "ConfigurationWizardMainPage.STORE_URL_ID"; //$NON-NLS-1$
-
     /**
      * ConfigurationWizardMainPage constructor.
      * 
@@ -299,8 +297,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         // Set remembered values
         IDialogSettings setts = getDialogSettings();
         if (setts != null) {
-            String[] hostNames = setts.getArray(STORE_URL_ID);
-            hostNames = updateHostNames(hostNames);
+            String[] hostNames = updateHostNames();
             if (hostNames != null) {
                 for (int i = 0; i < hostNames.length; i++) {
                     urlCombo.add(hostNames[i]);
@@ -341,8 +338,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private void saveWidgetValues() {
         // Update history
         IDialogSettings dialogSettings = getDialogSettings();
-        String[] hostNames = null;
-        hostNames = updateHostNames(hostNames);
         if (settings != null) {
             if (showCredentials) {
                 String[] userNames = dialogSettings.getArray(STORE_USERNAME_ID);
@@ -352,10 +347,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 userNames = addToHistory(userNames, userCombo.getText(),
                         COMBO_HISTORY_LENGTH);
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
-            }
-            hostNames = dialogSettings.getArray(STORE_URL_ID);
-            hostNames = addToHistory(hostNames, urlCombo.getText(), -1);
-            dialogSettings.put(STORE_URL_ID, hostNames);
+            }            
         }
     }
 
@@ -363,8 +355,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      * @param hostNames
      * @return
      */
-    private String[] updateHostNames(String[] hostNames) {
-        String[] newHostNames = hostNames;
+    private String[] updateHostNames() {
+        String[] newHostNames = new String[0];
         Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
                 .getRepoManager().getAllRepoLocations();
         if (repositories != null) {
