@@ -8,12 +8,15 @@
  * Contributors:
  *     StefanC - implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.dialogs;
+package com.vectrace.MercurialEclipse.ui;
 
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
-class UntrackedFilesFilter extends ViewerFilter 
+import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
+import com.vectrace.MercurialEclipse.dialogs.CommitResource;
+
+public class UntrackedFilesFilter extends ViewerFilter 
   {
     public UntrackedFilesFilter() 
     {
@@ -29,7 +32,7 @@ class UntrackedFilesFilter extends ViewerFilter
       if (element instanceof CommitResource) 
       {
         String str = ((CommitResource) element).getStatus();
-        return str.startsWith(CommitDialog.FILE_UNTRACKED) || str.startsWith(CommitDialog.FILE_DELETED) != true;
+        return !str.startsWith(CommitDialog.FILE_UNTRACKED) && !str.startsWith(CommitDialog.FILE_DELETED);
       }
       return true;
     }

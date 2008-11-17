@@ -14,7 +14,7 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
 
-final class CommitResourceLabelProvider extends LabelProvider implements ITableLabelProvider
+public final class CommitResourceLabelProvider extends LabelProvider implements ITableLabelProvider
 {
 
   public Image getColumnImage(Object element, int columnIndex)

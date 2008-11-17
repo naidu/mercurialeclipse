@@ -13,8 +13,11 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,28 +40,22 @@ public abstract class AbstractShellCommand {
     public static final int DEFAULT_TIMEOUT = 120000;
 
     private class InputStreamConsumer extends Thread {
-        private byte[] output;
         private final InputStream stream;
+        private final OutputStream output;
 
-        public InputStreamConsumer(InputStream stream) {
+        public InputStreamConsumer(InputStream stream, OutputStream output) {
+            this.output = output;
             this.stream = new BufferedInputStream(stream);
-        }
-
-        public byte[] getBytes() {
-            return output;
         }
 
         @Override
         public void run() {
-            ByteArrayOutputStream myOutput = new ByteArrayOutputStream();
             try {
                 int length;
                 byte[] buffer = new byte[1024];
-
                 while ((length = stream.read(buffer)) != -1) {
-                    myOutput.write(buffer, 0, length);
+                    output.write(buffer, 0, length);
                 }
-                this.output = myOutput.toByteArray();
             } catch (IOException e) {
                 if (!interrupted()) {
                     HgClients.logError(e);
@@ -70,13 +67,12 @@ public abstract class AbstractShellCommand {
                     HgClients.logError(e);
                 }
                 try {
-                    myOutput.close();
+                    output.close();
                 } catch (IOException e) {
                     HgClients.logError(e);
                 }
             }
         }
-
     }
 
     public static final int MAX_PARAMS = 120;
@@ -116,7 +112,7 @@ public abstract class AbstractShellCommand {
         int timeout = DEFAULT_TIMEOUT;
         if (this.timeoutConstant != null) {
             timeout = HgClients.getTimeOut(this.timeoutConstant);
-
+            
         }
         return executeToBytes(timeout);
     }
@@ -135,59 +131,63 @@ public abstract class AbstractShellCommand {
      */
     public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue)
             throws HgException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        if (executeToStream(bos, timeout, expectPositiveReturnValue))
+            return bos.toByteArray();
+        return null;
+    }
+
+    public boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+            throws HgException {
         try {
             List<String> cmd = getCommands();
             String cmdString = cmd.toString().replace(",", "").substring(1);
             cmdString = cmdString.substring(0, cmdString.length() - 1);
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
-            
+
             // set locale to english have deterministic output
             Map<String, String> env = builder.environment();
             env.put("LC_ALL", "en_US.utf8");
             env.put("LANG", "en_US.utf8");
             env.put("LANGUAGE", "en_US.utf8");
             env.put("LC_MESSAGES", "en_US.utf8");
-            
-            
+
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
             }
             process = builder.start();
-            consumer = new InputStreamConsumer(process.getInputStream());
-            byte[] returnValue = null;
+            consumer = new InputStreamConsumer(process.getInputStream(), output);
             consumer.start();
             getConsole().commandInvoked(cmdString);
             consumer.join(timeout); // 30 seconds timeout
+            String msg = getMessage(output);
             if (!consumer.isAlive()) {
                 int exitCode = process.waitFor();
-                returnValue = consumer.getBytes();
-                String msg = new String(returnValue);
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    getConsole().commandCompleted(0, new String(returnValue),
+                    getConsole().commandCompleted(0, msg,
                             null);
                     if (isDebugMode()) {
                         getConsole().printMessage(msg, null);
                     }
-                    return returnValue;
+                    return true;
                 }
 
                 // exit code > 0
                 HgException hgex = new HgException(
                         "Process error, return code: " + exitCode
-                                + ", message: " + new String(returnValue));
+                                + ", message: " + getMessage(output));
 
                 // exit code == 1 usually isn't fatal.
                 getConsole().commandCompleted(exitCode, msg, hgex);
-
                 throw hgex;
             }
-            returnValue = consumer.getBytes();
+            //command timeout
             HgException hgEx = new HgException("Process timeout");
-            if (returnValue != null) {
-                getConsole().printError(new String(returnValue), hgEx);
+            if (msg != null) {
+                getConsole().printError(msg, hgEx);
             } else {
                 getConsole().printError(hgEx.getMessage(), hgEx);
             }
@@ -201,6 +201,10 @@ public abstract class AbstractShellCommand {
                 process.destroy();
             }
         }
+    }
+
+    private static String getMessage(OutputStream output) {
+        return output instanceof FileOutputStream ? null : output.toString();
     }
 
     /**
@@ -219,6 +223,23 @@ public abstract class AbstractShellCommand {
             return new String(bytes);
         }
         return "";
+    }
+
+    public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(file, false);
+            return executeToStream(fos, timeout, expectPositiveReturnValue);
+        } catch (FileNotFoundException e) {
+            throw new HgException(e.getMessage(), e);
+        } finally {
+            if (fos != null)
+                try {
+                    fos.close();
+                } catch (IOException e) {
+                    throw new HgException(e.getMessage(), e);
+                }
+        }
     }
 
     protected List<String> getCommands() {

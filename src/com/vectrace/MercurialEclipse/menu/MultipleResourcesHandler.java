@@ -17,11 +17,14 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * 
@@ -57,6 +60,17 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
         return null;
     }
 	
+    protected IProject ensureSameProject() throws HgException{
+        List<IResource> resources = getSelectedResources();
+        final IProject project = resources.get(0).getProject();
+        for (IResource res : resources) {
+            if (!res.getProject().equals(project)) {
+                throw new HgException(
+                        "All resources must be in the same project. It will be fixed soon ;)");
+            }
+        }
+        return project;
+    }
 		
 	protected abstract void run(List<IResource> resources) throws Exception ;
 }
