@@ -81,10 +81,12 @@ public class LocationChooser extends Composite implements Listener {
     }
 
     protected void createLocationControl() {
-        btnClipboard = SWTWidgetHelper.createRadioButton(this, Messages.getString("ExportWizard.Clipboard"), 3); //$NON-NLS-1$
+        btnClipboard = SWTWidgetHelper.createRadioButton(this, Messages
+                .getString("ExportWizard.Clipboard"), 3); //$NON-NLS-1$
         btnClipboard.addListener(SWT.Selection, this);
 
-        btnFilesystem = SWTWidgetHelper.createRadioButton(this, Messages.getString("ExportWizard.FileSystem"), //$NON-NLS-1$
+        btnFilesystem = SWTWidgetHelper.createRadioButton(this, Messages
+                .getString("ExportWizard.FileSystem"), //$NON-NLS-1$
                 1);
         btnFilesystem.addListener(SWT.Selection, this);
         txtSystemFile = SWTWidgetHelper.createTextField(this);
@@ -102,7 +104,8 @@ public class LocationChooser extends Composite implements Listener {
         btnBrowseFileSystem = SWTWidgetHelper.createPushButton(this, "...", 1); //$NON-NLS-1$
         btnBrowseFileSystem.addListener(SWT.Selection, this);
 
-        btnWorkspace = SWTWidgetHelper.createRadioButton(this, Messages.getString("ExportWizard.Workspace"), 1); //$NON-NLS-1$
+        btnWorkspace = SWTWidgetHelper.createRadioButton(this, Messages
+                .getString("ExportWizard.Workspace"), 1); //$NON-NLS-1$
         btnWorkspace.addListener(SWT.Selection, this);
         txtWorkspaceFile = SWTWidgetHelper.createTextField(this);
         txtWorkspaceFile.setEditable(false);
@@ -148,7 +151,10 @@ public class LocationChooser extends Composite implements Listener {
 
     public String validate() {
         boolean valid = false;
-        switch (getLocationType()) {
+        LocationType type = getLocationType();
+        if (type == null)
+            return null;
+        switch (type) {
         case Workspace:
             // valid = isValidWorkSpaceLocation(getWorkspaceFile());
             // break;
@@ -325,5 +331,6 @@ public class LocationChooser extends Composite implements Listener {
             btnWorkspace.setSelection(true);
             break;
         }
+        updateBtnStatus();
     }
 }

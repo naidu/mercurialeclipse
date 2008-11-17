@@ -16,7 +16,6 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
-import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -35,8 +34,7 @@ import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
  * 
  */
 
-public class ExportPage extends HgWizardPage implements Listener,
-        ICheckStateListener {
+public class ExportPage extends HgWizardPage implements Listener {
 
     protected final List<IResource> resources;
 
@@ -50,7 +48,6 @@ public class ExportPage extends HgWizardPage implements Listener,
                 .getString("ExportWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
         this.resources = resources;
         this.root = root;
-        setPageComplete(false);
     }
 
     protected boolean validatePage() {
@@ -68,7 +65,8 @@ public class ExportPage extends HgWizardPage implements Listener,
         Composite composite = SWTWidgetHelper.createComposite(parent, 1);
         // TODO help
 
-        Group group = SWTWidgetHelper.createGroup(composite, Messages.getString("ExportWizard.PathLocation")); //$NON-NLS-1$
+        Group group = SWTWidgetHelper.createGroup(composite, Messages
+                .getString("ExportWizard.PathLocation")); //$NON-NLS-1$
         locationChooser = new LocationChooser(group, true, getDialogSettings());
         locationChooser.addStateListener(this);
         GridData data = new GridData(GridData.FILL_HORIZONTAL);
@@ -79,9 +77,10 @@ public class ExportPage extends HgWizardPage implements Listener,
         commitFiles = new CommitFilesChooser(composite, true, resources, root,
                 false);
         commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
-        commitFiles.getViewer().addCheckStateListener(this);
+        commitFiles.addStateListener(this);
 
         setControl(composite);
+        validatePage();
     }
 
     public ArrayList<IResource> getCheckedResources() {
@@ -106,9 +105,13 @@ public class ExportPage extends HgWizardPage implements Listener,
     public Location getLocation() {
         return locationChooser.getCheckedLocation();
     }
-    
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse
+     * .core.runtime.IProgressMonitor)
      */
     @Override
     public boolean finish(IProgressMonitor monitor) {

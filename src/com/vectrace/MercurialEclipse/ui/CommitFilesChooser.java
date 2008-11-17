@@ -15,10 +15,13 @@ import java.util.List;
 
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -32,6 +35,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
@@ -61,6 +65,7 @@ public class CommitFilesChooser extends Composite {
     private Button selectAllButton;
     private CheckboxTableViewer viewer;
     private final boolean untracked;
+    private ListenerList stateListeners = new ListenerList();
 
     /**
      * @return the viewer
@@ -141,13 +146,15 @@ public class CommitFilesChooser extends Composite {
         if (!selectable)
             return;
         selectAllButton = new Button(this, SWT.CHECK);
-        selectAllButton.setText(Messages.getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
+        selectAllButton.setText(Messages
+                .getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
         selectAllButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         if (!untracked)
             return;
         showUntrackedFilesButton = new Button(this, SWT.CHECK);
-        showUntrackedFilesButton.setText(Messages.getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
+        showUntrackedFilesButton.setText(Messages
+                .getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
         showUntrackedFilesButton.setLayoutData(new GridData(
                 GridData.FILL_HORIZONTAL));
     }
@@ -174,6 +181,11 @@ public class CommitFilesChooser extends Composite {
                 }
             }
         });
+        getViewer().addCheckStateListener(new ICheckStateListener(){
+            public void checkStateChanged(CheckStateChangedEvent event) {
+                fireStateChanged();
+            }
+        });
         if (selectable)
             selectAllButton.setSelection(false); // Start not selected
         if (selectable)
@@ -185,6 +197,7 @@ public class CommitFilesChooser extends Composite {
                     } else {
                         getViewer().setAllChecked(false);
                     }
+                    fireStateChanged();
                 }
             });
 
@@ -200,6 +213,7 @@ public class CommitFilesChooser extends Composite {
                                 getViewer().addFilter(untrackedFilesFilter);
                             }
                             getViewer().refresh(true);
+                            fireStateChanged();
                         }
                     });
         }
@@ -237,7 +251,7 @@ public class CommitFilesChooser extends Composite {
         }
         getViewer().setCheckedElements(tracked.toArray());
         if (!untracked)
-            showUntrackedFilesButton.setSelection(true);
+            selectAllButton.setSelection(true);
     }
 
     public ArrayList<IResource> getCheckedResources(String... status) {
@@ -259,4 +273,15 @@ public class CommitFilesChooser extends Composite {
         return list;
     }
 
+    /**
+     * @param exportPage
+     */
+    public void addStateListener(Listener listener) {
+        stateListeners.add(listener);
+    }
+
+    protected void fireStateChanged() {
+        for (Object obj : stateListeners.getListeners())
+            ((Listener) obj).handleEvent(null);
+    }
 }
