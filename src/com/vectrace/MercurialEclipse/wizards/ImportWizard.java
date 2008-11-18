@@ -20,7 +20,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgImportExportClient;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 
@@ -61,7 +61,7 @@ public boolean performFinish()
 
     try
     {
-      String result = HgImportExportClient.importPatch(project, importFile);
+      String result = HgPatchClient.importPatch(project, importFile);
       if(result.length() != 0)
       {
         Shell shell;

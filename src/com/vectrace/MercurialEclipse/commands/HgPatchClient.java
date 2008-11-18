@@ -16,10 +16,14 @@ import java.util.List;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.swt.dnd.Clipboard;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-public class HgImportExportClient {
+public class HgPatchClient {
 
     public static String importPatch(IProject project, String patchLocation)
             throws HgException {
@@ -36,12 +40,16 @@ public class HgImportExportClient {
         return command.executeToFile(patchFile, 0, false);
     }
 
-    public static String exportPatch(List<IResource> resources)
+    public static void exportPatch(List<IResource> resources)
             throws HgException {
         HgCommand command = new HgCommand("diff", ResourcesPlugin //$NON-NLS-1$
                 .getWorkspace().getRoot(), true);
         command.addFiles(resources);
         String result = command.executeToString();
-        return result;
+        Clipboard cb = new Clipboard(MercurialEclipsePlugin
+                .getStandardDisplay());
+        cb.setContents(new Object[] { result }, new Transfer[] { TextTransfer
+                .getInstance() });
+        cb.dispose();
     }
 }

@@ -20,13 +20,10 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
-import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.team.ui.TeamOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgImportExportClient;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
@@ -73,13 +70,6 @@ public class ExportWizard extends HgWizard {
                     return false;
             ExportOperation operation = new ExportOperation(getContainer());
             getContainer().run(true, false, operation);
-            if (location.getLocationType() == LocationType.Clipboard) {
-                Clipboard cb = new Clipboard(getContainer().getShell()
-                        .getDisplay());
-                cb.setContents(new Object[] { operation.result },
-                        new Transfer[] { TextTransfer.getInstance() });
-                cb.dispose();
-            }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(getWindowTitle(), e);
             MercurialEclipsePlugin.showError(e.getCause());
@@ -90,8 +80,6 @@ public class ExportWizard extends HgWizard {
 
     class ExportOperation extends TeamOperation {
 
-        public String result;
-
         public ExportOperation(IRunnableContext context) {
             super(context);
         }
@@ -100,7 +88,7 @@ public class ExportWizard extends HgWizard {
                 throws InvocationTargetException, InterruptedException {
             monitor.beginTask(Messages.getString("ExportWizard.pageTitle"), 1); //$NON-NLS-1$
             try {
-                result = doExport();
+                doExport();
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(Messages
                         .getString("ExportWizard.pageTitle") //$NON-NLS-1$
@@ -112,12 +100,12 @@ public class ExportWizard extends HgWizard {
 
     }
 
-    public String doExport() throws Exception {
+    public void doExport() throws Exception {
         if (location.getLocationType() == LocationType.Clipboard)
-            return HgImportExportClient.exportPatch(resources);
-        HgImportExportClient.exportPatch(resources, location.getFile());
+            HgPatchClient.exportPatch(resources);
+        else
+            HgPatchClient.exportPatch(resources, location.getFile());
         if (location.getLocationType() == LocationType.Workspace)
             location.getWorkspaceFile().refreshLocal(0, null);
-        return null;
     }
 }
