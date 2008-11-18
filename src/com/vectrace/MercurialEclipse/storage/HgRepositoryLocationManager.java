@@ -56,7 +56,7 @@ public class HgRepositoryLocationManager {
 
     final static private String REPO_LOCACTION_FILE = "repositories.txt";
 
-    private Set<HgRepositoryLocation> repos = new TreeSet<HgRepositoryLocation>();
+    private SortedSet<HgRepositoryLocation> repos = new TreeSet<HgRepositoryLocation>();
     private Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos = null;
 
     /**
@@ -113,7 +113,7 @@ public class HgRepositoryLocationManager {
 
         try {
             for (HgRepositoryLocation repo : repos) {
-                writer.write(repo.getUrl());
+                writer.write(repo.getSaveString());
                 writer.write('\n');
             }
         } finally {
@@ -141,8 +141,9 @@ public class HgRepositoryLocationManager {
     /**
      * Add a repository location to the database.
      */
-    public boolean addRepoLocation(HgRepositoryLocation loc) {
+    private boolean addRepoLocation(HgRepositoryLocation loc) {
         synchronized (repos) {
+            repos.remove(loc);
             repos.add(loc);
             REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
             return true;
@@ -252,7 +253,7 @@ public class HgRepositoryLocationManager {
             project
                     .setPersistentProperty(
                             MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY,
-                            loc.getUrl());
+                            loc.getLocation());
         } else {
             project
                     .setPersistentProperty(
@@ -298,7 +299,7 @@ public class HgRepositoryLocationManager {
                         .get(project);
                 if (repoSet != null) {
                     for (HgRepositoryLocation repo : repoSet) {
-                        writer.write(repo.getUrl());
+                        writer.write(repo.getSaveString());
                         writer.write('\n');
                     }
                 }
@@ -313,16 +314,26 @@ public class HgRepositoryLocationManager {
      * 
      * @param url
      * @return
+     * @throws URISyntaxException
      */
-    public HgRepositoryLocation getRepoLocation(String url) {
+    public HgRepositoryLocation getRepoLocation(String url, String user,
+            String pass) throws URISyntaxException {
+        HgRepositoryLocation location = null;
         if (repos != null) {
             for (HgRepositoryLocation loc : repos) {
-                if (loc.getUrl().equals(url)) {
-                    return loc;
+                if (loc.getLocation().equals(url)) {
+                    location = loc;
+                    break;
                 }
-            }
+            }            
+        } else {
+            repos = new TreeSet<HgRepositoryLocation>();
         }
-        return null;
+        if (location != null && (user == null || user.length() == 0)) {
+            return location;
+        }        
+        location = new HgRepositoryLocation(url, user, pass);
+        return location;
     }
 
     public void addRepositoryListener(IRepositoryListener repListener) {
@@ -341,14 +352,12 @@ public class HgRepositoryLocationManager {
      * 
      * user The username for the connection (optional) password The password
      * used for the connection (optional) url The url where the repository
-     * resides rootUrl The root url of the subversion repository (optional)
+     * resides
      * 
      * The created instance is not known by the provider and it's user
      * information is not cached. The purpose of the created location is to
      * allow connection validation before adding the location to the provider.
      * 
-     * This method will throw a HgException if the location for the given
-     * configuration already exists.
      */
     public HgRepositoryLocation createRepository(Properties configuration)
             throws HgException {
@@ -361,13 +370,6 @@ public class HgRepositoryLocationManager {
             throw new HgException("Couldn't create repository location.", e);
         }
 
-        // Check the cache for an equivalent instance and if there is one, throw
-        // an exception
-        HgRepositoryLocation existingLocation = getRepoLocation(location
-                .getUrl());
-        if (existingLocation != null) {
-            throw new HgException("Repository location already known.");
-        }
         addRepoLocation(location);
         return location;
     }
@@ -390,7 +392,7 @@ public class HgRepositoryLocationManager {
                         && project.isAccessible()) {
                     String url = getDefaultProjectRepository(project);
                     if (url != null
-                            && url.equals(hgRepositoryLocation.getUrl())) {
+                            && url.equals(hgRepositoryLocation.getLocation())) {
                         setDefaultProjectRepository(project, null);
                     }
                     SortedSet<HgRepositoryLocation> pRepos = projectRepos

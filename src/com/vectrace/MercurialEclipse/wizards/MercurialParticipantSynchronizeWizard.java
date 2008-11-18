@@ -118,8 +118,9 @@ public class MercurialParticipantSynchronizeWizard extends
         String user = pageProperties.getProperty("user"); //$NON-NLS-1$
         String pass = pageProperties.getProperty("password"); //$NON-NLS-1$
         HgRepositoryLocation repo;
-        try {
-            repo = new HgRepositoryLocation(url, user, pass);
+        try {            
+            repo = MercurialEclipsePlugin.getRepoManager().getRepoLocation(url,
+                    user, pass);
             ISynchronizationScope scope = null; // TODO
 
             MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(

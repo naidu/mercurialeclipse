@@ -35,20 +35,28 @@ public class HgRepositoryLocation extends AllRootsElement implements
     private String user;
     private String password;
     private URI uri;
+    private static final String SPLIT_TOKEN = "@@@";
 
-    public HgRepositoryLocation(String uri) throws URISyntaxException {
+    HgRepositoryLocation(String uri) throws URISyntaxException {
         this(uri, null, null);
     }
 
-    public HgRepositoryLocation(String uri, String user, String password)
+    HgRepositoryLocation(String uri, String user, String password)
             throws URISyntaxException {
         this.location = uri;
+        String[] repoInfo = uri.split(SPLIT_TOKEN);
+        
         this.user = user;
         this.password = password;
-
+        
+        if (this.user == null && repoInfo.length > 1) {
+            this.user = repoInfo[1];
+            this.location = repoInfo[0];
+        }
+        
         URI myUri = null;
         try {
-            myUri = new URI(uri);
+            myUri = new URI(location);
         } catch (URISyntaxException e) {
 
             // do nothing. workaround below doesn't work :-(
@@ -61,37 +69,46 @@ public class HgRepositoryLocation extends AllRootsElement implements
             // see http://www.selenic.com/mercurial/bts/issue1153
             // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
             // + myUri.toASCIIString().substring(5));
-        }
-        this.uri = myUri;
+        }        
         if (myUri != null) {
-            if (myUri.getUserInfo() == null && myUri.getScheme() != null
+            if (myUri.getScheme() != null
                     && !myUri.getScheme().equalsIgnoreCase("file")) {
-                String userInfo = user;
-                if (user != null && user.length() == 0) {
-                    // URI parts are undefinied, if they are null.
-                    userInfo = null;
-                } else if (user != null) {
-                    // pass gotta be separated by a colon
-                    if (password != null && password.length() != 0) {
-                        userInfo = userInfo.concat(":").concat(password);
+                String userInfo = null;
+                if (myUri.getUserInfo() == null) {
+                    userInfo = createUserinfo(this.user, this.password);
+                } else {
+                    // extract user and password from given URI
+                    String[] authorization = myUri.getUserInfo().split(":");
+                    this.user = authorization[0];
+                    if (authorization.length > 1) {
+                        this.password = authorization[1];
                     }
+                    userInfo = createUserinfo(this.user, this.password);
                 }
-
                 this.uri = new URI(myUri.getScheme(), userInfo,
                         myUri.getHost(), myUri.getPort(), myUri.getPath(),
                         myUri.getQuery(), myUri.getFragment());
-                                    
             }
-            // leave out authentication data
             this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
-                    .getPath(), myUri.getFragment()).toASCIIString();        
+                    .getPath(), myUri.getFragment()).toASCIIString();
         }
-        
-        
     }
 
-    public String getUrl() {
-        return this.location;
+    /**
+     * @param user
+     * @param password
+     * @return
+     */
+    private String createUserinfo(String user, String password) {
+        String userInfo = null;
+        if (user != null && user.length() > 0) {
+            // pass gotta be separated by a colon
+            userInfo = user;
+            if (password != null && password.length() != 0) {
+                userInfo = userInfo.concat(":").concat(password);
+            }
+        }
+        return userInfo;
     }
 
     static public boolean validateLocation(String validate) {
@@ -196,6 +213,14 @@ public class HgRepositoryLocation extends AllRootsElement implements
     @Override
     public String toString() {
         return location;
+    }
+
+    public String getSaveString() {
+        String r = location;
+        if (uri != null && uri.getUserInfo() != null) {
+            r += SPLIT_TOKEN + uri.getUserInfo();
+        }
+        return r;
     }
 
     @Override

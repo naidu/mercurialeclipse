@@ -31,7 +31,6 @@ import org.eclipse.swt.widgets.Listener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -211,8 +210,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             if (resource == null) {
                 return;
             }
-            HgRepositoryLocation defaultLocation = null;
-            Map<String, HgRepositoryLocation> paths = HgPathsClient
+            String defaultLocation = null;
+            Map<String, String> paths = HgPathsClient
                     .getPaths(resource.getProject());
             if (paths.containsKey(HgPathsClient.DEFAULT_PULL)) {
                 defaultLocation = paths.get(HgPathsClient.DEFAULT_PULL);
@@ -220,7 +219,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 defaultLocation = paths.get(HgPathsClient.DEFAULT);
             }
             if (defaultLocation != null) {
-                getUrlCombo().setText(defaultLocation.getUrl());
+                getUrlCombo().setText(defaultLocation);
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);

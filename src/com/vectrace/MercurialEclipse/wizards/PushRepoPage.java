@@ -65,16 +65,20 @@ public class PushRepoPage extends PushPullPage {
                     && getUrlCombo().getText() != null) {
                 OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
                 outgoingPage.setProject(resource.getProject());
-                outgoingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
-                        .getText(), getUserCombo().getText(), getPasswordText()
-                        .getText()));
+                HgRepositoryLocation loc = MercurialEclipsePlugin
+                        .getRepoManager().getRepoLocation(urlCombo.getText(),
+                                getUserCombo().getText(),
+                                getPasswordText()
+                                .getText());                
+                outgoingPage.setLocation(loc);
                 outgoingPage.setSvn(getSvnCheckBox() != null
                         && getSvnCheckBox().getSelection());
+                setErrorMessage(null);
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
         } catch (URISyntaxException e) {
-            MercurialEclipsePlugin.showError(e);
+            setErrorMessage(e.getLocalizedMessage());
         }
         return false;
     }

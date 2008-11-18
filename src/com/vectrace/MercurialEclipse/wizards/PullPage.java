@@ -70,16 +70,21 @@ public class PullPage extends PushPullPage {
                     && getUrlCombo().getText() != null) {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
                 incomingPage.setProject(resource.getProject());
-                incomingPage.setLocation(new HgRepositoryLocation(getUrlCombo()
-                        .getText(), getUserCombo().getText(), getPasswordText()
-                        .getText()));
+                HgRepositoryLocation loc = 
+                    MercurialEclipsePlugin
+                        .getRepoManager().getRepoLocation(
+                                getUrlCombo().getText(),
+                                getUserCombo().getText(),
+                                getPasswordText().getText());                
+                incomingPage.setLocation(loc);
                 incomingPage.setSvn(getSvnCheckBox() != null
                         && getSvnCheckBox().getSelection());
+                setErrorMessage(null);
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
         } catch (URISyntaxException e) {
-            MercurialEclipsePlugin.showError(e);
+            setErrorMessage(e.getLocalizedMessage());
         }
         return false;
     }

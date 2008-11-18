@@ -24,6 +24,6 @@ public class RepositoryComparator implements Comparator<HgRepositoryLocation> {
      * @see java.util.Comparator#compare(Obejct, Object)
      */
     public int compare(HgRepositoryLocation o1, HgRepositoryLocation o2) {
-        return o1.getUrl().compareToIgnoreCase(o2.getUrl());
+        return o1.getLocation().compareToIgnoreCase(o2.getLocation());
     }
 }

@@ -75,10 +75,14 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
             public void modifyText(ModifyEvent e) {
                 try {
+                    HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+                            .getRepoLocation(
+                                    getUrlCombo().getText(),
+                                    null, null);
+                    setErrorMessage(null);
                     SortedSet<ChangeSet> changes = IncomingChangesetCache
                             .getInstance().getIncomingChangeSets(project,
-                                    new HgRepositoryLocation(getUrlCombo()
-                                            .getText()));
+                                    repoLocation);
                     if (changes != null) {
                         changesets.clear();
                         changesets.addAll(changes);
@@ -88,8 +92,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                     setErrorMessage(Messages
                             .getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$)
                     MercurialEclipsePlugin.logError(e1);
-                } catch (URISyntaxException e1) {
-                    MercurialEclipsePlugin.logError(e1);
+                } catch (URISyntaxException e1) {                    
                     setErrorMessage(e1.getLocalizedMessage());
                 }
 

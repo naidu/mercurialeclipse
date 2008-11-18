@@ -53,8 +53,7 @@ public class NewLocationWizard extends HgWizard {
         HgRepositoryLocationManager provider = MercurialEclipsePlugin
                 .getRepoManager();
         try {
-            root[0] = provider.createRepository(props);
-            provider.addRepoLocation(root[0]);
+            root[0] = provider.createRepository(props);            
             return true;
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);

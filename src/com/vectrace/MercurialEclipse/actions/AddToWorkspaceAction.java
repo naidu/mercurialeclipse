@@ -101,11 +101,14 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
                 }
                 try {
                     // Repository-URL is stored in part 2
-                    HgRepositoryLocation location = new HgRepositoryLocation(
-                            referenceParts[2]);
+                    HgRepositoryLocation location = MercurialEclipsePlugin
+                            .getRepoManager()
+                            .getRepoLocation(
+                            referenceParts[2], null, null);
 
-                    HgCloneClient.clone(workspace, location, null, proj
-                            .getName());
+                    HgCloneClient.clone(workspace.getRoot().getLocation()
+                            .toOSString(), location, false, false, false,
+                            false, null, referenceParts[1]);
 
                     proj.create(monitor);
                     proj.open(monitor);

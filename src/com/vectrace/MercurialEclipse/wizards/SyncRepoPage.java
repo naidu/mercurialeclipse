@@ -183,7 +183,7 @@ public boolean isPageComplete()
     
         while (locIter.hasNext()) {
             HgRepositoryLocation loc = locIter.next();
-            locationCombo.add(loc.getUrl());
+            locationCombo.add(loc.getLocation());
         }
 	
     Button browseButton = new Button(outerContainer, SWT.PUSH);

@@ -365,7 +365,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     .iterator(); iterator.hasNext(); i++) {
                 HgRepositoryLocation hgRepositoryLocation = iterator.next();
                 newHostNames = addToHistory(newHostNames, hgRepositoryLocation
-                        .getUrl(), -1);
+                        .getLocation(), -1);
             }
         }
         return newHostNames;
