@@ -63,23 +63,31 @@ public class HgRepositoryLocation extends AllRootsElement implements
             // + myUri.toASCIIString().substring(5));
         }
         this.uri = myUri;
-        if (myUri != null && myUri.getUserInfo() == null
-                && myUri.getScheme() != null
-                && !myUri.getScheme().equalsIgnoreCase("file")) {
-            String userInfo = user;
-            if (user != null && user.length() == 0) {
-                // URI parts are undefinied, if they are null.
-                userInfo = null;
-            } else if (user != null) {
-                // pass gotta be separated by a colon
-                if (password != null && password.length() != 0) {
-                    userInfo = userInfo.concat(":").concat(password);
+        if (myUri != null) {
+            if (myUri.getUserInfo() == null && myUri.getScheme() != null
+                    && !myUri.getScheme().equalsIgnoreCase("file")) {
+                String userInfo = user;
+                if (user != null && user.length() == 0) {
+                    // URI parts are undefinied, if they are null.
+                    userInfo = null;
+                } else if (user != null) {
+                    // pass gotta be separated by a colon
+                    if (password != null && password.length() != 0) {
+                        userInfo = userInfo.concat(":").concat(password);
+                    }
                 }
+
+                this.uri = new URI(myUri.getScheme(), userInfo,
+                        myUri.getHost(), myUri.getPort(), myUri.getPath(),
+                        myUri.getQuery(), myUri.getFragment());
+                                    
             }
-            this.uri = new URI(myUri.getScheme(), userInfo, myUri.getHost(),
-                    myUri.getPort(), myUri.getPath(), myUri.getQuery(), myUri
-                            .getFragment());
+            // leave out authentication data
+            this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
+                    .getPath(), myUri.getFragment()).toASCIIString();        
         }
+        
+        
     }
 
     public String getUrl() {
