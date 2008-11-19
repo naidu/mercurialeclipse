@@ -250,9 +250,13 @@
         <command id="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"        
                  name="Refresh Status"/>
+        <command id="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 description="Import patch from file or clipboard(hg import)"
+                 name="I&amp;mport Patch..."/>
         <command id="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory" 
-                 description="Export patch to file (hg diff)"
+                 description="Export patch to file or clipboard(hg diff)"
                  name="E&amp;xport Patch..."/>
         <category
               id="com.vectrace.MercurialEclipse.commandCategory"
@@ -517,6 +521,8 @@
         </handler>
         <handler commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
                  class="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"/>
+        <handler commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
+                 class="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"/>
 	</extension>
 
 	<extension point="org.eclipse.ui.menus">
@@ -588,6 +594,12 @@
 				
                 
 				<separator name="group2" visible="false"/><!-- TODO visible="true" -->
+				<command commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
+					icon="icons/import.gif">
+					<visibleWhen>
+						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+					</visibleWhen>
+				</command>
 				<command commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
 					icon="icons/export.gif">
 					<visibleWhen>
@@ -846,14 +858,6 @@
                menubarPath="team.main/group5"
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
-           <action
-               label="&amp;Import patch..."
-               class="com.vectrace.MercurialEclipse.team.ActionImport"
-               tooltip="Import patch from file (hg import)"
-               icon="icons/import.gif"
-               menubarPath="team.main/group2"
-               id="com.vectrace.MercurialEclipse.team.ActionImport">
-           </action>           
       </objectContribution>    
       
       <!-- File Team Menu -->

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ListenerList;
@@ -132,14 +133,26 @@ public class LocationChooser extends Composite implements Listener {
                 if (dialog.open() == Window.OK)
                     txtWorkspaceFile.setText(dialog.getResult().toString());
             } else {
+                // no folder
+                // OpenResourceDialog dialog = new
+                // OpenResourceDialog(getShell(),ResourcesPlugin.getWorkspace().getRoot(),IResource.FILE);
+                // multi
+                // ResourceSelectionDialog dialog = new
+                // ResourceSelectionDialog(getShell(),
+                // ResourcesPlugin.getWorkspace().getRoot(),null);
+
                 ResourceListSelectionDialog dialog = new ResourceListSelectionDialog(
-                        getShell(), null, 0);
+                        getShell(), ResourcesPlugin.getWorkspace().getRoot(),
+                        IResource.FILE);
                 List<String> list = new ArrayList<String>(1);
                 list.add(txtWorkspaceFile.getText());
                 dialog.setInitialElementSelections(list);
+                dialog.open();
                 Object[] result = dialog.getResult();
                 if (result != null && result.length > 0)
-                    txtWorkspaceFile.setText(result[0].toString());
+                    txtWorkspaceFile
+                            .setText(((org.eclipse.core.internal.resources.File) result[0])
+                                    .getFullPath().toPortableString());
             }
         } else if (event.widget == btnClipboard
                 || event.widget == btnFilesystem
@@ -162,21 +175,22 @@ public class LocationChooser extends Composite implements Listener {
             valid = isValidSystemFile(getPatchFile());
             break;
         case Clipboard:
-            valid = validateClipboard();
-            break;
+            return validateClipboard();
         }
         if (valid)
             return null;
         return Messages.getString("ExportWizard.InvalidFileName"); //$NON-NLS-1$
     }
 
-    private boolean validateClipboard() {
+    private String validateClipboard() {
         if (save)
-            return true;
+            return null;
         Clipboard cb = new Clipboard(getDisplay());
         String contents = (String) cb.getContents(TextTransfer.getInstance());
         cb.dispose();
-        return contents != null && contents.trim().length() > 0;
+        if (contents != null && contents.trim().length() > 0)
+            return null;
+        return "Clipboard Empty";
     }
 
     private boolean isValidSystemFile(File file) {
@@ -195,7 +209,7 @@ public class LocationChooser extends Composite implements Listener {
             if (!parent.isDirectory())
                 return false;
         } else {
-            if (file.exists())
+            if (!file.exists())
                 return false;
         }
         return true;

@@ -11,6 +11,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -25,11 +27,39 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgPatchClient {
 
-    public static String importPatch(IProject project, String patchLocation)
+    public static String importPatch(IProject project, File patchLocation)
             throws HgException {
         HgCommand command = new HgCommand("import", project, true); //$NON-NLS-1$
-        command.addFiles(patchLocation);
+        command.addFiles(patchLocation.getAbsolutePath());
+        command.addOptions("--no-commit");
         return command.executeToString();
+    }
+
+    /**
+     * import diff from clipboard<br>
+     * TODO export stream direct to hg process inputstream
+     * 
+     * @param project
+     * @return
+     * @throws HgException
+     */
+    public static String importPatch(IProject project) throws HgException {
+        File file = null;
+        String txt = getClipboardString();
+        if (txt == null || txt.trim().length() == 0)
+            return null;
+        try {
+            file = File.createTempFile("mercurial_", ".patch");
+            FileWriter w = new FileWriter(file);
+            w.write(txt);
+            w.close();
+            return importPatch(project, file);
+        } catch (IOException e) {
+            throw new HgException("Error write temp file", e);
+        } finally {
+            if (file != null)
+                file.delete();
+        }
     }
 
     public static boolean exportPatch(List<IResource> resources, File patchFile)
@@ -40,16 +70,53 @@ public class HgPatchClient {
         return command.executeToFile(patchFile, 0, false);
     }
 
+    /**
+     * export diff file to clipboard
+     * 
+     * @param resources
+     * @throws HgException
+     */
     public static void exportPatch(List<IResource> resources)
             throws HgException {
         HgCommand command = new HgCommand("diff", ResourcesPlugin //$NON-NLS-1$
                 .getWorkspace().getRoot(), true);
         command.addFiles(resources);
         String result = command.executeToString();
-        Clipboard cb = new Clipboard(MercurialEclipsePlugin
-                .getStandardDisplay());
-        cb.setContents(new Object[] { result }, new Transfer[] { TextTransfer
-                .getInstance() });
-        cb.dispose();
+        copyToClipboard(result);
+    }
+
+    private static void copyToClipboard(final String result) {
+        if (MercurialEclipsePlugin.getStandardDisplay().getThread() == Thread
+                .currentThread()) {
+            Clipboard cb = new Clipboard(MercurialEclipsePlugin
+                    .getStandardDisplay());
+            cb.setContents(new Object[] { result },
+                    new Transfer[] { TextTransfer.getInstance() });
+            cb.dispose();
+            return;
+        }
+        MercurialEclipsePlugin.getStandardDisplay().syncExec(new Runnable() {
+            public void run() {
+                copyToClipboard(result);
+            }
+        });
+    }
+
+    private static String getClipboardString() {
+        if (MercurialEclipsePlugin.getStandardDisplay().getThread() == Thread
+                .currentThread()) {
+            Clipboard cb = new Clipboard(MercurialEclipsePlugin
+                    .getStandardDisplay());
+            String result = (String) cb.getContents(TextTransfer.getInstance());
+            cb.dispose();
+            return result;
+        }
+        final String[] r = { null };
+        MercurialEclipsePlugin.getStandardDisplay().syncExec(new Runnable() {
+            public void run() {
+                r[0] = getClipboardString();
+            }
+        });
+        return r[0];
     }
 }

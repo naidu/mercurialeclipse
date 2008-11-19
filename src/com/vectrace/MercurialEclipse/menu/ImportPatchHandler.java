@@ -10,33 +10,27 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import java.util.List;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.wizards.ExportWizard;
+import com.vectrace.MercurialEclipse.wizards.ImportWizard;
 
-public class ExportPatchHandler extends MultipleResourcesHandler {
+public class ImportPatchHandler extends SingleResourceHandler {
 
     @Override
-    protected void run(List<IResource> resources) throws Exception {
-        openWizard(resources, getShell());
+    protected void run(IResource resource) throws Exception {
+        openWizard(resource, getShell());
     }
 
-    public void openWizard(List<IResource> resources, Shell shell)
-            throws Exception {
-        IProject project = ensureSameProject();
-        HgRoot root = new HgRoot(MercurialUtilities
-                .search4MercurialRoot(project));
-        ExportWizard wizard = new ExportWizard(resources, root);
+    public void openWizard(IResource resource, Shell shell) throws Exception {
+        IProject project = resource.getProject();
+        ImportWizard wizard = new ImportWizard(project);
         WizardDialog dialog = new WizardDialog(shell, wizard);
         dialog.setBlockOnOpen(true);
-        dialog.open();
+        if (Window.OK == dialog.open())
+            project.refreshLocal(IResource.DEPTH_INFINITE, null);
     }
-
 }

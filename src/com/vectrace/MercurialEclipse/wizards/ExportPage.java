@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -85,17 +84,6 @@ public class ExportPage extends HgWizardPage implements Listener {
 
     public ArrayList<IResource> getCheckedResources() {
         return commitFiles.getCheckedResources();
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.viewers.ICheckStateListener#checkStateChanged(org.eclipse
-     * .jface.viewers.CheckStateChangedEvent)
-     */
-    public void checkStateChanged(CheckStateChangedEvent event) {
-        validatePage();
     }
 
     public void handleEvent(Event event) {
