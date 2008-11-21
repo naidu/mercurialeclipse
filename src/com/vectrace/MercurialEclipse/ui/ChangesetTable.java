@@ -139,7 +139,7 @@ public class ChangesetTable extends Composite {
      * @throws HgException
      */
     private void updateTable(int startRev) throws HgException {
-        if (table.isEnabled() && autoFetch) {
+        if (resource != null && table.isEnabled() && autoFetch) {
             if (startRev - logBatchSize > 0 || bottomNotFetched) {
                 LocalChangesetCache.getInstance().refreshAllLocalRevisions(
                         resource, true, logBatchSize, startRev, false);
