@@ -13,8 +13,9 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -23,27 +24,26 @@ import org.eclipse.team.ui.TeamOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
 
-public class ImportWizard extends HgWizard {
+public class ExportWizard extends HgWizard {
 
-    private ImportPage sourcePage;
+    private ExportPage sourcePage;
+    private ArrayList<IResource> resources;
     private Location location;
-    private IProject project;
-    private String result;
 
     /**
      * @param root
      * @param resource
      */
-    public ImportWizard(IResource selection) {
-        super(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
+    public ExportWizard(List<IResource> resources, HgRoot root) {
+        super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
-        project = selection.getProject();
-        this.sourcePage = new ImportPage(project);
+        this.sourcePage = new ExportPage(resources, root);
         addPage(sourcePage);
-        this.initPage(Messages.getString("ImportWizard.pageDescription"), //$NON-NLS-1$
+        this.initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
     }
 
@@ -56,15 +56,20 @@ public class ImportWizard extends HgWizard {
     public boolean performFinish() {
         sourcePage.finish(null);
         try {
+            resources = sourcePage.getCheckedResources();
             location = sourcePage.getLocation();
-            result = null;
-            ImportOperation operation = new ImportOperation(getContainer());
+            if (location.getLocationType() != LocationType.Clipboard
+                    && location.getFile().exists())
+                if (!MessageDialog
+                        .openConfirm(
+                                getShell(),
+                                Messages
+                                        .getString("ExportWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
+                                Messages
+                                        .getString("ExportWizard.OverwriteConfirmDescription"))) //$NON-NLS-1$
+                    return false;
+            ExportOperation operation = new ExportOperation(getContainer());
             getContainer().run(true, false, operation);
-            if (result != null){
-                MessageDialog.openError(getShell(), Messages.getString("ImportWizard.PatchError"), //$NON-NLS-1$
-                        result);
-                return false;
-            }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(getWindowTitle(), e);
             MercurialEclipsePlugin.showError(e.getCause());
@@ -73,9 +78,9 @@ public class ImportWizard extends HgWizard {
         return true;
     }
 
-    class ImportOperation extends TeamOperation {
+    class ExportOperation extends TeamOperation {
 
-        public ImportOperation(IRunnableContext context) {
+        public ExportOperation(IRunnableContext context) {
             super(context);
         }
 
@@ -83,9 +88,8 @@ public class ImportWizard extends HgWizard {
                 throws InvocationTargetException, InterruptedException {
             monitor.beginTask(Messages.getString("ExportWizard.pageTitle"), 1); //$NON-NLS-1$
             try {
-                performOperation();
+                doExport();
             } catch (Exception e) {
-                result = e.getLocalizedMessage();
                 MercurialEclipsePlugin.logError(Messages
                         .getString("ExportWizard.pageTitle") //$NON-NLS-1$
                         + " failed:", e); //$NON-NLS-1$
@@ -96,11 +100,12 @@ public class ImportWizard extends HgWizard {
 
     }
 
-    public void performOperation() throws Exception {
+    public void doExport() throws Exception {
         if (location.getLocationType() == LocationType.Clipboard)
-            HgPatchClient.importPatch(project);
+            HgPatchClient.exportPatch(resources);
         else
-            HgPatchClient.importPatch(project, location.getFile());
-        project.refreshLocal(0, null);
+            HgPatchClient.exportPatch(resources, location.getFile());
+        if (location.getLocationType() == LocationType.Workspace)
+            location.getWorkspaceFile().refreshLocal(0, null);
     }
 }

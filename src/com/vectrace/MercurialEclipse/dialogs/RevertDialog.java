@@ -41,6 +41,7 @@ import org.eclipse.swt.widgets.TableColumn;
 
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.ui.UntrackedFilesFilter;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 public class RevertDialog extends Dialog {
