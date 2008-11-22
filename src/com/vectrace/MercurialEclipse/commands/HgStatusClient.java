@@ -69,7 +69,7 @@ public class HgStatusClient extends AbstractClient {
     public static boolean isDirty(IProject project) throws HgException {
         HgCommand command = new HgCommand("status", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
+        command.addOptions("-mardi");// modified, added, removed, deleted //$NON-NLS-1$
         return command.executeToBytes().length != 0;
     }
     
@@ -102,6 +102,20 @@ public class HgStatusClient extends AbstractClient {
         command.addOptions("-marduic"); //$NON-NLS-1$
         command.addFiles(files);
         return command.executeToString();
+    }
+    
+    public static String[] getDirtyFiles(File file)
+            throws HgException {
+        HgCommand command = new HgCommand("status", getWorkingDirectory(file), //$NON-NLS-1$
+                true);
+        command
+                .setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+        command.addOptions("-mard"); //$NON-NLS-1$        
+        String result = command.executeToString();
+        if (result == null || result.length() == 0) {
+            return new String[0];
+        }
+        return result.split("\n"); //$NON-NLS-1$
     }
 
 }

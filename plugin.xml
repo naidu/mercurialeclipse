@@ -258,6 +258,14 @@
                  categoryId="com.vectrace.MercurialEclipse.commandCategory" 
                  description="%exportPatchToFileOrClipboard"
                  name="%exportPatch"/>
+        <command id="com.vectrace.MercurialEclipse.menu.ShelveHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 description="%shelveDescription"
+                 name="%shelveName"/>
+        <command id="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 description="%unshelveDescription"
+                 name="%unshelveName"/>                 
         <category
               id="com.vectrace.MercurialEclipse.commandCategory"
               name="Mercurial">
@@ -510,6 +518,24 @@
                 </and>
             </enabledWhen>
         </handler>
+        <!-- Shelve Handler  -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.ShelveHandler"
+                 class="com.vectrace.MercurialEclipse.menu.ShelveHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
+        <!-- UnShelve Handler  -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
+                 class="com.vectrace.MercurialEclipse.menu.UnShelveHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>                  
+                </and>
+            </enabledWhen>
+        </handler>
         <!-- RefreshStatusHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                  class="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler">
@@ -741,7 +767,23 @@
                             <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
                         </visibleWhen>
                     </command>
-                </menu>      
+                </menu>     
+                    <command
+                        commandId="com.vectrace.MercurialEclipse.menu.ShelveHandler"
+                        icon="icons/export.gif"                          
+                        label="%commandLabel.shelve">
+                            <visibleWhen>
+                                <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                            </visibleWhen>
+                    </command>
+                    <command
+                        commandId="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
+                        icon="icons/import.gif"                          
+                        label="%commandLabel.unshelve">
+                            <visibleWhen>
+                                <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                            </visibleWhen>
+                    </command>  
 				    <command
                         commandId="com.vectrace.MercurialEclipse.menu.SignHandler"
                           icon="icons/clcl16/deadlock_view.gif"

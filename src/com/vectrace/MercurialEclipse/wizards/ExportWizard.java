@@ -33,6 +33,7 @@ public class ExportWizard extends HgWizard {
     private ExportPage sourcePage;
     private ArrayList<IResource> resources;
     private Location location;
+    private HgRoot root;
 
     /**
      * @param root
@@ -45,6 +46,7 @@ public class ExportWizard extends HgWizard {
         addPage(sourcePage);
         this.initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
+        this.root = root;
     }
 
     /*
@@ -59,15 +61,17 @@ public class ExportWizard extends HgWizard {
             resources = sourcePage.getCheckedResources();
             location = sourcePage.getLocation();
             if (location.getLocationType() != LocationType.Clipboard
-                    && location.getFile().exists())
+                    && location.getFile().exists()) {
                 if (!MessageDialog
                         .openConfirm(
                                 getShell(),
                                 Messages
                                         .getString("ExportWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
                                 Messages
-                                        .getString("ExportWizard.OverwriteConfirmDescription"))) //$NON-NLS-1$
+                                        .getString("ExportWizard.OverwriteConfirmDescription"))) {
                     return false;
+                }
+            }
             ExportOperation operation = new ExportOperation(getContainer());
             getContainer().run(true, false, operation);
         } catch (Exception e) {
@@ -101,11 +105,13 @@ public class ExportWizard extends HgWizard {
     }
 
     public void doExport() throws Exception {
-        if (location.getLocationType() == LocationType.Clipboard)
-            HgPatchClient.exportPatch(resources);
-        else
-            HgPatchClient.exportPatch(resources, location.getFile());
-        if (location.getLocationType() == LocationType.Workspace)
+        if (location.getLocationType() == LocationType.Clipboard) {
+            HgPatchClient.exportPatch(root, resources);
+        } else {
+            HgPatchClient.exportPatch(root, resources, location.getFile());
+        }
+        if (location.getLocationType() == LocationType.Workspace) {
             location.getWorkspaceFile().refreshLocal(0, null);
+        }
     }
 }

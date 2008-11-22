@@ -7,6 +7,8 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Steeven Lee               - import/export stuff
+ *     Bastian Doetsch           - additions
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -17,7 +19,6 @@ import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
@@ -25,7 +26,7 @@ import org.eclipse.swt.dnd.Transfer;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-public class HgPatchClient {
+public class HgPatchClient extends AbstractClient {
 
     public static String importPatch(IProject project, File patchLocation)
             throws HgException {
@@ -46,8 +47,9 @@ public class HgPatchClient {
     public static String importPatch(IProject project) throws HgException {
         File file = null;
         String txt = getClipboardString();
-        if (txt == null || txt.trim().length() == 0)
+        if (txt == null || txt.trim().length() == 0) {
             return null;
+        }
         try {
             file = File.createTempFile("mercurial_", ".patch"); //$NON-NLS-1$ //$NON-NLS-2$
             FileWriter w = new FileWriter(file);
@@ -55,17 +57,18 @@ public class HgPatchClient {
             w.close();
             return importPatch(project, file);
         } catch (IOException e) {
-            throw new HgException(Messages.getString("HgPatchClient.error.writeTempFile"), e); //$NON-NLS-1$
+            throw new HgException(Messages
+                    .getString("HgPatchClient.error.writeTempFile"), e); //$NON-NLS-1$
         } finally {
-            if (file != null)
+            if (file != null) {
                 file.delete();
+            }
         }
     }
 
-    public static boolean exportPatch(List<IResource> resources, File patchFile)
+    public static boolean exportPatch(File workDir, List<IResource> resources, File patchFile)
             throws HgException {
-        HgCommand command = new HgCommand("diff", ResourcesPlugin //$NON-NLS-1$
-                .getWorkspace().getRoot(), true);
+        HgCommand command = new HgCommand("diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
         command.addFiles(resources);
         return command.executeToFile(patchFile, 0, false);
     }
@@ -76,10 +79,10 @@ public class HgPatchClient {
      * @param resources
      * @throws HgException
      */
-    public static void exportPatch(List<IResource> resources)
+    public static void exportPatch(File workDir, List<IResource> resources)
             throws HgException {
-        HgCommand command = new HgCommand("diff", ResourcesPlugin //$NON-NLS-1$
-                .getWorkspace().getRoot(), true);
+        HgCommand command = new HgCommand(
+                "diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$                
         command.addFiles(resources);
         String result = command.executeToString();
         copyToClipboard(result);
