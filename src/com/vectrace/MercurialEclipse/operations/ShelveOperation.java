@@ -93,7 +93,9 @@ public class ShelveOperation extends HgOperation {
             for (String f : dirtyFiles) {
                 IResource r = MercurialStatusCache.getInstance()
                         .convertRepoRelPath(root, project, f.substring(2));
-                resources.add(r);
+                if (r.exists()) {
+                    resources.add(r);
+                }
             }
             monitor.worked(1);
             monitor.subTask(Messages.getString("ShelveOperation.shelvingChanges"));             //$NON-NLS-1$
