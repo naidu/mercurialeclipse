@@ -47,8 +47,8 @@ protected String[] getHgCommand()
   {
     ArrayList<String> launchCmd = new ArrayList<String>(resources.length + 4);
     launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add("status");
-    launchCmd.add("--");
+    launchCmd.add("status"); //$NON-NLS-1$
+    launchCmd.add("--"); //$NON-NLS-1$
     if( resources.length == 0 )
     {
 //    	System.out.println("StatusContainerAction::getHgCommand() resources.length == 0");
@@ -74,7 +74,7 @@ protected File getHgWorkingDir()
   @Override
 protected String getActionDescription()
   {
-    return "Mercurial get status " + resources[0].getLocation() + " from the Mercurial repository.";
+    return Messages.getString("StatusContainerAction.job.description1") + resources[0].getLocation() + Messages.getString("StatusContainerAction.job.description.2"); //$NON-NLS-1$ //$NON-NLS-2$
   }
 
   public File getWorkingDir()

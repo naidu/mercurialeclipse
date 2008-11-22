@@ -72,8 +72,8 @@ public class AddHandler extends MultipleResourcesHandler {
                 new ResourceLabelProvider(), new ResourcesTreeContentProvider(roots));
 
         dialog.setInput(ResourcesTreeContentProvider.ROOT);
-        dialog.setTitle("Add to Version Control...");
-        dialog.setMessage("Select the files to add to Mercurial");
+        dialog.setTitle(Messages.getString("AddHandler.addToVersionControl")); //$NON-NLS-1$
+        dialog.setMessage(Messages.getString("AddHandler.selectFiles")); //$NON-NLS-1$
         dialog.setContainerMode(true);
         dialog.setInitialElementSelections(resources);
         dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
@@ -81,7 +81,7 @@ public class AddHandler extends MultipleResourcesHandler {
         if (dialog.open() == IDialogConstants.OK_ID) {
         	HgAddClient.addResources(keepFiles(dialog.getResult()), null);
         	for (IProject proj : roots) {
-        	    new RefreshStatusJob("Refreshing status after adding resources...", proj).schedule();    
+        	    new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), proj).schedule();     //$NON-NLS-1$
             }			
         }
     }

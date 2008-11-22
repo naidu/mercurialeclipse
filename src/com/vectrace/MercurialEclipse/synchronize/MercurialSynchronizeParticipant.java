@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class MercurialSynchronizeParticipant extends
         ModelSynchronizeParticipant {
-    private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION";
+    private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION"; //$NON-NLS-1$
     private String secondaryId;
     private HgRepositoryLocation repositoryLocation;
 
@@ -101,7 +101,7 @@ public class MercurialSynchronizeParticipant extends
 
     @Override
     public String getName() {
-        return "Mercurial Synchronization on Repository: ".concat(""
+        return Messages.getString("MercurialSynchronizeParticipant.syncOnRepo").concat("" //$NON-NLS-1$ //$NON-NLS-2$
                 + repositoryLocation);
     }    
 

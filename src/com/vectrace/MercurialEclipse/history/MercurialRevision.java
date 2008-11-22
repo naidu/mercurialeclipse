@@ -89,7 +89,7 @@ public class MercurialRevision extends FileRevision {
         this.changeSet = changeSet;
         this.gChangeSet = gChangeSet;
 
-        this.revision = changeSet.getChangesetIndex() + "";
+        this.revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
         this.hash = changeSet.getChangeset();
         this.resource = resource;
         this.signature = sig;

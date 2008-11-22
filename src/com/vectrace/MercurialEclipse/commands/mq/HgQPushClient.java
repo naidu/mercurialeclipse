@@ -23,27 +23,27 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgQPushClient extends AbstractClient {
     public static String pushAll(IResource resource, boolean force)
             throws HgException {
-        HgCommand command = new HgCommand("qpush",
+        HgCommand command = new HgCommand("qpush", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
-        command.addOptions("-a");
+        command.addOptions("-a"); //$NON-NLS-1$
         if (force) {
-            command.addOptions("--force");
+            command.addOptions("--force"); //$NON-NLS-1$
         }
         return command.executeToString();
     }
 
     public static String push(IResource resource, boolean force, String patchName)
             throws HgException {
-        HgCommand command = new HgCommand("qpush",
+        HgCommand command = new HgCommand("qpush", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
 
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (force) {
-            command.addOptions("--force");
+            command.addOptions("--force"); //$NON-NLS-1$
         }
         
         command.addOptions(patchName);

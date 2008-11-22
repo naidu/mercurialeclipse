@@ -38,13 +38,13 @@ public class ShowAnnotationHandler extends AbstractHandler {
             IAdaptable selectionAdaptable = (IAdaptable) ((List) selectionObject).get(0);
             IFile file = (IFile) selectionAdaptable.getAdapter(IResource.class);
 
-            IWorkbenchPart part = (IWorkbenchPart) context.getVariable("activePart");
+            IWorkbenchPart part = (IWorkbenchPart) context.getVariable("activePart"); //$NON-NLS-1$
 
             new ShowAnnotationOperation(part, new HgFile(file.getLocation()
                     .toFile())).run();
         } catch (Exception e) {
-            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()
-                    + "\nSee Error Log for more details.");
+            MessageDialog.openError(getShell(), Messages.getString("ShowAnnotationHandler.hgSays"), e.getMessage() //$NON-NLS-1$
+                    + Messages.getString("ShowAnnotationHandler.seeErrorLogForMoreDetails")); //$NON-NLS-1$
             throw new ExecutionException(e.getMessage(), e);
         }
         return null;

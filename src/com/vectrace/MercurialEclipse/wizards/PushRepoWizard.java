@@ -65,7 +65,7 @@ public class PushRepoWizard extends HgWizard {
         myPage.setShowCredentials(true);
         page = myPage;
         addPage(page);
-        outgoingPage = new OutgoingPage("OutgoingPage");
+        outgoingPage = new OutgoingPage("OutgoingPage"); //$NON-NLS-1$
         initPage(outgoingPage.getDescription(), outgoingPage);
         outgoingPage.setProject(project);
         addPage(outgoingPage);
@@ -107,7 +107,7 @@ public class PushRepoWizard extends HgWizard {
                     changeset = cs.getChangeset();
                 }
             }
-            String result = "Push output:\n";
+            String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
             if (pushRepoPage.isShowSvn()
                     && pushRepoPage.getSvnCheckBox().getSelection()) {
                 result += HgSvnClient.push(project.getLocation().toFile());

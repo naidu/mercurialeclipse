@@ -41,20 +41,20 @@ public class HgBackoutClient {
     public static String backout(IProject project, ChangeSet backoutRevision,
             boolean merge, String msg, String user)
             throws HgException {
-        HgCommand command = new HgCommand("backout", project, true);
+        HgCommand command = new HgCommand("backout", project, true); //$NON-NLS-1$
         boolean useExternalMergeTool = Boolean
         .valueOf(
                 HgClients
                         .getPreference(
                                 MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                                "false")).booleanValue();
+                                "false")).booleanValue(); //$NON-NLS-1$
         if (!useExternalMergeTool) {
-            command.addOptions("--config", "ui.merge=internal:fail");
+            command.addOptions("--config", "ui.merge=internal:fail"); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        command.addOptions("-r", backoutRevision.getChangeset(), "-m", msg,
-                "-u", user);
+        command.addOptions("-r", backoutRevision.getChangeset(), "-m", msg, //$NON-NLS-1$ //$NON-NLS-2$
+                "-u", user); //$NON-NLS-1$
         if (merge) {
-            command.addOptions("--merge");
+            command.addOptions("--merge"); //$NON-NLS-1$
         }
         
         return command.executeToString();

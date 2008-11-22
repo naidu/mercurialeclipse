@@ -74,7 +74,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     private static final DateFormat TIME_FORMAT;
 
     static {
-        TIME_FORMAT = new SimpleDateFormat("m:ss.SSS");        
+        TIME_FORMAT = new SimpleDateFormat("m:ss.SSS");         //$NON-NLS-1$
     }
 
     // Indicates whether the console is visible in the Console view
@@ -126,7 +126,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                         MercurialUtilities
                                 .getPreference(
                                         MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                                        "true")).booleanValue();
+                                        "true")).booleanValue(); //$NON-NLS-1$
         document = new ConsoleDocument();
         consoleManager = ConsolePlugin.getDefault().getConsoleManager();
         MercurialEclipsePlugin.getDefault().getPreferenceStore()
@@ -147,7 +147,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         initWrapSetting();
 
         // Ensure that initialization occurs in the ui thread
-        new SafeUiJob("Initializing console...") {
+        new SafeUiJob(Messages.getString("HgConsole.initializing")) { //$NON-NLS-1$
 
             @Override
             public IStatus runSafe(IProgressMonitor monitor) {
@@ -343,17 +343,17 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         long commandRuntime = System.currentTimeMillis() - commandStarted;
         String time;
         try {
-            time = "Done in " + TIME_FORMAT.format(new Date(commandRuntime))
-                    + " min.";
+            time = Messages.getString("HgConsole.doneIn") + TIME_FORMAT.format(new Date(commandRuntime)) //$NON-NLS-1$
+                    + Messages.getString("HgConsole.minutes"); //$NON-NLS-1$
         } catch (RuntimeException e) {
             MercurialEclipsePlugin.logError(e);
-            time = "UNKNOWN";
+            time = Messages.getString("HgConsole.unknown"); //$NON-NLS-1$
         }
         String statusText;
         if (status != null) {
             boolean includeRoot = true;
             if (status.getSeverity() == IStatus.ERROR) {
-                statusText = status.getMessage() + "(" + time + ")";
+                statusText = status.getMessage() + "(" + time + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                 appendLine(ConsoleDocument.ERROR, statusText);
                 includeRoot = false;
             } else {
@@ -364,7 +364,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
             outputStatus(status, includeRoot, includeRoot ? 0 : 1);
         } else if (exception != null) {
             if (exception instanceof OperationCanceledException) {
-                statusText = "Aborted. (" + time + ")";
+                statusText = Messages.getString("HgConsole.aborted1") + time + Messages.getString("HgConsole.aborted2"); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
                 statusText = time;
             }
@@ -375,7 +375,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         } else {
             appendLine(ConsoleDocument.COMMAND, time);
         }
-        appendLine(ConsoleDocument.COMMAND, "");
+        appendLine(ConsoleDocument.COMMAND, ""); //$NON-NLS-1$
     }
 
     private void outputStatus(IStatus status, boolean includeParent,
@@ -477,11 +477,11 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
      */
     private String messageLineForStatus(IStatus status) {
         if (status.getSeverity() == IStatus.ERROR) {
-            return "Error: " + status.getMessage();
+            return Messages.getString("HgConsole.error") + status.getMessage(); //$NON-NLS-1$
         } else if (status.getSeverity() == IStatus.WARNING) {
-            return "Warning: " + status.getMessage();
+            return Messages.getString("HgConsole.warning") + status.getMessage(); //$NON-NLS-1$
         } else if (status.getSeverity() == IStatus.INFO) {
-            return "Info: " + status.getMessage();
+            return Messages.getString("HgConsole.info") + status.getMessage(); //$NON-NLS-1$
         }
         return status.getMessage();
     }
@@ -507,7 +507,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                         MercurialUtilities
                                 .getPreference(
                                         MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                                        "false")).booleanValue();
+                                        "false")).booleanValue(); //$NON-NLS-1$
         if (showNoMatterWhat || showOnMessage) {
             if (!visible) {
                 HgConsoleFactory.showConsole();

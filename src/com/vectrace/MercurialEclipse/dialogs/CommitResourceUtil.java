@@ -47,8 +47,8 @@ public final class CommitResourceUtil {
             String result = statusAction.getResult();
             return spliceList(result, workingDir, inResources);
         } catch (Exception e) {
-            String msg = "HgRoot: " + root.getAbsolutePath()
-                    + ": unable to get status " + e.getMessage();
+            String msg = "HgRoot: " + root.getAbsolutePath() //$NON-NLS-1$
+                    + Messages.getString("CommitResourceUtil.error.unableToGetStatus") + e.getMessage(); //$NON-NLS-1$
             MercurialEclipsePlugin.logError(msg, e);
             return null;
         }
@@ -79,8 +79,8 @@ public final class CommitResourceUtil {
         // where the first token is the status and the 2nd is the path relative
         // to the project.
         while (st.hasMoreTokens()) {
-            status = st.nextToken(" ").trim();
-            fileName = st.nextToken("\n").trim();
+            status = st.nextToken(" ").trim(); //$NON-NLS-1$
+            fileName = st.nextToken("\n").trim(); //$NON-NLS-1$
             statusResource = null;
 
             for (int res = 0; res < inResources.length; res++) {
@@ -113,7 +113,7 @@ public final class CommitResourceUtil {
 
             }
             
-            if (!status.startsWith("?") || !Team.isIgnoredHint(statusResource)) {
+            if (!status.startsWith("?") || !Team.isIgnoredHint(statusResource)) { //$NON-NLS-1$
                 // file is allready managed
                 // or file is not in "ignore list"
                 list.add(new CommitResource(status, statusResource, new File(

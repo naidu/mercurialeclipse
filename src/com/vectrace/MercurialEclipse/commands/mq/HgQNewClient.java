@@ -25,36 +25,36 @@ public class HgQNewClient extends AbstractClient {
             String commitMessage, boolean force, boolean git, String include,
             String exclude, String user, String date, String patchName)
             throws HgException {
-        HgCommand command = new HgCommand("qnew",
+        HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
 
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (commitMessage != null && commitMessage.length() > 0) {
-            command.addOptions("--message", commitMessage);
+            command.addOptions("--message", commitMessage); //$NON-NLS-1$
         }
         if (force) {
-            command.addOptions("--force");
+            command.addOptions("--force"); //$NON-NLS-1$
         }
         if (git) {
-            command.addOptions("--git");
+            command.addOptions("--git"); //$NON-NLS-1$
         }
         if (include != null && include.length() > 0) {
-            command.addOptions("--include", include);
+            command.addOptions("--include", include); //$NON-NLS-1$
         }
         if (exclude != null && exclude.length() > 0) {
-            command.addOptions("--exclude", exclude);
+            command.addOptions("--exclude", exclude); //$NON-NLS-1$
         }
         if (user != null && user.length() > 0) {
-            command.addOptions("--user", user);
+            command.addOptions("--user", user); //$NON-NLS-1$
         } else {
-            command.addOptions("--currentuser");
+            command.addOptions("--currentuser"); //$NON-NLS-1$
         }
 
         if (date != null && date.length() > 0) {
-            command.addOptions("--date", date);
+            command.addOptions("--date", date); //$NON-NLS-1$
         } else {
-            command.addOptions("--currentdate");
+            command.addOptions("--currentdate"); //$NON-NLS-1$
         }
 
         command.addOptions(patchName);

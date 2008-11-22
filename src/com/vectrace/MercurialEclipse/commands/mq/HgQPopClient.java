@@ -25,27 +25,27 @@ public class HgQPopClient extends AbstractClient {
     public static String popAll(IResource resource, boolean force)
             throws HgException {
         Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qpop",
+        HgCommand command = new HgCommand("qpop", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
 
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
-        command.addOptions("-a");
+        command.addOptions("-a"); //$NON-NLS-1$
         if (force) {
-            command.addOptions("--force");
+            command.addOptions("--force"); //$NON-NLS-1$
         }
         return command.executeToString();
     }
 
     public static String pop(IResource resource, boolean force, String patchName)
             throws HgException {
-        HgCommand command = new HgCommand("qpop",
+        HgCommand command = new HgCommand("qpop", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
 
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (force) {
-            command.addOptions("--force");
+            command.addOptions("--force"); //$NON-NLS-1$
         }
         
         command.addOptions(patchName);

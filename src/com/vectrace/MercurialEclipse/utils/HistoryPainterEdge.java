@@ -71,7 +71,7 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	
 	@Override
 	public String toString() {
-		return "Start:"+start+",Stop:"+stop;
+		return "Start:"+start+",Stop:"+stop; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 	
 	

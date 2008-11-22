@@ -38,17 +38,17 @@ import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
  */
 public class MercurialTeamProvider extends RepositoryProvider {
 
-    public static final String ID = "com.vectrace.MercurialEclipse.team.MercurialTeamProvider";
+    public static final String ID = "com.vectrace.MercurialEclipse.team.MercurialTeamProvider"; //$NON-NLS-1$
 
     /**
      * Qualified Name for the repository a project was cloned from.
      */
     public static final QualifiedName QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY = new QualifiedName(
-            ID + ".projectSourceRepository",
-            "MercurialEclipseProjectSourceRepository");
+            ID + ".projectSourceRepository", //$NON-NLS-1$
+            "MercurialEclipseProjectSourceRepository"); //$NON-NLS-1$
 
     public static final QualifiedName QUALIFIED_NAME_DEFAULT_REVISION_LIMIT = new QualifiedName(
-            ID + ".defaultRevisionLimit", "defaultRevisionLimit");
+            ID + ".defaultRevisionLimit", "defaultRevisionLimit"); //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final Map<IProject, Boolean> HG_ROOTS = new HashMap<IProject, Boolean>();
 
@@ -72,7 +72,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
         getHgRoot(getProject());
 
         // try to find .hg directory to set it as private member
-        IResource hgDir = getProject().findMember(".hg");
+        IResource hgDir = getProject().findMember(".hg"); //$NON-NLS-1$
         if (hgDir != null && hgDir.exists()) {
             hgDir.setTeamPrivateMember(true);
             hgDir.setDerived(true);
@@ -107,7 +107,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
             MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));            
         } else {
             throw new HgException(project.getName()
-                    + " does not belong to a Hg repository.");
+                    + Messages.getString("MercurialTeamProvider.doesNotBelongToHgRepo")); //$NON-NLS-1$
         }
         return root;
     }

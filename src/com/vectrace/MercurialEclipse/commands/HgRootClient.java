@@ -75,7 +75,7 @@ public class HgRootClient {
             }
         }
         catch(IOException e) {
-            throw new HgException("Cannot get cannonical path for file"+file.getName());
+            throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
         }
         File root = file;
         if (root.isFile()) {
@@ -84,7 +84,7 @@ public class HgRootClient {
 
         FilenameFilter hg = new FilenameFilter() {
             public boolean accept(File dir, String name) {
-                return name.equalsIgnoreCase(".hg");
+                return name.equalsIgnoreCase(".hg"); //$NON-NLS-1$
             }
         };
 
@@ -99,7 +99,7 @@ public class HgRootClient {
             }
         }
         if (root == null) {
-            throw new HgException(file.getName() + " does not have a hg root");
+            throw new HgException(file.getName() + Messages.getString("HgRootClient.error.noRoot")); //$NON-NLS-1$
         }
         roots.put(canonicalPath, root);
         return root;

@@ -110,7 +110,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
         public ImageDescriptor getImageDescriptor() {
             System.out
-                    .println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()");
+                    .println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()"); //$NON-NLS-1$
             return null;
         }
 
@@ -118,11 +118,11 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
             // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getName()");
             String ret = "";//$NON-NLS-1$
             if (fileRevision != null) {
-                ret = fileRevision.getName() + "["
-                        + storage.getChangeSet().toString()+"]";
+                ret = fileRevision.getName() + "[" //$NON-NLS-1$
+                        + storage.getChangeSet().toString()+"]"; //$NON-NLS-1$
             } else if (storage != null) {
                 ret = storage.getName()
-                        + " "
+                        + " " //$NON-NLS-1$
                         + DateFormat.getInstance().format(
                                 new Date(((IFileState) storage)
                                         .getModificationTime()));
@@ -151,7 +151,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
                 return storage.getFullPath().toString();
             }
 
-            return "";
+            return ""; //$NON-NLS-1$
         }
 
         @SuppressWarnings("unchecked")
@@ -195,9 +195,9 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
             final IFileRevision revision = (IFileRevision) tempRevision;
             if (revision == null || !revision.exists()) {
                 MessageDialog.openError(page.getSite().getShell(),
-                        "Deleted Revision", "Can't open a deleted revision");
+                        Messages.getString("OpenMercurialRevisionAction.error.deletedRevision"), Messages.getString("OpenMercurialRevisionAction.error.cantOpen")); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
-                SafeUiJob runnable = new SafeUiJob("Opening editor...") {
+                SafeUiJob runnable = new SafeUiJob(Messages.getString("OpenMercurialRevisionAction.job.openingEditor")) { //$NON-NLS-1$
 
                     @Override
                     public IStatus runSafe(IProgressMonitor monitor) {
@@ -225,7 +225,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
                             return super.runSafe(monitor);
                         } catch (CoreException e) {
                             MercurialEclipsePlugin.logError(e);
-                            return new Status(IStatus.ERROR,"com.vectrace.MercurialEclipse",e.getMessage());                            
+                            return new Status(IStatus.ERROR,"com.vectrace.MercurialEclipse",e.getMessage());                             //$NON-NLS-1$
                         }
                         
                     }
@@ -257,7 +257,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
                 .getDefaultEditor(fileName, type);
         String id;
         if (descriptor == null || descriptor.isOpenExternal()) {
-            id = "org.eclipse.ui.DefaultTextEditor";
+            id = "org.eclipse.ui.DefaultTextEditor"; //$NON-NLS-1$
         } else {
             id = descriptor.getId();
         }

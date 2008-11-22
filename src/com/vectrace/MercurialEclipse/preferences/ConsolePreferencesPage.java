@@ -48,60 +48,60 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
     @Override
     protected void createFieldEditors() {
         final Composite composite = getFieldEditorParent();
-        createLabel(composite, "Console preferences");
+        createLabel(composite, Messages.getString("ConsolePreferencesPage.header")); //$NON-NLS-1$
         IPreferenceStore store = getPreferenceStore();
 
         // ** WRAP
         wrap = new BooleanFieldEditor(
-                MercurialPreferenceConstants.PREF_CONSOLE_WRAP, "Wrap text",
+                MercurialPreferenceConstants.PREF_CONSOLE_WRAP, Messages.getString("ConsolePreferencesPage.wrapText"), //$NON-NLS-1$
                 composite);
         addField(wrap);
 
         width = new IntegerFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_WIDTH,
-                "Console width", composite);
+                Messages.getString("ConsolePreferencesPage.consoleWidth"), composite); //$NON-NLS-1$
         addField(width);
 
         // ** RESTRICT OUTPUT
         restrictOutput = new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT,
-                "Limit output", composite);
+                Messages.getString("ConsolePreferencesPage.limitOutput"), composite); //$NON-NLS-1$
         addField(restrictOutput);
 
         highWaterMark = new IntegerFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK,
-                "Number of characters", composite); // )
+                Messages.getString("ConsolePreferencesPage.numberChars"), composite); // ) //$NON-NLS-1$
 
         addField(highWaterMark);
 
         // ** SHOW AUTOMATICALLY
         showOnMessage = new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                "Show console on message", composite);
+                Messages.getString("ConsolePreferencesPage.showConsoleOnMsg"), composite); //$NON-NLS-1$
         addField(showOnMessage);
 
         // ** SHOW DEBUG
         debug = new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
-                "Show all hg messages (debug mode)", composite);
+                Messages.getString("ConsolePreferencesPage.showAllHgMsg"), composite); //$NON-NLS-1$
         addField(debug);
 
-        createLabel(composite, "Console color preferences");
+        createLabel(composite, Messages.getString("ConsolePreferencesPage.colorPrefs")); //$NON-NLS-1$
 
         // ** COLORS AND FONTS
         commandColorEditor = createColorFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR,
-                "Command color", composite);
+                Messages.getString("ConsolePreferencesPage.cmdColor"), composite); //$NON-NLS-1$
         addField(commandColorEditor);
 
         messageColorEditor = createColorFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR,
-                "Message color", composite);
+                Messages.getString("ConsolePreferencesPage.msgColor"), composite); //$NON-NLS-1$
         addField(messageColorEditor);
 
         errorColorEditor = createColorFieldEditor(
                 MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR,
-                "Error color", composite);
+                Messages.getString("ConsolePreferencesPage.errorColor"), composite); //$NON-NLS-1$
         addField(errorColorEditor);
 
         //initIntegerFields();        
@@ -132,11 +132,11 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
         int currWatermark = highWaterMark.getIntValue();
         if (currWatermark < 1000) {
             highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
-            highWaterMark.setStringValue("1000");            
+            highWaterMark.setStringValue("1000");             //$NON-NLS-1$
         }
         int currWidth = width.getIntValue();
         if (currWidth < 80) {            
-            width.setStringValue("80");
+            width.setStringValue("80"); //$NON-NLS-1$
             width.setValidRange(80, Integer.MAX_VALUE - 1);
         }        
     }

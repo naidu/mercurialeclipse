@@ -114,7 +114,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
      * 
      */
     private void createActions() {
-        qImportAction = new Action("qimport") {
+        qImportAction = new Action("qimport") { //$NON-NLS-1$
             @Override
             public void run() {
                 try {
@@ -126,7 +126,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qImportAction.setEnabled(true);
 
-        qNewAction = new Action("qnew") {
+        qNewAction = new Action("qnew") { //$NON-NLS-1$
             @Override
             public void run() {
                 try {
@@ -138,7 +138,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qNewAction.setEnabled(true);
 
-        qRefreshAction = new Action("qrefresh") {
+        qRefreshAction = new Action("qrefresh") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -151,7 +151,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qRefreshAction.setEnabled(true);
 
-        qPushAction = new Action("qpush") {
+        qPushAction = new Action("qpush") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -174,7 +174,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qPushAction.setEnabled(true);
 
-        qPopAction = new Action("qpop") {
+        qPopAction = new Action("qpop") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -197,7 +197,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qPopAction.setEnabled(true);
 
-        qPushAllAction = new Action("qpush all") {
+        qPushAllAction = new Action("qpush all") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -218,7 +218,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qPushAllAction.setEnabled(true);
 
-        qPopAllAction = new Action("qpop all") {
+        qPopAllAction = new Action("qpop all") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -239,7 +239,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qPopAllAction.setEnabled(true);
 
-        qFoldAction = new Action("qfold") {
+        qFoldAction = new Action("qfold") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -261,7 +261,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         };
         qFoldAction.setEnabled(true);
 
-        qDeleteAction = new Action("qdel") {
+        qDeleteAction = new Action("qdel") { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -352,7 +352,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             currentHgRoot = newRoot;
                             resource = newResource;
                             populateTable();
-                            statusLabel.setText("Repository: " + currentHgRoot);
+                            statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
                         }
                     }
 
@@ -367,7 +367,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                     if (!newRoot.equals(currentHgRoot)) {
                         currentHgRoot = newRoot;
                         resource = file;
-                        statusLabel.setText("Repository: " + currentHgRoot);
+                        statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
                     }
                 }
             }

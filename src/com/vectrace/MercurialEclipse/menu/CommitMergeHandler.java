@@ -41,7 +41,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
      */
     public String commitMergeWithCommitDialog(IResource resource, Shell shell) throws HgException {
         Assert.isNotNull(resource);
-        String result = "";
+        String result = ""; //$NON-NLS-1$
         try {
             // FIXME let's pray that all resources are in the same project...
 
@@ -54,7 +54,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
                     shell,
                     root,
                     selectedResource,
-                    "Merge with "
+                    Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
                             + resource.getProject()
                                     .getPersistentProperty(ResourceProperties.MERGING),
                     false);
@@ -66,7 +66,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
                 result = commitMerge(resource, messageToCommit);
             }
         } catch (CoreException e) {
-            throw new HgException("Failed to set merge status", e);
+            throw new HgException(Messages.getString("CommitMergeHandler.failedToSetMergeStatus"), e); //$NON-NLS-1$
         }
         return result;
     }
@@ -83,7 +83,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
         Assert.isNotNull(resource);
         final IProject project = resource.getProject();
         Assert.isNotNull(project);
-        return commitMerge(resource, "Merge with "
+        return commitMerge(resource, Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
                 + project.getPersistentProperty(ResourceProperties.MERGING));
     }
 
@@ -109,10 +109,10 @@ public class CommitMergeHandler extends SingleResourceHandler {
         project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
         
         // refresh caches
-        new RefreshJob("Refresh status and changesets after merge commit...", null,
+        new RefreshJob(Messages.getString("CommitMergeHandler.refreshStatusAndChangesetsAfterMergeCommit"), null, //$NON-NLS-1$
                 project).schedule();
         project.touch(null);
-        new SafeUiJob("Clearing merge view...") {
+        new SafeUiJob(Messages.getString("CommitMergeHandler.clearingMergeView")) { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 

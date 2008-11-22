@@ -44,7 +44,7 @@ public abstract class SingleResourceAction implements IActionDelegate {
 			run(getSelectedResource());
 		} catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
-		    MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
+		    MessageDialog.openError(getShell(), Messages.getString("SingleResourceAction.hgSays"), e.getMessage()+Messages.getString("SingleResourceAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 	

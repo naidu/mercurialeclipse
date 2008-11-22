@@ -27,11 +27,11 @@ public class HgRemoveClient {
     public static void removeResource(IResource resource,
             IProgressMonitor monitor) throws HgException {
         if (monitor != null) {
-            monitor.subTask("Removing " + resource.getName()
-                    + " from repository");
+            monitor.subTask(Messages.getString("HgRemoveClient.removeResource.1") + resource.getName() //$NON-NLS-1$
+                    + Messages.getString("HgRemoveClient.removeResource.2")); //$NON-NLS-1$
         }
-        HgCommand command = new HgCommand("remove", resource.getProject(), true);
-        command.addOptions("--force");
+        HgCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
+        command.addOptions("--force"); //$NON-NLS-1$
         command.addFiles(resource);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
@@ -54,7 +54,7 @@ public class HgRemoveClient {
             int size = resources.size();
             int delta = AbstractShellCommand.MAX_PARAMS - 1;
             for (int i = 0; i < size; i += delta) {
-                AbstractShellCommand command = new HgCommand("remove", root,
+                AbstractShellCommand command = new HgCommand("remove", root, //$NON-NLS-1$
                         true);
                 command
                         .setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);

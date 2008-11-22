@@ -100,7 +100,7 @@ public class IStorageMercurialRevision implements IStorage {
         try {            
             cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(
                     res);
-            this.revision = cs.getChangesetIndex() + ""; // should be fetched
+            this.revision = cs.getChangesetIndex() + ""; // should be fetched //$NON-NLS-1$
             // from id
             this.global = cs.getChangeset();
             this.changeSet = cs;
@@ -132,7 +132,7 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public InputStream getContents() throws CoreException {
         // Setup and run command
-        String result = "";
+        String result = ""; //$NON-NLS-1$
         IFile file = resource.getProject().getFile(
                 resource.getProjectRelativePath());
         if (changeSet != null) {
@@ -153,22 +153,22 @@ public class IStorageMercurialRevision implements IStorage {
                 if (bundleFile != null) {
                     result = HgCatClient.getContentFromBundle(file, changeSet
                             .getChangesetIndex()
-                            + "", bundleFile);
+                            + "", bundleFile); //$NON-NLS-1$
                 }
 
             } else if (changeSet.getDirection() == Direction.OUTGOING) {
 
                 // outgoing: we can't query remote repositories :-(.
-                result = "Sorry, no content available for remote revision.\n"
-                        + "Mercurial doesn't allow access to the contents\n"
-                        + "of a remote repository (for incoming changes we "
-                        + "look inside downloaded bundles, that's why it works).\n";
+                result = Messages.getString("IStorageMercurialRevision.result.1") //$NON-NLS-1$
+                        + Messages.getString("IStorageMercurialRevision.result.2") //$NON-NLS-1$
+                        + Messages.getString("IStorageMercurialRevision.result.3") //$NON-NLS-1$
+                        + Messages.getString("IStorageMercurialRevision.result.4"); //$NON-NLS-1$
 
             } else {
                 // local: get the contents via cat
                 result = HgCatClient.getContent(file, changeSet
                         .getChangesetIndex()
-                        + "");
+                        + ""); //$NON-NLS-1$
             }
         } else {
             // no changeset known
@@ -185,8 +185,8 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public IPath getFullPath() {
         return resource.getFullPath().append(
-                revision != null ? (" [" + revision + "]")
-                        : " [parent changeset]");
+                revision != null ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
+                        : Messages.getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
     }
 
     /*
@@ -197,7 +197,7 @@ public class IStorageMercurialRevision implements IStorage {
     public String getName() {
         String name;
         if (changeSet != null) {
-            name = resource.getName() + " [" + changeSet.toString() + "]";
+            name = resource.getName() + " [" + changeSet.toString() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             name = resource.getName();
         }

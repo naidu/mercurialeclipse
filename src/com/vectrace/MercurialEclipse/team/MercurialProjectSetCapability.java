@@ -42,7 +42,7 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 		try {
 			String[] references = new String[providerProjects.length];
 
-			monitor.beginTask("Determining project references...",
+			monitor.beginTask(Messages.getString("MercurialProjectSetCapability.determiningProjectReferences"), //$NON-NLS-1$
 					providerProjects.length);
 
 			for (int i = 0; i < providerProjects.length; i++) {
@@ -53,9 +53,9 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 				} else {
 					String msg;
 					if (monitor.isCanceled()) {
-						msg = "Project reference determination cancelled.";
+						msg = Messages.getString("MercurialProjectSetCapability.cancelled"); //$NON-NLS-1$
 					} else {
-						msg = "Project reference not determinable for "
+						msg = Messages.getString("MercurialProjectSetCapability.notDeterminable") //$NON-NLS-1$
 								+ providerProjects[i];
 					}
 					throw new TeamException(msg);
@@ -82,7 +82,7 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 			action.run(monitor);
 		} catch (Exception e) {
 		    MessageDialog.openError(Display.getCurrent().getActiveShell(),
-                    "Error while importing project sets", e.getMessage());
+                    Messages.getString("MercurialProjectSetCapability.errorWhileImporting"), e.getMessage()); //$NON-NLS-1$
 		}
 		return action.getProjectsCreated();
 	}
@@ -98,8 +98,8 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 					.getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY);
 
 			if (srcRepository != null && srcRepository.length() > 0) {
-				reference = "MercurialEclipseProjectSet_" + project.getName()
-						+ "_" + srcRepository;
+				reference = "MercurialEclipseProjectSet_" + project.getName() //$NON-NLS-1$
+						+ "_" + srcRepository; //$NON-NLS-1$
 			} 
 		} catch (CoreException e) {
 			// reference is null -> error condition
@@ -109,7 +109,7 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 
 	@Override
 	public String getProject(String referenceString) {
-		return referenceString.split("_")[1];
+		return referenceString.split("_")[1]; //$NON-NLS-1$
 	}
 
 	/**

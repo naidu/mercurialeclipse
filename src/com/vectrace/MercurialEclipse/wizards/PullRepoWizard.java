@@ -67,7 +67,7 @@ public class PullRepoWizard extends HgWizard {
         private ChangeSet pullRevision;
         private boolean timeout;
         private boolean merge;
-        private String output = "";
+        private String output = ""; //$NON-NLS-1$
         private boolean showCommitDialog;
         private File bundleFile;
         private boolean forest;
@@ -110,7 +110,7 @@ public class PullRepoWizard extends HgWizard {
          */
         @Override
         protected String getActionDescription() {
-            return "Pulling...";
+            return Messages.getString("PullRepoWizard.pullOperation.description"); //$NON-NLS-1$
         }
 
         /**
@@ -124,11 +124,11 @@ public class PullRepoWizard extends HgWizard {
         private String performMerge(IProgressMonitor monitor)
                 throws HgException, PartInitException, CoreException,
                 InterruptedException {
-            String r = "Output of Merge:\n";
-            monitor.subTask("Merging...");
+            String r = Messages.getString("PullRepoWizard.pullOperation.mergeHeader"); //$NON-NLS-1$
+            monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.merging")); //$NON-NLS-1$
             if (HgLogClient.getHeads(resource.getProject()).length > 1) {
 
-                SafeUiJob job = new SafeUiJob("Merging...") {
+                SafeUiJob job = new SafeUiJob(Messages.getString("PullRepoWizard.pullOperation.mergeJob.description")) { //$NON-NLS-1$
                     /*
                      * (non-Javadoc)
                      * 
@@ -169,8 +169,8 @@ public class PullRepoWizard extends HgWizard {
                 IProgressMonitor monitor) throws InvocationTargetException {
             try {
                 monitor.worked(1);
-                monitor.subTask("Pulling incoming changesets...");
-                String r = "Output of Pull:\n";
+                monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.incoming")); //$NON-NLS-1$
+                String r = Messages.getString("PullRepoWizard.pullOperation.pull.header"); //$NON-NLS-1$
                 if (svn) {
                     r += HgSvnClient.pull(resource.getLocation().toFile());
                     if (rebase) {
@@ -198,13 +198,13 @@ public class PullRepoWizard extends HgWizard {
 
                 monitor.worked(1);
 
-                monitor.subTask("Refreshing local changesets after pull...");
+                monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.refresh.description")); //$NON-NLS-1$
                 IncomingChangesetCache.getInstance().clear();
                 LocalChangesetCache.getInstance().clear(resource.getProject());
                 LocalChangesetCache.getInstance().refreshAllLocalRevisions(
                         resource.getProject());
                 monitor.worked(1);
-                monitor.subTask("Refreshing status...");
+                monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.status")); //$NON-NLS-1$
                 new RefreshStatusJob(
                         Messages.getString("PullRepoWizard.refreshJob.title"), resource.getProject()).schedule(); //$NON-NLS-1$
                 monitor.worked(1);
@@ -224,7 +224,7 @@ public class PullRepoWizard extends HgWizard {
         private boolean saveRepo(IProgressMonitor monitor) {
             // It appears good. Stash the repo location.
             try {
-                monitor.subTask("Adding repository " + this.repo);
+                monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.addRepo") + this.repo); //$NON-NLS-1$
                 MercurialEclipsePlugin.getRepoManager().addRepoLocation(
                         resource.getProject(), repo);
             } catch (HgException e) {
@@ -246,7 +246,7 @@ public class PullRepoWizard extends HgWizard {
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
             try {
-                monitor.beginTask("Pulling...", 6);
+                monitor.beginTask(Messages.getString("PullRepoWizard.pullOperation.pulling"), 6); //$NON-NLS-1$
                 this.output += performPull(repo, monitor);
                 if (merge) {
                     String mergeResult = performMerge(monitor);
@@ -275,13 +275,13 @@ public class PullRepoWizard extends HgWizard {
                             ResourceProperties.MERGING) != null) {
                 boolean commit = true;
                 if (!HgResolveClient.checkAvailable()) {
-                    if (!mergeResult.contains("all conflicts resolved")) {
+                    if (!mergeResult.contains("all conflicts resolved")) { //$NON-NLS-1$
                         commit = false;
                     }
                 } else {
                     List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
                             .list(resource);
-                    monitor.subTask("Getting merge status...");
+                    monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
                     for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
                         if (flaggedAdaptable.getFlag() == 'U') {
                             commit = false;
@@ -291,13 +291,13 @@ public class PullRepoWizard extends HgWizard {
                     monitor.worked(1);
                 }
                 if (commit) {
-                    monitor.subTask("Committing...");
-                    output += "Output of Commit:\n";
+                    monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
+                    output += Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
                     if (!showCommitDialog) {
                         output += CommitMergeHandler.commitMerge(resource);
                     } else {
                         SafeUiJob job = new SafeUiJob(
-                                "Opening commit dialog...") {
+                                Messages.getString("PullRepoWizard.pullOperation.commitJob.description")) { //$NON-NLS-1$
                             /*
                              * (non-Javadoc)
                              * 

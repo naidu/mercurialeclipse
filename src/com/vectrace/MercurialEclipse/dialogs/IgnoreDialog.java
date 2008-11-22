@@ -52,7 +52,7 @@ public class IgnoreDialog extends Dialog {
 	@Override
 	protected void configureShell(Shell newShell) {
 		super.configureShell(newShell);
-		newShell.setText("Add to hgignore...");
+		newShell.setText(Messages.getString("IgnoreDialog.shell.text")); //$NON-NLS-1$
 	}
 
 	@Override
@@ -62,19 +62,19 @@ public class IgnoreDialog extends Dialog {
 		composite.setLayout(gridLayout);
 
 		Label label = new Label(composite, SWT.NONE);
-		label.setText("Select what to ignore:");
+		label.setText(Messages.getString("IgnoreDialog.selectLabel.text")); //$NON-NLS-1$
 
 		if(this.file != null) {
-			addButton(composite, "Only this file ('"+this.file.getName()+"')", false, ResultType.FILE);
+			addButton(composite, Messages.getString("IgnoreDialog.onlyFileBtn.label")+this.file.getName()+"')", false, ResultType.FILE); //$NON-NLS-1$ //$NON-NLS-2$
 			if(this.file.getFileExtension() != null) {
-				addButton(composite, "All files with the same extension ('*."+this.file.getFileExtension()+"')", false, ResultType.EXTENSION);
+				addButton(composite, Messages.getString("IgnoreDialog.filesWithExtBtn.label")+this.file.getFileExtension()+"')", false, ResultType.EXTENSION); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
 		if(this.folder != null) {
-			addButton(composite, "Only this folder ('"+this.folder.getName()+"')", false, ResultType.FOLDER);
+			addButton(composite, Messages.getString("IgnoreDialog.folderBtn.label")+this.folder.getName()+"')", false, ResultType.FOLDER); //$NON-NLS-1$ //$NON-NLS-2$
 		}
-		addButton(composite, "Custom regexp", true, ResultType.REGEXP);
-		addButton(composite, "Custom glob", true, ResultType.GLOB);
+		addButton(composite, Messages.getString("IgnoreDialog.customRegExpBtn.label"), true, ResultType.REGEXP); //$NON-NLS-1$
+		addButton(composite, Messages.getString("IgnoreDialog.customGlobBtn.label"), true, ResultType.GLOB); //$NON-NLS-1$
 
 		patternText = new Text(composite, SWT.BORDER | SWT.DROP_DOWN);
 		patternText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));

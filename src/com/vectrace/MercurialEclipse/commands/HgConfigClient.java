@@ -33,10 +33,10 @@ public class HgConfigClient extends AbstractClient {
      */
     public static String[] getHgConfigLines(File dir, String key)
             throws HgException {
-        HgCommand cmd = new HgCommand("showconfig", getWorkingDirectory(dir),
+        HgCommand cmd = new HgCommand("showconfig", getWorkingDirectory(dir), //$NON-NLS-1$
                 false);
         cmd.addOptions(key);
-        String[] lines = cmd.executeToString().split("\n");
+        String[] lines = cmd.executeToString().split("\n"); //$NON-NLS-1$
         return lines;
     }
 }

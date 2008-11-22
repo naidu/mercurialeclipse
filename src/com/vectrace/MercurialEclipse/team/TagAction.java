@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 			try {
 				MercurialStatusCache.getInstance().refresh(resource.getProject());
 			} catch (TeamException e) {
-				MercurialEclipsePlugin.logError("Unable to refresh project: ",
+				MercurialEclipsePlugin.logError(Messages.getString("TagAction.unableToRefresh"), //$NON-NLS-1$
 						e);
 			}
 //=======

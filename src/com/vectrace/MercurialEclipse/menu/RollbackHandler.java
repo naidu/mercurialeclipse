@@ -23,9 +23,9 @@ public class RollbackHandler extends SingleResourceHandler {
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
         String result = HgRollbackClient.rollback(project);
-        MessageDialog.openInformation(getShell(),"Rollback output", result);
+        MessageDialog.openInformation(getShell(),Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        new RefreshJob("Refreshing status and changesets after rollback...",null,project).schedule();
+        new RefreshJob(Messages.getString("RollbackHandler.refresh"),null,project).schedule(); //$NON-NLS-1$
     }
 
 }

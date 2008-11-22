@@ -67,7 +67,7 @@ public abstract class HgOperation extends TeamOperation {
                     getHgWorkingDir(), true);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(
-                    getActionDescription() + " failed:", e);
+                    getActionDescription() + Messages.getString("HgOperation.failed"), e); //$NON-NLS-1$
         } finally {
             monitor.done();
         }

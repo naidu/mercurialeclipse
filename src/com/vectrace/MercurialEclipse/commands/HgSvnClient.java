@@ -23,34 +23,34 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class HgSvnClient extends AbstractClient {
     
     public static String pull(File currentWorkingDirectory) throws HgException {
-        HgCommand cmd = new HgCommand("svn",
+        HgCommand cmd = new HgCommand("svn", //$NON-NLS-1$
                 getWorkingDirectory(currentWorkingDirectory), false);
         cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-        cmd.addOptions("pull");
+        cmd.addOptions("pull"); //$NON-NLS-1$
         return cmd.executeToString();
     }
 
     public static String push(File currentWorkingDirectory) throws HgException {
-        HgCommand cmd = new HgCommand("svn",
+        HgCommand cmd = new HgCommand("svn", //$NON-NLS-1$
                 getWorkingDirectory(currentWorkingDirectory), false);
         cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
-        cmd.addOptions("push");
+        cmd.addOptions("push"); //$NON-NLS-1$
         return cmd.executeToString();
     }
 
     public static String rebase(File currentWorkingDirectory)
             throws HgException {
-        HgCommand cmd = new HgCommand("svn",
+        HgCommand cmd = new HgCommand("svn", //$NON-NLS-1$
                 getWorkingDirectory(currentWorkingDirectory), false);
         cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
-        cmd.addOptions("--config", "extensions.hgext.rebase=");
-        cmd.addOptions("rebase");
+        cmd.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
+        cmd.addOptions("rebase"); //$NON-NLS-1$
         return cmd.executeToString();
     }
 
     public static String clone(File currentWorkingDirectory,
             HgRepositoryLocation repo, String cloneName) throws HgException {
-        HgCommand cmd = new HgCommand("svnclone",
+        HgCommand cmd = new HgCommand("svnclone", //$NON-NLS-1$
                 getWorkingDirectory(currentWorkingDirectory), false);
         cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
         addRepoToHgCommand(repo, cmd);

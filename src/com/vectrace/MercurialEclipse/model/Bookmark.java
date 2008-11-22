@@ -18,11 +18,11 @@ public class Bookmark {
 	
 	public Bookmark(String line) {
         assert (line != null && line.length() > 0);
-        assert (!line.startsWith("no bookmarks set"));        
-        active = line.startsWith(" *");
-        int lastSpace = line.lastIndexOf(" ");
+        assert (!line.startsWith("no bookmarks set"));         //$NON-NLS-1$
+        active = line.startsWith(" *"); //$NON-NLS-1$
+        int lastSpace = line.lastIndexOf(" "); //$NON-NLS-1$
         name = line.substring(3, lastSpace).trim();
-        int colon = line.indexOf(":");
+        int colon = line.indexOf(":"); //$NON-NLS-1$
         revision = Integer.parseInt(line.substring(lastSpace + 1, colon));
         shortNode = line.substring(colon + 1);
     }

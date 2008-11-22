@@ -36,9 +36,9 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class AnnotateCommand {
     private static final Pattern ANNOTATE = Pattern
-            .compile("^\\s*(.+[^ ])\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$");
+            .compile("^\\s*(.+[^ ])\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$"); //$NON-NLS-1$
     public static final DateFormat DATE_FORMAT = new SimpleDateFormat(
-            "EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH);
+            "EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
 
     private final HgFile file;
 
@@ -55,8 +55,8 @@ public class AnnotateCommand {
         File workingDir = MercurialUtilities.getWorkingDir(resource);
         String FullPath = MercurialUtilities.getResourceName(resource);
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),
-                "annotate", "--user", "--number", "--changeset", "--date",
-                "--", FullPath };
+                "annotate", "--user", "--number", "--changeset", "--date", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+                "--", FullPath }; //$NON-NLS-1$
 
         String output = MercurialUtilities.executeCommand(launchCmd,
                 workingDir, true);

@@ -21,25 +21,25 @@ public class CommitResource
     private IResource resource;
     private String convertStatus(String statusToken) 
     {
-      if (statusToken.startsWith("M")) 
+      if (statusToken.startsWith("M"))  //$NON-NLS-1$
       {
         // System.out.println("FILE_MODIFIED:path <" +
         // statusToken.toString() + ">");
         return CommitDialog.FILE_MODIFIED;
       } 
-      else if (statusToken.startsWith("A")) 
+      else if (statusToken.startsWith("A"))  //$NON-NLS-1$
       {
         return CommitDialog.FILE_ADDED;
       } 
-      else if (statusToken.startsWith("R")) 
+      else if (statusToken.startsWith("R"))  //$NON-NLS-1$
       {
         return CommitDialog.FILE_REMOVED;
       } 
-      else if (statusToken.startsWith("?")) 
+      else if (statusToken.startsWith("?"))  //$NON-NLS-1$
       {
         return CommitDialog.FILE_UNTRACKED;
       }
-      else if (statusToken.startsWith("!")) 
+      else if (statusToken.startsWith("!"))  //$NON-NLS-1$
       {
         // System.out.println("FILE_DELETED:path <" +
         // statusToken.toString() + ">");
@@ -47,7 +47,7 @@ public class CommitResource
       }
       else 
       {
-        return "status error: " + statusToken;
+        return "status error: " + statusToken; //$NON-NLS-1$
       }
     }
 

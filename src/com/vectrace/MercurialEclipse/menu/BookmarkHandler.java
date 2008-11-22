@@ -28,17 +28,17 @@ public class BookmarkHandler extends SingleResourceHandler {
         IProject project = resource.getProject();
         
         try {
-            if (!MercurialUtilities.isCommandAvailable("bookmarks",
+            if (!MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
                     ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
-                    "hgext.bookmarks=")) {
+                    "hgext.bookmarks=")) { //$NON-NLS-1$
                 Shell shell = getShell();
                 MessageDialog
                         .openInformation(
                                 shell,
-                                "Bookmarks extension not available",
-                                "The bookmarks extension is not available in your Mercurial installation.\n"
-                                        + "Please consider updating your installation to a Mercurial development version\n"
-                                        + "as stable Mercurial releases < 1.1 don't provide this extension.");
+                                Messages.getString("BookmarkHandler.extNotAvailable"), //$NON-NLS-1$
+                                Messages.getString("BookmarkHandler.extNotAvailableLong.1") //$NON-NLS-1$
+                                        + Messages.getString("BookmarkHandler.extNotAvailableLong.2") //$NON-NLS-1$
+                                        + Messages.getString("BookmarkHandler.extNotAvailableLong.3")); //$NON-NLS-1$
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);

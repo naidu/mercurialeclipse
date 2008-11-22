@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 					null, //user
 					dialog.isLocal(),
 					dialog.isForced());
-			new RefreshJob("Refreshing status and changesets after tagging...",null,project).schedule();
+			new RefreshJob(Messages.getString("TagHandler.refreshing"),null,project).schedule(); //$NON-NLS-1$
 		}
 	}
 

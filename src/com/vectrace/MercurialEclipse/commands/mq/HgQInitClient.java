@@ -22,11 +22,11 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class HgQInitClient extends AbstractClient {
     public static String init(IResource resource, boolean repository) throws HgException {
-        HgCommand command = new HgCommand("qinit",getWorkingDirectory(resource),true);
-        command.addOptions("--config", "extensions.hgext.mq=");
+        HgCommand command = new HgCommand("qinit",getWorkingDirectory(resource),true); //$NON-NLS-1$
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (repository) {
-            command.addOptions("--create-repo");
+            command.addOptions("--create-repo"); //$NON-NLS-1$
         }
         return command.executeToString();
     }

@@ -24,13 +24,13 @@ public class HgAddClient {
         }
         for (HgRoot root : resourcesByRoot.keySet()) {
             if (monitor != null) {
-                monitor.subTask("Adding resources from " + root.getName());
+                monitor.subTask(Messages.getString("HgAddClient.addingResourcesFrom") + root.getName()); //$NON-NLS-1$
             }
             // if there are too many resources, do several calls
             int size = resources.size();
             int delta = AbstractShellCommand.MAX_PARAMS - 1;
             for (int i = 0; i < size; i += delta) {
-                AbstractShellCommand command = new HgCommand("add", root,
+                AbstractShellCommand command = new HgCommand("add", root, //$NON-NLS-1$
                         true);
                 command.setUsePreferenceTimeout(MercurialPreferenceConstants.ADD_TIMEOUT);
                 command.addFiles(resourcesByRoot.get(root).subList(i,

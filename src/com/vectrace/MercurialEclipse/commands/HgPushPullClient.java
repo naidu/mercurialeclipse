@@ -25,16 +25,16 @@ public class HgPushPullClient extends AbstractClient {
 
     public static String push(IProject project, HgRepositoryLocation repo,
             boolean force, String revision, int timeout) throws HgException {
-        HgCommand command = new HgCommand("push", project, true);
+        HgCommand command = new HgCommand("push", project, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
         if (force) {
-            command.addOptions("-f");
+            command.addOptions("-f"); //$NON-NLS-1$
         }
 
         if (revision != null && revision.length() > 0) {
-            command.addOptions("-r", revision.trim());
+            command.addOptions("-r", revision.trim()); //$NON-NLS-1$
         }
 
         addRepoToHgCommand(repo, command);
@@ -79,21 +79,21 @@ public class HgPushPullClient extends AbstractClient {
         if (resource.getType() == IResource.FILE) {
             workDir = resource.getParent();
         }
-        HgCommand command = new HgCommand("pull", workDir.getLocation()
+        HgCommand command = new HgCommand("pull", workDir.getLocation() //$NON-NLS-1$
                 .toFile(), true);
                 
         if (update) {
-            command.addOptions("--update");
+            command.addOptions("--update"); //$NON-NLS-1$
         } else if (rebase) {
-            command.addOptions("--config", "extensions.hgext.rebase=");
-            command.addOptions("--rebase");
+            command.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
+            command.addOptions("--rebase"); //$NON-NLS-1$
         }
 
         if (force) {
-            command.addOptions("--force");
+            command.addOptions("--force"); //$NON-NLS-1$
         }
         if (changeset != null) {
-            command.addOptions("--rev", changeset.getChangeset());
+            command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
         }
 
         command.addOptions(pullSource);

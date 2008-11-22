@@ -39,19 +39,19 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      */
     public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
             HgRepositoryLocation repository) throws HgException {
-        HgCommand command = new HgCommand("incoming", getWorkingDirectory(res),
+        HgCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         try {
-            final File bundleFile = File.createTempFile("bundleFile-".concat(
-                    res.getProject().getName()).concat("-"), ".tmp", null);
+            final File bundleFile = File.createTempFile("bundleFile-".concat( //$NON-NLS-1$
+                    res.getProject().getName()).concat("-"), ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
             bundleFile.deleteOnExit();
             
             
-            command.addOptions("--debug", "--style",
+            command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
                     AbstractParseChangesetClient.getStyleFile(true)
-                            .getCanonicalPath(), "--bundle", bundleFile
+                            .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
                             .getCanonicalPath());
 
             URI uri = repository.getUri();
@@ -62,7 +62,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             }            
 
             String result = command.executeToString();
-            if (result.contains("no changes found")) {
+            if (result.contains("no changes found")) { //$NON-NLS-1$
                 return null;
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
@@ -70,7 +70,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                     Direction.INCOMING, repository, bundleFile);
             return revisions;
         } catch (HgException hg) {
-            if (hg.getMessage().contains("return code: 1")) {
+            if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
                 return null;
             }
             MercurialEclipsePlugin.logError(hg);

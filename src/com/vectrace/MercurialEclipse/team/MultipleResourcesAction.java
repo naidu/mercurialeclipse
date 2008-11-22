@@ -49,7 +49,7 @@ public abstract class MultipleResourcesAction implements IActionDelegate {
 			run(getSelectedResources());
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
+            MessageDialog.openError(getShell(), Messages.getString("MultipleResourcesAction.hgSays"), e.getMessage()+Messages.getString("MultipleResourcesAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 		

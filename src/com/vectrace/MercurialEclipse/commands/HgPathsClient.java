@@ -10,13 +10,13 @@ import org.eclipse.core.resources.IProject;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgPathsClient {
-    public static final String DEFAULT = "default";
-    public static final String DEFAULT_PULL = "default-pull";
-    public static final String DEFAULT_PUSH = "default-push";
+    public static final String DEFAULT = "default"; //$NON-NLS-1$
+    public static final String DEFAULT_PULL = "default-pull"; //$NON-NLS-1$
+    public static final String DEFAULT_PUSH = "default-push"; //$NON-NLS-1$
 
     public static Map<String, String> getPaths(IProject project)
             throws HgException {
-        HgCommand command = new HgCommand("paths", project, true);
+        HgCommand command = new HgCommand("paths", project, true); //$NON-NLS-1$
         return getPaths(command);
     }
 
@@ -36,7 +36,7 @@ public class HgPathsClient {
         String line;
         try {
             while (null != (line = reader.readLine())) {
-                String[] parts = line.split("=", 2);
+                String[] parts = line.split("=", 2); //$NON-NLS-1$
                 String name = parts[0].trim();
                 String url = parts[1].trim();
                 urlByName.put(name, url);

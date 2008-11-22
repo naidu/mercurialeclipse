@@ -35,20 +35,20 @@ public class HgStripClient {
     public static String strip(IProject proj, boolean saveUnrelated,
             boolean backup, boolean stripHeads, ChangeSet changeset)
             throws HgException {
-        HgCommand command = new HgCommand("strip", proj, true);
+        HgCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (saveUnrelated) {
-            command.addOptions("--backup");
+            command.addOptions("--backup"); //$NON-NLS-1$
         }
         if (!backup) {
-            command.addOptions("--nobackup");
+            command.addOptions("--nobackup"); //$NON-NLS-1$
         }
         if (stripHeads) {
-            command.addOptions("-f");
+            command.addOptions("-f"); //$NON-NLS-1$
         }
         command.addOptions(changeset.getChangeset());
         return command.executeToString();

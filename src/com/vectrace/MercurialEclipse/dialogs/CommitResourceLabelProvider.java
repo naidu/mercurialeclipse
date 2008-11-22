@@ -27,20 +27,20 @@ public final class CommitResourceLabelProvider extends LabelProvider implements 
   {
     if ((element instanceof CommitResource) != true)
     {
-      return "Type Error";
+      return "Type Error"; //$NON-NLS-1$
     }
     CommitResource resource = (CommitResource) element;
 
     switch (columnIndex)
     {
     case 0:
-      return "";
+      return ""; //$NON-NLS-1$
     case 1:
       return resource.getPath().toString();
     case 2:
       return resource.getStatus();
     default:
-      return "Col Error: " + columnIndex;
+      return "Col Error: " + columnIndex; //$NON-NLS-1$
     }
   }
 }

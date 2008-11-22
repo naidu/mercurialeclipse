@@ -21,7 +21,7 @@ public class HgException extends TeamException {
     private static final long serialVersionUID = 1L; // Get rid of warning
 
     public static final int OPERATION_FAILED = -100;
-    public static final String OPERATION_FAILED_STRING = "Mercurial Operation failed";
+    public static final String OPERATION_FAILED_STRING = Messages.getString("HgException.operationFailed"); //$NON-NLS-1$
 
     public HgException(IStatus status) {
         super(status);

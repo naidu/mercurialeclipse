@@ -123,7 +123,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             }
         });
 
-        String[] titles = { "Status", "File" };
+        String[] titles = { Messages.getString("MergeView.column.status"), Messages.getString("MergeView.column.file") }; //$NON-NLS-1$ //$NON-NLS-2$
         int[] widths = { 50, 400 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -138,7 +138,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
     private void createToolBar() {
         IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
 
-        abortAction = new Action("Abort") {
+        abortAction = new Action(Messages.getString("MergeView.abort")) { //$NON-NLS-1$
             @Override
             public void run() {
                 try {
@@ -162,7 +162,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
         };
         abortAction.setEnabled(false);
         mgr.add(abortAction);
-        markResolvedAction = new Action("Mark resolved") {
+        markResolvedAction = new Action(Messages.getString("MergeView.markResolved")) { //$NON-NLS-1$
             @Override
             public void run() {
                 try {
@@ -184,7 +184,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
         };
         markResolvedAction.setEnabled(false);
         mgr.add(markResolvedAction);
-        markUnresolvedAction = new Action("Mark unresolved") {
+        markUnresolvedAction = new Action(Messages.getString("MergeView.markUnresolved")) { //$NON-NLS-1$
             @Override
             public void run() {
                 try {
@@ -220,7 +220,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
         table.removeAll();
         for (FlaggedAdaptable flagged : status) {
             TableItem row = new TableItem(table, SWT.NONE);
-            row.setText(0, flagged.getFlag() + "");
+            row.setText(0, flagged.getFlag() + ""); //$NON-NLS-1$
             IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
             row.setText(1, iFile.getProjectRelativePath().toString());
             row.setData(flagged);
@@ -231,7 +231,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
     }
 
     public void clearView() {
-        statusLabel.setText("");
+        statusLabel.setText(""); //$NON-NLS-1$
         table.removeAll();
         currentProject = null;
         abortAction.setEnabled(false);
@@ -247,7 +247,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
                             .getPersistentProperty(ResourceProperties.MERGING);
                     if (mergeNode != null) {
                         this.currentProject = project;
-                        this.statusLabel.setText("Merged files of: "
+                        this.statusLabel.setText(Messages.getString("MergeView.mergeFilesOf") //$NON-NLS-1$
                                 + project.getName());
                         populateView();
                         // offer commit of merge exactly once if no conflicts
@@ -265,7 +265,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
                         if (allResolved) {
                             this.statusLabel
                                     .setText(currentProject.getName()
-                                            + ": Please commit merge with "
+                                            + Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
                                             + mergeNode);
                             if (currentProject
                                     .getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
@@ -276,7 +276,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
                                 currentProject
                                         .setSessionProperty(
                                                 ResourceProperties.MERGE_COMMIT_OFFERED,
-                                                "true");
+                                                "true"); //$NON-NLS-1$
                             }
                         }
                     } else {

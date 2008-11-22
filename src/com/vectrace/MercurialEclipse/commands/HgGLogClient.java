@@ -19,10 +19,10 @@ public class HgGLogClient extends HgCommand {
     private List<GChangeSet> sets = new ArrayList<GChangeSet>();
 
     public HgGLogClient(IResource resource) throws HgException {
-        super("glog", (resource instanceof IFile) ? resource.getParent()
+        super("glog", (resource instanceof IFile) ? resource.getParent() //$NON-NLS-1$
                 : (IContainer) resource, false);
-        addOptions("--config", "extensions.graphlog=");
-        addOptions("--template", "*{rev}\\n"); // Removes everything
+        addOptions("--config", "extensions.graphlog="); //$NON-NLS-1$ //$NON-NLS-2$
+        addOptions("--template", "*{rev}\\n"); // Removes everything //$NON-NLS-1$ //$NON-NLS-2$
 
         if (resource.getType() != IResource.PROJECT) {
            addOptions(resource.getName());
@@ -32,12 +32,12 @@ public class HgGLogClient extends HgCommand {
     }
 
     protected HgGLogClient(String text) {
-        super("", true);
+        super("", true); //$NON-NLS-1$
         load(text);
     }
 
     public void load(String s) {        
-        String[] split = s.split("\n");
+        String[] split = s.split("\n"); //$NON-NLS-1$
         // real changeset count as glog inserts a line between two changesets
         int length = split.length / 2;
         int lengthp1 = length + 1;
@@ -48,7 +48,7 @@ public class HgGLogClient extends HgCommand {
             int changeset = i * 2;
             // add current changeset and next line
             sets.add(last = new GChangeSet(rowCount, i, split[changeset],
-                    i != length ? split[changeset + 1] : "").clean(last));
+                    i != length ? split[changeset + 1] : "").clean(last)); //$NON-NLS-1$
         }
     }
 

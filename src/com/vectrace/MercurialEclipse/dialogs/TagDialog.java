@@ -64,7 +64,7 @@ public class TagDialog extends Dialog {
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
-        newShell.setText("Tag as Version...");
+        newShell.setText(Messages.getString("TagDialog.shell.text")); //$NON-NLS-1$
     }
 
     @Override
@@ -100,30 +100,30 @@ public class TagDialog extends Dialog {
 
     protected TabItem createMainTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Main");
+        item.setText(Messages.getString("TagDialog.mainTab.name")); //$NON-NLS-1$
 
         Composite composite = new Composite(folder, SWT.NONE);
         composite.setLayout(new GridLayout(1, true));
 
         // tag name
         Label label = new Label(composite, SWT.NONE);
-        label.setText("Please enter a tag name:");
+        label.setText(Messages.getString("TagDialog.enterTagName")); //$NON-NLS-1$
         label.setLayoutData(createGridData(1));
 
         nameText = new Text(composite, SWT.BORDER);
         nameText.setLayoutData(createGridData(1));
 
         forceButton = new Button(composite, SWT.CHECK);
-        forceButton.setText("Move tag if it already exists");
+        forceButton.setText(Messages.getString("TagDialog.moveTag")); //$NON-NLS-1$
         forceButton.setLayoutData(createGridData(1));
 
         localButton = new Button(composite, SWT.CHECK);
-        localButton.setText("Create local tag");
+        localButton.setText(Messages.getString("TagDialog.createLocal")); //$NON-NLS-1$
         localButton.setLayoutData(createGridData(1));
 
         // List of existing tags
         label = new Label(composite, SWT.NONE);
-        label.setText("Existing tags:");
+        label.setText(Messages.getString("TagDialog.existingTags")); //$NON-NLS-1$
         label.setLayoutData(createGridData(1));
 
         final TagTable table = new TagTable(composite);
@@ -153,7 +153,7 @@ public class TagDialog extends Dialog {
 
     protected TabItem createOptionsTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Options");
+        item.setText(Messages.getString("TagDialog.options")); //$NON-NLS-1$
 
         Composite composite = new Composite(folder, SWT.NONE);
         composite.setLayout(new GridLayout(1, true));
@@ -163,7 +163,7 @@ public class TagDialog extends Dialog {
 
         // user name
         final Button customUserButton = new Button(composite, SWT.CHECK);
-        customUserButton.setText("Use custom user name");
+        customUserButton.setText(Messages.getString("TagDialog.customUserName")); //$NON-NLS-1$
 
         final Text userText = new Text(composite, SWT.BORDER);
         userText.setLayoutData(createGridData(1, 250));
@@ -184,17 +184,17 @@ public class TagDialog extends Dialog {
 
     protected TabItem createTargetTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Target");
+        item.setText(Messages.getString("TagDialog.targetTab.name")); //$NON-NLS-1$
 
         Composite composite = new Composite(folder, SWT.NONE);
         composite.setLayout(new GridLayout(1, true));
 
         Button parentButton = new Button(composite, SWT.RADIO);
-        parentButton.setText("Tag parent changeset");
+        parentButton.setText(Messages.getString("TagDialog.tagParentChangeset")); //$NON-NLS-1$
         parentButton.setSelection(true);
 
         Button otherButton = new Button(composite, SWT.RADIO);
-        otherButton.setText("Tag another changeset");
+        otherButton.setText(Messages.getString("TagDialog.tagAnotherChangeset")); //$NON-NLS-1$
 
         final ChangesetTable table = new ChangesetTable(composite, project);
         table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));

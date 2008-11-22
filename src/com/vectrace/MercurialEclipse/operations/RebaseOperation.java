@@ -65,12 +65,12 @@ public class RebaseOperation extends HgOperation {
         monitor.beginTask(getActionDescription(), 3);
         try {
             monitor.worked(1);
-            monitor.subTask("Calling mercurial...");
+            monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
             result = HgRebaseClient.rebase(res.getLocation().toFile(),
                     sourceRev,
                     baseRev, destRev, collapse, cont, abort);                       
             monitor.worked(1);            
-            monitor.subTask("Refreshing changesets...");
+            monitor.subTask(Messages.getString("RebaseOperation.refreshing")); //$NON-NLS-1$
             LocalChangesetCache.getInstance().refreshAllLocalRevisions(res);
             monitor.worked(1);
         } catch (HgException e) {
@@ -88,7 +88,7 @@ public class RebaseOperation extends HgOperation {
      */
     @Override
     protected String getActionDescription() {
-        return "Rebasing changesets...";
+        return Messages.getString("RebaseOperation.rebasing"); //$NON-NLS-1$
     }
 
 }

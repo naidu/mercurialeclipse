@@ -141,7 +141,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
         setParents(parents);
         try {
             if (date != null) {
-                this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z")
+                this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z") //$NON-NLS-1$
                         .parse(date);
             }
         } catch (Exception e) {
@@ -151,7 +151,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     private ChangeSet(int changesetIndex, String changeSet, String user,
             String date, String branch) {
-        this(changesetIndex, changeSet, null, branch, user, date, "", null);
+        this(changesetIndex, changeSet, null, branch, user, date, "", null); //$NON-NLS-1$
     }
 
     public int getChangesetIndex() {
@@ -163,15 +163,15 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public String getTag() {
-        if (tag != null && tag.equals("tip") && bundleFile != null) {
-            tag = tag.concat(" [ ").concat(repository.toString()).concat(" ]");
+        if (tag != null && tag.equals("tip") && bundleFile != null) { //$NON-NLS-1$
+            tag = tag.concat(" [ ").concat(repository.toString()).concat(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         return tag;
     }
 
     public String getBranch() {
         if (branch == null) {
-            return "";
+            return ""; //$NON-NLS-1$
         }
         return branch;
     }
@@ -195,9 +195,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
     @Override
     public String toString() {
         if (nodeShort != null) {
-            return this.changesetIndex + ":" + this.nodeShort;
+            return this.changesetIndex + ":" + this.nodeShort; //$NON-NLS-1$
         }
-        return this.changesetIndex + ":" + this.changeset;
+        return this.changesetIndex + ":" + this.changeset; //$NON-NLS-1$
 
     }
 

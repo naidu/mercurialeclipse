@@ -87,7 +87,7 @@ public class GChangeSet {
                 }
             }
             rowCount.endRow();
-            if (string.contains("+")) {
+            if (string.contains("+")) { //$NON-NLS-1$
                 rowCount.jump = string.indexOf('o');
                 jumps = new int[] { string.indexOf('+') / 2, rowCount.jump / 2, };
             }

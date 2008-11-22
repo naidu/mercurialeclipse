@@ -133,10 +133,10 @@ public class ShowAnnotationOperation extends TeamOperation {
                     annotateBlocks, monitor);
 
             // We aren't running from a UI thread
-            new SafeUiJob("Hg Annotate") {
+            new SafeUiJob(Messages.getString("ShowAnnotationOperation.job.name")) { //$NON-NLS-1$
                 @Override
                 protected IStatus runSafe(IProgressMonitor moni) {
-                    moni.beginTask("Applying Annotation",
+                    moni.beginTask(Messages.getString("ShowAnnotationOperation.beginAnnotation"), //$NON-NLS-1$
                             IProgressMonitor.UNKNOWN);
                     final AbstractDecoratedTextEditor editor = getEditor();
                     if (editor != null) {
@@ -256,10 +256,10 @@ public class ShowAnnotationOperation extends TeamOperation {
         try {
             Class infoClass = info.getClass();
             Class[] paramTypes = { IInformationControlCreator.class };
-            Method method1 = infoClass.getMethod("setHoverControlCreator",
+            Method method1 = infoClass.getMethod("setHoverControlCreator", //$NON-NLS-1$
                     paramTypes);
             Method method2 = infoClass.getMethod(
-                    "setInformationPresenterControlCreator", paramTypes);
+                    "setInformationPresenterControlCreator", paramTypes); //$NON-NLS-1$
 
             final class AnnotationControlCreator implements
                     IInformationControlCreator {
@@ -277,7 +277,7 @@ public class ShowAnnotationOperation extends TeamOperation {
             }
 
             method1.invoke(info, new Object[] { new AnnotationControlCreator(
-                    "Press F2 for focus.") });
+                    Messages.getString("ShowAnnotationOperation.pressF2ForFocus")) }); //$NON-NLS-1$
             method2.invoke(info, new Object[] { new AnnotationControlCreator(
                     null) });
 

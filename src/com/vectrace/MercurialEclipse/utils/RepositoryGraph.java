@@ -61,7 +61,7 @@ public class RepositoryGraph {
 			ChangeSet cs) {
 		if (cs == null) {
 			throw new RuntimeException(
-					"Changeset was null, but must not be null :-(.");
+					Messages.getString("RepositoryGraph.changesetWasNull")); //$NON-NLS-1$
 		}
 		Map<String, ChangeSetNode> nodes = revMap.get(res);
 

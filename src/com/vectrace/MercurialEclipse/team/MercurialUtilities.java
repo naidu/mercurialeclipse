@@ -87,7 +87,7 @@ public class MercurialUtilities {
      */
     public static String getHGExecutable() {
         return HgClients.getPreference(
-                MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+                MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
     }
 
     /**
@@ -135,7 +135,7 @@ public class MercurialUtilities {
             configureHgExecutable();
             return getHGExecutable();
         }
-        return "hg";
+        return "hg"; //$NON-NLS-1$
     }
 
     /**
@@ -158,7 +158,7 @@ public class MercurialUtilities {
             configureGpgExecutable();
             return getGpgExecutable();
         }
-        return "gpg";
+        return "gpg"; //$NON-NLS-1$
     }
 
     /**
@@ -184,9 +184,9 @@ public class MercurialUtilities {
      */
     public static String getGpgExecutable() {
         String executable = HgClients.getPreference(
-                MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg");
+                MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg"); //$NON-NLS-1$
         if (executable == null || executable.length() == 0) {
-            return "false";
+            return "false"; //$NON-NLS-1$
         }
         return executable;
     }
@@ -197,13 +197,13 @@ public class MercurialUtilities {
      */
     public static void configureHgExecutable() {
         Shell shell = Display.getCurrent().getActiveShell();
-        String pageId = "com.vectrace.MercurialEclipse.prefspage";
+        String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
         String[] dsplIds = null;
         Object data = null;
         PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell,
                 pageId, dsplIds, data);
-        dlg.setErrorMessage("Mercurial is not configured correctly."
-                + "Run 'hg debuginstall' to analyse.");
+        dlg.setErrorMessage(Messages.getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
+                + Messages.getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
         dlg.open();
     }
 
@@ -256,8 +256,8 @@ public class MercurialUtilities {
             }
             if (shell != null) {
                 MessageDialog
-                        .openInformation(shell, "Resource in link URI",
-                                "The Selected resource is in a link and can't be handled by this plugin sorry!");
+                        .openInformation(shell, Messages.getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
+                                Messages.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
             }
         }
 
@@ -306,9 +306,9 @@ public class MercurialUtilities {
         }
         try {
             return HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace()
-                    .getRoot().getLocation().toFile(), "ui.username");
+                    .getRoot().getLocation().toFile(), "ui.username"); //$NON-NLS-1$
         } catch (HgException e) {
-            return System.getProperty("user.name");
+            return System.getProperty("user.name"); //$NON-NLS-1$
         }
     }
 
@@ -317,7 +317,7 @@ public class MercurialUtilities {
      */
     public static void configureUsername() {
         Shell shell = Display.getCurrent().getActiveShell();
-        String pageId = "com.vectrace.MercurialEclipse.prefspage";
+        String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
         String[] dsplIds = null;
         Object data = null;
         PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell,

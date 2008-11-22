@@ -85,10 +85,10 @@ public class ChangedPathsPage {
 
 		this.toggleAffectedPathsLayoutActions = new ToggleAffectedPathsOptionAction[] {
 				new ToggleAffectedPathsOptionAction(this,
-						"HistoryView.affectedPathsHorizontalLayout",
+						"HistoryView.affectedPathsHorizontalLayout", //$NON-NLS-1$
 						PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL),
 				new ToggleAffectedPathsOptionAction(this,
-						"HistoryView.affectedPathsVerticalLayout",
+						"HistoryView.affectedPathsVerticalLayout", //$NON-NLS-1$
 						PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_VERTICAL), };
 
 	}

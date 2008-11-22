@@ -40,8 +40,8 @@ public final class HgBisectClient {
      */
     public static String markGood(File repository, ChangeSet good)
             throws HgException {
-        HgCommand cmd = new HgCommand("bisect", repository, true);
-        cmd.addOptions("-g");
+        HgCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
+        cmd.addOptions("-g"); //$NON-NLS-1$
         if(good != null) {
             cmd.addOptions(getRevision(good));
         }
@@ -59,8 +59,8 @@ public final class HgBisectClient {
      */
     public static String markBad(File repository, ChangeSet bad)
             throws HgException {
-        HgCommand cmd = new HgCommand("bisect", repository, true);
-        cmd.addOptions("-b");
+        HgCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
+        cmd.addOptions("-b"); //$NON-NLS-1$
         if(bad != null) {
             cmd.addOptions(getRevision(bad));
         }
@@ -75,8 +75,8 @@ public final class HgBisectClient {
      * @throws HgException
      */
     public static String reset(File repository) throws HgException {
-        HgCommand cmd = new HgCommand("bisect", repository, true);
-        cmd.addOptions("-r");
+        HgCommand cmd = new HgCommand("bisect", repository, true); //$NON-NLS-1$
+        cmd.addOptions("-r"); //$NON-NLS-1$
         return cmd.executeToString();
     }
     
@@ -111,8 +111,8 @@ public final class HgBisectClient {
             reader = new BufferedReader(new FileReader(file));
             String line = null;
             while(null != (line = reader.readLine())) {
-                String[] statusChangeset = line.split("\\s");
-                if(statusChangeset[0].equalsIgnoreCase("bad")) {
+                String[] statusChangeset = line.split("\\s"); //$NON-NLS-1$
+                if(statusChangeset[0].equalsIgnoreCase("bad")) { //$NON-NLS-1$
                     statusByRevision.put(statusChangeset[1].trim(), Status.BAD);
                 } else {
                     statusByRevision.put(statusChangeset[1].trim(), Status.GOOD);
@@ -136,7 +136,7 @@ public final class HgBisectClient {
 
     private static File getStatusFile(File repository) throws IOException {
         String root = repository.getCanonicalPath();
-        String bisectStatusFile = root + File.separator + ".hg" + File.separator + "bisect.state";
+        String bisectStatusFile = root + File.separator + ".hg" + File.separator + "bisect.state"; //$NON-NLS-1$ //$NON-NLS-2$
         File file = new File(bisectStatusFile);
         return file;
     }

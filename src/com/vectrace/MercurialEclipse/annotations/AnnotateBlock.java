@@ -16,7 +16,7 @@ import com.vectrace.MercurialEclipse.HgRevision;
 
 public class AnnotateBlock {
 
-  private HgRevision revision = new HgRevision("", -1);
+  private HgRevision revision = new HgRevision("", -1); //$NON-NLS-1$
   private String user = ""; //$NON-NLS-1$
   private int startLine = 0;
   private int endLine = 0;

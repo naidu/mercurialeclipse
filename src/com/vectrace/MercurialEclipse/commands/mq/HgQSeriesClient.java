@@ -27,13 +27,13 @@ import com.vectrace.MercurialEclipse.model.Patch;
 public class HgQSeriesClient extends AbstractClient {
     public static List<Patch> getPatchesInSeries(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("qseries",
+        HgCommand command = new HgCommand("qseries", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
-        command.addOptions("-v");
-        command.addOptions("--summary");
+        command.addOptions("-v"); //$NON-NLS-1$
+        command.addOptions("--summary"); //$NON-NLS-1$
         return parse(command.executeToString());
     }
 
@@ -43,15 +43,15 @@ public class HgQSeriesClient extends AbstractClient {
      */
     public static List<Patch> parse(String executeToString) {
         List<Patch> list = new ArrayList<Patch>();
-        if (executeToString != null && executeToString.indexOf("\n") >= 0) {
-            String[] patches = executeToString.split("\n");
+        if (executeToString != null && executeToString.indexOf("\n") >= 0) { //$NON-NLS-1$
+            String[] patches = executeToString.split("\n"); //$NON-NLS-1$
             for (String string : patches) {
-                String[] components = string.split(":");
-                String[] patchData = components[0].trim().split(" ");
+                String[] components = string.split(":"); //$NON-NLS-1$
+                String[] patchData = components[0].trim().split(" "); //$NON-NLS-1$
                 
                 Patch p = new Patch();
                 p.setIndex(patchData[0]);
-                p.setApplied(patchData[1].equals("A") ? true : false);
+                p.setApplied(patchData[1].equals("A") ? true : false); //$NON-NLS-1$
                 p.setName(patchData[2].trim());
                 
                 if (components.length>1) {
@@ -67,11 +67,11 @@ public class HgQSeriesClient extends AbstractClient {
 
     public static List<Patch> getPatchesNotInSeries(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("qseries",
+        HgCommand command = new HgCommand("qseries", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
-        command.addOptions("--summary", "--missing");
+        command.addOptions("--summary", "--missing"); //$NON-NLS-1$ //$NON-NLS-2$
         return parse(command.executeToString());
     }
 }

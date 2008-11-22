@@ -68,7 +68,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class HgPristineCopyQuickDiffProvider implements
         IQuickDiffReferenceProvider {
 
-    public static final String HG_REFERENCE_PROVIDER = "com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider";
+    public static final String HG_REFERENCE_PROVIDER = "com.vectrace.MercurialEclipse.annotatations.HgReferenceProvider"; //$NON-NLS-1$
 
     // The editor showing this quickdiff and provides access to the editor input
     // and

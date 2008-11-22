@@ -72,7 +72,7 @@ public class Ancestor {
      * @return
      */
     private String getKey() {
-        return cs1.getChangeset() + "|" + cs2.getChangeset();
+        return cs1.getChangeset() + "|" + cs2.getChangeset(); //$NON-NLS-1$
     }
 
 }

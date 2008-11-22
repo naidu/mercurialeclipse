@@ -29,7 +29,7 @@ public class ResourcesTreeContentProvider implements ITreeContentProvider {
 			try {
 				return  ((IContainer)parentElement).members();
 			} catch (CoreException e) {
-				MercurialEclipsePlugin.logWarning("Failed to get children of "+parentElement, e);
+				MercurialEclipsePlugin.logWarning(Messages.getString("ResourcesTreeContentProvider.failedToGetChildrenOf")+parentElement, e); //$NON-NLS-1$
 				return null;
 			}
 		} else {

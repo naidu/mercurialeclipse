@@ -30,18 +30,18 @@ public class HgStatusClient extends AbstractClient {
         return getStatus(root.getLocation().toFile());
     }
     public static String getStatus(File root) throws HgException {
-        HgCommand command = new HgCommand("status", root, true);
+        HgCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
         // modified, added, removed, deleted, unknown, ignored, clean
-        command.addOptions("-marduic");
+        command.addOptions("-marduic"); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         return command.executeToString();
     }
 
     public static String getStatus(IResource res) throws HgException {
-        HgCommand command = new HgCommand("status", getWorkingDirectory(res),
+        HgCommand command = new HgCommand("status", getWorkingDirectory(res), //$NON-NLS-1$
                 true);
         // modified, added, removed, deleted, unknown, ignored, clean
-        command.addOptions("-marduic");
+        command.addOptions("-marduic"); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         if (res.getType() == IResource.FILE) {
             command.addOptions(res.getName());
@@ -51,36 +51,36 @@ public class HgStatusClient extends AbstractClient {
 
     public static String[] getUntrackedFiles(IContainer root)
             throws HgException {
-        HgCommand command = new HgCommand("status", root, true);
+        HgCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions("-u", "-n");
-        return command.executeToString().split("\n");
+        command.addOptions("-u", "-n"); //$NON-NLS-1$ //$NON-NLS-2$
+        return command.executeToString().split("\n"); //$NON-NLS-1$
     }
 
     public static boolean isDirty(List<? extends IResource> resources)
             throws HgException {
-        HgCommand command = new HgCommand("status", true);
+        HgCommand command = new HgCommand("status", true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions("-mard");// modified, added, removed, deleted
+        command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
         command.addFiles(resources);
         return command.executeToBytes().length != 0;
     }
 
     public static boolean isDirty(IProject project) throws HgException {
-        HgCommand command = new HgCommand("status", project, true);
+        HgCommand command = new HgCommand("status", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions("-mard");// modified, added, removed, deleted
+        command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
         return command.executeToBytes().length != 0;
     }
     
     public static String getMergeStatus(IResource res) throws HgException {
-        HgCommand command = new HgCommand("id", getWorkingDirectory(res), true);
+        HgCommand command = new HgCommand("id", getWorkingDirectory(res), true); //$NON-NLS-1$
         // Full global IDs
-        command.addOptions("-i","--debug");
+        command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);        
         String versionIds = command.executeToString().trim();
         
-        Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE);
+        Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE); //$NON-NLS-1$
         Matcher m = p.matcher(versionIds);
         if(m.matches()) {
             return m.group(1);
@@ -95,11 +95,11 @@ public class HgStatusClient extends AbstractClient {
      */
     public static String getStatus(File file, List<IResource> files)
             throws HgException {
-        HgCommand command = new HgCommand("status", getWorkingDirectory(file),
+        HgCommand command = new HgCommand("status", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         // modified, added, removed, deleted, unknown, ignored, clean
-        command.addOptions("-marduic");
+        command.addOptions("-marduic"); //$NON-NLS-1$
         command.addFiles(files);
         return command.executeToString();
     }

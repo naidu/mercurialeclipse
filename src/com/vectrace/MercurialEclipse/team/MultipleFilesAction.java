@@ -51,7 +51,7 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 					MercurialEclipsePlugin.logError(e);
 				}
 			} else {
-				MercurialEclipsePlugin.logWarning("Unexpected resource type: "+resource.getClass(), null);
+				MercurialEclipsePlugin.logWarning(Messages.getString("MultipleFilesAction.unexpectedResourceType")+resource.getClass(), null); //$NON-NLS-1$
 			}
 		}
 	}
@@ -69,7 +69,7 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 			run(getSelectedFiles());
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
+            MessageDialog.openError(getShell(), Messages.getString("MultipleFilesAction.hgSays"), e.getMessage()+Messages.getString("MultipleFilesAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 		

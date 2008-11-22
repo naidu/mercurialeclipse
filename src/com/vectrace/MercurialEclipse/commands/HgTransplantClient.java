@@ -30,22 +30,22 @@ public class HgTransplantClient {
             String pruneNodeId, boolean continueLastTransplant,
             boolean filterChangesets, String filter) throws HgException {
 
-        HgCommand command = new HgCommand("transplant", project, false);
+        HgCommand command = new HgCommand("transplant", project, false); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-        command.addOptions("--config", "extensions.hgext.transplant=");
+        command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
         if (continueLastTransplant) {
-            command.addOptions("--continue");
+            command.addOptions("--continue"); //$NON-NLS-1$
         } else {
-            command.addOptions("--log");
+            command.addOptions("--log"); //$NON-NLS-1$
             if (branch) {
-                command.addOptions("--branch");
+                command.addOptions("--branch"); //$NON-NLS-1$
                 command.addOptions(branchName);
                 if (all) {
-                    command.addOptions("--all");
+                    command.addOptions("--all"); //$NON-NLS-1$
                 }
             } else {
-                command.addOptions("--source");
+                command.addOptions("--source"); //$NON-NLS-1$
                 URI uri = repo.getUri();
                 if (uri != null ) {
                     command.addOptions(uri.toASCIIString());
@@ -55,12 +55,12 @@ public class HgTransplantClient {
             }
 
             if (prune) {
-                command.addOptions("--prune");
+                command.addOptions("--prune"); //$NON-NLS-1$
                 command.addOptions(pruneNodeId);
             }
 
             if (merge) {
-                command.addOptions("--merge");
+                command.addOptions("--merge"); //$NON-NLS-1$
                 command.addOptions(mergeNodeId);
             }
 
@@ -71,7 +71,7 @@ public class HgTransplantClient {
             }
 
             if (filterChangesets) {
-                command.addOptions("--filter", filter);
+                command.addOptions("--filter", filter); //$NON-NLS-1$
             }
         }
         return new String(command.executeToBytes());

@@ -37,14 +37,14 @@ public class HgResolveClient extends AbstractClient {
      * @throws HgException
      */
     public static List<FlaggedAdaptable> list(IResource res) throws HgException {
-        HgCommand command = new HgCommand("resolve", getWorkingDirectory(res),
+        HgCommand command = new HgCommand("resolve", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        command.addOptions("-l");
-        String[] lines = command.executeToString().split("\n");
+        command.addOptions("-l"); //$NON-NLS-1$
+        String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
         List<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
-        if (lines.length != 1 || !"".equals(lines[0])) {
+        if (lines.length != 1 || !"".equals(lines[0])) { //$NON-NLS-1$
             for (String line : lines) {
                 IFile iFile = res.getProject().getFile(line.substring(2));
                 FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line
@@ -64,11 +64,11 @@ public class HgResolveClient extends AbstractClient {
      */
     public static String markResolved(File file) throws HgException {
         try {
-            HgCommand command = new HgCommand("resolve",
+            HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
                     getWorkingDirectory(file), false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-            command.addOptions("-m", file.getCanonicalPath());
+            command.addOptions("-m", file.getCanonicalPath()); //$NON-NLS-1$
             return command.executeToString();
         } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
@@ -84,18 +84,18 @@ public class HgResolveClient extends AbstractClient {
      * @throws HgException
      */
     public static String resolveAll(File file) throws HgException {
-        HgCommand command = new HgCommand("resolve", getWorkingDirectory(file),
+        HgCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
         
         boolean useExternalMergeTool = Boolean.valueOf(
                 HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                        "false")).booleanValue();
+                        "false")).booleanValue(); //$NON-NLS-1$
         if (!useExternalMergeTool) {
             // we use an non-existent UI Merge tool, so no tool is started. We
             // need this option, though, as we still want the Mercurial merge to
             // take place.
-            command.addOptions("--config", "ui.merge=MercurialEclipse");
+            command.addOptions("--config", "ui.merge=MercurialEclipse"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -112,11 +112,11 @@ public class HgResolveClient extends AbstractClient {
      */
     public static String markUnresolved(File file) throws HgException {
         try {
-            HgCommand command = new HgCommand("resolve",
+            HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
                     getWorkingDirectory(file), false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-            command.addOptions("-u", file.getCanonicalPath());
+            command.addOptions("-u", file.getCanonicalPath()); //$NON-NLS-1$
             return command.executeToString();
         } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
@@ -143,13 +143,13 @@ public class HgResolveClient extends AbstractClient {
                 boolean useResolve = ((Boolean) prop).booleanValue();
                 returnValue = useResolve;
             } else {
-                HgCommand command = new HgCommand("help", ResourcesPlugin
+                HgCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
                         .getWorkspace().getRoot(), false);
-                command.addOptions("resolve");
+                command.addOptions("resolve"); //$NON-NLS-1$
                 String result;
                 try {
                     result = new String(command.executeToBytes(10000, false));
-                    if (result.startsWith("hg: unknown command 'resolve'")) {
+                    if (result.startsWith("hg: unknown command 'resolve'")) { //$NON-NLS-1$
                         returnValue = false;
                     } else {
                         returnValue = true;

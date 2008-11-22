@@ -190,7 +190,7 @@ public class LocationChooser extends Composite implements Listener {
         cb.dispose();
         if (contents != null && contents.trim().length() > 0)
             return null;
-        return "Clipboard Empty";
+        return Messages.getString("LocationChooser.clipboardEmpty"); //$NON-NLS-1$
     }
 
     private boolean isValidSystemFile(File file) {

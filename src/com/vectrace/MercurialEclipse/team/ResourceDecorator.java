@@ -117,7 +117,7 @@ public class ResourceDecorator extends LabelProvider implements
                     // LOCAL_CACHE notifies resource decorator when it's
                     // finished.
                     RefreshJob job = new RefreshJob(
-                            "Refreshing changeset decoration", null, resource
+                            Messages.getString("ResourceDecorator.refreshingChangesetDeco"), null, resource //$NON-NLS-1$
                                     .getProject(), showChangeset);
                     job.schedule();
                     job.join();
@@ -128,8 +128,8 @@ public class ResourceDecorator extends LabelProvider implements
                         && !STATUS_CACHE.getLock(resource).isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
-                            "Updating status for project " + project.getName()
-                                    + " on behalf of resource "
+                            Messages.getString("ResourceDecorator.updatingStatusForProject.1") + project.getName() //$NON-NLS-1$
+                                    + Messages.getString("ResourceDecorator.updatingStatusForProject.2") //$NON-NLS-1$
                                     + resource.getName(), project);
                     job.schedule();
                     job.join();
@@ -147,20 +147,20 @@ public class ResourceDecorator extends LabelProvider implements
                         && (output.cardinality() > 2 || (output.cardinality() == 2 && !output
                                 .get(MercurialStatusCache.BIT_IGNORE)))) {
                     overlay = DecoratorImages.modifiedDescriptor;
-                    prefix = ">";
+                    prefix = ">"; //$NON-NLS-1$
                 } else {
                     switch (output.length() - 1) {
                     case MercurialStatusCache.BIT_MODIFIED:
                         overlay = DecoratorImages.modifiedDescriptor;
-                        prefix = ">";
+                        prefix = ">"; //$NON-NLS-1$
                         break;
                     case MercurialStatusCache.BIT_ADDED:
                         overlay = DecoratorImages.addedDescriptor;
-                        prefix = ">";
+                        prefix = ">"; //$NON-NLS-1$
                         break;
                     case MercurialStatusCache.BIT_UNKNOWN:
                         overlay = DecoratorImages.notTrackedDescriptor;
-                        prefix = ">";
+                        prefix = ">"; //$NON-NLS-1$
                         break;
                     case MercurialStatusCache.BIT_CLEAN:
                         overlay = DecoratorImages.managedDescriptor;
@@ -169,15 +169,15 @@ public class ResourceDecorator extends LabelProvider implements
                     // do nothing
                     case MercurialStatusCache.BIT_REMOVED:
                         overlay = DecoratorImages.removedDescriptor;
-                        prefix = ">";
+                        prefix = ">"; //$NON-NLS-1$
                         break;
                     case MercurialStatusCache.BIT_DELETED:
                         overlay = DecoratorImages.deletedStillTrackedDescriptor;
-                        prefix = ">";
+                        prefix = ">"; //$NON-NLS-1$
                         break;
                     case MercurialStatusCache.BIT_CONFLICT:
                         overlay = DecoratorImages.conflictDescriptor;
-                        prefix = ">";
+                        prefix = ">"; //$NON-NLS-1$
                         break;
                     }
                 }
@@ -201,16 +201,16 @@ public class ResourceDecorator extends LabelProvider implements
 
                 if (newestIncomingChangeSet != null) {
                     if (prefix == null) {
-                        prefix = "<";
+                        prefix = "<"; //$NON-NLS-1$
                     } else {
-                        prefix = "<" + prefix;
+                        prefix = "<" + prefix; //$NON-NLS-1$
                     }
                 }
 
                 // local changeset info
                 try {
                     // init suffix with project changeset information
-                    String suffix = "";
+                    String suffix = ""; //$NON-NLS-1$
                     if (resource.getType() == IResource.PROJECT) {
                         suffix = getSuffixForProject(project);
                     }
@@ -228,7 +228,7 @@ public class ResourceDecorator extends LabelProvider implements
 
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logWarning(
-                            "Couldn't get version of resource " + resource, e);
+                            Messages.getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e); //$NON-NLS-1$
                 }
             } else {
                 if (resource.getType() == IResource.PROJECT) {
@@ -255,7 +255,7 @@ public class ResourceDecorator extends LabelProvider implements
                         HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                        "false")).booleanValue();
+                                        "false")).booleanValue(); //$NON-NLS-1$
         return showChangeset;
     }
 
@@ -269,7 +269,7 @@ public class ResourceDecorator extends LabelProvider implements
      */
     private String getSuffixForFiles(IResource resource, ChangeSet cs)
             throws HgException {
-        String suffix = "";
+        String suffix = ""; //$NON-NLS-1$
         // suffix for files
         if (!LOCAL_CACHE.isLocalUpdateInProgress(resource.getProject())
                 && !STATUS_CACHE.isAdded(resource.getProject(), resource
@@ -277,13 +277,13 @@ public class ResourceDecorator extends LabelProvider implements
                 && !LOCAL_CACHE.isLocalUpdateInProgress(resource)) {
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
-                suffix = " [" + fileCs.getChangesetIndex() + " - "
-                        + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
+                suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
+                        + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
 
                 if (cs != null) {
-                    suffix += "< [" + cs.getChangesetIndex() + ":"
-                            + cs.getNodeShort() + " - " + cs.getAgeDate()
-                            + " - " + cs.getUser() + "]";
+                    suffix += "< [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$ //$NON-NLS-2$
+                            + cs.getNodeShort() + " - " + cs.getAgeDate() //$NON-NLS-1$
+                            + " - " + cs.getUser() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -300,7 +300,7 @@ public class ResourceDecorator extends LabelProvider implements
     private String getSuffixForProject(IProject project) throws CoreException,
             IOException {
         ChangeSet changeSet = null;
-        String suffix = "";
+        String suffix = ""; //$NON-NLS-1$
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
             if (isShowChangeset()) {
                 LocalChangesetCache.getInstance().getLocalChangeSets(project);
@@ -308,11 +308,11 @@ public class ResourceDecorator extends LabelProvider implements
             changeSet = LocalChangesetCache.getInstance()
                     .getCurrentWorkDirChangeset(project);
         } else {
-            suffix = " [ new ] ";
+            suffix = Messages.getString("ResourceDecorator.new"); //$NON-NLS-1$
         }
         if (changeSet != null) {
-            suffix = " [ ";
-            String hex = ":" + changeSet.getNodeShort();
+            suffix = " [ "; //$NON-NLS-1$
+            String hex = ":" + changeSet.getNodeShort(); //$NON-NLS-1$
             String tags = changeSet.getTag();
             String branch = changeSet.getBranch();
             String merging = project
@@ -323,19 +323,19 @@ public class ResourceDecorator extends LabelProvider implements
 
             // branch info
             if (branch != null && branch.length() > 0) {
-                suffix += " @ " + branch;
+                suffix += " @ " + branch; //$NON-NLS-1$
             }
 
             // tags
             if (tags != null && tags.length() > 0) {
-                suffix += " (" + tags + ")";
+                suffix += " (" + tags + ")"; //$NON-NLS-1$ //$NON-NLS-2$
             }
 
             // merge info
             if (merging != null && merging.length() > 0) {
-                suffix += " MERGING " + merging;
+                suffix += Messages.getString("ResourceDecorator.merging") + merging; //$NON-NLS-1$
             }
-            suffix += " ]";
+            suffix += " ]"; //$NON-NLS-1$
         }
         return suffix;
     }

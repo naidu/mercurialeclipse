@@ -50,7 +50,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		
 		    @Override
 			protected Map<String,? extends Object> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
-		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor", 
+		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor",  //$NON-NLS-1$
 		            null);
 		//            new IAdaptable() {
 		//              public Object getAdapter(Class adapter) {

@@ -130,7 +130,7 @@ public class FlagManager implements IResourceChangeListener {
             case 'M':
                 return FlaggedResource.BIT_MODIFIED;
             default:
-                MercurialEclipsePlugin.logWarning("Unknown status: '" + status + "'", null);
+                MercurialEclipsePlugin.logWarning(Messages.getString("FlagManager.unknownStatus") + status + "'", null); //$NON-NLS-1$ //$NON-NLS-2$
                 return FlaggedResource.BIT_IMPOSSIBLE;
         }
     }

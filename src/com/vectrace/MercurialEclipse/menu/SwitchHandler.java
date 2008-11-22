@@ -30,13 +30,13 @@ public class SwitchHandler extends SingleResourceHandler {
         if (HgStatusClient.isDirty(project)) {
             if (!MessageDialog
                     .openQuestion(getShell(),
-                            "Do you really want to switch changeset?",
-                            "Project has some pending changes, do you want to continue and lose them?")) {
+                            Messages.getString("SwitchHandler.pendingChangesConfirmation.1"), //$NON-NLS-1$
+                            Messages.getString("SwitchHandler.pendingChangesConfirmation.2"))) { //$NON-NLS-1$
                 return;
             }
         }
         RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
-                "Switch to...", project);
+                Messages.getString("SwitchHandler.switchTo"), project); //$NON-NLS-1$
         int result = dialog.open();
         if (result == IDialogConstants.OK_ID) {
             HgUpdateClient.update(project, dialog.getRevision(), true);

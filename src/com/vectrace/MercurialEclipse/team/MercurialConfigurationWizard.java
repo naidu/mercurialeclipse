@@ -66,11 +66,11 @@ public class MercurialConfigurationWizard extends Wizard implements
             super(WizardPage.class.getName());
             this.newMercurialProject = newMercurialProject;
             if (newMercurialProject) {
-                setTitle("Mercurial Setup wizard");
-                setDescription("Put this project under mercurial version control.");
+                setTitle(Messages.getString("MercurialConfigurationWizard.titleNew")); //$NON-NLS-1$
+                setDescription(Messages.getString("MercurialConfigurationWizard.descriptionNew")); //$NON-NLS-1$
             } else {
-                setTitle("Mercurial Connect to existing repository");
-                setDescription("Connect to an existing mercurial version control");
+                setTitle(Messages.getString("MercurialConfigurationWizard.titleExisting")); //$NON-NLS-1$
+                setDescription(Messages.getString("MercurialConfigurationWizard.descriptionExisting")); //$NON-NLS-1$
             }
 
             // String imgKey = "icons/sample.gif";
@@ -89,7 +89,7 @@ public class MercurialConfigurationWizard extends Wizard implements
             mainControl.setLayout(new GridLayout(3, false));
 
             label = new Label(mainControl, SWT.CENTER);
-            label.setText("Select Directory");
+            label.setText(Messages.getString("MercurialConfigurationWizard.selectDirectory")); //$NON-NLS-1$
 
             directoryText = new Text(mainControl, SWT.BORDER);
             directoryText.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -97,18 +97,18 @@ public class MercurialConfigurationWizard extends Wizard implements
             directoryText.addSelectionListener(this);
 
             changeDirButton = new Button(mainControl, SWT.CENTER | SWT.PUSH);
-            changeDirButton.setText("Change Dir");
+            changeDirButton.setText(Messages.getString("MercurialConfigurationWizard.changeDirectory")); //$NON-NLS-1$
             changeDirButton.addSelectionListener(this);
 
             restoreDefaultDirButton = new Button(mainControl, SWT.CENTER
                     | SWT.PUSH);
-            restoreDefaultDirButton.setText("Use Project Root");
+            restoreDefaultDirButton.setText(Messages.getString("MercurialConfigurationWizard.useProjectRoot")); //$NON-NLS-1$
             restoreDefaultDirButton.addSelectionListener(this);
 
             if (!newMercurialProject) {
                 restoreExistingDirButton = new Button(mainControl, SWT.CENTER
                         | SWT.PUSH);
-                restoreExistingDirButton.setText("Use Existing .hg directory");
+                restoreExistingDirButton.setText(Messages.getString("MercurialConfigurationWizard.useExistingHgDir")); //$NON-NLS-1$
                 restoreExistingDirButton.addSelectionListener(this);
             }
 
@@ -121,9 +121,9 @@ public class MercurialConfigurationWizard extends Wizard implements
             if (e.widget == changeDirButton) {
                 DirectoryDialog directoryDialog;
                 directoryDialog = new DirectoryDialog(new Shell());
-                directoryDialog.setText("Select mercurial root");
+                directoryDialog.setText(Messages.getString("MercurialConfigurationWizard.selectMercurialRoot")); //$NON-NLS-1$
                 directoryDialog
-                        .setMessage("Select mercurial root, should be project root.");
+                        .setMessage(Messages.getString("MercurialConfigurationWizard.selectMercurialRootMsg")); //$NON-NLS-1$
 
                 hgPath = directoryDialog.open();
                 directoryText.setText(hgPath);
@@ -159,7 +159,7 @@ public class MercurialConfigurationWizard extends Wizard implements
     private NewWizardPage page;
 
     public MercurialConfigurationWizard() {
-        setWindowTitle("MercurialConfigurationWizard");
+        setWindowTitle(Messages.getString("MercurialConfigurationWizard.wizardTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
     }
 

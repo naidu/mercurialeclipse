@@ -54,7 +54,7 @@ public class HgRepositoryLocationManager {
     private static final RepositoryResourcesManager REPOSITORY_RESOURCES_MANAGER = RepositoryResourcesManager
             .getInstance();
 
-    final static private String REPO_LOCACTION_FILE = "repositories.txt";
+    final static private String REPO_LOCACTION_FILE = "repositories.txt"; //$NON-NLS-1$
 
     private SortedSet<HgRepositoryLocation> repos = new TreeSet<HgRepositoryLocation>();
     private Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos = null;
@@ -83,7 +83,7 @@ public class HgRepositoryLocationManager {
         if (file.exists()) {
             String line;
             BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(file), "UTF-8"));
+                    new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
 
             try {
                 while ((line = reader.readLine()) != null) {
@@ -109,7 +109,7 @@ public class HgRepositoryLocationManager {
         File file = getLocationFile();
 
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                new FileOutputStream(file), "UTF-8"));
+                new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
 
         try {
             for (HgRepositoryLocation repo : repos) {
@@ -215,7 +215,7 @@ public class HgRepositoryLocationManager {
                 String line;
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(new FileInputStream(file),
-                                "UTF-8"));
+                                "UTF-8")); //$NON-NLS-1$
 
                 try {
                     while ((line = reader.readLine()) != null) {
@@ -281,7 +281,7 @@ public class HgRepositoryLocationManager {
      */
     private File getProjectLocationFile(IProject project) {
         File file = MercurialEclipsePlugin.getDefault().getStateLocation()
-                .append(REPO_LOCACTION_FILE + "_" + project.getName()).toFile();
+                .append(REPO_LOCACTION_FILE + "_" + project.getName()).toFile(); //$NON-NLS-1$
         return file;
     }
 
@@ -292,7 +292,7 @@ public class HgRepositoryLocationManager {
             File file = getProjectLocationFile(project);
 
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(file), "UTF-8"));
+                    new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
 
             try {
                 SortedSet<HgRepositoryLocation> repoSet = projectRepos
@@ -367,7 +367,7 @@ public class HgRepositoryLocationManager {
             location = HgRepositoryLocation.fromProperties(configuration);
         } catch (URISyntaxException e) {
             MercurialEclipsePlugin.logError(e);
-            throw new HgException("Couldn't create repository location.", e);
+            throw new HgException(Messages.getString("HgRepositoryLocationManager.couldntCreate"), e); //$NON-NLS-1$
         }
 
         addRepoLocation(location);

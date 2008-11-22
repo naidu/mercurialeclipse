@@ -24,41 +24,41 @@ public class DecoratorImages
   /**
    * Added Image Descriptor
    */ 
-  public static final ImageDescriptor addedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/added_ov.gif");
+  public static final ImageDescriptor addedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/added_ov.gif"); //$NON-NLS-1$
   
   /**
    * Deleted but still tracked Image Descriptor
    */ 
-  public static final ImageDescriptor deletedStillTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/deleted_still_tracked_ov.gif");
+  public static final ImageDescriptor deletedStillTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/deleted_still_tracked_ov.gif"); //$NON-NLS-1$
   
   /**
    * Ignored Image Descriptor
    */ 
-  public static final ImageDescriptor ignoredDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/ignored_ov.gif");
+  public static final ImageDescriptor ignoredDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/ignored_ov.gif"); //$NON-NLS-1$
     
   /**
    * Modified Image Descriptor
    */ 
-  public static final ImageDescriptor modifiedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/modified_ov.gif");
+  public static final ImageDescriptor modifiedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/modified_ov.gif"); //$NON-NLS-1$
 
   /**
    * Not tracked Image Descriptor
    */ 
-  public static final ImageDescriptor notTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/not_tracked_ov.gif");
+  public static final ImageDescriptor notTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/not_tracked_ov.gif"); //$NON-NLS-1$
   /**
    * Removed Image Descriptor
    */ 
-  public static final ImageDescriptor removedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/removed_ov.gif");
+  public static final ImageDescriptor removedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/removed_ov.gif"); //$NON-NLS-1$
 
   /**
    * Managed Image Descriptor
    */ 
-  public static final ImageDescriptor managedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/managed_ov.gif");
+  public static final ImageDescriptor managedDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/managed_ov.gif"); //$NON-NLS-1$
   
   /**
    * Conflict Image Descriptor
    */ 
   //FIXME temporary picture
-  public static final ImageDescriptor conflictDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/confchg_ov.gif");
+  public static final ImageDescriptor conflictDescriptor = ImageDescriptor.createFromFile (DecoratorStatus.class, "images/confchg_ov.gif"); //$NON-NLS-1$
   
 }

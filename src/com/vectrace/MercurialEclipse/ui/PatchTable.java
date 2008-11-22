@@ -61,7 +61,7 @@ public class PatchTable extends Composite {
         table.setLinesVisible(true);
         table.setHeaderVisible(true);
 
-        String[] titles = { "#", "Applied", "Name", "Summary" };
+        String[] titles = { Messages.getString("PatchTable.0"), Messages.getString("PatchTable.applied"), Messages.getString("PatchTable.name"), Messages.getString("PatchTable.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 20, 100, 150, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -80,7 +80,7 @@ public class PatchTable extends Composite {
                 row.setBackground(1, APPLIED_COLOR);
             }
             row.setText(0, patch.getIndex());
-            row.setText(1, patch.isApplied() ? "APPLIED" : "UNAPPLIED");
+            row.setText(1, patch.isApplied() ? Messages.getString("PatchTable.statusApplied") : Messages.getString("PatchTable.statusUnapplied")); //$NON-NLS-1$ //$NON-NLS-2$
             row.setText(2, patch.getName());
             row.setText(3, patch.getSummary());
             row.setData(patch);

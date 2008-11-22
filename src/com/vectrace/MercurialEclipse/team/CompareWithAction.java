@@ -27,7 +27,7 @@ public class CompareWithAction extends CompareAction {
 	@Override
 	public void run(IFile file) throws TeamException {
 		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
-				"Compare With Revision...", file);
+				Messages.getString("CompareWithAction.compareWith"), file); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
 			CompareUtils.openEditor(file, dialog.getChangeSet(), true);

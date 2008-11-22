@@ -58,7 +58,7 @@ public class BookmarkTable extends Composite {
         data.minimumHeight = 50;
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Short Global", "Name", "State" };
+        String[] titles = { Messages.getString("BookmarkTable.column.rev"), Messages.getString("BookmarkTable.column.global"), Messages.getString("BookmarkTable.column.name"), Messages.getString("BookmarkTable.column.state") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 50, 150, 300, 70 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -88,7 +88,7 @@ public class BookmarkTable extends Composite {
             row.setText(0, Integer.toString(bm.getRevision()));
             row.setText(1, bm.getShortNodeId());
             row.setText(2, bm.getName());
-            row.setText(3, bm.isActive() ? "active" : "inactive");
+            row.setText(3, bm.isActive() ? Messages.getString("BookmarkTable.stateActive") : Messages.getString("BookmarkTable.stateInactive")); //$NON-NLS-1$ //$NON-NLS-2$
             row.setData(bm);
             if (bm.isActive()) {
                 row.setFont(PARENT_FONT);

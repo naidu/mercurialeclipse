@@ -50,7 +50,7 @@ public class BranchTable extends Composite {
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Global", "Branch", "Active" };
+        String[] titles = { Messages.getString("BranchTable.column.rev"), Messages.getString("BranchTable.column.global"), Messages.getString("BranchTable.column.branch"), Messages.getString("BranchTable.column.active") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 50, 150, 300, 70 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -70,7 +70,7 @@ public class BranchTable extends Composite {
     public void setBranches(Branch[] branches) {
         table.removeAll();
         for (Branch branch : branches) {
-            if (showTip || !"tip".equals(branch.getName())) {
+            if (showTip || !"tip".equals(branch.getName())) { //$NON-NLS-1$
                 TableItem row = new TableItem(table, SWT.NONE);
                 if (parents != null && isParent(branch.getRevision())) {
                     row.setFont(PARENT_FONT);
@@ -78,7 +78,7 @@ public class BranchTable extends Composite {
                 row.setText(0, Integer.toString(branch.getRevision()));
                 row.setText(1, branch.getGlobalId());
                 row.setText(2, branch.getName());
-                row.setText(3, (branch.isActive()?"active":"inactive"));
+                row.setText(3, (branch.isActive()?Messages.getString("BranchTable.stateActive"):Messages.getString("BranchTable.stateInactive"))); //$NON-NLS-1$ //$NON-NLS-2$
                 row.setData(branch);
             }
         }

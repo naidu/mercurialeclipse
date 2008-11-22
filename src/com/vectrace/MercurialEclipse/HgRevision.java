@@ -11,7 +11,7 @@
 package com.vectrace.MercurialEclipse;
 
 public class HgRevision {
-    public static final HgRevision TIP = new HgRevision("tip");
+    public static final HgRevision TIP = new HgRevision("tip"); //$NON-NLS-1$
     private final String changeset;
     private final int revision;
 
@@ -53,7 +53,7 @@ public class HgRevision {
 
     @Override
     public String toString() {
-        return revision + ":" + changeset;
+        return revision + ":" + changeset; //$NON-NLS-1$
     }
 
     public static HgRevision parse(String s) {

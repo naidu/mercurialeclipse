@@ -39,7 +39,7 @@ public class HgCommitClient {
         }
         for (HgRoot root : resourcesByRoot.keySet()) {
             if (monitor != null) {
-                monitor.subTask("Committing resources from " + root.getName());
+                monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
             }
             List<IResource> files = resourcesByRoot.get(root);
             commitRepository(root, files, user, message);
@@ -55,11 +55,11 @@ public class HgCommitClient {
     public static String commit(HgRoot root, List<File> files, String user,
             String message) throws HgException {
 
-        HgCommand command = new HgCommand("commit", root, true);
+        HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         command.addUserName(quote(user));
-        command.addOptions("-m", quote(message));
+        command.addOptions("-m", quote(message)); //$NON-NLS-1$
         command.addFiles(AbstractClient.toPaths(files));
         return command.executeToString();
     }
@@ -68,7 +68,7 @@ public class HgCommitClient {
         if (str == null || str.length() == 0) {
             return str;
         }
-        return str.replaceAll("\"", "\\\\\"");
+        return str.replaceAll("\"", "\\\\\""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static String commitProject(IProject project, String user,

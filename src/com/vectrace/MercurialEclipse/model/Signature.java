@@ -46,9 +46,9 @@ public class Signature {
         try {
             String result = HgSigsClient.checkSig(root.getCanonicalFile(),
                     nodeId);
-            if (!result.contains("No valid signature for")) {
+            if (!result.contains("No valid signature for")) { //$NON-NLS-1$
                 valid = true;
-                key = result.split("\n")[1].trim();
+                key = result.split("\n")[1].trim(); //$NON-NLS-1$
             }            
             checked = true;
             return valid;
@@ -65,7 +65,7 @@ public class Signature {
      */
     @Override
     public String toString() {
-        return valid + ":" + key + ", " + nodeId;
+        return valid + ":" + key + ", " + nodeId; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     /**

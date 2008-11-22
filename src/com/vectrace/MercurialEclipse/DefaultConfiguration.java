@@ -109,11 +109,11 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
         try {
             timeout = Integer.parseInt(pref);
             if (timeout < 0) {
-                throw new NumberFormatException("Timeout < 0");
+                throw new NumberFormatException(Messages.getString("DefaultConfiguration.timoutLessThanEqual")); //$NON-NLS-1$
             }
         } catch (NumberFormatException e) {
-            logWarning("Timeout for command " + commandId
-                    + " not correctly configured in preferences.", e);
+            logWarning(Messages.getString("DefaultConfiguration.timeoutForCommand") + commandId //$NON-NLS-1$
+                    + Messages.getString("DefaultConfiguration.notCorrectlyConfigured"), e); //$NON-NLS-1$
         }
         return timeout;
     }

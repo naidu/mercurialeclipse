@@ -22,18 +22,18 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
 
-    public final static String PROPERTY_STATUS = "status";
+    public final static String PROPERTY_STATUS = "status"; //$NON-NLS-1$
     
     @SuppressWarnings("serial")
     private final static Map<Object, Integer> BIT_MAP = new HashMap<Object, Integer>() {
         {
-            put("added", MercurialStatusCache.BIT_ADDED);
-            put("clean", MercurialStatusCache.BIT_CLEAN);
-            put("deleted", MercurialStatusCache.BIT_DELETED);
-            put("ignore", MercurialStatusCache.BIT_IGNORE);
-            put("modified", MercurialStatusCache.BIT_MODIFIED);
-            put("removed", MercurialStatusCache.BIT_REMOVED);
-            put("unknown", MercurialStatusCache.BIT_UNKNOWN);
+            put("added", MercurialStatusCache.BIT_ADDED); //$NON-NLS-1$
+            put("clean", MercurialStatusCache.BIT_CLEAN); //$NON-NLS-1$
+            put("deleted", MercurialStatusCache.BIT_DELETED); //$NON-NLS-1$
+            put("ignore", MercurialStatusCache.BIT_IGNORE); //$NON-NLS-1$
+            put("modified", MercurialStatusCache.BIT_MODIFIED); //$NON-NLS-1$
+            put("removed", MercurialStatusCache.BIT_REMOVED); //$NON-NLS-1$
+            put("unknown", MercurialStatusCache.BIT_UNKNOWN); //$NON-NLS-1$
         }
     };
     
@@ -51,7 +51,7 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
                     return !test.isEmpty();
                 }                
             } catch (Exception e) {
-                MercurialEclipsePlugin.logWarning("Could not test status field "+expectedValue+" on "+receiver, e);
+                MercurialEclipsePlugin.logWarning("Could not test status field "+expectedValue+" on "+receiver, e); //$NON-NLS-1$ //$NON-NLS-2$
                 return false;
             }
         }

@@ -38,8 +38,8 @@ public class HgServeClient {
 
         public HgServeJob(IResource hgRoot, int port, String prefix,
                 String name, String webdirConf, boolean ipv6, boolean stdio) {
-            super("Controller thread for serving repository "
-                    + hgRoot.getName() + "...");
+            super(Messages.getString("HgServeClient.serveJob.name") //$NON-NLS-1$
+                    + hgRoot.getName() + "..."); //$NON-NLS-1$
             this.hgRoot = hgRoot;
             this.port = port;
             this.prefix = prefix;
@@ -61,7 +61,7 @@ public class HgServeClient {
                         hgRoot, port, prefix, name, webdirConf, stdio, ipv6);
 
                 SafeWorkspaceJob job = new SafeWorkspaceJob(
-                        "Server thread for:" + command.getCommands().toString().replace(",", "")) {
+                        Messages.getString("HgServeClient.serverThread.name") + command.getCommands().toString().replace(",", "")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
                     /*
                      * (non-Javadoc)
@@ -118,26 +118,26 @@ public class HgServeClient {
     private static AbstractShellCommand getCommand(IResource hgRoot, int port,
             String prefixPath, String name, String webdirConf, boolean stdio,
             boolean ipv6) throws IOException {
-        final AbstractShellCommand command = new HgCommand("serve", new File(
+        final AbstractShellCommand command = new HgCommand("serve", new File( //$NON-NLS-1$
                 hgRoot.getLocation().toOSString()), true);
-        File pidFile = File.createTempFile("hgserve_" + hgRoot.getName(),
-                ".pidfile");
+        File pidFile = File.createTempFile("hgserve_" + hgRoot.getName(), //$NON-NLS-1$
+                ".pidfile"); //$NON-NLS-1$
         pidFile.deleteOnExit();
-        command.addOptions("--port", String.valueOf(port));
+        command.addOptions("--port", String.valueOf(port)); //$NON-NLS-1$
         if (prefixPath != null && prefixPath.length() > 0) {
-            command.addOptions("--prefix", prefixPath);
+            command.addOptions("--prefix", prefixPath); //$NON-NLS-1$
         }
         if (name != null && name.length() > 0) {
-            command.addOptions("--name", name);
+            command.addOptions("--name", name); //$NON-NLS-1$
         }
         if (webdirConf != null && webdirConf.length() > 0) {
-            command.addOptions("--webdir-conf", webdirConf);
+            command.addOptions("--webdir-conf", webdirConf); //$NON-NLS-1$
         }
         if (stdio) {
-            command.addOptions("--stdio");
+            command.addOptions("--stdio"); //$NON-NLS-1$
         }
         if (ipv6) {
-            command.addOptions("--ipv6");
+            command.addOptions("--ipv6"); //$NON-NLS-1$
         }
         // start daemon
         return command;

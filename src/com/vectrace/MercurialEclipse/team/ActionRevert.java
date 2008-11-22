@@ -127,7 +127,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 chooser.setFiles(commitResources);
                 if (chooser.open() == Window.OK) {
                     final List<CommitResource> result = chooser.getSelection();
-                    new SafeWorkspaceJob("Revert files") {
+                    new SafeWorkspaceJob(Messages.getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
                         @Override
                         protected IStatus runSafe(IProgressMonitor monitor) {
                             doRevert(monitor, result);
@@ -144,7 +144,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                     shell = workbench.getActiveWorkbenchWindow().getShell();
                 }
                 MessageDialog.openInformation(shell,
-                        "Mercurial Eclipse hg revert", "No files to revert!");
+                        Messages.getString("ActionRevert.HgRevert"), Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$ //$NON-NLS-2$
             }
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
@@ -155,9 +155,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     private void doRevert(IProgressMonitor monitor,
             List<CommitResource> resources) {
         // the last argument will be replaced with a path
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert",
-                "--no-backup", "--", "" };
-        monitor.beginTask("Reverting resources...", resources.size() * 2);
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert", //$NON-NLS-1$
+                "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
         for (CommitResource revertResource : resources) {
             IResource resource = revertResource.getResource();
             // Resource could be inside a link or something do nothing
@@ -169,7 +169,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             // System.out.println("Revert = " + FullPath);
             // IResourceChangeEvent event = new IResourceChangeEvent();
             try {
-                monitor.subTask("Reverting " + resource.getName() + "...");
+                monitor.subTask(Messages.getString("ActionRevert.reverting") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
                 MercurialUtilities.executeCommand(launchCmd, workingDir, true);
                 monitor.worked(1);
             } catch (HgException e) {
@@ -181,7 +181,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         }
 
         for (CommitResource commitResource : resources) {
-            monitor.subTask("Refreshing " + commitResource + "...");
+            monitor.subTask(Messages.getString("ActionRevert.refreshing") + commitResource + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             IResource resource = commitResource.getResource();
             try {
                 resource.refreshLocal(IResource.DEPTH_ONE, monitor);

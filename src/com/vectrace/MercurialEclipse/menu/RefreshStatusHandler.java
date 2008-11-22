@@ -27,7 +27,7 @@ public class RefreshStatusHandler extends SingleResourceHandler {
      */
     @Override
     protected void run(final IResource resource) throws Exception {
-        new SafeWorkspaceJob("Refreshing resource "+resource.getName()+"...") {
+        new SafeWorkspaceJob(Messages.getString("RefreshStatusHandler.refreshingResource")+resource.getName()+"...") { //$NON-NLS-1$ //$NON-NLS-2$
             /* (non-Javadoc)
              * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
              */

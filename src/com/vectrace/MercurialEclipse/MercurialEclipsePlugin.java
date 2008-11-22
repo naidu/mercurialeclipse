@@ -47,11 +47,11 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
  */
 public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
-    public static final String ID = "com.vectrace.MercurialEclipse";
+    public static final String ID = "com.vectrace.MercurialEclipse"; //$NON-NLS-1$
 
-    public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView";
+    public static final String ID_ChangeLogView = "com.vectrace.MercurialEclipse.views.ChangeLogView"; //$NON-NLS-1$
 
-    public static final String BUNDLE_FILE_PREFIX = "bundlefile";
+    public static final String BUNDLE_FILE_PREFIX = "bundlefile"; //$NON-NLS-1$
 
     // The shared instance.
     private static MercurialEclipsePlugin plugin;
@@ -77,7 +77,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             checkHgInstallation();
         } catch (Exception e) {
             this.hgUsable = false;
-            logError("Unable to start MercurialEclipsePlugin ", e);
+            logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
             throw e;
         }
         repoManager.start();
@@ -92,7 +92,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             this.hgUsable = true;
             MercurialUtilities.getHGExecutable(true);
             String result = HgDebugInstallClient.debugInstall();
-            if (result.endsWith("No problems detected")) {
+            if (result.endsWith("No problems detected")) { //$NON-NLS-1$
                 this.hgUsable = true;
                 return;
             }
@@ -142,7 +142,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      */
     public static ImageDescriptor getImageDescriptor(String path) {
         return AbstractUIPlugin.imageDescriptorFromPlugin(
-                "com.vectrace.MercurialEclipse", "icons/" + path);
+                "com.vectrace.MercurialEclipse", "icons/" + path); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     public static final void logError(String message, Throwable error) {
@@ -151,10 +151,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     }
 
     public static void showError(final Throwable error) {
-        new SafeUiJob("Show Error") {
+        new SafeUiJob(Messages.getString("MercurialEclipsePlugin.showError")) { //$NON-NLS-1$
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
-                ErrorDialog.openError(null, "Unexpected Error", error.getMessage(),
+                ErrorDialog.openError(null, Messages.getString("MercurialEclipsePlugin.unexpectedError"), error.getMessage(), //$NON-NLS-1$
                         createStatus(error.getMessage(), 0, IStatus.ERROR, error));
                 return super.runSafe(monitor);
             }

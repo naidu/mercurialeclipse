@@ -165,7 +165,7 @@ public class MercurialHistoryPage extends HistoryPage {
             String ret;
 
             if ((obj instanceof MercurialRevision) != true) {
-                return "Type Error";
+                return "Type Error"; //$NON-NLS-1$
             }
 
             MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
@@ -254,25 +254,25 @@ public class MercurialHistoryPage extends HistoryPage {
         changeLogTable.setLayout(layout);
 
         TableColumn column = new TableColumn(changeLogTable, SWT.CENTER);
-        column.setText("Graph");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.graph")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(7, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText("Changeset");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.changeset")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(15, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText("Tag");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.tag")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(10, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText("Branch");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.branch")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(10, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText("User");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.user")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(7, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText("Date");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.date")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(13, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText("Summary");
+        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.summary")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(25, true));
 
         viewer.setLabelProvider(new ChangeSetLabelProvider());
@@ -290,7 +290,7 @@ public class MercurialHistoryPage extends HistoryPage {
             text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
         }
         
-        text.append(System.getProperty("line.separator"));
+        text.append(System.getProperty("line.separator")); //$NON-NLS-1$
 
         while(iterator.hasNext()) {
             Object next = iterator.next();
@@ -298,7 +298,7 @@ public class MercurialHistoryPage extends HistoryPage {
             for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
                 text.append(labelProvider.getColumnText(next, columnIndex)).append('\t');
             }
-            text.append(System.getProperty("line.separator"));
+            text.append(System.getProperty("line.separator")); //$NON-NLS-1$
         }
         new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()}, 
                 new Transfer[]{ TextTransfer.getInstance() });
@@ -308,7 +308,7 @@ public class MercurialHistoryPage extends HistoryPage {
         final BaseSelectionListenerAction openAction = getOpenAction();
         final Action compareAction = getCompareAction();
 
-        final Action updateAction = new Action("Update to selected changeset") {
+        final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
             private MercurialRevision rev;
 
             @Override
@@ -324,7 +324,7 @@ public class MercurialHistoryPage extends HistoryPage {
                     project.setSessionProperty(
                             ResourceProperties.MERGE_COMMIT_OFFERED, null);
                     new RefreshStatusJob(
-                            "Refresh status after updating working directory.",
+                            Messages.getString("MercurialHistoryPage.refreshJob.name"), //$NON-NLS-1$
                             project).schedule();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);

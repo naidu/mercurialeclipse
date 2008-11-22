@@ -14,8 +14,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgIdentClient extends AbstractClient {
 
     public static String getCurrentRevision(IContainer root) throws HgException {
-        HgCommand command = new HgCommand("identify", root, true);
-        command.addOptions("-n", "-i");
+        HgCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
+        command.addOptions("-n", "-i"); //$NON-NLS-1$ //$NON-NLS-2$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         return command.executeToString().trim();
@@ -23,11 +23,11 @@ public class HgIdentClient extends AbstractClient {
 
     public static String getCurrentRevision(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("identify",
+        HgCommand command = new HgCommand("identify", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions("-nibt");
+        command.addOptions("-nibt"); //$NON-NLS-1$
         return command.executeToString().trim();
     }
 
@@ -43,7 +43,7 @@ public class HgIdentClient extends AbstractClient {
     public static String getCurrentChangesetId(File repository)
             throws HgException, IOException {
         String dirstate = repository.getCanonicalPath() + File.separator
-                + ".hg" + File.separator + "dirstate";
+                + ".hg" + File.separator + "dirstate"; //$NON-NLS-1$ //$NON-NLS-2$
         FileInputStream reader;
         try {
             reader = new FileInputStream(dirstate);
@@ -59,7 +59,7 @@ public class HgIdentClient extends AbstractClient {
                 x = x & 0xFF;
                 String s = Integer.toHexString(x);
                 if (s.length() == 1) {
-                    s = "0" + s;
+                    s = "0" + s; //$NON-NLS-1$
                 }
                 id.append(s);
             }

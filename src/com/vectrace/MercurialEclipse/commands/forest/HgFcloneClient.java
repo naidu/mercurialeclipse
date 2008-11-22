@@ -28,22 +28,22 @@ public class HgFcloneClient extends AbstractClient {
             boolean noUpdate, boolean pull, boolean uncompressed,
             boolean timeout, String rev, String cloneName)
             throws HgException {
-        HgCommand command = new HgCommand("fclone", new File(parentDirectory),
+        HgCommand command = new HgCommand("fclone", new File(parentDirectory), //$NON-NLS-1$
                 false);
 
-        command.addOptions("--config", "extensions.hgext.forest=");
+        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (noUpdate) {
-            command.addOptions("--noupdate");
+            command.addOptions("--noupdate"); //$NON-NLS-1$
         }
         if (pull) {
-            command.addOptions("--pull");
+            command.addOptions("--pull"); //$NON-NLS-1$
         }
         if (uncompressed) {
-            command.addOptions("--uncompressed");
+            command.addOptions("--uncompressed"); //$NON-NLS-1$
         }
         if (rev != null && rev.length() > 0) {
-            command.addOptions("--rev", rev);
+            command.addOptions("--rev", rev); //$NON-NLS-1$
         }
 
         URI uri = repo.getUri();

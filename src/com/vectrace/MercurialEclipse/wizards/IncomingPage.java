@@ -86,7 +86,7 @@ public class IncomingPage extends HgWizardPage {
          */
         @Override
         protected String getActionDescription() {
-            return "Getting incoming changesets...";
+            return Messages.getString("IncomingPage.getIncomingOperation.description"); //$NON-NLS-1$
         }
 
         /*
@@ -99,8 +99,8 @@ public class IncomingPage extends HgWizardPage {
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask("Getting incoming changesets...", 1);
-            monitor.subTask("Calling Mercurial...");
+            monitor.beginTask(Messages.getString("IncomingPage.getIncomingOperation.beginTask"), 1); //$NON-NLS-1$
+            monitor.subTask(Messages.getString("IncomingPage.getIncomingOperation.call")); //$NON-NLS-1$
             changesets = getIncomingInternal();
             monitor.worked(1);
             monitor.done();
@@ -179,11 +179,11 @@ public class IncomingPage extends HgWizardPage {
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
         String[] titles = {
-                Messages.getString("IncomingPage.columnHeader.revision"),
-                Messages.getString("IncomingPage.columnHeader.global"),
-                Messages.getString("IncomingPage.columnHeader.date"),
-                Messages.getString("IncomingPage.columnHeader.author"),
-                Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                Messages.getString("IncomingPage.columnHeader.revision"), //$NON-NLS-1$
+                Messages.getString("IncomingPage.columnHeader.global"), //$NON-NLS-1$
+                Messages.getString("IncomingPage.columnHeader.date"), //$NON-NLS-1$
+                Messages.getString("IncomingPage.columnHeader.author"), //$NON-NLS-1$
+                Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ 
         int[] widths = { 42, 100, 122, 80, 80, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);

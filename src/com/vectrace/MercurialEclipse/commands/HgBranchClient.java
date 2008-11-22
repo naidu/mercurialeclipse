@@ -12,22 +12,22 @@ import com.vectrace.MercurialEclipse.model.Branch;
 public class HgBranchClient extends AbstractClient {
 
     private static final Pattern GET_BRANCHES_PATTERN = Pattern
-            .compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( +(.+))?$");
+            .compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
 
     public static Branch[] getBranches(IProject project) throws HgException {
-        HgCommand command = new HgCommand("branches", project, false);
-        command.addOptions("-v");
-        String[] lines = command.executeToString().split("\n");
+        HgCommand command = new HgCommand("branches", project, false); //$NON-NLS-1$
+        command.addOptions("-v"); //$NON-NLS-1$
+        String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
         int length = lines.length;
         Branch[] branches = new Branch[length];
         for (int i = 0; i < length; i++) {
             Matcher m = GET_BRANCHES_PATTERN.matcher(lines[i]);
             if (m.matches()) {
                 Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m
-                        .group(3), (m.group(5) == null || !m.group(5).equals("(inactive)")));
+                        .group(3), (m.group(5) == null || !m.group(5).equals("(inactive)"))); //$NON-NLS-1$
                 branches[i] = branch;
             } else {
-                throw new HgException("Parse exception: '" + lines[i] + "'");
+                throw new HgException("Parse exception: '" + lines[i] + "'"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
         return branches;
@@ -44,9 +44,9 @@ public class HgBranchClient extends AbstractClient {
      */
     public static String addBranch(IResource resource, String name,
             String user, boolean force) throws HgException {
-        HgCommand command = new HgCommand("branch", getWorkingDirectory(resource), false);
+        HgCommand command = new HgCommand("branch", getWorkingDirectory(resource), false); //$NON-NLS-1$
         if (force) {
-            command.addOptions("-f");
+            command.addOptions("-f"); //$NON-NLS-1$
         }
         command.addOptions(name);
         return new String(command.executeToBytes());

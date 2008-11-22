@@ -51,14 +51,14 @@ public class OutgoingPage extends IncomingPage {
          */
         @Override
         protected String getActionDescription() {
-            return "Retrieving outoing changesets...";
+            return Messages.getString("OutgoingPage.getOutgoingOperation.description"); //$NON-NLS-1$
         }
 
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask("Getting outgoing changesets...", 1);
-            monitor.subTask("Calling Mercurial...");
+            monitor.beginTask(Messages.getString("OutgoingPage.getOutgoingOperation.beginTask"), 1); //$NON-NLS-1$
+            monitor.subTask(Messages.getString("OutgoingPage.getOutgoingOperation.call")); //$NON-NLS-1$
             setChangeSets(getOutgoingInternal());
             monitor.worked(1);
             monitor.done();
@@ -91,10 +91,10 @@ public class OutgoingPage extends IncomingPage {
      */
     protected OutgoingPage(String pageName) {
         super(pageName);
-        this.setTitle("Outgoing changesets");
+        this.setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
         this
-                .setDescription("Click on a changeset to see changed files. "
-                        + "Double-click on a file to compare against workspace revision.");
+                .setDescription(Messages.getString("OutgoingPage.description1") //$NON-NLS-1$
+                        + Messages.getString("OutgoingPage.description2")); //$NON-NLS-1$
     }
 
     /**
@@ -135,7 +135,7 @@ public class OutgoingPage extends IncomingPage {
     @Override
     public void createControl(Composite parent) {
         super.createControl(parent);
-        getRevisionCheckBox().setText("Push changes up to selected revision");
+        getRevisionCheckBox().setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
     }
 
     /**

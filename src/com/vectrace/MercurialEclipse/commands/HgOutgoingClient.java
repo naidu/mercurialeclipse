@@ -29,11 +29,11 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
         try {
-            HgCommand command = new HgCommand("outgoing", res.getProject(),
+            HgCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-            command.addOptions("--style", AbstractParseChangesetClient
+            command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
                     .getStyleFile(true).getCanonicalPath());
 
             URI uri = repository.getUri();
@@ -44,7 +44,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             }
             
             String result = command.executeToString();
-            if (result.contains("no changes found")) {
+            if (result.contains("no changes found")) { //$NON-NLS-1$
                 return null;
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
@@ -52,7 +52,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                     Direction.OUTGOING, repository, null);
             return revisions;
         } catch (HgException hg) {
-            if (hg.getMessage().contains("return code: 1")) {
+            if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
                 return null;
             }
             throw new HgException(hg.getMessage(), hg);

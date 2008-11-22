@@ -30,15 +30,15 @@ public class HgQDeleteClient extends AbstractClient {
             ChangeSet changeset, List<Patch> patches) throws HgException {
         Assert.isNotNull(patches);
         Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qdelete",
+        HgCommand command = new HgCommand("qdelete", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (keep) {
-            command.addOptions("--keep");
+            command.addOptions("--keep"); //$NON-NLS-1$
         }
         if (changeset != null) {
-            command.addOptions("--rev", changeset.getChangeset());
+            command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
         } else {
             for (Patch patch : patches) {
                 command.addOptions(patch.getName());

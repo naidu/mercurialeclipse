@@ -25,41 +25,41 @@ public class HgIMergeClient extends AbstractClient {
 
     public static String merge(IProject project, String revision)
             throws HgException {
-        HgCommand command = new HgCommand("imerge", project, false);
+        HgCommand command = new HgCommand("imerge", project, false); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 
         boolean useExternalMergeTool = Boolean.valueOf(
                 HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                        "false")).booleanValue();
+                        "false")).booleanValue(); //$NON-NLS-1$
 
-        command.addOptions("--config", "extensions.imerge=");
+        command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (!useExternalMergeTool) {
             // we use an non-existent UI Merge tool, so no tool is started. We
             // need this option, though, as we still want the Mercurial merge to
             // take place.
-            command.addOptions("--config", "ui.merge=MercurialEclipse");
+            command.addOptions("--config", "ui.merge=MercurialEclipse"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         if (revision != null) {
-            command.addOptions("-r", revision);
+            command.addOptions("-r", revision); //$NON-NLS-1$
         }
         return new String(command.executeToBytes());
     }
 
     public static List<FlaggedAdaptable> getMergeStatus(IResource res)
             throws HgException {
-        HgCommand command = new HgCommand("imerge", getWorkingDirectory(res),
+        HgCommand command = new HgCommand("imerge", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
-        command.addOptions("--config", "extensions.imerge=");
-        command.addOptions("status");
+        command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
+        command.addOptions("status"); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        String[] lines = command.executeToString().split("\n");
+        String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
         ArrayList<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
-        if (lines.length != 1 || !"all conflicts resolved".equals(lines[0])) {
+        if (lines.length != 1 || !"all conflicts resolved".equals(lines[0])) { //$NON-NLS-1$
             for (String line : lines) {
                 FlaggedAdaptable flagged = new FlaggedAdaptable(res
                         .getProject().getFile(line.substring(2)), line
@@ -71,10 +71,10 @@ public class HgIMergeClient extends AbstractClient {
     }
 
     public static String markResolved(IResource file) throws HgException {
-        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file),
+        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
-        command.addOptions("--config", "extensions.imerge=");
-        command.addOptions("resolve");
+        command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
+        command.addOptions("resolve"); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 
@@ -84,10 +84,10 @@ public class HgIMergeClient extends AbstractClient {
     }
 
     public static String markUnresolved(IResource file) throws HgException {
-        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file),
+        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
-        command.addOptions("--config", "extensions.imerge=");
-        command.addOptions("unresolve");
+        command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
+        command.addOptions("unresolve"); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         command.addFiles(file.getProjectRelativePath().toOSString());

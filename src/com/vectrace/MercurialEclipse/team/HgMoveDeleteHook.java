@@ -62,7 +62,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             if (result == null) {
                 return false;
             }
-            if ((result.length() != 0) && result.startsWith("?")) {
+            if ((result.length() != 0) && result.startsWith("?")) { //$NON-NLS-1$
                 return false;
             }
         } catch (Exception e) {
@@ -177,7 +177,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             int updateFlags, IProgressMonitor monitor) {
         if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) != 0) {
             // TODO: Need to delete the .hg directory...but how to?
-            IFolder folder = project.getFolder(".hg");
+            IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
 
             try {
                 folder.delete(updateFlags, monitor);
@@ -267,7 +267,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
         try {
             HgRenameClient.renameResource(source, destination, monitor);
         } catch (Exception e) {
-            System.out.println("Move failed: " + e.getMessage());
+            System.out.println(Messages.getString("HgMoveDeleteHook.moveFailed") + e.getMessage()); //$NON-NLS-1$
             return false;
         }
 

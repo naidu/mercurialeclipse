@@ -122,16 +122,16 @@ public class PullPage extends PushPullPage {
 
         // now the options
         Group pullGroup = SWTWidgetHelper
-                .createGroup(composite, "Pull options");
+                .createGroup(composite, Messages.getString("PullPage.pullGroup.label")); //$NON-NLS-1$
         this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
                 Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
         this.updateCheckBox.setSelection(true);
 
         try {
-            if (MercurialUtilities.isCommandAvailable("rebase",
-                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) {
+            if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
+                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) { //$NON-NLS-1$
                 this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
-                        "Rebase after pull");
+                        Messages.getString("PullPage.option.rebase")); //$NON-NLS-1$
                 SelectionListener rebaseCheckBoxListener = new SelectionListener() {
                     /*
                      * (non-Javadoc)
@@ -195,12 +195,12 @@ public class PullPage extends PushPullPage {
         pullGroup.moveAbove(optionGroup);
 
         Group mergeGroup = SWTWidgetHelper.createGroup(composite,
-                "Merge options");
+                Messages.getString("PullPage.option.merge")); //$NON-NLS-1$
         this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
-                "Merge and, if there are no conflicts, commit after update");
+                Messages.getString("PullPage.option.commitAfterMerge")); //$NON-NLS-1$
 
         this.commitDialogCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
-                "Edit commit message before committing merge.");
+                Messages.getString("PullPage.option.editCommitMessage")); //$NON-NLS-1$
 
         this.commitDialogCheckBox.setSelection(true);
         this.commitDialogCheckBox.setEnabled(false);
@@ -233,15 +233,15 @@ public class PullPage extends PushPullPage {
                     try {
                         status = HgStatusClient
                                 .getStatus(resource.getProject());
-                        if (status.length() > 0 && status.indexOf("M ") >= 0) {
-                            setErrorMessage("Please commit modified resources before trying to merge.");
+                        if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
+                            setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
                             setPageComplete(false);
                         } else {
                             setErrorMessage(null);
                             setPageComplete(true);
                         }
                     } catch (HgException e1) {
-                        setErrorMessage("Couldn't get status from Mercurial. Merge disabled.");
+                        setErrorMessage(Messages.getString("PullPage.error.noStatus")); //$NON-NLS-1$
                         mergeCheckBox.setSelection(false);
                         mergeCheckBox.setEnabled(false);
                         setPageComplete(true);

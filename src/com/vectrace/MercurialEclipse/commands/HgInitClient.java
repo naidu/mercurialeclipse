@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public class HgInitClient extends AbstractClient {
     public static String init(IProject project, String path) throws HgException {
-        HgCommand command = new HgCommand("init", getWorkingDirectory(project),
+        HgCommand command = new HgCommand("init", getWorkingDirectory(project), //$NON-NLS-1$
                 false);
         command.addOptions(path);
         command

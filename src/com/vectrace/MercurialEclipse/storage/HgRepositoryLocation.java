@@ -35,7 +35,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
     private String user;
     private String password;
     private URI uri;
-    private static final String SPLIT_TOKEN = "@@@";
+    private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
 
     HgRepositoryLocation(String uri) throws URISyntaxException {
         this(uri, null, null);
@@ -72,13 +72,13 @@ public class HgRepositoryLocation extends AllRootsElement implements
         }        
         if (myUri != null) {
             if (myUri.getScheme() != null
-                    && !myUri.getScheme().equalsIgnoreCase("file")) {
+                    && !myUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
                 String userInfo = null;
                 if (myUri.getUserInfo() == null) {
                     userInfo = createUserinfo(this.user, this.password);
                 } else {
                     // extract user and password from given URI
-                    String[] authorization = myUri.getUserInfo().split(":");
+                    String[] authorization = myUri.getUserInfo().split(":"); //$NON-NLS-1$
                     this.user = authorization[0];
                     if (authorization.length > 1) {
                         this.password = authorization[1];
@@ -105,7 +105,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
             // pass gotta be separated by a colon
             userInfo = user;
             if (password != null && password.length() != 0) {
-                userInfo = userInfo.concat(":").concat(password);
+                userInfo = userInfo.concat(":").concat(password); //$NON-NLS-1$
             }
         }
         return userInfo;
@@ -177,21 +177,21 @@ public class HgRepositoryLocation extends AllRootsElement implements
     public static HgRepositoryLocation fromProperties(Properties configuration)
             throws HgException, URISyntaxException {
 
-        String user = configuration.getProperty("user");
+        String user = configuration.getProperty("user"); //$NON-NLS-1$
         if ((user == null) || (user.length() == 0)) {
             user = null;
         }
-        String password = configuration.getProperty("password");
+        String password = configuration.getProperty("password"); //$NON-NLS-1$
         if (user == null) {
             password = null;
         }
-        String rootUrl = configuration.getProperty("rootUrl");
+        String rootUrl = configuration.getProperty("rootUrl"); //$NON-NLS-1$
         if ((rootUrl == null) || (rootUrl.length() == 0)) {
             rootUrl = null;
         }
-        String url = configuration.getProperty("url");
+        String url = configuration.getProperty("url"); //$NON-NLS-1$
         if (url == null) {
-            throw new HgException("URL must not be null.");
+            throw new HgException(Messages.getString("HgRepositoryLocation.urlMustNotBeNull")); //$NON-NLS-1$
         }
         return new HgRepositoryLocation(url, user, password);
     }

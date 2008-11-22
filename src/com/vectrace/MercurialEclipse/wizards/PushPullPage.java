@@ -104,24 +104,24 @@ public class PushPullPage extends ConfigurationWizardMainPage {
     private void createExtensionControls() {
         if (showForest) {
             this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                    "Repository is a forest");
+                    Messages.getString("PushPullPage.option.forest")); //$NON-NLS-1$
 
             if (showSnapFile) {
                 Composite c = SWTWidgetHelper.createComposite(optionGroup, 3);
                 final Label forestLabel = SWTWidgetHelper.createLabel(c,
-                        "Snapfile");
+                        Messages.getString("PushPullPage.snapfile.label")); //$NON-NLS-1$
                 forestLabel.setEnabled(false);
                 this.snapFileCombo = createEditableCombo(c);
                 snapFileCombo.setEnabled(false);
                 this.snapFileButton = SWTWidgetHelper.createPushButton(c,
-                        "Browse...", 1);
+                        Messages.getString("PushPullPage.snapfile.browse"), 1); //$NON-NLS-1$
                 snapFileButton.setEnabled(false);
                 this.snapFileButton
                         .addSelectionListener(new SelectionAdapter() {
                             @Override
                             public void widgetSelected(SelectionEvent e) {
                                 FileDialog dialog = new FileDialog(getShell());
-                                dialog.setText("Please select snapfile");
+                                dialog.setText(Messages.getString("PushPullPage.snapfile.select")); //$NON-NLS-1$
                                 String file = dialog.open();
                                 if (file != null) {
                                     snapFileCombo.setText(file);
@@ -147,7 +147,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
         if (showSvn) {
             this.svnCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                    "Use Subversion extension");            
+                    Messages.getString("PushPullPage.option.svn"));             //$NON-NLS-1$
         }
     }
 
@@ -354,7 +354,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
     public void setShowForest(boolean showForest) throws HgException {
         this.showForest = showForest
-                && MercurialUtilities.isCommandAvailable("fpull",
+                && MercurialUtilities.isCommandAvailable("fpull", //$NON-NLS-1$
                         ResourceProperties.EXT_FOREST_AVAILABLE, null);
     }
 
@@ -388,7 +388,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
     public void setShowSvn(boolean showSvn) throws HgException {
         this.showSvn = showSvn
-                && MercurialUtilities.isCommandAvailable("svn",
+                && MercurialUtilities.isCommandAvailable("svn", //$NON-NLS-1$
                         ResourceProperties.EXT_HGSUBVERSION_AVAILABLE, null);
     }
 

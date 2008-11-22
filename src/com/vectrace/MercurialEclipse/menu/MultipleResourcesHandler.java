@@ -54,7 +54,7 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
             }
             run(getSelectedResources());
         } catch (Exception e) {
-            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
+            MessageDialog.openError(getShell(), Messages.getString("MultipleResourcesHandler.hgSays"), e.getMessage()+Messages.getString("MultipleResourcesHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
             throw new ExecutionException(e.getMessage(), e);
         }
         return null;
@@ -66,7 +66,7 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
         for (IResource res : resources) {
             if (!res.getProject().equals(project)) {
                 throw new HgException(
-                        "All resources must be in the same project. It will be fixed soon ;)");
+                        Messages.getString("MultipleResourcesHandler.allResourcesMustBeInSameProject")); //$NON-NLS-1$
             }
         }
         return project;

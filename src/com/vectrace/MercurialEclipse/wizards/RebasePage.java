@@ -78,9 +78,9 @@ public class RebasePage extends HgWizardPage {
 
         setControl(comp);
         try {
-            if (!MercurialUtilities.isCommandAvailable("rebase",
-                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) {
-                setErrorMessage("Rebase not available. Please update to a newer Mercurial version.");
+            if (!MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
+                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) { //$NON-NLS-1$
+                setErrorMessage(Messages.getString("RebasePage.error.notAvailable")); //$NON-NLS-1$
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
@@ -92,13 +92,13 @@ public class RebasePage extends HgWizardPage {
      * @param comp
      */
     private void createOptionsWidgets(Composite comp) {
-        Group optionGroup = SWTWidgetHelper.createGroup(comp, "Options", 2,
+        Group optionGroup = SWTWidgetHelper.createGroup(comp, Messages.getString("RebasePage.optionGroup.label"), 2, //$NON-NLS-1$
                 GridData.FILL_BOTH);
 
         this.collapseRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                "Collapse the rebased revisions");
+                Messages.getString("RebasePage.option.collapse")); //$NON-NLS-1$
         this.abortRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                "Abort interrupted rebase");
+                Messages.getString("RebasePage.option.abort")); //$NON-NLS-1$
         
         SelectionListener abortSl = new SelectionListener() {
             /*
@@ -140,7 +140,7 @@ public class RebasePage extends HgWizardPage {
         abortRevCheckBox.addSelectionListener(abortSl);
         
         this.continueRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                "Continue interrupted rebase");
+                Messages.getString("RebasePage.option.continue")); //$NON-NLS-1$
         
         SelectionListener contSl = new SelectionListener() {
             /*
@@ -187,9 +187,9 @@ public class RebasePage extends HgWizardPage {
      */
     private void createDestWidgets(Composite comp) {
         Group destGroup = SWTWidgetHelper.createGroup(comp,
-                "Select destination revision", 2, GridData.FILL_BOTH);
+                Messages.getString("RebasePage.destinationGroup.label"), 2, GridData.FILL_BOTH); //$NON-NLS-1$
         this.destRevCheckBox = SWTWidgetHelper.createCheckBox(destGroup,
-                "Rebase onto the selected revision");
+                Messages.getString("RebasePage.destinationCheckbox.label")); //$NON-NLS-1$
 
         SelectionListener sl = new SelectionListener() {
             /*
@@ -229,11 +229,11 @@ public class RebasePage extends HgWizardPage {
      */
     private void createSrcWidgets(Composite comp) {
         Group srcGroup = SWTWidgetHelper.createGroup(comp,
-                "Select source revision", 2, GridData.FILL_BOTH);
+                Messages.getString("RebasePage.sourceGroup.label"), 2, GridData.FILL_BOTH); //$NON-NLS-1$
         this.sourceRevCheckBox = SWTWidgetHelper.createCheckBox(srcGroup,
-                "Rebase from the selected revision");
+                Messages.getString("RebasePage.source.label")); //$NON-NLS-1$
         this.baseRevCheckBox = SWTWidgetHelper.createCheckBox(srcGroup,
-                "Rebase from the base of the selected revision");
+                Messages.getString("RebasePage.base.label")); //$NON-NLS-1$
 
         SelectionListener srcSl = new SelectionListener() {
             /*

@@ -115,16 +115,16 @@ public abstract class AbstractClient {
     public static boolean isCommandAvailable(String commandName,
             String extensionEnabler) {
         boolean returnValue = false;
-        HgCommand command = new HgCommand("help", ResourcesPlugin
+        HgCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
                 .getWorkspace().getRoot(), false);
         if (extensionEnabler != null && extensionEnabler.length() != 0) {
-            command.addOptions("--config", "extensions." + extensionEnabler);
+            command.addOptions("--config", "extensions." + extensionEnabler); //$NON-NLS-1$ //$NON-NLS-2$
         }
         command.addOptions(commandName);
         String result;
         try {
             result = new String(command.executeToBytes(10000, false));
-            if (result.startsWith("hg: unknown command")) {
+            if (result.startsWith("hg: unknown command")) { //$NON-NLS-1$
                 returnValue = false;
             } else {
                 returnValue = true;

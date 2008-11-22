@@ -61,14 +61,14 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 			    IProject project = resource.getProject();
 			    // if there is a .hgignore at project level, get it via a
                 // refresh.
-                IResource hgIgnoreFile = project.getFile(".hgignore");
+                IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
                 hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, null);			        			    
 		
                 // refresh status of newly ignored resource
                 MercurialStatusCache.getInstance().refreshStatus(resource,
                         new NullProgressMonitor());
 			} catch (TeamException e) {
-				MercurialEclipsePlugin.logError("Unable to refresh project: ",
+				MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
 						e);
 			}
 		}

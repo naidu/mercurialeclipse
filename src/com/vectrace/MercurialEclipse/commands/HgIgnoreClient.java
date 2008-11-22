@@ -15,25 +15,25 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgIgnoreClient {
 
 	public static void addExtension(IFile file) throws HgException {
-		addPattern(file.getProject(), "regexp", escape("."+file.getFileExtension())+"$");
+		addPattern(file.getProject(), "regexp", escape("."+file.getFileExtension())+"$"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	public static void addFile(IFile file) throws HgException {
-		String regexp = "^"+escape(file.getProjectRelativePath().toString())+"$";
-		addPattern(file.getProject(), "regexp", regexp);
+		String regexp = "^"+escape(file.getProjectRelativePath().toString())+"$"; //$NON-NLS-1$ //$NON-NLS-2$
+		addPattern(file.getProject(), "regexp", regexp); //$NON-NLS-1$
 	}
 	
 	public static void addFolder(IFolder folder) throws HgException {
-		String regexp = "^"+escape(folder.getProjectRelativePath().toString())+"$";
-		addPattern(folder.getProject(), "regexp", regexp);
+		String regexp = "^"+escape(folder.getProjectRelativePath().toString())+"$"; //$NON-NLS-1$ //$NON-NLS-2$
+		addPattern(folder.getProject(), "regexp", regexp); //$NON-NLS-1$
 	}
 	
 	public static void addRegexp(IProject project, String regexp) throws HgException {
-		addPattern(project, "regexp", regexp);
+		addPattern(project, "regexp", regexp); //$NON-NLS-1$
 	}
 	
 	public static void addGlob(IProject project, String glob) throws HgException {
-		addPattern(project, "glob", glob);
+		addPattern(project, "glob", glob); //$NON-NLS-1$
 	}
 	
 	private static String escape(String string) {
@@ -67,7 +67,7 @@ public class HgIgnoreClient {
 		//TODO use existing sections
 	    BufferedOutputStream buffer = null;
 		try {
-		    String path = HgRootClient.getHgRoot(project).concat(File.separator).concat(".hgignore");
+		    String path = HgRootClient.getHgRoot(project).concat(File.separator).concat(".hgignore"); //$NON-NLS-1$
 		    
 		    File hgignore = new File(path);
 		    // append to file if it exists, else create a new one
@@ -79,16 +79,16 @@ public class HgIgnoreClient {
 			buffer.write(pattern.getBytes());
 			buffer.flush();
 		} catch (CoreException e) {
-			throw new HgException("Failed to add an entry to .hgignore", e);
+			throw new HgException(Messages.getString("HgIgnoreClient.failedToAddHgIgnore"), e); //$NON-NLS-1$
 		} catch (IOException e) {
-			throw new HgException("Failed to add an entry to .hgignore", e);
+			throw new HgException(Messages.getString("HgIgnoreClient.failedToAddEntry"), e); //$NON-NLS-1$
 		} finally {
 		    // we don't want to leak file descriptors...
 		    if (buffer != null) {
 		        try {
                     buffer.close();
                 } catch (IOException e) {
-                   throw new HgException("Failed to close file .hgignore",e);
+                   throw new HgException(Messages.getString("HgIgnoreClient.failedToCloseHgIgnore"),e); //$NON-NLS-1$
                 }
 		    }
 		}

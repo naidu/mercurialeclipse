@@ -9,14 +9,14 @@ public class HgUpdateClient {
 
     public static void update(IProject project, String revision, boolean clean)
             throws HgException {
-        HgCommand command = new HgCommand("update", project, false);
+        HgCommand command = new HgCommand("update", project, false); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);        
         if (revision != null) {
-            command.addOptions("-r", revision);
+            command.addOptions("-r", revision); //$NON-NLS-1$
         }
         if (clean) {
-            command.addOptions("-C");
+            command.addOptions("-C"); //$NON-NLS-1$
         }
         command.executeToBytes();
     }

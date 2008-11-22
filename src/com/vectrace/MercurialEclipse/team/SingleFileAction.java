@@ -44,7 +44,7 @@ public abstract class SingleFileAction implements IActionDelegate {
 			run(getSelectedFile());
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
+            MessageDialog.openError(getShell(), Messages.getString("SingleFileAction.hgSays"), e.getMessage()+Messages.getString("SingleFileAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
 	

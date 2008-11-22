@@ -127,7 +127,7 @@ public class MercurialParticipantSynchronizeWizard extends
                     scope, repo);
 
             SubscriberScopeManager manager = new SubscriberScopeManager(
-                    "HgSubscriberScopeManager", selectedMappings, subscriber,
+                    "HgSubscriberScopeManager", selectedMappings, subscriber, //$NON-NLS-1$
                     false);
 
             MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);           

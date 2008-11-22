@@ -91,8 +91,8 @@ public class ChangesetTable extends Composite {
         data.minimumHeight = 50;
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Global", "Date", "Author", "Branch",
-                "Summary" };
+        String[] titles = { Messages.getString("ChangesetTable.column.rev"), Messages.getString("ChangesetTable.column.global"), Messages.getString("ChangesetTable.column.date"), Messages.getString("ChangesetTable.column.author"), Messages.getString("ChangesetTable.column.branch"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+                Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$
         int[] widths = { 50, 150, 150, 100, 100, 300 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -112,7 +112,7 @@ public class ChangesetTable extends Composite {
                             .parseInt(MercurialUtilities
                                     .getPreference(
                                             MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                                            "200"));
+                                            "100")); //$NON-NLS-1$
                     try {
                         int startRev = cs.getChangesetIndex() - 1;
                         updateTable(startRev);

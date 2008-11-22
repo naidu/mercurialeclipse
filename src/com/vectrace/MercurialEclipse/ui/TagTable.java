@@ -49,7 +49,7 @@ public class TagTable extends Composite {
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
         table.setLayoutData(data);
 
-        String[] titles = { "Rev", "Global", "Tag", "Local" };
+        String[] titles = { Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         int[] widths = { 50, 150, 300, 70 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -69,7 +69,7 @@ public class TagTable extends Composite {
     public void setTags(Tag[] tags) {
         table.removeAll();
         for (Tag tag : tags) {
-            if (showTip || !"tip".equals(tag.getName())) {
+            if (showTip || !"tip".equals(tag.getName())) { //$NON-NLS-1$
                 TableItem row = new TableItem(table, SWT.NONE);
                 if (parents != null && isParent(tag.getRevision())) {
                     row.setFont(PARENT_FONT);
@@ -77,7 +77,7 @@ public class TagTable extends Composite {
                 row.setText(0, Integer.toString(tag.getRevision()));
                 row.setText(1, tag.getGlobalId());
                 row.setText(2, tag.getName());
-                row.setText(3, tag.isLocal() ? "local" : "");
+                row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") : Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$ //$NON-NLS-2$
                 row.setData(tag);
             }
         }

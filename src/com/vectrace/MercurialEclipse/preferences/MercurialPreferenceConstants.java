@@ -30,7 +30,7 @@ public class MercurialPreferenceConstants {
     public static final String LABELDECORATOR_LOGIC_2MM = "2-means-modified"; //$NON-NLS-1$
     public static final String LABELDECORATOR_LOGIC_HB = "high-bit"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_COMPLETE_STATUS = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
-    public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus";
+    public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 
     // Timeouts
@@ -66,6 +66,6 @@ public class MercurialPreferenceConstants {
     public static final String PREF_CONSOLE_DEBUG = "hg.console.debug"; //$NON-NLS-1$
 
     // merge
-    public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal";
+    public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal"; //$NON-NLS-1$
 
 }

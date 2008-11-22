@@ -29,15 +29,15 @@ public class HgQFoldClient extends AbstractClient {
             List<Patch> patches) throws HgException {
         Assert.isNotNull(patches);
         Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qfold",
+        HgCommand command = new HgCommand("qfold", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.hgext.mq=");
+        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (keep) {
-            command.addOptions("--keep");
+            command.addOptions("--keep"); //$NON-NLS-1$
         }
         if (message != null && message.length() > 0) {
-            command.addOptions("--message", message);
+            command.addOptions("--message", message); //$NON-NLS-1$
         }
         
         for (Patch patch : patches) {

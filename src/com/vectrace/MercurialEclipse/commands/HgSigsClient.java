@@ -42,14 +42,14 @@ public class HgSigsClient extends AbstractClient {
             HgRoot root = new HgRoot(MercurialTeamProvider.getHgRoot(repoFile)
                     .getCanonicalPath());
             List<Signature> nodes = new ArrayList<Signature>();
-            File sigFile = new File(root.getCanonicalPath().concat(File.separator).concat(".hgsigs"));
+            File sigFile = new File(root.getCanonicalPath().concat(File.separator).concat(".hgsigs")); //$NON-NLS-1$
             if (sigFile.exists()) {
                 LineNumberReader reader = null;
                 try {
                   reader = new LineNumberReader(new FileReader(sigFile));
                   String line = reader.readLine();
                   while (line != null) {
-                      String nodeId = line.substring(0,line.indexOf(" 0 "));
+                      String nodeId = line.substring(0,line.indexOf(" 0 ")); //$NON-NLS-1$
                       Signature sig = new Signature(null,nodeId,root);
                       nodes.add(sig);
                       line = reader.readLine();
@@ -75,7 +75,7 @@ public class HgSigsClient extends AbstractClient {
      * @throws HgException
      */
     public static String checkSig(File file, String nodeId) throws HgException {
-        HgCommand c = new HgCommand("sigcheck", getWorkingDirectory(file),
+        HgCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
         c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
         c.addOptions(nodeId);

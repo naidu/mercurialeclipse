@@ -63,7 +63,7 @@ public class BookmarkDialog extends TrayDialog {
     @Override
     protected void configureShell(Shell newShell) {
         super.configureShell(newShell);
-        newShell.setText("Manage bookmarks...");
+        newShell.setText(Messages.getString("BookmarkDialog.shell.text")); //$NON-NLS-1$
     }
 
     @Override
@@ -83,7 +83,7 @@ public class BookmarkDialog extends TrayDialog {
     protected TabItem createCreateTabItem(TabFolder folder) {
         // setup control
         TabItem item = new TabItem(folder, folder.getStyle());
-        item.setText("Create bookmark");
+        item.setText(Messages.getString("BookmarkDialog.createTab.name")); //$NON-NLS-1$
         Composite c = SWTWidgetHelper.createComposite(folder, 2);
         GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
         c.setLayoutData(layoutData);
@@ -107,11 +107,11 @@ public class BookmarkDialog extends TrayDialog {
         item.addListener(SWT.Show, tabSl);
 
         // create widgets
-        Group tipGroup = SWTWidgetHelper.createGroup(c, "Create new bookmark");
-        SWTWidgetHelper.createLabel(tipGroup, "Bookmark name");
+        Group tipGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.createGroup.label")); //$NON-NLS-1$
+        SWTWidgetHelper.createLabel(tipGroup, Messages.getString("BookmarkDialog.bookmarkName")); //$NON-NLS-1$
         this.bmNameTextBox = SWTWidgetHelper.createTextField(tipGroup);
         Group revGroup = SWTWidgetHelper.createGroup(c,
-                "Select revision (or don't select to set bookmark to tip)");
+                Messages.getString("BookmarkDialog.selectRevision")); //$NON-NLS-1$
         revGroup.setLayoutData(layoutData);
         this.csTable = new ChangesetTable(revGroup, project, true);
         csTable.setLayoutData(layoutData);
@@ -140,7 +140,7 @@ public class BookmarkDialog extends TrayDialog {
     protected TabItem createModifyTabItem(TabFolder folder) {
         // setup control
         TabItem item = new TabItem(folder, folder.getStyle());
-        item.setText("Modify bookmark");
+        item.setText(Messages.getString("BookmarkDialog.modifyTab.name")); //$NON-NLS-1$
         Composite c = SWTWidgetHelper.createComposite(folder, 2);
         GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, true);
         c.setLayoutData(layoutData);
@@ -164,7 +164,7 @@ public class BookmarkDialog extends TrayDialog {
         item.addListener(SWT.Show, tabSl);
 
         // create widgets
-        Group selGroup = SWTWidgetHelper.createGroup(c, "Select bookmark");
+        Group selGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.selectBookmark")); //$NON-NLS-1$
         selGroup.setLayoutData(layoutData);
         this.bookmarkTable = new BookmarkTable(selGroup, project);
         this.bookmarkTable.setLayoutData(layoutData);
@@ -186,9 +186,9 @@ public class BookmarkDialog extends TrayDialog {
         };
         this.bookmarkTable.addSelectionListener(sl);
 
-        Group renameGroup = SWTWidgetHelper.createGroup(c, "Modify action");
+        Group renameGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.renameGroup.label")); //$NON-NLS-1$
         this.deleteCheckBox(SWTWidgetHelper.createCheckBox(renameGroup,
-                "Delete selected bookmark"));
+                Messages.getString("BookmarkDialog.option.delete"))); //$NON-NLS-1$
 
         SelectionListener delSl = new SelectionListener() {
             /*
@@ -222,9 +222,9 @@ public class BookmarkDialog extends TrayDialog {
         };
         this.deleteCheckBox.addSelectionListener(delSl);
         this.renameCheckBox = SWTWidgetHelper.createCheckBox(renameGroup,
-                "Rename selected bookmark");
+                Messages.getString("BookmarkDialog.option.rename")); //$NON-NLS-1$
         renameLabel = SWTWidgetHelper.createLabel(renameGroup,
-                "New name of bookmark");
+                Messages.getString("BookmarkDialog.newName")); //$NON-NLS-1$
         this.newBmNameTextBox = SWTWidgetHelper.createTextField(renameGroup);
         this.newBmNameTextBox.setEnabled(false);
         renameLabel.setEnabled(false);
@@ -272,7 +272,7 @@ public class BookmarkDialog extends TrayDialog {
         try {
             if (!modifyTab) {
                 // create new bookmark
-                String targetRev = "tip";
+                String targetRev = "tip"; //$NON-NLS-1$
                 if (csTable.getSelection() != null) {
                     targetRev = csTable.getSelection().getChangeset();
                 }

@@ -50,14 +50,14 @@ import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
  * 
  */
 public class CommitDialog extends TrayDialog {
-    public static final String FILE_MODIFIED = "Modified";
-    public static final String FILE_ADDED = "Added";
-    public static final String FILE_REMOVED = "Removed";
-    public static final String FILE_UNTRACKED = "Untracked";
-    public static final String FILE_DELETED = "Already Deleted";
+    public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
+    public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
+    public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
+    public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
+    public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
 
 
-    private String defaultCommitMessage = "(no commit message)";
+    private String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
     private ISourceViewer commitTextBox;
     private Label commitTextLabel;
@@ -110,7 +110,7 @@ public class CommitDialog extends TrayDialog {
         container.setLayout(new FormLayout());
 
         commitTextLabel = new Label(container, SWT.NONE);
-        commitTextLabel.setText("Commit comments");
+        commitTextLabel.setText(Messages.getString("CommitDialog.commitTextLabel.text")); //$NON-NLS-1$
 
         // commitTextBox = new Text(container, SWT.V_SCROLL | SWT.MULTI
         // | SWT.BORDER | SWT.WRAP);
@@ -143,7 +143,7 @@ public class CommitDialog extends TrayDialog {
         });
 
         commitFilesLabel = new Label(container, SWT.NONE);
-        commitFilesLabel.setText("Select Files:");
+        commitFilesLabel.setText(Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
 
         final FormData fd_commitTextLabel = new FormData();
         fd_commitTextLabel.top = new FormAttachment(0, 20);

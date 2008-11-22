@@ -32,7 +32,7 @@ public class RebaseWizard extends HgWizard {
      * @param windowTitle
      */
     public RebaseWizard(IResource res) {
-        super("Rebase wizard");
+        super(Messages.getString("RebaseWizard.title")); //$NON-NLS-1$
         this.resource = res;
         setNeedsProgressMonitor(true);
     }
@@ -71,7 +71,7 @@ public class RebaseWizard extends HgWizard {
             if (op.getResult().length() != 0) {
                 IWorkbench workbench = PlatformUI.getWorkbench();
                 Shell shell = workbench.getActiveWorkbenchWindow().getShell();
-                MessageDialog.openInformation(shell, "Rebase output:", op
+                MessageDialog.openInformation(shell, Messages.getString("RebaseWizard.output.header"), op //$NON-NLS-1$
                         .getResult());
 
             }            
@@ -91,10 +91,10 @@ public class RebaseWizard extends HgWizard {
      */
     @Override
     public void addPages() {
-        rebasePage = new RebasePage("RebasePage", "Rebase",
+        rebasePage = new RebasePage("RebasePage", Messages.getString("RebaseWizard.rebasePage.title"), //$NON-NLS-1$ //$NON-NLS-2$
                 MercurialEclipsePlugin
-                        .getImageDescriptor("wizards/droplets-50.png"),
-                "Move changeset (and descendants) to a different branch.",
+                        .getImageDescriptor("wizards/droplets-50.png"), //$NON-NLS-1$
+                Messages.getString("RebaseWizard.rebasePage.description"), //$NON-NLS-1$
                 resource);
 
         initPage(rebasePage.getDescription(), rebasePage);

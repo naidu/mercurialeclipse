@@ -170,7 +170,7 @@ public class MercurialHistory extends FileHistory {
 
             int logBatchSize = Integer.parseInt(MercurialUtilities
                     .getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                            "500"));
+                            "500")); //$NON-NLS-1$
 
             // check if we have reached the bottom (initially = 0)
             if (from == this.bottom || from < 0) {
@@ -194,7 +194,7 @@ public class MercurialHistory extends FileHistory {
 
                 List<Signature> sigs = HgSigsClient.getSigs(file);
                 Map<String, Signature> sigMap = new HashMap<String, Signature>();
-                if (!MercurialUtilities.getGpgExecutable().equals("false")) {
+                if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
                     for (Signature signature : sigs) {
                         sigMap.put(signature.getNodeId(), signature);
                     }

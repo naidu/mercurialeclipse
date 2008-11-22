@@ -39,7 +39,7 @@ public class ResourceProperties {
      * @see ResourceDecorator
      */
     public final static QualifiedName MERGING = new QualifiedName(
-            MercurialEclipsePlugin.ID, "merging");
+            MercurialEclipsePlugin.ID, "merging"); //$NON-NLS-1$
 
     /**
      * Qualified name for a session property on a project that signifies that
@@ -50,7 +50,7 @@ public class ResourceProperties {
      * @see CommitMergeHandler
      */
     public static final QualifiedName MERGE_COMMIT_OFFERED = new QualifiedName(
-            MercurialEclipsePlugin.ID, MergeView.ID + ".commitOffered");
+            MercurialEclipsePlugin.ID, MergeView.ID + ".commitOffered"); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether to
@@ -59,14 +59,14 @@ public class ResourceProperties {
      * restarted.
      */
     public static final QualifiedName MERGE_USE_RESOLVE = new QualifiedName(
-            MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve");
+            MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve"); //$NON-NLS-1$
     
     /**
      * Qualified name for a workspace session property that signifies whether
      * rebase is available.
      */
     public static final QualifiedName REBASE_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "rebaseAvailable");
+            MercurialEclipsePlugin.ID, "rebaseAvailable"); //$NON-NLS-1$
 
     /**
      * Qualified name for a project session property that stores the canonical
@@ -74,28 +74,28 @@ public class ResourceProperties {
      * new File(project.getPersistentProperty(ResourceProperties.HG_ROOT))
      */
     public static final QualifiedName HG_ROOT = new QualifiedName(
-            MercurialEclipsePlugin.ID, "hgRoot");
+            MercurialEclipsePlugin.ID, "hgRoot"); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
      * the bookmarks extension is available.
      */
     public static final QualifiedName EXT_BOOKMARKS_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "extBookmarksAvailable");
+            MercurialEclipsePlugin.ID, "extBookmarksAvailable"); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
      * the forest extension is available.
      */
     public static QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "extForestAvailable");
+            MercurialEclipsePlugin.ID, "extForestAvailable"); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
      * the HgSubversion extension is available.
      */
     public static QualifiedName EXT_HGSUBVERSION_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "extHgSubversionAvailable");
+            MercurialEclipsePlugin.ID, "extHgSubversionAvailable"); //$NON-NLS-1$
 
     private ResourceProperties() {
     }

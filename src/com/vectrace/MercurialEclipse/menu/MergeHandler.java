@@ -46,12 +46,12 @@ public class MergeHandler extends SingleResourceHandler {
             PartInitException {
         IProject project = resource.getProject();
         RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
-                "Merge With...", project);
-        String result = "";
+                Messages.getString("MergeHandler.mergeWith"), project); //$NON-NLS-1$
+        String result = ""; //$NON-NLS-1$
         boolean useExternalMergeTool = Boolean.valueOf(
                 HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                        "false")).booleanValue();
+                        "false")).booleanValue(); //$NON-NLS-1$
         if (dialog.open() == IDialogConstants.OK_ID) {
             boolean useResolve = isHgResolveAvailable();
             if (useResolve) {

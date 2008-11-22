@@ -141,17 +141,17 @@ public abstract class AbstractShellCommand {
             throws HgException {
         try {
             List<String> cmd = getCommands();
-            String cmdString = cmd.toString().replace(",", "").substring(1);
+            String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
             cmdString = cmdString.substring(0, cmdString.length() - 1);
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
 
             // set locale to english have deterministic output
             Map<String, String> env = builder.environment();
-            env.put("LC_ALL", "en_US.utf8");
-            env.put("LANG", "en_US.utf8");
-            env.put("LANGUAGE", "en_US.utf8");
-            env.put("LC_MESSAGES", "en_US.utf8");
+            env.put("LC_ALL", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
+            env.put("LANG", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
+            env.put("LANGUAGE", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
+            env.put("LC_MESSAGES", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
 
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
@@ -177,15 +177,15 @@ public abstract class AbstractShellCommand {
 
                 // exit code > 0
                 HgException hgex = new HgException(
-                        "Process error, return code: " + exitCode
-                                + ", message: " + getMessage(output));
+                        "Process error, return code: " + exitCode //$NON-NLS-1$
+                                + ", message: " + getMessage(output)); //$NON-NLS-1$
 
                 // exit code == 1 usually isn't fatal.
                 getConsole().commandCompleted(exitCode, msg, hgex);
                 throw hgex;
             }
             //command timeout
-            HgException hgEx = new HgException("Process timeout");
+            HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
             if (msg != null) {
                 getConsole().printError(msg, hgEx);
             } else {
@@ -214,7 +214,7 @@ public abstract class AbstractShellCommand {
         return Boolean.valueOf(
                 HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
-                        "false")).booleanValue();
+                        "false")).booleanValue(); //$NON-NLS-1$
     }
 
     public String executeToString() throws HgException {
@@ -222,7 +222,7 @@ public abstract class AbstractShellCommand {
         if (bytes != null) {
             return new String(bytes);
         }
-        return "";
+        return ""; //$NON-NLS-1$
     }
 
     public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
@@ -251,7 +251,7 @@ public abstract class AbstractShellCommand {
         result.add(command);
         result.addAll(options);
         if (escapeFiles && !files.isEmpty()) {
-            result.add("--");
+            result.add("--"); //$NON-NLS-1$
         }
         result.addAll(files);
         // TODO check that length <= MAX_PARAMS

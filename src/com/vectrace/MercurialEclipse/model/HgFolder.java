@@ -92,7 +92,7 @@ public class HgFolder extends HgFilesystemObject {
                 if (file.isDirectory()) {
                     pFiles.addAll(file.getProjectFiles());
                 } else {
-                    if (file.getName().equals(".project")) {
+                    if (file.getName().equals(".project")) { //$NON-NLS-1$
                         pFiles.add(file);
                     }
                 }

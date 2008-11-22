@@ -102,8 +102,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         }
 
         private String unescape(String string) {
-            return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">")
-                    .replaceAll("&amp;", "&");
+            return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                    .replaceAll("&amp;", "&"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         /**
@@ -113,7 +113,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
          * @return
          */
         private String untab(String string) {
-            return string.replaceAll("\n\t", "\n");
+            return string.replaceAll("\n\t", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         private String[] splitClean(String string, String sep) {
@@ -134,9 +134,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         public void endElement(String uri, String localName, String name)
                 throws SAXException {
 
-            if (name.equals("de")) {
+            if (name.equals("de")) { //$NON-NLS-1$
                 de = chars.toString();
-            } else if (name.equals("cs")) {
+            } else if (name.equals("cs")) { //$NON-NLS-1$
 
 
                 ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di,
@@ -145,7 +145,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 csb.nodeShort(ns);
                 csb.ageDate(da);
                 csb.description(untab(unescape(de)));
-                csb.parents(splitClean(pr, " "));
+                csb.parents(splitClean(pr, " ")); //$NON-NLS-1$
 
                 csb.hgRoot(hgRoot).bundleFile(bundleFile)
                         .repository(repository).direction(direction);
@@ -210,33 +210,33 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
              * <de>{desc|escape|tabindent}</de>
              */
             this.chars = new StringBuilder();
-            if (name.equals("br")) {
+            if (name.equals("br")) { //$NON-NLS-1$
                 this.br = atts.getValue(0);
-            } else if (name.equals("tg")) {
+            } else if (name.equals("tg")) { //$NON-NLS-1$
                 this.tg = atts.getValue(0);
-            } else if (name.equals("rv")) {
+            } else if (name.equals("rv")) { //$NON-NLS-1$
                 this.rv = Integer.parseInt(atts.getValue(0));
-            } else if (name.equals("ns")) {
+            } else if (name.equals("ns")) { //$NON-NLS-1$
                 this.ns = atts.getValue(0);
-            } else if (name.equals("nl")) {
+            } else if (name.equals("nl")) { //$NON-NLS-1$
                 this.nl = atts.getValue(0);
-            } else if (name.equals("di")) {
+            } else if (name.equals("di")) { //$NON-NLS-1$
                 this.di = atts.getValue(0);
-            } else if (name.equals("da")) {
+            } else if (name.equals("da")) { //$NON-NLS-1$
                 this.da = atts.getValue(0);
-            } else if (name.equals("au")) {
+            } else if (name.equals("au")) { //$NON-NLS-1$
                 this.au = atts.getValue(0);
-            } else if (name.equals("pr")) {
+            } else if (name.equals("pr")) { //$NON-NLS-1$
                 this.pr = atts.getValue(0);
           /*  } else if (name.equals("de")) {
                 this.de = untab(unescape(atts.getValue(0))); */
-            } else if (name.equals("fl")) {
+            } else if (name.equals("fl")) { //$NON-NLS-1$
                 this.action = FileStatus.Action.MODIFIED;
-            } else if (name.equals("fa")) {
+            } else if (name.equals("fa")) { //$NON-NLS-1$
                 this.action = FileStatus.Action.ADDED;
-            } else if (name.equals("fd")) {
+            } else if (name.equals("fd")) { //$NON-NLS-1$
                 this.action = FileStatus.Action.REMOVED;
-            } else if (name.equals("f")) {
+            } else if (name.equals("f")) { //$NON-NLS-1$
                 if (this.action == Action.ADDED) {
                     filesAdded.add(atts.getValue(0));
                     filesModified.remove(atts.getValue(0));
@@ -313,11 +313,11 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
     }
 
-    private static final String STYLE_SRC = "/styles/log_style";
-    private static final String STYLE = "/log_style";
-    private static final String STYLE_WITH_FILES_SRC = "/styles/log_style_with_files";
-    private static final String STYLE_WITH_FILES = "/log_style_with_files";
-    private static final String STYLE_TEMP_EXTN = ".tmpl";
+    private static final String STYLE_SRC = "/styles/log_style"; //$NON-NLS-1$
+    private static final String STYLE = "/log_style"; //$NON-NLS-1$
+    private static final String STYLE_WITH_FILES_SRC = "/styles/log_style_with_files"; //$NON-NLS-1$
+    private static final String STYLE_WITH_FILES = "/log_style_with_files"; //$NON-NLS-1$
+    private static final String STYLE_TEMP_EXTN = ".tmpl"; //$NON-NLS-1$
 
     private static ContentHandler handler;
 
@@ -384,7 +384,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
             return stylefile;
         } catch (IOException e) {
-            throw new HgException("Failed to setup hg style file", e);
+            throw new HgException("Failed to setup hg style file", e); //$NON-NLS-1$
         }
     }
 
@@ -439,7 +439,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         }
 
         File hgRoot = MercurialTeamProvider.getHgRoot(res);
-        String myInput = "<top>".concat(input).concat("</top>");
+        String myInput = "<top>".concat(input).concat("</top>"); //$NON-NLS-1$ //$NON-NLS-2$
         try {
             XMLReader reader = XMLReaderFactory.createXMLReader();
             reader.setContentHandler(getHandler(res, direction, repository,

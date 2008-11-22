@@ -78,7 +78,7 @@ public class RevertDialog extends Dialog {
         fd_label.top = new FormAttachment(0, 10);
         fd_label.left = new FormAttachment(0, 5);
         label.setLayoutData(fd_label);
-        label.setText("Checked resources will be reverted");
+        label.setText(Messages.getString("RevertDialog.header")); //$NON-NLS-1$
 
         createFilesList(container);
         final FormData fd_table = new FormData();
@@ -94,7 +94,7 @@ public class RevertDialog extends Dialog {
         fd_selectAllButton.right = new FormAttachment(0, 90);
         fd_selectAllButton.left = new FormAttachment(0, 5);
         selectAllButton.setLayoutData(fd_selectAllButton);
-        selectAllButton.setText("Select All");
+        selectAllButton.setText(Messages.getString("RevertDialog.option.selectAll")); //$NON-NLS-1$
 
         deselectAllButton = new Button(container, SWT.NONE);
         final FormData fd_deselectAllButton = new FormData();
@@ -103,7 +103,7 @@ public class RevertDialog extends Dialog {
         fd_deselectAllButton.bottom = new FormAttachment(100, -3);
         fd_deselectAllButton.right = new FormAttachment(0, 185);
         deselectAllButton.setLayoutData(fd_deselectAllButton);
-        deselectAllButton.setText("Deselect All");
+        deselectAllButton.setText(Messages.getString("RevertDialog.option.deselectAll")); //$NON-NLS-1$
         //
 
         makeActions();
@@ -122,19 +122,19 @@ public class RevertDialog extends Dialog {
         // Check mark
         col = new TableColumn(table, SWT.NONE | SWT.BORDER);
         col.setResizable(false);
-        col.setText("");
+        col.setText(""); //$NON-NLS-1$
         layout.addColumnData(new ColumnPixelData(20, false));
 
         // File name
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
-        col.setText("File");
+        col.setText(Messages.getString("RevertDialog.file")); //$NON-NLS-1$
         layout.addColumnData(new ColumnPixelData(220, true));
 
         // File status
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
-        col.setText("Status");
+        col.setText(Messages.getString("RevertDialog.status")); //$NON-NLS-1$
         layout.addColumnData(new ColumnPixelData(100, true));
 
         table.setLayout(layout);

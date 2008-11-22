@@ -138,8 +138,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
         // Create actions
 
         // New Repository (popup)
-        newAction = new Action("Create Repository", MercurialEclipsePlugin
-                .getImageDescriptor("wizards/newlocation_wiz.gif")) {
+        newAction = new Action(Messages.getString("RepositoriesView.createRepo"), MercurialEclipsePlugin //$NON-NLS-1$
+                .getImageDescriptor("wizards/newlocation_wiz.gif")) { //$NON-NLS-1$
             @Override
             public void run() {
                 NewLocationWizard wizard = new NewLocationWizard();
@@ -182,23 +182,23 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
                 removeRootAction);
 
         // Refresh action (toolbar)
-        refreshAction = new Action("Refresh repositories",
-                MercurialEclipsePlugin.getImageDescriptor("elcl16/refresh.gif")) {
+        refreshAction = new Action(Messages.getString("RepositoriesView.refreshRepos"), //$NON-NLS-1$
+                MercurialEclipsePlugin.getImageDescriptor("elcl16/refresh.gif")) { //$NON-NLS-1$
             @Override
             public void run() {
                 refreshViewer(null, true);
             }
         };
-        refreshAction.setToolTipText("Refresh"); 
+        refreshAction.setToolTipText(Messages.getString("RepositoriesView.refresh"));  //$NON-NLS-1$
         refreshAction.setDisabledImageDescriptor(MercurialEclipsePlugin
-                .getImageDescriptor("dlcl16/refresh.gif"));
+                .getImageDescriptor("dlcl16/refresh.gif")); //$NON-NLS-1$
         refreshAction.setHoverImageDescriptor(MercurialEclipsePlugin
-                .getImageDescriptor("clcl16/refresh.gif"));
+                .getImageDescriptor("clcl16/refresh.gif")); //$NON-NLS-1$
         getViewSite().getActionBars().setGlobalActionHandler(
                 ActionFactory.REFRESH.getId(), refreshAction);
 
-        refreshPopupAction = new Action("Refresh", MercurialEclipsePlugin
-                .getImageDescriptor("clcl16/refresh.gif")) {
+        refreshPopupAction = new Action(Messages.getString("RepositoriesView.refresh"), MercurialEclipsePlugin //$NON-NLS-1$
+                .getImageDescriptor("clcl16/refresh.gif")) { //$NON-NLS-1$
             @Override
             public void run() {
                 refreshViewerNode();
@@ -206,17 +206,17 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
         };
 
         // Collapse action
-        collapseAllAction = new Action("RepositoriesView.collapseAll",
+        collapseAllAction = new Action("RepositoriesView.collapseAll", //$NON-NLS-1$
                 MercurialEclipsePlugin
-                        .getImageDescriptor("elcl16/collapseall.gif")) {
+                        .getImageDescriptor("elcl16/collapseall.gif")) { //$NON-NLS-1$
             @Override
             public void run() {
                 collapseAll();
             }
         };
-        collapseAllAction.setToolTipText("Collapse all");
+        collapseAllAction.setToolTipText(Messages.getString("RepositoriesView.collapseAll")); //$NON-NLS-1$
         collapseAllAction.setHoverImageDescriptor(MercurialEclipsePlugin
-                .getImageDescriptor("clcl16/collapseall.gif"));
+                .getImageDescriptor("clcl16/collapseall.gif")); //$NON-NLS-1$
 
         // Create the popup menu
         MenuManager menuMgr = new MenuManager();
@@ -249,7 +249,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
     protected void addWorkbenchActions(IMenuManager manager) {
         // New actions go next
 
-        MenuManager sub = new MenuManager("New",
+        MenuManager sub = new MenuManager(Messages.getString("RepositoriesView.new"), //$NON-NLS-1$
                 IWorkbenchActionConstants.GROUP_ADD);
         sub.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
         manager.add(sub);
@@ -257,10 +257,10 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
         // File actions go first (view file)
         manager.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
         // Misc additions
-        manager.add(new Separator("historyGroup"));
-        manager.add(new Separator("checkoutGroup"));
-        manager.add(new Separator("exportImportGroup"));
-        manager.add(new Separator("miscGroup"));
+        manager.add(new Separator("historyGroup")); //$NON-NLS-1$
+        manager.add(new Separator("checkoutGroup")); //$NON-NLS-1$
+        manager.add(new Separator("exportImportGroup")); //$NON-NLS-1$
+        manager.add(new Separator("miscGroup")); //$NON-NLS-1$
 
         manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
@@ -350,15 +350,15 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
      */
     private String getStatusLineMessage(ISelection selection) {
         if (selection == null || selection.isEmpty())
-            return "";
+            return ""; //$NON-NLS-1$
         if (!(selection instanceof IStructuredSelection))
-            return "";
+            return ""; //$NON-NLS-1$
         IStructuredSelection s = (IStructuredSelection) selection;
 
         if (s.size() > 1) {
-            return String.valueOf(s.size()) + " selected.";
+            return String.valueOf(s.size()) + Messages.getString("RepositoriesView.multiSelected"); //$NON-NLS-1$
         }
-        return "1 selected.";
+        return Messages.getString("RepositoriesView.oneSelected"); //$NON-NLS-1$
     }
 
     /**

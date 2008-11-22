@@ -106,7 +106,7 @@ public class RevisionChooserDialog extends Dialog {
         composite.setLayout(gridLayout);
 
         Label label = new Label(composite, SWT.NONE);
-        label.setText("Please enter a valid revision (local, global, tag or branch):");
+        label.setText(Messages.getString("RevisionChooserDialog.rev.label")); //$NON-NLS-1$
 
         text = new Text(composite, SWT.BORDER | SWT.DROP_DOWN);
         text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
@@ -118,9 +118,9 @@ public class RevisionChooserDialog extends Dialog {
         tabFolder.setLayoutData(data);
         createRevisionTabItem(tabFolder);
         try {
-            if (MercurialUtilities.isCommandAvailable("bookmarks",
+            if (MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
                     ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
-                    "hgext.bookmarks=")) {
+                    "hgext.bookmarks=")) { //$NON-NLS-1$
                 createBookmarkTabItem(tabFolder);
             }
         } catch (HgException e) {
@@ -136,22 +136,22 @@ public class RevisionChooserDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		String[] split = text.getText().split(":");
+		String[] split = text.getText().split(":"); //$NON-NLS-1$
 		revision = split[0].trim();
 		
 		if (changeSet == null) {
 			if (tag != null){
 					changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        tag.getRevision() + ":"+tag.getGlobalId());				
+                        tag.getRevision() + ":"+tag.getGlobalId());				 //$NON-NLS-1$
 			}
 			else if(branch != null) {
 			    changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        branch.getRevision() + ":"+branch.getGlobalId());     
+                        branch.getRevision() + ":"+branch.getGlobalId());      //$NON-NLS-1$
 			} else if (bookmark != null) {
                 changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        bookmark.getRevision() + ":"
+                        bookmark.getRevision() + ":" //$NON-NLS-1$
                                 + bookmark.getShortNodeId());
-                this.revision = changeSet.getChangesetIndex() + "";
+                this.revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
 			}
 		}
 		
@@ -167,7 +167,7 @@ public class RevisionChooserDialog extends Dialog {
 
     protected TabItem createRevisionTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Revisions");
+        item.setText(Messages.getString("RevisionChooserDialog.revTab.name")); //$NON-NLS-1$
 
 
         final ChangesetTable table = new ChangesetTable(folder, dataLoader
@@ -181,7 +181,7 @@ public class RevisionChooserDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
             	branch = null;
-                text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
+                text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
             }
         });
@@ -192,7 +192,7 @@ public class RevisionChooserDialog extends Dialog {
 
     protected TabItem createTagTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Tags");
+        item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
         final TagTable table = new TagTable(folder);
         table.highlightParents(parents);
@@ -211,7 +211,7 @@ public class RevisionChooserDialog extends Dialog {
         table.addListener(SWT.Show, new Listener() {
             public void handleEvent(Event event) {
                 table.removeListener(SWT.Show, this);
-                new SafeUiJob("Fetching tags from repository") {
+                new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
                     @Override
                     protected IStatus runSafe(IProgressMonitor monitor) {
                         try {
@@ -233,7 +233,7 @@ public class RevisionChooserDialog extends Dialog {
 
     protected TabItem createBranchTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Branches");
+        item.setText(Messages.getString("RevisionChooserDialog.branchTab.name")); //$NON-NLS-1$
 
         final BranchTable table = new BranchTable(folder);
         table.highlightParents(parents);
@@ -253,7 +253,7 @@ public class RevisionChooserDialog extends Dialog {
         table.addListener(SWT.Show, new Listener() {
             public void handleEvent(Event event) {
                 table.removeListener(SWT.Show, this);
-                new SafeUiJob("Fetching branches from repository") {
+                new SafeUiJob(Messages.getString("RevisionChooserDialog.branchJob.description")) { //$NON-NLS-1$
                     @Override
                     protected IStatus runSafe(IProgressMonitor monitor) {
                         try {
@@ -275,7 +275,7 @@ public class RevisionChooserDialog extends Dialog {
     
     protected TabItem createBookmarkTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Bookmarks");
+        item.setText(Messages.getString("RevisionChooserDialog.bookmarkTab.name")); //$NON-NLS-1$
 
         final BookmarkTable table = new BookmarkTable(folder, dataLoader
                 .getProject());
@@ -298,7 +298,7 @@ public class RevisionChooserDialog extends Dialog {
 
     protected TabItem createHeadTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText("Heads");
+        item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
 
         final ChangesetTable table = new ChangesetTable(folder, dataLoader
                 .getProject(), false);
@@ -310,7 +310,7 @@ public class RevisionChooserDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
             	branch = null;
-            	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset());
+            	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
             }
         });
@@ -318,7 +318,7 @@ public class RevisionChooserDialog extends Dialog {
         table.addListener(SWT.Show, new Listener() {
             public void handleEvent(Event event) {
                 table.removeListener(SWT.Show, this);
-                new SafeUiJob("Fetching heads from repository") {
+                new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
                     @Override
                     protected IStatus runSafe(IProgressMonitor monitor) {
                         try {

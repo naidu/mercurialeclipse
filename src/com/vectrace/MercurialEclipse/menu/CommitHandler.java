@@ -45,7 +45,7 @@ public class CommitHandler extends MultipleResourcesHandler {
                     .getDefaultUserName(), messageToCommit,
                     new NullProgressMonitor());
 
-            new RefreshJob("Refreshing local changesets after commit...", null,
+            new RefreshJob(Messages.getString("CommitHandler.refreshing"), null, //$NON-NLS-1$
                     project).schedule();
         }
     }

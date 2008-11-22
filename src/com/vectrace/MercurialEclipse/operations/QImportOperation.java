@@ -66,12 +66,12 @@ public class QImportOperation extends HgOperation {
         monitor.beginTask(getActionDescription(), 3);
         try {            
             monitor.worked(1);
-            monitor.subTask("Calling mercurial...");
+            monitor.subTask(Messages.getString("QImportOperation.call")); //$NON-NLS-1$
             HgQImportClient.qimport(resource, force, git, existing, changesets,
                     patchFile);
             monitor.worked(1);
-            monitor.subTask("Refreshing Patch Queue View...");
-            new SafeUiJob("Refreshing PatchQueueView...") {
+            monitor.subTask(Messages.getString("QImportOperation.refreshingView")); //$NON-NLS-1$
+            new SafeUiJob(Messages.getString("QImportOperation.refreshingView")) { //$NON-NLS-1$
                 /*
                  * (non-Javadoc)
                  * 
@@ -100,7 +100,7 @@ public class QImportOperation extends HgOperation {
      */
     @Override
     protected String getActionDescription() {
-        return "Importing patch to mercurial queue...";
+        return Messages.getString("QImportOperation.importingPatch"); //$NON-NLS-1$
     }
 
 }

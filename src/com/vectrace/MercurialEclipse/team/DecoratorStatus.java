@@ -129,20 +129,20 @@ public class DecoratorStatus extends LabelProvider implements
                     && (output.cardinality() > 2 || (output.cardinality() == 2 && !output
                             .get(MercurialStatusCache.BIT_IGNORE)))) {
                 overlay = DecoratorImages.modifiedDescriptor;
-                prefix = ">";
+                prefix = ">"; //$NON-NLS-1$
             } else {
                 switch (output.length() - 1) {
                 case MercurialStatusCache.BIT_MODIFIED:
                     overlay = DecoratorImages.modifiedDescriptor;
-                    prefix = ">";
+                    prefix = ">"; //$NON-NLS-1$
                     break;
                 case MercurialStatusCache.BIT_ADDED:
                     overlay = DecoratorImages.addedDescriptor;
-                    prefix = ">";
+                    prefix = ">"; //$NON-NLS-1$
                     break;
                 case MercurialStatusCache.BIT_UNKNOWN:
                     overlay = DecoratorImages.notTrackedDescriptor;
-                    prefix = ">";
+                    prefix = ">"; //$NON-NLS-1$
                     break;
                 case MercurialStatusCache.BIT_CLEAN:
                     overlay = DecoratorImages.managedDescriptor;
@@ -151,11 +151,11 @@ public class DecoratorStatus extends LabelProvider implements
                 // do nothing
                 case MercurialStatusCache.BIT_REMOVED:
                     overlay = DecoratorImages.removedDescriptor;
-                    prefix = ">";
+                    prefix = ">"; //$NON-NLS-1$
                     break;
                 case MercurialStatusCache.BIT_DELETED:
                     overlay = DecoratorImages.deletedStillTrackedDescriptor;
-                    prefix = ">";
+                    prefix = ">"; //$NON-NLS-1$
                     break;
                 }
             }
@@ -176,9 +176,9 @@ public class DecoratorStatus extends LabelProvider implements
 
         if (cs != null) {
             if (prefix == null) {
-                prefix = "<";
+                prefix = "<"; //$NON-NLS-1$
             } else {
-                prefix = "<" + prefix;
+                prefix = "<" + prefix; //$NON-NLS-1$
             }
         }
 
@@ -190,16 +190,16 @@ public class DecoratorStatus extends LabelProvider implements
             ChangeSet changeSet = LocalChangesetCache.getInstance()
                     .getNewestLocalChangeSet(objectResource);
             if (changeSet != null) {
-                String hex = ":" + changeSet.getNodeShort();
-                String suffix = " [" + changeSet.getChangesetIndex() + hex
-                        + "]";
+                String hex = ":" + changeSet.getNodeShort(); //$NON-NLS-1$
+                String suffix = " [" + changeSet.getChangesetIndex() + hex //$NON-NLS-1$
+                        + "]"; //$NON-NLS-1$
 
                 if (objectResource.getType() == IResource.FILE) {
-                    suffix = " [" + changeSet.getChangesetIndex() + "] ";
+                    suffix = " [" + changeSet.getChangesetIndex() + "] "; //$NON-NLS-1$ //$NON-NLS-2$
 
                     if (cs != null) {
-                        suffix += "< [" + cs.getChangesetIndex() + ":"
-                                + cs.getNodeShort() + " " + cs.getUser() + "]";
+                        suffix += "< [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$ //$NON-NLS-2$
+                                + cs.getNodeShort() + " " + cs.getUser() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
 
@@ -210,7 +210,7 @@ public class DecoratorStatus extends LabelProvider implements
 
         } catch (HgException e) {
             MercurialEclipsePlugin.logWarning(
-                    "Couldn't get version of resource " + objectResource, e);
+                    Messages.getString("DecoratorStatus.couldntGetVersionOfResource") + objectResource, e); //$NON-NLS-1$
         }
 
     }
@@ -253,7 +253,7 @@ public class DecoratorStatus extends LabelProvider implements
         if (o == statusCache) {
             final IWorkbench workbench = PlatformUI.getWorkbench();
             final String decoratorId = DecoratorStatus.class.getName();
-            new SafeUiJob("Update Decorations") {
+            new SafeUiJob(Messages.getString("DecoratorStatus.updatingDecos")) { //$NON-NLS-1$
                 @Override
                 protected IStatus runSafe(IProgressMonitor monitor) {
                     workbench.getDecoratorManager().update(decoratorId);

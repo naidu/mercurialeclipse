@@ -48,7 +48,7 @@ public abstract class SingleResourceHandler extends AbstractHandler {
             this.selection = (IResource)selectionAdaptable.getAdapter(IResource.class);
             run(getSelectedResource());
         } catch (Exception e) {
-            MessageDialog.openError(getShell(), "Hg says...", e.getMessage()+"\nSee Error Log for more details.");
+            MessageDialog.openError(getShell(), Messages.getString("SingleResourceHandler.hgSays"), e.getMessage()+Messages.getString("SingleResourceHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
             throw new ExecutionException(e.getMessage(), e);
         }
         return null;

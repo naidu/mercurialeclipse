@@ -24,13 +24,13 @@ public class CompareUtils {
             boolean dialog, boolean localEditable) {
         openEditor(file, new IStorageMercurialRevision(file, changeset
                 .getChangesetIndex()
-                + "", changeset.getChangeset(), changeset), dialog, localEditable);
+                + "", changeset.getChangeset(), changeset), dialog, localEditable); //$NON-NLS-1$
     }
 
     public static void openEditor(IResource file, ChangeSet changeset, boolean localEditable) {
         openEditor(file, new IStorageMercurialRevision(file, changeset
                 .getChangesetIndex()
-                + "", changeset.getChangeset(), changeset), false, localEditable);
+                + "", changeset.getChangeset(), changeset), false, localEditable); //$NON-NLS-1$
     }
 
     public static void openEditor(IResource file,

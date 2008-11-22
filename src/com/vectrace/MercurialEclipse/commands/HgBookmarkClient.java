@@ -30,9 +30,9 @@ public class HgBookmarkClient extends AbstractClient {
      * @throws HgException
      */
     public static List<Bookmark> getBookmarks(File file) throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file),
+        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
-        cmd.addOptions("--config", "extensions.hgext.bookmarks=");
+        cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
         String result = cmd.executeToString();
         ArrayList<Bookmark> bookmarks = convert(result);
         return bookmarks;
@@ -44,8 +44,8 @@ public class HgBookmarkClient extends AbstractClient {
      */
     private static ArrayList<Bookmark> convert(String result) {
         ArrayList<Bookmark> bookmarks = new ArrayList<Bookmark>();
-        if (!result.startsWith("no bookmarks set")) {
-            String[] split = result.split("\n");
+        if (!result.startsWith("no bookmarks set")) { //$NON-NLS-1$
+            String[] split = result.split("\n"); //$NON-NLS-1$
             for (String string : split) {
                 bookmarks.add(new Bookmark(string));
             }
@@ -61,10 +61,10 @@ public class HgBookmarkClient extends AbstractClient {
      */
     public static String create(File file, String name, String targetChangeset)
             throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file),
+        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
-        cmd.addOptions("--config", "extensions.hgext.bookmarks=");
-        cmd.addOptions("--rev", targetChangeset, name);
+        cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
+        cmd.addOptions("--rev", targetChangeset, name); //$NON-NLS-1$
         String result = cmd.executeToString();
         return result;
     }
@@ -77,10 +77,10 @@ public class HgBookmarkClient extends AbstractClient {
      */
     public static String rename(File file, String name, String newName)
             throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file),
+        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
-        cmd.addOptions("--config", "extensions.hgext.bookmarks=");
-        cmd.addOptions("--rename", name, newName);
+        cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
+        cmd.addOptions("--rename", name, newName); //$NON-NLS-1$
         String result = cmd.executeToString();
         return result;
     }
@@ -93,10 +93,10 @@ public class HgBookmarkClient extends AbstractClient {
      */
     public static String delete(File file, String name)
             throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file),
+        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
-        cmd.addOptions("--config", "extensions.hgext.bookmarks=");
-        cmd.addOptions("--delete", name);
+        cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
+        cmd.addOptions("--delete", name); //$NON-NLS-1$
         String result = cmd.executeToString();
         return result;
     }

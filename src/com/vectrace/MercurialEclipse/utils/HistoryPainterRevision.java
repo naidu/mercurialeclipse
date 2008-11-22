@@ -164,13 +164,13 @@ public class HistoryPainterRevision implements
 	@Override
 	public String toString() {
 		return resource.getName()
-				+ ","
+				+ "," //$NON-NLS-1$
 				+ changeSet.toString()
-				+ ",Lane:"
+				+ ",Lane:" //$NON-NLS-1$
 				+ lane
-				+ ",Lanes:"
+				+ ",Lanes:" //$NON-NLS-1$
 				+ lanes
-				+ ",Parents:"+parents.size();
+				+ ",Parents:"+parents.size(); //$NON-NLS-1$
 	}
 
 	/**

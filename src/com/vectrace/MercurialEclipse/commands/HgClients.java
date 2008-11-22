@@ -40,7 +40,7 @@ public final class HgClients {
     public static String getExecutable() {
         if (config == null) {
             throw new IllegalStateException(
-                    "HgClient has not been initialized with a configuration");
+                    Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
         }
         return config.getExecutable();
     }
@@ -51,7 +51,7 @@ public final class HgClients {
     public static String getDefaultUserName() {
         if (config == null) {
             throw new IllegalStateException(
-                    "HgClient has not been initialized with a configuration");
+                    Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
         }
         return config.getDefaultUserName();
     }
@@ -62,7 +62,7 @@ public final class HgClients {
     public static IConsole getConsole() {
         if (console == null) {
             throw new IllegalStateException(
-                    "HgClients has not been initialized with a console");
+                    Messages.getString("HgClients.error.notInitializedWithConsole")); //$NON-NLS-1$
         }
         return console;
     }

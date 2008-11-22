@@ -51,7 +51,7 @@ public class InitOperation extends HgOperation {
      */
     @Override
     protected String getActionDescription() {
-        return "Creating repository";
+        return Messages.getString("InitOperation.creatingRepo"); //$NON-NLS-1$
     }
 
     /*
@@ -65,24 +65,24 @@ public class InitOperation extends HgOperation {
     public void run(IProgressMonitor monitor)
             throws InvocationTargetException, InterruptedException {
         try {
-            monitor.beginTask("Share: ", 3);
+            monitor.beginTask(Messages.getString("InitOperation.share"), 3); //$NON-NLS-1$
             if ((this.foundHgPath == null)
                     || (!this.foundHgPath.equals(hgPath))) {
                 monitor
-                        .subTask("Calling Mercurial...");
+                        .subTask(Messages.getString("InitOperation.call")); //$NON-NLS-1$
                 HgInitClient.init(project, hgPath);
                 monitor.worked(1);
             }
-            monitor.subTask("Mapping " + project.getName()
-                    + " to team provider...");
+            monitor.subTask(Messages.getString("InitOperation.mapping.1") + project.getName() //$NON-NLS-1$
+                    + Messages.getString("InitOperation.mapping.2")); //$NON-NLS-1$
             RepositoryProvider.map(project, MercurialTeamProvider.class
                     .getName());
             monitor.worked(1);
             project.touch(monitor);
             monitor
-                    .subTask("Scheduling status refresh...");
-            new RefreshStatusJob("Refresh project " + project
-                    + " after mapping team provider...", project)
+                    .subTask(Messages.getString("InitOperation.schedulingRefresh")); //$NON-NLS-1$
+            new RefreshStatusJob(Messages.getString("InitOperation.refresh.1") + project //$NON-NLS-1$
+                    + Messages.getString("InitOperation.refresh.2"), project) //$NON-NLS-1$
                     .schedule();
             monitor.worked(1);
         } catch (HgException e) {

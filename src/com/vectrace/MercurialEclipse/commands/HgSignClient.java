@@ -64,18 +64,18 @@ public class HgSignClient {
     public static String sign(File directory, ChangeSet cs, String key,
             String message, String user, boolean local, boolean force,
             boolean noCommit, String passphrase) throws HgException {
-        HgCommand command = new HgCommand("sign", directory, true);
-        File file = new File("me.gpg.tmp");
-        String cmd = "gpg.cmd=".concat(
+        HgCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
+        File file = new File("me.gpg.tmp"); //$NON-NLS-1$
+        String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
                 MercurialUtilities.getGpgExecutable(true)).concat(
-                " --batch --no-tty --armor");
+                " --batch --no-tty --armor"); //$NON-NLS-1$
         if (passphrase != null && passphrase.length() > 0) {
             FileWriter fw = null;
             try {
                 fw = new FileWriter(file);
-                fw.write(passphrase.concat("\n"));
+                fw.write(passphrase.concat("\n")); //$NON-NLS-1$
                 fw.flush();
-                cmd = cmd.concat(" --passphrase-file ").concat(
+                cmd = cmd.concat(" --passphrase-file ").concat( //$NON-NLS-1$
                         file.getCanonicalFile().getCanonicalPath());
             } catch (IOException e) {
                 throw new HgException(e.getMessage());
@@ -89,17 +89,17 @@ public class HgSignClient {
                 }
             }
         }
-        command.addOptions("-k", key, "--config", cmd);
+        command.addOptions("-k", key, "--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
         if (local) {
-            command.addOptions("-l");
+            command.addOptions("-l"); //$NON-NLS-1$
         }
         if (force) {
-            command.addOptions("-f");
+            command.addOptions("-f"); //$NON-NLS-1$
         }
         if (noCommit) {
-            command.addOptions("--no-commit");
+            command.addOptions("--no-commit"); //$NON-NLS-1$
         } else {
-            command.addOptions("-m", message, "-u", user);
+            command.addOptions("-m", message, "-u", user); //$NON-NLS-1$ //$NON-NLS-2$
         }
         
         command.addOptions(cs.getChangeset());
@@ -115,9 +115,9 @@ public class HgSignClient {
     public static String getPrivateKeyList() throws HgException {
         List<String> getKeysCmd = new ArrayList<String>();
         getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
-        getKeysCmd.add("-k");
-        getKeysCmd.add("-v");
-        getKeysCmd.add("0");
+        getKeysCmd.add("-k"); //$NON-NLS-1$
+        getKeysCmd.add("-v"); //$NON-NLS-1$
+        getKeysCmd.add("0"); //$NON-NLS-1$
         GpgCommand command = new GpgCommand(getKeysCmd, ResourcesPlugin
                 .getWorkspace().getRoot().getLocation().toFile(), false);
         return new String(command.executeToBytes());

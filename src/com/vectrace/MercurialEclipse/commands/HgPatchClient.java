@@ -31,7 +31,7 @@ public class HgPatchClient {
             throws HgException {
         HgCommand command = new HgCommand("import", project, true); //$NON-NLS-1$
         command.addFiles(patchLocation.getAbsolutePath());
-        command.addOptions("--no-commit");
+        command.addOptions("--no-commit"); //$NON-NLS-1$
         return command.executeToString();
     }
 
@@ -49,13 +49,13 @@ public class HgPatchClient {
         if (txt == null || txt.trim().length() == 0)
             return null;
         try {
-            file = File.createTempFile("mercurial_", ".patch");
+            file = File.createTempFile("mercurial_", ".patch"); //$NON-NLS-1$ //$NON-NLS-2$
             FileWriter w = new FileWriter(file);
             w.write(txt);
             w.close();
             return importPatch(project, file);
         } catch (IOException e) {
-            throw new HgException("Error write temp file", e);
+            throw new HgException(Messages.getString("HgPatchClient.error.writeTempFile"), e); //$NON-NLS-1$
         } finally {
             if (file != null)
                 file.delete();

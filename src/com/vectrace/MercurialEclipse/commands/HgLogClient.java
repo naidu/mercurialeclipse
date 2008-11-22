@@ -19,10 +19,10 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
-            .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$");
+            .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$"); //$NON-NLS-1$
     
     public static ChangeSet[] getHeads(IProject project) throws HgException {
-        HgCommand command = new HgCommand("heads", project, true);
+        HgCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         return getRevisions(command);
@@ -37,18 +37,18 @@ public class HgLogClient extends AbstractParseChangesetClient {
      */
     private static ChangeSet[] getRevisions(HgCommand command)
             throws HgException {
-        command.addOptions("--template",
-                "{rev}:{node} {date|isodate} {author|person}#{branches}\n");
+        command.addOptions("--template", //$NON-NLS-1$
+                "{rev}:{node} {date|isodate} {author|person}#{branches}\n"); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         String[] lines = null;
         try {
-            lines = command.executeToString().split("\n");
+            lines = command.executeToString().split("\n"); //$NON-NLS-1$
         } catch (HgException e) {
             if (!e
                     .getMessage()
                     .contains(
-                            "abort: can only follow copies/renames for explicit file names")) {
+                            "abort: can only follow copies/renames for explicit file names")) { //$NON-NLS-1$
                 throw new HgException(e);
             }
             return null;
@@ -68,7 +68,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
                 
                 changeSets[i] = changeSet;
             } else {
-                throw new HgException("Parse exception: '" + lines[i] + "'");
+                throw new HgException(Messages.getString("HgLogClient.parseException") + lines[i] + "'"); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
         }
@@ -96,26 +96,26 @@ public class HgLogClient extends AbstractParseChangesetClient {
             int limitNumber, int startRev, boolean withFiles)
             throws HgException {
         try {
-            HgCommand command = new HgCommand("log", getWorkingDirectory(res),
+            HgCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-            command.addOptions("--debug", "--style",
+            command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
                     AbstractParseChangesetClient.getStyleFile(withFiles)
                             .getCanonicalPath());
 
             if (startRev >= 0 && startRev != Integer.MAX_VALUE) {                
                 int last = Math.max(startRev - limitNumber, 0);
-                command.addOptions("-r");
-                command.addOptions(startRev + ":" + last);
+                command.addOptions("-r"); //$NON-NLS-1$
+                command.addOptions(startRev + ":" + last); //$NON-NLS-1$
             }
 
             if (limitNumber > 0) {
-                command.addOptions("-l", limitNumber + "");
+                command.addOptions("-l", limitNumber + ""); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
             if (res.getType() == IResource.FILE) {
-                command.addOptions("-f");
+                command.addOptions("-f"); //$NON-NLS-1$
             }
 
             if (res.getType() != IResource.PROJECT) {
@@ -145,13 +145,13 @@ public class HgLogClient extends AbstractParseChangesetClient {
         try {
             Assert.isNotNull(nodeId);
 
-            HgCommand command = new HgCommand("log", getWorkingDirectory(res),
+            HgCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-            command.addOptions("--debug", "--style", AbstractParseChangesetClient
+            command.addOptions("--debug", "--style", AbstractParseChangesetClient //$NON-NLS-1$ //$NON-NLS-2$
                     .getStyleFile(withFiles).getCanonicalPath());
-            command.addOptions("--rev", nodeId);
+            command.addOptions("--rev", nodeId); //$NON-NLS-1$
             String result = command.executeToString();
 
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(

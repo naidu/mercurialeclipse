@@ -121,7 +121,7 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         
         addField(new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                "Use external merge tool for resolving conflicts", getFieldEditorParent()));
+                Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 
         addField(new LabelDecoratorRadioGroupFieldEditor(
                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC,

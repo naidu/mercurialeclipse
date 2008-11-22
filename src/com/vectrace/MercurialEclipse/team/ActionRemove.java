@@ -91,7 +91,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		Repository=MercurialUtilities.getRepositoryPath(proj);
 		if(Repository==null)
 		{
-			Repository="."; //never leave this empty add a . to point to current path
+			Repository="."; //never leave this empty add a . to point to current path //$NON-NLS-1$
 		}
 
     //Get shell & workbench
@@ -109,7 +109,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 		Object obj;
     Iterator itr; 
 	  // the last argument will be replaced with a path
-		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"remove","--", "" };
+		String launchCmd[] = { MercurialUtilities.getHGExecutable(),"remove","--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
     itr=selection.iterator();
     while(itr.hasNext())
     {
@@ -127,7 +127,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
           File workingDir=MercurialUtilities.getWorkingDir(resource);
           launchCmd[3] = MercurialUtilities.getResourceName(resource);
 
-          if( MessageDialog.openConfirm(shell,"Remove File?","Are you sure you want to remove the file:\n" + launchCmd[3] + "\nFrom the repository and filesystem?") )
+          if( MessageDialog.openConfirm(shell,Messages.getString("ActionRemove.removeFileQuestion"),Messages.getString("ActionRemove.removeFileConfirmation") + launchCmd[3] + Messages.getString("ActionRemove.removeFileConfirmation.2")) ) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
           {
             try
             {
@@ -137,7 +137,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
                 // output output in a window
                 if (output.length() != 0)
                 {
-                  MessageDialog.openInformation(shell, "Mercurial Eclipse hg remove", output);
+                  MessageDialog.openInformation(shell, Messages.getString("ActionRemove.removeOutput"), output); //$NON-NLS-1$
                 }
               }
             } 
@@ -150,7 +150,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             try {
         		MercurialStatusCache.getInstance().refresh(proj);
         	} catch (TeamException e) {
-        		MercurialEclipsePlugin.logError("Unable to refresh project: ", e);
+        		MercurialEclipsePlugin.logError(Messages.getString("ActionRemove.unableToRefresh"), e); //$NON-NLS-1$
         	}
 //            MercurialEclipsePlugin.refreshProjectFlags(proj);
 

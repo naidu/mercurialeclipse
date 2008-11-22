@@ -12,12 +12,12 @@ import com.vectrace.MercurialEclipse.model.Tag;
 public class HgTagClient {
 
     private static final Pattern GET_TAGS_PATTERN = Pattern
-            .compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( local)?$");
+            .compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( local)?$"); //$NON-NLS-1$
 
     public static Tag[] getTags(IProject project) throws HgException {
-        HgCommand command = new HgCommand("tags", project, false);
-        command.addOptions("-v");
-        String[] lines = command.executeToString().split("\n");
+        HgCommand command = new HgCommand("tags", project, false); //$NON-NLS-1$
+        command.addOptions("-v"); //$NON-NLS-1$
+        String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
         int length = lines.length;
         Tag[] tags = new Tag[length];
         for (int i = 0; i < length; i++) {
@@ -27,7 +27,7 @@ public class HgTagClient {
                         .group(3), m.group(4) != null);
                 tags[i] = tag;
             } else {
-                throw new HgException("Parse exception: '" + lines[i] + "'");
+                throw new HgException(Messages.getString("HgTagClient.parseException") + lines[i] + "'"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
         return tags;
@@ -44,15 +44,15 @@ public class HgTagClient {
      */
     public static void addTag(IResource resource, String name, String rev,
             String user, boolean local, boolean force) throws HgException {
-        HgCommand command = new HgCommand("tag", resource.getProject(), false);
+        HgCommand command = new HgCommand("tag", resource.getProject(), false); //$NON-NLS-1$
         if (local) {
-            command.addOptions("-l");
+            command.addOptions("-l"); //$NON-NLS-1$
         }
         if (force) {
-            command.addOptions("-f");
+            command.addOptions("-f"); //$NON-NLS-1$
         }
         if (rev != null) {
-            command.addOptions("-r", rev);
+            command.addOptions("-r", rev); //$NON-NLS-1$
         }
         command.addUserName(user);
         command.addOptions(name);
