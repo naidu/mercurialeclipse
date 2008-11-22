@@ -97,6 +97,9 @@ public class ShelveOperation extends HgOperation {
                     resources.add(r);
                 }
             }
+            if (resources.size() == 0) {
+                throw new HgException(Messages.getString("ShelveOperation.error.nothingToShelve")); //$NON-NLS-1$
+            }
             monitor.worked(1);
             monitor.subTask(Messages.getString("ShelveOperation.shelvingChanges"));             //$NON-NLS-1$
             
