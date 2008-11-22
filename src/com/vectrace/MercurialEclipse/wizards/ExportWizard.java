@@ -68,7 +68,7 @@ public class ExportWizard extends HgWizard {
                                 Messages
                                         .getString("ExportWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
                                 Messages
-                                        .getString("ExportWizard.OverwriteConfirmDescription"))) {
+                                        .getString("ExportWizard.OverwriteConfirmDescription"))) { //$NON-NLS-1$
                     return false;
                 }
             }
