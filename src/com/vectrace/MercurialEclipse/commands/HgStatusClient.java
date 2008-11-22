@@ -69,7 +69,7 @@ public class HgStatusClient extends AbstractClient {
     public static boolean isDirty(IProject project) throws HgException {
         HgCommand command = new HgCommand("status", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-        command.addOptions("-mardi");// modified, added, removed, deleted //$NON-NLS-1$
+        command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
         return command.executeToBytes().length != 0;
     }
     
