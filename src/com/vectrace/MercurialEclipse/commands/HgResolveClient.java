@@ -138,7 +138,7 @@ public class HgResolveClient extends AbstractClient {
             IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
                     .getRoot();
             Object prop = workspaceRoot
-                    .getSessionProperty(ResourceProperties.MERGE_USE_RESOLVE);
+                    .getSessionProperty(ResourceProperties.RESOLVE_AVAILABLE);
             if (prop != null) {
                 boolean useResolve = ((Boolean) prop).booleanValue();
                 returnValue = useResolve;
@@ -158,7 +158,7 @@ public class HgResolveClient extends AbstractClient {
                     returnValue = false;
                 }
                 workspaceRoot.setSessionProperty(
-                        ResourceProperties.MERGE_USE_RESOLVE, Boolean
+                        ResourceProperties.RESOLVE_AVAILABLE, Boolean
                                 .valueOf(returnValue));
             }
             return returnValue;

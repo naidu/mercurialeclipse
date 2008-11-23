@@ -86,10 +86,13 @@ public abstract class AbstractMercurialTestCase extends TestCase {
         ProcessBuilder builder = new ProcessBuilder(cmd);
         builder.redirectErrorStream(true);
         Process process = builder.start();
-        LineNumberReader err = new LineNumberReader(new InputStreamReader(
-                process.getInputStream()));
-        int ret = process.waitFor();
+        LineNumberReader err = null;
         String result = "";
+        try {
+            err = new LineNumberReader(new InputStreamReader(
+        
+                process.getInputStream()));
+        int ret = process.waitFor();     
         String line = err.readLine();
         while (line != null) {
             result += "\n" + line;
@@ -98,6 +101,11 @@ public abstract class AbstractMercurialTestCase extends TestCase {
         if (ret != 0) {
             throw new RuntimeException(
                     "Cannot clone test repository. Err-Output:".concat(result));
+        }
+        } finally {
+            if (err != null) {
+                err.close();
+            }
         }
         return result;
     }

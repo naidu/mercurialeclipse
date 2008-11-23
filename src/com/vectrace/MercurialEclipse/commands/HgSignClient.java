@@ -108,7 +108,9 @@ public class HgSignClient {
             result = command.executeToString();
             return result;
         } finally {
-            file.delete();
+            if (file.delete() == false) {
+                throw new HgException(file.getName()+" could not be deleted.");
+            }
         }
     }
 

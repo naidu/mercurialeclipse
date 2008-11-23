@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.views.MergeView;
  * @see IResource#setSessionProperty(QualifiedName, Object)
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
-public class ResourceProperties {
+public interface ResourceProperties {
 
     /**
      * Qualified name for a persistent property that signifies that a project is
@@ -58,7 +58,7 @@ public class ResourceProperties {
      * check exactly once for hg resolve and remember it until Eclipse is
      * restarted.
      */
-    public static final QualifiedName MERGE_USE_RESOLVE = new QualifiedName(
+    public static final QualifiedName RESOLVE_AVAILABLE = new QualifiedName(
             MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve"); //$NON-NLS-1$
     
     /**
@@ -66,7 +66,7 @@ public class ResourceProperties {
      * rebase is available.
      */
     public static final QualifiedName REBASE_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "rebaseAvailable"); //$NON-NLS-1$
+            MercurialEclipsePlugin.ID, "hgext.rebase="); //$NON-NLS-1$
 
     /**
      * Qualified name for a project session property that stores the canonical
@@ -81,23 +81,20 @@ public class ResourceProperties {
      * the bookmarks extension is available.
      */
     public static final QualifiedName EXT_BOOKMARKS_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "extBookmarksAvailable"); //$NON-NLS-1$
+            MercurialEclipsePlugin.ID, "hgext.bookmarks="); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
      * the forest extension is available.
      */
-    public static QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "extForestAvailable"); //$NON-NLS-1$
+    public static final QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(
+            MercurialEclipsePlugin.ID, "hgext.forest="); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
      * the HgSubversion extension is available.
      */
-    public static QualifiedName EXT_HGSUBVERSION_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "extHgSubversionAvailable"); //$NON-NLS-1$
-
-    private ResourceProperties() {
-    }
+    public static final QualifiedName EXT_HGSUBVERSION_AVAILABLE = new QualifiedName(
+            MercurialEclipsePlugin.ID, "hgext.hgsubversion="); //$NON-NLS-1$
 
 }

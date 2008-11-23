@@ -97,11 +97,14 @@ public class UnShelveOperation extends HgOperation {
                     HgPatchClient.importPatch(project, shelveFile);
                     monitor.worked(1);
                     monitor.subTask(Messages.getString("UnShelveOperation.emptyingShelf")); //$NON-NLS-1$
-                    shelveFile.delete();
+                    boolean deleted = shelveFile.delete();
                     monitor.worked(1);
                     monitor.subTask(Messages.getString("UnShelveOperation.refreshingProject")); //$NON-NLS-1$
                     project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
                     monitor.worked(1);                    
+                    if (!deleted) {
+                        throw new HgException(shelveFile.getName()+" could not be deleted.");
+                    }
                 } else {
                     throw new HgException(
                             Messages.getString("UnShelveOperation.error.ShelfEmpty")); //$NON-NLS-1$

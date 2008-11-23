@@ -61,7 +61,10 @@ public class HgPatchClient extends AbstractClient {
                     .getString("HgPatchClient.error.writeTempFile"), e); //$NON-NLS-1$
         } finally {
             if (file != null) {
-                file.delete();
+                boolean successful = file.delete();
+                if (!successful) {
+                    throw new HgException(file.getName()+" could not be deleted.");
+                }
             }
         }
     }

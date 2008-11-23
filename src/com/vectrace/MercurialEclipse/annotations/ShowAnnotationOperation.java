@@ -282,7 +282,7 @@ public class ShowAnnotationOperation extends TeamOperation {
                     null) });
 
         } catch (Exception e) {
-            // ignore
+            MercurialEclipsePlugin.logError(e);
         }
 
         final CommitterColors colors = CommitterColors.getDefault();

@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.history;
 
 import java.io.File;
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +54,10 @@ public class MercurialHistory extends FileHistory {
     }
 
     private static final class ChangeSetComparator implements
-            Comparator<ChangeSet> {
+            Comparator<ChangeSet>, Serializable {
+
+        private static final long serialVersionUID = 6661721027440425773L;
+
         public int compare(ChangeSet o1, ChangeSet o2) {
             int result = o2.getChangesetIndex() - o1.getChangesetIndex();
 
@@ -71,7 +75,10 @@ public class MercurialHistory extends FileHistory {
     }
 
     private static final class RevisionComparator implements
-            Comparator<MercurialRevision> {
+            Comparator<MercurialRevision>, Serializable {
+        
+        private static final long serialVersionUID = 5305190339206751711L;
+
         public int compare(MercurialRevision o1, MercurialRevision o2) {
             int result = o2.getChangeSet().getChangesetIndex()
                     - o1.getChangeSet().getChangesetIndex();
