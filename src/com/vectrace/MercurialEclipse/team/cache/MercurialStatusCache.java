@@ -75,7 +75,7 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
  */
 public class MercurialStatusCache extends AbstractCache implements
         IResourceChangeListener {
-
+    
     private static final int STATUS_BATCH_SIZE = 10;
     private static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
 
@@ -200,6 +200,15 @@ public class MercurialStatusCache extends AbstractCache implements
     public final static int BIT_MODIFIED = 6;
     public final static int BIT_IMPOSSIBLE = 7;
     public final static int BIT_CONFLICT = 8;
+    
+    public static final char CHAR_MODIFIED = 'M';
+    public static final char CHAR_ADDED = 'A';
+    public static final char CHAR_UNKNOWN = '?';
+    public static final char CHAR_CLEAN = 'C';
+    public static final char CHAR_IGNORED = 'I';
+    public static final char CHAR_REMOVED = 'R';
+    public static final char CHAR_DELETED = '!';
+
 
     private static MercurialStatusCache instance;
 
@@ -649,19 +658,19 @@ public class MercurialStatusCache extends AbstractCache implements
     public char getStatusChar(int bitIndex) {
         switch (bitIndex) {
         case BIT_DELETED:
-            return '!';
+            return CHAR_DELETED;
         case BIT_REMOVED:
-            return 'R';
+            return CHAR_REMOVED;
         case BIT_IGNORE:
-            return 'I';
+            return CHAR_IGNORED;
         case BIT_CLEAN:
-            return 'C';
+            return CHAR_CLEAN;
         case BIT_UNKNOWN:
-            return '?';
+            return CHAR_UNKNOWN;
         case BIT_ADDED:
-            return 'A';
+            return CHAR_ADDED;
         case BIT_MODIFIED:
-            return 'M';
+            return CHAR_MODIFIED;
         default:
             String msg = "Unknown status: '" + bitIndex + "'";
             MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
