@@ -106,7 +106,7 @@ public class QDeletePage extends HgWizardPage {
         GridData gridData = new GridData(GridData.FILL_BOTH);
         gridData.heightHint = 150;
         gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(g, resource);
+        this.changesetTable = new ChangesetTable(g, resource.getProject());
         this.changesetTable.setLayoutData(gridData);
         this.changesetTable.setEnabled(false);
         setControl(composite);
