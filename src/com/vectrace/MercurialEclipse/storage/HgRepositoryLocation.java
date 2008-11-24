@@ -49,7 +49,8 @@ public class HgRepositoryLocation extends AllRootsElement implements
         this.user = user;
         this.password = password;
         
-        if (this.user == null && repoInfo.length > 1) {
+        if ((this.user == null || this.user.length() == 0)
+                && repoInfo.length > 1) {
             this.user = repoInfo[1];
             this.location = repoInfo[0];
         }
