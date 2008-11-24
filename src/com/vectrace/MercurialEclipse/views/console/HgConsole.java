@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.views.console;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -55,6 +56,19 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     private Color commandColor;
     private Color messageColor;
     private Color errorColor;
+    private final static String HTTP_PATTERN_STRING = "[hH][tT][tT][pP].*[@]"; //$NON-NLS-1$
+    private final static String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS].*[@]"; //$NON-NLS-1$
+    private final static String SSH_PATTERN_STRING = "[sS][sS][hH].*[@]"; //$NON-NLS-1$
+    private final static String SVN_PATTERN_STRING = "[sS][vV][nN].*[@]"; //$NON-NLS-1$
+
+    private final static Pattern HTTP_PATTERN = Pattern
+            .compile(HTTP_PATTERN_STRING);
+    private final static Pattern HTTPS_PATTERN = Pattern
+            .compile(HTTPS_PATTERN_STRING);
+    private final static Pattern SSH_PATTERN = Pattern
+            .compile(SSH_PATTERN_STRING);
+    private final static Pattern SVN_PATTERN = Pattern
+            .compile(SVN_PATTERN_STRING);
 
     // used to time the commands
     private long commandStarted = 0;
@@ -74,7 +88,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     private static final DateFormat TIME_FORMAT;
 
     static {
-        TIME_FORMAT = new SimpleDateFormat("m:ss.SSS");         //$NON-NLS-1$
+        TIME_FORMAT = new SimpleDateFormat("m:ss.SSS"); //$NON-NLS-1$
     }
 
     // Indicates whether the console is visible in the Console view
@@ -180,9 +194,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
             if (highWaterMark < 1000) {
                 highWaterMark = 1000;
             }
-            setWaterMarks(
-                    0,
-                    highWaterMark);
+            setWaterMarks(0, highWaterMark);
         } else {
             setWaterMarks(0, 1000);
         }
@@ -235,21 +247,32 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
 
     private void appendLine(int type, String line) {
         showConsole();
+        String myLine = line;
+        myLine = HTTP_PATTERN.matcher(line).replaceAll("http://***@"); //$NON-NLS-1$
+        if (myLine.equals(line)) {
+            myLine = HTTPS_PATTERN.matcher(line).replaceAll("https://***@"); //$NON-NLS-1$
+        }
+        if (myLine.equals(line)) {
+            myLine = SSH_PATTERN.matcher(line).replaceAll("ssh://***@"); //$NON-NLS-1$
+        }
+        if (myLine.equals(line)) {
+            myLine = SVN_PATTERN.matcher(line).replaceAll("svn://***@"); //$NON-NLS-1$
+        }
         synchronized (document) {
             if (visible) {
                 switch (type) {
                 case ConsoleDocument.COMMAND:
-                    commandStream.println(line);
+                    commandStream.println(myLine);
                     break;
                 case ConsoleDocument.MESSAGE:
-                    messageStream.println("  " + line); //$NON-NLS-1$
+                    messageStream.println("  " + myLine); //$NON-NLS-1$
                     break;
                 case ConsoleDocument.ERROR:
-                    errorStream.println("  " + line); //$NON-NLS-1$
+                    errorStream.println("  " + myLine); //$NON-NLS-1$
                     break;
                 }
             } else {
-                document.appendConsoleLine(type, line);
+                document.appendConsoleLine(type, myLine);
             }
         }
     }
