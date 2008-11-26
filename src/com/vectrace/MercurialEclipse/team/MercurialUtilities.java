@@ -24,6 +24,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -38,6 +40,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
@@ -196,15 +199,25 @@ public class MercurialUtilities {
      * preference page.
      */
     public static void configureHgExecutable() {
-        Shell shell = Display.getCurrent().getActiveShell();
-        String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
-        String[] dsplIds = null;
-        Object data = null;
-        PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell,
-                pageId, dsplIds, data);
-        dlg.setErrorMessage(Messages.getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
-                + Messages.getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
-        dlg.open();
+        new SafeUiJob("Opening preferences for configuring MercurialEclipse") {
+            /* (non-Javadoc)
+             * @see com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
+             */
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+            String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
+            String[] dsplIds = null;
+            Object data = null;
+            PreferenceDialog dlg = PreferencesUtil
+                        .createPreferenceDialogOn(
+                                getDisplay().getActiveShell(),
+                    pageId, dsplIds, data);
+            dlg.setErrorMessage(Messages.getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
+                    + Messages.getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
+            dlg.open();
+            return super.runSafe(monitor);
+            }
+        }.schedule();
     }
 
     /**
