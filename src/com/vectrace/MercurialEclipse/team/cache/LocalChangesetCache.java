@@ -69,7 +69,7 @@ public class LocalChangesetCache extends AbstractCache {
                         HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                        "false")).booleanValue();
+                                        "false")).booleanValue(); //$NON-NLS-1$
     }
 
     public static LocalChangesetCache getInstance() {
@@ -264,12 +264,12 @@ public class LocalChangesetCache extends AbstractCache {
         try {
             defaultLimit = Integer.parseInt(pref);
             if (defaultLimit < 0) {
-                throw new NumberFormatException("Limit < 0");
+                throw new NumberFormatException(Messages.getString("LocalChangesetCache.LogLimitLessThanZero")); //$NON-NLS-1$
             }
         } catch (NumberFormatException e) {
             MercurialEclipsePlugin
                     .logWarning(
-                            "Log limit not correctly configured in preferences.",
+                            Messages.getString("LocalChangesetCache.LogLimitNotCorrectlyConfigured"), //$NON-NLS-1$
                             e);
         }
         return defaultLimit;
@@ -318,7 +318,7 @@ public class LocalChangesetCache extends AbstractCache {
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
             if (nodeId != null
                     && !nodeId
-                            .equals("0000000000000000000000000000000000000000")) {
+                            .equals("0000000000000000000000000000000000000000")) { //$NON-NLS-1$
                 return getLocalChangeSet(res, nodeId, false);
             }
         } catch (IOException e) {
@@ -481,8 +481,8 @@ public class LocalChangesetCache extends AbstractCache {
             SortedSet<ChangeSet> branchChangeSets = new TreeSet<ChangeSet>();
             for (ChangeSet changeSet : changes) {
                 if (changeSet.getBranch().equals(branchName)
-                        || (branchName.equals("default") && changeSet
-                                .getBranch().equals(""))) {
+                        || (branchName.equals("default") && changeSet //$NON-NLS-1$
+                                .getBranch().equals(""))) { //$NON-NLS-1$
                     branchChangeSets.add(changeSet);
                 }
             }

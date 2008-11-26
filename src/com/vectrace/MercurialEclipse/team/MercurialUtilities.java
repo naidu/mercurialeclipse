@@ -199,7 +199,7 @@ public class MercurialUtilities {
      * preference page.
      */
     public static void configureHgExecutable() {
-        new SafeUiJob("Opening preferences for configuring MercurialEclipse") {
+        new SafeUiJob(Messages.getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
             /* (non-Javadoc)
              * @see com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
              */

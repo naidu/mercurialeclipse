@@ -105,7 +105,7 @@ public class MercurialStatusCache extends AbstractCache implements
                             HgClients
                                     .getPreference(
                                             MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                            "false")).booleanValue();
+                                            "false")).booleanValue(); //$NON-NLS-1$
         }
 
         private IResource getResource(IResource res) {
@@ -430,7 +430,7 @@ public class MercurialStatusCache extends AbstractCache implements
             throws HgException {
         Assert.isNotNull(res);
         if (monitor != null) {
-            monitor.subTask("Refreshing " + res.getName());
+            monitor.subTask(Messages.getString("MercurialStatusCache.Refreshing") + res.getName()); //$NON-NLS-1$
         }
 
         if (null != RepositoryProvider.getProvider(res.getProject(),
@@ -473,7 +473,7 @@ public class MercurialStatusCache extends AbstractCache implements
                         monitor.worked(1);
                     }
                 } catch (CoreException e) {
-                    throw new HgException("Failed to refresh merge status", e);
+                    throw new HgException(Messages.getString("MercurialStatusCache.FailedToRefreshMergeStatus"), e); //$NON-NLS-1$
                 }
             } finally {
                 lock.unlock();
@@ -582,7 +582,7 @@ public class MercurialStatusCache extends AbstractCache implements
                         HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                        "false")).booleanValue();
+                                        "false")).booleanValue(); //$NON-NLS-1$
 
         for (IResource parent = resource.getParent(); parent != null
                 && parent != resource.getProject().getParent(); parent = parent
@@ -622,7 +622,7 @@ public class MercurialStatusCache extends AbstractCache implements
                         HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
-                                        "false")).booleanValue();
+                                        "false")).booleanValue(); //$NON-NLS-1$
         return computeDeep;
     }
 
@@ -643,7 +643,7 @@ public class MercurialStatusCache extends AbstractCache implements
         case 'M':
             return BIT_MODIFIED;
         default:
-            String msg = "Unknown status: '" + status + "'";
+            String msg = Messages.getString("MercurialStatusCache.UnknownStatus") + status + "'"; //$NON-NLS-1$ //$NON-NLS-2$
             MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
             return BIT_IMPOSSIBLE;
         }
@@ -672,7 +672,7 @@ public class MercurialStatusCache extends AbstractCache implements
         case BIT_MODIFIED:
             return CHAR_MODIFIED;
         default:
-            String msg = "Unknown status: '" + bitIndex + "'";
+            String msg = Messages.getString("MercurialStatusCache.UnknownStatus") + bitIndex + "'"; //$NON-NLS-1$ //$NON-NLS-2$
             MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
             return BIT_IMPOSSIBLE;
         }
@@ -772,27 +772,27 @@ public class MercurialStatusCache extends AbstractCache implements
                                     for (IResource resource : changed) {
                                         projects.add(resource.getProject());
                                     }
-                                    monitor.beginTask("Refreshing projects...",
+                                    monitor.beginTask(Messages.getString("MercurialStatusCache.RefreshingProjects"), //$NON-NLS-1$
                                             projects.size() + 2);
                                     for (IProject project : projects) {
-                                        monitor.subTask("Refreshing project "
-                                                + project.getName() + "...");
+                                        monitor.subTask(Messages.getString("MercurialStatusCache.RefreshingProject") //$NON-NLS-1$
+                                                + project.getName() + Messages.getString("MercurialStatusCache....")); //$NON-NLS-1$
                                         refreshStatus(project, monitor);
                                         monitor.worked(1);
                                     }
 
                                 } else {
                                     monitor.beginTask(
-                                            "Refreshing resources...", 4);
+                                            Messages.getString("MercurialStatusCache.RefreshingResources..."), 4); //$NON-NLS-1$
                                     // changed
                                     monitor
-                                            .subTask("Refreshing changed resources...");
+                                            .subTask(Messages.getString("MercurialStatusCache.RefreshingChangedResources...")); //$NON-NLS-1$
                                     refreshStatus(changed);
                                     monitor.worked(1);
 
                                     // added
                                     monitor
-                                            .subTask("Refreshing added resources...");
+                                            .subTask(Messages.getString("MercurialStatusCache.RefreshingAddedResources...")); //$NON-NLS-1$
                                     refreshStatus(added);
                                     monitor.worked(1);
 
@@ -801,14 +801,14 @@ public class MercurialStatusCache extends AbstractCache implements
                                 }
                                 // notify observers
                                 monitor
-                                        .subTask("Adding resources for decorator update...");
+                                        .subTask(Messages.getString("MercurialStatusCache.AddingResourcesForDecoratorUpdate...")); //$NON-NLS-1$
                                 Set<IResource> resources = new HashSet<IResource>();
                                 resources.addAll(changed);
                                 resources.addAll(added);
                                 resources.addAll(removed);
                                 monitor.worked(1);
                                 monitor
-                                        .subTask("Triggering decorator update...");
+                                        .subTask(Messages.getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
                                 notifyChanged(resources);
                                 monitor.worked(1);
                             } finally {
@@ -816,7 +816,7 @@ public class MercurialStatusCache extends AbstractCache implements
                             }
                         }
                     };                    
-                    new SafeWorkspaceJob("Refresh status...") {
+                    new SafeWorkspaceJob(Messages.getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
                         @Override
                         protected IStatus runSafe(IProgressMonitor monitor) {
                             ISchedulingRule rule = workspace.getRuleFactory()
@@ -860,7 +860,7 @@ public class MercurialStatusCache extends AbstractCache implements
                 batchSize = Integer.parseInt(pref);
             } catch (NumberFormatException e) {
                 MercurialEclipsePlugin.logWarning(
-                        "Batch size for status command not correct.", e);
+                        Messages.getString("MercurialStatusCache.BatchSizeForStatusCommandNotCorrect."), e); //$NON-NLS-1$
             }
         }
         List<IResource> currentBatch = new ArrayList<IResource>();

@@ -57,7 +57,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
                         HgClients
                                 .getPreference(
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                        "false")).booleanValue();
+                                        "false")).booleanValue(); //$NON-NLS-1$
     }
 
     @Override
@@ -69,11 +69,11 @@ public final class RefreshJob extends SafeWorkspaceJob {
         }
 
         if (monitor != null) {
-            monitor.subTask("Updating status and version cache...");
+            monitor.subTask(Messages.getString("RefreshJob.UpdatingStatusAndVersionCache")); //$NON-NLS-1$
         }
         try {
             if (monitor != null) {
-                monitor.subTask("Loading local revisions...");
+                monitor.subTask(Messages.getString("RefreshJob.LoadingLocalRevisions")); //$NON-NLS-1$
             }
             LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
                     true, withFiles);
@@ -83,7 +83,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
             // incoming
             if (repositoryLocation != null) {
                 if (monitor != null) {
-                    monitor.subTask("Loading incoming revisions for "
+                    monitor.subTask(Messages.getString("RefreshJob.LoadingIncomingRevisions") //$NON-NLS-1$
                             + repositoryLocation);
                 }
                 IncomingChangesetCache.getInstance().refreshIncomingChangeSets(
@@ -93,7 +93,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
                 }
 
                 if (monitor != null) {
-                    monitor.subTask("Loading outgoing revisions for "
+                    monitor.subTask(Messages.getString("RefreshJob.LoadingOutgoingRevisionsFor") //$NON-NLS-1$
                             + repositoryLocation);
                 }
                 OutgoingChangesetCache.getInstance().refreshOutgoingChangeSets(
@@ -104,7 +104,7 @@ public final class RefreshJob extends SafeWorkspaceJob {
 
                 if (monitor != null) {
                     monitor
-                            .subTask("Adding remote repository to project repositories...");
+                            .subTask(Messages.getString("RefreshJob.AddingRemoteRepositoryToProjectRepositories")); //$NON-NLS-1$
                 }
 
                 MercurialEclipsePlugin.getRepoManager().addRepoLocation(

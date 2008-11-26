@@ -47,7 +47,7 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
     @Override
     protected IStatus runSafe(IProgressMonitor monitor) {
         try {
-            monitor.beginTask("Obtaining Mercurial Status information.", 5);
+            monitor.beginTask(Messages.getString("RefreshStatusJob.OptainingMercurialStatusInformation"), 5); //$NON-NLS-1$
             mercurialStatusCache.refreshStatus(project, monitor);
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);

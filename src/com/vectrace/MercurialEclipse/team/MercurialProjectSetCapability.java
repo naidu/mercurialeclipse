@@ -104,7 +104,7 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
             IWorkspace workspace = ResourcesPlugin.getWorkspace();
             IProject project = workspace.getRoot().getProject(projectName);
 
-            String srcRepository = "";
+            String srcRepository = ""; //$NON-NLS-1$
             Map<String, String> locs = HgPathsClient.getPaths(project);
             if (locs.containsKey(HgPathsClient.DEFAULT_PULL)) {
                 srcRepository = locs.get(HgPathsClient.DEFAULT_PULL);
