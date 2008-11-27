@@ -125,7 +125,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         public void characters(char[] ch, int start, int length)
                 throws SAXException {
-            for (int i = start; i < start+length; i++) chars.append(ch[i]);
+            for (int i = start; i < start+length; i++) {
+                chars.append(ch[i]);
+            }
         }
 
         public void endDocument() throws SAXException {
@@ -445,7 +447,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             reader.setContentHandler(getHandler(res, direction, repository,
                     bundleFile, hgRoot, fileRevisions));
             reader.parse(new InputSource(new ByteArrayInputStream(myInput
-                    .getBytes())));
+                    .getBytes("UTF-8")))); //$NON-NLS-1$
         } catch (Exception e) {
             String nextTry = cleanControlChars(myInput);
             try {
@@ -453,7 +455,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 reader.setContentHandler(getHandler(res, direction, repository,
                         bundleFile, hgRoot, fileRevisions));
                 reader.parse(new InputSource(new ByteArrayInputStream(nextTry
-                        .getBytes())));
+                        .getBytes("UTF-8")))); //$NON-NLS-1$
             } catch (Exception e1) {
                 throw new HgException(e1.getLocalizedMessage(), e);
             }
