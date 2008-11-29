@@ -32,6 +32,8 @@ import org.eclipse.swt.widgets.Listener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -239,8 +241,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         
         for (String path : paths.values()) {
             try {
-                MercurialEclipsePlugin.getRepoManager().getRepoLocation(
-                        path, null, null);
+                HgRepositoryLocationManager repoManager = MercurialEclipsePlugin
+                        .getRepoManager();
+                HgRepositoryLocation loc = repoManager.getRepoLocation(path,
+                        null, null);
+                repoManager.addRepoLocation(resource.getProject(), loc);
+                
             } catch (URISyntaxException e) {
                 MercurialEclipsePlugin.logError(e);
             }
