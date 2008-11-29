@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 
 import java.net.URISyntaxException;
+import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -19,6 +20,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
@@ -46,15 +48,6 @@ public class PushRepoPage extends PushPullPage {
     public boolean finish(IProgressMonitor monitor) {
         this.force = forceCheckBox.getSelection();
         this.timeout = timeoutCheckBox.getSelection();
-        // if (revCheckBox.getSelection()) {
-        // ChangeSet cs = changesetTable.getSelection();
-        //
-        // String rev = cs.toString();
-        //            if (rev != null && rev.length() > 0 && rev.indexOf(":") != -1) { //$NON-NLS-1$
-        // // we save the nodeshort info
-        //                this.revision = rev.split(":")[1]; //$NON-NLS-1$
-        // }
-        // }
         return super.finish(monitor);
     }
     
@@ -81,6 +74,30 @@ public class PushRepoPage extends PushPullPage {
             setErrorMessage(e.getLocalizedMessage());
         }
         return false;
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.wizards.PushPullPage#setDefaultLocation()
+     */
+    @Override
+    protected Map<String, String> setDefaultLocation() {
+        String defaultLocation = "";
+        Map<String, String> paths = super.setDefaultLocation();
+        if (paths == null) {
+            return null;
+        }
+        if (paths.containsKey(HgPathsClient.DEFAULT_PUSH)) {
+            defaultLocation = paths.get(HgPathsClient.DEFAULT_PUSH);
+        } else if (paths.containsKey(HgPathsClient.DEFAULT)) {
+            defaultLocation = paths.get(HgPathsClient.DEFAULT);
+        }
+        if (defaultLocation != null) {
+            getUrlCombo().setText(defaultLocation);
+        }
+        return paths;
     }
 
 }

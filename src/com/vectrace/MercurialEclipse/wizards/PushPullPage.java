@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
@@ -205,14 +206,14 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         this.changesetTable.addSelectionListener(listener);
     }
 
-    protected void setDefaultLocation() {
+    protected Map<String, String> setDefaultLocation() {
         try {
             if (resource == null) {
-                return;
+                return null;
             }
             String defaultLocation = null;
-            Map<String, String> paths = HgPathsClient
-                    .getPaths(resource.getProject());
+            Map<String, String> paths = loadRepositoriesFromHg();
+            
             if (paths.containsKey(HgPathsClient.DEFAULT_PULL)) {
                 defaultLocation = paths.get(HgPathsClient.DEFAULT_PULL);
             } else if (paths.containsKey(HgPathsClient.DEFAULT)) {
@@ -221,9 +222,30 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             if (defaultLocation != null) {
                 getUrlCombo().setText(defaultLocation);
             }
+            return paths;
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
+        return null;
+    }
+
+    /**
+     * @return
+     * @throws HgException
+     */
+    private Map<String, String> loadRepositoriesFromHg() throws HgException {
+        Map<String, String> paths = HgPathsClient
+                .getPaths(resource.getProject());
+        
+        for (String path : paths.values()) {
+            try {
+                MercurialEclipsePlugin.getRepoManager().getRepoLocation(
+                        path, null, null);
+            } catch (URISyntaxException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+        return paths;
     }
 
     /**
