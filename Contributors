@@ -62,10 +62,15 @@ Bastian Doetsch -
      I'm interested in Mercurial and MercurialEclipse so I started contributing a bit while learning. 
 	   I try to get the synchronize infrastructure to work.
      Zingos Comment: Well Bastian seem to learn fast :) the Time from the first small patch to large 
-     contribution was quite small Bastian is now driving the project forward.
+     contribution was quite small. Bastian is now driving the project forward.
      
 Brian Wallis:
      Zingos Comments: Brian helped with some bugfixing an a few features. 
 
 Georg Koltermann:
      Zingos Comment: Georg was one of the first users leaving feedback and even helped fixing some bugs.
+
+Steeven Lee:
+     Steeven introduced himself by contributing export functionality for changes. This, together with a revamped
+     import wizard is nicely integrated in Eclipse and we look forward to further contributions!    
+     
