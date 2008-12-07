@@ -34,6 +34,7 @@ import org.osgi.framework.BundleContext;
 
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
@@ -59,6 +60,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     // the repository manager
     private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
+    // the commit message manager
+    private static HgCommitMessageManager commitMessageManager = new HgCommitMessageManager();
+
+    
     private boolean hgUsable = true;
 
     /**
@@ -81,6 +86,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             throw e;
         }
         repoManager.start();
+        // read in commit messages from disk
+        commitMessageManager.start();
     }
 
     /**
@@ -110,6 +117,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         return repoManager;
     }
 
+    public static HgCommitMessageManager getCommitMessageManager() {
+        return commitMessageManager;
+    }
+
+    public static void setCommitMessageManager(
+            HgCommitMessageManager commitMessageManager) {
+        MercurialEclipsePlugin.commitMessageManager = commitMessageManager;
+    }
+
     @Override
     public void stop(BundleContext context) throws Exception {
         try {
@@ -119,6 +135,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             IncomingChangesetCache.getInstance().clear();
             OutgoingChangesetCache.getInstance().clear();
             repoManager.stop();
+            // save commit messages to disk
+            commitMessageManager.stop();
             plugin = null;
         } finally {
             super.stop(context);
