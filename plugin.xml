@@ -382,10 +382,7 @@
 		<handler commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
 		         class="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler">
 			<enabledWhen>
-				<and>
-					<count value="1"/>
-					<reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
-				</and>
+					<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
 			</enabledWhen>
 		</handler>
 		<!-- SyncHandler -->
