@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Zingo Andersen           - Save/Load comment history using a xml file
+ *     Zingo Andersen           - Save/Load commit messages using a xml file
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -49,13 +49,13 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgCommitMessageManager extends DefaultHandler {
 
     /*
-     * old commit messages 
+     * commit messages database (keep it simple) 
      */
     private static String[] commit_message = new String[0];
     
     final static private String COMMIT_MESSAGE_FILE = "commit_messages.xml"; //$NON-NLS-1$
     final static private String XML_TAG_COMMIT_MESSAGE  = "commitmessage";   //$NON-NLS-1$
-    final static private String XML_TAG_COMMIT_MESSAGES = "commitmessages";   //$NON-NLS-1$
+    final static private String XML_TAG_COMMIT_MESSAGES = "commitmessages";  //$NON-NLS-1$
 
     String tmpMessage;
 
@@ -72,7 +72,7 @@ public class HgCommitMessageManager extends DefaultHandler {
         }
         commit_message2[old_size] = message;
         
-        // Replace the comment string array
+        /* Replace the comment string array */
         commit_message = commit_message2;
     }
 
@@ -114,11 +114,11 @@ public class HgCommitMessageManager extends DefaultHandler {
                 parser.parse(new InputSource(reader), this);
             }
             catch(SAXException e) {
-                // we don't want to load it - it will be cleaned when saving
+                /* we don't want to load it - it will be cleaned when saving */
                 MercurialEclipsePlugin.logError(e);
             } 
             catch(ParserConfigurationException e) {
-                // we don't want to load it - it will be cleaned when saving
+                /* we don't want to load it - it will be cleaned when saving */
                 MercurialEclipsePlugin.logError(e);
             }
             reader.close();
@@ -184,7 +184,7 @@ public class HgCommitMessageManager extends DefaultHandler {
     public void startElement(String uri, String localName, String qname, 
             Attributes attr)
     {
-        // Clear char string
+        /* Clear char string */
         tmpMessage = ""; //$NON-NLS-1$
     }
 
@@ -194,7 +194,7 @@ public class HgCommitMessageManager extends DefaultHandler {
      */
     @Override
     public void endElement(String uri, String localName, String qname) {
-        // If it was a commit message save the char string
+        /* If it was a commit message save the char string in the database */
         if (qname.equalsIgnoreCase(XML_TAG_COMMIT_MESSAGE)) { 
             saveCommitMessage(tmpMessage);
         }            
@@ -207,7 +207,7 @@ public class HgCommitMessageManager extends DefaultHandler {
      */
     @Override
     public void characters(char[] ch, int start, int length) {
-        // Save char string
+        /* Collect the char string together this will be called for every special char */
         tmpMessage = tmpMessage + new String(ch, start, length);
     }
 }
