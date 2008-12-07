@@ -454,7 +454,7 @@ public class PullRepoWizard extends HgWizard {
 
     private HgRepositoryLocation getLocation() {
         try {
-            return HgRepositoryLocation
+            return MercurialEclipsePlugin.getRepoManager()
                     .fromProperties(pullPage.getProperties());
         } catch (Exception e) {
             MessageDialog.openInformation(getShell(), Messages

@@ -65,7 +65,8 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
         HgRepositoryLocation repo;
         IResource res = null;
         try {
-            repo = HgRepositoryLocation.fromProperties(clonePage
+            repo = MercurialEclipsePlugin.getRepoManager().fromProperties(
+                    clonePage
                     .getProperties());
         } catch (Exception e) {
             MessageDialog

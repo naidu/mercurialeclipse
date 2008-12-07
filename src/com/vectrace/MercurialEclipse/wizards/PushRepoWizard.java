@@ -81,7 +81,7 @@ public class PushRepoWizard extends HgWizard {
         super.performFinish();
         try {
             Properties props = page.getProperties();
-            HgRepositoryLocation repo = HgRepositoryLocation
+            HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
                     .fromProperties(props);
 
             // Check that this project exist.
