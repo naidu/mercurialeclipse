@@ -21,6 +21,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -335,6 +336,37 @@ public class HgRepositoryLocationManager {
         location = new HgRepositoryLocation(url, user, pass);
         return location;
     }
+    
+    /**
+     * Create a repository location instance from the given properties. The
+     * supported properties are: user The username for the connection (optional)
+     * password The password used for the connection (optional) url The url
+     * where the repository resides rootUrl The repository root url
+     * 
+     * @throws MalformedURLException
+     */
+    public HgRepositoryLocation fromProperties(Properties configuration)
+            throws HgException, URISyntaxException {
+
+        String user = configuration.getProperty("user"); //$NON-NLS-1$
+        if ((user == null) || (user.length() == 0)) {
+            user = null;
+        }
+        String password = configuration.getProperty("password"); //$NON-NLS-1$
+        if (user == null) {
+            password = null;
+        }
+        String rootUrl = configuration.getProperty("rootUrl"); //$NON-NLS-1$
+        if ((rootUrl == null) || (rootUrl.length() == 0)) {
+            rootUrl = null;
+        }
+        String url = configuration.getProperty("url"); //$NON-NLS-1$
+        if (url == null) {
+            throw new HgException(Messages
+                    .getString("HgRepositoryLocation.urlMustNotBeNull")); //$NON-NLS-1$
+        }
+        return getRepoLocation(url, user, password);
+    }
 
     public void addRepositoryListener(IRepositoryListener repListener) {
         REPOSITORY_RESOURCES_MANAGER.addRepositoryListener(repListener);
@@ -364,7 +396,7 @@ public class HgRepositoryLocationManager {
         // Create a new repository location
         HgRepositoryLocation location;
         try {
-            location = HgRepositoryLocation.fromProperties(configuration);
+            location = fromProperties(configuration);
         } catch (URISyntaxException e) {
             MercurialEclipsePlugin.logError(e);
             throw new HgException(Messages.getString("HgRepositoryLocationManager.couldntCreate"), e); //$NON-NLS-1$
