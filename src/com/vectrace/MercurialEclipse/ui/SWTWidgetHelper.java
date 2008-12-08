@@ -12,6 +12,9 @@ package com.vectrace.MercurialEclipse.ui;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.source.AnnotationModel;
+import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.LabelProvider;
@@ -19,6 +22,8 @@ import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -27,6 +32,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.editors.text.EditorsUI;
+import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
+import org.eclipse.ui.texteditor.AnnotationPreference;
+import org.eclipse.ui.texteditor.DefaultMarkerAnnotationAccess;
+import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
+import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
@@ -346,7 +357,8 @@ public class SWTWidgetHelper {
      *            the text for the title label
      * @param heightHint
      *            the nominal height of the list
-     * @param the label decorator
+     * @param the
+     *            label decorator
      * @return the created list viewer
      */
     public static ListViewer createListViewer(Composite parent, String title,
@@ -369,7 +381,7 @@ public class SWTWidgetHelper {
             }
 
         });
-        listViewer.setLabelProvider(labelProvider);        
+        listViewer.setLabelProvider(labelProvider);
 
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = heightHint;
@@ -401,15 +413,42 @@ public class SWTWidgetHelper {
         return createGroup(parent, text, 2, style);
     }
 
-    /* incompatible with 3.2
-    public static DateTime createDateTime(Composite c, int style) {
-        DateTime dt = new DateTime(c, style);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL);
-        data.verticalAlignment = GridData.CENTER;
-        data.grabExcessVerticalSpace = false;
-        data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
-        dt.setLayoutData(data);
-        return dt;
-    }*/
+    public static SourceViewer createTextArea(Composite container) {
+        SourceViewer textBox = new SourceViewer(container, null, SWT.V_SCROLL
+                | SWT.MULTI | SWT.BORDER | SWT.WRAP);
+        textBox.setEditable(true);
+
+        // set up spell-check annotations
+        final SourceViewerDecorationSupport decorationSupport = new SourceViewerDecorationSupport(
+                textBox, null, new DefaultMarkerAnnotationAccess(), EditorsUI
+                        .getSharedTextColors());
+
+        AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
+                .getAnnotationPreference(SpellingAnnotation.TYPE);
+
+        decorationSupport.setAnnotationPreference(pref);
+        decorationSupport.install(EditorsUI.getPreferenceStore());
+
+        textBox.configure(new TextSourceViewerConfiguration(EditorsUI
+                .getPreferenceStore()));
+        textBox.setDocument(new Document(), new AnnotationModel());
+        textBox.getTextWidget().addDisposeListener(new DisposeListener() {
+            public void widgetDisposed(DisposeEvent e) {
+                decorationSupport.uninstall();
+            }
+        });
+        GridData data = new GridData(GridData.FILL_BOTH);
+//        data.heightHint = heightHint;
+        textBox.getControl().setLayoutData(data);
+        return textBox;
+    }
+
+    /*
+     * incompatible with 3.2 public static DateTime createDateTime(Composite c,
+     * int style) { DateTime dt = new DateTime(c, style); GridData data = new
+     * GridData(GridData.FILL_HORIZONTAL); data.verticalAlignment =
+     * GridData.CENTER; data.grabExcessVerticalSpace = false; data.widthHint =
+     * IDialogConstants.ENTRY_FIELD_WIDTH; dt.setLayoutData(data); return dt; }
+     */
 
 }

@@ -27,6 +27,7 @@ import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
+import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
 public class ExportWizard extends HgWizard {
 
@@ -34,6 +35,10 @@ public class ExportWizard extends HgWizard {
     private ArrayList<IResource> resources;
     private Location location;
     private HgRoot root;
+    // operation result returned from another thread
+    private String result;
+    private ArrayList<String> options;
+    private ExportOptionsPage optionsPage;
 
     /**
      * @param root
@@ -42,10 +47,14 @@ public class ExportWizard extends HgWizard {
     public ExportWizard(List<IResource> resources, HgRoot root) {
         super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
-        this.sourcePage = new ExportPage(resources, root);
+        sourcePage = new ExportPage(resources, root);
         addPage(sourcePage);
-        this.initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
+        initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
+        optionsPage = new ExportOptionsPage();
+        addPage(optionsPage);
+        initPage(Messages.getString("ExportWizard.optionsPageDescription"), //$NON-NLS-1$
+                optionsPage);
         this.root = root;
     }
 
@@ -59,6 +68,7 @@ public class ExportWizard extends HgWizard {
         sourcePage.finish(null);
         try {
             resources = sourcePage.getCheckedResources();
+            options = optionsPage.getOptions();
             location = sourcePage.getLocation();
             if (location.getLocationType() != LocationType.Clipboard
                     && location.getFile().exists()) {
@@ -73,7 +83,12 @@ public class ExportWizard extends HgWizard {
                 }
             }
             ExportOperation operation = new ExportOperation(getContainer());
+            result = null;
             getContainer().run(true, false, operation);
+            if (result != null) {
+                optionsPage.setErrorMessage(result);
+                return false;
+            }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(getWindowTitle(), e);
             MercurialEclipsePlugin.showError(e.getCause());
@@ -94,6 +109,7 @@ public class ExportWizard extends HgWizard {
             try {
                 doExport();
             } catch (Exception e) {
+                result = e.getLocalizedMessage();
                 MercurialEclipsePlugin.logError(Messages
                         .getString("ExportWizard.pageTitle") //$NON-NLS-1$
                         + " failed:", e); //$NON-NLS-1$
@@ -106,9 +122,11 @@ public class ExportWizard extends HgWizard {
 
     public void doExport() throws Exception {
         if (location.getLocationType() == LocationType.Clipboard) {
-            HgPatchClient.exportPatch(root, resources);
+            ClipboardUtils.copyToClipboard(HgPatchClient.exportPatch(root,
+                    resources, options));
         } else {
-            HgPatchClient.exportPatch(root, resources, location.getFile());
+            HgPatchClient.exportPatch(root, resources, location.getFile(),
+                    options);
         }
         if (location.getLocationType() == LocationType.Workspace) {
             location.getWorkspaceFile().refreshLocal(0, null);

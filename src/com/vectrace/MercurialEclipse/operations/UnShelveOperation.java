@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.operations;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -94,7 +95,8 @@ public class UnShelveOperation extends HgOperation {
                 if (shelveFile.exists()) {
                     monitor.worked(1);
                     monitor.subTask(Messages.getString("UnShelveOperation.applyingChanges")); //$NON-NLS-1$
-                    HgPatchClient.importPatch(project, shelveFile);
+                    HgPatchClient.importPatch(project, shelveFile,
+                            new ArrayList<String>(0));
                     monitor.worked(1);
                     monitor.subTask(Messages.getString("UnShelveOperation.emptyingShelf")); //$NON-NLS-1$
                     boolean deleted = shelveFile.delete();

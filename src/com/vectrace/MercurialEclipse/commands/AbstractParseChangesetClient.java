@@ -10,12 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -446,16 +446,14 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             XMLReader reader = XMLReaderFactory.createXMLReader();
             reader.setContentHandler(getHandler(res, direction, repository,
                     bundleFile, hgRoot, fileRevisions));
-            reader.parse(new InputSource(new ByteArrayInputStream(myInput
-                    .getBytes("UTF-8")))); //$NON-NLS-1$
+            reader.parse(new InputSource(new StringReader(myInput)));
         } catch (Exception e) {
             String nextTry = cleanControlChars(myInput);
             try {
                 XMLReader reader = XMLReaderFactory.createXMLReader();
                 reader.setContentHandler(getHandler(res, direction, repository,
                         bundleFile, hgRoot, fileRevisions));
-                reader.parse(new InputSource(new ByteArrayInputStream(nextTry
-                        .getBytes("UTF-8")))); //$NON-NLS-1$
+                reader.parse(new InputSource(new StringReader(nextTry)));
             } catch (Exception e1) {
                 throw new HgException(e1.getLocalizedMessage(), e);
             }
