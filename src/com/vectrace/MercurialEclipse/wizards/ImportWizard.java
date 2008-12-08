@@ -12,12 +12,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.ui.TeamOperation;
 
@@ -25,13 +26,16 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
+import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
 public class ImportWizard extends HgWizard {
 
     private ImportPage sourcePage;
+    private ImportOptionsPage optionsPage;
     private Location location;
     private IProject project;
     private String result;
+    private ArrayList<String> options;
 
     /**
      * @param root
@@ -41,10 +45,15 @@ public class ImportWizard extends HgWizard {
         super(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
         project = selection.getProject();
-        this.sourcePage = new ImportPage(project);
+
+        sourcePage = new ImportPage(project);
         addPage(sourcePage);
-        this.initPage(Messages.getString("ImportWizard.pageDescription"), //$NON-NLS-1$
+        initPage(Messages.getString("ImportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
+
+        optionsPage = new ImportOptionsPage();
+        addPage(optionsPage);
+        initPage(Messages.getString("ImportWizard.optionsPageDescription"), optionsPage); //$NON-NLS-1$
     }
 
     /*
@@ -57,12 +66,12 @@ public class ImportWizard extends HgWizard {
         sourcePage.finish(null);
         try {
             location = sourcePage.getLocation();
+            options = optionsPage.getOptions();
             result = null;
             ImportOperation operation = new ImportOperation(getContainer());
             getContainer().run(true, false, operation);
-            if (result != null){
-                MessageDialog.openError(getShell(), Messages.getString("ImportWizard.PatchError"), //$NON-NLS-1$
-                        result);
+            if (result != null) {
+                optionsPage.setErrorMessage(result);
                 return false;
             }
         } catch (Exception e) {
@@ -97,10 +106,20 @@ public class ImportWizard extends HgWizard {
     }
 
     public void performOperation() throws Exception {
-        if (location.getLocationType() == LocationType.Clipboard)
-            HgPatchClient.importPatch(project);
-        else
-            HgPatchClient.importPatch(project, location.getFile());
+        if (location.getLocationType() == LocationType.Clipboard) {
+            File file = null;
+            try {
+                file = ClipboardUtils.clipboardToTempFile("mercurial_", //$NON-NLS-1$
+                        ".patch"); //$NON-NLS-1$
+                if (file != null)
+                    HgPatchClient.importPatch(project, file, options);
+            } finally {
+                if (file != null)
+                    file.delete();
+            }
+
+        } else
+            HgPatchClient.importPatch(project, location.getFile(), options);
         project.refreshLocal(0, null);
     }
 }

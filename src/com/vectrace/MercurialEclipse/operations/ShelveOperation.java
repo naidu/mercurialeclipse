@@ -111,7 +111,8 @@ public class ShelveOperation extends HgOperation {
             if (shelveFile.exists()) {
                 throw new HgException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
             }
-            HgPatchClient.exportPatch(root, resources, shelveFile);
+            HgPatchClient.exportPatch(root, resources, shelveFile,
+                    new ArrayList<String>(0));
             monitor.worked(1);
             monitor.subTask(Messages.getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$
             String currRev = HgIdentClient.getCurrentChangesetId(root);

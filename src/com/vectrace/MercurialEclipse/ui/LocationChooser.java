@@ -23,8 +23,6 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.dnd.Clipboard;
-import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.events.FocusAdapter;
 import org.eclipse.swt.events.FocusEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -39,6 +37,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ResourceListSelectionDialog;
 import org.eclipse.ui.dialogs.SaveAsDialog;
 
+import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
@@ -150,9 +149,8 @@ public class LocationChooser extends Composite implements Listener {
                 dialog.open();
                 Object[] result = dialog.getResult();
                 if (result != null && result.length > 0)
-                    txtWorkspaceFile
-                            .setText(((org.eclipse.core.internal.resources.File) result[0])
-                                    .getFullPath().toPortableString());
+                    txtWorkspaceFile.setText(((IFile) result[0]).getFullPath()
+                            .toPortableString());
             }
         } else if (event.widget == btnClipboard
                 || event.widget == btnFilesystem
@@ -185,12 +183,8 @@ public class LocationChooser extends Composite implements Listener {
     private String validateClipboard() {
         if (save)
             return null;
-        Clipboard cb = new Clipboard(getDisplay());
-        String contents = (String) cb.getContents(TextTransfer.getInstance());
-        cb.dispose();
-        if (contents != null && contents.trim().length() > 0)
-            return null;
-        return Messages.getString("LocationChooser.clipboardEmpty"); //$NON-NLS-1$
+        return ClipboardUtils.isEmpty() ? Messages
+                .getString("LocationChooser.clipboardEmpty") : null; //$NON-NLS-1$
     }
 
     private boolean isValidSystemFile(File file) {
