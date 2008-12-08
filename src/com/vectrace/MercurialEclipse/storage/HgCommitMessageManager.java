@@ -66,16 +66,34 @@ public class HgCommitMessageManager extends DefaultHandler {
     public void saveCommitMessage(String message) {
         int old_size = commit_message.length;
         String commit_message2[] = new String[old_size + 1];
+        commit_message2[0] = message; /* put new message first */
         for(int i = 0; i < old_size; i++)
         {
-            commit_message2[i] = commit_message[i];
+            commit_message2[i+1] = commit_message[i];
         }
-        commit_message2[old_size] = message;
         
         /* Replace the comment string array */
         commit_message = commit_message2;
     }
 
+    /**
+     *  Save message in in-memory database new data last (used when loading from file)
+     */    
+    
+    private void addCommitMessage(String message) {
+        int old_size = commit_message.length;
+        String commit_message2[] = new String[old_size + 1];
+        for(int i = 0; i < old_size; i++)
+        {
+            commit_message2[i] = commit_message[i];
+        }
+        commit_message2[old_size] = message; /* put new message last */
+        
+        /* Replace the comment string array */
+        commit_message = commit_message2;
+    }
+
+    
     /**
      *  Get all messages from in-memory database
      */        
@@ -196,7 +214,7 @@ public class HgCommitMessageManager extends DefaultHandler {
     public void endElement(String uri, String localName, String qname) {
         /* If it was a commit message save the char string in the database */
         if (qname.equalsIgnoreCase(XML_TAG_COMMIT_MESSAGE)) { 
-            saveCommitMessage(tmpMessage);
+            addCommitMessage(tmpMessage);
         }            
     }
 

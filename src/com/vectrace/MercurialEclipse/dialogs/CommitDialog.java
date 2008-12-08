@@ -229,8 +229,11 @@ public class CommitDialog extends TrayDialog {
         resourcesToCommit = commitFilesList.getCheckedResources();
         resourcesToRemove = commitFilesList.getCheckedResources(FILE_DELETED);
         commitMessage = commitTextDocument.get();
-        /* Store commit message in the database */
-        MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
+        /* Store commit message in the database if not the default message */
+        if(!commitMessage.equals(defaultCommitMessage))
+        {
+           MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
+        }
         super.okPressed();
     }
 
