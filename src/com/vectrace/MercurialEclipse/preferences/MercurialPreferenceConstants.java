@@ -33,6 +33,7 @@ public class MercurialPreferenceConstants {
     public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 
+    
     // Timeouts
     public static final String DEFAULT_TIMEOUT = "hg.timeout.default"; //$NON-NLS-1$
     public static final String CLONE_TIMEOUT = "hg.timeout.clone"; //$NON-NLS-1$
@@ -49,6 +50,7 @@ public class MercurialPreferenceConstants {
     // batch sizes
     public static final String LOG_BATCH_SIZE = "hg.batchsize.log"; //$NON-NLS-1$
     public static final String STATUS_BATCH_SIZE = "hg.batchsize.status"; //$NON-NLS-1$
+    public static final String COMMIT_MESSAGE_BATCH_SIZE = "hg.batchsize.commitmessage"; //$NON-NLS-1$
 
     // synchronize
     public static final String SYNCHRONIZE_FILES = "hg.synchronize.synchronizeOnFileLevel"; //$NON-NLS-1$

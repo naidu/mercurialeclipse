@@ -40,6 +40,8 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * A manager for all Mercurial commit messages.
@@ -64,16 +66,43 @@ public class HgCommitMessageManager extends DefaultHandler {
      */    
     
     public void saveCommitMessage(String message) {
-        int old_size = commit_message.length;
-        String commit_message2[] = new String[old_size + 1];
-        commit_message2[0] = message; /* put new message first */
-        for(int i = 0; i < old_size; i++)
-        {
-            commit_message2[i+1] = commit_message[i];
-        }
+        int new_size = commit_message.length + 1 ;
+
+        int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
+                .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+                        "10")); //$NON-NLS-1$
         
-        /* Replace the comment string array */
-        commit_message = commit_message2;
+        if(new_size == (prefs_commit_message_size_max + 1))
+        {
+            /* we have a full buffer just shift around in it no need for a new buffer */
+            new_size = prefs_commit_message_size_max;
+
+            /* shift everything down */
+            for(int i = (new_size - 1); i > 0; i--)
+            {
+                commit_message[i] = commit_message[i - 1];
+            }
+            commit_message[0] = message; /* put new message first */
+        }
+        else
+        {
+            if(new_size > (prefs_commit_message_size_max + 1))
+            {   
+                /* This probably means that the prefs size got smaller then the old buffer 
+                 * lets copy it to a smaller buffer 
+                 */
+                new_size = prefs_commit_message_size_max;
+            }
+            String commit_message2[] = new String[new_size];
+            commit_message2[0] = message; /* put new message first */
+            for(int i = 1; i < new_size; i++)
+            {
+                commit_message2[i] = commit_message[i - 1];
+            }
+
+            /* Replace the comment string array */
+            commit_message = commit_message2;
+        }
     }
 
     /**
@@ -81,16 +110,25 @@ public class HgCommitMessageManager extends DefaultHandler {
      */    
     
     private void addCommitMessage(String message) {
-        int old_size = commit_message.length;
-        String commit_message2[] = new String[old_size + 1];
-        for(int i = 0; i < old_size; i++)
+        int new_size = commit_message.length + 1;
+
+        int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
+                .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+                        "10")); //$NON-NLS-1$
+
+        /* only add new stuff if its lower or equal the prefs size */
+        if(new_size <= prefs_commit_message_size_max)
         {
-            commit_message2[i] = commit_message[i];
+            String commit_message2[] = new String[new_size];
+            for(int i = 0; i < (new_size - 1); i++)
+            {
+                commit_message2[i] = commit_message[i];
+            }
+            commit_message2[new_size - 1] = message; /* put new message last */
+
+            /* Replace the comment string array */
+            commit_message = commit_message2;
         }
-        commit_message2[old_size] = message; /* put new message last */
-        
-        /* Replace the comment string array */
-        commit_message = commit_message2;
     }
 
     
@@ -98,6 +136,24 @@ public class HgCommitMessageManager extends DefaultHandler {
      *  Get all messages from in-memory database
      */        
     public String[] getCommitMessages() {
+        int size = commit_message.length;
+        int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
+                .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+                        "10")); //$NON-NLS-1$
+        if(size > (prefs_commit_message_size_max ))
+        {
+            /*
+             *  prefs changed to smaller since last used copy to smaller buffer
+             */
+            String commit_message2[] = new String[prefs_commit_message_size_max];
+            for(int i = 0; i < prefs_commit_message_size_max; i++)
+            {
+                commit_message2[i] = commit_message[i];
+            }
+
+            /* Replace the comment string array */
+            commit_message = commit_message2;
+        }
         return commit_message;
     }
     
@@ -168,7 +224,21 @@ public class HgCommitMessageManager extends DefaultHandler {
             AttributesImpl atts = new AttributesImpl();
             atts.clear();
             transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGES,atts); //$NON-NLS-1$
-            for (int i=0;i<commit_message.length;i++)
+
+            int size = commit_message.length;
+
+            int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
+                    .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+                            "10")); //$NON-NLS-1$
+
+            /* Do not save more then the prefs size */
+            if(size > prefs_commit_message_size_max)
+            {
+                size = prefs_commit_message_size_max;
+            }
+
+            
+            for (int i = 0; i < size; i++)
             {
                 transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGE,atts); //$NON-NLS-1$
                 transformerHandler.characters(commit_message[i].toCharArray(), 0, commit_message[i].length()); //$NON-NLS-1$

@@ -17,6 +17,7 @@ package com.vectrace.MercurialEclipse.preferences;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
+import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.jface.preference.RadioGroupFieldEditor;
 import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.widgets.Composite;
@@ -24,6 +25,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+
 
 /**
  * This class represents a preference page that is contributed to the
@@ -39,6 +41,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         IWorkbenchPreferencePage {
 
+    protected static final int DEFAULT_COMMIT_MESSAGE_BATCH_SIZE = 10;
+    
     private final class LabelDecoratorRadioGroupFieldEditor extends
             RadioGroupFieldEditor {
         private LabelDecoratorRadioGroupFieldEditor(String name,
@@ -65,7 +69,7 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         @Override
         protected boolean checkState() {
             // There are other ways of doing this properly but this is
-            // better than the default behaviour
+            // better than the default behavior
             return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
                     .equals(getTextControl().getText())
                     || super.checkState();
@@ -88,6 +92,33 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         }
     }
 
+    private final class CommitMessageBatchSizeIntegerFieldEditor extends
+    IntegerFieldEditor {
+        /**
+         * @param name
+         * @param labelText
+         * @param parent
+         */
+        private CommitMessageBatchSizeIntegerFieldEditor(String name,
+                String labelText, Composite parent) {
+            super(name, labelText, parent);
+        }
+
+        /*
+         * (non-Javadoc)
+         * 
+         * @see org.eclipse.jface.preference.FieldEditor#load()
+         */
+        @Override
+        public void load() {
+            super.load();
+            if (getIntValue() <= 0) {
+                super.setPresentsDefaultValue(true);
+                super.setStringValue(String.valueOf(DEFAULT_COMMIT_MESSAGE_BATCH_SIZE));
+            }
+        }
+    }
+    
     public GeneralPreferencePage() {
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
@@ -136,6 +167,10 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
                 getFieldEditorParent(), true));
 
+        addField(new CommitMessageBatchSizeIntegerFieldEditor(
+                MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+                Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$
+                getFieldEditorParent()));
     }
 
     /*
