@@ -59,14 +59,28 @@ public class ResourceDecorator extends LabelProvider implements
             .getInstance();
 
     private static String[] fonts = new String[] {
-            HgDecoratorConstants.IGNORED_FONT,
-            HgDecoratorConstants.CHANGE_FONT };
+            HgDecoratorConstants.ADDED_FONT,
+            HgDecoratorConstants.CONFLICT_FONT,
+            HgDecoratorConstants.DELETED_FONT,
+            HgDecoratorConstants.REMOVED_FONT,
+            HgDecoratorConstants.UNKNOWN_FONT,
+            HgDecoratorConstants.IGNORED_FONT, HgDecoratorConstants.CHANGE_FONT };
 
     private static String[] colors = new String[] {
+            HgDecoratorConstants.ADDED_BACKGROUND_COLOR,
+            HgDecoratorConstants.ADDED_FOREGROUND_COLOR,
             HgDecoratorConstants.CHANGE_BACKGROUND_COLOR,
             HgDecoratorConstants.CHANGE_FOREGROUND_COLOR,
+            HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR,
+            HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR,
             HgDecoratorConstants.IGNORED_BACKGROUND_COLOR,
-            HgDecoratorConstants.IGNORED_FOREGROUND_COLOR };
+            HgDecoratorConstants.IGNORED_FOREGROUND_COLOR,
+            HgDecoratorConstants.DELETED_BACKGROUND_COLOR,
+            HgDecoratorConstants.DELETED_FOREGROUND_COLOR,
+            HgDecoratorConstants.REMOVED_BACKGROUND_COLOR,
+            HgDecoratorConstants.REMOVED_FOREGROUND_COLOR,
+            HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR,
+            HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR };
 
     // set to true when having 2 different statuses in a folder flags it has
     // modified
@@ -142,7 +156,7 @@ public class ResourceDecorator extends LabelProvider implements
                 // in the future this could check is this is another repository
                 return;
             }
-            
+
             boolean coloriseLabels = isColorise();
 
             boolean showChangeset = isShowChangeset();
@@ -385,7 +399,7 @@ public class ResourceDecorator extends LabelProvider implements
                                         "false")).booleanValue(); //$NON-NLS-1$
         return showChangeset;
     }
-    
+
     private boolean isColorise() {
         boolean colorise = Boolean.valueOf(
                 HgClients.getPreference(
