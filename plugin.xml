@@ -1131,7 +1131,7 @@
        </description>
     </colorDefinition>
     <colorDefinition 
-       id="com.vectrace.mercurialeclipse.ui.colorsandfonts.conflictBackgroundColor"
+       id="com.vectrace.mercurialeclipse.ui.colorsandfonts.deletedBackgroundColor"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%colorDefinition.label.deletedBg"
        value="COLOR_LIST_BACKGROUND">
@@ -1140,7 +1140,7 @@
        </description>
     </colorDefinition>
     <fontDefinition
-       id="com.vectrace.mercurialeclipse.ui.colorsandfonts.conflictFont"
+       id="com.vectrace.mercurialeclipse.ui.colorsandfonts.deletedFont"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
        label="%fontDefinition.label.deleted">
        <description>
