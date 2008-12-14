@@ -32,7 +32,7 @@ public class MercurialPreferenceConstants {
     public static final String RESOURCE_DECORATOR_COMPLETE_STATUS = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
-
+    public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
     
     // Timeouts
     public static final String DEFAULT_TIMEOUT = "hg.timeout.default"; //$NON-NLS-1$
@@ -69,5 +69,4 @@ public class MercurialPreferenceConstants {
 
     // merge
     public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal"; //$NON-NLS-1$
-
 }

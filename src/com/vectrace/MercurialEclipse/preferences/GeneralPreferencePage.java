@@ -167,6 +167,10 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
                                 MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
                 getFieldEditorParent(), true));
 
+        addField(new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
+                Messages.getString("GeneralPreferencePage.enableFontAndColorDecorations"), getFieldEditorParent())); //$NON-NLS-1$
+
         addField(new CommitMessageBatchSizeIntegerFieldEditor(
                 MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
                 Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$

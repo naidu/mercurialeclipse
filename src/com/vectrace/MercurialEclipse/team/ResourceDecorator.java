@@ -27,11 +27,13 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.themes.ITheme;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -56,15 +58,51 @@ public class ResourceDecorator extends LabelProvider implements
     private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache
             .getInstance();
 
+    private static String[] fonts = new String[] {
+            HgDecoratorConstants.IGNORED_FONT,
+            HgDecoratorConstants.CHANGE_FONT };
+
+    private static String[] colors = new String[] {
+            HgDecoratorConstants.CHANGE_BACKGROUND_COLOR,
+            HgDecoratorConstants.CHANGE_FOREGROUND_COLOR,
+            HgDecoratorConstants.IGNORED_BACKGROUND_COLOR,
+            HgDecoratorConstants.IGNORED_FOREGROUND_COLOR };
+
     // set to true when having 2 different statuses in a folder flags it has
     // modified
     private static boolean folder_logic_2MM;
+    private ITheme theme;
 
     public ResourceDecorator() {
         configureFromPreferences();
         STATUS_CACHE.addObserver(this);
         LOCAL_CACHE.addObserver(this);
         INCOMING_CACHE.addObserver(this);
+        theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+        this.ensureFontAndColorsCreated(fonts, colors);
+    }
+
+    /**
+     * This method will ensure that the fonts and colors used by the decorator
+     * are cached in the registries. This avoids having to syncExec when
+     * decorating since we ensure that the fonts and colors are pre-created.
+     * 
+     * @param f
+     *            fonts ids to cache
+     * @param c
+     *            color ids to cache
+     */
+    private void ensureFontAndColorsCreated(final String[] f, final String[] c) {
+        MercurialEclipsePlugin.getStandardDisplay().syncExec(new Runnable() {
+            public void run() {
+                for (int i = 0; i < c.length; i++) {
+                    theme.getColorRegistry().get(c[i]);
+                }
+                for (int i = 0; i < f.length; i++) {
+                    theme.getFontRegistry().get(f[i]);
+                }
+            }
+        });
     }
 
     @Override
@@ -87,7 +125,7 @@ public class ResourceDecorator extends LabelProvider implements
                         .getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
     }
 
-    public void decorate(Object element, IDecoration decoration) {
+    public void decorate(Object element, IDecoration d) {
         try {
             IResource resource = (IResource) element;
             IProject project = resource.getProject();
@@ -104,6 +142,8 @@ public class ResourceDecorator extends LabelProvider implements
                 // in the future this could check is this is another repository
                 return;
             }
+            
+            boolean coloriseLabels = isColorise();
 
             boolean showChangeset = isShowChangeset();
             if (showChangeset) {
@@ -117,7 +157,8 @@ public class ResourceDecorator extends LabelProvider implements
                     // LOCAL_CACHE notifies resource decorator when it's
                     // finished.
                     RefreshJob job = new RefreshJob(
-                            Messages.getString("ResourceDecorator.refreshingChangesetDeco"), null, resource //$NON-NLS-1$
+                            Messages
+                                    .getString("ResourceDecorator.refreshingChangesetDeco"), null, resource //$NON-NLS-1$
                                     .getProject(), showChangeset);
                     job.schedule();
                     job.join();
@@ -128,8 +169,10 @@ public class ResourceDecorator extends LabelProvider implements
                         && !STATUS_CACHE.getLock(resource).isLocked()
                         && !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
-                            Messages.getString("ResourceDecorator.updatingStatusForProject.1") + project.getName() //$NON-NLS-1$
-                                    + Messages.getString("ResourceDecorator.updatingStatusForProject.2") //$NON-NLS-1$
+                            Messages
+                                    .getString("ResourceDecorator.updatingStatusForProject.1") + project.getName() //$NON-NLS-1$
+                                    + Messages
+                                            .getString("ResourceDecorator.updatingStatusForProject.2") //$NON-NLS-1$
                                     + resource.getName(), project);
                     job.schedule();
                     job.join();
@@ -148,19 +191,62 @@ public class ResourceDecorator extends LabelProvider implements
                                 .get(MercurialStatusCache.BIT_IGNORE)))) {
                     overlay = DecoratorImages.modifiedDescriptor;
                     prefix = ">"; //$NON-NLS-1$
+                    if (coloriseLabels) {
+                        setBackground(d,
+                                HgDecoratorConstants.CHANGE_BACKGROUND_COLOR);
+                        setForeground(d,
+                                HgDecoratorConstants.CHANGE_FOREGROUND_COLOR);
+                        setFont(d, HgDecoratorConstants.CHANGE_FONT);
+                    }
                 } else {
                     switch (output.length() - 1) {
+                    case MercurialStatusCache.BIT_IGNORE:
+                        if (coloriseLabels) {
+                            setBackground(
+                                    d,
+                                    HgDecoratorConstants.IGNORED_BACKGROUND_COLOR);
+                            setForeground(
+                                    d,
+                                    HgDecoratorConstants.IGNORED_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.IGNORED_FONT);
+                        }
+                        break;
                     case MercurialStatusCache.BIT_MODIFIED:
                         overlay = DecoratorImages.modifiedDescriptor;
                         prefix = ">"; //$NON-NLS-1$
+                        if (coloriseLabels) {
+                            setBackground(
+                                    d,
+                                    HgDecoratorConstants.CHANGE_BACKGROUND_COLOR);
+                            setForeground(
+                                    d,
+                                    HgDecoratorConstants.CHANGE_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.CHANGE_FONT);
+                        }
                         break;
                     case MercurialStatusCache.BIT_ADDED:
                         overlay = DecoratorImages.addedDescriptor;
                         prefix = ">"; //$NON-NLS-1$
+                        if (coloriseLabels) {
+                            setBackground(d,
+                                    HgDecoratorConstants.ADDED_BACKGROUND_COLOR);
+                            setForeground(d,
+                                    HgDecoratorConstants.ADDED_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.ADDED_FONT);
+                        }
                         break;
                     case MercurialStatusCache.BIT_UNKNOWN:
                         overlay = DecoratorImages.notTrackedDescriptor;
                         prefix = ">"; //$NON-NLS-1$
+                        if (coloriseLabels) {
+                            setBackground(
+                                    d,
+                                    HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR);
+                            setForeground(
+                                    d,
+                                    HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.UNKNOWN_FONT);
+                        }
                         break;
                     case MercurialStatusCache.BIT_CLEAN:
                         overlay = DecoratorImages.managedDescriptor;
@@ -170,14 +256,41 @@ public class ResourceDecorator extends LabelProvider implements
                     case MercurialStatusCache.BIT_REMOVED:
                         overlay = DecoratorImages.removedDescriptor;
                         prefix = ">"; //$NON-NLS-1$
+                        if (coloriseLabels) {
+                            setBackground(
+                                    d,
+                                    HgDecoratorConstants.REMOVED_BACKGROUND_COLOR);
+                            setForeground(
+                                    d,
+                                    HgDecoratorConstants.REMOVED_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.REMOVED_FONT);
+                        }
                         break;
                     case MercurialStatusCache.BIT_DELETED:
                         overlay = DecoratorImages.deletedStillTrackedDescriptor;
                         prefix = ">"; //$NON-NLS-1$
+                        if (coloriseLabels) {
+                            setBackground(
+                                    d,
+                                    HgDecoratorConstants.DELETED_BACKGROUND_COLOR);
+                            setForeground(
+                                    d,
+                                    HgDecoratorConstants.DELETED_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.DELETED_FONT);
+                        }
                         break;
                     case MercurialStatusCache.BIT_CONFLICT:
                         overlay = DecoratorImages.conflictDescriptor;
                         prefix = ">"; //$NON-NLS-1$
+                        if (coloriseLabels) {
+                            setBackground(
+                                    d,
+                                    HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR);
+                            setForeground(
+                                    d,
+                                    HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR);
+                            setFont(d, HgDecoratorConstants.CONFLICT_FONT);
+                        }
                         break;
                     }
                 }
@@ -185,7 +298,7 @@ public class ResourceDecorator extends LabelProvider implements
                 // empty folder, do nothing
             }
             if (overlay != null) {
-                decoration.addOverlay(overlay);
+                d.addOverlay(overlay);
             }
 
             if (showChangeset) {
@@ -223,27 +336,41 @@ public class ResourceDecorator extends LabelProvider implements
 
                     // only decorate files and project with suffix
                     if (resource.getType() != IResource.FOLDER) {
-                        decoration.addSuffix(suffix);
+                        d.addSuffix(suffix);
                     }
 
                 } catch (HgException e) {
-                    MercurialEclipsePlugin.logWarning(
-                            Messages.getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e); //$NON-NLS-1$
+                    MercurialEclipsePlugin
+                            .logWarning(
+                                    Messages
+                                            .getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e); //$NON-NLS-1$
                 }
             } else {
                 if (resource.getType() == IResource.PROJECT) {
                     String suffix = getSuffixForProject(project);
-                    decoration.addSuffix(suffix);
+                    d.addSuffix(suffix);
                 }
             }
 
             // we want a prefix, even if no changeset is displayed
             if (prefix != null) {
-                decoration.addPrefix(prefix);
+                d.addPrefix(prefix);
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }
+    }
+
+    private void setBackground(IDecoration d, String id) {
+        d.setBackgroundColor(theme.getColorRegistry().get(id));
+    }
+
+    private void setForeground(IDecoration d, String id) {
+        d.setForegroundColor(theme.getColorRegistry().get(id));
+    }
+
+    private void setFont(IDecoration d, String id) {
+        d.setFont(theme.getFontRegistry().get(id));
     }
 
     /**
@@ -257,6 +384,14 @@ public class ResourceDecorator extends LabelProvider implements
                                         MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
                                         "false")).booleanValue(); //$NON-NLS-1$
         return showChangeset;
+    }
+    
+    private boolean isColorise() {
+        boolean colorise = Boolean.valueOf(
+                HgClients.getPreference(
+                        MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
+                        "false")).booleanValue(); //$NON-NLS-1$
+        return colorise;
     }
 
     /**
