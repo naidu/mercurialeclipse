@@ -816,11 +816,12 @@ public class MercurialStatusCache extends AbstractCache implements
                             }
                         }
                     };                    
-                    new SafeWorkspaceJob(Messages.getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
+                    new SafeWorkspaceJob(Messages
+                            .getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
                         @Override
                         protected IStatus runSafe(IProgressMonitor monitor) {
                             ISchedulingRule rule = workspace.getRuleFactory()
-                                    .modifyRule(workspace.getRoot());
+                                    .markerRule(workspace.getRoot());
                             try {
                                 workspace.run(job, rule,
                                         IWorkspace.AVOID_UPDATE, monitor);
@@ -828,7 +829,7 @@ public class MercurialStatusCache extends AbstractCache implements
                                 MercurialEclipsePlugin.logError(e);
                                 return new Status(IStatus.ERROR,
                                         MercurialEclipsePlugin.ID, e
-                                                .getLocalizedMessage(), e);                                
+                                                .getLocalizedMessage(), e);
                             }
                             return super.runSafe(monitor);
                         }
