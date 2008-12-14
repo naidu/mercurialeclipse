@@ -16,31 +16,20 @@ import java.util.Date;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.resource.FontRegistry;
-import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.console.ConsolePlugin;
-import org.eclipse.ui.console.IConsole;
-import org.eclipse.ui.console.IConsoleListener;
-import org.eclipse.ui.console.IConsoleManager;
 import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * Console that shows the output of Hg commands. It is shown as a page in the
@@ -49,8 +38,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * 
  * @since 3.0
  */
-public class HgConsole extends MessageConsole implements IConsoleListener,
-        IPropertyChangeListener {
+public class HgConsole extends MessageConsole {
 
     // created colors for each line type - must be disposed at shutdown
     private Color commandColor;
@@ -78,11 +66,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     private MessageConsoleStream messageStream;
     private MessageConsoleStream errorStream;
 
-    // preferences for showing the Hg console when Hg output is provided
-    private boolean showOnMessage = false;
-
     private ConsoleDocument document;
-    private IConsoleManager consoleManager;
 
     // format for timings printed to console
     private static final DateFormat TIME_FORMAT;
@@ -102,49 +86,13 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     private static final String NESTING = "   "; //$NON-NLS-1$
 
     /**
-     * Used to notify this console of lifecycle methods <code>init()</code> and
-     * <code>dispose()</code>.
-     */
-    public class MyLifecycle implements org.eclipse.ui.console.IConsoleListener {
-        public void consolesAdded(IConsole[] consoles) {
-            for (int i = 0; i < consoles.length; i++) {
-                IConsole console = consoles[i];
-                if (console == HgConsole.this) {
-                    init();
-                }
-            }
-
-        }
-
-        public void consolesRemoved(IConsole[] consoles) {
-            for (int i = 0; i < consoles.length; i++) {
-                IConsole console = consoles[i];
-                if (console == HgConsole.this) {
-                    ConsolePlugin.getDefault().getConsoleManager()
-                            .removeConsoleListener(this);
-                    dispose();
-                }
-            }
-        }
-    }
-
-    /**
      * Constructor initializes preferences and colors but doesn't create the
      * console page yet.
      */
     public HgConsole() {
         super(
                 "Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
-        showOnMessage = Boolean
-                .valueOf(
-                        MercurialUtilities
-                                .getPreference(
-                                        MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                                        "true")).booleanValue(); //$NON-NLS-1$
         document = new ConsoleDocument();
-        consoleManager = ConsolePlugin.getDefault().getConsoleManager();
-        MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .addPropertyChangeListener(HgConsole.this);
     }
 
     /*
@@ -159,18 +107,8 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
 
         initLimitOutput();
         initWrapSetting();
-
-        // Ensure that initialization occurs in the ui thread
-        new SafeUiJob(Messages.getString("HgConsole.initializing")) { //$NON-NLS-1$
-
-            @Override
-            public IStatus runSafe(IProgressMonitor monitor) {
-                JFaceResources.getFontRegistry().addListener(HgConsole.this);
-                initializeStreams();
-                dump();
-                return super.runSafe(monitor);
-            }
-        }.schedule();
+        initializeStreams();
+        dump();
     }
 
     private void initWrapSetting() {
@@ -223,11 +161,6 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                         .getStandardDisplay(),
                         MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR);
                 errorStream.setColor(errorColor);
-                // install font
-                Font f = PlatformUI.getWorkbench().getThemeManager()
-                        .getCurrentTheme().getFontRegistry().get(
-                                MercurialPreferenceConstants.PREF_CONSOLE_FONT);
-                setFont(f);
                 initialized = true;
             }
         }
@@ -246,7 +179,7 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
     }
 
     private void appendLine(int type, String line) {
-        showConsole();
+        HgConsoleFactory.getInstance().showConsole();
         String myLine = line;
         myLine = HTTP_PATTERN.matcher(line).replaceAll("http://***@"); //$NON-NLS-1$
         if (myLine.equals(line)) {
@@ -277,10 +210,6 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         }
     }
 
-    private void showConsole() {
-        show(false);
-    }
-
     /*
      * (non-Javadoc)
      * 
@@ -297,7 +226,6 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         // Called when console is removed from the console view
         synchronized (document) {
             visible = false;
-            JFaceResources.getFontRegistry().removeListener(this);
         }
     }
 
@@ -317,8 +245,6 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         if (errorColor != null) {
             errorColor.dispose();
         }
-        MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .removePropertyChangeListener(this);
     }
 
     /*
@@ -472,15 +398,6 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
                 setFont(((FontRegistry) event.getSource())
                         .get(MercurialPreferenceConstants.PREF_CONSOLE_FONT));
             }
-        }
-        if (property
-                .equals(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE)) {
-            Object value = event.getNewValue();
-            if (value instanceof String) {
-                showOnMessage = Boolean.valueOf((String) value).booleanValue();
-            } else {
-                showOnMessage = ((Boolean) value).booleanValue();
-            }
         } else if (property
                 .equals(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT)) {
             initLimitOutput();
@@ -516,54 +433,5 @@ public class HgConsole extends MessageConsole implements IConsoleListener,
         RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin
                 .getDefault().getPreferenceStore(), preference);
         return new Color(display, rgb);
-    }
-
-    /**
-     * Show the console.
-     * 
-     * @param showNoMatterWhat
-     *            ignore preferences if <code>true</code>
-     */
-    public void show(boolean showNoMatterWhat) {
-        showOnMessage = Boolean
-                .valueOf(
-                        MercurialUtilities
-                                .getPreference(
-                                        MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                                        "false")).booleanValue(); //$NON-NLS-1$
-        if (showNoMatterWhat || showOnMessage) {
-            if (!visible) {
-                HgConsoleFactory.showConsole();
-            } else {
-                consoleManager.showConsoleView(this);
-            }
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.console.IConsoleListener#consolesAdded(org.eclipse.ui.
-     * console.IConsole[])
-     */
-    public void consolesAdded(IConsole[] consoles) {
-        for (IConsole console : consoles) {
-            if (console.equals(this)) {
-                show(true);
-                break;
-            }
-        }
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.console.IConsoleListener#consolesRemoved(org.eclipse.ui
-     * .console.IConsole[])
-     */
-    public void consolesRemoved(IConsole[] consoles) {
-
     }
 }

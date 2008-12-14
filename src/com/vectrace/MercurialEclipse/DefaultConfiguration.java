@@ -31,7 +31,14 @@ import com.vectrace.MercurialEclipse.views.console.HgConsole;
 public class DefaultConfiguration implements IConsole, IErrorHandler,
         IConfiguration {
 
-    private HgConsole console = MercurialUtilities.getMercurialConsole();
+    private HgConsole console;
+
+    /**
+     * 
+     */
+    public DefaultConfiguration() {
+        console = MercurialUtilities.getMercurialConsole();
+    }
 
     /*
      * (non-Javadoc)

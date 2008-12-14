@@ -199,23 +199,32 @@ public class MercurialUtilities {
      * preference page.
      */
     public static void configureHgExecutable() {
-        new SafeUiJob(Messages.getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
-            /* (non-Javadoc)
-             * @see com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
+        new SafeUiJob(
+                Messages
+                        .getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
+            /*
+             * (non-Javadoc)
+             * 
+             * @see
+             * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core
+             * .runtime.IProgressMonitor)
              */
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
             String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
-            String[] dsplIds = null;
-            Object data = null;
-            PreferenceDialog dlg = PreferencesUtil
+                String[] dsplIds = null;
+                Object data = null;
+                PreferenceDialog dlg = PreferencesUtil
                         .createPreferenceDialogOn(
-                                getDisplay().getActiveShell(),
-                    pageId, dsplIds, data);
-            dlg.setErrorMessage(Messages.getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
-                    + Messages.getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
-            dlg.open();
-            return super.runSafe(monitor);
+                                getDisplay().getActiveShell(), pageId, dsplIds,
+                                data);
+                dlg
+                        .setErrorMessage(Messages
+                                .getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
+                                + Messages
+                                        .getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
+                dlg.open();
+                return super.runSafe(monitor);
             }
         }.schedule();
     }
@@ -269,8 +278,12 @@ public class MercurialUtilities {
             }
             if (shell != null) {
                 MessageDialog
-                        .openInformation(shell, Messages.getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
-                                Messages.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
+                        .openInformation(
+                                shell,
+                                Messages
+                                        .getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
+                                Messages
+                                        .getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
             }
         }
 
@@ -318,8 +331,9 @@ public class MercurialUtilities {
             return getHGUsername();
         }
         try {
-            return HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace()
-                    .getRoot().getLocation().toFile(), "ui.username"); //$NON-NLS-1$
+            return HgConfigClient.getHgConfigLine(ResourcesPlugin
+                    .getWorkspace().getRoot().getLocation().toFile(),
+                    "ui.username"); //$NON-NLS-1$
         } catch (HgException e) {
             return System.getProperty("user.name"); //$NON-NLS-1$
         }
@@ -464,14 +478,11 @@ public class MercurialUtilities {
      * 
      * @return the MercurialConsole.
      */
-    public static synchronized HgConsole getMercurialConsole() {
-        if (console != null) {
-            return console;
+    public static HgConsole getMercurialConsole() {
+        if (console == null) {
+        console = HgConsoleFactory.getInstance().getConsole();
+            HgConsoleFactory.getInstance().showConsole();
         }
-
-        console = new HgConsole();
-        console.initialize();
-        HgConsoleFactory.showConsole();
         return console;
     }
 
@@ -557,8 +568,7 @@ public class MercurialUtilities {
             boolean returnValue;
             IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
                     .getRoot();
-            Object prop = workspaceRoot
-                    .getSessionProperty(sessionPropertyName);
+            Object prop = workspaceRoot.getSessionProperty(sessionPropertyName);
             if (prop != null) {
                 returnValue = ((Boolean) prop).booleanValue();
             } else {
