@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -24,7 +22,6 @@ import org.eclipse.ui.console.IConsoleListener;
 import org.eclipse.ui.console.IConsoleManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -45,6 +42,7 @@ public class HgConsoleFactory implements IConsoleFactory, IConsoleListener,
     
     public HgConsoleFactory() {
         instance = this;
+        console = new HgConsole();
     }
     
     public static HgConsoleFactory getInstance() {
@@ -60,7 +58,7 @@ public class HgConsoleFactory implements IConsoleFactory, IConsoleListener,
 
     private void init() {
         if (!initialized) {
-            new SafeUiJob(Messages.getString("HgConsoleFactory.initializingConsole")) { //$NON-NLS-1$
+            Runnable r = new Runnable() { 
                 /*
                  * (non-Javadoc)
                  * 
@@ -68,8 +66,8 @@ public class HgConsoleFactory implements IConsoleFactory, IConsoleListener,
                  * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org
                  * .eclipse .core.runtime.IProgressMonitor)
                  */
-                @Override
-                protected IStatus runSafe(IProgressMonitor monitor) {
+                
+                public void run() {
                     // install font
                     Font f = PlatformUI
                             .getWorkbench()
@@ -77,14 +75,18 @@ public class HgConsoleFactory implements IConsoleFactory, IConsoleListener,
                             .getCurrentTheme()
                             .getFontRegistry()
                             .get(MercurialPreferenceConstants.PREF_CONSOLE_FONT);
-                    getConsole().setFont(f);
-                    return super.runSafe(monitor);
+                    if (console == null) {
+                        console = new HgConsole();
+                    }
+                    console.setFont(f);
+                    console.initialize();
+                    JFaceResources.getFontRegistry().addListener(
+                            HgConsoleFactory.this);
                 }
-            }.schedule();
-            JFaceResources.getFontRegistry().addListener(this);
+            };
+            MercurialEclipsePlugin.getStandardDisplay().asyncExec(r);
             MercurialEclipsePlugin.getDefault().getPreferenceStore()
                     .addPropertyChangeListener(this);
-            getConsoleManager().showConsoleView(getConsole());
         }
         initialized = true;
     }
@@ -128,10 +130,6 @@ public class HgConsoleFactory implements IConsoleFactory, IConsoleListener,
      * @return
      */
     public HgConsole getConsole() {
-        if (console == null) {
-            console = new HgConsole();
-            console.initialize();
-        }
         return console;
     }
 

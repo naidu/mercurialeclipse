@@ -69,11 +69,9 @@ public class HgConsole extends MessageConsole {
     private ConsoleDocument document;
 
     // format for timings printed to console
-    private static final DateFormat TIME_FORMAT;
-
-    static {
-        TIME_FORMAT = new SimpleDateFormat("m:ss.SSS"); //$NON-NLS-1$
-    }
+    private static final DateFormat TIME_FORMAT = new SimpleDateFormat(
+            "m:ss.SSS"); //$NON-NLS-1$
+    
 
     // Indicates whether the console is visible in the Console view
     private boolean visible = false;

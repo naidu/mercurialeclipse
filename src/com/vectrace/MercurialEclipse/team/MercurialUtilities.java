@@ -58,8 +58,6 @@ import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
  */
 public class MercurialUtilities {
 
-    private static HgConsole console;
-
     /**
      * This class is full of utilities metods, useful allover the place
      */
@@ -473,16 +471,12 @@ public class MercurialUtilities {
     }
 
     /**
-     * Gets the Mercurial console. If it's not already created, we create it and
-     * register it with the ConsoleManager.
+     * Gets the Mercurial console.
      * 
      * @return the MercurialConsole.
      */
     public static HgConsole getMercurialConsole() {
-        if (console == null) {
-        console = HgConsoleFactory.getInstance().getConsole();
-            HgConsoleFactory.getInstance().showConsole();
-        }
+        HgConsole console = HgConsoleFactory.getInstance().getConsole();
         return console;
     }
 

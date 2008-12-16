@@ -132,8 +132,9 @@ public abstract class AbstractShellCommand {
     public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue)
             throws HgException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        if (executeToStream(bos, timeout, expectPositiveReturnValue))
+        if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
             return bos.toByteArray();
+        }
         return null;
     }
 
@@ -233,12 +234,13 @@ public abstract class AbstractShellCommand {
         } catch (FileNotFoundException e) {
             throw new HgException(e.getMessage(), e);
         } finally {
-            if (fos != null)
+            if (fos != null) {
                 try {
                     fos.close();
                 } catch (IOException e) {
                     throw new HgException(e.getMessage(), e);
                 }
+            }
         }
     }
 
@@ -302,7 +304,7 @@ public abstract class AbstractShellCommand {
     /**
      * @return the console
      */
-    private static IConsole getConsole() {
+    private IConsole getConsole() {
         return HgClients.getConsole();
     }
 }

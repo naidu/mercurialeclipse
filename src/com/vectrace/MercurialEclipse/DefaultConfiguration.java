@@ -23,6 +23,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
+import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
 
 /**
  * @author Stefan
@@ -37,7 +38,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * 
      */
     public DefaultConfiguration() {
-        console = MercurialUtilities.getMercurialConsole();
+        console = HgConsoleFactory.getInstance().getConsole();
     }
 
     /*
