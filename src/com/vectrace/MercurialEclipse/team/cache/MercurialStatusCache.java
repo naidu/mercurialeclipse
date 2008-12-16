@@ -75,7 +75,7 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
  */
 public class MercurialStatusCache extends AbstractCache implements
         IResourceChangeListener {
-    
+
     private static final int STATUS_BATCH_SIZE = 10;
     private static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
 
@@ -85,9 +85,9 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     private final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
-        private final Set<IResource> removed;
-        private final Set<IResource> changed;
-        private final Set<IResource> added;
+        private final Map<IProject, Set<IResource>> removed;
+        private final Map<IProject, Set<IResource>> changed;
+        private final Map<IProject, Set<IResource>> added;
         private boolean completeStatus;
 
         /**
@@ -95,11 +95,13 @@ public class MercurialStatusCache extends AbstractCache implements
          * @param changed
          * @param added
          */
-        private ResourceDeltaVisitor(Set<IResource> removed,
-                Set<IResource> changed, Set<IResource> added) {
+        private ResourceDeltaVisitor(Map<IProject, Set<IResource>> removed,
+                Map<IProject, Set<IResource>> changed,
+                Map<IProject, Set<IResource>> added) {
             this.removed = removed;
             this.changed = changed;
             this.added = added;
+
             completeStatus = Boolean
                     .valueOf(
                             HgClients
@@ -123,26 +125,45 @@ public class MercurialStatusCache extends AbstractCache implements
                     && res.getProject().isAccessible()
                     && RepositoryProvider.getProvider(res.getProject(),
                             MercurialTeamProvider.ID) != null) {
+                IResource resource = getResource(res);
+                IProject project = resource.getProject();
+                Set<IResource> addSet = added.get(project);
+                if (addSet == null) {
+                    addSet = new HashSet<IResource>();
+                    added.put(project, addSet);
+                }
+
+                Set<IResource> removeSet = removed.get(project);
+                if (removeSet == null) {
+                    removeSet = new HashSet<IResource>();
+                    removed.put(project, removeSet);
+                }
+
+                Set<IResource> changeSet = changed.get(project);
+                if (changeSet == null) {
+                    changeSet = new HashSet<IResource>();
+                    changed.put(project, changeSet);
+                }
 
                 switch (delta.getKind()) {
                 case IResourceDelta.ADDED:
                     if (!res.isTeamPrivateMember() && !res.isDerived()
                             && res.getType() == IResource.FILE) {
-                        added.add(getResource(res));
+                        addSet.add(resource);
                     }
                     break;
                 case IResourceDelta.CHANGED:
                     if (!res.isTeamPrivateMember() && !res.isDerived()
                             && isSupervised(res)
                             && res.getType() == IResource.FILE) {
-                        changed.add(getResource(res));
+                        changeSet.add(resource);
                     }
                     break;
                 case IResourceDelta.REMOVED:
                     if (!res.isTeamPrivateMember() && !res.isDerived()
                             && isSupervised(res)
                             && res.getType() == IResource.FILE) {
-                        removed.add(getResource(res));
+                        removeSet.add(getResource(res));
                     }
                     break;
                 }
@@ -200,7 +221,7 @@ public class MercurialStatusCache extends AbstractCache implements
     public final static int BIT_MODIFIED = 6;
     public final static int BIT_IMPOSSIBLE = 7;
     public final static int BIT_CONFLICT = 8;
-    
+
     public static final char CHAR_MODIFIED = 'M';
     public static final char CHAR_ADDED = 'A';
     public static final char CHAR_UNKNOWN = '?';
@@ -208,7 +229,6 @@ public class MercurialStatusCache extends AbstractCache implements
     public static final char CHAR_IGNORED = 'I';
     public static final char CHAR_REMOVED = 'R';
     public static final char CHAR_DELETED = '!';
-
 
     private static MercurialStatusCache instance;
 
@@ -430,7 +450,9 @@ public class MercurialStatusCache extends AbstractCache implements
             throws HgException {
         Assert.isNotNull(res);
         if (monitor != null) {
-            monitor.subTask(Messages.getString("MercurialStatusCache.Refreshing") + res.getName()); //$NON-NLS-1$
+            monitor
+                    .subTask(Messages
+                            .getString("MercurialStatusCache.Refreshing") + res.getName()); //$NON-NLS-1$
         }
 
         if (null != RepositoryProvider.getProvider(res.getProject(),
@@ -473,7 +495,9 @@ public class MercurialStatusCache extends AbstractCache implements
                         monitor.worked(1);
                     }
                 } catch (CoreException e) {
-                    throw new HgException(Messages.getString("MercurialStatusCache.FailedToRefreshMergeStatus"), e); //$NON-NLS-1$
+                    throw new HgException(
+                            Messages
+                                    .getString("MercurialStatusCache.FailedToRefreshMergeStatus"), e); //$NON-NLS-1$
                 }
             } finally {
                 lock.unlock();
@@ -529,7 +553,7 @@ public class MercurialStatusCache extends AbstractCache implements
             String localName = scanner.nextLine().trim();
 
             IResource member = convertRepoRelPath(root, project, localName);
-            
+
             // doesn't belong to our project (can happen if root is above
             // project level)
             if (member == null) {
@@ -643,7 +667,8 @@ public class MercurialStatusCache extends AbstractCache implements
         case 'M':
             return BIT_MODIFIED;
         default:
-            String msg = Messages.getString("MercurialStatusCache.UnknownStatus") + status + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+            String msg = Messages
+                    .getString("MercurialStatusCache.UnknownStatus") + status + "'"; //$NON-NLS-1$ //$NON-NLS-2$
             MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
             return BIT_IMPOSSIBLE;
         }
@@ -672,7 +697,8 @@ public class MercurialStatusCache extends AbstractCache implements
         case BIT_MODIFIED:
             return CHAR_MODIFIED;
         default:
-            String msg = Messages.getString("MercurialStatusCache.UnknownStatus") + bitIndex + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+            String msg = Messages
+                    .getString("MercurialStatusCache.UnknownStatus") + bitIndex + "'"; //$NON-NLS-1$ //$NON-NLS-2$
             MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
             return BIT_IMPOSSIBLE;
         }
@@ -746,9 +772,9 @@ public class MercurialStatusCache extends AbstractCache implements
                 for (IResourceDelta delta : event.getDelta()
                         .getAffectedChildren()) {
 
-                    final Set<IResource> changed = new HashSet<IResource>();
-                    final Set<IResource> added = new HashSet<IResource>();
-                    final Set<IResource> removed = new HashSet<IResource>();
+                    final Map<IProject, Set<IResource>> changed = new HashMap<IProject, Set<IResource>>();
+                    final Map<IProject, Set<IResource>> added = new HashMap<IProject, Set<IResource>>();
+                    final Map<IProject, Set<IResource>> removed = new HashMap<IProject, Set<IResource>>();
 
                     IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(
                             removed, changed, added);
@@ -756,83 +782,104 @@ public class MercurialStatusCache extends AbstractCache implements
                     // walk tree
                     delta.accept(visitor);
                     final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-                    final IWorkspaceRunnable job = new IWorkspaceRunnable() {
+                    final Set<IProject> changedProjects = new HashSet<IProject>(
+                            changed.keySet());
+                    changedProjects.addAll(added.keySet());
+                    changedProjects.addAll(removed.keySet());
+                    for (final IProject project : changedProjects) {
 
-                        public void run(IProgressMonitor monitor)
-                                throws CoreException {
+                        final IWorkspaceRunnable job = new IWorkspaceRunnable() {
 
-                            // now process gathered changes (they are in the
-                            // lists)
-                            try {
-                                if (changed.size() + added.size()
-                                        + removed.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
-                                    changed.addAll(added);
-                                    changed.addAll(removed);
-                                    Set<IProject> projects = new HashSet<IProject>();
-                                    for (IResource resource : changed) {
-                                        projects.add(resource.getProject());
-                                    }
-                                    monitor.beginTask(Messages.getString("MercurialStatusCache.RefreshingProjects"), //$NON-NLS-1$
-                                            projects.size() + 2);
-                                    for (IProject project : projects) {
-                                        monitor.subTask(Messages.getString("MercurialStatusCache.RefreshingProject") //$NON-NLS-1$
-                                                + project.getName() + Messages.getString("MercurialStatusCache....")); //$NON-NLS-1$
+                            public void run(IProgressMonitor monitor)
+                                    throws CoreException {
+
+                                // now process gathered changes (they are in the
+                                // lists)
+                                try {
+                                    Set<IResource> addSet = added.get(project);
+                                    Set<IResource> removedSet = removed
+                                            .get(project);
+                                    Set<IResource> changedSet = changed
+                                            .get(project);
+                                    Set<IResource> resources = new HashSet<IResource>();
+                                    resources.addAll(changedSet);
+                                    resources.addAll(addSet);
+                                    resources.addAll(removedSet);
+
+                                    if (changedSet.size() + addSet.size()
+                                            + removedSet.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
+                                        monitor
+                                                .beginTask(
+                                                        Messages
+                                                                .getString("MercurialStatusCache.RefreshingProjects"), //$NON-NLS-1$
+                                                        2);
+                                        monitor
+                                                .subTask(Messages
+                                                        .getString("MercurialStatusCache.RefreshingProject") //$NON-NLS-1$
+                                                        + project.getName()
+                                                        + Messages
+                                                                .getString("MercurialStatusCache....")); //$NON-NLS-1$
                                         refreshStatus(project, monitor);
                                         monitor.worked(1);
+                                    } else {
+                                        monitor
+                                                .beginTask(
+                                                        Messages
+                                                                .getString("MercurialStatusCache.RefreshingResources..."), 4); //$NON-NLS-1$
+                                        // changed
+                                        monitor
+                                                .subTask(Messages
+                                                        .getString("MercurialStatusCache.RefreshingChangedResources...")); //$NON-NLS-1$
+                                        refreshStatus(changedSet);
+                                        monitor.worked(1);
+
+                                        // added
+                                        monitor
+                                                .subTask(Messages
+                                                        .getString("MercurialStatusCache.RefreshingAddedResources...")); //$NON-NLS-1$
+                                        refreshStatus(addSet);
+                                        monitor.worked(1);
+
+                                        // removed not used right now
+                                        // refreshStatus(removed);
                                     }
-
-                                } else {
-                                    monitor.beginTask(
-                                            Messages.getString("MercurialStatusCache.RefreshingResources..."), 4); //$NON-NLS-1$
-                                    // changed
+                                    // notify observers
                                     monitor
-                                            .subTask(Messages.getString("MercurialStatusCache.RefreshingChangedResources...")); //$NON-NLS-1$
-                                    refreshStatus(changed);
+                                            .subTask(Messages
+                                                    .getString("MercurialStatusCache.AddingResourcesForDecoratorUpdate...")); //$NON-NLS-1$
                                     monitor.worked(1);
-
-                                    // added
                                     monitor
-                                            .subTask(Messages.getString("MercurialStatusCache.RefreshingAddedResources...")); //$NON-NLS-1$
-                                    refreshStatus(added);
+                                            .subTask(Messages
+                                                    .getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
+                                    notifyChanged(resources);
                                     monitor.worked(1);
-
-                                    // removed not used right now
-                                    // refreshStatus(removed);
+                                } finally {
+                                    monitor.done();
                                 }
-                                // notify observers
-                                monitor
-                                        .subTask(Messages.getString("MercurialStatusCache.AddingResourcesForDecoratorUpdate...")); //$NON-NLS-1$
-                                Set<IResource> resources = new HashSet<IResource>();
-                                resources.addAll(changed);
-                                resources.addAll(added);
-                                resources.addAll(removed);
-                                monitor.worked(1);
-                                monitor
-                                        .subTask(Messages.getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
-                                notifyChanged(resources);
-                                monitor.worked(1);
-                            } finally {
-                                monitor.done();
                             }
-                        }
-                    };                    
-                    new SafeWorkspaceJob(Messages.getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
-                        @Override
-                        protected IStatus runSafe(IProgressMonitor monitor) {
-                            ISchedulingRule rule = workspace.getRuleFactory()
-                                    .modifyRule(workspace.getRoot());
-                            try {
-                                workspace.run(job, rule,
-                                        IWorkspace.AVOID_UPDATE, monitor);
-                            } catch (CoreException e) {
-                                MercurialEclipsePlugin.logError(e);
-                                return new Status(IStatus.ERROR,
-                                        MercurialEclipsePlugin.ID, e
-                                                .getLocalizedMessage(), e);                                
+                        };
+                        final ISchedulingRule rule = workspace.getRuleFactory()
+                                .modifyRule(project);
+                        SafeWorkspaceJob wsJob = new SafeWorkspaceJob(
+                                Messages
+                                        .getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
+                            @Override
+                            protected IStatus runSafe(IProgressMonitor monitor) {
+                                try {
+                                    workspace.run(job, rule,
+                                            IWorkspace.AVOID_UPDATE, monitor);
+                                } catch (CoreException e) {
+                                    MercurialEclipsePlugin.logError(e);
+                                    return new Status(IStatus.ERROR,
+                                            MercurialEclipsePlugin.ID, e
+                                                    .getLocalizedMessage(), e);
+                                }
+                                return super.runSafe(monitor);
                             }
-                            return super.runSafe(monitor);
-                        }
-                    }.schedule();
+                        };
+                        wsJob.setRule(rule);
+                        wsJob.schedule(200);
+                    }
                 }
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
@@ -859,8 +906,10 @@ public class MercurialStatusCache extends AbstractCache implements
             try {
                 batchSize = Integer.parseInt(pref);
             } catch (NumberFormatException e) {
-                MercurialEclipsePlugin.logWarning(
-                        Messages.getString("MercurialStatusCache.BatchSizeForStatusCommandNotCorrect."), e); //$NON-NLS-1$
+                MercurialEclipsePlugin
+                        .logWarning(
+                                Messages
+                                        .getString("MercurialStatusCache.BatchSizeForStatusCommandNotCorrect."), e); //$NON-NLS-1$
             }
         }
         List<IResource> currentBatch = new ArrayList<IResource>();
