@@ -11,7 +11,9 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
@@ -501,11 +503,30 @@ public class ResourceDecorator extends LabelProvider implements
     @SuppressWarnings("unchecked")
     public void update(Observable o, Object updatedObject) {
         if (updatedObject instanceof Set) {
-            Set changed = (Set) updatedObject;
-            LabelProviderChangedEvent event = new LabelProviderChangedEvent(
-                    this, changed.toArray());
-            fireLabelProviderChanged(event);
+            Set<IResource> changed = (Set<IResource>) updatedObject;
+            List<IResource> notification = new ArrayList<IResource>(1000);
+            int i = 0;
+            for (IResource resource : changed) {
+                if (i % 1000 == 0 && notification.size() > 0) {
+                    fireNotification(notification);
+                }
+                notification.add(resource);
+                i++;
+            }
+            if (notification.size() > 0) {
+                fireNotification(notification);
+            }
         }
+    }
+
+    /**
+     * @param notification
+     */
+    private void fireNotification(List<IResource> notification) {
+        LabelProviderChangedEvent event = new LabelProviderChangedEvent(this,
+                notification.toArray());
+        fireLabelProviderChanged(event);
+        notification.clear();
     }
 
 }
