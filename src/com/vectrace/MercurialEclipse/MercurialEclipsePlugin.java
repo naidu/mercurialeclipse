@@ -79,7 +79,21 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             super.start(context);
             DefaultConfiguration cfg = new DefaultConfiguration();
             HgClients.initialize(cfg, cfg, cfg);
-            checkHgInstallation();
+            new SafeWorkspaceJob(
+                    "Checking if Mercurial is correctly installed...") {
+                /*
+                 * (non-Javadoc)
+                 * 
+                 * @see
+                 * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org
+                 * .eclipse.core.runtime.IProgressMonitor)
+                 */
+                @Override
+                protected IStatus runSafe(IProgressMonitor monitor) {
+                    checkHgInstallation();
+                    return super.runSafe(monitor);
+                }
+            }.schedule(1000);
         } catch (Exception e) {
             this.hgUsable = false;
             logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
