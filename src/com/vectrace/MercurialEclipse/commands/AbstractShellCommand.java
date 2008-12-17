@@ -25,7 +25,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 
+import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
@@ -112,7 +115,7 @@ public abstract class AbstractShellCommand {
         int timeout = DEFAULT_TIMEOUT;
         if (this.timeoutConstant != null) {
             timeout = HgClients.getTimeOut(this.timeoutConstant);
-            
+
         }
         return executeToBytes(timeout);
     }
@@ -138,12 +141,13 @@ public abstract class AbstractShellCommand {
         return null;
     }
 
-    public boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
-            throws HgException {
+    public boolean executeToStream(OutputStream output, int timeout,
+            boolean expectPositiveReturnValue) throws HgException {
         try {
             List<String> cmd = getCommands();
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-            cmdString = cmdString.substring(0, cmdString.length() - 1);
+            final String commandInvoked = cmdString.substring(0, cmdString
+                    .length() - 1);
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
 
@@ -161,31 +165,57 @@ public abstract class AbstractShellCommand {
             process = builder.start();
             consumer = new InputStreamConsumer(process.getInputStream(), output);
             consumer.start();
-            getConsole().commandInvoked(cmdString);
+            new SafeWorkspaceJob("Writing to console...") {
+                /*
+                 * (non-Javadoc)
+                 * 
+                 * @see
+                 * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org
+                 * .eclipse.core.runtime.IProgressMonitor)
+                 */
+                @Override
+                protected IStatus runSafe(IProgressMonitor monitor) {
+                    getConsole().commandInvoked(commandInvoked);
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
+
             consumer.join(timeout); // 30 seconds timeout
-            String msg = getMessage(output);
+            final String msg = getMessage(output);
             if (!consumer.isAlive()) {
-                int exitCode = process.waitFor();
+                final int exitCode = process.waitFor();
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    getConsole().commandCompleted(0, msg,
-                            null);
-                    if (isDebugMode()) {
-                        getConsole().printMessage(msg, null);
-                    }
+                    new SafeWorkspaceJob("Writing to console...") {
+                        @Override
+                        public IStatus runSafe(IProgressMonitor monitor) {
+                            getConsole().commandCompleted(0, msg, null);
+                            if (isDebugMode()) {
+                                getConsole().printMessage(msg, null);
+                            }
+                            return super.runSafe(monitor);
+                        }
+                    }.schedule();
                     return true;
                 }
 
                 // exit code > 0
-                HgException hgex = new HgException(
+                final HgException hgex = new HgException(
                         "Process error, return code: " + exitCode //$NON-NLS-1$
                                 + ", message: " + getMessage(output)); //$NON-NLS-1$
 
                 // exit code == 1 usually isn't fatal.
-                getConsole().commandCompleted(exitCode, msg, hgex);
+                new SafeWorkspaceJob("Writing to console...") {
+                    @Override
+                    public IStatus runSafe(IProgressMonitor monitor) {
+                        getConsole().commandCompleted(exitCode, msg, hgex);
+                        return super.runSafe(monitor);
+                    }
+                }.schedule();
+                
                 throw hgex;
             }
-            //command timeout
+            // command timeout
             HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
             if (msg != null) {
                 getConsole().printError(msg, hgEx);
@@ -226,7 +256,8 @@ public abstract class AbstractShellCommand {
         return ""; //$NON-NLS-1$
     }
 
-    public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
+    public boolean executeToFile(File file, int timeout,
+            boolean expectPositiveReturnValue) throws HgException {
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(file, false);
