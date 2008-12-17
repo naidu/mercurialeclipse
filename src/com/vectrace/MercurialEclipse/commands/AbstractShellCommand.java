@@ -212,16 +212,22 @@ public abstract class AbstractShellCommand {
                         return super.runSafe(monitor);
                     }
                 }.schedule();
-                
+
                 throw hgex;
             }
             // command timeout
-            HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
-            if (msg != null) {
-                getConsole().printError(msg, hgEx);
-            } else {
-                getConsole().printError(hgEx.getMessage(), hgEx);
-            }
+            final HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
+            new SafeWorkspaceJob("Writing to console...") {
+                @Override
+                public IStatus runSafe(IProgressMonitor monitor) {
+                    if (msg != null) {
+                        getConsole().printError(msg, hgEx);
+                    } else {
+                        getConsole().printError(hgEx.getMessage(), hgEx);
+                    }
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
             throw hgEx;
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
