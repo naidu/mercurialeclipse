@@ -95,7 +95,7 @@ public class HgResolveClient extends AbstractClient {
             // we use an non-existent UI Merge tool, so no tool is started. We
             // need this option, though, as we still want the Mercurial merge to
             // take place.
-            command.addOptions("--config", "ui.merge=MercurialEclipse"); //$NON-NLS-1$ //$NON-NLS-2$
+            command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
