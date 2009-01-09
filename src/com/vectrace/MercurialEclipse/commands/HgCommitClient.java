@@ -39,6 +39,9 @@ public class HgCommitClient {
         }
         for (HgRoot root : resourcesByRoot.keySet()) {
             if (monitor != null) {
+                if (monitor.isCanceled()) {
+                    break;
+                }
                 monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
             }
             List<IResource> files = resourcesByRoot.get(root);

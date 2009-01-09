@@ -159,6 +159,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
         for (CommitResource revertResource : resources) {
+            if (monitor.isCanceled()) {
+                break;
+            }
             IResource resource = revertResource.getResource();
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
@@ -174,9 +177,6 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 monitor.worked(1);
             } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);
-            }
-            if (monitor.isCanceled()) {
-                break;
             }
         }
 
