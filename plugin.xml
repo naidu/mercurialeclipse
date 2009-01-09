@@ -34,7 +34,7 @@
    
 	<extension point="org.eclipse.team.ui.configurationWizards">
 	   <wizard
-	        name="Mercurial"
+	        name="MercurialEclipse"
 	        icon="icons/mercurialeclipse.png"
 	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
@@ -935,7 +935,7 @@
       <page class="com.vectrace.MercurialEclipse.preferences.GeneralPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
             category="org.eclipse.team.ui.TeamPreferences"
-            name="Mercurial Eclipse"/>
+            name="MercurialEclipse"/>
       <page class="com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
             category="com.vectrace.MercurialEclipse.prefspage"
