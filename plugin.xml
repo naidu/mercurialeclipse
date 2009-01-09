@@ -65,13 +65,14 @@
 
 	<extension point="org.eclipse.ui.decorators">
 	    <decorator
-	            adaptable="true"
-	            label="%MercurialEclipseDecorations"
-	            state="true"
-	            lightweight= "true"
-	            location= "BOTTOM_RIGHT"
-	            class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
-	            id="com.vectrace.MercurialEclipse.team.ResourceDecorator">
+           adaptable="true"
+           class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
+           icon="icons/mercury_Hg.png"
+           id="com.vectrace.MercurialEclipse.team.ResourceDecorator"
+           label="%MercurialEclipseDecorations"
+           lightweight="true"
+           location="BOTTOM_RIGHT"
+           state="true">
 	         <description>
 	            %labelDecorationsForMercurialEclipse
 	         </description>
@@ -1226,5 +1227,12 @@
         </description>
       </fontDefinition>
 </extension>
+   <extension
+         point="org.eclipse.team.core.ignore">
+      <ignore
+            enabled="true"
+            pattern="*/.hg/*">
+      </ignore>
+   </extension>
    
 </plugin>
