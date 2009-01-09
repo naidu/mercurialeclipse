@@ -122,9 +122,13 @@ public class MercurialStatusCache extends AbstractCache implements
             IResource res = delta.getResource();
             if (res.isAccessible()
                     && !Team.isIgnoredHint(res)
-                    && res.getProject().isAccessible()
-                    && RepositoryProvider.getProvider(res.getProject(),
-                            MercurialTeamProvider.ID) != null) {
+                    && (res.getType() == IResource.ROOT || RepositoryProvider
+                            .getProvider(res.getProject(),
+                                    MercurialTeamProvider.ID) != null)) {
+
+                if (res.getType() == IResource.ROOT) {
+                    return true;
+                }
                 IResource resource = getResource(res);
                 IProject project = resource.getProject();
                 Set<IResource> addSet = added.get(project);
@@ -774,123 +778,118 @@ public class MercurialStatusCache extends AbstractCache implements
         // auto-build triggers another two. how to filter duplicate events?
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             try {
-                // each project gets its own notification
-                for (IResourceDelta delta : event.getDelta()
-                        .getAffectedChildren()) {
-                    
-                    int flags = delta.getFlags();
-                    if ((flags & INTERESTING_CHANGES) != 0) {
-                        continue;
-                    } 
+                IResourceDelta delta = event.getDelta();
+                int flags = delta.getFlags();
+                if ((flags & INTERESTING_CHANGES) != 0) {
+                    return;
+                }
 
-                    final Map<IProject, Set<IResource>> changed = new HashMap<IProject, Set<IResource>>();
-                    final Map<IProject, Set<IResource>> added = new HashMap<IProject, Set<IResource>>();
-                    final Map<IProject, Set<IResource>> removed = new HashMap<IProject, Set<IResource>>();
+                final Map<IProject, Set<IResource>> changed = new HashMap<IProject, Set<IResource>>();
+                final Map<IProject, Set<IResource>> added = new HashMap<IProject, Set<IResource>>();
+                final Map<IProject, Set<IResource>> removed = new HashMap<IProject, Set<IResource>>();
 
-                    IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(
-                            removed, changed, added);
+                IResourceDeltaVisitor visitor = new ResourceDeltaVisitor(
+                        removed, changed, added);
 
-                    // walk tree
-                    delta.accept(visitor);
-                    final IWorkspace workspace = ResourcesPlugin.getWorkspace();
-                    final Set<IProject> changedProjects = new HashSet<IProject>(
-                            changed.keySet());
-                    changedProjects.addAll(added.keySet());
-                    changedProjects.addAll(removed.keySet());
-                    for (final IProject project : changedProjects) {
+                // walk tree
+                delta.accept(visitor);
+                final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+                final Set<IProject> changedProjects = new HashSet<IProject>(
+                        changed.keySet());
+                changedProjects.addAll(added.keySet());
+                changedProjects.addAll(removed.keySet());
+                for (final IProject project : changedProjects) {
 
-                        final IWorkspaceRunnable job = new IWorkspaceRunnable() {
+                    final IWorkspaceRunnable job = new IWorkspaceRunnable() {
 
-                            public void run(IProgressMonitor monitor)
-                                    throws CoreException {
+                        public void run(IProgressMonitor monitor)
+                                throws CoreException {
 
-                                // now process gathered changes (they are in the
-                                // lists)
-                                try {
-                                    Set<IResource> addSet = added.get(project);
-                                    Set<IResource> removedSet = removed
-                                            .get(project);
-                                    Set<IResource> changedSet = changed
-                                            .get(project);
-                                    Set<IResource> resources = new HashSet<IResource>();
-                                    resources.addAll(changedSet);
-                                    resources.addAll(addSet);
-                                    resources.addAll(removedSet);
+                            // now process gathered changes (they are in the
+                            // lists)
+                            try {
+                                Set<IResource> addSet = added.get(project);
+                                Set<IResource> removedSet = removed
+                                        .get(project);
+                                Set<IResource> changedSet = changed
+                                        .get(project);
+                                Set<IResource> resources = new HashSet<IResource>();
+                                resources.addAll(changedSet);
+                                resources.addAll(addSet);
+                                resources.addAll(removedSet);
 
-                                    if (changedSet.size() + addSet.size()
-                                            + removedSet.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
-                                        monitor
-                                                .beginTask(
-                                                        Messages
-                                                                .getString("MercurialStatusCache.RefreshingProjects"), //$NON-NLS-1$
-                                                        2);
-                                        monitor
-                                                .subTask(Messages
-                                                        .getString("MercurialStatusCache.RefreshingProject") //$NON-NLS-1$
-                                                        + project.getName()
-                                                        + Messages
-                                                                .getString("MercurialStatusCache....")); //$NON-NLS-1$
-                                        refreshStatus(project, monitor);
-                                        monitor.worked(1);
-                                    } else {
-                                        monitor
-                                                .beginTask(
-                                                        Messages
-                                                                .getString("MercurialStatusCache.RefreshingResources..."), 4); //$NON-NLS-1$
-                                        // changed
-                                        monitor
-                                                .subTask(Messages
-                                                        .getString("MercurialStatusCache.RefreshingChangedResources...")); //$NON-NLS-1$
-                                        refreshStatus(changedSet);
-                                        monitor.worked(1);
-
-                                        // added
-                                        monitor
-                                                .subTask(Messages
-                                                        .getString("MercurialStatusCache.RefreshingAddedResources...")); //$NON-NLS-1$
-                                        refreshStatus(addSet);
-                                        monitor.worked(1);
-
-                                        // removed not used right now
-                                        // refreshStatus(removed);
-                                    }
-                                    // notify observers
+                                if (changedSet.size() + addSet.size()
+                                        + removedSet.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
+                                    monitor
+                                            .beginTask(
+                                                    Messages
+                                                            .getString("MercurialStatusCache.RefreshingProjects"), //$NON-NLS-1$
+                                                    2);
                                     monitor
                                             .subTask(Messages
-                                                    .getString("MercurialStatusCache.AddingResourcesForDecoratorUpdate...")); //$NON-NLS-1$
+                                                    .getString("MercurialStatusCache.RefreshingProject") //$NON-NLS-1$
+                                                    + project.getName()
+                                                    + Messages
+                                                            .getString("MercurialStatusCache....")); //$NON-NLS-1$
+                                    refreshStatus(project, monitor);
                                     monitor.worked(1);
+                                } else {
+                                    monitor
+                                            .beginTask(
+                                                    Messages
+                                                            .getString("MercurialStatusCache.RefreshingResources..."), 4); //$NON-NLS-1$
+                                    // changed
                                     monitor
                                             .subTask(Messages
-                                                    .getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
-                                    notifyChanged(resources);
+                                                    .getString("MercurialStatusCache.RefreshingChangedResources...")); //$NON-NLS-1$
+                                    refreshStatus(changedSet);
                                     monitor.worked(1);
-                                } finally {
-                                    monitor.done();
+
+                                    // added
+                                    monitor
+                                            .subTask(Messages
+                                                    .getString("MercurialStatusCache.RefreshingAddedResources...")); //$NON-NLS-1$
+                                    refreshStatus(addSet);
+                                    monitor.worked(1);
+
+                                    // removed not used right now
+                                    // refreshStatus(removed);
                                 }
+                                // notify observers
+                                monitor
+                                        .subTask(Messages
+                                                .getString("MercurialStatusCache.AddingResourcesForDecoratorUpdate...")); //$NON-NLS-1$
+                                monitor.worked(1);
+                                monitor
+                                        .subTask(Messages
+                                                .getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
+                                notifyChanged(resources);
+                                monitor.worked(1);
+                            } finally {
+                                monitor.done();
                             }
-                        };
-                        final ISchedulingRule rule = workspace.getRuleFactory()
-                                .modifyRule(project);
-                        SafeWorkspaceJob wsJob = new SafeWorkspaceJob(
-                                Messages
-                                        .getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
-                            @Override
-                            protected IStatus runSafe(IProgressMonitor monitor) {
-                                try {
-                                    workspace.run(job, rule,
-                                            IWorkspace.AVOID_UPDATE, monitor);
-                                } catch (CoreException e) {
-                                    MercurialEclipsePlugin.logError(e);
-                                    return new Status(IStatus.ERROR,
-                                            MercurialEclipsePlugin.ID, e
-                                                    .getLocalizedMessage(), e);
-                                }
-                                return super.runSafe(monitor);
+                        }
+                    };
+                    final ISchedulingRule rule = workspace.getRuleFactory()
+                            .modifyRule(project);
+                    SafeWorkspaceJob wsJob = new SafeWorkspaceJob(Messages
+                            .getString("MercurialStatusCache.RefreshStatus...")) { //$NON-NLS-1$
+                        @Override
+                        protected IStatus runSafe(IProgressMonitor monitor) {
+                            try {
+                                workspace.run(job, rule,
+                                        IWorkspace.AVOID_UPDATE, monitor);
+                            } catch (CoreException e) {
+                                MercurialEclipsePlugin.logError(e);
+                                return new Status(IStatus.ERROR,
+                                        MercurialEclipsePlugin.ID, e
+                                                .getLocalizedMessage(), e);
                             }
-                        };
-                        wsJob.setRule(rule);
-                        wsJob.schedule(200);
-                    }
+                            return super.runSafe(monitor);
+                        }
+                    };
+                    wsJob.setRule(rule);
+                    wsJob.schedule(200);
                 }
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
