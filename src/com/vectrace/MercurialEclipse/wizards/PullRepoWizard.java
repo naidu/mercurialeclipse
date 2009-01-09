@@ -49,7 +49,6 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 public class PullRepoWizard extends HgWizard {
 
@@ -205,9 +204,9 @@ public class PullRepoWizard extends HgWizard {
                         resource.getProject());
                 monitor.worked(1);
                 monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.status")); //$NON-NLS-1$
-                new RefreshStatusJob(
-                        Messages.getString("PullRepoWizard.refreshJob.title"), resource.getProject()).schedule(); //$NON-NLS-1$
-                monitor.worked(1);
+                // new RefreshStatusJob(
+                //                        Messages.getString("PullRepoWizard.refreshJob.title"), resource.getProject()).schedule(); //$NON-NLS-1$
+                // monitor.worked(1);
                 saveRepo(monitor);
                 return r;
 
