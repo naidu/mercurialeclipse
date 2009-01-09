@@ -67,7 +67,7 @@
 	    <decorator
 	            adaptable="true"
 	            label="%MercurialEclipseDecorations"
-	            state="false"
+	            state="true"
 	            lightweight= "true"
 	            location= "BOTTOM_RIGHT"
 	            class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
