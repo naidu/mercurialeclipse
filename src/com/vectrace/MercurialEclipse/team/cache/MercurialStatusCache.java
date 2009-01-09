@@ -230,6 +230,11 @@ public class MercurialStatusCache extends AbstractCache implements
     public static final char CHAR_REMOVED = 'R';
     public static final char CHAR_DELETED = '!';
 
+    protected int INTERESTING_CHANGES = IResourceDelta.CONTENT
+            | IResourceDelta.MOVED_FROM | IResourceDelta.MOVED_TO
+            | IResourceDelta.OPEN | IResourceDelta.REPLACED
+            | IResourceDelta.TYPE;
+
     private static MercurialStatusCache instance;
 
     /** Used to store the last known status of a resource */
@@ -769,8 +774,14 @@ public class MercurialStatusCache extends AbstractCache implements
         // auto-build triggers another two. how to filter duplicate events?
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             try {
+                // each project gets its own notification
                 for (IResourceDelta delta : event.getDelta()
                         .getAffectedChildren()) {
+                    
+                    int flags = delta.getFlags();
+                    if ((flags & INTERESTING_CHANGES) != 0) {
+                        continue;
+                    } 
 
                     final Map<IProject, Set<IResource>> changed = new HashMap<IProject, Set<IResource>>();
                     final Map<IProject, Set<IResource>> added = new HashMap<IProject, Set<IResource>>();
