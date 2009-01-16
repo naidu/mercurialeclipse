@@ -120,6 +120,12 @@ public class MercurialStatusCache extends AbstractCache implements
 
         public boolean visit(IResourceDelta delta) throws CoreException {
             IResource res = delta.getResource();
+            // System.out.println("[ME-RV] Flags: "
+            // + Integer.toHexString(delta.getFlags()));
+            // System.out.println("[ME-RV] Kind: "
+            // + Integer.toHexString(delta.getKind()));
+            // System.out.println("[ME-RV] Resource: " + res.getFullPath());
+
             if (res.isAccessible()
                     && !Team.isIgnoredHint(res)
                     && (res.getType() == IResource.ROOT || RepositoryProvider
@@ -129,50 +135,57 @@ public class MercurialStatusCache extends AbstractCache implements
                 if (res.getType() == IResource.ROOT) {
                     return true;
                 }
+
                 IResource resource = getResource(res);
                 IProject project = resource.getProject();
                 Set<IResource> addSet = added.get(project);
                 if (addSet == null) {
                     addSet = new HashSet<IResource>();
-                    added.put(project, addSet);
                 }
 
                 Set<IResource> removeSet = removed.get(project);
                 if (removeSet == null) {
                     removeSet = new HashSet<IResource>();
-                    removed.put(project, removeSet);
                 }
 
                 Set<IResource> changeSet = changed.get(project);
                 if (changeSet == null) {
                     changeSet = new HashSet<IResource>();
-                    changed.put(project, changeSet);
                 }
-
-                switch (delta.getKind()) {
-                case IResourceDelta.ADDED:
-                    if (!res.isTeamPrivateMember() && !res.isDerived()
-                            && res.getType() == IResource.FILE) {
+                if (!res.isTeamPrivateMember() && !res.isDerived()
+                        && res.getType() == IResource.FILE) {
+                    int flag = delta.getFlags() & INTERESTING_CHANGES;
+                    // System.out.println("[ME-RV] Interesting? Result: "
+                    // + Integer.toHexString(flag));
+                    if (flag == 0) {
+                        // System.out.println("[ME-RV] Not interesting: " + flag
+                        // + " (returning with false)");
+                        return false;
+                    }
+                    switch (delta.getKind()) {
+                    case IResourceDelta.ADDED:
                         addSet.add(resource);
+                        added.put(project, addSet);
+                        break;
+                    case IResourceDelta.CHANGED:
+                        if (isSupervised(res)) {
+                            changeSet.add(resource);
+                            changed.put(project, changeSet);
+                        }
+                        break;
+                    case IResourceDelta.REMOVED:
+                        if (isSupervised(res)) {
+                            removeSet.add(getResource(res));
+                            removed.put(project, removeSet);
+                        }
+                        break;
                     }
-                    break;
-                case IResourceDelta.CHANGED:
-                    if (!res.isTeamPrivateMember() && !res.isDerived()
-                            && isSupervised(res)
-                            && res.getType() == IResource.FILE) {
-                        changeSet.add(resource);
-                    }
-                    break;
-                case IResourceDelta.REMOVED:
-                    if (!res.isTeamPrivateMember() && !res.isDerived()
-                            && isSupervised(res)
-                            && res.getType() == IResource.FILE) {
-                        removeSet.add(getResource(res));
-                    }
-                    break;
                 }
+                // System.out
+                // .println("[ME-RV] Descending to next level (returning with true)");
                 return true;
             }
+            // System.out.println("[ME-RV] Not descending (returning with false)");
             return false;
         }
     }
@@ -779,10 +792,6 @@ public class MercurialStatusCache extends AbstractCache implements
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             try {
                 IResourceDelta delta = event.getDelta();
-                int flags = delta.getFlags();
-                if ((flags & INTERESTING_CHANGES) != 0) {
-                    return;
-                }
 
                 final Map<IProject, Set<IResource>> changed = new HashMap<IProject, Set<IResource>>();
                 final Map<IProject, Set<IResource>> added = new HashMap<IProject, Set<IResource>>();
@@ -808,18 +817,23 @@ public class MercurialStatusCache extends AbstractCache implements
                             // now process gathered changes (they are in the
                             // lists)
                             try {
-                                Set<IResource> addSet = added.get(project);
+                                Set<IResource> addedSet = added.get(project);
                                 Set<IResource> removedSet = removed
                                         .get(project);
                                 Set<IResource> changedSet = changed
                                         .get(project);
                                 Set<IResource> resources = new HashSet<IResource>();
-                                resources.addAll(changedSet);
-                                resources.addAll(addSet);
-                                resources.addAll(removedSet);
+                                if (changedSet != null) {
+                                    resources.addAll(changedSet);
+                                }
+                                if (addedSet != null) {
+                                    resources.addAll(addedSet);
+                                }
+                                if (removedSet != null) {
+                                    resources.addAll(removedSet);
+                                }
 
-                                if (changedSet.size() + addSet.size()
-                                        + removedSet.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
+                                if (resources.size() > NUM_CHANGED_FOR_COMPLETE_STATUS) {
                                     monitor
                                             .beginTask(
                                                     Messages
@@ -842,14 +856,19 @@ public class MercurialStatusCache extends AbstractCache implements
                                     monitor
                                             .subTask(Messages
                                                     .getString("MercurialStatusCache.RefreshingChangedResources...")); //$NON-NLS-1$
-                                    refreshStatus(changedSet);
+                                    if (changedSet != null
+                                            && changedSet.size() > 0) {
+                                        refreshStatus(changedSet);
+                                    }
                                     monitor.worked(1);
 
                                     // added
                                     monitor
                                             .subTask(Messages
                                                     .getString("MercurialStatusCache.RefreshingAddedResources...")); //$NON-NLS-1$
-                                    refreshStatus(addSet);
+                                    if (addedSet != null && addedSet.size() > 0) {
+                                        refreshStatus(addedSet);
+                                    }
                                     monitor.worked(1);
 
                                     // removed not used right now
@@ -906,6 +925,9 @@ public class MercurialStatusCache extends AbstractCache implements
      */
     private void refreshStatus(final Set<IResource> resources)
             throws HgException {
+        if (resources == null) {
+            return;
+        }
         // TODO: group batches by repo root
         String pref = HgClients.getPreference(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
