@@ -122,22 +122,30 @@ public class ImportOptionsPage extends HgWizardPage implements Listener {
 
     ArrayList<String> getOptions() {
         ArrayList<String> list = new ArrayList<String>();
-        if (chkStrip.getSelection())
+        if (chkStrip.getSelection()) {
             list.add("-p " + txtStrip.getText()); //$NON-NLS-1$
-        if (chkForce.getSelection())
+        }
+        if (chkForce.getSelection()) {
             list.add("-f"); //$NON-NLS-1$
-        if (chkBase.getSelection())
+        }
+        if (chkBase.getSelection()) {
             list.add("-b " + txtBase.getText()); //$NON-NLS-1$
-        if (chkNoCommit.getSelection())
+        }
+        if (chkNoCommit.getSelection()) {
             list.add("--no-commit"); //$NON-NLS-1$
-        if (chkExact.getSelection())
+        }
+        if (chkExact.getSelection()) {
             list.add("--exact"); //$NON-NLS-1$
-        if (chkUser.getSelection())
-            list.add("-u \"" + txtUser.getText() + '\"'); //$NON-NLS-1$
-        if (chkDate.getSelection())
+        }
+        if (chkUser.getSelection()) {
+            list.add("-u " + txtUser.getText()); //$NON-NLS-1$
+        }
+        if (chkDate.getSelection()) {
             list.add("-d \"" + txtDate.getText() + '\"'); //$NON-NLS-1$
-        if (chkComments.getSelection())
-            list.add("-m \"" + txtComments.getDocument().get() + '\"'); //$NON-NLS-1$
+        }
+        if (chkComments.getSelection()) {
+            list.add("-m " + txtComments.getDocument().get()); //$NON-NLS-1$
+        }
         return list;
     }
 
