@@ -123,7 +123,9 @@ public class HgServeClient {
         File pidFile = File.createTempFile("hgserve_" + hgRoot.getName(), //$NON-NLS-1$
                 ".pidfile"); //$NON-NLS-1$
         pidFile.deleteOnExit();
-        command.addOptions("--port", String.valueOf(port)); //$NON-NLS-1$
+        if(port!=8000){
+            command.addOptions("--port", String.valueOf(port)); //$NON-NLS-1$
+        }
         if (prefixPath != null && prefixPath.length() > 0) {
             command.addOptions("--prefix", prefixPath); //$NON-NLS-1$
         }
