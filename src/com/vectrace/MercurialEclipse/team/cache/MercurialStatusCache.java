@@ -155,20 +155,16 @@ public class MercurialStatusCache extends AbstractCache implements
                 if (!res.isTeamPrivateMember() && !res.isDerived()
                         && res.getType() == IResource.FILE) {
                     int flag = delta.getFlags() & INTERESTING_CHANGES;
-                    // System.out.println("[ME-RV] Interesting? Result: "
+                    // System.out.println("[ME-RV] " + res.getFullPath()
+                    // + " interesting? Result: "
                     // + Integer.toHexString(flag));
-                    if (flag == 0) {
-                        // System.out.println("[ME-RV] Not interesting: " + flag
-                        // + " (returning with false)");
-                        return false;
-                    }
                     switch (delta.getKind()) {
                     case IResourceDelta.ADDED:
                         addSet.add(resource);
                         added.put(project, addSet);
                         break;
                     case IResourceDelta.CHANGED:
-                        if (isSupervised(res)) {
+                        if (isSupervised(res) && flag != 0) {
                             changeSet.add(resource);
                             changed.put(project, changeSet);
                         }
