@@ -260,7 +260,7 @@ public class MercurialStatusCache extends AbstractCache implements
     private static final Object DUMMY = new Object();
 
     /** Used to store the last known status of a resource */
-    private static Map<IPath, BitSet> statusMap = new HashMap<IPath, BitSet>();
+    private final Map<IPath, BitSet> statusMap = new ConcurrentHashMap<IPath, BitSet>();
 
     /** Used to store which projects have already been parsed */
     private final Map<IProject, Object> knownStatus = new ConcurrentHashMap<IProject, Object>();
