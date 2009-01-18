@@ -224,6 +224,14 @@ public class MercurialStatusCache extends AbstractCache implements
         }
 
     }
+    
+    /*
+     * Initialization On Demand Holder idiom, thread-safe and instance will not be created
+     * until getInstance is called in the outer class.
+     */
+    private static final class MercurialStatusCacheHolder {
+        public static final MercurialStatusCache instance = new MercurialStatusCache();
+    }
 
     public final static int BIT_IGNORE = 0;
     public final static int BIT_CLEAN = 1;
@@ -248,8 +256,6 @@ public class MercurialStatusCache extends AbstractCache implements
             | IResourceDelta.OPEN | IResourceDelta.REPLACED
             | IResourceDelta.TYPE;
 
-    private static MercurialStatusCache instance;
-
     /** Used to store the last known status of a resource */
     private static Map<IPath, BitSet> statusMap = new HashMap<IPath, BitSet>();
 
@@ -265,11 +271,8 @@ public class MercurialStatusCache extends AbstractCache implements
         // new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }
 
-    public static MercurialStatusCache getInstance() {
-        if (instance == null) {
-            instance = new MercurialStatusCache();
-        }
-        return instance;
+    public static final MercurialStatusCache getInstance() {
+        return MercurialStatusCacheHolder.instance;
     }
 
     /**
