@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IContainer;
@@ -255,19 +256,20 @@ public class MercurialStatusCache extends AbstractCache implements
             | IResourceDelta.MOVED_FROM | IResourceDelta.MOVED_TO
             | IResourceDelta.OPEN | IResourceDelta.REPLACED
             | IResourceDelta.TYPE;
+    
+    private static final Object DUMMY = new Object();
 
     /** Used to store the last known status of a resource */
     private static Map<IPath, BitSet> statusMap = new HashMap<IPath, BitSet>();
 
     /** Used to store which projects have already been parsed */
-    private static Set<IProject> knownStatus;
-
+    private final Map<IProject, Object> knownStatus = new ConcurrentHashMap<IProject, Object>();
+    
     /* Access to this map must be protected with a synchronized lock itself */ 
     private final Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
 
     private MercurialStatusCache() {
         AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
-        knownStatus = new HashSet<IProject>();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
         // new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }
@@ -337,7 +339,7 @@ public class MercurialStatusCache extends AbstractCache implements
         ReentrantLock lock = getLock(project);
         try {
             lock.lock();
-            return knownStatus.contains(project);
+            return knownStatus.containsKey(project);
         } finally {
             lock.unlock();
         }
@@ -567,7 +569,7 @@ public class MercurialStatusCache extends AbstractCache implements
     private Set<IResource> parseStatus(File root, IResource res, String output)
             throws HgException {
         if (res.getType() == IResource.PROJECT) {
-            knownStatus.add(res.getProject());
+            knownStatus.put(res.getProject(), DUMMY);
         }
         // we need the project for performance reasons - gotta hand it to
         // addToProjectResources
@@ -779,7 +781,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @return an IProject[] of the projects
      */
     public IProject[] getAllManagedProjects() {
-        return knownStatus.toArray(new IProject[knownStatus.size()]);
+        return knownStatus.keySet().toArray(new IProject[knownStatus.size()]);
     }
 
     /*
