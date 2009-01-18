@@ -17,7 +17,6 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -60,7 +59,6 @@ import com.vectrace.MercurialEclipse.commands.HgIMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -187,13 +185,6 @@ public class MercurialStatusCache extends AbstractCache implements
         }
     }
 
-    private final class ChangeSetIndexComparator implements
-            Comparator<ChangeSet> {
-        public int compare(ChangeSet arg0, ChangeSet arg1) {
-            return arg0.getChangesetIndex() - arg1.getChangesetIndex();
-        }
-    }
-
     private final class MemberStatusVisitor implements IResourceVisitor {
 
         private BitSet bitSet;
@@ -269,7 +260,6 @@ public class MercurialStatusCache extends AbstractCache implements
     private final Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
 
     private MercurialStatusCache() {
-        AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
         // new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }

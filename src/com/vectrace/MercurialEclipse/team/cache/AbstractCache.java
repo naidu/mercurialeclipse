@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -45,7 +44,6 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public abstract class AbstractCache extends Observable {
 
     protected final static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
-    protected static Comparator<ChangeSet> changeSetIndexComparator;
     protected final static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
 
     /**
