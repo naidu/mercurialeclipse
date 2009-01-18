@@ -262,7 +262,8 @@ public class MercurialStatusCache extends AbstractCache implements
     /** Used to store which projects have already been parsed */
     private static Set<IProject> knownStatus;
 
-    private static Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
+    /* Access to this map must be protected with a synchronized lock itself */ 
+    private final Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
 
     private MercurialStatusCache() {
         AbstractCache.changeSetIndexComparator = new ChangeSetIndexComparator();
@@ -287,7 +288,9 @@ public class MercurialStatusCache extends AbstractCache implements
         statusMap.clear();
         knownStatus.clear();
         projectResources.clear();
-        locks.clear();
+        synchronized (locks) {
+            locks.clear();
+        }
         getInstance().setChanged();
         getInstance().notifyObservers(knownStatus);
     }
@@ -311,13 +314,15 @@ public class MercurialStatusCache extends AbstractCache implements
         // } else {
         // hgRoot = new Path(resource.getProject().getLocation().toOSString());
         // }
-        ReentrantLock lock = locks.get(resource.getProject());
-        if (lock == null) {
-            lock = new ReentrantLock();
-            locks.put(resource.getProject(), lock);
+        
+        synchronized (locks) {
+            ReentrantLock lock = locks.get(resource.getProject());
+            if (lock == null) {
+                lock = new ReentrantLock();
+                locks.put(resource.getProject(), lock);
+            }
+            return lock;
         }
-        return lock;
-
     }
 
     /**
