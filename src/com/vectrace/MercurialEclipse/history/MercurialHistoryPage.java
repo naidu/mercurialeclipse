@@ -284,7 +284,7 @@ public class MercurialHistoryPage extends HistoryPage {
     
     private void copyToClipboard() {
         IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
-        Iterator iterator = selection.iterator();
+        Iterator<?> iterator = selection.iterator();
         StringBuilder text = new StringBuilder();
         for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
             text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
