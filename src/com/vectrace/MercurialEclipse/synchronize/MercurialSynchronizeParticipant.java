@@ -72,9 +72,7 @@ public class MercurialSynchronizeParticipant extends
         super.saveState(memento);
         IMemento myMemento = memento
                 .createChild(MercurialSynchronizeParticipant.class.getName());
-        myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getUri()
-                .toString());
-        
+        myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getSaveString());
     }
 
     /*
