@@ -22,7 +22,8 @@ public class HgAddClient {
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
-        for (HgRoot root : resourcesByRoot.keySet()) {
+        for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+            HgRoot root = mapEntry.getKey();
             if (monitor != null) {
                 monitor.subTask(Messages.getString("HgAddClient.addingResourcesFrom") + root.getName()); //$NON-NLS-1$
             }
@@ -33,7 +34,7 @@ public class HgAddClient {
                 AbstractShellCommand command = new HgCommand("add", root, //$NON-NLS-1$
                         true);
                 command.setUsePreferenceTimeout(MercurialPreferenceConstants.ADD_TIMEOUT);
-                command.addFiles(resourcesByRoot.get(root).subList(i,
+                command.addFiles(mapEntry.getValue().subList(i,
                         Math.min(i + delta, size - i)));
                 command.executeToBytes();
             }

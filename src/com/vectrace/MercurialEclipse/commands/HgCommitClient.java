@@ -37,14 +37,15 @@ public class HgCommitClient {
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
-        for (HgRoot root : resourcesByRoot.keySet()) {
+        for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+            HgRoot root = mapEntry.getKey();
             if (monitor != null) {
                 if (monitor.isCanceled()) {
                     break;
                 }
                 monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
             }
-            List<IResource> files = resourcesByRoot.get(root);
+            List<IResource> files = mapEntry.getValue();
             commitRepository(root, files, user, message);
         }
     }

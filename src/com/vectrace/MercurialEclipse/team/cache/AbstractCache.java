@@ -81,10 +81,9 @@ public abstract class AbstractCache extends Observable {
         // add them to cache(s)
         if (resources != null && resources.size() > 0) {
 
-            for (Iterator<IPath> iter = resources.keySet().iterator(); iter
-                    .hasNext();) {
-                IPath path = iter.next();
-                SortedSet<ChangeSet> changes = resources.get(path);
+            for (Map.Entry<IPath, SortedSet<ChangeSet>> mapEntry : resources.entrySet()) {
+                IPath path = mapEntry.getKey();
+                SortedSet<ChangeSet> changes = mapEntry.getValue();
 
                 if (changes != null && changes.size() > 0) {
                     SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();

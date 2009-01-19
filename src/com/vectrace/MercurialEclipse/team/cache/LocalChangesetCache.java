@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -406,10 +405,9 @@ public class LocalChangesetCache extends AbstractCache {
                                 .get(rootPath));
                     }
 
-                    for (Iterator<IPath> iter = revisions.keySet().iterator(); iter
-                            .hasNext();) {
-                        IPath path = iter.next();
-                        SortedSet<ChangeSet> changes = revisions.get(path);
+                    for (Map.Entry<IPath, SortedSet<ChangeSet>> mapEntry : revisions.entrySet()) {
+                        IPath path = mapEntry.getKey();
+                        SortedSet<ChangeSet> changes = mapEntry.getValue();
                         // if changes for resource not in cache, get at least 1
                         // revision
                         if (changes == null

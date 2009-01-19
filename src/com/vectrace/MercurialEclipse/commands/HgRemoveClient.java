@@ -49,7 +49,8 @@ public class HgRemoveClient {
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
-        for (HgRoot root : resourcesByRoot.keySet()) {            
+        for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+            HgRoot root = mapEntry.getKey();
             // if there are too many resources, do several calls
             int size = resources.size();
             int delta = AbstractShellCommand.MAX_PARAMS - 1;
@@ -58,7 +59,7 @@ public class HgRemoveClient {
                         true);
                 command
                         .setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-                command.addFiles(resourcesByRoot.get(root).subList(i,
+                command.addFiles(mapEntry.getValue().subList(i,
                         Math.min(i + delta, size - i)));
                 command.executeToBytes();
             }
