@@ -47,8 +47,6 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.views.console.HgConsole;
-import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
 
 /**
  * Class that offers Utility methods for working with the plug-in.
@@ -468,16 +466,6 @@ public class MercurialUtilities {
             workingDir = null;
         }
         return workingDir;
-    }
-
-    /**
-     * Gets the Mercurial console.
-     * 
-     * @return the MercurialConsole.
-     */
-    public static HgConsole getMercurialConsole() {
-        HgConsole console = HgConsoleFactory.getInstance().getConsole();
-        return console;
     }
 
     private static class LegacyAdaptor extends HgCommand {
