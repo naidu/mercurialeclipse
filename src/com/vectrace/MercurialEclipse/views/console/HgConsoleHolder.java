@@ -33,6 +33,9 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
     
     private HgConsole console;
     
+    private HgConsoleHolder() {
+    }
+    
     public static HgConsoleHolder getInstance() {
         return instance;
     }
