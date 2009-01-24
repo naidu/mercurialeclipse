@@ -23,22 +23,22 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.views.console.HgConsole;
-import com.vectrace.MercurialEclipse.views.console.HgConsoleFactory;
+import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
  * @author Stefan
- * 
  */
 public class DefaultConfiguration implements IConsole, IErrorHandler,
         IConfiguration {
 
-    private HgConsole console;
-
+    private interface WithConsole {
+        public void run(HgConsole console);
+    }
+    
     /**
      * 
      */
     public DefaultConfiguration() {
-        console = HgConsoleFactory.getInstance().getConsole();
     }
 
     /*
@@ -141,20 +141,32 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * com.vectrace.MercurialEclipse.commands.IConsole#commandCompleted(int,
      * java.lang.String, java.lang.Throwable)
      */
-    public void commandCompleted(int exitCode, String message, Throwable error) {
-        int severity = IStatus.OK;
-        switch (exitCode) {
-        case 0:
-            severity = IStatus.OK;
-            break;
-        case 1:
-            severity = IStatus.OK;
-            break;
-        default:
-            severity = IStatus.ERROR;
-        }
-        console.commandCompleted(new Status(severity,
-                MercurialEclipsePlugin.ID, message), error);
+    public void commandCompleted(final int exitCode, final String message, final Throwable error) {
+        run(new WithConsole() {
+            public void run(HgConsole console) {
+                int severity = IStatus.OK;
+                switch (exitCode) {
+                case 0:
+                    severity = IStatus.OK;
+                    break;
+                case 1:
+                    severity = IStatus.OK;
+                    break;
+                default:
+                    severity = IStatus.ERROR;
+                }
+                console.commandCompleted(new Status(severity, MercurialEclipsePlugin.ID,
+                        message), error);
+            }
+        });
+    }
+    
+    private void run(final WithConsole r) {
+        MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
+            public void run() {
+                r.run(HgConsoleHolder.getInstance().getConsole());
+            }
+        });
     }
 
     /*
@@ -164,9 +176,12 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * com.vectrace.MercurialEclipse.commands.IConsole#commandInvoked(java.lang
      * .String)
      */
-    public void commandInvoked(String command) {
-        console.commandInvoked(command);
-
+    public void commandInvoked(final String command) {
+        run(new WithConsole() {
+            public void run(HgConsole console) {
+                console.commandInvoked(command);
+            }
+        });
     }
 
     /*
@@ -176,9 +191,14 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * com.vectrace.MercurialEclipse.commands.IConsole#printError(java.lang.
      * String, java.lang.Throwable)
      */
-    public void printError(String message, Throwable root) {
-        console.errorLineReceived(root.getMessage(), new Status(IStatus.ERROR,
-                MercurialEclipsePlugin.ID, message, root));
+    public void printError(final String message, final Throwable root) {
+        run(new WithConsole() {
+            public void run(HgConsole console) {
+                console.errorLineReceived(root.getMessage(),
+                        new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+                                message, root));
+            }
+        });
     }
 
     /*
@@ -188,9 +208,13 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang
      * .String, java.lang.Throwable)
      */
-    public void printMessage(String message, Throwable root) {
-        console.messageLineReceived(message, new Status(IStatus.INFO,
-                MercurialEclipsePlugin.ID, message, root));
+    public void printMessage(final String message, final Throwable root) {
+        run(new WithConsole() {
+            public void run(HgConsole console) {
+                console.messageLineReceived(message, new Status(IStatus.INFO,
+                        MercurialEclipsePlugin.ID, message, root));
+            }
+        });
     }
 
     /*

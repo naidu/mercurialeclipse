@@ -27,6 +27,6 @@ public class ConsoleRemoveAction extends Action {
 	
 	@Override
     public void run() {
-		HgConsoleFactory.closeConsole();
+		HgConsoleHolder.getInstance().closeConsole();
 	}
 }
