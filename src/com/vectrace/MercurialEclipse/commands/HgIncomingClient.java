@@ -63,7 +63,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             }            
 
             String result = command.executeToString();
-            if (result.contains("no changes found")) { //$NON-NLS-1$
+            if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
                 return null;
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
