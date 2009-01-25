@@ -107,7 +107,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     private static String getResult(HgCommand command) throws HgException {
         try {
             String result = command.executeToString();
-            if (result.contains("no changes found")) { //$NON-NLS-1$
+            if (result.trim().equals("no changes found")) { //$NON-NLS-1$
                 return null;
             }
             return result;
