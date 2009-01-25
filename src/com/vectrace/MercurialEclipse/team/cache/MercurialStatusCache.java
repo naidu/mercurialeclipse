@@ -496,7 +496,7 @@ public class MercurialStatusCache extends AbstractCache implements
                     monitor.worked(1);
                 }
                 statusMap.remove(res.getLocation());
-                String output = HgStatusClient.getStatus(res);
+                String output = HgStatusClient.getStatusWithoutIgnored(res);
                 if (monitor != null) {
                     monitor.worked(1);
                 }
@@ -963,7 +963,7 @@ public class MercurialStatusCache extends AbstractCache implements
             if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
                 File root = AbstractClient.getHgRoot(resource);
-                String output = HgStatusClient.getStatus(resource.getLocation()
+                String output = HgStatusClient.getStatusWithoutIgnored(resource.getLocation()
                         .toFile(), currentBatch);
                 parseStatus(root, resource, output);
                 currentBatch.clear();

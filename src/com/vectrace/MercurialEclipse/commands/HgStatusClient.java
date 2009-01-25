@@ -37,11 +37,11 @@ public class HgStatusClient extends AbstractClient {
         return command.executeToString();
     }
 
-    public static String getStatus(IResource res) throws HgException {
+    public static String getStatusWithoutIgnored(IResource res) throws HgException {
         HgCommand command = new HgCommand("status", getWorkingDirectory(res), //$NON-NLS-1$
                 true);
         // modified, added, removed, deleted, unknown, ignored, clean
-        command.addOptions("-marduic"); //$NON-NLS-1$
+        command.addOptions("-marduc"); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         if (res.getType() == IResource.FILE) {
             command.addOptions(res.getName());
@@ -74,7 +74,8 @@ public class HgStatusClient extends AbstractClient {
     }
     
     public static String getMergeStatus(IResource res) throws HgException {
-        HgCommand command = new HgCommand("id", getWorkingDirectory(res), true); //$NON-NLS-1$
+        HgCommand command = new HgCommand(
+                "identify", getWorkingDirectory(res), true); //$NON-NLS-1$
         // Full global IDs
         command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);        
@@ -93,13 +94,13 @@ public class HgStatusClient extends AbstractClient {
      * @return
      * @throws HgException 
      */
-    public static String getStatus(File file, List<IResource> files)
+    public static String getStatusWithoutIgnored(File file, List<IResource> files)
             throws HgException {
         HgCommand command = new HgCommand("status", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         // modified, added, removed, deleted, unknown, ignored, clean
-        command.addOptions("-marduic"); //$NON-NLS-1$
+        command.addOptions("-marduc"); //$NON-NLS-1$
         command.addFiles(files);
         return command.executeToString();
     }
