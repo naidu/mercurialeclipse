@@ -62,6 +62,9 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     private static IFilePatch[] getOutgoingPatches(IResource res,
             HgRepositoryLocation repository) throws HgException {
         String outgoingPatch = getOutgoingPatch(res, repository);
+        if (outgoingPatch == null) {
+            return new IFilePatch[0];
+        }
         Matcher matcher = DIFF_START_PATTERN.matcher(outgoingPatch);
         if (matcher.find()) {
             final String strippedPatch = outgoingPatch.substring(matcher.start(),
