@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2006-2009 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -13,7 +13,6 @@
  *     Bastian Doetsch           - Code reformatting to code style and refreshes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -25,10 +24,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.actions.StatusContainerAction;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgRenameClient;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+
 
 /**
  * @author Peter Hunnisett <peter_hge at softwarebalm dot com>
@@ -42,11 +41,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
      *          control.
      */
     private boolean isInMercurialRepo(IFile file, IProgressMonitor monitor) {
-        IResource[] fileArray = { file };
-        StatusContainerAction statusAction = new StatusContainerAction(null,
-                fileArray);
-
-        if (MercurialUtilities.hgIsTeamProviderFor(file, false) != true) {
+        if (!MercurialUtilities.hgIsTeamProviderFor(file, false)) {
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
             return false;
@@ -54,15 +49,6 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 
         try {
             if (!MercurialStatusCache.getInstance().isSupervised(file)) {
-                return false;
-            }
-
-            statusAction.run(monitor);
-            final String result = statusAction.getResult();
-            if (result == null) {
-                return false;
-            }
-            if ((result.length() != 0) && result.startsWith("?")) { //$NON-NLS-1$
                 return false;
             }
         } catch (Exception e) {
@@ -118,7 +104,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
          * system and eclipse.
          */
 
-        if (!isInMercurialRepo(file, monitor)) {
+        if (!isInMercurialRepo(file, monitor) || file.isDerived()) {
             return false;
         }
 
@@ -162,9 +148,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
         // force flag provided in
         // updateFlags.
         try {
-            IResource parent = resource.getParent();
             HgRemoveClient.removeResource(resource, monitor);
-            MercurialStatusCache.getInstance().refreshStatus(parent, monitor);
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
             return true;
@@ -176,9 +160,7 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
     public boolean deleteProject(IResourceTree tree, IProject project,
             int updateFlags, IProgressMonitor monitor) {
         if ((updateFlags & IResource.ALWAYS_DELETE_PROJECT_CONTENT) != 0) {
-            // TODO: Need to delete the .hg directory...but how to?
             IFolder folder = project.getFolder(".hg"); //$NON-NLS-1$
-
             try {
                 folder.delete(updateFlags, monitor);
             } catch (CoreException e) {
@@ -187,8 +169,6 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
             }
         }
 
-        // TODO: Would be nice to check for any modification and confirm if a
-        // sync is desired first.
         return false;
     }
 
