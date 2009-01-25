@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.eclipse.compare.patch.IFilePatch;
+
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
@@ -44,6 +46,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private Direction direction;
     private String summary;
     private File hgRoot;
+    private IFilePatch[] patches;
 
     /**
      * This class is getting too tangled up with everything else, has a a large
@@ -119,6 +122,11 @@ public class ChangeSet implements Comparable<ChangeSet> {
         public Builder nodeShort(String nodeShort) {
             this.cs.nodeShort = nodeShort;
             return this;
+        }
+        
+
+        public void patches(IFilePatch[] patches) {
+            this.cs.patches = patches;
         }
 
         public ChangeSet build() {
@@ -327,5 +335,12 @@ public class ChangeSet implements Comparable<ChangeSet> {
      */
     public File getHgRoot() {
         return hgRoot;
+    }
+    
+    /**
+     * @return the patch
+     */
+    public IFilePatch[] getPatches() {
+        return patches;
     }
 }

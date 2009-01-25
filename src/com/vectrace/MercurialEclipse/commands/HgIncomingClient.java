@@ -6,6 +6,7 @@ import java.net.URI;
 import java.util.Map;
 import java.util.SortedSet;
 
+import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
@@ -67,7 +68,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
                     res, result, true,
-                    Direction.INCOMING, repository, bundleFile);
+                    Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
             return revisions;
         } catch (HgException hg) {
             if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
