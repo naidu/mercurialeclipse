@@ -249,23 +249,11 @@ public class IStorageMercurialRevision implements IStorage {
         return global;
     }
 
-    public void setGlobal(String hash) {
-        this.global = hash;
-    }
-
     /**
      * @return the changeSet
      */
     public ChangeSet getChangeSet() {
         return changeSet;
-    }
-
-    /**
-     * @param changeSet
-     *            the changeSet to set
-     */
-    public void setChangeSet(ChangeSet changeSet) {
-        this.changeSet = changeSet;
     }
 
     /**
