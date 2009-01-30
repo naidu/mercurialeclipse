@@ -31,7 +31,7 @@ public class HgFcloneClient extends AbstractClient {
         HgCommand command = new HgCommand("fclone", new File(parentDirectory), //$NON-NLS-1$
                 false);
 
-        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
+        //        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
         
         if (noUpdate) {
             command.addOptions("--noupdate"); //$NON-NLS-1$

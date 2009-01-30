@@ -88,13 +88,13 @@ public interface ResourceProperties {
      * the forest extension is available.
      */
     public static final QualifiedName EXT_FOREST_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "hgext.forest="); //$NON-NLS-1$
+            MercurialEclipsePlugin.ID, "hgforest"); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
      * the HgSubversion extension is available.
      */
     public static final QualifiedName EXT_HGSUBVERSION_AVAILABLE = new QualifiedName(
-            MercurialEclipsePlugin.ID, "hgext.hgsubversion="); //$NON-NLS-1$
+            MercurialEclipsePlugin.ID, "hgsubversion"); //$NON-NLS-1$
 
 }
