@@ -10,7 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
+import java.io.InputStream;
 
 import junit.framework.TestCase;
 
@@ -21,9 +21,11 @@ import junit.framework.TestCase;
 public class HgIdentClientTest extends TestCase {
 
     public void testGetCurrentChangesetId() throws Exception {
-        File repo = new File(".");
-        String id = HgIdentClient.getCurrentChangesetId(repo);
-        System.out.println(id);
+        String expected = "9b417223cbb2f53e54872bfbd559db35645a6afb";
+        InputStream dirstate = Thread.currentThread().getContextClassLoader()
+            .getResourceAsStream("dirstate");
+        String id = HgIdentClient.getCurrentChangesetId(dirstate);
+        assertEquals(expected, id);
     }
 
 }
