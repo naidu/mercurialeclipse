@@ -33,12 +33,8 @@ public class HgIdentClient extends AbstractClient {
     }
     
     static String getCurrentChangesetId(InputStream inputStream) throws IOException {
-        byte[] nodid = new byte[20];
-        inputStream.read(nodid);
         StringBuilder id = new StringBuilder();
-        for (byte b : nodid) {
-            int x = b;
-            x = x & 0xFF;
+        for (int i = 0, x = 0; i < 20 && (x = inputStream.read()) != -1; ++i) {
             String s = Integer.toHexString(x);
             if (s.length() == 1) {
                 s = "0" + s; //$NON-NLS-1$
