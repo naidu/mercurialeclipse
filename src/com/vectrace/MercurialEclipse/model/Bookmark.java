@@ -22,7 +22,7 @@ public class Bookmark {
         active = line.startsWith(" *"); //$NON-NLS-1$
         int lastSpace = line.lastIndexOf(" "); //$NON-NLS-1$
         name = line.substring(3, lastSpace).trim();
-        int colon = line.indexOf(":"); //$NON-NLS-1$
+        int colon = line.lastIndexOf(":"); //$NON-NLS-1$
         revision = Integer.parseInt(line.substring(lastSpace + 1, colon));
         shortNode = line.substring(colon + 1);
     }

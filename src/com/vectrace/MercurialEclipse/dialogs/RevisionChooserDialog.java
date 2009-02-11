@@ -151,9 +151,11 @@ public class RevisionChooserDialog extends Dialog {
                 changeSet = LocalChangesetCache.getInstance().getChangeSet(
                         bookmark.getRevision() + ":" //$NON-NLS-1$
                                 + bookmark.getShortNodeId());
-                this.revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
 			}
 		}
+		if (changeSet != null) {
+            this.revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
+        }
 		
 		if (revision.length() == 0) {
 			revision = null;
@@ -181,6 +183,7 @@ public class RevisionChooserDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
             	branch = null;
+            	bookmark = null;
                 text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
             }
@@ -205,6 +208,8 @@ public class RevisionChooserDialog extends Dialog {
                 text.setText(table.getSelection().getName());
                 tag = table.getSelection(); 
                 branch = null;
+                bookmark = null;
+                changeSet = null;
             }
         });
 
@@ -247,6 +252,7 @@ public class RevisionChooserDialog extends Dialog {
                 branch = table.getSelection(); 
                 tag = null;
                 bookmark = null;
+                changeSet = null;
             }
         });
 
@@ -289,6 +295,7 @@ public class RevisionChooserDialog extends Dialog {
                 bookmark = table.getSelection();
                 tag = null;
                 branch = null;
+                changeSet = null;
             }
         });
 
@@ -310,6 +317,7 @@ public class RevisionChooserDialog extends Dialog {
             public void widgetSelected(SelectionEvent e) {
             	tag = null;
             	branch = null;
+            	bookmark = null;
             	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
             }
