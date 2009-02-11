@@ -782,9 +782,6 @@ public class MercurialStatusCache extends AbstractCache implements
      * .eclipse.core.resources.IResourceChangeEvent)
      */
     public void resourceChanged(IResourceChangeEvent event) {
-        // FIXME: this is strange: one edit in a file triggers two post_change
-        // events,
-        // auto-build triggers another two. how to filter duplicate events?
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             try {
                 IResourceDelta delta = event.getDelta();
@@ -1070,7 +1067,7 @@ public class MercurialStatusCache extends AbstractCache implements
      * @param resources
      */
     @Override
-    protected void notifyChanged(Set<IResource> resources) {
+    public void notifyChanged(Set<IResource> resources) {
         setChanged();
         notifyObservers(resources);
     }
