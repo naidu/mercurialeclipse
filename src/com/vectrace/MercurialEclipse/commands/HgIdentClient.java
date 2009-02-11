@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
@@ -30,6 +31,22 @@ public class HgIdentClient extends AbstractClient {
         command.addOptions("-nibt"); //$NON-NLS-1$
         return command.executeToString().trim();
     }
+    
+    static String getCurrentChangesetId(InputStream inputStream) throws IOException {
+        byte[] nodid = new byte[20];
+        inputStream.read(nodid);
+        StringBuilder id = new StringBuilder();
+        for (byte b : nodid) {
+            int x = b;
+            x = x & 0xFF;
+            String s = Integer.toHexString(x);
+            if (s.length() == 1) {
+                s = "0" + s; //$NON-NLS-1$
+            }
+            id.append(s);
+        }
+        return id.toString();
+    }
 
     /**
      * Returns the current node-id as a String
@@ -51,19 +68,7 @@ public class HgIdentClient extends AbstractClient {
             return null;
         }
         try {
-            byte[] nodid = new byte[20];
-            reader.read(nodid);
-            StringBuilder id = new StringBuilder();
-            for (byte b : nodid) {
-                int x = b;
-                x = x & 0xFF;
-                String s = Integer.toHexString(x);
-                if (s.length() == 1) {
-                    s = "0" + s; //$NON-NLS-1$
-                }
-                id.append(s);
-            }
-            return id.toString();
+            return getCurrentChangesetId(reader);
         } finally {
             reader.close();
         }
