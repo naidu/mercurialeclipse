@@ -23,7 +23,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgTransplantClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**

@@ -299,23 +299,23 @@ public abstract class AbstractShellCommand {
 
     protected abstract String getExecutable();
 
-    protected void addFiles(String... myFiles) {
+    public void addFiles(String... myFiles) {
         addFiles(Arrays.asList(myFiles));
     }
 
-    protected void addFiles(Collection<String> myFiles) {
+    public void addFiles(Collection<String> myFiles) {
         for (String file : myFiles) {
             this.files.add(file);
         }
     }
 
-    protected void addFiles(IResource... resources) {
+    public void addFiles(IResource... resources) {
         for (IResource resource : resources) {
             this.files.add(resource.getLocation().toOSString());
         }
     }
 
-    protected void addFiles(List<? extends IResource> resources) {
+    public void addFiles(List<? extends IResource> resources) {
         for (IResource resource : resources) {
             this.files.add(resource.getLocation().toOSString());
         }

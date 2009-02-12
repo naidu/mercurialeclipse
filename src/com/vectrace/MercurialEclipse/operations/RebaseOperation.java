@@ -18,7 +18,7 @@ import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.HgRebaseClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 

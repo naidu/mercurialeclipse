@@ -41,12 +41,12 @@ public class HgCommand extends AbstractShellCommand {
         this.escapeFiles = escapeFiles;
     }
 
-    protected HgCommand(String command, IContainer container,
+    public HgCommand(String command, IContainer container,
             boolean escapeFiles) {
         this(command, container.getLocation().toFile(), escapeFiles);
     }
 
-    protected HgCommand(String command, boolean escapeFiles) {
+    public HgCommand(String command, boolean escapeFiles) {
         this(command, (File) null, escapeFiles);
     }
 

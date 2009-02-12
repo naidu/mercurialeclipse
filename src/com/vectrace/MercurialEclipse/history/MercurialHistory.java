@@ -29,9 +29,9 @@ import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
-import com.vectrace.MercurialEclipse.commands.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
-import com.vectrace.MercurialEclipse.commands.HgSigsClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgGLogClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;

@@ -27,7 +27,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
-import com.vectrace.MercurialEclipse.commands.HgSvnClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;

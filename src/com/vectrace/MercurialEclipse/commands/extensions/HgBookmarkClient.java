@@ -8,12 +8,14 @@
  * Contributors:
  * bastian	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands;
+package com.vectrace.MercurialEclipse.commands.extensions;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 

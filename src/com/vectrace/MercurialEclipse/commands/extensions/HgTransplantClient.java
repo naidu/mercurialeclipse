@@ -8,13 +8,14 @@
  * Contributors:
  *     Bastian Doetsch           - implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands;
+package com.vectrace.MercurialEclipse.commands.extensions;
 
 import java.net.URI;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;

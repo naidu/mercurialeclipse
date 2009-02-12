@@ -8,10 +8,11 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands;
+package com.vectrace.MercurialEclipse.commands.extensions;
 
 import org.eclipse.core.resources.IProject;
 
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;

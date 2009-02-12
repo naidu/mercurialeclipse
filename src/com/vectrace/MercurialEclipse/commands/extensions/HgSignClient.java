@@ -8,7 +8,7 @@
  * Contributors:
  *     Bastian Doetsch      - implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands;
+package com.vectrace.MercurialEclipse.commands.extensions;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -19,6 +19,8 @@ import java.util.List;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.GpgCommand;
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;

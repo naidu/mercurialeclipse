@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public class GpgCommand extends AbstractShellCommand {
 
-    protected GpgCommand(List<String> commands, File workingDir,
+    public GpgCommand(List<String> commands, File workingDir,
             boolean escapeFiles) {
         super(commands, workingDir, escapeFiles);
     }

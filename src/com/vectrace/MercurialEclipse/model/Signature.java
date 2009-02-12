@@ -13,7 +13,7 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.IOException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgSigsClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
