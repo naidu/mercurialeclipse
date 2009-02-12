@@ -97,4 +97,11 @@ public interface ResourceProperties {
     public static final QualifiedName EXT_HGSUBVERSION_AVAILABLE = new QualifiedName(
             MercurialEclipsePlugin.ID, "hgsubversion"); //$NON-NLS-1$
 
+    /**
+     * Qualified name for a workspace session property that signifies whether
+     * the HgAttic extension is available.
+     */
+    public static final QualifiedName EXT_HGATTIC_AVAILABLE = new QualifiedName(
+            MercurialEclipsePlugin.ID, "hgattic"); //$NON-NLS-1$
+
 }

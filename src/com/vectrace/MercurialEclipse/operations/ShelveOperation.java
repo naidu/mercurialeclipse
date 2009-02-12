@@ -28,12 +28,15 @@ import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgAtticClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author bastian
- *
+ * 
  */
 public class ShelveOperation extends HgOperation {
     private IProject project;
@@ -64,14 +67,17 @@ public class ShelveOperation extends HgOperation {
         this.project = p;
     }
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
      */
     @Override
     protected String getActionDescription() {
         return Messages.getString("ShelveOperation.shelvingChanges"); //$NON-NLS-1$
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -81,57 +87,83 @@ public class ShelveOperation extends HgOperation {
      */
     @Override
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
-            InterruptedException {        
+            InterruptedException {
         try {
             // get modified files
-            monitor.beginTask(Messages.getString("ShelveOperation.shelving"), 5); //$NON-NLS-1$
-            monitor.subTask(Messages.getString("ShelveOperation.determiningChanges")); //$NON-NLS-1$
-            String[] dirtyFiles = HgStatusClient.getDirtyFiles(project
-                    .getLocation().toFile());
-            List<IResource> resources = new ArrayList<IResource>();
-            File root = HgClients.getHgRoot(project.getLocation().toFile());
-            for (String f : dirtyFiles) {
-                IResource r = MercurialStatusCache.getInstance()
-                        .convertRepoRelPath(root, project, f.substring(2));
-                if (r.exists()) {
-                    resources.add(r);
+            monitor
+                    .beginTask(
+                            Messages.getString("ShelveOperation.shelving"), 5); //$NON-NLS-1$
+            // check if hg > 1.0x and hgattic is available
+            if (MercurialUtilities.isCommandAvailable("resolve", // $NON-NLS-1$
+                    ResourceProperties.RESOLVE_AVAILABLE, "") // $NON-NLS-1$
+                    && MercurialUtilities.isCommandAvailable("attic-shelve",// $NON-NLS-1$
+                            ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
+
+                HgAtticClient.shelve(project.getLocation().toFile(),
+                        "MercurialEclipse shelve operation", // $NON-NLS-1$
+                        true, MercurialUtilities.getHGUsername(),
+                        project.getName());
+                monitor.worked(1);
+                project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+                monitor.worked(1);
+            } else {
+
+                monitor.subTask(Messages
+                        .getString("ShelveOperation.determiningChanges")); //$NON-NLS-1$
+                String[] dirtyFiles = HgStatusClient.getDirtyFiles(project
+                        .getLocation().toFile());
+                List<IResource> resources = new ArrayList<IResource>();
+                File root = HgClients.getHgRoot(project.getLocation().toFile());
+                for (String f : dirtyFiles) {
+                    IResource r = MercurialStatusCache.getInstance()
+                            .convertRepoRelPath(root, project, f.substring(2));
+                    if (r.exists()) {
+                        resources.add(r);
+                    }
                 }
+                if (resources.size() == 0) {
+                    throw new HgException(Messages
+                            .getString("ShelveOperation.error.nothingToShelve")); //$NON-NLS-1$
+                }
+                monitor.worked(1);
+                monitor.subTask(Messages
+                        .getString("ShelveOperation.shelvingChanges")); //$NON-NLS-1$
+
+                File shelveDir = new File(root, ".hg" + File.separator //$NON-NLS-1$
+                        + "mercurialeclipse-shelve-backups"); //$NON-NLS-1$
+                shelveDir.mkdir();
+                File shelveFile = new File(shelveDir, project.getName().concat(
+                        "-patchfile.patch")); //$NON-NLS-1$
+                if (shelveFile.exists()) {
+                    throw new HgException(Messages
+                            .getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
+                }
+                HgPatchClient.exportPatch(root, resources, shelveFile,
+                        new ArrayList<String>(0));
+                monitor.worked(1);
+                monitor
+                        .subTask(Messages
+                                .getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$
+                String currRev = HgIdentClient.getCurrentChangesetId(root);
+                monitor.worked(1);
+                monitor.subTask(Messages
+                        .getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
+                HgUpdateClient.update(project, currRev, true);
+                monitor.worked(1);
+                monitor.subTask(Messages
+                        .getString("ShelveOperation.refreshingResources")); //$NON-NLS-1$
+                for (IResource resource : resources) {
+                    resource.refreshLocal(IResource.DEPTH_ZERO, monitor);
+                }
+                monitor.worked(1);
             }
-            if (resources.size() == 0) {
-                throw new HgException(Messages.getString("ShelveOperation.error.nothingToShelve")); //$NON-NLS-1$
-            }
-            monitor.worked(1);
-            monitor.subTask(Messages.getString("ShelveOperation.shelvingChanges"));             //$NON-NLS-1$
-            
-            File shelveDir = new File(root, ".hg" + File.separator //$NON-NLS-1$
-                    + "mercurialeclipse-shelve-backups"); //$NON-NLS-1$
-            shelveDir.mkdir();
-            File shelveFile = new File(shelveDir, project.getName().concat(
-                    "-patchfile.patch"));             //$NON-NLS-1$
-            if (shelveFile.exists()) {
-                throw new HgException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
-            }
-            HgPatchClient.exportPatch(root, resources, shelveFile,
-                    new ArrayList<String>(0));
-            monitor.worked(1);
-            monitor.subTask(Messages.getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$
-            String currRev = HgIdentClient.getCurrentChangesetId(root);
-            monitor.worked(1);
-            monitor.subTask(Messages.getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
-            HgUpdateClient.update(project, currRev, true);
-            monitor.worked(1);
-            monitor.subTask(Messages.getString("ShelveOperation.refreshingResources")); //$NON-NLS-1$
-            for (IResource resource : resources) {
-                resource.refreshLocal(IResource.DEPTH_ZERO, monitor);
-            }
-            monitor.worked(1);
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         } finally {
             monitor.done();
         }
-                
+
     }
 
 }
