@@ -8,7 +8,7 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands.mq;
+package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;

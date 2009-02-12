@@ -8,7 +8,7 @@
  * Contributors:
  * Bastian Doetsch	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands.forest;
+package com.vectrace.MercurialEclipse.commands.extensions.forest;
 
 import java.io.File;
 import java.net.URI;

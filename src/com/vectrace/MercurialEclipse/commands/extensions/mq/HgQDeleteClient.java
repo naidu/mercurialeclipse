@@ -8,7 +8,7 @@
  * Contributors:
  * bastian	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands.mq;
+package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import java.util.List;
 

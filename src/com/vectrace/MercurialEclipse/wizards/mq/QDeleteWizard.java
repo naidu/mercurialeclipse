@@ -20,7 +20,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
-import com.vectrace.MercurialEclipse.commands.mq.HgQDeleteClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQDeleteClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;

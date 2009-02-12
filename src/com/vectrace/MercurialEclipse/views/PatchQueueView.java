@@ -38,10 +38,10 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
-import com.vectrace.MercurialEclipse.commands.mq.HgQFoldClient;
-import com.vectrace.MercurialEclipse.commands.mq.HgQPopClient;
-import com.vectrace.MercurialEclipse.commands.mq.HgQPushClient;
-import com.vectrace.MercurialEclipse.commands.mq.HgQSeriesClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFoldClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPopClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPushClient;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQSeriesClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.QDeleteHandler;
 import com.vectrace.MercurialEclipse.menu.QImportHandler;

@@ -8,7 +8,7 @@
  * Contributors:
  * bastian	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands.mq;
+package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import org.eclipse.core.resources.IResource;
 
@@ -20,17 +20,16 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * @author bastian
  * 
  */
-public class HgQRefreshClient extends AbstractClient {
-    public static String refresh(IResource resource,
+public class HgQNewClient extends AbstractClient {
+    public static String createNewPatch(IResource resource,
             String commitMessage, boolean force, boolean git, String include,
-            String exclude, String user, String date)
+            String exclude, String user, String date, String patchName)
             throws HgException {
-        HgCommand command = new HgCommand("qrefresh", //$NON-NLS-1$
+        HgCommand command = new HgCommand("qnew", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
-        
+
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
-
         if (commitMessage != null && commitMessage.length() > 0) {
             command.addOptions("--message", commitMessage); //$NON-NLS-1$
         }
@@ -56,7 +55,9 @@ public class HgQRefreshClient extends AbstractClient {
             command.addOptions("--date", date); //$NON-NLS-1$
         } else {
             command.addOptions("--currentdate"); //$NON-NLS-1$
-        }        
+        }
+
+        command.addOptions(patchName);
 
         return command.executeToString();
     }

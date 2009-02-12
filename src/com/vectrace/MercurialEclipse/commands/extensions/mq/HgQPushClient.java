@@ -8,10 +8,9 @@
  * Contributors:
  * bastian	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.commands.mq;
+package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
@@ -21,13 +20,12 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * @author bastian
  * 
  */
-public class HgQPopClient extends AbstractClient {
-    public static String popAll(IResource resource, boolean force)
+public class HgQPushClient extends AbstractClient {
+    public static String pushAll(IResource resource, boolean force)
             throws HgException {
-        Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qpop", //$NON-NLS-1$
+        HgCommand command = new HgCommand("qpush", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
-
+        
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         
         command.addOptions("-a"); //$NON-NLS-1$
@@ -37,9 +35,9 @@ public class HgQPopClient extends AbstractClient {
         return command.executeToString();
     }
 
-    public static String pop(IResource resource, boolean force, String patchName)
+    public static String push(IResource resource, boolean force, String patchName)
             throws HgException {
-        HgCommand command = new HgCommand("qpop", //$NON-NLS-1$
+        HgCommand command = new HgCommand("qpush", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
 
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

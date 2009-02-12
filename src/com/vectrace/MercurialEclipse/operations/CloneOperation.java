@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.commands.HgSvnClient;
-import com.vectrace.MercurialEclipse.commands.forest.HgFcloneClient;
+import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFcloneClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.wizards.Messages;
