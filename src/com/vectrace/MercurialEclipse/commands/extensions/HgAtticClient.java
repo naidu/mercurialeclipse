@@ -16,18 +16,16 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-
 /**
  * @author bastian
- *
+ * 
  */
 public class HgAtticClient extends AbstractClient {
-    
+
     public static String shelve(File repoFile, String commitMessage,
             boolean git, String user, String name) throws HgException {
         HgCommand cmd = new HgCommand("attic-shelve",// $NON-NLS-1$
-                getWorkingDirectory(repoFile),
-                false);
+                getWorkingDirectory(repoFile), false);
 
         if (commitMessage != null && commitMessage.length() > 0) {
             cmd.addOptions("-m", commitMessage);// $NON-NLS-1$
@@ -39,34 +37,34 @@ public class HgAtticClient extends AbstractClient {
         if (user != null && user.length() > 0) {
             cmd.addOptions("-u", user);// $NON-NLS-1$
         }
-        
-        
+
         cmd.addOptions("--currentdate", name);// $NON-NLS-1$
         return cmd.executeToString();
     }
-    
+
     public static String unshelve(File repoFile, boolean guessRenamedFiles,
-            String name)
-            throws HgException {
+            boolean delete, String name) throws HgException {
         HgCommand cmd = new HgCommand("attic-unshelve",// $NON-NLS-1$
                 getWorkingDirectory(repoFile), false);
 
         if (guessRenamedFiles) {
             cmd.addOptions("--similarity");// $NON-NLS-1$
         }
-        
+
+        if (delete) {
+            cmd.addOptions("--delete"); // $NON-NLS-1$
+        }
+
         cmd.addOptions(name);
         return cmd.executeToString();
     }
-    
-    public static String refresh(File repoFile, String name)
-            throws HgException {
+
+    public static String refresh(File repoFile, String name) throws HgException {
         HgCommand cmd = new HgCommand("shelve",// $NON-NLS-1$
                 getWorkingDirectory(repoFile), false);
-        
+
         cmd.addOptions("--refresh", name);// $NON-NLS-1$
         return cmd.executeToString();
     }
-    
-    
+
 }

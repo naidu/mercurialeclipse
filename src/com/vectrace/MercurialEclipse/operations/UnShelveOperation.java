@@ -94,6 +94,7 @@ public class UnShelveOperation extends HgOperation {
                     && MercurialUtilities.isCommandAvailable("attic-shelve",// $NON-NLS-1$
                             ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
                 HgAtticClient.unshelve(project.getLocation().toFile(), false,
+                        true,
                         project
                         .getName());
                 monitor.worked(1);
