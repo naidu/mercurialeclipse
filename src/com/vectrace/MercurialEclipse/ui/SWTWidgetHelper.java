@@ -93,6 +93,22 @@ public class SWTWidgetHelper {
         combo.setLayoutData(data);
         return combo;
     }
+    
+
+    /**
+     * Utility method that creates an editable combo box
+     * 
+     * @param parent
+     *            the parent for the new label
+     * @return the new widget
+     */
+    public static Combo createEditableCombo(Composite parent) {
+        Combo combo = new Combo(parent, SWT.NULL);
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
+        combo.setLayoutData(data);
+        return combo;
+    }
 
     /**
      * Creates composite control and sets the default layout data.
