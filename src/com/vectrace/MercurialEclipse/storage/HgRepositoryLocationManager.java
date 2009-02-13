@@ -40,6 +40,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
 import com.vectrace.MercurialEclipse.repository.RepositoryResourcesManager;
@@ -88,7 +89,8 @@ public class HgRepositoryLocationManager {
 
             try {
                 while ((line = reader.readLine()) != null) {
-                    addRepoLocation(new HgRepositoryLocation(line, null, null));
+                    addRepoLocation(new HgRepositoryLocation(null, line, null,
+                            null));
                 }
             } catch (URISyntaxException e) {
                 // we don't want to load it - it will be cleaned when saving
@@ -161,6 +163,7 @@ public class HgRepositoryLocationManager {
         if (loc == null) {
             return false;
         }
+        
         synchronized (projectRepos) {
             try {
                 projectRepos = getProjectRepos();
@@ -200,7 +203,7 @@ public class HgRepositoryLocationManager {
             try {
                 String url = getDefaultProjectRepository(project);
                 if (url != null) {
-                    HgRepositoryLocation srcRepository = new HgRepositoryLocation(
+                    HgRepositoryLocation srcRepository = getRepoLocation(null,
                             url, null, null);
                     addRepoLocation(project, srcRepository);
                 } else {
@@ -221,7 +224,7 @@ public class HgRepositoryLocationManager {
                 try {
                     while ((line = reader.readLine()) != null) {
                         try {
-                            HgRepositoryLocation loc = new HgRepositoryLocation(
+                            HgRepositoryLocation loc = getRepoLocation(null,
                                     line, null, null);
                             addRepoLocation(project, loc);
 
@@ -238,6 +241,18 @@ public class HgRepositoryLocationManager {
                     }
                 } finally {
                     reader.close();
+                }
+            }
+            Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
+            for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
+                try {
+                    // if not existent, add to repository browser
+                    HgRepositoryLocation loc = getRepoLocation(entry.getKey(),
+                            entry.getValue(), null,
+                            null);
+                    addRepoLocation(project, loc);
+                } catch (URISyntaxException e) {
+                    MercurialEclipsePlugin.logError(e);
                 }
             }
         }
@@ -310,6 +325,11 @@ public class HgRepositoryLocationManager {
         }
     }
 
+    public HgRepositoryLocation getRepoLocation(String url, String user,
+            String pass) throws URISyntaxException {
+        return this.getRepoLocation(null, url, user, pass);
+    }
+
     /**
      * Gets a repo by its URL
      * 
@@ -317,26 +337,29 @@ public class HgRepositoryLocationManager {
      * @return
      * @throws URISyntaxException
      */
-    public HgRepositoryLocation getRepoLocation(String url, String user,
-            String pass) throws URISyntaxException {
+    public HgRepositoryLocation getRepoLocation(String logicalName, String url,
+            String user, String pass) throws URISyntaxException {
         HgRepositoryLocation location = null;
         if (repos != null) {
             for (HgRepositoryLocation loc : repos) {
                 if (loc.getLocation().equals(url)) {
+                    if (logicalName != null && logicalName.length() > 0) {
+                        loc.setLogicalName(logicalName);
+                    }
                     location = loc;
                     break;
                 }
-            }            
+            }
         } else {
             repos = new TreeSet<HgRepositoryLocation>();
         }
         if (location != null && (user == null || user.length() == 0)) {
             return location;
-        }        
-        location = new HgRepositoryLocation(url, user, pass);
+        }
+        location = new HgRepositoryLocation(logicalName, url, user, pass);
         return location;
     }
-    
+
     /**
      * Create a repository location instance from the given properties. The
      * supported properties are: user The username for the connection (optional)
@@ -399,7 +422,8 @@ public class HgRepositoryLocationManager {
             location = fromProperties(configuration);
         } catch (URISyntaxException e) {
             MercurialEclipsePlugin.logError(e);
-            throw new HgException(Messages.getString("HgRepositoryLocationManager.couldntCreate"), e); //$NON-NLS-1$
+            throw new HgException(Messages
+                    .getString("HgRepositoryLocationManager.couldntCreate"), e); //$NON-NLS-1$
         }
 
         addRepoLocation(location);

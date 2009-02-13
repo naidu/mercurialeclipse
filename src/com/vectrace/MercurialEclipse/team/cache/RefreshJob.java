@@ -107,8 +107,6 @@ public final class RefreshJob extends SafeWorkspaceJob {
                             .subTask(Messages.getString("RefreshJob.AddingRemoteRepositoryToProjectRepositories")); //$NON-NLS-1$
                 }
 
-                MercurialEclipsePlugin.getRepoManager().addRepoLocation(
-                        project, repositoryLocation);
                 if (monitor != null) {
                     monitor.worked(1);
                 }

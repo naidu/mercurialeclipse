@@ -28,18 +28,24 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
  */
 public class HgRepositoryLocation extends AllRootsElement implements
         Comparable<HgRepositoryLocation> {
+    private String logicalName;
     private String location;
     private String user;
     private String password;
     private URI uri;
     private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
+    private static final String ALIAS_TOKEN = "@alias@"; //$NON-NLS-1$
+    
 
-    HgRepositoryLocation(String uri) throws URISyntaxException {
-        this(uri, null, null);
+    HgRepositoryLocation(String logicalName, String uri)
+            throws URISyntaxException {
+        this(logicalName, uri, null, null);
     }
 
-    HgRepositoryLocation(String uri, String user, String password)
+    HgRepositoryLocation(String logicalName, String uri, String user,
+            String password)
             throws URISyntaxException {
+        this.logicalName = logicalName;
         this.location = uri;
         String[] repoInfo = uri.split(SPLIT_TOKEN);
         
@@ -48,8 +54,21 @@ public class HgRepositoryLocation extends AllRootsElement implements
         
         if ((this.user == null || this.user.length() == 0)
                 && repoInfo.length > 1) {
-            this.user = repoInfo[1];
-            this.location = repoInfo[0];
+            String userInfo = repoInfo[1];
+            if (userInfo.contains(ALIAS_TOKEN)) {
+                userInfo = userInfo.substring(0, userInfo.indexOf(ALIAS_TOKEN));
+            }
+            this.user = userInfo;
+            location = repoInfo[0];
+        }
+        
+        String[] alias = uri.split(ALIAS_TOKEN);
+        if (alias.length == 2
+                && (logicalName == null || logicalName.length() == 0)) {
+            this.logicalName = alias[1];
+            if (location.contains(ALIAS_TOKEN)) {
+                location = location.substring(0, location.indexOf(ALIAS_TOKEN));
+            }
         }
         
         URI myUri = null;
@@ -180,6 +199,9 @@ public class HgRepositoryLocation extends AllRootsElement implements
 
     @Override
     public String toString() {
+        if (logicalName!= null && logicalName.length()>0) {
+            return logicalName + " (" + location + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+        }
         return location;
     }
 
@@ -187,6 +209,9 @@ public class HgRepositoryLocation extends AllRootsElement implements
         String r = location;
         if (uri != null && uri.getUserInfo() != null) {
             r += SPLIT_TOKEN + uri.getUserInfo();
+        }
+        if (logicalName != null && logicalName.length() > 0) {
+            r += ALIAS_TOKEN + logicalName;
         }
         return r;
     }
@@ -213,6 +238,21 @@ public class HgRepositoryLocation extends AllRootsElement implements
      */
     public String getLocation() {
         return location;
+    }
+
+    /**
+     * @return the logicalName
+     */
+    public String getLogicalName() {
+        return logicalName;
+    }
+
+    /**
+     * @param logicalName
+     *            the logicalName to set
+     */
+    public void setLogicalName(String logicalName) {
+        this.logicalName = logicalName;
     }
 
 }
