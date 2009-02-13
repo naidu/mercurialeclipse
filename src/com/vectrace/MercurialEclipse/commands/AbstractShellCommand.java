@@ -40,7 +40,7 @@ public abstract class AbstractShellCommand {
     /**
      * 
      */
-    public static final int DEFAULT_TIMEOUT = 120000;
+    public static final int DEFAULT_TIMEOUT = 360000;
 
     private class InputStreamConsumer extends Thread {
         private final InputStream stream;
