@@ -83,9 +83,9 @@ public class PushRepoPage extends PushPullPage {
      * com.vectrace.MercurialEclipse.wizards.PushPullPage#setDefaultLocation()
      */
     @Override
-    protected Map<String, String> setDefaultLocation() {
-        String defaultLocation = "";
-        Map<String, String> paths = super.setDefaultLocation();
+    protected Map<String, HgRepositoryLocation> setDefaultLocation() {
+        HgRepositoryLocation defaultLocation = null;
+        Map<String, HgRepositoryLocation> paths = super.setDefaultLocation();
         if (paths == null) {
             return null;
         }
@@ -95,7 +95,7 @@ public class PushRepoPage extends PushPullPage {
             defaultLocation = paths.get(HgPathsClient.DEFAULT);
         }
         if (defaultLocation != null) {
-            getUrlCombo().setText(defaultLocation);
+            getUrlCombo().setText(defaultLocation.getDisplayLocation());
         }
         return paths;
     }

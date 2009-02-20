@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
@@ -208,13 +209,13 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         this.changesetTable.addSelectionListener(listener);
     }
 
-    protected Map<String, String> setDefaultLocation() {
+    protected Map<String, HgRepositoryLocation> setDefaultLocation() {
         try {
             if (resource == null) {
                 return null;
             }
-            String defaultLocation = null;
-            Map<String, String> paths = loadRepositoriesFromHg();
+            HgRepositoryLocation defaultLocation = null;
+            Map<String, HgRepositoryLocation> paths = loadRepositoriesFromHg();
             
             if (paths.containsKey(HgPathsClient.DEFAULT_PULL)) {
                 defaultLocation = paths.get(HgPathsClient.DEFAULT_PULL);
@@ -222,7 +223,16 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 defaultLocation = paths.get(HgPathsClient.DEFAULT);
             }
             if (defaultLocation != null) {
-                getUrlCombo().setText(defaultLocation);
+                getUrlCombo().setText(defaultLocation.getDisplayLocation());
+                
+                String user = defaultLocation.getUser();
+                if (user != null && user.length() != 0) {
+                    getUserCombo().setText(user);
+                }
+                String password = defaultLocation.getPassword();
+                if (password != null && password.length() != 0) {
+                    getPasswordText().setText(password);
+                }
             }
             return paths;
         } catch (HgException e) {
@@ -235,23 +245,27 @@ public class PushPullPage extends ConfigurationWizardMainPage {
      * @return
      * @throws HgException
      */
-    private Map<String, String> loadRepositoriesFromHg() throws HgException {
+    private Map<String, HgRepositoryLocation> loadRepositoriesFromHg() throws HgException {
         Map<String, String> paths = HgPathsClient
                 .getPaths(resource.getProject());
         
-        for (String path : paths.values()) {
+        Map<String,HgRepositoryLocation> repos = new HashMap<String,HgRepositoryLocation>();
+        
+        for (Map.Entry<String, String> path : paths.entrySet()) {
             try {
                 HgRepositoryLocationManager repoManager = MercurialEclipsePlugin
                         .getRepoManager();
-                HgRepositoryLocation loc = repoManager.getRepoLocation(path,
+                HgRepositoryLocation loc = repoManager.getRepoLocation(path.getValue(),
                         null, null);
                 repoManager.addRepoLocation(resource.getProject(), loc);
+                
+                repos.put(path.getKey(), loc);
                 
             } catch (URISyntaxException e) {
                 MercurialEclipsePlugin.logError(e);
             }
         }
-        return paths;
+        return repos;
     }
 
     /**

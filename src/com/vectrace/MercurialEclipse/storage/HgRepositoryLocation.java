@@ -239,6 +239,25 @@ public class HgRepositoryLocation extends AllRootsElement implements
     public String getLocation() {
         return location;
     }
+    
+    /**
+     * @return a location with password removed that is safe to display on screen
+     */
+    public String getDisplayLocation() {
+        if (uri == null) {
+            return this.location;
+        }
+        
+        try {
+            return (new URI(uri.getScheme(), user,
+                    uri.getHost(), uri.getPort(), uri.getPath(),
+                    uri.getQuery(), uri.getFragment())).toString();
+            
+        } catch (URISyntaxException e) {
+            // This shouldn't happen at this point
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * @return the logicalName

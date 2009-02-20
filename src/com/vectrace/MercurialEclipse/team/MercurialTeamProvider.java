@@ -146,6 +146,27 @@ public class MercurialTeamProvider extends RepositoryProvider {
         }
     }
     
+    /**
+     * Gets the project hgrc as a {@link java.io.File}.
+     * 
+     * @param project
+     *          the project to get the hgrc for
+     * @return the {@link java.io.File} referencing the hgrc file,
+     *          <code>null</code> if it doesn't exist.
+     * @throws HgException
+     *          if an error occured (e.g., no root could be found).
+     */
+    public static File getHgRootConfig(IResource resource) throws HgException {
+        assert (resource != null);
+        File hgRoot = getHgRoot(resource);
+        
+        File hgrc = new File(hgRoot, ".hg/hgrc");
+        if (hgrc.exists()) {
+            return hgrc;
+        }
+        
+        return null;
+    }
     
 
     /**
