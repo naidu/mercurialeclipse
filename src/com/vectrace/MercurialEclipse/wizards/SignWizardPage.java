@@ -141,9 +141,9 @@ public class SignWizardPage extends HgWizardPage {
             if (keys.indexOf("\n") == -1) { //$NON-NLS-1$
                 combo.add(keys);
             } else {
-                String[] items = keys.split("\n"); //$NON-NLS-1$
+                String[] items = keys.split("\n\n"); //$NON-NLS-1$
                 for (String string : items) {
-                    if (string.trim().startsWith("pub")) { //$NON-NLS-1$
+                    if (string.trim().startsWith("sec")) { //$NON-NLS-1$
                         combo.add(string.substring(6));
                     }
                 }
