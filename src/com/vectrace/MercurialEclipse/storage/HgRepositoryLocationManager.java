@@ -325,6 +325,29 @@ public class HgRepositoryLocationManager {
         }
     }
 
+    /**
+     * Get a repo by its URL.
+     * 
+     * @param url
+     * @return
+     * @throws URISyntaxException
+     */
+    public HgRepositoryLocation getRepoLocation(String url)
+            throws URISyntaxException {
+        return this.getRepoLocation(url, null, null);
+    }
+    
+    /**
+     * Get a repo by its URL.
+     * 
+     * @param url
+     * @param user if specified and matches existing repo, that repo will be
+     *      returned; if not matching existing repo a new repo location is
+     *      created.
+     * @param pass
+     * @return
+     * @throws URISyntaxException
+     */
     public HgRepositoryLocation getRepoLocation(String url, String user,
             String pass) throws URISyntaxException {
         return this.getRepoLocation(null, url, user, pass);

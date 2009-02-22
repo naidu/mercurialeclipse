@@ -11,6 +11,7 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -211,6 +212,31 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
              */
             public void modifyText(ModifyEvent e) {
                 setPageComplete(true);
+            }
+        });
+        
+        urlCombo.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent e) {
+                
+                try {
+                    // note that repo will not be null, will be blank
+                    // repo if no existing one was found
+                    HgRepositoryLocation repo = MercurialEclipsePlugin
+                        .getRepoManager().getRepoLocation(urlCombo.getText());
+                    
+                    String user = repo.getUser();
+                    if (user != null && user.length() != 0) {
+                        getUserCombo().setText(user);
+                    }
+                    String password = repo.getPassword();
+                    if (password != null && password.length() != 0) {
+                        getPasswordText().setText(password);
+                    }
+                } catch (URISyntaxException e1) {
+                    // Lookup obviously failed, but verification will
+                    // pick this error up later
+                    MercurialEclipsePlugin.logError(e1);
+                }
             }
         });
     }

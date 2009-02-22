@@ -12,7 +12,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 
 import java.net.URISyntaxException;
-import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -83,21 +83,34 @@ public class PushRepoPage extends PushPullPage {
      * com.vectrace.MercurialEclipse.wizards.PushPullPage#setDefaultLocation()
      */
     @Override
-    protected Map<String, HgRepositoryLocation> setDefaultLocation() {
+    protected Set<HgRepositoryLocation> setDefaultLocation() {
         HgRepositoryLocation defaultLocation = null;
-        Map<String, HgRepositoryLocation> paths = super.setDefaultLocation();
-        if (paths == null) {
+        Set<HgRepositoryLocation> repos = super.setDefaultLocation();
+        if (repos == null) {
             return null;
         }
-        if (paths.containsKey(HgPathsClient.DEFAULT_PUSH)) {
-            defaultLocation = paths.get(HgPathsClient.DEFAULT_PUSH);
-        } else if (paths.containsKey(HgPathsClient.DEFAULT)) {
-            defaultLocation = paths.get(HgPathsClient.DEFAULT);
+        for (HgRepositoryLocation repo : repos)
+        {
+            if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName()) ||
+                    HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+                defaultLocation = repo;
+                break;
+            }
         }
+
         if (defaultLocation != null) {
-            getUrlCombo().setText(defaultLocation.getDisplayLocation());
+            getUrlCombo().setText(defaultLocation.getLocation());
+            
+            String user = defaultLocation.getUser();
+            if (user != null && user.length() != 0) {
+                getUserCombo().setText(user);
+            }
+            String password = defaultLocation.getPassword();
+            if (password != null && password.length() != 0) {
+                getPasswordText().setText(password);
+            }
         }
-        return paths;
+        return repos;
     }
 
 }
