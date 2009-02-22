@@ -164,6 +164,21 @@ public class HgRepositoryLocationManager {
             return false;
         }
         
+        HgRepositoryLocation location;
+        
+        // If repo is the same as an existing repo,
+        // just update the username and password.
+        HgRepositoryLocation existing = matchRepoLocation(loc.getLocation());
+        if (existing != null) {
+            // Just update the user and password ("remember last user/password")
+            existing.setUser(loc.getUser());
+            existing.setPassword(loc.getPassword());
+            location = existing;
+        } else {
+            addRepoLocation(loc);
+            location = loc;
+        }
+        
         synchronized (projectRepos) {
             try {
                 projectRepos = getProjectRepos();
@@ -175,10 +190,10 @@ public class HgRepositoryLocationManager {
             if (repoSet == null) {
                 repoSet = new TreeSet<HgRepositoryLocation>();
             }
-            repoSet.add(loc);
+            repoSet.add(location);
             projectRepos.put(project, repoSet);
         }
-        addRepoLocation(loc);
+        
         return true;
     }
 
@@ -199,6 +214,21 @@ public class HgRepositoryLocationManager {
             if (!project.isOpen()) {
                 continue;
             }
+            
+            // Load .hg/hgrc paths first; plugin settings will override these
+            Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
+            for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
+                try {
+                    // if not existent, add to repository browser
+                    HgRepositoryLocation loc = getRepoLocation(entry.getKey(),
+                            entry.getValue(), null,
+                            null);
+                    addRepoLocation(project, loc);
+                } catch (URISyntaxException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+            
             boolean createSrcRepository = false;
             try {
                 String url = getDefaultProjectRepository(project);
@@ -241,18 +271,6 @@ public class HgRepositoryLocationManager {
                     }
                 } finally {
                     reader.close();
-                }
-            }
-            Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
-            for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
-                try {
-                    // if not existent, add to repository browser
-                    HgRepositoryLocation loc = getRepoLocation(entry.getKey(),
-                            entry.getValue(), null,
-                            null);
-                    addRepoLocation(project, loc);
-                } catch (URISyntaxException e) {
-                    MercurialEclipsePlugin.logError(e);
                 }
             }
         }
@@ -354,7 +372,7 @@ public class HgRepositoryLocationManager {
     }
 
     /**
-     * Gets a repo by its URL
+     * Gets a repo by its URL. Resets the repo alias if specified.
      * 
      * @param url
      * @return
@@ -362,25 +380,41 @@ public class HgRepositoryLocationManager {
      */
     public HgRepositoryLocation getRepoLocation(String logicalName, String url,
             String user, String pass) throws URISyntaxException {
-        HgRepositoryLocation location = null;
+        HgRepositoryLocation location = matchRepoLocation(url);
+        if (location != null) {
+            if (logicalName != null && logicalName.length() > 0) {
+                // reset logical name when specified
+                location.setLogicalName(logicalName);
+            }
+            
+            // if the requested user name is different, don't over-write
+            // the existing location; instead make a new one
+            if (user == null || user.length() == 0)
+                return location;
+        }
+        
+        // make a new location if no matches exist or it's a different user
+        location = new HgRepositoryLocation(logicalName, url, user, pass);
+        return location;
+    }
+    
+    /**
+     * Simple search on existing repos.
+     * 
+     * @param url
+     * @return
+     */
+    private HgRepositoryLocation matchRepoLocation(String url) {
         if (repos != null) {
             for (HgRepositoryLocation loc : repos) {
                 if (loc.getLocation().equals(url)) {
-                    if (logicalName != null && logicalName.length() > 0) {
-                        loc.setLogicalName(logicalName);
-                    }
-                    location = loc;
-                    break;
+                    return loc;
                 }
             }
         } else {
             repos = new TreeSet<HgRepositoryLocation>();
         }
-        if (location != null && (user == null || user.length() == 0)) {
-            return location;
-        }
-        location = new HgRepositoryLocation(logicalName, url, user, pass);
-        return location;
+        return null;
     }
 
     /**

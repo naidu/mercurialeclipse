@@ -35,6 +35,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
     private URI uri;
     private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
     private static final String ALIAS_TOKEN = "@alias@"; //$NON-NLS-1$
+    private static final String PASSWORD_TOKEN = ":"; //$NON-NLS-1$
     
 
     HgRepositoryLocation(String logicalName, String uri)
@@ -58,7 +59,9 @@ public class HgRepositoryLocation extends AllRootsElement implements
             if (userInfo.contains(ALIAS_TOKEN)) {
                 userInfo = userInfo.substring(0, userInfo.indexOf(ALIAS_TOKEN));
             }
-            this.user = userInfo;
+            String[] splitUserInfo = userInfo.split(PASSWORD_TOKEN);
+            this.user = splitUserInfo[0];
+            this.password = splitUserInfo[1];
             location = repoInfo[0];
         }
         
@@ -189,12 +192,20 @@ public class HgRepositoryLocation extends AllRootsElement implements
     public String getUser() {
         return user;
     }
+    
+    public void setUser(String user) {
+        this.user = user;
+    }
 
     /**
      * @return the password
      */
     public String getPassword() {
         return password;
+    }
+    
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     @Override
