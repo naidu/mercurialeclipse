@@ -227,10 +227,14 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     String user = repo.getUser();
                     if (user != null && user.length() != 0) {
                         getUserCombo().setText(user);
+                    } else {
+                        getUserCombo().setText("");
                     }
                     String password = repo.getPassword();
                     if (password != null && password.length() != 0) {
                         getPasswordText().setText(password);
+                    } else {
+                        getPasswordText().setText("");
                     }
                 } catch (URISyntaxException e1) {
                     // Lookup obviously failed, but verification will

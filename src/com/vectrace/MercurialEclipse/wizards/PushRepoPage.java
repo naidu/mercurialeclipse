@@ -97,6 +97,12 @@ public class PushRepoPage extends PushPullPage {
                 break;
             }
         }
+        
+        if (defaultLocation == null) {
+            defaultLocation = MercurialEclipsePlugin
+                .getRepoManager().getDefaultProjectRepoLocation(
+                        resource.getProject());
+        }
 
         if (defaultLocation != null) {
             getUrlCombo().setText(defaultLocation.getLocation());

@@ -57,8 +57,8 @@ public class MercurialSynchronizeParticipant extends
         String uri = myMemento.getString(REPOSITORY_LOCATION);
 
         try {
-            this.repositoryLocation = MercurialEclipsePlugin.getRepoManager()
-                    .getRepoLocation(uri, null, null);
+            this.repositoryLocation = MercurialEclipsePlugin
+                    .getRepoManager().getRepoLocation(uri);
         } catch (URISyntaxException e) {
             throw new PartInitException(e.getLocalizedMessage(), e);
         }

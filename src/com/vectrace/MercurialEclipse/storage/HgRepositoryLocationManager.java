@@ -154,7 +154,8 @@ public class HgRepositoryLocationManager {
     }
 
     /**
-     * Add a repository location to the database.
+     * Add a repository location to the database. Associate a repository 
+     * location to a particular project.
      * 
      * @throws HgException
      */
@@ -164,20 +165,7 @@ public class HgRepositoryLocationManager {
             return false;
         }
         
-        HgRepositoryLocation location;
-        
-        // If repo is the same as an existing repo,
-        // just update the username and password.
-        HgRepositoryLocation existing = matchRepoLocation(loc.getLocation());
-        if (existing != null) {
-            // Just update the user and password ("remember last user/password")
-            existing.setUser(loc.getUser());
-            existing.setPassword(loc.getPassword());
-            location = existing;
-        } else {
-            addRepoLocation(loc);
-            location = loc;
-        }
+        addRepoLocation(loc);
         
         synchronized (projectRepos) {
             try {
@@ -190,7 +178,7 @@ public class HgRepositoryLocationManager {
             if (repoSet == null) {
                 repoSet = new TreeSet<HgRepositoryLocation>();
             }
-            repoSet.add(location);
+            repoSet.add(loc);
             projectRepos.put(project, repoSet);
         }
         
@@ -220,9 +208,10 @@ public class HgRepositoryLocationManager {
             for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
                 try {
                     // if not existent, add to repository browser
-                    HgRepositoryLocation loc = getRepoLocation(entry.getKey(),
-                            entry.getValue(), null,
-                            null);
+                    HgRepositoryLocation loc = updateRepoLocation(
+                            entry.getValue(),
+                            entry.getKey(),
+                            null, null);
                     addRepoLocation(project, loc);
                 } catch (URISyntaxException e) {
                     MercurialEclipsePlugin.logError(e);
@@ -233,8 +222,8 @@ public class HgRepositoryLocationManager {
             try {
                 String url = getDefaultProjectRepository(project);
                 if (url != null) {
-                    HgRepositoryLocation srcRepository = getRepoLocation(null,
-                            url, null, null);
+                    HgRepositoryLocation srcRepository = updateRepoLocation(
+                            url, null, null, null);
                     addRepoLocation(project, srcRepository);
                 } else {
                     createSrcRepository = true;
@@ -254,8 +243,8 @@ public class HgRepositoryLocationManager {
                 try {
                     while ((line = reader.readLine()) != null) {
                         try {
-                            HgRepositoryLocation loc = getRepoLocation(null,
-                                    line, null, null);
+                            HgRepositoryLocation loc = updateRepoLocation(
+                                    line, null, null, null);
                             addRepoLocation(project, loc);
 
                             if (createSrcRepository) {
@@ -298,11 +287,29 @@ public class HgRepositoryLocationManager {
     }
 
     /**
+     * Returns the default repository location for a project, if it is set.
+     * 
      * @param project
      * @return
      * @throws CoreException
      */
-    public String getDefaultProjectRepository(IProject project)
+    public HgRepositoryLocation getDefaultProjectRepoLocation(IProject project) {
+        try {
+            return matchRepoLocation(getDefaultProjectRepository(project));
+        } catch (CoreException e) {
+            // log the exception - but don't bother the user
+            MercurialEclipsePlugin.logError(e);
+            return null;
+        }
+    }
+    
+    
+    /**
+     * @param project
+     * @return
+     * @throws CoreException
+     */
+    private String getDefaultProjectRepository(IProject project)
             throws CoreException {
         String url = project
                 .getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY);
@@ -344,7 +351,7 @@ public class HgRepositoryLocationManager {
     }
 
     /**
-     * Get a repo by its URL.
+     * Get a repo by its URL. If URL is unknown, returns a new location.
      * 
      * @param url
      * @return
@@ -356,45 +363,24 @@ public class HgRepositoryLocationManager {
     }
     
     /**
-     * Get a repo by its URL.
+     * Get a repo by its URL. If URL is unknown, returns a new location.
      * 
      * @param url
-     * @param user if specified and matches existing repo, that repo will be
-     *      returned; if not matching existing repo a new repo location is
-     *      created.
+     * @param user
      * @param pass
      * @return
      * @throws URISyntaxException
      */
     public HgRepositoryLocation getRepoLocation(String url, String user,
             String pass) throws URISyntaxException {
-        return this.getRepoLocation(null, url, user, pass);
-    }
-
-    /**
-     * Gets a repo by its URL. Resets the repo alias if specified.
-     * 
-     * @param url
-     * @return
-     * @throws URISyntaxException
-     */
-    public HgRepositoryLocation getRepoLocation(String logicalName, String url,
-            String user, String pass) throws URISyntaxException {
         HgRepositoryLocation location = matchRepoLocation(url);
         if (location != null) {
-            if (logicalName != null && logicalName.length() > 0) {
-                // reset logical name when specified
-                location.setLogicalName(logicalName);
-            }
-            
-            // if the requested user name is different, don't over-write
-            // the existing location; instead make a new one
-            if (user == null || user.length() == 0)
+            if (user == null || !user.equals(location.getUser()))
                 return location;
         }
         
         // make a new location if no matches exist or it's a different user
-        location = new HgRepositoryLocation(logicalName, url, user, pass);
+        location = new HgRepositoryLocation(null, url, user, pass);
         return location;
     }
     
@@ -415,6 +401,70 @@ public class HgRepositoryLocationManager {
             repos = new TreeSet<HgRepositoryLocation>();
         }
         return null;
+    }
+    
+    /**
+     * Gets a repo by its URL. If URL is unknown, returns a new location,
+     * adding it to the global repositories cache. Will update stored
+     * last user and password with the provided values.
+     * 
+     * @param url
+     * @param logicalName
+     * @param user
+     * @param pass
+     * @return
+     * @throws URISyntaxException
+     */
+    public HgRepositoryLocation updateRepoLocation(String url,
+            String logicalName, String user, String pass) 
+            throws URISyntaxException {
+        HgRepositoryLocation loc = matchRepoLocation(url);
+        
+        if (loc == null) {
+            // in some cases url may be a repository database line
+            loc = new HgRepositoryLocation(logicalName, url, user, pass);
+            addRepoLocation(loc);
+            return loc;
+        }
+        
+        boolean update = false;
+        
+        String myLogicalName = logicalName;
+        String myUser = user;
+        String myPass = pass;
+        
+        if (logicalName == null || !logicalName.equals(loc.getLogicalName())) {
+            update = true;
+        } else {
+            myLogicalName = loc.getLogicalName();
+        }
+        if (user == null || !user.equals(loc.getUser())) {
+            update = true;
+        } else {
+            myUser = loc.getUser();
+        }
+        if (pass == null || !pass.equals(loc.getPassword())) {
+            update = true;
+        } else {
+            myPass = loc.getPassword();
+        }
+        
+        if (update) {
+            HgRepositoryLocation updated = new HgRepositoryLocation(
+                    myLogicalName, loc.getLocation(), myUser, myPass);
+            repos.remove(updated);
+            repos.add(updated);
+            
+            for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
+                if (locs.remove(updated))
+                    locs.add(updated);
+            }
+            
+            REPOSITORY_RESOURCES_MANAGER.repositoryModified(updated);
+            return updated;
+        }
+        
+        return loc;
     }
 
     /**
@@ -445,7 +495,7 @@ public class HgRepositoryLocationManager {
             throw new HgException(Messages
                     .getString("HgRepositoryLocation.urlMustNotBeNull")); //$NON-NLS-1$
         }
-        return getRepoLocation(url, user, password);
+        return updateRepoLocation(url, null, user, password);
     }
 
     public void addRepositoryListener(IRepositoryListener repListener) {

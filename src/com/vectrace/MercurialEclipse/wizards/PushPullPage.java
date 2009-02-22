@@ -224,6 +224,12 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 break;
             }
         }
+        
+        if (defaultLocation == null) {
+            defaultLocation = MercurialEclipsePlugin
+                .getRepoManager().getDefaultProjectRepoLocation(
+                        resource.getProject());
+        }
 
         if (defaultLocation != null) {
             getUrlCombo().setText(defaultLocation.getLocation());

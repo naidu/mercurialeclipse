@@ -76,9 +76,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
             public void modifyText(ModifyEvent e) {
                 try {
                     HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-                            .getRepoLocation(
-                                    getUrlCombo().getText(),
-                                    null, null);
+                            .getRepoLocation(getUrlCombo().getText());
                     setErrorMessage(null);
                     SortedSet<ChangeSet> changes = IncomingChangesetCache
                             .getInstance().getIncomingChangeSets(project,
