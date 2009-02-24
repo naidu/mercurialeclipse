@@ -7,11 +7,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
-import org.ini4j.Ini;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.IniFile;
 
 public class HgPathsClient {
     public static final String DEFAULT = "default"; //$NON-NLS-1$
@@ -24,6 +24,7 @@ public class HgPathsClient {
             throws HgException {
         
         
+        
         File hgrc = MercurialTeamProvider.getHgRootConfig(project);
         
         if (hgrc == null)
@@ -33,8 +34,8 @@ public class HgPathsClient {
         
         try {
             FileInputStream input = new FileInputStream(hgrc);
-            Ini ini = new Ini(input);
-            paths.putAll(ini.get(PATHS_SECTION));
+            IniFile ini = new IniFile(hgrc.toURL());
+            paths.putAll(ini.getSection(PATHS_SECTION));
             input.close();
         } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
