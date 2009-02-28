@@ -10,20 +10,14 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.compare.patch.ApplyPatchOperation;
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IStorage;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -34,7 +28,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
     
-    private static final Pattern DIFF_START_PATTERN = Pattern.compile(
+    static final Pattern DIFF_START_PATTERN = Pattern.compile(
             "^diff -r ", Pattern.MULTILINE);
 
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
@@ -62,46 +56,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     private static IFilePatch[] getOutgoingPatches(IResource res,
             HgRepositoryLocation repository) throws HgException {
         String outgoingPatch = getOutgoingPatch(res, repository);
-        if (outgoingPatch == null) {
-            return new IFilePatch[0];
-        }
-        Matcher matcher = DIFF_START_PATTERN.matcher(outgoingPatch);
-        if (matcher.find()) {
-            final String strippedPatch = outgoingPatch.substring(matcher.start(),
-                    outgoingPatch.length());
-            try {
-                return createPatches(strippedPatch);
-            } catch (CoreException e) {
-                throw new HgException(e);
-            }
-        }
-        return new IFilePatch[0];
-    }
-    
-    private static IFilePatch[] createPatches(final String patch)
-            throws CoreException {
-        return ApplyPatchOperation.parsePatch(new IStorage() {
-            public InputStream getContents() throws CoreException {
-                return new ByteArrayInputStream(patch.getBytes());
-            }
-
-            public IPath getFullPath() {
-                return null;
-            }
-
-            public String getName() {
-                return null;
-            }
-
-            public boolean isReadOnly() {
-                return true;
-            }
-
-            public Object getAdapter(
-                    @SuppressWarnings("unchecked") Class adapter) {
-                return null;
-            }
-        });
+        return HgPatchClient.getFilePatches(outgoingPatch);
     }
 
     private static String getResult(HgCommand command) throws HgException {
