@@ -50,13 +50,21 @@ public class HgSvnClient extends AbstractClient {
         return cmd.executeToString();
     }
 
-    public static String clone(File currentWorkingDirectory,
-            HgRepositoryLocation repo, String cloneName) throws HgException {
+    public static void clone(File currentWorkingDirectory,
+            HgRepositoryLocation repo, boolean timeout, String cloneName)
+            throws HgException {
         HgCommand cmd = new HgCommand("svnclone", //$NON-NLS-1$
                 getWorkingDirectory(currentWorkingDirectory), false);
         cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
         addRepoToHgCommand(repo, cmd);
-        cmd.addOptions(cloneName);
-        return cmd.executeToString();
+        if (cloneName != null) {
+            cmd.addOptions(cloneName);
+        }
+        if (timeout) {
+            cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
+            cmd.executeToBytes();
+        } else {
+            cmd.executeToBytes(Integer.MAX_VALUE);
+        }
     }
 }

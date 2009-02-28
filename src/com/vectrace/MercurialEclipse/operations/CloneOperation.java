@@ -91,7 +91,7 @@ public class CloneOperation extends HgOperation {
             m.subTask(Messages
                     .getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
             if (svn) {
-                HgSvnClient.clone(new File(parentDirectory), repo, cloneName);
+                HgSvnClient.clone(new File(parentDirectory), repo, timeout, cloneName);
             } else if (!forest) {
                 HgCloneClient.clone(parentDirectory, repo, noUpdate, pull,
                         uncompressed, timeout, rev, cloneName);
