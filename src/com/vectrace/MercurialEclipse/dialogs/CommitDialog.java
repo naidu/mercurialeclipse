@@ -17,7 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.dialogs.TrayDialog;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.AnnotationModel;
@@ -26,17 +27,19 @@ import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Point;
-import org.eclipse.swt.layout.FormAttachment;
-import org.eclipse.swt.layout.FormData;
-import org.eclipse.swt.layout.FormLayout;
+import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.texteditor.AnnotationPreference;
@@ -45,8 +48,17 @@ import org.eclipse.ui.texteditor.SourceViewerDecorationSupport;
 import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgAddClient;
+import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgCommitClient;
+import com.vectrace.MercurialEclipse.commands.HgPatchClient;
+import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
+import com.vectrace.MercurialEclipse.ui.DiffTray;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * 
@@ -54,19 +66,22 @@ import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
  * message for those files. Untracked files may also be chosen.
  * 
  */
-public class CommitDialog extends TrayDialog {
-    public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
-    public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
-    public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
-    public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
-    public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+public class CommitDialog extends TitleAreaDialog {
+    public static final String FILE_MODIFIED = Messages
+            .getString("CommitDialog.modified"); //$NON-NLS-1$
+    public static final String FILE_ADDED = Messages
+            .getString("CommitDialog.added"); //$NON-NLS-1$
+    public static final String FILE_REMOVED = Messages
+            .getString("CommitDialog.removed"); //$NON-NLS-1$
+    public static final String FILE_UNTRACKED = Messages
+            .getString("CommitDialog.untracked"); //$NON-NLS-1$
+    public static final String FILE_DELETED = Messages
+            .getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
 
-
-    private String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
+    private String defaultCommitMessage = Messages
+            .getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
     private Combo oldCommitComboBox;
     private ISourceViewer commitTextBox;
-    private Label commitTextLabel;
-    private Label commitFilesLabel;
     private CommitFilesChooser commitFilesList;
     private boolean selectableFiles;
     private HgRoot root;
@@ -77,6 +92,9 @@ public class CommitDialog extends TrayDialog {
     private IDocument commitTextDocument;
     private SourceViewerDecorationSupport decorationSupport;
     private List<IResource> inResources;
+    private Text userTextField;
+    private String user;
+    private boolean closed = true;
 
     /**
      * @param shell
@@ -84,14 +102,17 @@ public class CommitDialog extends TrayDialog {
     public CommitDialog(Shell shell, HgRoot root, List<IResource> resources) {
         super(shell);
         setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
+        setBlockOnOpen(false);
         this.root = root;
         this.inResources = resources;
         this.selectableFiles = true;
         this.commitTextDocument = new Document();
+        setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$
     }
 
-    public CommitDialog(Shell shell, HgRoot root, ArrayList<IResource> selectedResource,
-            String defaultCommitMessage, boolean selectableFiles) {
+    public CommitDialog(Shell shell, HgRoot root,
+            ArrayList<IResource> selectedResource, String defaultCommitMessage,
+            boolean selectableFiles) {
         this(shell, root, selectedResource);
         this.selectableFiles = selectableFiles;
         this.defaultCommitMessage = defaultCommitMessage;
@@ -109,42 +130,107 @@ public class CommitDialog extends TrayDialog {
         return resourcesToAdd;
     }
 
+    /*
+     * (non-Javadoc)
+     * 
+     * @see
+     * org.eclipse.jface.dialogs.TitleAreaDialog#createDialogArea(org.eclipse
+     * .swt.widgets.Composite)
+     */
     @Override
     protected Control createDialogArea(Composite parent) {
-        Composite container = (Composite) super.createDialogArea(parent);
-        container.setLayout(new FormLayout());
+        Composite container = SWTWidgetHelper.createComposite(parent, 1);
+        GridData gd = getGD(400);
+        gd.minimumWidth = 600;
+        container.setLayoutData(gd);
+        super.createDialogArea(parent);
 
-        commitTextLabel = new Label(container, SWT.NONE);
-        commitTextLabel.setText(Messages.getString("CommitDialog.commitTextLabel.text")); //$NON-NLS-1$
+        container.addKeyListener(new KeyListener() {
+            public void keyReleased(KeyEvent e) {
+                if (e.character == SWT.CR && e.stateMask == SWT.MOD1) {
+                    okPressed();
+                    e.doit = false;
+                }
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+        });
+
+        createCommitTextBox(container);
+        createOldCommitCombo(container);
+        createUserCommitCombo(container);
+        createFilesList(container);
+        Button trayButton = SWTWidgetHelper.createPushButton(container,
+                Messages.getString("CommitDialog.showDiffButton.text"), //$NON-NLS-1$
+                1);
+        trayButton.addMouseListener(new MouseListener() {
+
+            public void mouseUp(MouseEvent e) {
+                if (closed && inResources.size() > 0) {
+                    try {
+                        openTray(new DiffTray(HgPatchClient.getDiff(inResources
+                                .get(0).getLocation().toFile())));
+                        closed = false;
+                    } catch (Exception e1) {
+                        MercurialEclipsePlugin.logError(e1);
+                        setErrorMessage(e1.getMessage());
+                    }
+                } else {
+                    closeTray();
+                    closed = true;
+                }
+            }
+
+            public void mouseDown(MouseEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+
+            public void mouseDoubleClick(MouseEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+        });
+        setupDefaultCommitMessage();
+
+        commitTextBox.getTextWidget().setFocus();
+        return container;
+    }
+
+    /**
+     * @param container
+     */
+    private void createFilesList(Composite container) {
+        SWTWidgetHelper.createLabel(container, Messages
+                .getString("CommitDialog.selectFiles")); //$NON-NLS-1$
+
+        commitFilesList = new CommitFilesChooser(container, selectableFiles,
+                this.inResources, this.root, true);
+        commitFilesList.setLayoutData(getGD(200));
+    }
+
+    /**
+     * @param container
+     */
+    private void createUserCommitCombo(Composite container) {
+        Composite comp = SWTWidgetHelper.createComposite(container, 2);
+        SWTWidgetHelper.createLabel(comp, Messages
+                .getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
+        this.userTextField = SWTWidgetHelper.createTextField(comp);
+    }
+
+    /**
+     * @param container
+     */
+    private void createCommitTextBox(Composite container) {
+        setMessage(Messages.getString("CommitDialog.commitTextLabel.text")); //$NON-NLS-1$
 
         commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL
                 | SWT.MULTI | SWT.BORDER | SWT.WRAP);
         commitTextBox.setEditable(true);
+        commitTextBox.getTextWidget().setLayoutData(getGD(150));
 
-        
-        final String oldCommits[] = MercurialEclipsePlugin.getCommitMessageManager().getCommitMessages();
-        if(oldCommits.length > 0)
-        {
-            oldCommitComboBox = new Combo(container, SWT.READ_ONLY);
-            oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$ 
-            oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
-            for (int i = 0; i < oldCommits.length; i++) {
-                /* Add text to the combo but replace \n with <br> to get a one-liner */
-                oldCommitComboBox.add(oldCommits[i].replaceAll("\\n","<br>")); 
-            }
-            oldCommitComboBox.addSelectionListener(new SelectionAdapter() {
-                @Override
-                public void widgetSelected(SelectionEvent e) {
-                    if(oldCommitComboBox.getSelectionIndex() != 0)
-                    {
-                        commitTextDocument.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
-                        commitTextBox.setSelectedRange(0, oldCommits[oldCommitComboBox.getSelectionIndex() - 1].length());
-                    }
-
-                }
-            });
-        }
-        
         // set up spell-check annotations
         decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
                 null, new DefaultMarkerAnnotationAccess(), EditorsUI
@@ -167,56 +253,51 @@ public class CommitDialog extends TrayDialog {
             }
 
         });
+    }
 
-        commitFilesLabel = new Label(container, SWT.NONE);
-        commitFilesLabel.setText(Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
+    /**
+     * @return
+     */
+    private GridData getGD(int minHeight) {
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gd.minimumHeight = minHeight;
+        return gd;
+    }
 
-        final FormData fd_commitTextLabel = new FormData();
-        fd_commitTextLabel.top = new FormAttachment(0, 20);
-        fd_commitTextLabel.left = new FormAttachment(0, 9);
-        fd_commitTextLabel.right = new FormAttachment(100, -9);
-        commitTextLabel.setLayoutData(fd_commitTextLabel);
+    /**
+     * @param container
+     */
+    private void createOldCommitCombo(Composite container) {
+        final String oldCommits[] = MercurialEclipsePlugin
+                .getCommitMessageManager().getCommitMessages();
+        if (oldCommits.length > 0) {
+            oldCommitComboBox = SWTWidgetHelper.createCombo(container);
+            oldCommitComboBox.add(Messages
+                    .getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$ 
+            oldCommitComboBox.setText(Messages
+                    .getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
+            for (int i = 0; i < oldCommits.length; i++) {
+                /*
+                 * Add text to the combo but replace \n with <br> to get a
+                 * one-liner
+                 */
+                oldCommitComboBox.add(oldCommits[i].replaceAll("\\n", "<br>")); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            oldCommitComboBox.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    if (oldCommitComboBox.getSelectionIndex() != 0) {
+                        commitTextDocument.set(oldCommits[oldCommitComboBox
+                                .getSelectionIndex() - 1]);
+                        commitTextBox.setSelectedRange(0,
+                                oldCommits[oldCommitComboBox
+                                        .getSelectionIndex() - 1].length());
+                    }
 
-        final FormData fd_commitTextBox = new FormData();
+                }
+            });
 
-        if (oldCommitComboBox != null)
-        {        
-            final FormData fd_oldcommitComboBox = new FormData();
-            fd_oldcommitComboBox.top = new FormAttachment(commitTextLabel, 3, SWT.BOTTOM);
-            fd_oldcommitComboBox.left = new FormAttachment(0, 9);
-            fd_oldcommitComboBox.right = new FormAttachment(100, -9);
-            oldCommitComboBox.setLayoutData(fd_oldcommitComboBox);
-
-            fd_commitTextBox.top = new FormAttachment(oldCommitComboBox, 3, SWT.BOTTOM);
         }
-        else
-        {
-            fd_commitTextBox.top = new FormAttachment(commitTextLabel, 3, SWT.BOTTOM);
-        }
-        fd_commitTextBox.left = new FormAttachment(0, 9);
-        fd_commitTextBox.right = new FormAttachment(100, -9);
-        fd_commitTextBox.bottom = new FormAttachment(0, 200);
-        commitTextBox.getTextWidget().setLayoutData(fd_commitTextBox);
-
-        final FormData fd_commitFilesLabel = new FormData();
-        fd_commitFilesLabel.top = new FormAttachment(commitTextBox.getTextWidget(), 3);
-        fd_commitFilesLabel.left = new FormAttachment(0, 9);
-        fd_commitFilesLabel.right = new FormAttachment(100, -9);
-        commitFilesLabel.setLayoutData(fd_commitFilesLabel);
-
-        commitFilesList = new CommitFilesChooser(container, selectableFiles,
-                this.inResources, this.root, true);
-
-        final FormData fd_table = new FormData();
-        fd_table.top = new FormAttachment(commitFilesLabel, 3);
-        fd_table.left = new FormAttachment(0, 9);
-        fd_table.right = new FormAttachment(100, -9);
-        fd_table.bottom = new FormAttachment(100, -9);
-        commitFilesList.setLayoutData(fd_table);
-
-        setupDefaultCommitMessage();
-        
-        return container;
     }
 
     /**
@@ -225,21 +306,47 @@ public class CommitDialog extends TrayDialog {
      */
     @Override
     protected void okPressed() {
-        resourcesToAdd = commitFilesList.getCheckedResources(FILE_UNTRACKED);
-        resourcesToCommit = commitFilesList.getCheckedResources();
-        resourcesToRemove = commitFilesList.getCheckedResources(FILE_DELETED);
-        commitMessage = commitTextDocument.get();
-        /* Store commit message in the database if not the default message */
-        if(!commitMessage.equals(defaultCommitMessage))
-        {
-           MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
-        }
-        super.okPressed();
-    }
+        try {
+            resourcesToAdd = commitFilesList
+                    .getCheckedResources(FILE_UNTRACKED);
+            resourcesToCommit = commitFilesList.getCheckedResources();
+            resourcesToRemove = commitFilesList
+                    .getCheckedResources(FILE_DELETED);
+            commitMessage = commitTextDocument.get();
+            /* Store commit message in the database if not the default message */
+            if (!commitMessage.equals(defaultCommitMessage)) {
+                MercurialEclipsePlugin.getCommitMessageManager()
+                        .saveCommitMessage(commitMessage);
+            }
+            this.user = userTextField.getText();
 
-    @Override
-    protected Point getInitialSize() {
-        return new Point(477, 562);
+            // add new resources
+            HgAddClient.addResources(resourcesToAdd, null);
+
+            // remove deleted resources
+            HgRemoveClient.removeResources(resourcesToRemove);
+
+            // commit all
+            String messageToCommit = this.getCommitMessage();
+            if (user == null || user.length() == 0) {
+                user = HgClients.getDefaultUserName();
+            }
+
+            HgCommitClient.commitResources(resourcesToCommit, user,
+                    messageToCommit, new NullProgressMonitor());
+
+            if (inResources.size() > 0) {
+                new RefreshJob(
+                        Messages.getString("CommitDialog.refreshing"), null, //$NON-NLS-1$
+                        inResources.get(0).getProject()).schedule();
+            }
+
+            super.okPressed();
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            setErrorMessage(e.getLocalizedMessage());
+        }
+
     }
 
     protected void setRoot(HgRoot root) {
@@ -253,9 +360,17 @@ public class CommitDialog extends TrayDialog {
     public List<IResource> getResourcesToRemove() {
         return resourcesToRemove;
     }
-    
+
     private void setupDefaultCommitMessage() {
         commitTextDocument.set(defaultCommitMessage);
         commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
     }
+
+    /**
+     * @return the user
+     */
+    public String getUser() {
+        return user;
+    }
+
 }
