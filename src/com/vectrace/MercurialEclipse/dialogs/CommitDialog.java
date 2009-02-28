@@ -218,6 +218,10 @@ public class CommitDialog extends TitleAreaDialog {
         SWTWidgetHelper.createLabel(comp, Messages
                 .getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
         this.userTextField = SWTWidgetHelper.createTextField(comp);
+        if (user == null || user.length() == 0) {
+            user = HgClients.getDefaultUserName();
+        }
+        this.userTextField.setText(user);
     }
 
     /**
