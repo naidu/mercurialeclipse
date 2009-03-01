@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.regex.Pattern;
 
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
@@ -25,12 +24,10 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
     
-    static final Pattern DIFF_START_PATTERN = Pattern.compile(
-            "^diff -r ", Pattern.MULTILINE);
-
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
         try {
@@ -56,7 +53,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     private static IFilePatch[] getOutgoingPatches(IResource res,
             HgRepositoryLocation repository) throws HgException {
         String outgoingPatch = getOutgoingPatch(res, repository);
-        return HgPatchClient.getFilePatches(outgoingPatch);
+        return PatchUtils.getFilePatches(outgoingPatch);
     }
 
     private static String getResult(HgCommand command) throws HgException {
