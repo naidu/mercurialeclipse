@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.text.Document;
@@ -55,7 +56,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -326,9 +327,15 @@ public class CommitDialog extends TitleAreaDialog {
             if (user == null || user.length() == 0) {
                 user = HgClients.getDefaultUserName();
             }
-
-            HgCommitClient.commitResources(resourcesToCommit, user,
-                    messageToCommit, new NullProgressMonitor());
+            
+            if (!selectableFiles) {
+                // commit merge
+                CommitMergeHandler.commitMerge(inResources.get(0),
+                        messageToCommit);
+            } else {
+                HgCommitClient.commitResources(resourcesToCommit, user,
+                        messageToCommit, new NullProgressMonitor());
+            }
 
             if (inResources.size() > 0) {
                 new RefreshJob(
@@ -337,7 +344,7 @@ public class CommitDialog extends TitleAreaDialog {
             }
 
             super.okPressed();
-        } catch (HgException e) {
+        } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
             setErrorMessage(e.getLocalizedMessage());
         }

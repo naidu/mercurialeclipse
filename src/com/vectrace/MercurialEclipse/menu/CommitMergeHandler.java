@@ -8,7 +8,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.SafeUiJob;
@@ -60,11 +59,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
                     false);
 
             // open dialog and wait for ok
-            if (commitDialog.open() == Window.OK) {
-                // commit
-                String messageToCommit = commitDialog.getCommitMessage();
-                result = commitMerge(resource, messageToCommit);
-            }
+            commitDialog.open();
         } catch (CoreException e) {
             throw new HgException(Messages.getString("CommitMergeHandler.failedToSetMergeStatus"), e); //$NON-NLS-1$
         }
