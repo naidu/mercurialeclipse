@@ -13,8 +13,12 @@ package com.vectrace.MercurialEclipse.ui;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -67,17 +71,40 @@ public class HgProjectPropertyPage extends PropertyPage {
         // each repository gets a label with its logical name and a combo for
         // setting it within MercurialEclipse
 
-        HgRepositoryLocationManager mgr = MercurialEclipsePlugin
+        final HgRepositoryLocationManager mgr = MercurialEclipsePlugin
                 .getRepoManager();
         Set<HgRepositoryLocation> repos = mgr
                 .getAllProjectRepoLocations(project);
-        for (HgRepositoryLocation repo : repos) {
+        for (final HgRepositoryLocation repo : repos) {
             Composite repoComposite = SWTWidgetHelper.createComposite(
-                    reposGroup, 2);
+                    reposGroup, 3);
             SWTWidgetHelper.createLabel(repoComposite,
                     repo.getLogicalName() == null ? "Unnamed" : repo
                             .getLogicalName());
             Combo combo = SWTWidgetHelper.createEditableCombo(repoComposite);
+            Button defaultButton = SWTWidgetHelper.createPushButton(
+                    repoComposite,
+                    "Set as default", 1);
+            defaultButton.addMouseListener(new MouseListener() {
+
+                public void mouseUp(MouseEvent e) {
+                    try {
+                        mgr.setDefaultProjectRepository(project, repo);
+                    } catch (CoreException e1) {
+                        MercurialEclipsePlugin.logError(e1);
+                        setErrorMessage(e1.getLocalizedMessage());
+                    }
+                }
+
+                public void mouseDown(MouseEvent e) {
+                    // TODO Auto-generated method stub
+
+                }
+
+                public void mouseDoubleClick(MouseEvent e) {
+
+                }
+            });
             combo.add(repo.getLocation());
             combo.select(0);
         }
