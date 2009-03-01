@@ -19,14 +19,12 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -116,30 +114,24 @@ public class CommitFilesChooser extends Composite {
         Table table = new Table(this, flags);
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        TableLayout layout = new TableLayout();
+        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+        table.setLayoutData(data);
 
         TableColumn col;
 
-        // Check mark
-        col = new TableColumn(table, SWT.NONE | SWT.BORDER);
-        col.setResizable(false);
-        col.setText(""); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(20, false));
         // File name
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(320, true));
+        col.setWidth(400);
+        col.setMoveable(true);
 
         // File status
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(100, true));
-
-        table.setLayout(layout);
-
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+        col.setWidth(170);
+        col.setMoveable(true);
         return table;
     }
 

@@ -19,11 +19,9 @@ import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -115,29 +113,22 @@ public class RevertDialog extends Dialog {
                 | SWT.FULL_SELECTION | SWT.MULTI | SWT.CHECK | SWT.BORDER);
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        TableLayout layout = new TableLayout();
-
         TableColumn col;
-
-        // Check mark
-        col = new TableColumn(table, SWT.NONE | SWT.BORDER);
-        col.setResizable(false);
-        col.setText(""); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(20, false));
 
         // File name
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("RevertDialog.file")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(220, true));
+        col.setWidth(350);
+        col.setMoveable(true);
 
         // File status
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("RevertDialog.status")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(100, true));
+        col.setWidth(170);
+        col.setMoveable(true);
 
-        table.setLayout(layout);
         selectFilesList = new CheckboxTableViewer(table);
 
         selectFilesList.setContentProvider(new ArrayContentProvider());
