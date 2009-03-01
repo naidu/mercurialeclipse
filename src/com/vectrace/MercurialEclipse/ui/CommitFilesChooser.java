@@ -19,14 +19,12 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
-import org.eclipse.jface.viewers.ColumnPixelData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.StructuredViewer;
-import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -48,7 +46,6 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
-import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * TODO enable tree/flat view switch
@@ -76,7 +73,7 @@ public class CommitFilesChooser extends Composite {
 
     public CommitFilesChooser(Composite container, boolean selectable,
             List<IResource> resources, HgRoot hgRoot, boolean showUntracked) {
-        super(container, SWT.None);
+        super(container, container.getStyle());
 
         this.selectable = selectable;
         this.root = hgRoot;
@@ -90,6 +87,7 @@ public class CommitFilesChooser extends Composite {
         layout.marginWidth = 0;
         layout.marginHeight = 0;
         setLayout(layout);
+        
 
         Table table = createTable();
         createOptionCheckbox();
@@ -98,8 +96,9 @@ public class CommitFilesChooser extends Composite {
         viewer.setContentProvider(new ArrayContentProvider());
         viewer.setLabelProvider(new CommitResourceLabelProvider());
         viewer.addFilter(committableFilesFilter);
-        if (!showUntracked)
+        if (!showUntracked) {
             viewer.addFilter(untrackedFilesFilter);
+        }
 
         setResources(resources);
         makeActions();
@@ -115,43 +114,39 @@ public class CommitFilesChooser extends Composite {
         Table table = new Table(this, flags);
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
-        TableLayout layout = new TableLayout();
+        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+        table.setLayoutData(data);
 
         TableColumn col;
 
-        // Check mark
-        col = new TableColumn(table, SWT.NONE | SWT.BORDER);
-        col.setResizable(false);
-        col.setText(""); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(20, false));
         // File name
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(320, true));
+        col.setWidth(400);
+        col.setMoveable(true);
 
         // File status
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnPixelData(100, true));
-
-        table.setLayout(layout);
-
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+        col.setWidth(170);
+        col.setMoveable(true);
         return table;
     }
 
     private void createOptionCheckbox() {
-        if (!selectable)
+        if (!selectable) {
             return;
+        }
         selectAllButton = new Button(this, SWT.CHECK);
         selectAllButton.setText(Messages
                 .getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
         selectAllButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        if (!untracked)
+        if (!untracked) {
             return;
+        }
         showUntrackedFilesButton = new Button(this, SWT.CHECK);
         showUntrackedFilesButton.setText(Messages
                 .getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
@@ -186,9 +181,10 @@ public class CommitFilesChooser extends Composite {
                 fireStateChanged();
             }
         });
-        if (selectable)
+        if (selectable) {
             selectAllButton.setSelection(false); // Start not selected
-        if (selectable)
+        }
+        if (selectable) {
             selectAllButton.addSelectionListener(new SelectionAdapter() {
                 @Override
                 public void widgetSelected(SelectionEvent e) {
@@ -200,6 +196,7 @@ public class CommitFilesChooser extends Composite {
                     fireStateChanged();
                 }
             });
+        }
 
         if (selectable && untracked) {
             showUntrackedFilesButton.setSelection(true); // Start selected.
@@ -250,24 +247,27 @@ public class CommitFilesChooser extends Composite {
             }
         }
         getViewer().setCheckedElements(tracked.toArray());
-        if (!untracked)
+        if (!untracked) {
             selectAllButton.setSelection(true);
+        }
     }
 
     public ArrayList<IResource> getCheckedResources(String... status) {
         ArrayList<IResource> list = new ArrayList<IResource>();
         for (Object res : getViewer().getCheckedElements()) {
-            if (res instanceof CommitResource != true)
+            if (res instanceof CommitResource != true) {
                 return null;
+            }
             CommitResource resource = (CommitResource) res;
-            if (status == null || status.length == 0)
+            if (status == null || status.length == 0) {
                 list.add(resource.getResource());
-            else {
-                for (String stat : status)
+            } else {
+                for (String stat : status) {
                     if (resource.getStatus().equals(stat)) {
                         list.add(resource.getResource());
                         break;
                     }
+                }
             }
         }
         return list;
@@ -281,7 +281,8 @@ public class CommitFilesChooser extends Composite {
     }
 
     protected void fireStateChanged() {
-        for (Object obj : stateListeners.getListeners())
+        for (Object obj : stateListeners.getListeners()) {
             ((Listener) obj).handleEvent(null);
+        }
     }
 }

@@ -18,6 +18,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +29,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -148,16 +150,17 @@ public abstract class AbstractShellCommand {
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
             final String commandInvoked = cmdString.substring(0, cmdString
                     .length() - 1);
-
+    
             ProcessBuilder builder = new ProcessBuilder(cmd);
-
+    
             // set locale to english have deterministic output
             Map<String, String> env = builder.environment();
             env.put("LC_ALL", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
             env.put("LANG", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
             env.put("LANGUAGE", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
             env.put("LC_MESSAGES", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
-
+            env.put("HGENCODING", "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+    
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
@@ -179,7 +182,7 @@ public abstract class AbstractShellCommand {
                     return super.runSafe(monitor);
                 }
             }.schedule();
-
+    
             consumer.join(timeout); // 30 seconds timeout
             final String msg = getMessage(output);
             if (!consumer.isAlive()) {
@@ -198,12 +201,12 @@ public abstract class AbstractShellCommand {
                     }.schedule();
                     return true;
                 }
-
+    
                 // exit code > 0
                 final HgException hgex = new HgException(
                         "Process error, return code: " + exitCode //$NON-NLS-1$
                                 + ", message: " + getMessage(output)); //$NON-NLS-1$
-
+    
                 // exit code == 1 usually isn't fatal.
                 new SafeWorkspaceJob("Writing to console...") {
                     @Override
@@ -212,7 +215,7 @@ public abstract class AbstractShellCommand {
                         return super.runSafe(monitor);
                     }
                 }.schedule();
-
+    
                 throw hgex;
             }
             // command timeout
@@ -241,7 +244,10 @@ public abstract class AbstractShellCommand {
     }
 
     private static String getMessage(OutputStream output) {
-        return output instanceof FileOutputStream ? null : output.toString();
+        if (output instanceof FileOutputStream) {
+            return null;
+        }
+        return output.toString();
     }
 
     /**
@@ -257,7 +263,12 @@ public abstract class AbstractShellCommand {
     public String executeToString() throws HgException {
         byte[] bytes = executeToBytes();
         if (bytes != null) {
-            return new String(bytes);
+            try {
+                return new String(bytes, "UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new HgException(e.getLocalizedMessage(), e);
+            }
         }
         return ""; //$NON-NLS-1$
     }

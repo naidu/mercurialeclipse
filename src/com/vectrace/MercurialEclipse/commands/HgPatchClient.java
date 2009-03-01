@@ -16,10 +16,12 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgPatchClient extends AbstractClient {
 
@@ -55,5 +57,18 @@ public class HgPatchClient extends AbstractClient {
         command.addFiles(resources);
         command.addOptions(options.toArray(new String[options.size()]));
         return command.executeToString();
+    }
+    
+    public static String getDiff(File workDir) throws HgException {
+        HgCommand command = new HgCommand(
+                "diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$ 
+        return command.executeToString();
+    }
+
+    public IFilePatch[] getFilePatchesFromDiff(File file) throws HgException {
+        HgCommand command = new HgCommand(
+                "diff", getWorkingDirectory(getWorkingDirectory(file)), true); //$NON-NLS-1$         
+        String patchString = command.executeToString();
+        return PatchUtils.getFilePatches(patchString);
     }
 }

@@ -68,6 +68,15 @@ public class SWTWidgetHelper {
         button.setLayoutData(data);
         return button;
     }
+    
+    /**
+     * @return
+     */
+    public static GridData getFillGD(int minHeight) {
+        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
+        gd.minimumHeight = minHeight;
+        return gd;
+    }
 
     public static Button createPushButton(Composite parent, String label,
             int span) {

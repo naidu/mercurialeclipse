@@ -119,9 +119,7 @@ public class HgSignClient {
     public static String getPrivateKeyList() throws HgException {
         List<String> getKeysCmd = new ArrayList<String>();
         getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
-        getKeysCmd.add("-k"); //$NON-NLS-1$
-        getKeysCmd.add("-v"); //$NON-NLS-1$
-        getKeysCmd.add("0"); //$NON-NLS-1$
+        getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
         GpgCommand command = new GpgCommand(getKeysCmd, ResourcesPlugin
                 .getWorkspace().getRoot().getLocation().toFile(), false);
         return new String(command.executeToBytes());
