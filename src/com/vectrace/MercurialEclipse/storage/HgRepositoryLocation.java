@@ -98,7 +98,14 @@ public class HgRepositoryLocation extends AllRootsElement implements
                     && !myUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
                 String userInfo = null;
                 if (myUri.getUserInfo() == null) {
-                    userInfo = createUserinfo(this.user, this.password);
+                    // This is a hack: ssh doesn't allow us to directly enter
+                    // in passwords in the URI (even though it says it does)
+                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
+                        userInfo = this.user;
+                    } else {
+                        userInfo = createUserinfo(this.user, this.password);
+                    }
+                    
                 } else {
                     // extract user and password from given URI
                     String[] authorization = myUri.getUserInfo().split(":"); //$NON-NLS-1$
@@ -106,7 +113,14 @@ public class HgRepositoryLocation extends AllRootsElement implements
                     if (authorization.length > 1) {
                         this.password = authorization[1];
                     }
-                    userInfo = createUserinfo(this.user, this.password);
+                    
+                    // This is a hack: ssh doesn't allow us to directly enter 
+                    // in passwords in the URI (even though it says it does)
+                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
+                        userInfo = this.user;
+                    } else {
+                        userInfo = createUserinfo(this.user, this.password);
+                    }
                 }
                 this.uri = new URI(myUri.getScheme(), userInfo,
                         myUri.getHost(), myUri.getPort(), myUri.getPath(),
