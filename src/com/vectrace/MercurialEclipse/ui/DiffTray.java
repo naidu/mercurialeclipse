@@ -10,19 +10,21 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
+
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.source.ISourceViewer;
+import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Label;
-
 
 /**
  * @author bastian
- *
+ * 
  */
 public class DiffTray extends org.eclipse.jface.dialogs.DialogTray {
-    
+
     private String patch;
 
     /**
@@ -31,7 +33,7 @@ public class DiffTray extends org.eclipse.jface.dialogs.DialogTray {
     public DiffTray(String patch) {
         this.patch = patch;
     }
-    
+
     /*
      * (non-Javadoc)
      * 
@@ -41,10 +43,16 @@ public class DiffTray extends org.eclipse.jface.dialogs.DialogTray {
      */
     @Override
     protected Control createContents(Composite parent) {
-       Composite comp = SWTWidgetHelper.createComposite(parent, 1);
-        Label l = SWTWidgetHelper.createLabel(comp, patch);
-        GridData gd = new GridData(SWT.BEGINNING, SWT.TOP, false, true);
-        l.setLayoutData(gd);
+        Composite comp = SWTWidgetHelper.createComposite(parent, 1);
+
+        ISourceViewer diffContent = new SourceViewer(comp, null, SWT.V_SCROLL
+                | SWT.MULTI | SWT.BORDER);
+        diffContent.setEditable(false);
+        diffContent.getTextWidget().setLayoutData(getFillGD(150));
+        Document doc = new Document();
+        doc.set(patch);
+        diffContent.setDocument(doc);
+        diffContent.activatePlugins();
         return comp;
     }
 
