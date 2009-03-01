@@ -45,6 +45,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
 import com.vectrace.MercurialEclipse.repository.RepositoryResourcesManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * A manager for all Mercurial repository locations.
@@ -199,7 +200,8 @@ public class HgRepositoryLocationManager {
                 .getProjects();
 
         for (IProject project : projects) {
-            if (!project.isOpen()) {
+            if (!project.isAccessible()
+                    || !MercurialUtilities.hgIsTeamProviderFor(project, false)) {
                 continue;
             }
             
@@ -375,8 +377,9 @@ public class HgRepositoryLocationManager {
             String pass) throws URISyntaxException {
         HgRepositoryLocation location = matchRepoLocation(url);
         if (location != null) {
-            if (user == null || !user.equals(location.getUser()))
+            if (user == null || !user.equals(location.getUser())) {
                 return location;
+            }
         }
         
         // make a new location if no matches exist or it's a different user
@@ -456,8 +459,9 @@ public class HgRepositoryLocationManager {
             repos.add(updated);
             
             for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
-                if (locs.remove(updated))
+                if (locs.remove(updated)) {
                     locs.add(updated);
+                }
             }
             
             REPOSITORY_RESOURCES_MANAGER.repositoryModified(updated);
