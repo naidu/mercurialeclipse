@@ -13,6 +13,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -140,7 +142,7 @@ public class CommitDialog extends TitleAreaDialog {
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite container = SWTWidgetHelper.createComposite(parent, 1);
-        GridData gd = getGD(400);
+        GridData gd = getFillGD(400);
         gd.minimumWidth = 600;
         container.setLayoutData(gd);
         super.createDialogArea(parent);
@@ -183,13 +185,11 @@ public class CommitDialog extends TitleAreaDialog {
             }
 
             public void mouseDown(MouseEvent e) {
-                // TODO Auto-generated method stub
 
             }
 
             public void mouseDoubleClick(MouseEvent e) {
-                // TODO Auto-generated method stub
-
+                
             }
         });
         setupDefaultCommitMessage();
@@ -207,7 +207,7 @@ public class CommitDialog extends TitleAreaDialog {
 
         commitFilesList = new CommitFilesChooser(container, selectableFiles,
                 this.inResources, this.root, true);
-        commitFilesList.setLayoutData(getGD(200));
+        commitFilesList.setLayoutData(getFillGD(200));
     }
 
     /**
@@ -233,7 +233,7 @@ public class CommitDialog extends TitleAreaDialog {
         commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL
                 | SWT.MULTI | SWT.BORDER | SWT.WRAP);
         commitTextBox.setEditable(true);
-        commitTextBox.getTextWidget().setLayoutData(getGD(150));
+        commitTextBox.getTextWidget().setLayoutData(getFillGD(150));
 
         // set up spell-check annotations
         decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
@@ -257,15 +257,6 @@ public class CommitDialog extends TitleAreaDialog {
             }
 
         });
-    }
-
-    /**
-     * @return
-     */
-    private GridData getGD(int minHeight) {
-        GridData gd = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gd.minimumHeight = minHeight;
-        return gd;
     }
 
     /**
