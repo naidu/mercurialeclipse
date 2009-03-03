@@ -210,6 +210,7 @@ public class MercurialHistory extends FileHistory {
                 changeSets.addAll(localChangeSets);
 
                 if (revisions == null || revisions.size() == 0
+                        || revisions.size() < changeSets.size()
                         || !(revisions.first().getResource().equals(resource))) {
                     revisions = new TreeSet<MercurialRevision>(
                             getRevisionComparator());
