@@ -64,6 +64,13 @@ public class HgPatchClient extends AbstractClient {
                 "diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$ 
         return command.executeToString();
     }
+    
+    public static String getDiff(File workDir, File file) throws HgException {
+        HgCommand command = new HgCommand(
+                "diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
+        command.addOptions(file.getAbsolutePath());
+        return command.executeToString();
+    }
 
     public IFilePatch[] getFilePatchesFromDiff(File file) throws HgException {
         HgCommand command = new HgCommand(

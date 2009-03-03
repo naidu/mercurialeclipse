@@ -16,9 +16,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-import org.eclipse.compare.patch.IFilePatch;
-import org.eclipse.compare.patch.IFilePatchResult;
-import org.eclipse.compare.patch.PatchConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
@@ -34,6 +31,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 /**
  * @author zingo
@@ -160,7 +158,8 @@ public class IStorageMercurialRevision implements IStorage {
                 }
 
             } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                return getOutgoingContents(file);
+                return PatchUtils.getPatchedContents(file, changeSet
+                        .getPatches(), true);
             } else {
                 // local: get the contents via cat
                 result = HgCatClient.getContent(file, changeSet
@@ -173,22 +172,6 @@ public class IStorageMercurialRevision implements IStorage {
         }
         ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes());
         return is;
-    }
-
-    private InputStream getOutgoingContents(IFile file) throws CoreException {
-        for (IFilePatch patch : changeSet.getPatches()) {
-            String[] headerWords = patch.getHeader().split(" ");
-            String patchPath = headerWords[headerWords.length - 1].trim();
-            if (file.getFullPath().toString().endsWith(patchPath)) {
-                PatchConfiguration configuration = new PatchConfiguration();
-                configuration.setReversed(true);
-                IFilePatchResult patchResult = patch.apply(file, configuration,
-                        null);
-                return patchResult.getPatchedContents();
-            }
-        }
-        /* If there's no patch, we just return no differences */
-        return file.getContents();
     }
     
     /*

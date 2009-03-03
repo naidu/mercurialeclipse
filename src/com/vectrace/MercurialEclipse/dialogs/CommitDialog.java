@@ -18,6 +18,9 @@ import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.compare.ResourceNode;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -27,6 +30,10 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -54,14 +61,16 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
-import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
+import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.DiffTray;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * 
@@ -98,6 +107,8 @@ public class CommitDialog extends TitleAreaDialog {
     private Text userTextField;
     private String user;
     private boolean closed = true;
+    private IFile selectedFile;
+    private Button trayButton;
 
     /**
      * @param shell
@@ -144,7 +155,7 @@ public class CommitDialog extends TitleAreaDialog {
     protected Control createDialogArea(Composite parent) {
         Composite container = SWTWidgetHelper.createComposite(parent, 1);
         GridData gd = getFillGD(400);
-        gd.minimumWidth = 600;
+        gd.minimumWidth = 500;
         container.setLayoutData(gd);
         super.createDialogArea(parent);
 
@@ -164,16 +175,16 @@ public class CommitDialog extends TitleAreaDialog {
         createOldCommitCombo(container);
         createUserCommitCombo(container);
         createFilesList(container);
-        Button trayButton = SWTWidgetHelper.createPushButton(container,
+        trayButton = SWTWidgetHelper.createPushButton(container,
                 Messages.getString("CommitDialog.showDiffButton.text"), //$NON-NLS-1$
                 1);
+        trayButton.setEnabled(false);
         trayButton.addMouseListener(new MouseListener() {
 
             public void mouseUp(MouseEvent e) {
                 if (closed && inResources.size() > 0) {
                     try {
-                        openTray(new DiffTray(HgPatchClient.getDiff(inResources
-                                .get(0).getLocation().toFile())));
+                        openTray(new DiffTray(getCompareEditorInput()));
                         closed = false;
                     } catch (Exception e1) {
                         MercurialEclipsePlugin.logError(e1);
@@ -190,13 +201,28 @@ public class CommitDialog extends TitleAreaDialog {
             }
 
             public void mouseDoubleClick(MouseEvent e) {
-                
+
             }
         });
         setupDefaultCommitMessage();
 
         commitTextBox.getTextWidget().setFocus();
         return container;
+    }
+
+    /**
+     * @return
+     */
+    protected CompareEditorInput getCompareEditorInput() {
+
+        if (selectedFile == null) {
+            return null;
+        }
+        IStorageMercurialRevision iStorage = new IStorageMercurialRevision(
+                selectedFile);
+        ResourceNode right = new RevisionNode(iStorage);
+        ResourceNode left = new ResourceNode(selectedFile);
+        return CompareUtils.getCompareInput(left, right, false);
     }
 
     /**
@@ -209,6 +235,24 @@ public class CommitDialog extends TitleAreaDialog {
         commitFilesList = new CommitFilesChooser(container, selectableFiles,
                 this.inResources, this.root, true);
         commitFilesList.setLayoutData(getFillGD(200));
+        commitFilesList.getViewer().addSelectionChangedListener(
+                new ISelectionChangedListener() {
+
+                    public void selectionChanged(SelectionChangedEvent event) {
+                        ISelection selection = event.getSelection();
+
+                        if (selection instanceof IStructuredSelection) {
+                            IStructuredSelection sel = (IStructuredSelection) selection;
+                            selectedFile = (IFile) ((CommitResource) sel
+                                    .getFirstElement()).getResource();
+                            trayButton.setEnabled(true);
+                            if (!closed) {
+                                closeTray();
+                                openTray(new DiffTray(getCompareEditorInput()));
+                            }
+                        }
+                    }
+                });
     }
 
     /**
@@ -327,7 +371,7 @@ public class CommitDialog extends TitleAreaDialog {
             if (user == null || user.length() == 0) {
                 user = HgClients.getDefaultUserName();
             }
-            
+
             if (!selectableFiles) {
                 // commit merge
                 CommitMergeHandler.commitMerge(inResources.get(0),

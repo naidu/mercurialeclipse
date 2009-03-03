@@ -130,7 +130,7 @@ public class CommitFilesChooser extends Composite {
         col = new TableColumn(table, SWT.NONE);
         col.setResizable(true);
         col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
-        col.setWidth(170);
+        col.setWidth(70);
         col.setMoveable(true);
         return table;
     }

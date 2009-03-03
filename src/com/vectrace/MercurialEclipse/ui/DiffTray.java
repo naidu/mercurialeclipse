@@ -10,14 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
+import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.jface.text.Document;
-import org.eclipse.jface.text.source.ISourceViewer;
-import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.swt.SWT;
+import org.eclipse.compare.CompareEditorInput;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author bastian
@@ -25,13 +26,14 @@ import org.eclipse.swt.widgets.Control;
  */
 public class DiffTray extends org.eclipse.jface.dialogs.DialogTray {
 
-    private String patch;
+    private CompareEditorInput compareInput;
+    private Composite comp;
 
     /**
      * 
      */
-    public DiffTray(String patch) {
-        this.patch = patch;
+    public DiffTray(CompareEditorInput compareInput) {
+        this.compareInput = compareInput;
     }
 
     /*
@@ -43,16 +45,20 @@ public class DiffTray extends org.eclipse.jface.dialogs.DialogTray {
      */
     @Override
     protected Control createContents(Composite parent) {
-        Composite comp = SWTWidgetHelper.createComposite(parent, 1);
-
-        ISourceViewer diffContent = new SourceViewer(comp, null, SWT.V_SCROLL
-                | SWT.MULTI | SWT.BORDER);
-        diffContent.setEditable(false);
-        diffContent.getTextWidget().setLayoutData(getFillGD(150));
-        Document doc = new Document();
-        doc.set(patch);
-        diffContent.setDocument(doc);
-        diffContent.activatePlugins();
+        try {
+        comp = SWTWidgetHelper.createComposite(parent, 1);
+        compareInput.run(new NullProgressMonitor());
+        } catch (InvocationTargetException e) {
+            // TODO Auto-generated catch block
+            MercurialEclipsePlugin.logError(e);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            MercurialEclipsePlugin.logError(e);
+        }
+        Control c = compareInput.createContents(comp);
+        GridData layoutData = new GridData(GridData.FILL_BOTH);
+        layoutData.minimumWidth = 400;
+        c.setLayoutData(layoutData);
         return comp;
     }
 
