@@ -35,7 +35,10 @@ public class HgPathsClient {
         try {
             FileInputStream input = new FileInputStream(hgrc);
             IniFile ini = new IniFile(hgrc.toURL());
-            paths.putAll(ini.getSection(PATHS_SECTION));
+            Map<String,String> section = ini.getSection(PATHS_SECTION);
+            if (section != null) {
+                paths.putAll(section);
+            }
             input.close();
         } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
