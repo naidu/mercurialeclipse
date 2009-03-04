@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2006-2009 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -98,7 +99,7 @@ public class IStorageMercurialRevision implements IStorage {
         super();
         this.resource = res;
         ChangeSet cs = null;
-        try {            
+        try {
             cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(
                     res);
             this.revision = cs.getChangesetIndex() + ""; // should be fetched //$NON-NLS-1$
@@ -170,19 +171,29 @@ public class IStorageMercurialRevision implements IStorage {
             // no changeset known
             result = HgCatClient.getContent(file, null);
         }
-        ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes());
-        return is;
+        
+        try {
+            ByteArrayInputStream is = new ByteArrayInputStream(result
+                    .getBytes(file.getCharset()));
+            return is;
+        } catch (UnsupportedEncodingException e) {
+            MercurialEclipsePlugin.logError(e);
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
     }
-    
+
     /*
      * (non-Javadoc)setContents(
      * 
      * @see org.eclipse.core.resources.IStorage#getFullPath()
      */
     public IPath getFullPath() {
-        return resource.getFullPath().append(
-                revision != null ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
-                        : Messages.getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
+        return resource
+                .getFullPath()
+                .append(
+                        revision != null ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
+                                : Messages
+                                        .getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
     }
 
     /*
