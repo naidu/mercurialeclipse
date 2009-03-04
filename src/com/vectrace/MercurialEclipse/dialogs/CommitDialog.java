@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2006-2009 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
- *     Bastian Doetsch - Added spellchecking.
+ *     Bastian Doetsch - Added spellchecking and some other stuff
  *     StefanC - many updates
  *     Zingo Andersen - some updates
  *******************************************************************************/
@@ -18,9 +18,6 @@ import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.compare.CompareEditorInput;
-import org.eclipse.compare.ResourceNode;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -30,21 +27,14 @@ import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ISelectionChangedListener;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -62,15 +52,11 @@ import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
-import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
-import com.vectrace.MercurialEclipse.ui.DiffTray;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
-import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * 
@@ -106,10 +92,7 @@ public class CommitDialog extends TitleAreaDialog {
     private List<IResource> inResources;
     private Text userTextField;
     private String user;
-    private boolean closed = true;
-    private IFile selectedFile;
-    private Button trayButton;
-
+    
     /**
      * @param shell
      */
@@ -175,54 +158,10 @@ public class CommitDialog extends TitleAreaDialog {
         createOldCommitCombo(container);
         createUserCommitCombo(container);
         createFilesList(container);
-        trayButton = SWTWidgetHelper.createPushButton(container,
-                Messages.getString("CommitDialog.showDiffButton.text"), //$NON-NLS-1$
-                1);
-        trayButton.setEnabled(false);
-        trayButton.addMouseListener(new MouseListener() {
-
-            public void mouseUp(MouseEvent e) {
-                if (closed && inResources.size() > 0) {
-                    try {
-                        openTray(new DiffTray(getCompareEditorInput()));
-                        closed = false;
-                    } catch (Exception e1) {
-                        MercurialEclipsePlugin.logError(e1);
-                        setErrorMessage(e1.getMessage());
-                    }
-                } else {
-                    closeTray();
-                    closed = true;
-                }
-            }
-
-            public void mouseDown(MouseEvent e) {
-
-            }
-
-            public void mouseDoubleClick(MouseEvent e) {
-
-            }
-        });
         setupDefaultCommitMessage();
 
         commitTextBox.getTextWidget().setFocus();
         return container;
-    }
-
-    /**
-     * @return
-     */
-    protected CompareEditorInput getCompareEditorInput() {
-
-        if (selectedFile == null) {
-            return null;
-        }
-        IStorageMercurialRevision iStorage = new IStorageMercurialRevision(
-                selectedFile);
-        ResourceNode right = new RevisionNode(iStorage);
-        ResourceNode left = new ResourceNode(selectedFile);
-        return CompareUtils.getCompareInput(left, right, false);
     }
 
     /**
@@ -231,28 +170,9 @@ public class CommitDialog extends TitleAreaDialog {
     private void createFilesList(Composite container) {
         SWTWidgetHelper.createLabel(container, Messages
                 .getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-
-        commitFilesList = new CommitFilesChooser(container, selectableFiles,
+        commitFilesList = new CommitFilesChooser(this, container,
+                selectableFiles,
                 this.inResources, this.root, true);
-        commitFilesList.setLayoutData(getFillGD(200));
-        commitFilesList.getViewer().addSelectionChangedListener(
-                new ISelectionChangedListener() {
-
-                    public void selectionChanged(SelectionChangedEvent event) {
-                        ISelection selection = event.getSelection();
-
-                        if (selection instanceof IStructuredSelection) {
-                            IStructuredSelection sel = (IStructuredSelection) selection;
-                            selectedFile = (IFile) ((CommitResource) sel
-                                    .getFirstElement()).getResource();
-                            trayButton.setEnabled(true);
-                            if (!closed) {
-                                closeTray();
-                                openTray(new DiffTray(getCompareEditorInput()));
-                            }
-                        }
-                    }
-                });
     }
 
     /**

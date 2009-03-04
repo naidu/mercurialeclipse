@@ -51,10 +51,12 @@ public class ExportPage extends HgWizardPage implements Listener {
 
     protected boolean validatePage() {
         String msg = locationChooser.validate();
-        if (msg == null && getCheckedResources().size() == 0)
+        if (msg == null && getCheckedResources().size() == 0) {
             msg = Messages.getString("ExportWizard.InvalidPathFile"); //$NON-NLS-1$
-        if (msg == null)
+        }
+        if (msg == null) {
             setMessage(null);
+        }
         setErrorMessage(msg);
         setPageComplete(msg == null);
         return msg == null;
@@ -73,7 +75,8 @@ public class ExportPage extends HgWizardPage implements Listener {
         locationChooser.setLayoutData(data);
 
         // TODO no diff for untracked files, bug?
-        commitFiles = new CommitFilesChooser(composite, true, resources, root,
+        commitFiles = new CommitFilesChooser(null, composite, true, resources,
+                root,
                 false);
         commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
         commitFiles.addStateListener(this);

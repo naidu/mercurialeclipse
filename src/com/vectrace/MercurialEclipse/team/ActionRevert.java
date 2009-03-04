@@ -36,9 +36,6 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
-import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
-import com.vectrace.MercurialEclipse.dialogs.CommitResource;
-import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -96,7 +93,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                             .getPersistentProperty(ResourceProperties.MERGING) != null;
                     boolean supervised = MercurialUtilities
                             .hgIsTeamProviderFor(resource, false) == true;
-                    
+
                     if (supervised && !merging) {
                         resources.add(resource);
                         if (root == null) {
@@ -108,26 +105,14 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 }
             }
 
-            CommitResource[] commitResources = new CommitResourceUtil(root)
-                    .getCommitResources(resources
-                            .toArray(new IResource[resources.size()]));
-
-            // Check to see if there are any that are untracked.
-            int count = 0;
-            for (int i = 0; i < commitResources.length; i++) {
-                if (!commitResources[i].getStatus().startsWith(
-                        CommitDialog.FILE_UNTRACKED)) {
-                    count++;
-                }
-            }
-
-            if (count != 0) {
+            if (resources.size() != 0) {
                 RevertDialog chooser = new RevertDialog(Display.getCurrent()
-                        .getActiveShell());
-                chooser.setFiles(commitResources);
+                        .getActiveShell(), root);
+                chooser.setFiles(resources);
                 if (chooser.open() == Window.OK) {
-                    final List<CommitResource> result = chooser.getSelection();
-                    new SafeWorkspaceJob(Messages.getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
+                    final List<IResource> result = chooser.getSelection();
+                    new SafeWorkspaceJob(Messages
+                            .getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
                         @Override
                         protected IStatus runSafe(IProgressMonitor monitor) {
                             doRevert(monitor, result);
@@ -143,8 +128,10 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                     workbench = PlatformUI.getWorkbench();
                     shell = workbench.getActiveWorkbenchWindow().getShell();
                 }
-                MessageDialog.openInformation(shell,
-                        Messages.getString("ActionRevert.HgRevert"), Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$ //$NON-NLS-2$
+                MessageDialog
+                        .openInformation(
+                                shell,
+                                Messages.getString("ActionRevert.HgRevert"), Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$ //$NON-NLS-2$
             }
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
@@ -152,17 +139,18 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         }
     }
 
-    private void doRevert(IProgressMonitor monitor,
-            List<CommitResource> resources) {
+    private void doRevert(IProgressMonitor monitor, List<IResource> resources) {
         // the last argument will be replaced with a path
         String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert", //$NON-NLS-1$
                 "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
-        for (CommitResource revertResource : resources) {
+        monitor
+                .beginTask(
+                        Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
+
+        for (IResource resource : resources) {
             if (monitor.isCanceled()) {
                 break;
             }
-            IResource resource = revertResource.getResource();
             // Resource could be inside a link or something do nothing
             // in the future this could check is this is another repository
 
@@ -172,7 +160,8 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             // System.out.println("Revert = " + FullPath);
             // IResourceChangeEvent event = new IResourceChangeEvent();
             try {
-                monitor.subTask(Messages.getString("ActionRevert.reverting") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+                monitor
+                        .subTask(Messages.getString("ActionRevert.reverting") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
                 MercurialUtilities.executeCommand(launchCmd, workingDir, true);
                 monitor.worked(1);
             } catch (HgException e) {
@@ -180,31 +169,15 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             }
         }
 
-        for (CommitResource commitResource : resources) {
-            monitor.subTask(Messages.getString("ActionRevert.refreshing") + commitResource + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-            IResource resource = commitResource.getResource();
+        for (IResource resource : resources) {
+            monitor
+                    .subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             try {
                 resource.refreshLocal(IResource.DEPTH_ONE, monitor);
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }
             monitor.worked(1);
-            // if (!refreshedProjects.contains(resource.getProject())) {
-            // final IProject proj = resource.getProject();
-            // new SafeUiJob("Updating status") {
-            // @Override
-            // protected IStatus runSafe(IProgressMonitor monitor1) {
-            // try {
-            // MercurialStatusCache.getInstance().refresh(proj);
-            // } catch (TeamException e) {
-            // MercurialEclipsePlugin.logError(
-            // "Unable to refresh project: ", e);
-            // }
-            // return super.runSafe(monitor1);
-            // }
-            // }.schedule();
-            // refreshedProjects.add(proj);
-            // }
         }
         monitor.done();
     }
