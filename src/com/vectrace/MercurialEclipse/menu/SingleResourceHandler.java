@@ -22,18 +22,20 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+
 /**
  * 
  * @author Jerome Negre <jerome+hg@jnegre.org>
- *
+ * 
  */
 public abstract class SingleResourceHandler extends AbstractHandler {
 
-	private IResource selection;
+    private IResource selection;
 
-	protected Shell getShell() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-	}
+    protected Shell getShell() {
+        return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+    }
 
     protected IResource getSelectedResource() {
         return selection;
@@ -41,19 +43,32 @@ public abstract class SingleResourceHandler extends AbstractHandler {
 
     @SuppressWarnings("unchecked")
     public Object execute(ExecutionEvent event) throws ExecutionException {
-        Object selectionObject = ((EvaluationContext) event.getApplicationContext())
-                .getDefaultVariable();
+        Object selectionObject = ((EvaluationContext) event
+                .getApplicationContext()).getDefaultVariable();
         try {
-        	IAdaptable selectionAdaptable = (IAdaptable)((List)selectionObject).get(0);
-            this.selection = (IResource)selectionAdaptable.getAdapter(IResource.class);
+            if (selectionObject != null && selectionObject instanceof List) {
+                List list = (List) selectionObject;
+                Object listEntry = list.get(0);
+                if (listEntry != null && listEntry instanceof IAdaptable) {
+                    IAdaptable selectionAdaptable = (IAdaptable) listEntry;
+                    selection = (IResource) selectionAdaptable
+                            .getAdapter(IResource.class);
+                }
+            }
+            if (selection == null) {
+                selection = ResourceUtils.getActiveResourceFromEditor();
+            }
+
             run(getSelectedResource());
         } catch (Exception e) {
-            MessageDialog.openError(getShell(), Messages.getString("SingleResourceHandler.hgSays"), e.getMessage()+Messages.getString("SingleResourceHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+            MessageDialog
+                    .openError(
+                            getShell(),
+                            Messages.getString("SingleResourceHandler.hgSays"), e.getMessage() + Messages.getString("SingleResourceHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
             throw new ExecutionException(e.getMessage(), e);
         }
         return null;
     }
-	
-		
-	protected abstract void run(IResource resource) throws Exception ;
+
+    protected abstract void run(IResource resource) throws Exception;
 }
