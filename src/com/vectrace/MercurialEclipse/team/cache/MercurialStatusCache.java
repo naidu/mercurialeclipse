@@ -50,6 +50,8 @@ import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -60,6 +62,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
+import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -88,6 +91,7 @@ public class MercurialStatusCache extends AbstractCache implements
         private final Map<IProject, Set<IResource>> changed;
         private final Map<IProject, Set<IResource>> added;
         private boolean completeStatus;
+        private boolean autoShare;
 
         /**
          * @param removed
@@ -107,6 +111,12 @@ public class MercurialStatusCache extends AbstractCache implements
                                     .getPreference(
                                             MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
                                             "false")).booleanValue(); //$NON-NLS-1$
+            autoShare = Boolean
+                    .valueOf(
+                            HgClients
+                                    .getPreference(
+                                            MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS,
+                                            "false")).booleanValue();
         }
 
         private IResource getResource(IResource res) {
@@ -125,16 +135,55 @@ public class MercurialStatusCache extends AbstractCache implements
             // + Integer.toHexString(delta.getKind()));
             // System.out.println("[ME-RV] Resource: " + res.getFullPath());
 
+            if (res.isAccessible() && res.getType() == IResource.ROOT) {
+                return true;
+            }
+
+            // handle projects that contain a mercurial repository
+            if (delta.getFlags() == IResourceDelta.OPEN && res.isAccessible()
+                    && RepositoryProvider.getProvider(res.getProject()) == null) {
+                final IProject project = res.getProject();
+                final String root = MercurialUtilities
+                        .search4MercurialRoot(project);
+                if (root != null && root.length() > 0 && autoShare) {
+                    final IWorkbenchWindow activeWorkbenchWindow = PlatformUI
+                            .getWorkbench().getActiveWorkbenchWindow();
+
+                    try {
+                        new SafeWorkspaceJob(Messages.getString("MercurialStatusCache.autoshare.1") + project.getName() //$NON-NLS-1$
+                                + Messages.getString("MercurialStatusCache.autoshare.2")) { //$NON-NLS-1$
+                            /*
+                             * (non-Javadoc)
+                             * 
+                             * @see
+                             * com.vectrace.MercurialEclipse.SafeWorkspaceJob
+                             * #runSafe
+                             * (org.eclipse.core.runtime.IProgressMonitor)
+                             */
+                            @Override
+                            protected IStatus runSafe(IProgressMonitor monitor) {
+                                try {
+                                    new InitOperation(activeWorkbenchWindow,
+                                            project, root, root).run(monitor);
+                                } catch (Exception e) {
+                                    MercurialEclipsePlugin.logError(e);
+                                    throw new RuntimeException(e);
+                                }
+                                return super.runSafe(monitor);
+                            }
+                        }.schedule();
+                    } catch (Exception e) {
+                        MercurialEclipsePlugin.logError(e);
+                        throw new HgException(e.getLocalizedMessage(), e);
+                    }
+                }
+            }
+
             if (res.isAccessible()
                     && !Team.isIgnoredHint(res)
                     && (res.getType() == IResource.ROOT || RepositoryProvider
                             .getProvider(res.getProject(),
                                     MercurialTeamProvider.ID) != null)) {
-
-                if (res.getType() == IResource.ROOT) {
-                    return true;
-                }
-
                 IResource resource = getResource(res);
                 IProject project = resource.getProject();
                 Set<IResource> addSet = added.get(project);
@@ -216,10 +265,10 @@ public class MercurialStatusCache extends AbstractCache implements
         }
 
     }
-    
+
     /*
-     * Initialization On Demand Holder idiom, thread-safe and instance will not be created
-     * until getInstance is called in the outer class.
+     * Initialization On Demand Holder idiom, thread-safe and instance will not
+     * be created until getInstance is called in the outer class.
      */
     private static final class MercurialStatusCacheHolder {
         public static final MercurialStatusCache instance = new MercurialStatusCache();
@@ -247,7 +296,7 @@ public class MercurialStatusCache extends AbstractCache implements
             | IResourceDelta.MOVED_FROM | IResourceDelta.MOVED_TO
             | IResourceDelta.OPEN | IResourceDelta.REPLACED
             | IResourceDelta.TYPE;
-    
+
     private static final Object DUMMY = new Object();
 
     /** Used to store the last known status of a resource */
@@ -255,8 +304,8 @@ public class MercurialStatusCache extends AbstractCache implements
 
     /** Used to store which projects have already been parsed */
     private final Map<IProject, Object> knownStatus = new ConcurrentHashMap<IProject, Object>();
-    
-    /* Access to this map must be protected with a synchronized lock itself */ 
+
+    /* Access to this map must be protected with a synchronized lock itself */
     private final Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
 
     private MercurialStatusCache() {
@@ -306,7 +355,7 @@ public class MercurialStatusCache extends AbstractCache implements
         // } else {
         // hgRoot = new Path(resource.getProject().getLocation().toOSString());
         // }
-        
+
         synchronized (locks) {
             ReentrantLock lock = locks.get(resource.getProject());
             if (lock == null) {
@@ -960,8 +1009,8 @@ public class MercurialStatusCache extends AbstractCache implements
             if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
                 File root = AbstractClient.getHgRoot(resource);
-                String output = HgStatusClient.getStatusWithoutIgnored(resource.getLocation()
-                        .toFile(), currentBatch);
+                String output = HgStatusClient.getStatusWithoutIgnored(resource
+                        .getLocation().toFile(), currentBatch);
                 parseStatus(root, resource, output);
                 currentBatch.clear();
             }

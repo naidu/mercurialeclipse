@@ -171,6 +171,11 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
                 MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
                 Messages.getString("GeneralPreferencePage.enableFontAndColorDecorations"), getFieldEditorParent())); //$NON-NLS-1$
 
+        addField(new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS,
+                Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
+                getFieldEditorParent())); 
+        
         addField(new CommitMessageBatchSizeIntegerFieldEditor(
                 MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
                 Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$

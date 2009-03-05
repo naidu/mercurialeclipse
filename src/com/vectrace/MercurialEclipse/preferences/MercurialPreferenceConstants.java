@@ -33,6 +33,7 @@ public class MercurialPreferenceConstants {
     public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; //$NON-NLS-1$
     public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
     public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
+    public static String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
     
     // Timeouts
     public static final String DEFAULT_TIMEOUT = "hg.timeout.default"; //$NON-NLS-1$
