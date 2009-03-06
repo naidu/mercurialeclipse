@@ -90,18 +90,25 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                  */
                 @Override
                 protected IStatus runSafe(IProgressMonitor monitor) {
-                    checkHgInstallation();
-                    return super.runSafe(monitor);
+                    try {
+                        checkHgInstallation();
+                        // read known repositories
+                        repoManager.start();
+                        // read in commit messages from disk
+                        commitMessageManager.start();
+                        return super.runSafe(monitor);
+                    } catch (Exception e) {
+                        MercurialEclipsePlugin.logError(e);
+                        return new Status(IStatus.ERROR, ID, e
+                                .getLocalizedMessage(), e);
+                    }
                 }
-            }.schedule(1000);
+            }.schedule();
         } catch (Exception e) {
             this.hgUsable = false;
             logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
-            throw e;
         }
-        repoManager.start();
-        // read in commit messages from disk
-        commitMessageManager.start();
+        
     }
 
     /**
