@@ -458,6 +458,23 @@ public class MercurialStatusCache extends AbstractCache implements
         return false;
 
     }
+    
+    /**
+     * 
+     */
+    public boolean hasUncommittedChanges(IResource[] resources)
+            throws HgException {
+        if (resources != null && resources.length > 0) {
+                for (IResource resource : resources) {
+                    BitSet status = getStatus(resource);
+                    if (status.length() - 1 > MercurialStatusCache.BIT_CLEAN) {
+                        return true;
+                    }
+                }
+                return true;
+            }
+        return false;
+    }
 
     public boolean isAdded(IResource resource, IPath path) throws HgException {
         Assert.isNotNull(resource);

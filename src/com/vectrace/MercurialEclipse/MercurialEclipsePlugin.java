@@ -26,6 +26,7 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.team.internal.core.subscribers.ActiveChangeSetManager;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -34,8 +35,10 @@ import org.osgi.framework.BundleContext;
 
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
+import com.vectrace.MercurialEclipse.mapping.HgActiveChangeSetCollector;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -65,6 +68,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     
     private boolean hgUsable = true;
+
+    private ActiveChangeSetManager changeSetManager;
 
     /**
      * The constructor.
@@ -317,5 +322,13 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      */
     public static Display getStandardDisplay() {
         return PlatformUI.getWorkbench().getDisplay();
+    }
+
+    public synchronized ActiveChangeSetManager getChangeSetManager() {
+        if (changeSetManager == null) {
+            changeSetManager = new HgActiveChangeSetCollector(
+                    MercurialSynchronizeSubscriber.getInstance());
+        }
+        return changeSetManager;
     }
 }

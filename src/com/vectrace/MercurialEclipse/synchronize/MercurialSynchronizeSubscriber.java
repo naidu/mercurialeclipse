@@ -82,9 +82,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
     @Override
     public SyncInfo getSyncInfo(IResource resource) throws TeamException {
-        try {            
-            if (resource != null && null != RepositoryProvider.getProvider(resource.getProject(),
-                    MercurialTeamProvider.ID)
+        try {
+            if (resource != null
+                    && null != RepositoryProvider.getProvider(resource
+                            .getProject(), MercurialTeamProvider.ID)
                     && resource.getProject().isAccessible()
                     && (isSupervised(resource) || (!resource.exists()))) {
 
@@ -115,11 +116,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                     if (resource.exists()
                             && !STATUS_CACHE.isAdded(resource.getProject(),
                                     resource.getLocation())) {
-                        
+
                         // Find current working directory changeset (not head)
-                        File root = new File(HgRootClient.getHgRoot(resource));                                                
-                        String nodeId = HgIdentClient.getCurrentChangesetId(root);
-                        
+                        File root = new File(HgRootClient.getHgRoot(resource));
+                        String nodeId = HgIdentClient
+                                .getCurrentChangesetId(root);
+
                         // try to get from cache (without loading)
                         csOutgoing = LocalChangesetCache.getInstance()
                                 .getChangeSet(nodeId);
@@ -129,7 +131,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                             csOutgoing = LocalChangesetCache.getInstance()
                                     .getLocalChangeSet(resource, nodeId);
                         }
-                        
+
                         // construct base revision
                         outgoingIStorage = new IStorageMercurialRevision(
                                 resource, String.valueOf(csOutgoing
@@ -165,7 +167,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 // but resource and comparator
 
                 SyncInfo info = new MercurialSyncInfo(resource, outgoing,
-                        incoming, comparator);
+                        incoming, getResourceComparator());
 
                 info.init();
                 return info;
@@ -234,9 +236,14 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             toRefresh = ResourcesPlugin.getWorkspace().getRoot().getProjects();
         }
         Set<IProject> refreshed = new HashSet<IProject>(toRefresh.length);
-        monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshing") + getName() + Messages.getString("MercurialSynchronizeSubscriber.refreshing.2") //$NON-NLS-1$ //$NON-NLS-2$
-                + repositoryLocation + "...", 10); //$NON-NLS-1$
-        monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingResources")); //$NON-NLS-1$
+        monitor
+                .beginTask(
+                        Messages
+                                .getString("MercurialSynchronizeSubscriber.refreshing") + getName() + Messages.getString("MercurialSynchronizeSubscriber.refreshing.2") //$NON-NLS-1$ //$NON-NLS-2$
+                                + repositoryLocation + "...", 10); //$NON-NLS-1$
+        monitor
+                .subTask(Messages
+                        .getString("MercurialSynchronizeSubscriber.refreshingResources")); //$NON-NLS-1$
         List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
         for (IResource resource : toRefresh) {
             if (monitor.isCanceled()) {
@@ -250,23 +257,38 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             }
 
             AbstractCache.clearNodeMap();
-            monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-            INCOMING_CACHE.clear(repositoryLocation);
-            INCOMING_CACHE.refreshIncomingChangeSets(project,
-                    repositoryLocation);
-            monitor.worked(1);
-            if (monitor.isCanceled()) {
-                return;
+            monitor
+                    .subTask(Messages
+                            .getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
+            IResource[] incomingMembers = null;
+            IResource[] outgoingMembers = null;
+            if (repositoryLocation != null) {
+                INCOMING_CACHE.clear(repositoryLocation);
+                INCOMING_CACHE.refreshIncomingChangeSets(project,
+                        repositoryLocation);
+
+                monitor.worked(1);
+                if (monitor.isCanceled()) {
+                    return;
+                }
+                monitor
+                        .subTask(Messages
+                                .getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
+                OUTGOING_CACHE.clear(repositoryLocation);
+                OUTGOING_CACHE.refreshOutgoingChangeSets(project,
+                        repositoryLocation);
+                monitor.worked(1);
+                if (monitor.isCanceled()) {
+                    return;
+                }
+                incomingMembers = INCOMING_CACHE.getIncomingMembers(resource,
+                        repositoryLocation);
+                outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(resource,
+                        repositoryLocation);
             }
-            monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
-            OUTGOING_CACHE.clear(repositoryLocation);
-            OUTGOING_CACHE.refreshOutgoingChangeSets(project,
-                    repositoryLocation);
-            monitor.worked(1);
-            if (monitor.isCanceled()) {
-                return;
-            }
-            monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
+            monitor
+                    .subTask(Messages
+                            .getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
             MercurialStatusCache.getInstance().refreshStatus(project, monitor);
             monitor.worked(1);
             if (monitor.isCanceled()) {
@@ -274,10 +296,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             }
             refreshed.add(project);
             IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
-            IResource[] incomingMembers = INCOMING_CACHE.getIncomingMembers(
-                    resource, repositoryLocation);
-            IResource[] outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(
-                    resource, repositoryLocation);
 
             Set<IResource> resourcesToRefresh = new HashSet<IResource>();
 
@@ -301,7 +319,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         if (monitor.isCanceled()) {
             return;
         }
-        monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
+        monitor
+                .subTask(Messages
+                        .getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
         super.fireTeamResourceChange(changeEvents
                 .toArray(new ISubscriberChangeEvent[changeEvents.size()]));
         monitor.worked(1);
@@ -319,6 +339,20 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             }
         }
         return myRoots;
+    }
+
+    /**
+     * @return
+     */
+    public static Subscriber getInstance() {
+        MercurialSynchronizeSubscriber sub = new MercurialSynchronizeSubscriber();
+        return sub;
+    }
+
+    /**
+     * 
+     */
+    private MercurialSynchronizeSubscriber() {
     }
 
 }
