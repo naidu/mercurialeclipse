@@ -85,7 +85,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             DefaultConfiguration cfg = new DefaultConfiguration();
             HgClients.initialize(cfg, cfg, cfg);
             new SafeWorkspaceJob(
-                    "Checking if Mercurial is correctly installed...") {
+                    "Starting MercurialEclipse.") {
                 /*
                  * (non-Javadoc)
                  * 
@@ -96,11 +96,20 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                 @Override
                 protected IStatus runSafe(IProgressMonitor monitor) {
                     try {
+                        monitor.beginTask("Starting MercurialEclipse", 3);
+                        monitor.subTask("Checking Mercurial installation.");
                         checkHgInstallation();
+                        monitor.done();
                         // read known repositories
+                        monitor
+                                .subTask("Loading known Mercurial repositories.");
                         repoManager.start();
+                        monitor.worked(1);
                         // read in commit messages from disk
+                        monitor.subTask("Starting Commit Message manager.");
                         commitMessageManager.start();
+                        monitor.worked(1);
+                        monitor.done();
                         return super.runSafe(monitor);
                     } catch (Exception e) {
                         MercurialEclipsePlugin.logError(e);
