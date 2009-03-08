@@ -40,7 +40,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      */
     public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
             HgRepositoryLocation repository) throws HgException {
-        HgCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);

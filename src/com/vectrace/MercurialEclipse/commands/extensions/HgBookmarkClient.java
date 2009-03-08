@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
@@ -32,7 +33,7 @@ public class HgBookmarkClient extends AbstractClient {
      * @throws HgException
      */
     public static List<Bookmark> getBookmarks(File file) throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
         cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
         String result = cmd.executeToString();
@@ -63,7 +64,7 @@ public class HgBookmarkClient extends AbstractClient {
      */
     public static String create(File file, String name, String targetChangeset)
             throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
         cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
         cmd.addOptions("--rev", targetChangeset, name); //$NON-NLS-1$
@@ -79,7 +80,7 @@ public class HgBookmarkClient extends AbstractClient {
      */
     public static String rename(File file, String name, String newName)
             throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
         cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
         cmd.addOptions("--rename", name, newName); //$NON-NLS-1$
@@ -95,7 +96,7 @@ public class HgBookmarkClient extends AbstractClient {
      */
     public static String delete(File file, String name)
             throws HgException {
-        HgCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("bookmarks", getWorkingDirectory(file), //$NON-NLS-1$
                 true);
         cmd.addOptions("--config", "extensions.hgext.bookmarks="); //$NON-NLS-1$ //$NON-NLS-2$
         cmd.addOptions("--delete", name); //$NON-NLS-1$

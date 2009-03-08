@@ -15,7 +15,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgIdentClient extends AbstractClient {
 
     public static String getCurrentRevision(IContainer root) throws HgException {
-        HgCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
         command.addOptions("-n", "-i"); //$NON-NLS-1$ //$NON-NLS-2$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -24,7 +24,7 @@ public class HgIdentClient extends AbstractClient {
 
     public static String getCurrentRevision(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("identify", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("identify", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);

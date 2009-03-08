@@ -17,7 +17,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgRollbackClient {
 
     public static String rollback(IProject project) throws HgException {
-        HgCommand command = new HgCommand("rollback", project.getLocation() //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("rollback", project.getLocation() //$NON-NLS-1$
                 .toFile(), true);
         String result = command.executeToString();
         return result;

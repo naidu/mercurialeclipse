@@ -30,7 +30,7 @@ public class HgParentClient extends AbstractClient {
             .compile("^([0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
 
     public static int[] getParents(IProject project) throws HgException {
-        HgCommand command = new HgCommand("parents", project, false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("parents", project, false); //$NON-NLS-1$
         command.addOptions("--template", "{rev}\n"); //$NON-NLS-1$ //$NON-NLS-2$
         String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
         int[] parents = new int[lines.length];
@@ -42,7 +42,7 @@ public class HgParentClient extends AbstractClient {
 
     public static String[] getParentNodeIds(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("parents", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
                 getWorkingDirectory(resource), false);
         command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
         String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
@@ -55,7 +55,7 @@ public class HgParentClient extends AbstractClient {
 
     public static String[] getParentNodeIds(IResource resource, ChangeSet cs)
             throws HgException {
-        HgCommand command = new HgCommand("parents", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
                 getWorkingDirectory(resource), false);
         command
                 .addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -70,7 +70,7 @@ public class HgParentClient extends AbstractClient {
 
     public static int findCommonAncestor(IProject project, int r1, int r2)
             throws HgException {
-        HgCommand command = new HgCommand("debugancestor", project, false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("debugancestor", project, false); //$NON-NLS-1$
         command.addOptions(Integer.toString(r1), Integer.toString(r2));
         String result = command.executeToString().trim();
         Matcher m = ANCESTOR_PATTERN.matcher(result);
@@ -82,7 +82,7 @@ public class HgParentClient extends AbstractClient {
 
     public static int findCommonAncestor(File file, String node1, String node2)
             throws HgException {
-        HgCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
                 getWorkingDirectory(file), false);
         command.addOptions(node1, node2);
         String result = command.executeToString().trim();
@@ -125,7 +125,7 @@ public class HgParentClient extends AbstractClient {
             commands.add(cs1.getChangeset());
             commands.add(cs2.getChangeset());
             
-            HgCommand command = new HgCommand(commands, getWorkingDirectory(file),
+            AbstractShellCommand command = new HgCommand(commands, getWorkingDirectory(file),
                     false);            
             result = command.executeToString().trim();
             Matcher m = ANCESTOR_PATTERN.matcher(result);
@@ -142,7 +142,7 @@ public class HgParentClient extends AbstractClient {
 
     public static String findCommonAncestorNodeId(IResource resource,
             String node1, String node2) throws HgException {
-        HgCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
                 getWorkingDirectory(resource), false);
         command.addOptions(node1, node2);
         String result = command.executeToString().trim();
@@ -155,7 +155,7 @@ public class HgParentClient extends AbstractClient {
 
     public static String[] getParents(IResource rev, String node)
             throws HgException {
-        HgCommand command = new HgCommand("parents", rev.getProject(), false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("parents", rev.getProject(), false); //$NON-NLS-1$
         command.addOptions("--template", "{rev}:{node|short}\n"); //$NON-NLS-1$ //$NON-NLS-2$
         command.addOptions("-r", node); //$NON-NLS-1$
         String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$

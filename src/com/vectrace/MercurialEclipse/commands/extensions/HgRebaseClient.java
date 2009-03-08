@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands.extensions;
 import java.io.File;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -46,7 +47,7 @@ public class HgRebaseClient extends AbstractClient {
     public static String rebase(File repoResource, int sourceRev, int baseRev,
             int destRev, boolean collapse, boolean cont, boolean abort)
             throws HgException {
-        HgCommand c = new HgCommand("rebase", //$NON-NLS-1$
+        AbstractShellCommand c = new HgCommand("rebase", //$NON-NLS-1$
                 getWorkingDirectory(repoResource), false);
         c.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         c.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$

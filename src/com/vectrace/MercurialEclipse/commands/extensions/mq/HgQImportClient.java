@@ -15,6 +15,7 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -28,7 +29,7 @@ public class HgQImportClient extends AbstractClient {
     public static String qimport(IResource resource, boolean force, boolean git, boolean existing,
             ChangeSet[] changesets, IPath patchFile) throws HgException {
         Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qimport", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("qimport", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
         

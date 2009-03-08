@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.commands.extensions;
 
 import org.eclipse.core.resources.IProject;
 
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -36,7 +37,7 @@ public class HgStripClient {
     public static String strip(IProject proj, boolean saveUnrelated,
             boolean backup, boolean stripHeads, ChangeSet changeset)
             throws HgException {
-        HgCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         

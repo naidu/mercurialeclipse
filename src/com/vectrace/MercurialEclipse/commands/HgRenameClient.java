@@ -25,7 +25,7 @@ public class HgRenameClient {
             monitor.subTask(Messages.getString("HgRenameClient.moving.1") + source.getName() + Messages.getString("HgRenameClient.moving.2") //$NON-NLS-1$ //$NON-NLS-2$
                     + dest.getName());
         }
-        HgCommand command = new HgCommand("rename", source.getProject(), true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("rename", source.getProject(), true); //$NON-NLS-1$
         command.addOptions("--force"); //$NON-NLS-1$
         command.addFiles(source, dest);
         command.executeToBytes();

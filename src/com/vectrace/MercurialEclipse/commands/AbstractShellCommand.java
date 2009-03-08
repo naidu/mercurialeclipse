@@ -91,6 +91,7 @@ public abstract class AbstractShellCommand {
     private String timeoutConstant;
     private InputStreamConsumer consumer;
     private Process process;
+    private boolean showOnConsole = true;
 
     // private HgConsole console;
 
@@ -150,9 +151,9 @@ public abstract class AbstractShellCommand {
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
             final String commandInvoked = cmdString.substring(0, cmdString
                     .length() - 1);
-    
+
             ProcessBuilder builder = new ProcessBuilder(cmd);
-    
+
             // set locale to english have deterministic output
             Map<String, String> env = builder.environment();
             env.put("LC_ALL", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -160,7 +161,7 @@ public abstract class AbstractShellCommand {
             env.put("LANGUAGE", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
             env.put("LC_MESSAGES", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
             env.put("HGENCODING", "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
-    
+
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
@@ -168,69 +169,33 @@ public abstract class AbstractShellCommand {
             process = builder.start();
             consumer = new InputStreamConsumer(process.getInputStream(), output);
             consumer.start();
-            new SafeWorkspaceJob("Writing to console...") {
-                /*
-                 * (non-Javadoc)
-                 * 
-                 * @see
-                 * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org
-                 * .eclipse.core.runtime.IProgressMonitor)
-                 */
-                @Override
-                protected IStatus runSafe(IProgressMonitor monitor) {
-                    getConsole().commandInvoked(commandInvoked);
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
-    
+
+            logConsoleCommandInvoked(commandInvoked);
             consumer.join(timeout); // 30 seconds timeout
             final String msg = getMessage(output);
             if (!consumer.isAlive()) {
                 final int exitCode = process.waitFor();
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    new SafeWorkspaceJob("Writing to console...") {
-                        @Override
-                        public IStatus runSafe(IProgressMonitor monitor) {
-                            getConsole().commandCompleted(0, msg, null);
-                            if (isDebugMode()) {
-                                getConsole().printMessage(msg, null);
-                            }
-                            return super.runSafe(monitor);
-                        }
-                    }.schedule();
+                    logConsoleCompleted(msg, exitCode, null);
+                    if (isDebugMode()) {
+                        logConsoleMessage(msg, null);
+                    }
                     return true;
                 }
-    
+
                 // exit code > 0
                 final HgException hgex = new HgException(
                         "Process error, return code: " + exitCode //$NON-NLS-1$
                                 + ", message: " + getMessage(output)); //$NON-NLS-1$
-    
+
                 // exit code == 1 usually isn't fatal.
-                new SafeWorkspaceJob("Writing to console...") {
-                    @Override
-                    public IStatus runSafe(IProgressMonitor monitor) {
-                        getConsole().commandCompleted(exitCode, msg, hgex);
-                        return super.runSafe(monitor);
-                    }
-                }.schedule();
-    
+                logConsoleCompleted(msg, exitCode, hgex);
                 throw hgex;
             }
             // command timeout
             final HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
-            new SafeWorkspaceJob("Writing to console...") {
-                @Override
-                public IStatus runSafe(IProgressMonitor monitor) {
-                    if (msg != null) {
-                        getConsole().printError(msg, hgEx);
-                    } else {
-                        getConsole().printError(hgEx.getMessage(), hgEx);
-                    }
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
+            logConsoleError(msg, hgEx);
             throw hgEx;
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
@@ -240,6 +205,90 @@ public abstract class AbstractShellCommand {
             if (process != null) {
                 process.destroy();
             }
+        }
+    }
+
+    /**
+     * @param commandInvoked
+     */
+    protected void logConsoleCommandInvoked(final String commandInvoked) {
+        if (showOnConsole) {
+            new SafeWorkspaceJob("Writing to console") {
+                @Override
+                public IStatus runSafe(IProgressMonitor monitor) {
+                    monitor.beginTask("Writinng to console", 2);
+                    monitor.worked(1);
+                    getConsole().commandInvoked(commandInvoked);
+                    monitor.worked(1);
+                    monitor.done();
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
+        }
+    }
+
+    /**
+     * @param msg
+     */
+    protected void logConsoleMessage(final String msg, final Throwable t) {
+        if (showOnConsole) {
+            new SafeWorkspaceJob("Writing to console") {
+                @Override
+                public IStatus runSafe(IProgressMonitor monitor) {
+                    monitor.beginTask("Writinng to console", 2);
+                    monitor.worked(1);
+                    getConsole().printMessage(msg, t);
+                    monitor.worked(1);
+                    monitor.done();
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
+        }
+    }
+
+    /**
+     * @param msg
+     * @param hgEx
+     */
+    protected void logConsoleError(final String msg, final HgException hgEx) {
+        if (showOnConsole) {
+            new SafeWorkspaceJob("Writing to console...") {
+                @Override
+                public IStatus runSafe(IProgressMonitor monitor) {
+                    monitor.beginTask("Writinng to console", 2);
+                    monitor.worked(1);
+                    if (msg != null) {
+                        getConsole().printError(msg, hgEx);
+                    } else {
+                        getConsole().printError(hgEx.getMessage(), hgEx);
+                    }
+                    monitor.worked(1);
+                    monitor.done();
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
+        }
+    }
+
+    /**
+     * @param msg
+     * @param exitCode
+     * @param hgex
+     */
+    private void logConsoleCompleted(final String msg, final int exitCode,
+            final HgException hgex) {
+        if (showOnConsole) {
+            new SafeWorkspaceJob("Writing to console...") {
+                @Override
+                public IStatus runSafe(IProgressMonitor monitor) {
+                    monitor.beginTask("Writinng to console", 2);
+                    monitor.worked(1);
+                    getConsole().commandCompleted(exitCode, msg, hgex);
+                    monitor.worked(1);
+                    monitor.done();
+                    return super.runSafe(monitor);
+                }
+            }.schedule();
         }
     }
 
@@ -354,5 +403,12 @@ public abstract class AbstractShellCommand {
      */
     private IConsole getConsole() {
         return HgClients.getConsole();
+    }
+
+    /**
+     * @param b
+     */
+    public void setShowOnConsole(boolean b) {
+        this.showOnConsole = b;
     }
 }

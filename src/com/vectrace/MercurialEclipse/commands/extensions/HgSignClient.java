@@ -19,6 +19,7 @@ import java.util.List;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.GpgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -66,7 +67,7 @@ public class HgSignClient {
     public static String sign(File directory, ChangeSet cs, String key,
             String message, String user, boolean local, boolean force,
             boolean noCommit, String passphrase) throws HgException {
-        HgCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
         File file = new File("me.gpg.tmp"); //$NON-NLS-1$
         String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
                 MercurialUtilities.getGpgExecutable(true)).concat(

@@ -115,7 +115,7 @@ public abstract class AbstractClient {
     public static boolean isCommandAvailable(String commandName,
             String extensionEnabler) {
         boolean returnValue = false;
-        HgCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
                 .getWorkspace().getRoot(), false);
         if (extensionEnabler != null && extensionEnabler.length() != 0) {
             command.addOptions("--config", "extensions." + extensionEnabler); //$NON-NLS-1$ //$NON-NLS-2$
@@ -139,7 +139,7 @@ public abstract class AbstractClient {
      * @param repo
      * @param cmd
      */
-    protected static void addRepoToHgCommand(HgRepositoryLocation repo, HgCommand cmd) {
+    protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) {
         URI uri = repo.getUri();
         if (uri != null ) {
             cmd.addOptions(uri.toASCIIString());

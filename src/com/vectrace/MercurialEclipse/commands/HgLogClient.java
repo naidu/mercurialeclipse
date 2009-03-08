@@ -23,7 +23,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$"); //$NON-NLS-1$
     
     public static ChangeSet[] getHeads(IProject project) throws HgException {
-        HgCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         return getRevisions(command);
@@ -36,7 +36,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
      * @return
      * @throws HgException
      */
-    private static ChangeSet[] getRevisions(HgCommand command)
+    private static ChangeSet[] getRevisions(AbstractShellCommand command)
             throws HgException {
         command.addOptions("--template", //$NON-NLS-1$
                 "{rev}:{node} {date|isodate} {author|person}#{branches}\n"); //$NON-NLS-1$
@@ -97,7 +97,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             int limitNumber, int startRev, boolean withFiles)
             throws HgException {
         try {
-            HgCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
+            AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
@@ -146,7 +146,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         try {
             Assert.isNotNull(nodeId);
 
-            HgCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
+            AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);

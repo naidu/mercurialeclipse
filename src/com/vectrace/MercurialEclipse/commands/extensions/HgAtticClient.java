@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands.extensions;
 import java.io.File;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
@@ -24,7 +25,7 @@ public class HgAtticClient extends AbstractClient {
 
     public static String shelve(File repoFile, String commitMessage,
             boolean git, String user, String name) throws HgException {
-        HgCommand cmd = new HgCommand("attic-shelve",// $NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("attic-shelve",// $NON-NLS-1$
                 getWorkingDirectory(repoFile), false);
 
         if (commitMessage != null && commitMessage.length() > 0) {
@@ -44,7 +45,7 @@ public class HgAtticClient extends AbstractClient {
 
     public static String unshelve(File repoFile, boolean guessRenamedFiles,
             boolean delete, String name) throws HgException {
-        HgCommand cmd = new HgCommand("attic-unshelve",// $NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("attic-unshelve",// $NON-NLS-1$
                 getWorkingDirectory(repoFile), false);
 
         if (guessRenamedFiles) {
@@ -60,7 +61,7 @@ public class HgAtticClient extends AbstractClient {
     }
 
     public static String refresh(File repoFile, String name) throws HgException {
-        HgCommand cmd = new HgCommand("shelve",// $NON-NLS-1$
+        AbstractShellCommand cmd = new HgCommand("shelve",// $NON-NLS-1$
                 getWorkingDirectory(repoFile), false);
 
         cmd.addOptions("--refresh", name);// $NON-NLS-1$

@@ -15,6 +15,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -31,7 +32,7 @@ public class HgTransplantClient {
             String pruneNodeId, boolean continueLastTransplant,
             boolean filterChangesets, String filter) throws HgException {
 
-        HgCommand command = new HgCommand("transplant", project, false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("transplant", project, false); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$

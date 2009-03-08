@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands.extensions.mq;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
@@ -23,7 +24,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 public class HgQPushClient extends AbstractClient {
     public static String pushAll(IResource resource, boolean force)
             throws HgException {
-        HgCommand command = new HgCommand("qpush", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("qpush", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
@@ -37,7 +38,7 @@ public class HgQPushClient extends AbstractClient {
 
     public static String push(IResource resource, boolean force, String patchName)
             throws HgException {
-        HgCommand command = new HgCommand("qpush", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("qpush", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
 
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$

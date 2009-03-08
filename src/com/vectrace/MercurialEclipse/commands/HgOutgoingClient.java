@@ -31,7 +31,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
         try {
-            HgCommand command = getCommand(res);
+            AbstractShellCommand command = getCommand(res);
             command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
                     .getStyleFile(true).getCanonicalPath());
             setRepository(repository, command);
@@ -56,7 +56,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         return PatchUtils.getFilePatches(outgoingPatch);
     }
 
-    private static String getResult(HgCommand command) throws HgException {
+    private static String getResult(AbstractShellCommand command) throws HgException {
         try {
             String result = command.executeToString();
             if (result.endsWith("no changes found")) { //$NON-NLS-1$
@@ -71,8 +71,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         }
     }
 
-    private static HgCommand getCommand(IResource res) throws HgException {
-        HgCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
+    private static AbstractShellCommand getCommand(IResource res) throws HgException {
+        AbstractShellCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
@@ -80,7 +80,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     }
 
     private static void setRepository(HgRepositoryLocation repository,
-            HgCommand command) {
+            AbstractShellCommand command) {
         URI uri = repository.getUri();
         if (uri != null) {
             command.addOptions(uri.toASCIIString());
@@ -90,7 +90,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     }
     
     private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository) throws HgException {
-        HgCommand command = getCommand(res);
+        AbstractShellCommand command = getCommand(res);
         command.addOptions("-p");
         setRepository(repository, command);
         return getResult(command);

@@ -22,7 +22,7 @@ public class HgCloneClient {
     public static void clone(String parentDirectory, HgRepositoryLocation repo,
             boolean noUpdate, boolean pull, boolean uncompressed,
             boolean timeout, String rev, String cloneName) throws HgException {
-        HgCommand command = new HgCommand("clone", new File(parentDirectory), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("clone", new File(parentDirectory), //$NON-NLS-1$
                 false);
 
         if (noUpdate) {

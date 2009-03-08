@@ -12,7 +12,7 @@ public class HgCatClient {
 
     public static String getContent(IFile file, String revision)
             throws HgException {
-        HgCommand command = new HgCommand("cat", file.getProject() //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("cat", file.getProject() //$NON-NLS-1$
                 .getLocation().toFile(), true);
         if (revision != null && revision.length() != 0) {
             command.addOptions("--rev", revision); //$NON-NLS-1$
@@ -36,7 +36,7 @@ public class HgCatClient {
         }
         command.add("--decode"); //$NON-NLS-1$
         command.add(file.getProjectRelativePath().toOSString());
-        HgCommand hgCommand = new HgCommand(command, file.getProject()
+        AbstractShellCommand hgCommand = new HgCommand(command, file.getProject()
                 .getLocation().toFile(), true);
 
         return hgCommand.executeToString();

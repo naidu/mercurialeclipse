@@ -25,7 +25,7 @@ public class HgPushPullClient extends AbstractClient {
 
     public static String push(IProject project, HgRepositoryLocation repo,
             boolean force, String revision, int timeout) throws HgException {
-        HgCommand command = new HgCommand("push", project, true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("push", project, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
@@ -79,7 +79,7 @@ public class HgPushPullClient extends AbstractClient {
         if (resource.getType() == IResource.FILE) {
             workDir = resource.getParent();
         }
-        HgCommand command = new HgCommand("pull", workDir.getLocation() //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("pull", workDir.getLocation() //$NON-NLS-1$
                 .toFile(), true);
                 
         if (update) {

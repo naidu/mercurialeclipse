@@ -15,7 +15,7 @@ public class HgTagClient {
             .compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( local)?$"); //$NON-NLS-1$
 
     public static Tag[] getTags(IProject project) throws HgException {
-        HgCommand command = new HgCommand("tags", project, false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("tags", project, false); //$NON-NLS-1$
         command.addOptions("-v"); //$NON-NLS-1$
         String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
         int length = lines.length;

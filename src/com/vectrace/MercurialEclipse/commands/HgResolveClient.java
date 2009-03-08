@@ -37,7 +37,7 @@ public class HgResolveClient extends AbstractClient {
      * @throws HgException
      */
     public static List<FlaggedAdaptable> list(IResource res) throws HgException {
-        HgCommand command = new HgCommand("resolve", getWorkingDirectory(res), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("resolve", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -64,7 +64,7 @@ public class HgResolveClient extends AbstractClient {
      */
     public static String markResolved(File file) throws HgException {
         try {
-            HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
+            AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
                     getWorkingDirectory(file), false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -84,7 +84,7 @@ public class HgResolveClient extends AbstractClient {
      * @throws HgException
      */
     public static String resolveAll(File file) throws HgException {
-        HgCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
         
         boolean useExternalMergeTool = Boolean.valueOf(
@@ -112,7 +112,7 @@ public class HgResolveClient extends AbstractClient {
      */
     public static String markUnresolved(File file) throws HgException {
         try {
-            HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
+            AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
                     getWorkingDirectory(file), false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
@@ -143,7 +143,7 @@ public class HgResolveClient extends AbstractClient {
                 boolean useResolve = ((Boolean) prop).booleanValue();
                 returnValue = useResolve;
             } else {
-                HgCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
+                AbstractShellCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
                         .getWorkspace().getRoot(), false);
                 command.addOptions("resolve"); //$NON-NLS-1$
                 String result;

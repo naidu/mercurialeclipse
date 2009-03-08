@@ -41,7 +41,7 @@ public class HgBackoutClient {
     public static String backout(IProject project, ChangeSet backoutRevision,
             boolean merge, String msg, String user)
             throws HgException {
-        HgCommand command = new HgCommand("backout", project, true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("backout", project, true); //$NON-NLS-1$
         boolean useExternalMergeTool = Boolean
         .valueOf(
                 HgClients

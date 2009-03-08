@@ -9,7 +9,7 @@ public class HgUpdateClient {
 
     public static void update(IProject project, String revision, boolean clean)
             throws HgException {
-        HgCommand command = new HgCommand("update", project, false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("update", project, false); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);        
         if (revision != null) {

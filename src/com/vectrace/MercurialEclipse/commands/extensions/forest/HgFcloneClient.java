@@ -14,6 +14,7 @@ import java.io.File;
 import java.net.URI;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -28,7 +29,7 @@ public class HgFcloneClient extends AbstractClient {
             boolean noUpdate, boolean pull, boolean uncompressed,
             boolean timeout, String rev, String cloneName)
             throws HgException {
-        HgCommand command = new HgCommand("fclone", new File(parentDirectory), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("fclone", new File(parentDirectory), //$NON-NLS-1$
                 false);
 
         //        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$

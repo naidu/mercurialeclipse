@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -30,7 +31,7 @@ public class HgQDeleteClient extends AbstractClient {
             ChangeSet changeset, List<Patch> patches) throws HgException {
         Assert.isNotNull(patches);
         Assert.isNotNull(resource);
-        HgCommand command = new HgCommand("qdelete", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("qdelete", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         

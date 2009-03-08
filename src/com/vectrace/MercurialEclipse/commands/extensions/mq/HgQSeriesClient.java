@@ -16,6 +16,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Patch;
@@ -27,7 +28,7 @@ import com.vectrace.MercurialEclipse.model.Patch;
 public class HgQSeriesClient extends AbstractClient {
     public static List<Patch> getPatchesInSeries(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("qseries", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
@@ -67,7 +68,7 @@ public class HgQSeriesClient extends AbstractClient {
 
     public static List<Patch> getPatchesNotInSeries(IResource resource)
             throws HgException {
-        HgCommand command = new HgCommand("qseries", //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("qseries", //$NON-NLS-1$
                 getWorkingDirectory(resource), true);
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
         

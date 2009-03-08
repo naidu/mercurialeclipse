@@ -30,7 +30,7 @@ public class HgRemoveClient {
             monitor.subTask(Messages.getString("HgRemoveClient.removeResource.1") + resource.getName() //$NON-NLS-1$
                     + Messages.getString("HgRemoveClient.removeResource.2")); //$NON-NLS-1$
         }
-        HgCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
         command.addOptions("--force"); //$NON-NLS-1$
         command.addFiles(resource);
         command

@@ -16,6 +16,7 @@ import java.net.URI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -27,7 +28,7 @@ public class HgFpushPullClient extends AbstractClient {
     public static String fpush(File forestRoot, HgRepositoryLocation repo,
             String revision, int timeout, File snapFile) throws HgException {
         try {
-            HgCommand command = new HgCommand("fpush",
+            AbstractShellCommand command = new HgCommand("fpush",
                     forestRoot, true);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
@@ -84,7 +85,7 @@ public class HgFpushPullClient extends AbstractClient {
             boolean partial, String pullSource) throws HgException {
 
         try {
-            HgCommand command = new HgCommand("fpull",
+            AbstractShellCommand command = new HgCommand("fpull",
                     forestRoot, true);
 
             if (update) {

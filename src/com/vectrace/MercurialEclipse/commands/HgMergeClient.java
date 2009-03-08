@@ -19,7 +19,7 @@ public class HgMergeClient extends AbstractClient {
 
     public static String merge(IResource res, String revision, boolean useExternalMergeTool)
             throws HgException {
-        HgCommand command = new HgCommand("merge", getWorkingDirectory(res), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("merge", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);

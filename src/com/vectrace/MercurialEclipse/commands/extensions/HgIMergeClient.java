@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -28,7 +29,7 @@ public class HgIMergeClient extends AbstractClient {
 
     public static String merge(IProject project, String revision)
             throws HgException {
-        HgCommand command = new HgCommand("imerge", project, false); //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("imerge", project, false); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 
@@ -54,7 +55,7 @@ public class HgIMergeClient extends AbstractClient {
 
     public static List<FlaggedAdaptable> getMergeStatus(IResource res)
             throws HgException {
-        HgCommand command = new HgCommand("imerge", getWorkingDirectory(res), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("imerge", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
         command.addOptions("status"); //$NON-NLS-1$
@@ -74,7 +75,7 @@ public class HgIMergeClient extends AbstractClient {
     }
 
     public static String markResolved(IResource file) throws HgException {
-        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("imerge", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
         command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
         command.addOptions("resolve"); //$NON-NLS-1$
@@ -87,7 +88,7 @@ public class HgIMergeClient extends AbstractClient {
     }
 
     public static String markUnresolved(IResource file) throws HgException {
-        HgCommand command = new HgCommand("imerge", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("imerge", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
         command.addOptions("--config", "extensions.imerge="); //$NON-NLS-1$ //$NON-NLS-2$
         command.addOptions("unresolve"); //$NON-NLS-1$

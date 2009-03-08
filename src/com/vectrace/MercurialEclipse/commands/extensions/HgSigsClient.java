@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -77,7 +78,7 @@ public class HgSigsClient extends AbstractClient {
      * @throws HgException
      */
     public static String checkSig(File file, String nodeId) throws HgException {
-        HgCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
+        AbstractShellCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
         c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
         c.addOptions(nodeId);
