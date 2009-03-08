@@ -32,7 +32,7 @@ import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 public class ExportWizard extends HgWizard {
 
     private ExportPage sourcePage;
-    private ArrayList<IResource> resources;
+    private List<IResource> resources;
     private Location location;
     private HgRoot root;
     // operation result returned from another thread

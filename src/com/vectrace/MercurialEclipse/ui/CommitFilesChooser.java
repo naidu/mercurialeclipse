@@ -18,7 +18,6 @@ import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.ListenerList;
-import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTableViewer;
@@ -32,19 +31,26 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Sash;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.TableColumnSorter;
@@ -74,9 +80,14 @@ public class CommitFilesChooser extends Composite {
     private final boolean untracked;
     private ListenerList stateListeners = new ListenerList();
     protected Control trayButton;
-    protected TrayDialog parentDialog;
     protected boolean trayClosed = true;
     protected IFile selectedFile;
+
+    private Label rightSeparator;
+    private Label leftSeparator;
+    private Control trayControl;
+    private Sash sash;
+    private DiffTray tray;
 
     /**
      * @return the viewer
@@ -85,17 +96,14 @@ public class CommitFilesChooser extends Composite {
         return viewer;
     }
 
-    public CommitFilesChooser(TrayDialog trayDialog, Composite container,
-            boolean selectable, List<IResource> resources, HgRoot hgRoot,
-            boolean showUntracked) {
+    public CommitFilesChooser(Composite container, boolean selectable,
+            List<IResource> resources, HgRoot hgRoot, boolean showUntracked) {
         super(container, container.getStyle());
-
         this.selectable = selectable;
         this.root = hgRoot;
         this.untracked = showUntracked;
         this.untrackedFilesFilter = new UntrackedFilesFilter();
         this.committableFilesFilter = new CommittableFilesFilter();
-        this.parentDialog = trayDialog;
 
         GridLayout layout = new GridLayout();
         layout.verticalSpacing = 3;
@@ -103,7 +111,7 @@ public class CommitFilesChooser extends Composite {
         layout.marginWidth = 0;
         layout.marginHeight = 0;
         setLayout(layout);
-        
+
         setLayoutData(SWTWidgetHelper.getFillGD(200));
 
         Table table = createTable();
@@ -118,10 +126,10 @@ public class CommitFilesChooser extends Composite {
         }
 
         setResources(resources);
-        if (parentDialog != null) {
-            createShowDiffButton(container);
-            createFileSelectionListener();
-        }
+
+        createShowDiffButton(container);
+        createFileSelectionListener();
+
         makeActions();
     }
 
@@ -129,34 +137,29 @@ public class CommitFilesChooser extends Composite {
      * 
      */
     private void createFileSelectionListener() {
-        getViewer().addSelectionChangedListener(
-                new ISelectionChangedListener() {
+        getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
+            public void selectionChanged(SelectionChangedEvent event) {
+                ISelection selection = event.getSelection();
 
-                    public void selectionChanged(SelectionChangedEvent event) {
-                        ISelection selection = event.getSelection();
-
-                        if (selection instanceof IStructuredSelection) {
-                            IStructuredSelection sel = (IStructuredSelection) selection;
-                            CommitResource commitResource = (CommitResource) sel
-                                    .getFirstElement();
-                            if (commitResource != null) {
-                                IFile oldSelectedFile = selectedFile;
-                                selectedFile = (IFile) commitResource
-                                        .getResource();
-                                if (oldSelectedFile == null
-                                        || !oldSelectedFile
-                                                .equals(selectedFile)) {
-                                    trayButton.setEnabled(true);
-                                    if (!trayClosed) {
-                                        parentDialog.closeTray();
-                                        parentDialog.openTray(new DiffTray(
-                                                getCompareEditorInput()));
-                                    }
-                                }
+                if (selection instanceof IStructuredSelection) {
+                    IStructuredSelection sel = (IStructuredSelection) selection;
+                    CommitResource commitResource = (CommitResource) sel.getFirstElement();
+                    if (commitResource != null) {
+                        IFile oldSelectedFile = selectedFile;
+                        selectedFile = (IFile) commitResource.getResource();
+                        if (oldSelectedFile == null || !oldSelectedFile.equals(selectedFile)) {
+                            trayButton.setEnabled(true);
+                            if (!trayClosed) {
+                                closeSash();
+                                openSash();
                             }
                         }
                     }
-                });
+
+                }
+            }
+
+        });
     }
 
     /**
@@ -172,14 +175,13 @@ public class CommitFilesChooser extends Composite {
             public void mouseUp(MouseEvent e) {
                 if (trayClosed && selectedFile != null) {
                     try {
-                        parentDialog.openTray(new DiffTray(
-                                getCompareEditorInput()));
+                        openSash();
                         trayClosed = false;
                     } catch (Exception e1) {
                         MercurialEclipsePlugin.logError(e1);
                     }
                 } else {
-                    parentDialog.closeTray();
+                    closeSash();
                     trayClosed = true;
                 }
             }
@@ -192,6 +194,44 @@ public class CommitFilesChooser extends Composite {
 
             }
         });
+    }
+
+    /**
+     * 
+     */
+    private void openSash() {
+        DiffTray t = new DiffTray(getCompareEditorInput());
+        final Shell shell = getShell();
+        leftSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
+        leftSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+        sash = new Sash(shell, SWT.VERTICAL);
+        sash.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+        rightSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
+        rightSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+        trayControl = t.createContents(shell);
+        Rectangle clientArea = shell.getClientArea();
+        final GridData data = new GridData(GridData.FILL_VERTICAL);
+        data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
+        trayControl.setLayoutData(data);
+        int trayWidth = leftSeparator.computeSize(SWT.DEFAULT, clientArea.height).x
+                + sash.computeSize(SWT.DEFAULT, clientArea.height).x
+                + rightSeparator.computeSize(SWT.DEFAULT, clientArea.height).x + data.widthHint;
+        Rectangle bounds = shell.getBounds();
+        shell.setBounds(bounds.x - ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y,
+                bounds.width + trayWidth, bounds.height);
+        sash.addListener(SWT.Selection, new Listener() {
+            public void handleEvent(Event event) {
+                if (event.detail != SWT.DRAG) {
+                    Rectangle rect = shell.getClientArea();
+                    int newWidth = rect.width - event.x - (sash.getSize().x + rightSeparator.getSize().x);
+                    if (newWidth != data.widthHint) {
+                        data.widthHint = newWidth;
+                        shell.layout();
+                    }
+                }
+            }
+        });
+        this.tray = t;
     }
 
     private Table createTable() {
@@ -230,18 +270,15 @@ public class CommitFilesChooser extends Composite {
             return;
         }
         selectAllButton = new Button(this, SWT.CHECK);
-        selectAllButton.setText(Messages
-                .getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
+        selectAllButton.setText(Messages.getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
         selectAllButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-        
+
         if (!untracked) {
             return;
         }
         showUntrackedFilesButton = new Button(this, SWT.CHECK);
-        showUntrackedFilesButton.setText(Messages
-                .getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
-        showUntrackedFilesButton.setLayoutData(new GridData(
-                GridData.FILL_HORIZONTAL));
+        showUntrackedFilesButton.setText(Messages.getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
+        showUntrackedFilesButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     }
 
     /**
@@ -252,8 +289,7 @@ public class CommitFilesChooser extends Composite {
         if (selectedFile == null) {
             return null;
         }
-        IStorageMercurialRevision iStorage = new IStorageMercurialRevision(
-                selectedFile);
+        IStorageMercurialRevision iStorage = new IStorageMercurialRevision(selectedFile);
         ResourceNode right = new RevisionNode(iStorage);
         ResourceNode left = new ResourceNode(selectedFile);
         return CompareUtils.getCompareInput(left, right, false);
@@ -262,20 +298,15 @@ public class CommitFilesChooser extends Composite {
     private void makeActions() {
         getViewer().addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
-                IStructuredSelection sel = (IStructuredSelection) getViewer()
-                        .getSelection();
+                IStructuredSelection sel = (IStructuredSelection) getViewer().getSelection();
                 if (sel.getFirstElement() instanceof CommitResource) {
-                    CommitResource resource = (CommitResource) sel
-                            .getFirstElement();
+                    CommitResource resource = (CommitResource) sel.getFirstElement();
 
                     // workspace version
-                    ResourceNode leftNode = new ResourceNode(resource
-                            .getResource());
+                    ResourceNode leftNode = new ResourceNode(resource.getResource());
 
                     // mercurial version
-                    RevisionNode rightNode = new RevisionNode(
-                            new IStorageMercurialRevision(resource
-                                    .getResource()));
+                    RevisionNode rightNode = new RevisionNode(new IStorageMercurialRevision(resource.getResource()));
 
                     CompareUtils.openCompareDialog(leftNode, rightNode, false);
                 }
@@ -305,19 +336,18 @@ public class CommitFilesChooser extends Composite {
 
         if (selectable && untracked) {
             showUntrackedFilesButton.setSelection(true); // Start selected.
-            showUntrackedFilesButton
-                    .addSelectionListener(new SelectionAdapter() {
-                        @Override
-                        public void widgetSelected(SelectionEvent e) {
-                            if (showUntrackedFilesButton.getSelection()) {
-                                getViewer().removeFilter(untrackedFilesFilter);
-                            } else {
-                                getViewer().addFilter(untrackedFilesFilter);
-                            }
-                            getViewer().refresh(true);
-                            fireStateChanged();
-                        }
-                    });
+            showUntrackedFilesButton.addSelectionListener(new SelectionAdapter() {
+                @Override
+                public void widgetSelected(SelectionEvent e) {
+                    if (showUntrackedFilesButton.getSelection()) {
+                        getViewer().removeFilter(untrackedFilesFilter);
+                    } else {
+                        getViewer().addFilter(untrackedFilesFilter);
+                    }
+                    getViewer().refresh(true);
+                    fireStateChanged();
+                }
+            });
         }
 
         final Table table = getViewer().getTable();
@@ -329,8 +359,7 @@ public class CommitFilesChooser extends Composite {
                 @Override
                 protected int doCompare(Viewer v, Object e1, Object e2) {
                     StructuredViewer v1 = (StructuredViewer) v;
-                    ITableLabelProvider lp = ((ITableLabelProvider) v1
-                            .getLabelProvider());
+                    ITableLabelProvider lp = ((ITableLabelProvider) v1.getLabelProvider());
                     String t1 = lp.getColumnText(e1, colIdx);
                     String t2 = lp.getColumnText(e2, colIdx);
                     return t1.compareTo(t2);
@@ -341,8 +370,7 @@ public class CommitFilesChooser extends Composite {
 
     public void setResources(List<IResource> resources) {
         IResource[] res = resources.toArray(new IResource[0]);
-        CommitResource[] commitResources = new CommitResourceUtil(root)
-                .getCommitResources(res);
+        CommitResource[] commitResources = new CommitResourceUtil(root).getCommitResources(res);
         getViewer().setInput(commitResources);
         // auto-check all tracked elements
         List<CommitResource> tracked = new ArrayList<CommitResource>();
@@ -357,20 +385,29 @@ public class CommitFilesChooser extends Composite {
         }
     }
 
-    public ArrayList<IResource> getCheckedResources(String... status) {
-        ArrayList<IResource> list = new ArrayList<IResource>();
-        for (Object res : getViewer().getCheckedElements()) {
-            if (res instanceof CommitResource != true) {
-                return null;
-            }
-            CommitResource resource = (CommitResource) res;
-            if (status == null || status.length == 0) {
-                list.add(resource.getResource());
-            } else {
-                for (String stat : status) {
-                    if (resource.getStatus().equals(stat)) {
-                        list.add(resource.getResource());
-                        break;
+    public List<IResource> getCheckedResources(String... status) {
+        return getViewerResources(true, status);
+    }
+
+    public List<IResource> getUncheckedResources(String... status) {
+        return getViewerResources(false, status);
+    }
+
+    public List<IResource> getViewerResources(boolean checked, String... status) {
+        TableItem[] children = getViewer().getTable().getItems();
+        List<IResource> list = new ArrayList<IResource>(children.length);
+        for (int i = 0; i < children.length; i++) {
+            TableItem item = children[i];
+            if (item.getChecked() == checked && item.getData() instanceof CommitResource) {
+                CommitResource resource = (CommitResource) item.getData();
+                if (status == null || status.length == 0) {
+                    list.add(resource.getResource());
+                } else {
+                    for (String stat : status) {
+                        if (resource.getStatus().equals(stat)) {
+                            list.add(resource.getResource());
+                            break;
+                        }
                     }
                 }
             }
@@ -389,5 +426,27 @@ public class CommitFilesChooser extends Composite {
         for (Object obj : stateListeners.getListeners()) {
             ((Listener) obj).handleEvent(null);
         }
+    }
+
+    /**
+     * 
+     */
+    private void closeSash() {
+        if (tray == null) {
+            throw new IllegalStateException("Tray was not open"); //$NON-NLS-1$
+        }
+        int trayWidth = trayControl.getSize().x + leftSeparator.getSize().x + sash.getSize().x + rightSeparator.getSize().x;
+        trayControl.dispose();
+        trayControl = null;
+        tray = null;
+        leftSeparator.dispose();
+        leftSeparator = null;
+        rightSeparator.dispose();
+        rightSeparator = null;
+        sash.dispose();
+        sash = null;
+        Shell shell = getShell();
+        Rectangle bounds = shell.getBounds();
+        shell.setBounds(bounds.x + ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y, bounds.width - trayWidth, bounds.height);
     }
 }

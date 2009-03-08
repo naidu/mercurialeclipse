@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -75,7 +74,7 @@ public class ExportPage extends HgWizardPage implements Listener {
         locationChooser.setLayoutData(data);
 
         // TODO no diff for untracked files, bug?
-        commitFiles = new CommitFilesChooser(null, composite, true, resources,
+        commitFiles = new CommitFilesChooser(composite, true, resources,
                 root,
                 false);
         commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -85,7 +84,7 @@ public class ExportPage extends HgWizardPage implements Listener {
         validatePage();
     }
 
-    public ArrayList<IResource> getCheckedResources() {
+    public List<IResource> getCheckedResources() {
         return commitFiles.getCheckedResources();
     }
 

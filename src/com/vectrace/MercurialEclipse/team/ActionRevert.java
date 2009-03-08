@@ -139,7 +139,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         }
     }
 
-    private void doRevert(IProgressMonitor monitor, List<IResource> resources) {
+    public void doRevert(IProgressMonitor monitor, List<IResource> resources) {
         // the last argument will be replaced with a path
         String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert", //$NON-NLS-1$
                 "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
