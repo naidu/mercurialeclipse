@@ -166,7 +166,7 @@ public class CommitDialog extends TitleAreaDialog {
      * @param container
      */
     private void createRevertCheckBox(Composite container) {
-        this.revertCheckBox = SWTWidgetHelper.createCheckBox(container, "Revert unchecked resources.");
+        this.revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
     }
 
     /**
@@ -295,7 +295,7 @@ public class CommitDialog extends TitleAreaDialog {
             if (revertCheckBox.getSelection()) {
                 final List<IResource> revertResources = commitFilesList.getUncheckedResources(FILE_ADDED, FILE_DELETED,
                         FILE_MODIFIED, FILE_REMOVED);
-                new SafeWorkspaceJob("Reverting files") {
+                new SafeWorkspaceJob(Messages.getString("CommitDialog.revertJob.RevertingFiles")) { //$NON-NLS-1$
                     /*
                      * (non-Javadoc)
                      * 
