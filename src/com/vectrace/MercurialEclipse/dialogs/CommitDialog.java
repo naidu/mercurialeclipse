@@ -104,7 +104,6 @@ public class CommitDialog extends TitleAreaDialog {
         this.inResources = resources;
         this.selectableFiles = true;
         this.commitTextDocument = new Document();
-        setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$
     }
 
     public CommitDialog(Shell shell, HgRoot root, ArrayList<IResource> selectedResource, String defaultCommitMessage,
@@ -159,6 +158,8 @@ public class CommitDialog extends TitleAreaDialog {
         setupDefaultCommitMessage();
 
         commitTextBox.getTextWidget().setFocus();
+        setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$");
+        setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$");
         return container;
     }
 

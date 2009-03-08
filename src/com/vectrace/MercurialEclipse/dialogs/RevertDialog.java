@@ -34,16 +34,11 @@ public class RevertDialog extends TitleAreaDialog {
     private HgRoot root;
     private List<IResource> selection;
 
-    public static final String FILE_MODIFIED = Messages
-            .getString("CommitDialog.modified"); //$NON-NLS-1$
-    public static final String FILE_ADDED = Messages
-            .getString("CommitDialog.added"); //$NON-NLS-1$
-    public static final String FILE_REMOVED = Messages
-            .getString("CommitDialog.removed"); //$NON-NLS-1$
-    public static final String FILE_UNTRACKED = Messages
-            .getString("CommitDialog.untracked"); //$NON-NLS-1$
-    public static final String FILE_DELETED = Messages
-            .getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+    public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
+    public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
+    public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
+    public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
+    public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
 
     /**
      * Create the dialog
@@ -67,15 +62,14 @@ public class RevertDialog extends TitleAreaDialog {
         GridData gd = getFillGD(400);
         container.setLayoutData(gd);
         super.createDialogArea(parent);
-        setMessage(Messages.getString("RevertDialog.header")); //$NON-NLS-1$
-
         createFilesList(container);
+        setTitle(Messages.getString("RevertDialog.title")); //$NON-NLS-1$
+        setMessage(Messages.getString("RevertDialog.message")); //$NON-NLS-1$
         return container;
     }
 
     private void createFilesList(Composite container) {
-        selectFilesList = new CommitFilesChooser(container, true,
-                resources, root, false);
+        selectFilesList = new CommitFilesChooser(container, true, resources, root, false);
     }
 
     public void setFiles(List<IResource> resources) {
@@ -85,8 +79,7 @@ public class RevertDialog extends TitleAreaDialog {
 
     @Override
     protected void okPressed() {
-        this.selection = selectFilesList.getCheckedResources(FILE_ADDED,
-                FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+        this.selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
         super.okPressed();
 
     }
