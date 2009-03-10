@@ -11,12 +11,9 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.operations.RebaseOperation;
 
 /**
@@ -69,11 +66,7 @@ public class RebaseWizard extends HgWizard {
         try {
             getContainer().run(true, false, op);            
             if (op.getResult().length() != 0) {
-                IWorkbench workbench = PlatformUI.getWorkbench();
-                Shell shell = workbench.getActiveWorkbenchWindow().getShell();
-                MessageDialog.openInformation(shell, Messages.getString("RebaseWizard.output.header"), op //$NON-NLS-1$
-                        .getResult());
-
+                HgClients.getConsole().printMessage(op.getResult(), null);
             }            
             return true;
         } catch (Exception e) {

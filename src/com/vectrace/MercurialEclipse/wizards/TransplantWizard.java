@@ -18,11 +18,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
@@ -95,14 +93,7 @@ public class TransplantWizard extends HgWizard {
                             .isFilterChangesets(), optionsPage.getFilter());
 
             if (result.length() != 0) {
-                Shell shell;
-                IWorkbench workbench;
-
-                workbench = PlatformUI.getWorkbench();
-                shell = workbench.getActiveWorkbenchWindow().getShell();
-
-                MessageDialog.openInformation(shell, Messages.getString("TransplantWizard.outputMessage"), //$NON-NLS-1$
-                        result);
+                HgClients.getConsole().printMessage(result, null);
             }
 
             // It appears good. Stash the repo location.

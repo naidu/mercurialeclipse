@@ -21,11 +21,9 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
@@ -128,17 +126,7 @@ public class PushRepoWizard extends HgWizard {
                         .isForce(), changeset, timeout);
             }
             if (result.length() != 0) {
-                Shell shell;
-                IWorkbench workbench;
-
-                workbench = PlatformUI.getWorkbench();
-                shell = workbench.getActiveWorkbenchWindow().getShell();
-
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages
-                                        .getString("PushRepoWizard.outputDialog.title"), result); //$NON-NLS-1$
+                HgClients.getConsole().printMessage(result, null);
             }
 
             // It appears good. Stash the repo location.

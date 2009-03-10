@@ -196,10 +196,10 @@ public class HgConsole extends MessageConsole {
                     commandStream.println(myLine);
                     break;
                 case ConsoleDocument.MESSAGE:
-                    messageStream.println("  " + myLine); //$NON-NLS-1$
+                    messageStream.println(myLine); //$NON-NLS-1$
                     break;
                 case ConsoleDocument.ERROR:
-                    errorStream.println("  " + myLine); //$NON-NLS-1$
+                    errorStream.println(myLine); //$NON-NLS-1$
                     break;
                 }
             } else {
@@ -265,7 +265,7 @@ public class HgConsole extends MessageConsole {
      * messageLineReceived(java.lang.String)
      */
     public void messageLineReceived(String line, IStatus status) {
-        appendLine(ConsoleDocument.MESSAGE, "  " + line); //$NON-NLS-1$
+        appendLine(ConsoleDocument.MESSAGE, line); //$NON-NLS-1$
     }
 
     /*
@@ -276,7 +276,7 @@ public class HgConsole extends MessageConsole {
      * errorLineReceived(java.lang.String)
      */
     public void errorLineReceived(String line, IStatus status) {
-        appendLine(ConsoleDocument.ERROR, "  " + line); //$NON-NLS-1$
+        appendLine(ConsoleDocument.ERROR, line); //$NON-NLS-1$
     }
 
     /*

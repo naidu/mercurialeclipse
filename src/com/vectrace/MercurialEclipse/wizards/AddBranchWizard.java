@@ -14,12 +14,12 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -65,8 +65,7 @@ public class AddBranchWizard extends HgWizard {
                         .getHGUsername(), branchPage.getForceCheckBox()
                         .getSelection());
                 monitor.worked(1);                
-                MessageDialog.openInformation(getShell(), Messages.getString("AddBranchWizard.AddBranchOperation.output.title"), //$NON-NLS-1$
-                        result);
+                HgClients.getConsole().printMessage(result, null);
             } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);
                 throw new InvocationTargetException(e, e.getLocalizedMessage());

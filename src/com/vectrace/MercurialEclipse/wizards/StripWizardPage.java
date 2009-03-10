@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -115,7 +116,7 @@ public class StripWizardPage extends HgWizardPage {
         try {
             String result = HgStripClient.strip(project, this.unrelated,
                     this.backup, this.stripHeads, stripRevision);
-            MessageDialog.openInformation(getShell(), Messages.getString("StripWizardPage.outputMessage"), result); //$NON-NLS-1$
+            HgClients.getConsole().printMessage(result, null);
         } catch (HgException e) {
             MessageDialog.openError(getShell(), Messages.getString("StripWizardPage.errorCallingStrip"), e //$NON-NLS-1$
                     .getMessage());

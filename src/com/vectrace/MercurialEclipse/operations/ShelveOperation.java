@@ -99,13 +99,14 @@ public class ShelveOperation extends HgOperation {
                     && MercurialUtilities.isCommandAvailable("attic-shelve",// $NON-NLS-1$
                             ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
 
-                HgAtticClient.shelve(project.getLocation().toFile(),
+                String output = HgAtticClient.shelve(project.getLocation().toFile(),
                         "MercurialEclipse shelve operation", // $NON-NLS-1$
                         true, MercurialUtilities.getHGUsername(),
                         project.getName());
                 monitor.worked(1);
                 project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
                 monitor.worked(1);
+                HgClients.getConsole().printMessage(output, null);
             } else {
 
                 monitor.subTask(Messages

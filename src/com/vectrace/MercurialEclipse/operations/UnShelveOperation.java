@@ -93,13 +93,14 @@ public class UnShelveOperation extends HgOperation {
                     ResourceProperties.RESOLVE_AVAILABLE, "") // $NON-NLS-1$
                     && MercurialUtilities.isCommandAvailable("attic-shelve",// $NON-NLS-1$
                             ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
-                HgAtticClient.unshelve(project.getLocation().toFile(), false,
+                String output = HgAtticClient.unshelve(project.getLocation().toFile(), false,
                         true,
                         project
                         .getName());
                 monitor.worked(1);
                 project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
                 monitor.worked(1);
+                HgClients.getConsole().printMessage(output, null);
             } else {
                 monitor.subTask(Messages
                         .getString("UnShelveOperation.GettingChanges")); //$NON-NLS-1$

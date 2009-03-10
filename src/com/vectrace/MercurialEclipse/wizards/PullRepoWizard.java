@@ -26,14 +26,12 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
@@ -204,9 +202,7 @@ public class PullRepoWizard extends HgWizard {
                         resource.getProject());
                 monitor.worked(1);
                 monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.status")); //$NON-NLS-1$
-                // new RefreshStatusJob(
-                //                        Messages.getString("PullRepoWizard.refreshJob.title"), resource.getProject()).schedule(); //$NON-NLS-1$
-                // monitor.worked(1);
+                
                 saveRepo(monitor);
                 return r;
 
@@ -432,15 +428,10 @@ public class PullRepoWizard extends HgWizard {
             String output = pullOperation.getOutput();
 
             if (output.length() != 0) {
-                IWorkbench workbench = PlatformUI.getWorkbench();
-                Shell shell = workbench.getActiveWorkbenchWindow().getShell();
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages
-                                        .getString("PullRepoWizard.messageDialog.title"), output); //$NON-NLS-1$
-
+                HgClients.getConsole().printMessage(output, null);
             }
+            
+            IncomingChangesetCache.getInstance().clear(repo);
 
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
