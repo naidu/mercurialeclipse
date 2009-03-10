@@ -377,7 +377,7 @@ public class HgRepositoryLocationManager {
             String pass) throws URISyntaxException {
         HgRepositoryLocation location = matchRepoLocation(url);
         if (location != null) {
-            if (user == null || !user.equals(location.getUser())) {
+            if (user == null || user.length() == 0 || user.equals(location.getUser())) {
                 return location;
             }
         }
@@ -436,17 +436,17 @@ public class HgRepositoryLocationManager {
         String myUser = user;
         String myPass = pass;
         
-        if (logicalName == null || !logicalName.equals(loc.getLogicalName())) {
+        if (logicalName != null && logicalName.length() > 0 && !logicalName.equals(loc.getLogicalName())) {
             update = true;
         } else {
             myLogicalName = loc.getLogicalName();
         }
-        if (user == null || !user.equals(loc.getUser())) {
+        if (user != null && user.length() > 0 && !user.equals(loc.getUser())) {
             update = true;
         } else {
             myUser = loc.getUser();
         }
-        if (pass == null || !pass.equals(loc.getPassword())) {
+        if (pass != null && pass.length() > 0 && !pass.equals(loc.getPassword())) {
             update = true;
         } else {
             myPass = loc.getPassword();
