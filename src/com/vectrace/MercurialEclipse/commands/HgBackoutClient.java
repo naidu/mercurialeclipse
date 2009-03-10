@@ -49,7 +49,7 @@ public class HgBackoutClient {
                                 MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
                                 "false")).booleanValue(); //$NON-NLS-1$
         if (!useExternalMergeTool) {
-            command.addOptions("--config", "ui.merge=internal:fail"); //$NON-NLS-1$ //$NON-NLS-2$
+            command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         command.addOptions("-r", backoutRevision.getChangeset(), "-m", msg, //$NON-NLS-1$ //$NON-NLS-2$
                 "-u", user); //$NON-NLS-1$
