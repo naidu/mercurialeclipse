@@ -7,10 +7,11 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.ui.model.BaseWorkbenchContentProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
-public class ResourcesTreeContentProvider implements ITreeContentProvider {
+public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider implements ITreeContentProvider {
 
 	//the pseudo-root
 	public final static Object ROOT = new Object();
@@ -22,7 +23,8 @@ public class ResourcesTreeContentProvider implements ITreeContentProvider {
 		this.roots = roots;
 	}
 
-	public Object[] getChildren(Object parentElement) {
+	@Override
+    public Object[] getChildren(Object parentElement) {
 		if(parentElement == ROOT) {
 			return roots.toArray(new IResource[0]);
 		} else if(parentElement instanceof IContainer){
@@ -37,22 +39,27 @@ public class ResourcesTreeContentProvider implements ITreeContentProvider {
 		}
 	}
 
-	public Object getParent(Object element) {
+	@Override
+    public Object getParent(Object element) {
 		return ((IResource)element).getParent();
 	}
 
-	public boolean hasChildren(Object element) {
+	@Override
+    public boolean hasChildren(Object element) {
 		return element == ROOT || element instanceof IContainer;
 	}
 
-	public Object[] getElements(Object inputElement) {
+	@Override
+    public Object[] getElements(Object inputElement) {
 		return getChildren(inputElement);
 	}
 
-	public void dispose() {
+	@Override
+    public void dispose() {
 	}
 
-	public void inputChanged(Viewer viewer, Object oldInput,
+	@Override
+    public void inputChanged(Viewer viewer, Object oldInput,
 			Object newInput) {
 	}
 

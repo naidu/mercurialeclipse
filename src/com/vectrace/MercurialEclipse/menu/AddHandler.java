@@ -27,13 +27,13 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.ui.dialogs.CheckedTreeSelectionDialog;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.views.navigator.ResourceComparator;
 
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
-import com.vectrace.MercurialEclipse.ui.ResourceLabelProvider;
 import com.vectrace.MercurialEclipse.ui.ResourcesTreeContentProvider;
 import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
 
@@ -69,7 +69,8 @@ public class AddHandler extends MultipleResourcesHandler {
                 untrackedFolders);
 
         CheckedTreeSelectionDialog dialog = new CheckedTreeSelectionDialog(getShell(),
-                new ResourceLabelProvider(), new ResourcesTreeContentProvider(roots));
+                new WorkbenchLabelProvider(),
+                new ResourcesTreeContentProvider(roots));
 
         dialog.setInput(ResourcesTreeContentProvider.ROOT);
         dialog.setTitle(Messages.getString("AddHandler.addToVersionControl")); //$NON-NLS-1$
