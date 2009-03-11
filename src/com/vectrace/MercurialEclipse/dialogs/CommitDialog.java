@@ -43,6 +43,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.team.internal.core.subscribers.ActiveChangeSet;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.texteditor.AnnotationPreference;
@@ -333,8 +334,13 @@ public class CommitDialog extends TitleAreaDialog {
     }
 
     private void setupDefaultCommitMessage() {
-        commitTextDocument.set(defaultCommitMessage);
-        commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
+        ActiveChangeSet changeset = MercurialEclipsePlugin.getDefault().getChangeSetManager().getDefaultSet();
+        String msg = defaultCommitMessage;
+        if (changeset != null && changeset.getComment() != null && changeset.getComment().length() > 0) {
+            msg = changeset.getComment();
+        }
+        commitTextDocument.set(msg);
+        commitTextBox.setSelectedRange(0, msg.length());
     }
 
     /**
