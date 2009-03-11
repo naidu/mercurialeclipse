@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
@@ -20,12 +19,10 @@ public class PushHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
         PushRepoWizard pushRepoWizard = new PushRepoWizard(resource);        
         WizardDialog pushWizardDialog = new WizardDialog(getShell(),
                 pushRepoWizard);
         pushWizardDialog.open();
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
     }
 
 }
