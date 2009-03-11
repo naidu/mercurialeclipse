@@ -338,11 +338,11 @@ public class CommitDialog extends TitleAreaDialog {
     }
 
     private void setupDefaultCommitMessage() {
-        String msg = defaultCommitMessage;
-        msg = getProposedComment(inResources.toArray(new IResource[inResources.size()]));
+        String msg = getProposedComment(inResources.toArray(new IResource[inResources.size()]));
         if (msg != null && msg.length() > 0) {
             commitTextDocument.set(msg);
         } else {
+            msg = defaultCommitMessage;
             commitTextBox.setSelectedRange(0, msg.length());    
         }
     }
