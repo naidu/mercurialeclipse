@@ -342,8 +342,8 @@ public class CommitDialog extends TitleAreaDialog {
         if (msg != null && msg.length() > 0) {
             commitTextDocument.set(msg);
         } else {
-            msg = defaultCommitMessage;
-            commitTextBox.setSelectedRange(0, msg.length());    
+            commitTextDocument.set(defaultCommitMessage);
+            commitTextBox.setSelectedRange(0, defaultCommitMessage.length());    
         }
     }
 
