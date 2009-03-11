@@ -6,6 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
+ *     Eclipse.org - see CommitWizardCommitPage
  *     Software Balm Consulting Inc (Peter Hunnisett <peter_hge at softwarebalm dot com>) - implementation
  *     Bastian Doetsch - Added spellchecking and some other stuff
  *     StefanC - many updates
@@ -44,6 +45,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.internal.core.subscribers.ActiveChangeSet;
+import org.eclipse.team.internal.core.subscribers.ActiveChangeSetManager;
+import org.eclipse.team.internal.core.subscribers.ChangeSet;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.texteditor.AnnotationPreference;
@@ -93,6 +96,7 @@ public class CommitDialog extends TitleAreaDialog {
     private Text userTextField;
     private String user;
     private Button revertCheckBox;
+    private ActiveChangeSetManager csManager = MercurialEclipsePlugin.getDefault().getChangeSetManager();
 
     /**
      * @param shell
@@ -334,13 +338,13 @@ public class CommitDialog extends TitleAreaDialog {
     }
 
     private void setupDefaultCommitMessage() {
-        ActiveChangeSet changeset = MercurialEclipsePlugin.getDefault().getChangeSetManager().getDefaultSet();
         String msg = defaultCommitMessage;
-        if (changeset != null && changeset.getComment() != null && changeset.getComment().length() > 0) {
-            msg = changeset.getComment();
+        msg = getProposedComment(inResources.toArray(new IResource[inResources.size()]));
+        if (msg != null && msg.length() > 0) {
+            commitTextDocument.set(msg);
+        } else {
+            commitTextBox.setSelectedRange(0, msg.length());    
         }
-        commitTextDocument.set(msg);
-        commitTextBox.setSelectedRange(0, msg.length());
     }
 
     /**
@@ -348,6 +352,51 @@ public class CommitDialog extends TitleAreaDialog {
      */
     public String getUser() {
         return user;
+    }
+    
+    /*
+     * Get a proposed comment by looking at the active change sets
+     */
+    private String getProposedComment(IResource[] resourcesToCommit) {
+        StringBuffer comment = new StringBuffer();
+        ChangeSet[] sets = csManager.getSets();
+      
+        int numMatchedSets = 0;
+        for (int i = 0; i < sets.length; i++) {
+            ChangeSet set = sets[i];
+            if (isUserSet(set) && containsOne(set, resourcesToCommit)) {
+                if (numMatchedSets > 0) {
+                    comment.append(System.getProperty("line.separator")); //$NON-NLS-1$
+                }
+                comment.append(set.getComment());
+                numMatchedSets++;
+            }
+        }
+        return comment.toString();
+    }
+
+    private boolean isUserSet(ChangeSet set) {
+        if (set instanceof ActiveChangeSet) {
+            ActiveChangeSet acs = (ActiveChangeSet) set;
+            return acs.isUserCreated();
+        }
+        return false;
+    }
+
+    private boolean containsOne(ChangeSet set, IResource[] resourcesToCommit) {
+        for (int j = 0; j < resourcesToCommit.length; j++) {
+            IResource resource = resourcesToCommit[j];
+            if (set.contains(resource)) {
+                return true;
+            }
+            if (set instanceof ActiveChangeSet) {
+                ActiveChangeSet acs = (ActiveChangeSet) set;
+                if (acs.getDiffTree().members(resource).length > 0) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 }
