@@ -68,7 +68,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
      */
     @Override
     public void configureProject() throws CoreException {
-        getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
         getHgRoot(getProject());
 
         // try to find .hg directory to set it as private member
@@ -254,5 +253,15 @@ public class MercurialTeamProvider extends RepositoryProvider {
     @Override
     public boolean canHandleLinkedResources() {
         return true;
+    }
+    
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResourceURI()
+     */
+    @Override
+    public boolean canHandleLinkedResourceURI() {
+        return canHandleLinkedResources();
     }
 }
