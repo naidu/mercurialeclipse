@@ -503,7 +503,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 buf.appendCodePoint(ch);
             } else if (Character.isISOControl(ch)) {
                 buf.append(' ');
-            } else {
+            } else if (ch == '&') {
+                buf.append("&amp;");
+            }else {
                 buf.appendCodePoint(ch);
             }
         }
