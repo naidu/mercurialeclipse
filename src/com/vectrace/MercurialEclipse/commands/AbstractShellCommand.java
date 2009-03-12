@@ -293,10 +293,20 @@ public abstract class AbstractShellCommand {
     }
 
     private static String getMessage(OutputStream output) {
+        String msg = null;
         if (output instanceof FileOutputStream) {
             return null;
+        } else if (output instanceof ByteArrayOutputStream) {
+            ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
+            try {
+                msg = baos.toString("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                MercurialEclipsePlugin.logError(e);
+                msg = baos.toString();
+            }
         }
-        return output.toString();
+        
+        return msg;
     }
 
     /**
