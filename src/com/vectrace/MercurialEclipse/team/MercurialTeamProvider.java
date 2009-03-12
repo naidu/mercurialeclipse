@@ -61,15 +61,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
         super();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.RepositoryProvider#configureProject()
-     */
     @Override
     public void configureProject() throws CoreException {
+        getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
         getHgRoot(getProject());
-
+    
         // try to find .hg directory to set it as private member
         IResource hgDir = getProject().findMember(".hg"); //$NON-NLS-1$
         if (hgDir != null && hgDir.exists()) {
