@@ -81,9 +81,11 @@ public class HgRoot extends File {
         // set fallbackencoding to windows standard codepage
         String fallback = getConfigItem("ui", "fallbackencoding");
 
-        if (fallbackencoding == null || fallback == null || fallback.length() == 0) {
-            fallback = "windows-1251";
-            fallbackencoding = Charset.forName(fallback);
+        if (fallbackencoding == null) {
+            if (fallback == null || fallback.length() == 0) {
+                fallback = "windows-1251";
+            } 
+            fallbackencoding = Charset.forName(fallback);    
         }
     }
 
