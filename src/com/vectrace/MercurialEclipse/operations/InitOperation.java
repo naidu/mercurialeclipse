@@ -22,6 +22,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
@@ -29,17 +30,17 @@ public class InitOperation extends HgOperation {
 
     private IProject project;
     private String hgPath;
-    private String foundHgPath;
+    private HgRoot foundHgPath;
 
     /**
      * 
      */
     public InitOperation(IRunnableContext ctx, IProject project,
-            String foundHgPath, String hgPath) {
+            HgRoot foundHgRoot, String hgPath) {
         super(ctx);
         this.hgPath = hgPath;
         this.project = project;
-        this.foundHgPath = foundHgPath;
+        this.foundHgPath = foundHgRoot;
     }
 
     /*
@@ -67,7 +68,7 @@ public class InitOperation extends HgOperation {
         try {
             monitor.beginTask(Messages.getString("InitOperation.share"), 3); //$NON-NLS-1$
             if ((this.foundHgPath == null)
-                    || (!this.foundHgPath.equals(hgPath))) {
+                    || (!this.foundHgPath.getAbsolutePath().equals(hgPath))) {
                 monitor
                         .subTask(Messages.getString("InitOperation.call")); //$NON-NLS-1$
                 HgInitClient.init(project, hgPath);

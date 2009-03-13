@@ -97,9 +97,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                     if (supervised && !merging) {
                         resources.add(resource);
                         if (root == null) {
-                            root = new HgRoot(MercurialUtilities
-                                    .search4MercurialRoot(resources.get(0)
-                                            .getLocation().toFile()));
+                            root = MercurialTeamProvider.getHgRoot(resource);
                         }
                     }
                 }

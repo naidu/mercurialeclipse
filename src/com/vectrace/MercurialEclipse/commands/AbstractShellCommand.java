@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -31,7 +32,9 @@ import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
@@ -99,8 +102,7 @@ public abstract class AbstractShellCommand {
         // this.console = MercurialUtilities.getMercurialConsole();
     }
 
-    public AbstractShellCommand(List<String> commands, File workingDir,
-            boolean escapeFiles) {
+    public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
         this();
         this.command = null;
         this.escapeFiles = escapeFiles;
@@ -135,8 +137,7 @@ public abstract class AbstractShellCommand {
      * @return
      * @throws HgException
      */
-    public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue)
-            throws HgException {
+    public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
             return bos.toByteArray();
@@ -144,24 +145,32 @@ public abstract class AbstractShellCommand {
         return null;
     }
 
-    public boolean executeToStream(OutputStream output, int timeout,
-            boolean expectPositiveReturnValue) throws HgException {
+    public boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+            throws HgException {
         try {
             List<String> cmd = getCommands();
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-            final String commandInvoked = cmdString.substring(0, cmdString
-                    .length() - 1);
+            final String commandInvoked = cmdString.substring(0, cmdString.length() - 1);
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
 
             // set locale to english have deterministic output
             Map<String, String> env = builder.environment();
-            env.put("LC_ALL", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
-            env.put("LANG", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
-            env.put("LANGUAGE", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
-            env.put("LC_MESSAGES", "en_US.utf8"); //$NON-NLS-1$ //$NON-NLS-2$
-            env.put("HGENCODING", "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
-
+            env.put("LANG", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+            env.put("LANGUAGE", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+            
+            if (workingDir != null) {
+                HgRoot hgRoot;
+                try {
+                    hgRoot = HgClients.getHgRoot(workingDir);
+                    Charset charset = hgRoot.getEncoding();
+                    if (charset != null) {
+                        env.put("HGENCODING", charset.name()); //$NON-NLS-1$
+                    }
+                } catch (HgCoreException e) {
+                    // no hg root found
+                }
+            }
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
@@ -185,9 +194,8 @@ public abstract class AbstractShellCommand {
                 }
 
                 // exit code > 0
-                final HgException hgex = new HgException(
-                        "Process error, return code: " + exitCode //$NON-NLS-1$
-                                + ", message: " + getMessage(output)); //$NON-NLS-1$
+                final HgException hgex = new HgException("Process error, return code: " + exitCode //$NON-NLS-1$
+                        + ", message: " + getMessage(output)); //$NON-NLS-1$
 
                 // exit code == 1 usually isn't fatal.
                 logConsoleCompleted(msg, exitCode, hgex);
@@ -275,8 +283,7 @@ public abstract class AbstractShellCommand {
      * @param exitCode
      * @param hgex
      */
-    private void logConsoleCompleted(final String msg, final int exitCode,
-            final HgException hgex) {
+    private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
         if (showOnConsole) {
             new SafeWorkspaceJob("Writing to console...") {
                 @Override
@@ -305,7 +312,7 @@ public abstract class AbstractShellCommand {
                 msg = baos.toString();
             }
         }
-        
+
         return msg;
     }
 
@@ -313,10 +320,8 @@ public abstract class AbstractShellCommand {
      * @return
      */
     private boolean isDebugMode() {
-        return Boolean.valueOf(
-                HgClients.getPreference(
-                        MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
-                        "false")).booleanValue(); //$NON-NLS-1$
+        return Boolean
+                .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
     }
 
     public String executeToString() throws HgException {
@@ -332,8 +337,7 @@ public abstract class AbstractShellCommand {
         return ""; //$NON-NLS-1$
     }
 
-    public boolean executeToFile(File file, int timeout,
-            boolean expectPositiveReturnValue) throws HgException {
+    public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(file, false);

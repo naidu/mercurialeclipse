@@ -12,7 +12,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 
-import org.eclipse.core.runtime.CoreException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan
@@ -43,6 +43,6 @@ public interface IConfiguration {
      */
     String getPreference(String preferenceConstant, String defaultIfNotSet);
     
-    File getHgRoot(File file) throws CoreException;
+    HgRoot getHgRoot(File file);
 
 }

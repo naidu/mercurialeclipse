@@ -47,6 +47,7 @@ import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 
 /**
@@ -129,14 +130,14 @@ public class MercurialConfigurationWizard extends Wizard implements
                 directoryText.setText(hgPath);
                 // directoryDialog.close();
             } else if (e.widget == restoreDefaultDirButton) {
-                hgPath = hgPathOrginal;
+                hgPath = hgPathOriginal;
                 directoryText.setText(hgPath);
             } else if (e.widget == directoryText) {
                 hgPath = directoryText.getText();
                 directoryText.setText(hgPath);
             } else if ((!newMercurialProject)
                     && (e.widget == restoreExistingDirButton)) {
-                hgPath = foundhgPath;
+                hgPath = hgPathOriginal;
                 directoryText.setText(hgPath);
             }
         }
@@ -153,10 +154,10 @@ public class MercurialConfigurationWizard extends Wizard implements
 
     private IProject project;
     private String hgPath; 
-    private String hgPathOrginal;
-    private String foundhgPath;
+    private HgRoot foundhgPath;
     private Text directoryText;
     private NewWizardPage page;
+    private String hgPathOriginal;
 
     public MercurialConfigurationWizard() {
         setWindowTitle(Messages.getString("MercurialConfigurationWizard.wizardTitle")); //$NON-NLS-1$
@@ -168,23 +169,21 @@ public class MercurialConfigurationWizard extends Wizard implements
     //
     @Override
     public void addPages() {
-        String mercurialRootDir = null;
         try {
-            mercurialRootDir = MercurialUtilities.search4MercurialRoot(project);
+            foundhgPath = MercurialTeamProvider.getHgRoot(project);
         } catch (HgException e) {
             // do nothing
         }
-        if (mercurialRootDir == null) {
-            foundhgPath = null;
-            hgPathOrginal = project.getLocation().toString();
-            hgPath = hgPathOrginal;
+        if (foundhgPath == null) {
+            hgPath = project.getLocation().toString();
+            hgPathOriginal = hgPath;
             page = new NewWizardPage(true);
             addPage(page);
         } else {
-            foundhgPath = mercurialRootDir;
-            hgPathOrginal = mercurialRootDir;
-            hgPath = hgPathOrginal;
-            addPage(new NewWizardPage(false));
+            hgPath = foundhgPath.getAbsolutePath();
+            hgPathOriginal = hgPath;
+            page = new NewWizardPage(false);
+            addPage(page);
         }
     }
 

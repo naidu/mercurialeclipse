@@ -15,7 +15,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -46,8 +46,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
 
             ArrayList<IResource> selectedResource = new ArrayList<IResource>(1);
             selectedResource.add(resource);
-            HgRoot root = new HgRoot(MercurialUtilities
-                    .search4MercurialRoot(resource.getLocation().toFile()));
+            HgRoot root = MercurialTeamProvider.getHgRoot(resource);
 
             CommitDialog commitDialog = new CommitDialog(
                     shell,

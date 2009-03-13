@@ -24,6 +24,7 @@ public class MercurialPreferenceConstants {
     // user name should be per project in the future, different repositories
     // could have different names (sub optimal I know but it really could)
     public static final String MERCURIAL_USERNAME = "user.name"; //$NON-NLS-1$
+    public static final String PREF_DEFAULT_ENCODING = "UTF-8"; //$NON-NLS-1$
 
     // label decorator
     public static final String LABELDECORATOR_LOGIC = "hg.labeldecorator.logic"; //$NON-NLS-1$
@@ -70,4 +71,5 @@ public class MercurialPreferenceConstants {
 
     // merge
     public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal"; //$NON-NLS-1$
+    
 }

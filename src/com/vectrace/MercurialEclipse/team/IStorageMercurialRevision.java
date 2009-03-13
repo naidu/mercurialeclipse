@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
@@ -45,18 +46,18 @@ public class IStorageMercurialRevision implements IStorage {
     private String global;
     private IResource resource;
     private ChangeSet changeSet;
+    private HgRoot root;
 
     /**
-     * The recommended constructor to use is IStorageMercurialRevision(IResource
-     * res, String rev, String global, ChangeSet cs)
+     * The recommended constructor to use is IStorageMercurialRevision(IResource res, String rev, String global,
+     * ChangeSet cs)
      * 
      */
     public IStorageMercurialRevision(IResource res, String changeset) {
         super();
         resource = res;
         try {
-            ChangeSet cs = LocalChangesetCache.getInstance().getLocalChangeSet(
-                    res, changeset);
+            ChangeSet cs = LocalChangesetCache.getInstance().getLocalChangeSet(res, changeset);
             this.changeSet = cs;
             this.revision = String.valueOf(cs.getChangesetIndex());
             this.global = cs.getChangeset();
@@ -79,8 +80,7 @@ public class IStorageMercurialRevision implements IStorage {
      * @param cs
      *            the changeset object
      */
-    public IStorageMercurialRevision(IResource res, String rev, String global,
-            ChangeSet cs) {
+    public IStorageMercurialRevision(IResource res, String rev, String global, ChangeSet cs) {
         super();
         this.revision = rev;
         this.global = global;
@@ -89,8 +89,7 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * Constructs an {@link IStorageMercurialRevision} with the newest local
-     * changeset available.
+     * Constructs an {@link IStorageMercurialRevision} with the newest local changeset available.
      * 
      * @param res
      *            the resource
@@ -100,8 +99,7 @@ public class IStorageMercurialRevision implements IStorage {
         this.resource = res;
         ChangeSet cs = null;
         try {
-            cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(
-                    res);
+            cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(res);
             this.revision = cs.getChangesetIndex() + ""; // should be fetched //$NON-NLS-1$
             // from id
             this.global = cs.getChangeset();
@@ -129,52 +127,42 @@ public class IStorageMercurialRevision implements IStorage {
      * 
      * @see org.eclipse.core.resources.IStorage#getContents()
      * 
-     * generate data content of the so called "file" in this case a revision,
-     * e.g. a hg cat --rev "rev" <file>
+     * generate data content of the so called "file" in this case a revision, e.g. a hg cat --rev "rev" <file>
      */
     public InputStream getContents() throws CoreException {
         // Setup and run command
         String result = ""; //$NON-NLS-1$
-        IFile file = resource.getProject().getFile(
-                resource.getProjectRelativePath());
+        root = MercurialTeamProvider.getHgRoot(resource);
+        IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
         if (changeSet != null) {
 
             // incoming: overlay repository with bundle and extract then via cat
-            if (changeSet.getDirection() == Direction.INCOMING
-                    && changeSet.getBundleFile() != null) {
+            if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
 
                 String bundleFile = null;
                 try {
-                    bundleFile = changeSet.getBundleFile().getCanonicalFile()
-                            .getCanonicalPath();
+                    bundleFile = changeSet.getBundleFile().getCanonicalFile().getCanonicalPath();
                 } catch (IOException e) {
                     MercurialEclipsePlugin.logError(e);
-                    throw new CoreException(new Status(IStatus.ERROR,
-                            MercurialEclipsePlugin.ID, e.getMessage(), e));
+                    throw new CoreException(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, e.getMessage(), e));
                 }
                 if (bundleFile != null) {
-                    result = HgCatClient.getContentFromBundle(file, changeSet
-                            .getChangesetIndex()
-                            + "", bundleFile); //$NON-NLS-1$
+                    result = HgCatClient.getContentFromBundle(file, changeSet.getChangesetIndex() + "", bundleFile); //$NON-NLS-1$
                 }
 
             } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                return PatchUtils.getPatchedContents(file, changeSet
-                        .getPatches(), true);
+                return PatchUtils.getPatchedContents(file, changeSet.getPatches(), true);
             } else {
                 // local: get the contents via cat
-                result = HgCatClient.getContent(file, changeSet
-                        .getChangesetIndex()
-                        + ""); //$NON-NLS-1$
+                result = HgCatClient.getContent(file, changeSet.getChangesetIndex() + ""); //$NON-NLS-1$
             }
         } else {
             // no changeset known
             result = HgCatClient.getContent(file, null);
         }
-        
+
         try {
-            ByteArrayInputStream is = new ByteArrayInputStream(result
-                    .getBytes(file.getCharset()));
+            ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes(root.getEncoding().name()));
             return is;
         } catch (UnsupportedEncodingException e) {
             MercurialEclipsePlugin.logError(e);
@@ -188,12 +176,8 @@ public class IStorageMercurialRevision implements IStorage {
      * @see org.eclipse.core.resources.IStorage#getFullPath()
      */
     public IPath getFullPath() {
-        return resource
-                .getFullPath()
-                .append(
-                        revision != null ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
-                                : Messages
-                                        .getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
+        return resource.getFullPath().append(revision != null ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
+                : Messages.getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
     }
 
     /*
@@ -220,8 +204,7 @@ public class IStorageMercurialRevision implements IStorage {
      * 
      * @see org.eclipse.core.resources.IStorage#isReadOnly()
      * 
-     * You can't write to other revisions then the current selected e.g.
-     * ReadOnly
+     * You can't write to other revisions then the current selected e.g. ReadOnly
      */
     public boolean isReadOnly() {
         if (revision != null) {
@@ -251,8 +234,8 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * This constructor is not recommended, as the revision index is not unique
-     * when working with other than the local repository.
+     * This constructor is not recommended, as the revision index is not unique when working with other than the local
+     * repository.
      * 
      * @param res
      * @param rev

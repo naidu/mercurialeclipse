@@ -348,57 +348,7 @@ public class MercurialUtilities {
         dlg.open();
     }
 
-    /**
-     * Returns hg root if project != null. Delegates to
-     * {@link MercurialTeamProvider#getHgRoot(IResource)}.
-     * 
-     * @param project
-     *            the project to get root for
-     * @return the canonical file system path of the hg root or null
-     * @throws HgException
-     *             if error occurred
-     */
-    public static String search4MercurialRoot(final IProject project)
-            throws HgException {
-        if (project != null) {
-            try {
-                File file = MercurialTeamProvider.getHgRoot(project);
-                if (file != null) {
-                    return file.getCanonicalPath();
-                }
-            } catch (HgException e) {
-                // do nothing - no root available
-                MercurialEclipsePlugin.logInfo(e.getLocalizedMessage(), e);
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
-                throw new HgException(e.getLocalizedMessage(), e);
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Returns hg root if file != null. Delegates to
-     * {@link MercurialTeamProvider#getHgRoot(File)}.
-     * 
-     * @param file
-     *            file to get root for
-     * @return the canonical file system path of the hg root or null
-     * @throws HgException
-     */
-    public static String search4MercurialRoot(final File file)
-            throws HgException {
-        if (file != null) {
-            try {
-                return MercurialTeamProvider.getHgRoot(file).getCanonicalPath();
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-                throw new HgException(e.getLocalizedMessage(), e);
-            }
-        }
-        return null;
-    }
-
+ 
     /**
      * Get the project for the selection (it use the first element)
      * 
