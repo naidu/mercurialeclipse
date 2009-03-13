@@ -149,6 +149,19 @@ public abstract class AbstractShellCommand {
             throws HgException {
         try {
             List<String> cmd = getCommands();
+            Charset charset = null;
+            if (workingDir != null) {
+                HgRoot hgRoot;
+                try {
+                    hgRoot = HgClients.getHgRoot(workingDir);
+                    charset = hgRoot.getEncoding();
+                    cmd.add(2, "--config"); //$NON-NLS-1$
+                    cmd.add(3, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+                } catch (HgCoreException e) {
+                    // no hg root found
+                }
+            }
+            
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
             final String commandInvoked = cmdString.substring(0, cmdString.length() - 1);
 
@@ -158,19 +171,10 @@ public abstract class AbstractShellCommand {
             Map<String, String> env = builder.environment();
             env.put("LANG", "en"); //$NON-NLS-1$ //$NON-NLS-2$
             env.put("LANGUAGE", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-            
-            if (workingDir != null) {
-                HgRoot hgRoot;
-                try {
-                    hgRoot = HgClients.getHgRoot(workingDir);
-                    Charset charset = hgRoot.getEncoding();
-                    if (charset != null) {
-                        env.put("HGENCODING", charset.name()); //$NON-NLS-1$
-                    }
-                } catch (HgCoreException e) {
-                    // no hg root found
-                }
+            if (charset != null) {
+                env.put("HGENCODING", charset.name()); //$NON-NLS-1$
             }
+            
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);

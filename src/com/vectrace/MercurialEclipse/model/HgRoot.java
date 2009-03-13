@@ -82,7 +82,7 @@ public class HgRoot extends File {
         String fallback = getConfigItem("ui", "fallbackencoding");
 
         if (fallbackencoding == null || fallback == null || fallback.length() == 0) {
-            fallback = "cp1251";
+            fallback = "windows-1251";
             fallbackencoding = Charset.forName(fallback);
         }
     }
@@ -125,5 +125,12 @@ public class HgRoot extends File {
             }
         }
         return null;
+    }
+
+    /**
+     * @return the fallbackencoding
+     */
+    public Charset getFallbackencoding() {
+        return fallbackencoding;
     }
 }
