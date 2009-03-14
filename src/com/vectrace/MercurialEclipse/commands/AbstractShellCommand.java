@@ -149,6 +149,10 @@ public abstract class AbstractShellCommand {
             throws HgException {
         try {
             List<String> cmd = getCommands();
+            // don't output fallbackencoding
+            String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
+            final String commandInvoked = cmdString.substring(0, cmdString.length() - 1);
+            
             Charset charset = null;
             if (workingDir != null) {
                 HgRoot hgRoot;
@@ -161,9 +165,6 @@ public abstract class AbstractShellCommand {
                     // no hg root found
                 }
             }
-            
-            String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-            final String commandInvoked = cmdString.substring(0, cmdString.length() - 1);
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
 
