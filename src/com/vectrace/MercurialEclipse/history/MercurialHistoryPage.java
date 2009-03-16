@@ -327,7 +327,7 @@ public class MercurialHistoryPage extends HistoryPage {
                     new RefreshStatusJob(
                             Messages.getString("MercurialHistoryPage.refreshJob.name"), //$NON-NLS-1$
                             project).schedule();
-                    new RefreshLocalChangesetsJob("Refreshing local changesets.", project).schedule();
+                    new RefreshLocalChangesetsJob(project).schedule();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
