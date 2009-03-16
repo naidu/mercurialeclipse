@@ -66,6 +66,7 @@ import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.RefreshLocalChangesetsJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -326,6 +327,7 @@ public class MercurialHistoryPage extends HistoryPage {
                     new RefreshStatusJob(
                             Messages.getString("MercurialHistoryPage.refreshJob.name"), //$NON-NLS-1$
                             project).schedule();
+                    new RefreshLocalChangesetsJob("Refreshing local changesets.", project).schedule();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
