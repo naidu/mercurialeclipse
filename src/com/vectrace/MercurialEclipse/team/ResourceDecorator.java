@@ -32,6 +32,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.themes.ITheme;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -465,15 +466,14 @@ public class ResourceDecorator extends LabelProvider implements
             suffix = " [ "; //$NON-NLS-1$
             String hex = ":" + changeSet.getNodeShort(); //$NON-NLS-1$
             String tags = changeSet.getTag();
-            String branch = changeSet.getBranch();
             String merging = project
                     .getPersistentProperty(ResourceProperties.MERGING);
 
             // rev info
             suffix += changeSet.getChangesetIndex() + hex;
-
-            // branch info
-            if (branch != null && branch.length() > 0) {
+         
+            String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+            if (branch != null && branch.length() > 0 && !branch.equals("default")) { //$NON-NLS-1$
                 suffix += " @ " + branch; //$NON-NLS-1$
             }
 
@@ -495,9 +495,17 @@ public class ResourceDecorator extends LabelProvider implements
      * Called when the configuration of the decorator changes
      */
     public static void onConfigurationChanged() {
-        String decoratorId = ResourceDecorator.class.getName();
+        String decoratorId = getDecoratorId();
         configureFromPreferences();
         PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
+    }
+
+    /**
+     * @return
+     */
+    public static String getDecoratorId() {
+        String decoratorId = ResourceDecorator.class.getName();
+        return decoratorId;
     }
 
     @SuppressWarnings("unchecked")

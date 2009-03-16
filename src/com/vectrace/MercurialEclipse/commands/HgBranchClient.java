@@ -1,5 +1,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +50,21 @@ public class HgBranchClient extends AbstractClient {
             command.addOptions("-f"); //$NON-NLS-1$
         }
         command.addOptions(name);
-        return new String(command.executeToBytes());
+        return command.executeToString();
+    }
+
+    /**
+     * Get active branch of working directory
+     * 
+     * @param workingDir
+     *            a file or a directory within the local repository
+     * @return the branch name
+     * @throws HgException
+     *             if a hg error occurred
+     */
+    public static String getActiveBranch(File workingDir) throws HgException {
+        AbstractShellCommand command = new HgCommand("branch", getWorkingDirectory(workingDir), false); //$NON-NLS-1$
+        return command.executeToString().replaceAll("\n", "");
     }
 
 }
