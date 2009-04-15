@@ -18,7 +18,6 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.expressions.EvaluationContext;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -26,6 +25,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -77,17 +78,17 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
         return null;
     }
 
-    protected IProject ensureSameProject() throws HgException {
+    protected HgRoot ensureSameRoot() throws HgException {
         List<IResource> resources = getSelectedResources();
-        final IProject project = resources.get(0).getProject();
+        final HgRoot root = MercurialTeamProvider.getHgRoot(resources.get(0));
         for (IResource res : resources) {
-            if (!res.getProject().equals(project)) {
+            if (!root.equals(MercurialTeamProvider.getHgRoot(res))) {
                 throw new HgException(
                         Messages
                                 .getString("MultipleResourcesHandler.allResourcesMustBeInSameProject")); //$NON-NLS-1$
             }
         }
-        return project;
+        return root;
     }
 
     protected abstract void run(List<IResource> resources) throws Exception;
