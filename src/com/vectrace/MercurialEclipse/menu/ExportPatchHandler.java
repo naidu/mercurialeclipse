@@ -12,13 +12,11 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.wizards.ExportWizard;
 
 public class ExportPatchHandler extends MultipleResourcesHandler {
@@ -30,8 +28,7 @@ public class ExportPatchHandler extends MultipleResourcesHandler {
 
     public void openWizard(List<IResource> resources, Shell shell)
             throws Exception {
-        IProject project = ensureSameProject();
-        HgRoot root = MercurialTeamProvider.getHgRoot(project);
+        HgRoot root = ensureSameRoot();
         ExportWizard wizard = new ExportWizard(resources, root);
         WizardDialog dialog = new WizardDialog(shell, wizard);
         dialog.setBlockOnOpen(true);
