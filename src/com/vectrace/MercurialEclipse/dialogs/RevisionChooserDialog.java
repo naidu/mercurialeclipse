@@ -187,6 +187,11 @@ public class RevisionChooserDialog extends Dialog {
                 text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
             }
+            
+            @Override
+            public void widgetDefaultSelected(SelectionEvent e) {
+                okPressed();
+            }
         });
         table.setEnabled(true);
         item.setControl(table);
