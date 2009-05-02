@@ -33,8 +33,8 @@ import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
-import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
@@ -170,28 +170,10 @@ public class CommitFilesChooser extends Composite {
                 .getString("CommitFilesChooser.showDiffButton.text"), //$NON-NLS-1$
                 1);
         trayButton.setEnabled(false);
-        trayButton.addMouseListener(new MouseListener() {
-
+        trayButton.addMouseListener(new MouseAdapter() {
+            @Override
             public void mouseUp(MouseEvent e) {
-                if (trayClosed && selectedFile != null) {
-                    try {
-                        openSash();
-                        trayClosed = false;
-                    } catch (Exception e1) {
-                        MercurialEclipsePlugin.logError(e1);
-                    }
-                } else {
-                    closeSash();
-                    trayClosed = true;
-                }
-            }
-
-            public void mouseDown(MouseEvent e) {
-
-            }
-
-            public void mouseDoubleClick(MouseEvent e) {
-
+                showDiffForSelection();
             }
         });
     }
@@ -298,18 +280,7 @@ public class CommitFilesChooser extends Composite {
     private void makeActions() {
         getViewer().addDoubleClickListener(new IDoubleClickListener() {
             public void doubleClick(DoubleClickEvent event) {
-                IStructuredSelection sel = (IStructuredSelection) getViewer().getSelection();
-                if (sel.getFirstElement() instanceof CommitResource) {
-                    CommitResource resource = (CommitResource) sel.getFirstElement();
-
-                    // workspace version
-                    ResourceNode leftNode = new ResourceNode(resource.getResource());
-
-                    // mercurial version
-                    RevisionNode rightNode = new RevisionNode(new IStorageMercurialRevision(resource.getResource()));
-
-                    CompareUtils.openCompareDialog(leftNode, rightNode, false);
-                }
+                showDiffForSelection();
             }
         });
         getViewer().addCheckStateListener(new ICheckStateListener() {
@@ -448,5 +419,22 @@ public class CommitFilesChooser extends Composite {
         Shell shell = getShell();
         Rectangle bounds = shell.getBounds();
         shell.setBounds(bounds.x + ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y, bounds.width - trayWidth, bounds.height);
+    }
+
+    /**
+     * 
+     */
+    private void showDiffForSelection() {
+        if (trayClosed && selectedFile != null) {
+            try {
+                openSash();
+                trayClosed = false;
+            } catch (Exception e1) {
+                MercurialEclipsePlugin.logError(e1);
+            }
+        } else {
+            closeSash();
+            trayClosed = true;
+        }
     }
 }
