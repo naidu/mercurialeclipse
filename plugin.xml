@@ -189,9 +189,6 @@
 		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
 		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="%updateTo"/>
-		<command id="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%showAnnotation"/>
 		<command id="com.vectrace.MercurialEclipse.menu.AddHandler"
 		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
 		         name="%add"/>
@@ -362,14 +359,6 @@
 				<count value="1"/>
 			</enabledWhen>
 		</handler-->
-
-		<!-- ShowAnnotationHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
-		         class="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler">
-			<enabledWhen>				
-					<count value="1"/>
-			</enabledWhen>
-		</handler>
 		
 		<!-- AddHandler -->
 		<handler commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
@@ -683,17 +672,7 @@
        </visibleWhen>
     </command>
 	<separator name="group4" visible="true"/>				
-	<command
-          commandId="com.vectrace.MercurialEclipse.menu.ShowAnnotationHandler"
-          icon="icons/annotate.gif"
-          label="%menuLabel.showAnnotation">
-					<visibleWhen>
-					<and>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.file"/>
-					</and>
-					</visibleWhen>
-				</command>
+	
 				<separator name="group5" visible="true"/>
 				<menu label="%menuLabel.undo" id="team.main.com.vectrace.MercurialEclipse.menu.undo" icon="icons/undo_edit.gif">  
     				<command
@@ -891,6 +870,13 @@
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
            <action
+	          class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
+	          id="com.vectrace.MercurialEclipse.team.ActionAnnotate"
+	          icon="icons/annotate.gif"
+	          menubarPath="team.main/group4"
+	          label="%menuLabel.showAnnotation">
+	       </action>
+           <action
                label="%actionLabel.revert"
                class="com.vectrace.MercurialEclipse.team.ActionRevert"
                icon="icons/actions/revert.gif"
@@ -898,6 +884,13 @@
                menubarPath="team.main/group5"
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
+           <action
+	          class="com.vectrace.MercurialEclipse.team.ActionCommit"
+	          id="com.vectrace.MercurialEclipse.team.ActionCommit"
+	          icon="icons/actions/commit.gif"
+	          menubarPath="team.main/group5"
+	          label="%menuLabel.commit">
+	       </action>
       </objectContribution>    
       
       <!-- File Team Menu -->
