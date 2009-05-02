@@ -44,7 +44,16 @@ public class CompareUtils {
 
     public static void openEditor(IStorageMercurialRevision left,
             IStorageMercurialRevision right, boolean dialog, boolean localEditable) {
-        openEditor(getNode(left), getNode(right), dialog, localEditable);
+        ResourceNode leftNode, rightNode;
+        if (right == null) {
+            // comparing with filesystem
+            rightNode = getNode(left);
+            leftNode = new ResourceNode(rightNode.getResource());
+        } else {
+            leftNode = getNode(left);
+            rightNode = getNode(right);
+        }
+        openEditor(leftNode, rightNode, dialog, localEditable);
     }
 
     public static void openEditor(ResourceNode left, ResourceNode right,

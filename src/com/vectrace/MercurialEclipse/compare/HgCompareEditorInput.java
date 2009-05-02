@@ -45,7 +45,8 @@ public class HgCompareEditorInput extends CompareEditorInput
     this.right = right;
     setTitle(resource.getName());
     configuration.setLeftLabel(left.getName());
-    configuration.setLeftEditable(false);
+    // if left isn't a RevisionNode, then it must be the one on the filesystem
+    configuration.setLeftEditable(!(left instanceof RevisionNode));
     configuration.setRightLabel(right.getName());
     configuration.setRightEditable(false);
   }

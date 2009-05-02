@@ -390,8 +390,10 @@ public class MercurialHistoryPage extends HistoryPage {
             @Override
             public void run() {
                 try {
-                    CompareUtils.openEditor(getStorage(0), getStorage(1),
-                            false, false);
+                    IStorageMercurialRevision secondSelection = getStorage(1);
+                    boolean localEditable = secondSelection == null;
+                    CompareUtils.openEditor(getStorage(0), secondSelection,
+                            false, localEditable);
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
@@ -399,9 +401,10 @@ public class MercurialHistoryPage extends HistoryPage {
 
             @Override
             public boolean isEnabled() {
+                int size = ((IStructuredSelection) viewer.getSelection())
+                        .size();
                 return IFile.class.isAssignableFrom(getInput().getClass())
-                        && ((IStructuredSelection) viewer.getSelection())
-                                .size() == 2;
+                        && (size == 1 || size == 2);
             }
 
             private IStorageMercurialRevision getStorage(int i)
