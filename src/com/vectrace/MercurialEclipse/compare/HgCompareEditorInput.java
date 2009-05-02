@@ -18,6 +18,11 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+
 public class HgCompareEditorInput extends CompareEditorInput
 {
   private static final Differencer DIFFERENCER = new Differencer();
@@ -26,16 +31,44 @@ public class HgCompareEditorInput extends CompareEditorInput
   private final ResourceNode ancestor;
   private final ResourceNode right;
 
+  /*
+   * Does either a 2-way or 3-way compare, depending on if one is an ancestor
+   * of the other. If they are divergent, then it finds the common ancestor
+   * and does 3-way compare.
+   */
   public HgCompareEditorInput(CompareConfiguration configuration,
       IResource resource, ResourceNode left, ResourceNode right)
   {
     super(configuration);
     this.left = left;
-    this.ancestor = null;
+    this.ancestor = findParentNodeIfExists(resource, left, right);
     this.right = right;
     setTitle(resource.getName());
     configuration.setLeftLabel(left.getName());
+    configuration.setLeftEditable(false);
     configuration.setRightLabel(right.getName());
+    configuration.setRightEditable(false);
+  }
+
+
+  private ResourceNode findParentNodeIfExists(IResource resource, ResourceNode l, ResourceNode r) {
+      if (!(l instanceof RevisionNode && r instanceof RevisionNode))
+          return null;
+      
+      String lId = ((RevisionNode)l).getRevision();
+      String rId = ((RevisionNode)r).getRevision();
+      
+      try {
+        int commonAncestor = HgParentClient.findCommonAncestor(resource.getProject().getLocation().toFile(), lId, rId);
+        if (String.valueOf(commonAncestor).equals(lId))
+            return null;
+        if (String.valueOf(commonAncestor).equals(rId))
+            return null;
+        return new RevisionNode(new IStorageMercurialRevision(resource, commonAncestor));
+    } catch (HgException e) {
+        MercurialEclipsePlugin.logError(e);
+        return null;
+    }
   }
 
   public HgCompareEditorInput(CompareConfiguration configuration,

@@ -111,7 +111,7 @@ public class CompareUtils {
         }
 
         return new HgCompareEditorInput(new CompareConfiguration(), resource,
-                leftNode, rightNode, localEditable);
+                leftNode, rightNode);
     }
 
     private static RevisionNode getNode(IStorageMercurialRevision rev) {

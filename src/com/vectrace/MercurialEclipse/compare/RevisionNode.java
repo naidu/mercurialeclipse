@@ -37,4 +37,9 @@ public class RevisionNode extends ResourceNode implements IStreamContentAccessor
   {
     return rev.getContents();
   }
+  
+  public String getRevision() 
+  {
+      return rev.getRevision();
+  }
 }
