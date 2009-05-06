@@ -18,6 +18,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -36,8 +38,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
-
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -53,7 +53,7 @@ public class HgCommitMessageManager extends DefaultHandler {
     /*
      * commit messages database (keep it simple) 
      */
-    private static String[] commit_message = new String[0];
+    private static List<String> commitMessages = new ArrayList<String>();
     
     final static private String COMMIT_MESSAGE_FILE = "commit_messages.xml"; //$NON-NLS-1$
     final static private String XML_TAG_COMMIT_MESSAGE  = "commitmessage";   //$NON-NLS-1$
@@ -66,43 +66,28 @@ public class HgCommitMessageManager extends DefaultHandler {
      */    
     
     public void saveCommitMessage(String message) {
-        int new_size = commit_message.length + 1 ;
+        if (commitMessages.contains(message)) {
+            // remove it, and put it in front
+            commitMessages.remove(message);
+            commitMessages.add(0, message);
+            return;
+        }
 
+        commitMessages.add(0, message);
+        restrictSavedCommitMessages();
+    }
+
+    /**
+     * Make sure we don't have more commit messages than are allowed
+     * in the plugin prefs.
+     */
+    private void restrictSavedCommitMessages() {
         int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
                 .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
                         "10")); //$NON-NLS-1$
-        
-        if(new_size == (prefs_commit_message_size_max + 1))
-        {
-            /* we have a full buffer just shift around in it no need for a new buffer */
-            new_size = prefs_commit_message_size_max;
 
-            /* shift everything down */
-            for(int i = (new_size - 1); i > 0; i--)
-            {
-                commit_message[i] = commit_message[i - 1];
-            }
-            commit_message[0] = message; /* put new message first */
-        }
-        else
-        {
-            if(new_size > (prefs_commit_message_size_max + 1))
-            {   
-                /* This probably means that the prefs size got smaller then the old buffer 
-                 * lets copy it to a smaller buffer 
-                 */
-                new_size = prefs_commit_message_size_max;
-            }
-            String commit_message2[] = new String[new_size];
-            commit_message2[0] = message; /* put new message first */
-            for(int i = 1; i < new_size; i++)
-            {
-                commit_message2[i] = commit_message[i - 1];
-            }
-
-            /* Replace the comment string array */
-            commit_message = commit_message2;
-        }
+        while (commitMessages.size() > prefs_commit_message_size_max)
+            commitMessages.remove(commitMessages.size()-1);
     }
 
     /**
@@ -110,25 +95,8 @@ public class HgCommitMessageManager extends DefaultHandler {
      */    
     
     private void addCommitMessage(String message) {
-        int new_size = commit_message.length + 1;
-
-        int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
-                .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
-                        "10")); //$NON-NLS-1$
-
-        /* only add new stuff if its lower or equal the prefs size */
-        if(new_size <= prefs_commit_message_size_max)
-        {
-            String commit_message2[] = new String[new_size];
-            for(int i = 0; i < (new_size - 1); i++)
-            {
-                commit_message2[i] = commit_message[i];
-            }
-            commit_message2[new_size - 1] = message; /* put new message last */
-
-            /* Replace the comment string array */
-            commit_message = commit_message2;
-        }
+        commitMessages.add(message);
+        restrictSavedCommitMessages();
     }
 
     
@@ -136,25 +104,8 @@ public class HgCommitMessageManager extends DefaultHandler {
      *  Get all messages from in-memory database
      */        
     public String[] getCommitMessages() {
-        int size = commit_message.length;
-        int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
-                .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
-                        "10")); //$NON-NLS-1$
-        if(size > (prefs_commit_message_size_max ))
-        {
-            /*
-             *  prefs changed to smaller since last used copy to smaller buffer
-             */
-            String commit_message2[] = new String[prefs_commit_message_size_max];
-            for(int i = 0; i < prefs_commit_message_size_max; i++)
-            {
-                commit_message2[i] = commit_message[i];
-            }
-
-            /* Replace the comment string array */
-            commit_message = commit_message2;
-        }
-        return commit_message;
+        restrictSavedCommitMessages();
+        return commitMessages.toArray(new String[0]);
     }
     
     /**
@@ -225,7 +176,7 @@ public class HgCommitMessageManager extends DefaultHandler {
             atts.clear();
             transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGES,atts); //$NON-NLS-1$
 
-            int size = commit_message.length;
+            int size = commitMessages.size();
 
             int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
                     .getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
@@ -240,8 +191,9 @@ public class HgCommitMessageManager extends DefaultHandler {
             
             for (int i = 0; i < size; i++)
             {
+                String msg = commitMessages.get(i);
                 transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGE,atts); //$NON-NLS-1$
-                transformerHandler.characters(commit_message[i].toCharArray(), 0, commit_message[i].length()); //$NON-NLS-1$
+                transformerHandler.characters(msg.toCharArray(), 0, msg.length()); //$NON-NLS-1$
                 transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGE); //$NON-NLS-1$
             }
             transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGES); //$NON-NLS-1$
