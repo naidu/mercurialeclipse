@@ -16,9 +16,11 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -28,6 +30,13 @@ public class UpdateHandler extends SingleResourceHandler {
     @Override
     protected void run(IResource resource) throws Exception {
         final IProject project = resource.getProject();
+        boolean dirty = HgStatusClient.isDirty(project);
+        if (dirty) {
+            boolean result = MessageDialog.openQuestion(getShell(), "Uncommited Changes", 
+                    "Your project has uncommited changes.\nDo you really want to update?");
+            if (!result)
+                return;
+        }
         HgUpdateClient.update(project, null, false);
         // reset merge properties
         project.setPersistentProperty(ResourceProperties.MERGING, null);
