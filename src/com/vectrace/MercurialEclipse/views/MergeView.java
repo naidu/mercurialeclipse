@@ -67,7 +67,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
     private Action markResolvedAction;
 
     private Action markUnresolvedAction;
-
+    
     @Override
     public void createPartControl(final Composite parent) {
         parent.setLayout(new GridLayout(1, false));
@@ -228,6 +228,39 @@ public class MergeView extends ViewPart implements ISelectionListener {
         abortAction.setEnabled(true);
         markResolvedAction.setEnabled(true);
         markUnresolvedAction.setEnabled(true);
+        
+        attemptToCommitMerge();
+    }
+
+    /**
+     * 
+     */
+    private void attemptToCommitMerge() {
+        try {
+            String mergeNode = currentProject.getPersistentProperty(ResourceProperties.MERGING);
+    
+            // offer commit of merge exactly once if no conflicts
+            // are found
+            boolean allResolved = areAllResolved();
+            if (allResolved) {
+                this.statusLabel.setText(currentProject.getName()
+                                + Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
+                                + mergeNode);
+                if (currentProject
+                        .getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
+                    new CommitMergeHandler()
+                            .commitMergeWithCommitDialog(
+                                    this.currentProject, getSite()
+                                            .getShell());
+                    currentProject
+                            .setSessionProperty(
+                                    ResourceProperties.MERGE_COMMIT_OFFERED,
+                                    "true"); //$NON-NLS-1$
+                }
+            }
+        } catch (Exception e) {
+            MercurialEclipsePlugin.logError(e);
+        }
     }
 
     public void clearView() {
@@ -250,35 +283,6 @@ public class MergeView extends ViewPart implements ISelectionListener {
                         this.statusLabel.setText(Messages.getString("MergeView.mergeFilesOf") //$NON-NLS-1$
                                 + project.getName());
                         populateView();
-                        // offer commit of merge exactly once if no conflicts
-                        // are
-                        // found
-                        boolean allResolved = true;
-                        if (table.getItems() != null
-                                && table.getItems().length > 0) {
-                            for (TableItem item : table.getItems()) {
-                                FlaggedAdaptable fa = (FlaggedAdaptable) item
-                                        .getData();
-                                allResolved &= fa.getFlag() == 'R';
-                            }
-                        }
-                        if (allResolved) {
-                            this.statusLabel
-                                    .setText(currentProject.getName()
-                                            + Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
-                                            + mergeNode);
-                            if (currentProject
-                                    .getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
-                                new CommitMergeHandler()
-                                        .commitMergeWithCommitDialog(
-                                                this.currentProject, getSite()
-                                                        .getShell());
-                                currentProject
-                                        .setSessionProperty(
-                                                ResourceProperties.MERGE_COMMIT_OFFERED,
-                                                "true"); //$NON-NLS-1$
-                            }
-                        }
                     } else {
                         clearView();
                     }
@@ -287,6 +291,22 @@ public class MergeView extends ViewPart implements ISelectionListener {
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }
+    }
+
+    /**
+     * @return
+     */
+    private boolean areAllResolved() {
+        boolean allResolved = true;
+        if (table.getItems() != null
+                && table.getItems().length > 0) {
+            for (TableItem item : table.getItems()) {
+                FlaggedAdaptable fa = (FlaggedAdaptable) item
+                        .getData();
+                allResolved &= fa.getFlag() == 'R';
+            }
+        }
+        return allResolved;
     }
 
     public void selectionChanged(IWorkbenchPart part, ISelection selection) {
