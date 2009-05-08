@@ -47,6 +47,7 @@ public class MergeHandler extends SingleResourceHandler {
         IProject project = resource.getProject();
         RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
                 Messages.getString("MergeHandler.mergeWith"), project); //$NON-NLS-1$
+        dialog.setDefaultShowingHeads(true);
         String result = ""; //$NON-NLS-1$
         boolean useExternalMergeTool = Boolean.valueOf(
                 HgClients.getPreference(
