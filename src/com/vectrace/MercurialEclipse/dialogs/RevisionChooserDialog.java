@@ -65,11 +65,11 @@ public class RevisionChooserDialog extends Dialog {
 	private Tag tag;
     private Branch branch;
     private Bookmark bookmark;
+    private boolean defaultShowingHeads = false;
 	
 	private final int[] parents;
 
 	private ChangeSet changeSet;
-
 
     public RevisionChooserDialog(Shell parentShell, String title, IFile file) {
         this(parentShell, title, new FileDataLoader(file));
@@ -133,7 +133,6 @@ public class RevisionChooserDialog extends Dialog {
         return composite;
     }
 
-
 	@Override
 	protected void okPressed() {
 		String[] split = text.getText().split(":"); //$NON-NLS-1$
@@ -174,9 +173,9 @@ public class RevisionChooserDialog extends Dialog {
 
         final ChangesetTable table = new ChangesetTable(folder, dataLoader
                 .getProject());
-        table.setEnabled(true);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
         table.highlightParents(parents);
+        table.setEnabled(true);
 
         table.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -350,6 +349,8 @@ public class RevisionChooserDialog extends Dialog {
         });
 
         item.setControl(table);
+        if (defaultShowingHeads)
+            folder.setSelection(item);
         return item;
     }
 
@@ -357,4 +358,7 @@ public class RevisionChooserDialog extends Dialog {
 		return changeSet;
 	}
 
+    public void setDefaultShowingHeads(boolean defaultShowingHeads) {
+        this.defaultShowingHeads = defaultShowingHeads;
+    }
 }

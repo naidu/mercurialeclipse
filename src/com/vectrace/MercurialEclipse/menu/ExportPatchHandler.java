@@ -28,7 +28,7 @@ public class ExportPatchHandler extends MultipleResourcesHandler {
 
     public void openWizard(List<IResource> resources, Shell shell)
             throws Exception {
-        HgRoot root = ensureSameRoot();
+        HgRoot root = ensureSameRoot(resources);
         ExportWizard wizard = new ExportWizard(resources, root);
         WizardDialog dialog = new WizardDialog(shell, wizard);
         dialog.setBlockOnOpen(true);

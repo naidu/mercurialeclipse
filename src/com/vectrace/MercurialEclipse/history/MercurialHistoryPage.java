@@ -113,6 +113,7 @@ public class MercurialHistoryPage extends HistoryPage {
                 final Runnable runnable = new Runnable() {
                     public void run() {
                         viewer.setInput(mercurialHistory);
+                        viewer.refresh();
                     }
                 };
 

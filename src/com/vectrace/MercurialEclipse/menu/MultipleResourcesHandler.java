@@ -78,8 +78,7 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
         return null;
     }
 
-    protected HgRoot ensureSameRoot() throws HgException {
-        List<IResource> resources = getSelectedResources();
+    protected HgRoot ensureSameRoot(List<IResource> resources) throws HgException {
         final HgRoot root = MercurialTeamProvider.getHgRoot(resources.get(0));
         for (IResource res : resources) {
             if (!root.equals(MercurialTeamProvider.getHgRoot(res))) {

@@ -169,6 +169,12 @@ public class MercurialHistory extends FileHistory {
         RepositoryProvider provider = RepositoryProvider.getProvider(resource
                 .getProject());
         if (provider != null && provider instanceof MercurialTeamProvider) {
+            if (from == Integer.MAX_VALUE && revisions != null) {
+                // We're getting revisions up to the latest one available.
+                // So clear out the cached list, as it may contain revisions
+                // that no longer exist (e.g. after a strip/rollback). 
+                revisions.clear();
+            }
             // We need these to be in order for the GChangeSets to display
             // properly
 
@@ -233,6 +239,7 @@ public class MercurialHistory extends FileHistory {
                 }
             }
         }
+        
     }
 
     /**

@@ -12,7 +12,7 @@ public class CommitHandler extends MultipleResourcesHandler {
 
     @Override
     public void run(final List<IResource> resources) throws HgException {
-        HgRoot root = ensureSameRoot();
+        HgRoot root = ensureSameRoot(resources);
         CommitDialog commitDialog = new CommitDialog(getShell(), root,
                 resources);
 
