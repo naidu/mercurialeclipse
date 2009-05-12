@@ -554,17 +554,6 @@
 					</visibleWhen>
 				</command>
 				<command
-          commandId="com.vectrace.MercurialEclipse.menu.CommitHandler"
-          icon="icons/actions/commit.gif"
-          label="%menuLabel.commit">
-					<visibleWhen>
-						<and>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
-						</and>
-					</visibleWhen>
-				</command>				
-				<command
           commandId="com.vectrace.MercurialEclipse.menu.PushHandler"
           icon="icons/actions/commit.gif"
           label="%menuLabel.push">
@@ -888,7 +877,7 @@
 	          class="com.vectrace.MercurialEclipse.team.ActionCommit"
 	          id="com.vectrace.MercurialEclipse.team.ActionCommit"
 	          icon="icons/actions/commit.gif"
-	          menubarPath="team.main/group5"
+	          menubarPath="team.main/group1"
 	          label="%menuLabel.commit">
 	       </action>
       </objectContribution>    
