@@ -16,6 +16,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 
+import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.IConfiguration;
 import com.vectrace.MercurialEclipse.commands.IConsole;
 import com.vectrace.MercurialEclipse.commands.IErrorHandler;
@@ -114,7 +115,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
      * .lang.String)
      */
     public int getTimeOut(String commandId) {
-        int timeout = 12000;
+        int timeout = AbstractShellCommand.DEFAULT_TIMEOUT;
         String pref = getPreference(commandId, String.valueOf(timeout));
         try {
             timeout = Integer.parseInt(pref);
