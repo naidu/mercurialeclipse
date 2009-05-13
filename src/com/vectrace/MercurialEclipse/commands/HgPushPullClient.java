@@ -43,12 +43,12 @@ public class HgPushPullClient extends AbstractClient {
 
     public static String pull(IResource resource,
             HgRepositoryLocation location, boolean update) throws HgException {
-        return pull(resource, location, update, false, false, null, false);
+        return pull(resource, null, location, update, false, false, false);
     }
 
-    public static String pull(IResource resource, HgRepositoryLocation repo,
-            boolean update, boolean force, boolean timeout,
-            ChangeSet changeset, boolean rebase) throws HgException {
+    public static String pull(IResource resource, ChangeSet changeset,
+            HgRepositoryLocation repo, boolean update, boolean rebase,
+            boolean force, boolean timeout) throws HgException {
 
         URI uri = repo.getUri();
         String pullSource;
@@ -58,23 +58,23 @@ public class HgPushPullClient extends AbstractClient {
             pullSource = repo.getLocation();
         }
 
-        return pull(resource, update, force, timeout, changeset, pullSource,
-                rebase);
+        return pull(resource, changeset, pullSource, update, rebase, force,
+                timeout);
     }
 
     /**
      * @param resource
+     * @param changeset
+     * @param pullSource
      * @param update
      * @param force
      * @param timeout
-     * @param changeset
-     * @param pullSource
      * @return
      * @throws HgException
      */
-    public static String pull(IResource resource, boolean update,
-            boolean force, boolean timeout, ChangeSet changeset,
-            String pullSource, boolean rebase) throws HgException {
+    public static String pull(IResource resource, ChangeSet changeset,
+            String pullSource, boolean update, boolean rebase,
+            boolean force, boolean timeout) throws HgException {
         IResource workDir = resource;
         if (resource.getType() == IResource.FILE) {
             workDir = resource.getParent();

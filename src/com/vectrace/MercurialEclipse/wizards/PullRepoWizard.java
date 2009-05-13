@@ -183,14 +183,14 @@ public class PullRepoWizard extends HgWizard {
                                 this.doUpdate, this.timeout, this.pullRevision,
                                 true, snapFile, false);
                     } else {
-                        r += HgPushPullClient.pull(resource, this.repo,
-                                this.doUpdate, this.force, this.timeout,
-                                pullRevision, rebase);
+                        r += HgPushPullClient.pull(resource, pullRevision,
+                                this.repo, this.doUpdate, rebase,
+                                this.force, this.timeout);
                     }
                 } else {
-                    r += HgPushPullClient.pull(resource, this.doUpdate,
-                            this.force, this.timeout, pullRevision, bundleFile
-                                    .getCanonicalPath(), rebase);
+                    r += HgPushPullClient.pull(resource, pullRevision,
+                            bundleFile
+                                    .getCanonicalPath(), this.doUpdate, rebase, this.force, this.timeout);
                 }
 
                 monitor.worked(1);
