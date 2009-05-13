@@ -35,6 +35,8 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -225,6 +227,15 @@ public class CommitDialog extends TitleAreaDialog {
                 decorationSupport.uninstall();
             }
 
+        });
+        
+        commitTextBox.getTextWidget().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseUp(MouseEvent e) {
+                if (commitTextDocument.get().equals(defaultCommitMessage)) {
+                    commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
+                }
+            }
         });
     }
 
