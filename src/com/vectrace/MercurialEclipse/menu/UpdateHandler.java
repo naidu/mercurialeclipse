@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 public class UpdateHandler extends SingleResourceHandler {
 
     @Override
-    protected void run(IResource resource) throws Exception {
+    public void run(IResource resource) throws Exception {
         final IProject project = resource.getProject();
         boolean dirty = HgStatusClient.isDirty(project);
         if (dirty) {

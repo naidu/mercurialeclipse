@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -40,6 +41,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClien
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
+import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -168,6 +170,8 @@ public class PullRepoWizard extends HgWizard {
                 monitor.worked(1);
                 monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.incoming")); //$NON-NLS-1$
                 String r = Messages.getString("PullRepoWizard.pullOperation.pull.header"); //$NON-NLS-1$
+                boolean updateSeparately = false;
+                
                 if (svn) {
                     r += HgSvnClient.pull(resource.getLocation().toFile());
                     if (rebase) {
@@ -183,14 +187,18 @@ public class PullRepoWizard extends HgWizard {
                                 this.doUpdate, this.timeout, this.pullRevision,
                                 true, snapFile, false);
                     } else {
+                        if (this.doUpdate)
+                            updateSeparately = true;
                         r += HgPushPullClient.pull(resource, pullRevision,
-                                this.repo, this.doUpdate, rebase,
+                                this.repo, false, rebase,
                                 this.force, this.timeout);
                     }
                 } else {
+                    if (this.doUpdate)
+                        updateSeparately = true;
                     r += HgPushPullClient.pull(resource, pullRevision,
                             bundleFile
-                                    .getCanonicalPath(), this.doUpdate, rebase, this.force, this.timeout);
+                                    .getCanonicalPath(), false, rebase, this.force, this.timeout);
                 }
 
                 monitor.worked(1);
@@ -204,6 +212,20 @@ public class PullRepoWizard extends HgWizard {
                 monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.status")); //$NON-NLS-1$
                 
                 saveRepo(monitor);
+                
+                if (updateSeparately) {
+                    final IResource res = resource;
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() {
+                            try {
+                                new UpdateHandler().run(res);
+                            } catch (Exception e) {
+                                MercurialEclipsePlugin.logError(e);
+                                MercurialEclipsePlugin.showError(e);
+                            }
+                        }
+                    });
+                }
                 return r;
 
             } catch (Exception e) {
