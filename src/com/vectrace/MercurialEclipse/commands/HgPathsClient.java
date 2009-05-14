@@ -10,14 +10,13 @@ import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
 public class HgPathsClient {
     public static final String DEFAULT = "default"; //$NON-NLS-1$
     public static final String DEFAULT_PULL = "default-pull"; //$NON-NLS-1$
     public static final String DEFAULT_PUSH = "default-push"; //$NON-NLS-1$
-    
+    public static final String PATHS_LOCATION = "/.hg/hgrc"; //$NON-NLS-1$
     public static final String PATHS_SECTION = "paths"; //$NON-NLS-1$
 
     public static Map<String, String> getPaths(IProject project)
@@ -25,9 +24,10 @@ public class HgPathsClient {
         
         
         
-        File hgrc = MercurialTeamProvider.getHgRootConfig(project);
         
-        if (hgrc == null)
+        File hgrc = new File (project.getLocation()+PATHS_LOCATION);
+        
+        if (!hgrc.exists())
             return new HashMap<String, String>();
 
         Map<String,String> paths = new HashMap<String,String>();
