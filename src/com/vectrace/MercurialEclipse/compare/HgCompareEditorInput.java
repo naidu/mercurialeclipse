@@ -93,6 +93,16 @@ public class HgCompareEditorInput extends CompareEditorInput
     return DIFFERENCER.findDifferences(ancestor != null, monitor, null, ancestor, left, right);
   }
   
+  /* (non-Javadoc)
+   * @see org.eclipse.compare.CompareEditorInput#getOKButtonLabel()
+   */
+  @Override
+  public String getOKButtonLabel() {
+      if (getCompareConfiguration().isLeftEditable() || getCompareConfiguration().isRightEditable())
+          return "Save Changes";
+      return super.getOKButtonLabel();
+  }
+  
   @Override
   public void saveChanges(IProgressMonitor monitor) throws CoreException
   {
