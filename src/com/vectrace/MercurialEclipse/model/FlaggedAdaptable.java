@@ -22,4 +22,7 @@ public class FlaggedAdaptable implements IAdaptable {
         return this.flag;
     }
     
+    public String getStatus() {
+        return flag == 'U' ? Messages.getString("FlaggedAdaptable.unresolvedStatus") : Messages.getString("FlaggedAdaptable.resolvedStatus");
+    }
 }

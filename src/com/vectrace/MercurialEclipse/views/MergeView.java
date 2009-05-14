@@ -19,6 +19,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
@@ -124,7 +125,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
         });
 
         String[] titles = { Messages.getString("MergeView.column.status"), Messages.getString("MergeView.column.file") }; //$NON-NLS-1$ //$NON-NLS-2$
-        int[] widths = { 50, 400 };
+        int[] widths = { 100, 400 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
@@ -220,10 +221,12 @@ public class MergeView extends ViewPart implements ISelectionListener {
         table.removeAll();
         for (FlaggedAdaptable flagged : status) {
             TableItem row = new TableItem(table, SWT.NONE);
-            row.setText(0, flagged.getFlag() + ""); //$NON-NLS-1$
+            row.setText(0, flagged.getStatus()); //$NON-NLS-1$
             IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
             row.setText(1, iFile.getProjectRelativePath().toString());
             row.setData(flagged);
+            if (flagged.getFlag() == 'U')
+                row.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
         }
         abortAction.setEnabled(true);
         markResolvedAction.setEnabled(true);
