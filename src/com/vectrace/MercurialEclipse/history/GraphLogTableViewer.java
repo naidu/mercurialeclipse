@@ -6,6 +6,7 @@ package com.vectrace.MercurialEclipse.history;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
@@ -89,6 +90,10 @@ public class GraphLogTableViewer extends TableViewer {
             } catch (HgException e) {
                 MercurialEclipsePlugin.logError(e);
             }
+        }
+        if (mhp.getCurrentWorkdirChangeset() != null) {
+            if (rev.getRevision().equals(""+mhp.getCurrentWorkdirChangeset().getRevision().getRevision()))
+                tableItem.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
         }
     }
 

@@ -66,6 +66,7 @@ import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshLocalChangesetsJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
@@ -84,6 +85,8 @@ public class MercurialHistoryPage extends HistoryPage {
     private RefreshMercurialHistory refreshFileHistoryJob;
     private ChangedPathsPage changedPaths;
 
+    private ChangeSet currentWorkdirChangeset;
+    
     class RefreshMercurialHistory extends Job {
         MercurialHistory mercurialHistory;
         private int from;
@@ -106,6 +109,7 @@ public class MercurialHistoryPage extends HistoryPage {
             if (mercurialHistory != null) {
                 try {
                     mercurialHistory.refresh(monitor, from);
+                    currentWorkdirChangeset = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(resource);
                 } catch (CoreException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
@@ -329,6 +333,7 @@ public class MercurialHistoryPage extends HistoryPage {
                             Messages.getString("MercurialHistoryPage.refreshJob.name"), //$NON-NLS-1$
                             project).schedule();
                     new RefreshLocalChangesetsJob(project).schedule();
+                    refresh();
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                 }
@@ -442,6 +447,10 @@ public class MercurialHistoryPage extends HistoryPage {
 
     public boolean isValidInput(Object object) {
         return true;
+    }
+    
+    public ChangeSet getCurrentWorkdirChangeset() {
+        return currentWorkdirChangeset;
     }
 
     public void refresh() {
