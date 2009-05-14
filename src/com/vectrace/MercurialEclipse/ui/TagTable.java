@@ -21,7 +21,9 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * 
@@ -49,8 +51,8 @@ public class TagTable extends Composite {
         GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
         table.setLayoutData(data);
 
-        String[] titles = { Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        int[] widths = { 50, 150, 300, 70 };
+        String[] titles = { Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+        int[] widths = { 50, 150, 200, 70, 300};
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
@@ -78,6 +80,8 @@ public class TagTable extends Composite {
                 row.setText(1, tag.getGlobalId());
                 row.setText(2, tag.getName());
                 row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") : Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$ //$NON-NLS-2$
+                ChangeSet changeSet = LocalChangesetCache.getInstance().getChangeSet(""+tag.getRevision()+":"+tag.getGlobalId());
+                row.setText(4, changeSet.getSummary());
                 row.setData(tag);
             }
         }

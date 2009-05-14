@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
-            .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)$"); //$NON-NLS-1$
+            .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
     
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         AbstractShellCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
@@ -39,7 +39,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     private static ChangeSet[] getRevisions(AbstractShellCommand command)
             throws HgException {
         command.addOptions("--template", //$NON-NLS-1$
-                "{rev}:{node} {date|isodate} {author|person}#{branches}\n"); //$NON-NLS-1$
+                "{rev}:{node} {date|isodate} {author|person}#{branches}**#{desc|firstline}\n"); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         String[] lines = null;
@@ -65,7 +65,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
                         m.group(5), // branch
                         m.group(3), // date
                         m.group(4) // user
-                        ).build();
+                        ).description(m.group(6)).build();
                 
                 changeSets[i] = changeSet;
             } else {
