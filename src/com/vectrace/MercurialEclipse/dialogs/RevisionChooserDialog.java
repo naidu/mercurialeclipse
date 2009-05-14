@@ -81,7 +81,7 @@ public class RevisionChooserDialog extends Dialog {
         this(parentShell, title, new ProjectDataLoader(project));
     }
 
-    private RevisionChooserDialog(Shell parentShell, String title, DataLoader loader) {
+    public RevisionChooserDialog(Shell parentShell, String title, DataLoader loader) {
         super(parentShell);
         setShellStyle(getShellStyle() | SWT.RESIZE);
         this.title = title;
