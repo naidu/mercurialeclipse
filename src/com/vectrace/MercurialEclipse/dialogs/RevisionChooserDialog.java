@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
@@ -66,7 +67,8 @@ public class RevisionChooserDialog extends Dialog {
     private Branch branch;
     private Bookmark bookmark;
     private boolean defaultShowingHeads = false;
-	
+    private boolean disallowSelectingParents = false;
+    
 	private final int[] parents;
 
 	private ChangeSet changeSet;
@@ -159,6 +161,19 @@ public class RevisionChooserDialog extends Dialog {
 		if (revision.length() == 0) {
 			revision = null;
 		}
+		
+		if (disallowSelectingParents) {
+		    for (int p : parents) {
+		        if (String.valueOf(p).equals(revision)) {
+		            MessageBox mb = new MessageBox(getShell(), SWT.ICON_WARNING);
+		            mb.setText("Merge");
+		            mb.setMessage(Messages.getString("RevisionChooserDialog.cannotMergeWithParent"));
+		            mb.open();
+		            return;
+		        }
+		    }
+		}
+		
 		super.okPressed();
 	}
 
@@ -360,5 +375,9 @@ public class RevisionChooserDialog extends Dialog {
 
     public void setDefaultShowingHeads(boolean defaultShowingHeads) {
         this.defaultShowingHeads = defaultShowingHeads;
+    }
+
+    public void setDisallowSelectingParents(boolean b) {
+        this.disallowSelectingParents = b;
     }
 }
