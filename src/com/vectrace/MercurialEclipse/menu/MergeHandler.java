@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import java.text.MessageFormat;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -58,7 +60,16 @@ public class MergeHandler extends SingleResourceHandler {
         if (cs != null) {
             MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
             mb.setText("Merge");
-            mb.setMessage(Messages.getString("MergeHandler.mergeWithOtherHead"));
+            String csSummary = "Changeset: " + cs.getRevision().toString().substring(0, 20) + "\n" + 
+                "User: " + cs.getUser() + "\n" +
+                "Date: " + cs.getDate() + "\n" + 
+                "Summary: " + cs.getSummary();
+            
+            String branch = cs.getBranch();
+            if (branch.equals(""))
+                branch = "default";
+            mb.setMessage(MessageFormat.format(Messages.getString("MergeHandler.mergeWithOtherHead"),
+                    branch, csSummary));
             if (mb.open() == SWT.NO)
                 cs = null;
         }
