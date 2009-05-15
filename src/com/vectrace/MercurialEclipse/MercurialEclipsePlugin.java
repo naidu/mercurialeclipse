@@ -139,6 +139,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                 return;
             }
         } catch (Exception e) {
+            MercurialEclipsePlugin.logError(e);
+            MercurialEclipsePlugin.showError(e);
             this.hgUsable = false;
         }
     }
