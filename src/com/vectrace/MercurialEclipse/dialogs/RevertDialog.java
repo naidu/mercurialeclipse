@@ -69,7 +69,7 @@ public class RevertDialog extends TitleAreaDialog {
     }
 
     private void createFilesList(Composite container) {
-        selectFilesList = new CommitFilesChooser(container, true, resources, root, false);
+        selectFilesList = new CommitFilesChooser(container, true, resources, root, false, true);
     }
 
     public void setFiles(List<IResource> resources) {

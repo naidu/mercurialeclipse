@@ -182,7 +182,7 @@ public class CommitDialog extends TitleAreaDialog {
      */
     private void createFilesList(Composite container) {
         SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-        commitFilesList = new CommitFilesChooser(container, selectableFiles, this.inResources, this.root, true);
+        commitFilesList = new CommitFilesChooser(container, selectableFiles, this.inResources, this.root, true, true);
     }
 
     /**

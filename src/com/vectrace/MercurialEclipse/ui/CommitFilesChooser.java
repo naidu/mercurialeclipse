@@ -78,6 +78,7 @@ public class CommitFilesChooser extends Composite {
     private Button selectAllButton;
     private CheckboxTableViewer viewer;
     private final boolean untracked;
+    private final boolean missing;
     private ListenerList stateListeners = new ListenerList();
     protected Control trayButton;
     protected boolean trayClosed = true;
@@ -97,12 +98,13 @@ public class CommitFilesChooser extends Composite {
     }
 
     public CommitFilesChooser(Composite container, boolean selectable,
-            List<IResource> resources, HgRoot hgRoot, boolean showUntracked) {
+            List<IResource> resources, HgRoot hgRoot, boolean showUntracked, boolean showMissing) {
         super(container, container.getStyle());
         this.selectable = selectable;
         this.root = hgRoot;
         this.untracked = showUntracked;
-        this.untrackedFilesFilter = new UntrackedFilesFilter();
+        this.missing = showMissing;
+        this.untrackedFilesFilter = new UntrackedFilesFilter(missing);
         this.committableFilesFilter = new CommittableFilesFilter();
 
         GridLayout layout = new GridLayout();

@@ -76,7 +76,7 @@ public class ExportPage extends HgWizardPage implements Listener {
         // TODO no diff for untracked files, bug?
         commitFiles = new CommitFilesChooser(composite, true, resources,
                 root,
-                false);
+                false, false);
         commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
         commitFiles.addStateListener(this);
 
