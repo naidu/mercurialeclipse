@@ -215,11 +215,16 @@ public class PullRepoWizard extends HgWizard {
                 
                 if (updateSeparately) {
                     final IResource res = resource;
-                    Display.getDefault().asyncExec(new Runnable() {
+                    Display.getDefault().syncExec(new Runnable() {
                         public void run() {
                             try {
                                 new UpdateHandler().run(res);
                             } catch (Exception e) {
+                                if (e instanceof HgException) {
+                                    // no point in complaining, since they want to merge/rebase anyway
+                                    if ((merge || rebase) && e.getMessage().contains("crosses branches"))
+                                        return;
+                                }
                                 MercurialEclipsePlugin.logError(e);
                                 MercurialEclipsePlugin.showError(e);
                             }
