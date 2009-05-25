@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -35,18 +34,14 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
-import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
@@ -139,7 +134,7 @@ public class PullRepoWizard extends HgWizard {
                     protected IStatus runSafe(IProgressMonitor m) {
                         try {
                             String res = MergeHandler.merge(resource,
-                                    getShell());
+                                    getShell(), m, true, showCommitDialog);
                             return new Status(IStatus.OK,
                                     MercurialEclipsePlugin.ID, res);
                         } catch (Exception e) {
@@ -271,9 +266,7 @@ public class PullRepoWizard extends HgWizard {
                 monitor.beginTask(Messages.getString("PullRepoWizard.pullOperation.pulling"), 6); //$NON-NLS-1$
                 this.output += performPull(repo, monitor);
                 if (merge) {
-                    String mergeResult = performMerge(monitor);
-                    output += mergeResult;
-                    commitMerge(monitor, mergeResult);
+                    output += performMerge(monitor);
                 }
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
@@ -281,88 +274,10 @@ public class PullRepoWizard extends HgWizard {
             }
             monitor.done();
         }
-
-        /**
-         * @param monitor
-         * @param mergeResult
-         * @throws HgException
-         * @throws CoreException
-         * @throws InterruptedException
-         */
-        private void commitMerge(IProgressMonitor monitor, String mergeResult)
-                throws HgException, CoreException, InterruptedException {
-            if (resource != null
-                    && resource.getProject() != null
-                    && resource.getProject().getPersistentProperty(
-                            ResourceProperties.MERGING) != null) {
-                boolean commit = true;
-                if (!HgResolveClient.checkAvailable()) {
-                    if (!mergeResult.contains("all conflicts resolved")) { //$NON-NLS-1$
-                        commit = false;
-                    }
-                } else {
-                    List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
-                            .list(resource);
-                    monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
-                    for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
-                        if (flaggedAdaptable.getFlag() == 'U') {
-                            commit = false;
-                            break;
-                        }
-                    }
-                    monitor.worked(1);
-                }
-                if (commit) {
-                    monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
-                    output += Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
-                    if (!showCommitDialog) {
-                        output += CommitMergeHandler.commitMerge(resource);
-                    } else {
-                        SafeUiJob job = new SafeUiJob(
-                                Messages.getString("PullRepoWizard.pullOperation.commitJob.description")) { //$NON-NLS-1$
-                            /*
-                             * (non-Javadoc)
-                             * 
-                             * @see
-                             * com.vectrace.MercurialEclipse.SafeUiJob#runSafe
-                             * (org .eclipse.core.runtime.IProgressMonitor)
-                             */
-                            @Override
-                            protected IStatus runSafe(IProgressMonitor moni) {
-                                try {
-                                    String res = new CommitMergeHandler()
-                                            .commitMergeWithCommitDialog(
-                                                    resource, getShell());
-                                    return new Status(IStatus.OK,
-                                            MercurialEclipsePlugin.ID, res);
-                                } catch (HgException e) {
-                                    MercurialEclipsePlugin.logError(e);
-                                    return new Status(IStatus.ERROR,
-                                            MercurialEclipsePlugin.ID, e
-                                                    .getLocalizedMessage(), e);
-                                }
-
-                            }
-                        };
-                        job.schedule();
-                        job.join();
-                        IStatus jobResult = job.getResult();
-                        if (jobResult.getSeverity() == IStatus.OK) {
-                            output += jobResult.getMessage();
-                        } else {
-                            throw new HgException(jobResult.getMessage(),
-                                    jobResult.getException());
-                        }
-                    }
-                    monitor.worked(1);
-                }
-            }
-        }
-
+        
         public String getOutput() {
             return output;
         }
-
     }
 
     /**
