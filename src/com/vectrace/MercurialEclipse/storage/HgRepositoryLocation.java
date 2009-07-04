@@ -126,8 +126,14 @@ public class HgRepositoryLocation extends AllRootsElement implements
                         myUri.getHost(), myUri.getPort(), myUri.getPath(),
                         myUri.getQuery(), myUri.getFragment());
             }
-            this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
-                    .getPath(), myUri.getFragment()).toASCIIString();
+            /*
+             * Bugfix for issue #208, port number not displayed for push/pull drop-down
+             * June 03 2009 - slyons
+             */
+            //this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
+            //        .getPath(), myUri.getFragment()).toASCIIString();
+            this.location = new URI(myUri.getScheme(), null, myUri.getHost(), myUri.getPort(),
+                    myUri.getPath(), null, myUri.getFragment()).toASCIIString();
         }
     }
 
