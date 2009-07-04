@@ -505,6 +505,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 buf.append(' ');
             } else if (ch == '&') {
                 buf.append("&amp;");
+            } else if (ch == '"') {
+                buf.append("\"");
             }else {
                 buf.appendCodePoint(ch);
             }
