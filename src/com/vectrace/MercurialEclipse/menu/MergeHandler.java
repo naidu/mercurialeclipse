@@ -40,7 +40,6 @@ import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.views.MergeView;
-import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MergeHandler extends SingleResourceHandler {
 
@@ -135,7 +134,7 @@ public class MergeHandler extends SingleResourceHandler {
         } else {
             List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
             .list(resource);
-            monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
+            monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
             for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
                 if (flaggedAdaptable.getFlag() == 'U') {
                     commit = false;
@@ -145,8 +144,8 @@ public class MergeHandler extends SingleResourceHandler {
             monitor.worked(1);
         }
         if (commit) {
-            monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
-            output += Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
+            monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
+            output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
             if (!showCommitDialog) {
                 output += CommitMergeHandler.commitMerge(resource);
             } else {
