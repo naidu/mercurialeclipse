@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -84,7 +85,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             super.start(context);
             DefaultConfiguration cfg = new DefaultConfiguration();
             HgClients.initialize(cfg, cfg, cfg);
-            new SafeWorkspaceJob(
+            new Job(
                     "Starting MercurialEclipse.") {
                 /*
                  * (non-Javadoc)
@@ -94,7 +95,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                  * .eclipse.core.runtime.IProgressMonitor)
                  */
                 @Override
-                protected IStatus runSafe(IProgressMonitor monitor) {
+                protected IStatus run(IProgressMonitor monitor) {
                     try {
                         monitor.beginTask("Starting MercurialEclipse", 3);
                         monitor.subTask("Checking Mercurial installation.");
@@ -110,7 +111,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                         commitMessageManager.start();
                         monitor.worked(1);
                         monitor.done();
-                        return super.runSafe(monitor);
+                        return new Status(IStatus.OK, ID, "MercurialEclipse started successfully.");
                     } catch (Exception e) {
                         MercurialEclipsePlugin.logError(e);
                         return new Status(IStatus.ERROR, ID, e
