@@ -35,7 +35,7 @@ public class HgAddClient {
                         true);
                 command.setUsePreferenceTimeout(MercurialPreferenceConstants.ADD_TIMEOUT);
                 command.addFiles(mapEntry.getValue().subList(i,
-                        Math.min(i + delta, size - i)));
+                        Math.min(i + delta, size)));
                 command.executeToBytes();
             }
         }

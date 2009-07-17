@@ -60,7 +60,7 @@ public class HgRemoveClient {
                 command
                         .setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
                 command.addFiles(mapEntry.getValue().subList(i,
-                        Math.min(i + delta, size - i)));
+                        Math.min(i + delta, size)));
                 command.executeToBytes();
             }
         }
