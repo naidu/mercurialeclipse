@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.util.Date;
 
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
 import org.eclipse.team.ui.TeamUI;
@@ -75,6 +76,15 @@ public class MercurialSynchronizeParticipant extends
         myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getSaveString());
     }
 
+    /* (non-Javadoc)
+     * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#restoreContext(org.eclipse.team.core.mapping.ISynchronizationScopeManager)
+     */
+    @Override
+    protected MergeContext restoreContext(ISynchronizationScopeManager manager) throws CoreException {
+        // TODO probably it should do something more helpful
+        return null;
+    }
+    
     /*
      * (non-Javadoc)
      * 
