@@ -120,7 +120,6 @@ public final class HgBisectClient {
             }
             
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);  
             throw new HgException(e.getLocalizedMessage(),e);
         } finally {
             try {

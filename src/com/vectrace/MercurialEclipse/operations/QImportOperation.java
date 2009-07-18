@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.operation.IRunnableContext;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
@@ -87,7 +86,6 @@ public class QImportOperation extends HgOperation {
             }.schedule();
             monitor.worked(1);
         } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         }
         monitor.done();

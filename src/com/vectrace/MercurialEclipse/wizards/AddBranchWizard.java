@@ -68,7 +68,6 @@ public class AddBranchWizard extends HgWizard {
                 HgClients.getConsole().printMessage(result, null);
                 resource.touch(monitor);
             } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
                 throw new InvocationTargetException(e, e.getLocalizedMessage());
             }
             monitor.done();

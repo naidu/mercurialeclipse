@@ -297,7 +297,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 fileRevisions.put(path, pathRevs);
 
             } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
                 throw new HgException(e.getLocalizedMessage(), e);
             }
         }

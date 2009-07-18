@@ -472,7 +472,6 @@ public class MercurialUtilities {
             }
             return resource;
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
@@ -511,7 +510,6 @@ public class MercurialUtilities {
             }
             return returnValue;
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e);
         }
 

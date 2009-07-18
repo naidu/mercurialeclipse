@@ -16,7 +16,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -74,7 +73,6 @@ public class RebaseOperation extends HgOperation {
             LocalChangesetCache.getInstance().refreshAllLocalRevisions(res);
             monitor.worked(1);
         } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         }
         monitor.done();

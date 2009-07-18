@@ -27,7 +27,6 @@ import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
@@ -137,7 +136,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
             HgRoot root = new HgRoot(rootFile);
             return root;
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }

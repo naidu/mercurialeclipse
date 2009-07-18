@@ -269,7 +269,6 @@ public class PullRepoWizard extends HgWizard {
                     output += performMerge(monitor);
                 }
             } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
                 throw new InvocationTargetException(e, e.getMessage());
             }
             monitor.done();

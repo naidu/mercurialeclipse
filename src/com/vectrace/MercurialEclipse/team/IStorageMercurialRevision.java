@@ -143,7 +143,6 @@ public class IStorageMercurialRevision implements IStorage {
                 try {
                     bundleFile = changeSet.getBundleFile().getCanonicalFile().getCanonicalPath();
                 } catch (IOException e) {
-                    MercurialEclipsePlugin.logError(e);
                     throw new CoreException(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, e.getMessage(), e));
                 }
                 if (bundleFile != null) {
@@ -165,7 +164,6 @@ public class IStorageMercurialRevision implements IStorage {
             ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes(root.getEncoding().name()));
             return is;
         } catch (UnsupportedEncodingException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }

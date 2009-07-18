@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
@@ -101,7 +100,6 @@ public class CloneOperation extends HgOperation {
             }
             m.worked(1);
         } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e);
         }
     }

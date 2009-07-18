@@ -20,7 +20,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.ui.IWorkbenchPart;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
@@ -142,7 +141,6 @@ public class UnShelveOperation extends HgOperation {
                 }
             }
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         } finally {
             monitor.done();

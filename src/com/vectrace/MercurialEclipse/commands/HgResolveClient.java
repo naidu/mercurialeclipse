@@ -21,7 +21,6 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -71,7 +70,6 @@ public class HgResolveClient extends AbstractClient {
             command.addOptions("-m", file.getCanonicalPath()); //$NON-NLS-1$
             return command.executeToString();
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
@@ -119,7 +117,6 @@ public class HgResolveClient extends AbstractClient {
             command.addOptions("-u", file.getCanonicalPath()); //$NON-NLS-1$
             return command.executeToString();
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
@@ -163,7 +160,6 @@ public class HgResolveClient extends AbstractClient {
             }
             return returnValue;
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e);
         }
 

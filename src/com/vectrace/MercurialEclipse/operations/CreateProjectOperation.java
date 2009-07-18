@@ -82,7 +82,6 @@ public class CreateProjectOperation extends HgOperation {
             createProject(monitor);
             monitor.done();
         } catch (HgException e1) {
-            MercurialEclipsePlugin.logError(e1);
             throw new InvocationTargetException(e1);
         }
     }
@@ -134,7 +133,6 @@ public class CreateProjectOperation extends HgOperation {
             registerWithTeamProvider(p, monitor);
             this.project = p;
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getMessage(), e);
         } finally {
             try {
@@ -177,7 +175,6 @@ public class CreateProjectOperation extends HgOperation {
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(p, repo);
             monitor.worked(1);
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getMessage(), e);
         }
     }

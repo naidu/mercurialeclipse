@@ -335,7 +335,6 @@ public abstract class AbstractShellCommand {
             try {
                 return new String(bytes, "UTF-8");
             } catch (UnsupportedEncodingException e) {
-                MercurialEclipsePlugin.logError(e);
                 throw new HgException(e.getLocalizedMessage(), e);
             }
         }

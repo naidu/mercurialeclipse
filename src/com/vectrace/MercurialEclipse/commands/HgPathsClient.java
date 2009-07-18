@@ -8,7 +8,6 @@ import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
@@ -41,7 +40,6 @@ public class HgPathsClient {
             }
             input.close();
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
             // TODO: Fix log message
             throw new HgException("Unable to read paths", e);
         }

@@ -171,7 +171,6 @@ public class LocalChangesetCache extends AbstractCache {
             }
             return lock;
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
@@ -321,10 +320,8 @@ public class LocalChangesetCache extends AbstractCache {
                 return getLocalChangeSet(res, nodeId, false);
             }
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
         return null;
@@ -431,7 +428,6 @@ public class LocalChangesetCache extends AbstractCache {
 
                 }
             } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
                 throw new HgException(e.getLocalizedMessage(), e);
             } finally {
                 lock.unlock();

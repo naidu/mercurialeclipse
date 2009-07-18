@@ -231,7 +231,6 @@ public class DefaultConfiguration implements IConsole, IErrorHandler,
         try {
             return MercurialTeamProvider.getHgRoot(file);
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgCoreException(e);
         }
     }

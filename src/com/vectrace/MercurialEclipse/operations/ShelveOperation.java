@@ -21,7 +21,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.ui.IWorkbenchPart;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
@@ -159,7 +158,6 @@ public class ShelveOperation extends HgOperation {
                 monitor.worked(1);
             }
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         } finally {
             monitor.done();

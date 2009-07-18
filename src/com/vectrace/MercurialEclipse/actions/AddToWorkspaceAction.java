@@ -130,7 +130,6 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
                     proj.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
                 } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
                     CoreException ex = new CoreException(new Status(
                             IStatus.ERROR, MercurialEclipsePlugin.ID, e
                                     .getLocalizedMessage()));

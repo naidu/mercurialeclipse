@@ -164,14 +164,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                                     new InitOperation(activeWorkbenchWindow, project, root, root.getAbsolutePath())
                                             .run(monitor);
                                 } catch (Exception e) {
-                                    MercurialEclipsePlugin.logError(e);
                                     throw new RuntimeException(e);
                                 }
                                 return super.runSafe(monitor);
                             }
                         }.schedule();
                     } catch (Exception e) {
-                        MercurialEclipsePlugin.logError(e);
                         throw new HgException(e.getLocalizedMessage(), e);
                     }
                 }
@@ -938,7 +936,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 try {
                     refreshStatus(resource, null);
                 } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
                     throw new HgException(e.getMessage(), e);
                 }
                 continue;

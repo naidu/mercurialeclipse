@@ -10,7 +10,6 @@ import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -74,10 +73,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
                 return null;
             }
-            MercurialEclipsePlugin.logError(hg);
             throw new HgException(hg.getMessage(), hg);
         } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getMessage(), e);
         }
     }

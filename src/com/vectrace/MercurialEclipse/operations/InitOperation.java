@@ -18,7 +18,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.team.core.RepositoryProvider;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -87,10 +86,8 @@ public class InitOperation extends HgOperation {
                     .schedule();
             monitor.worked(1);
         } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e);
         } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new InvocationTargetException(e);
         }
         monitor.done();

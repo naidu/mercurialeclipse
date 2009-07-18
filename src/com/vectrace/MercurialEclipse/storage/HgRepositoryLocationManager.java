@@ -532,7 +532,6 @@ public class HgRepositoryLocationManager {
         try {
             location = fromProperties(configuration);
         } catch (URISyntaxException e) {
-            MercurialEclipsePlugin.logError(e);
             throw new HgException(Messages
                     .getString("HgRepositoryLocationManager.couldntCreate"), e); //$NON-NLS-1$
         }
