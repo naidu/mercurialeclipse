@@ -105,7 +105,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
             }
             MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));
         } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
+            // the first low of exception handling: either log it and do not throw,
+            // or throw and do not log.
+            // MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
         return hgRoot;
