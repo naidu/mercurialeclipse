@@ -90,23 +90,27 @@ public class MercurialTeamProvider extends RepositoryProvider {
     private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
         assert (resource != null);
         IProject project = resource.getProject();
-        assert (project != null);
-        HgRoot hgRoot;
-        try {
-            hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
-            if (hgRoot == null) {
-                String rootPath = HgRootClient.getHgRoot(resource);
-                if (rootPath == null || rootPath.length() == 0) {
-                    throw new HgException("There is no hg repository here (.hg not found)!");
+        HgRoot hgRoot = null;
+        String noHgFoundMsg = "There is no hg repository here (.hg not found)!";
+        if (project != null) {
+            try {
+                hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
+                if (hgRoot == null) {
+                    String rootPath = HgRootClient.getHgRoot(resource);
+                    if (rootPath == null || rootPath.length() == 0) {
+                        throw new HgException(noHgFoundMsg);
+                    }
+                    hgRoot = new HgRoot(new File(rootPath));
+                    setRepositoryEncoding(project, hgRoot);
+                    project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
                 }
-                hgRoot = new HgRoot(new File(rootPath));
-                setRepositoryEncoding(project, hgRoot);
-                project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
+                MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
+                throw new HgException(e.getLocalizedMessage(), e);
             }
-            MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-            throw new HgException(e.getLocalizedMessage(), e);
+        } else {
+            throw new HgException(noHgFoundMsg);
         }
         return hgRoot;
     }
