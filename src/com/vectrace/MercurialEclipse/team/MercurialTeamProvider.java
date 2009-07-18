@@ -89,14 +89,15 @@ public class MercurialTeamProvider extends RepositoryProvider {
     private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
         assert (resource != null);
         IProject project = resource.getProject();
-        assert (project != null);
-        HgRoot hgRoot;
+        HgRoot hgRoot = null;
+        String noHgFoundMsg = "There is no hg repository here (.hg not found)!";
+        if (project != null) {
         try {
             hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
             if (hgRoot == null) {
                 String rootPath = HgRootClient.getHgRoot(resource);
                 if (rootPath == null || rootPath.length() == 0) {
-                    throw new HgException("There is no hg repository here (.hg not found)!");
+                        throw new HgException(noHgFoundMsg);
                 }
                 hgRoot = new HgRoot(new File(rootPath));
                 setRepositoryEncoding(project, hgRoot);
@@ -108,6 +109,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
             // or throw and do not log.
             // MercurialEclipsePlugin.logError(e);
             throw new HgException(e.getLocalizedMessage(), e);
+        }
+        } else {
+            throw new HgException(noHgFoundMsg);
         }
         return hgRoot;
     }
