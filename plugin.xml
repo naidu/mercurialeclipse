@@ -1221,7 +1221,6 @@
       <page
             adaptable="true"
             class="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
-            icon="icons/mercurialeclipse.png"
             id="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
             name="MercurialEclipse"
             objectClass="org.eclipse.core.resources.IProject">
