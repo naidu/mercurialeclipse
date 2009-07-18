@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
@@ -115,8 +114,10 @@ public abstract class AbstractClient {
     public static boolean isCommandAvailable(String commandName,
             String extensionEnabler) {
         boolean returnValue = false;
-        AbstractShellCommand command = new HgCommand("help", ResourcesPlugin //$NON-NLS-1$
-                .getWorkspace().getRoot(), false);
+        // see bug http://bitbucket.org/mercurialeclipse/main/issue/224/
+        // If hg command uses non-null directory, which is NOT under the hg control,
+        // MercurialTeamProvider.getAndStoreHgRoot() throws an exception
+        AbstractShellCommand command = new HgCommand("help", (File)null, false);
         if (extensionEnabler != null && extensionEnabler.length() != 0) {
             command.addOptions("--config", "extensions." + extensionEnabler); //$NON-NLS-1$ //$NON-NLS-2$
         }
