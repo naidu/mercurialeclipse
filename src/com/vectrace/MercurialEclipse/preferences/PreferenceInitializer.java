@@ -36,6 +36,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
         store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, System.getProperty ( "user.name" )); //$NON-NLS-1$
         store.setDefault(MercurialPreferenceConstants.LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM);
 
+        // TODO this is currently required to see immediate changes on file state after editing
+        store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, true);
+
         // blue
         store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR, "0,0,255");
         // black
