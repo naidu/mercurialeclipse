@@ -1222,7 +1222,7 @@
             adaptable="true"
             class="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
             id="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
-            name="MercurialEclipse"
+            name="Mercurial"
             objectClass="org.eclipse.core.resources.IProject">
       </page>
    </extension>
