@@ -41,6 +41,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
         store.setDefault(MercurialPreferenceConstants.LOG_BATCH_SIZE, 500);
         store.setDefault(MercurialPreferenceConstants.STATUS_BATCH_SIZE, 10);
+        store.setDefault(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, 10);
 
         // blue
         store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR, "0,0,255");

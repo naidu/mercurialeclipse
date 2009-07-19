@@ -8,7 +8,7 @@
  * Contributors:
  *     Gunnar Ahlberg            - implementation
  *     VecTrace (Zingo Andersen) - updateing it
- *     Jérôme Nègre              - adding label decorator section 
+ *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
@@ -39,12 +39,10 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 
 public class GeneralPreferencePage extends FieldEditorPreferencePage implements
-        IWorkbenchPreferencePage {
+IWorkbenchPreferencePage {
 
-    protected static final int DEFAULT_COMMIT_MESSAGE_BATCH_SIZE = 10;
-    
     private final class LabelDecoratorRadioGroupFieldEditor extends
-            RadioGroupFieldEditor {
+    RadioGroupFieldEditor {
         private LabelDecoratorRadioGroupFieldEditor(String name,
                 String labelText, int numColumns, String[][] labelAndValues,
                 Composite parent, boolean useGroup) {
@@ -60,7 +58,7 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
     }
 
     private final class MercurialExecutableFileFieldEditor extends
-            FileFieldEditor {
+    FileFieldEditor {
         private MercurialExecutableFileFieldEditor(String name,
                 String labelText, Composite parent) {
             super(name, labelText, parent);
@@ -71,8 +69,8 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
             // There are other ways of doing this properly but this is
             // better than the default behavior
             return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
-                    .equals(getTextControl().getText())
-                    || super.checkState();
+            .equals(getTextControl().getText())
+            || super.checkState();
         }
     }
 
@@ -87,38 +85,11 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
             // There are other ways of doing this properly but this is
             // better than the default behaviour
             return MercurialPreferenceConstants.GPG_EXECUTABLE
-                    .equals(getTextControl().getText())
-                    || super.checkState();
+            .equals(getTextControl().getText())
+            || super.checkState();
         }
     }
 
-    private final class CommitMessageBatchSizeIntegerFieldEditor extends
-    IntegerFieldEditor {
-        /**
-         * @param name
-         * @param labelText
-         * @param parent
-         */
-        private CommitMessageBatchSizeIntegerFieldEditor(String name,
-                String labelText, Composite parent) {
-            super(name, labelText, parent);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.jface.preference.FieldEditor#load()
-         */
-        @Override
-        public void load() {
-            super.load();
-            if (getIntValue() <= 0) {
-                super.setPresentsDefaultValue(true);
-                super.setStringValue(String.valueOf(DEFAULT_COMMIT_MESSAGE_BATCH_SIZE));
-            }
-        }
-    }
-    
     public GeneralPreferencePage() {
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
@@ -149,7 +120,7 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         addField(new StringFieldEditor(
                 MercurialPreferenceConstants.MERCURIAL_USERNAME,
                 Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
-        
+
         addField(new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
                 Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
@@ -159,13 +130,13 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
                 Messages.getString("GeneralPreferencePage.field.decorationGroup.description"), //$NON-NLS-1$
                 1,
                 new String[][] {
+                    {
+                        Messages.getString("GeneralPreferencePage.field.decorationGroup.asModified"), //$NON-NLS-1$
+                        MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
                         {
-                                Messages.getString("GeneralPreferencePage.field.decorationGroup.asModified"), //$NON-NLS-1$
-                                MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
-                        {
-                                Messages.getString("GeneralPreferencePage.field.decorationGroup.mostImportant"), //$NON-NLS-1$
-                                MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
-                getFieldEditorParent(), true));
+                            Messages.getString("GeneralPreferencePage.field.decorationGroup.mostImportant"), //$NON-NLS-1$
+                            MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
+                            getFieldEditorParent(), true));
 
         addField(new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
@@ -174,12 +145,14 @@ public class GeneralPreferencePage extends FieldEditorPreferencePage implements
         addField(new BooleanFieldEditor(
                 MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS,
                 Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
-                getFieldEditorParent())); 
-        
-        addField(new CommitMessageBatchSizeIntegerFieldEditor(
+                getFieldEditorParent()));
+
+        IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
                 MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
                 Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$
-                getFieldEditorParent()));
+                getFieldEditorParent());
+        commitSizeEditor.setValidRange(1, Integer.MAX_VALUE);
+        addField(commitSizeEditor);
     }
 
     /*
