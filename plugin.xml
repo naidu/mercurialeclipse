@@ -34,7 +34,7 @@
    
 	<extension point="org.eclipse.team.ui.configurationWizards">
 	   <wizard
-	        name="MercurialEclipse"
+	        name="Mercurial"
 	        icon="icons/mercurialeclipse.png"
 	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
 	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
@@ -849,6 +849,13 @@
                tooltip="%actionLabel.removeTooltip"
                menubarPath="team.main/group10"
                id="com.vectrace.MercurialEclipse.team.ActionRemove">
+              <enablement>
+                 <not>
+                    <objectClass
+                          name="org.eclipse.core.resources.IProject">
+                    </objectClass>
+                 </not>
+              </enablement>
            </action>           
            <action
                label="%actionLabel.showHistory"
@@ -858,13 +865,6 @@
                menubarPath="team.main/group4"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
-           <action
-	          class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
-	          id="com.vectrace.MercurialEclipse.team.ActionAnnotate"
-	          icon="icons/annotate.gif"
-	          menubarPath="team.main/group4"
-	          label="%menuLabel.showAnnotation">
-	       </action>
            <action
                label="%actionLabel.revert"
                class="com.vectrace.MercurialEclipse.team.ActionRevert"
@@ -909,6 +909,13 @@
                menubarPath="compareWithMenu/compareWithGroup"
                id="com.vectrace.MercurialEclipse.team.CompareAction"
                enablesFor="1">
+           </action>
+           <action
+                 class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
+                 icon="icons/annotate.gif"
+                 id="com.vectrace.MercurialEclipse.team.ActionAnnotate"
+                 label="%menuLabel.showAnnotation"
+                 menubarPath="team.main/group4">
            </action>
       </objectContribution>
    </extension>
