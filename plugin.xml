@@ -1001,23 +1001,31 @@
    <!-- Views -->
    
    <extension point="org.eclipse.ui.views">
+      <category
+            id="com.vectrace.MercurialEclipse.teamCategory"
+            name="Mercurial">
+      </category>
       <view
-        class="com.vectrace.MercurialEclipse.views.MergeView"
-        id="com.vectrace.MercurialEclipse.views.MergeView"
-        icon="icons/branches_rep.gif"
-        name="%mergeViewName">
+            category="com.vectrace.MercurialEclipse.teamCategory"
+            class="com.vectrace.MercurialEclipse.views.MergeView"
+            icon="icons/branches_rep.gif"
+            id="com.vectrace.MercurialEclipse.views.MergeView"
+            name="%mergeViewName">
       </view>
       
       <view
-            name="%repositoryViewName"            
-            icon="icons/cview16/repo_rep.gif"
+            category="com.vectrace.MercurialEclipse.teamCategory"
             class="com.vectrace.MercurialEclipse.repository.RepositoriesView"
-            id="com.vectrace.MercurialEclipse.repository.RepositoriesView">
+            icon="icons/cview16/repo_rep.gif"
+            id="com.vectrace.MercurialEclipse.repository.RepositoriesView"
+            name="%repositoryViewName">
       </view>
       <view
-            name="%patchQueueViewName"          
+            category="com.vectrace.MercurialEclipse.teamCategory"
             class="com.vectrace.MercurialEclipse.views.PatchQueueView"
-            id="com.vectrace.MercurialEclipse.views.PatchQueueView">
+            icon="platform:/plugin/org.eclipse.compare/icons/full/elcl16/next_change_nav.gif"
+            id="com.vectrace.MercurialEclipse.views.PatchQueueView"
+            name="%patchQueueViewName">
       </view>
    </extension>
    <extension
