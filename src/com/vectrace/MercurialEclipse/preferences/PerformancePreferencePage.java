@@ -8,7 +8,7 @@
  * Contributors:
  *     Gunnar Ahlberg            - implementation
  *     VecTrace (Zingo Andersen) - updateing it
- *     Jérôme Nègre              - adding label decorator section 
+ *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
@@ -17,7 +17,6 @@ package com.vectrace.MercurialEclipse.preferences;
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
-import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
@@ -35,72 +34,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 
 public class PerformancePreferencePage extends FieldEditorPreferencePage
-        implements IWorkbenchPreferencePage {
+implements IWorkbenchPreferencePage {
 
-    /**
-     * @author bastian
-     * 
-     */
-    private final class StatusBatchSizeIntegerFieldEditor extends
-            IntegerFieldEditor {
-        /**
-         * @param name
-         * @param labelText
-         * @param parent
-         */
-        private StatusBatchSizeIntegerFieldEditor(String name,
-                String labelText, Composite parent) {
-            super(name, labelText, parent);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.jface.preference.FieldEditor#load()
-         */
-        @Override
-        public void load() {
-            super.load();
-            if (getIntValue() <= 0) {
-                super.setPresentsDefaultValue(true);
-                super.setStringValue(String.valueOf(DEFAULT_STATUS_BATCH_SIZE));
-            }
-        }
-    }
-
-    /**
-     * @author bastian
-     * 
-     */
-    private final class LogBatchSizeIntegerFieldEditor extends
-            IntegerFieldEditor {
-        /**
-         * @param name
-         * @param labelText
-         * @param parent
-         */
-        private LogBatchSizeIntegerFieldEditor(String name, String labelText,
-                Composite parent) {
-            super(name, labelText, parent);
-        }
-
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.jface.preference.FieldEditor#load()
-         */
-        @Override
-        public void load() {
-            super.load();
-            if (getIntValue() <= 0) {
-                super.setPresentsDefaultValue(true);
-                super.setStringValue(String.valueOf(DEFAULT_LOG_BATCH_SIZE));
-            }
-        }
-    }
-
-    protected static final int DEFAULT_LOG_BATCH_SIZE = 500;
-    protected static final int DEFAULT_STATUS_BATCH_SIZE = 10;
 
     public PerformancePreferencePage() {
         super(GRID);
@@ -118,20 +53,24 @@ public class PerformancePreferencePage extends FieldEditorPreferencePage
     public void createFieldEditors() {
         // batch size preferences
 
-        addField(new LogBatchSizeIntegerFieldEditor(
+        IntegerFieldEditor batchLogRevisionEditor = new IntegerFieldEditor(
                 MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                Messages.getString("PerformancePreferencePage.field.revisionLimit"), getFieldEditorParent())); //$NON-NLS-1$
+                Messages.getString("PerformancePreferencePage.field.revisionLimit"), getFieldEditorParent()); //$NON-NLS-1$
+        addField(batchLogRevisionEditor);
+        batchLogRevisionEditor.setValidRange(1, Integer.MAX_VALUE);
 
-        addField(new StatusBatchSizeIntegerFieldEditor(
+        IntegerFieldEditor batchStatusSeditor = new IntegerFieldEditor(
                 MercurialPreferenceConstants.STATUS_BATCH_SIZE,
                 Messages.getString("PerformancePreferencePage.field.statusBatchSize"), //$NON-NLS-1$
-                getFieldEditorParent()));
+                getFieldEditorParent());
+        addField(batchStatusSeditor);
+        batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
 
         addField(new BooleanFieldEditor(
                 MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
                 Messages.getString("PerformancePreferencePage.field.completeStatus"), //$NON-NLS-1$
                 getFieldEditorParent()));
-        
+
         addField(new BooleanFieldEditor(
                 MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
                 Messages.getString("PerformancePreferencePage.field.computeDeep"), //$NON-NLS-1$

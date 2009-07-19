@@ -39,6 +39,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
         // TODO this is currently required to see immediate changes on file state after editing
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, true);
 
+        store.setDefault(MercurialPreferenceConstants.LOG_BATCH_SIZE, 500);
+        store.setDefault(MercurialPreferenceConstants.STATUS_BATCH_SIZE, 10);
+
         // blue
         store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR, "0,0,255");
         // black
