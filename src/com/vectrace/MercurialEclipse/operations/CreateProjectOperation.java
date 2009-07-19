@@ -38,12 +38,12 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
  */
 public class CreateProjectOperation extends HgOperation {
 
-    private File projectFile;
-    private HgRepositoryLocation repo;
-    private boolean readProjectFile;
-    private String projectName;
+    private final File projectFile;
+    private final HgRepositoryLocation repo;
+    private final boolean readProjectFile;
+    private final String projectName;
     private IProject project;
-    private File projectDirectory;
+    private final File projectDirectory;
 
     /**
      * @param context
@@ -76,7 +76,7 @@ public class CreateProjectOperation extends HgOperation {
      */
     @Override
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
-            InterruptedException {
+    InterruptedException {
 
         try {
             createProject(monitor);
@@ -99,20 +99,20 @@ public class CreateProjectOperation extends HgOperation {
             if (readProjectFile && projectFile != null) {
                 // load the project description from the retrieved metafile
                 monitor
-                        .subTask(Messages
-                                .getString("CreateProjectOperation.subTaskReadingProjectFile")); //$NON-NLS-1$
+                .subTask(Messages
+                        .getString("CreateProjectOperation.subTaskReadingProjectFile")); //$NON-NLS-1$
                 in = new FileInputStream(projectFile);
                 projectDesc = workspace.loadProjectDescription(in);
                 monitor.worked(1);
             } else {
                 // create project description
                 monitor
-                        .subTask(Messages
-                                .getString("CreateProjectOperation.subTaskCreatingProjectFile")); //$NON-NLS-1$
+                .subTask(Messages
+                        .getString("CreateProjectOperation.subTaskCreatingProjectFile")); //$NON-NLS-1$
                 projectDesc = workspace.newProjectDescription(projectName);
                 projectDesc
-                        .setComment(Messages
-                                .getString("CloneRepoWizard.description.comment") + repo); //$NON-NLS-1$                
+                .setComment(Messages
+                        .getString("CloneRepoWizard.description.comment") + repo); //$NON-NLS-1$
                 monitor.worked(1);
             }
 
@@ -121,7 +121,19 @@ public class CreateProjectOperation extends HgOperation {
                     .equals(projectDirectory.getParentFile().getAbsolutePath())) {
                 projectDesc.setLocation(new Path(projectDirectory.getAbsolutePath()));
             } else {
-                projectDesc.setLocation(null);                
+                projectDesc.setLocation(null);
+                // Our project is inside workspace directory.
+                if(!projectDirectory.getName().equals(projectDesc.getName())){
+                    // Project name in the .project file does NOT match it's folder,
+                    // so Eclipse will create a new empty project with the name from .properties file
+                    // and ignore just imported hg folder
+                    String message = "Project directory name does not match project name from .project file! ";
+                    message += "Directory name is '" + projectDirectory.getName() + "', ";
+                    message += "project name is '" + projectDesc.getName() + "'! ";
+                    message += "Using '" + projectDirectory.getName() + "' as project name!";
+                    MercurialEclipsePlugin.logInfo(message, null);
+                    projectDesc.setName(projectDirectory.getName());
+                }
             }
 
             // now get resource handle and create & open project
@@ -152,26 +164,26 @@ public class CreateProjectOperation extends HgOperation {
      * @throws HgException
      */
     private void registerWithTeamProvider(IProject p, IProgressMonitor monitor)
-            throws HgException {
+    throws HgException {
         try {
             // Register the project with Team. This will bring all the
             // files
             // that
             // we cloned into the project.
             monitor
-                    .subTask(Messages
-                            .getString("CloneRepoWizard.subTask.registeringProject1") + p.getName() //$NON-NLS-1$
-                            + Messages
-                                    .getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
+            .subTask(Messages
+                    .getString("CloneRepoWizard.subTask.registeringProject1") + p.getName() //$NON-NLS-1$
+                    + Messages
+                    .getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
             RepositoryProvider.map(p, MercurialTeamProvider.class.getName());
             monitor.worked(1);
 
             // It appears good. Stash the repo location.
             monitor
-                    .subTask(Messages
-                            .getString("CloneRepoWizard.subTask.addingRepository.1") + repo //$NON-NLS-1$
-                            + Messages
-                                    .getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
+            .subTask(Messages
+                    .getString("CloneRepoWizard.subTask.addingRepository.1") + repo //$NON-NLS-1$
+                    + Messages
+                    .getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(p, repo);
             monitor.worked(1);
         } catch (Exception e) {
