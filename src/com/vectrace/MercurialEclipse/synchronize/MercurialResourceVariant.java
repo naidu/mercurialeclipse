@@ -18,31 +18,31 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 public class MercurialResourceVariant implements IResourceVariant {
-	private IStorageMercurialRevision rev;
+    private final IStorageMercurialRevision rev;
 
-	public MercurialResourceVariant(IStorageMercurialRevision rev) {
-		this.rev = rev;
-	}
+    public MercurialResourceVariant(IStorageMercurialRevision rev) {
+        this.rev = rev;
+    }
 
-	public byte[] asBytes() {
-		return getContentIdentifier().getBytes();
-	}
+    public byte[] asBytes() {
+        return getContentIdentifier().getBytes();
+    }
 
-	public String getContentIdentifier() {
-		return rev.getGlobal();
-	}
+    public String getContentIdentifier() {
+        return rev.getGlobal();
+    }
 
-	public String getName() {
-		return rev.getName();
-	}
+    public String getName() {
+        return rev.getResource().getName();
+    }
 
-	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-		return rev;
-	}
+    public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
+        return rev;
+    }
 
-	public boolean isContainer() {
-		return false;
-	}
+    public boolean isContainer() {
+        return false;
+    }
 
     /**
      * @return the rev
