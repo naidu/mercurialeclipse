@@ -36,7 +36,6 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  * @author zingo
  * 
  */
-
 public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
     private IWorkbenchWindow window;
@@ -64,7 +63,6 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
      * @see IWorkbenchWindowActionDelegate#init
      */
     public void init(IWorkbenchWindow w) {
-        // System.out.println("ActionRemove:init(window)");
         this.window = w;
     }
 
@@ -78,15 +76,15 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
     @SuppressWarnings("unchecked")
     public void run(IAction action) {
         IProject proj;
-        String Repository;
+        String repository;
         // String FullPath;
         Shell shell;
         IWorkbench workbench;
 
         proj = MercurialUtilities.getProject(selection);
-        Repository = MercurialUtilities.getRepositoryPath(proj);
-        if (Repository == null) {
-            Repository = "."; //never leave this empty add a . to point to current path //$NON-NLS-1$
+        repository = MercurialUtilities.getRepositoryPath(proj);
+        if (repository == null) {
+            repository = "."; //never leave this empty add a . to point to current path //$NON-NLS-1$
         }
 
         // Get shell & workbench
@@ -97,73 +95,65 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             shell = workbench.getActiveWorkbenchWindow().getShell();
         }
 
-        Object obj;
-        Iterator itr;
         // the last argument will be replaced with a path
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),
                 "remove", "-Af", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        itr = selection.iterator();
+        Iterator itr = selection.iterator();
         while (itr.hasNext()) {
-            obj = itr.next();
-            if (obj instanceof IResource) {
-                IResource resource = (IResource) obj;
-                if (MercurialUtilities.hgIsTeamProviderFor(resource, true) == true) {
+            Object obj = itr.next();
+            if (!(obj instanceof IResource) || obj instanceof IProject) {
+                continue;
+            }
+            IResource resource = (IResource) obj;
+            if (!MercurialUtilities.hgIsTeamProviderFor(resource, true)) {
+                continue;
+            }
 
-                    // Resource could be inside a link or something do nothing
-                    // in the future this could check is this is another
-                    // repository
+            // Resource could be inside a link or something do nothing
+            // in the future this could check is this is another repository
 
-                    // Setup and run command
-                    File workingDir = MercurialUtilities
-                            .getWorkingDir(resource);
-                    launchCmd[4] = MercurialUtilities.getResourceName(resource);
+            // Setup and run command
+            File workingDir = MercurialUtilities.getWorkingDir(resource);
+            launchCmd[4] = MercurialUtilities.getResourceName(resource);
+            if (!confirmRemove(shell, launchCmd[4])) {
+                continue;
+            }
 
-                    if (MessageDialog
-                            .openConfirm(
-                                    shell,
-                                    Messages
-                                            .getString("ActionRemove.removeFileQuestion"), Messages.getString("ActionRemove.removeFileConfirmation") + launchCmd[4] + Messages.getString("ActionRemove.removeFileConfirmation.2"))) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    {
-                        try {
-                            String output = MercurialUtilities.executeCommand(
-                                    launchCmd, workingDir, false);
-                            if (output != null) {
-                                // output output in a window
-                                if (output.length() != 0) {
-                                    MessageDialog
-                                            .openInformation(
-                                                    shell,
-                                                    Messages
-                                                            .getString("ActionRemove.removeOutput"), output); //$NON-NLS-1$
-                                }
-                            }
-                        } catch (HgException e) {
-                            MercurialEclipsePlugin.logError(e);
-                            // System.out.println(e.getMessage());
-                        }
-
-                        try {
-                            MercurialStatusCache.getInstance().refresh(proj);
-                        } catch (TeamException e) {
-                            MercurialEclipsePlugin
-                                    .logError(
-                                            Messages
-                                                    .getString("ActionRemove.unableToRefresh"), e); //$NON-NLS-1$
-                        }
-                        // MercurialEclipsePlugin.refreshProjectFlags(proj);
-
+            try {
+                String output = MercurialUtilities.executeCommand(
+                        launchCmd, workingDir, false);
+                if (output != null) {
+                    // output output in a window
+                    if (output.length() != 0) {
+                        MessageDialog
+                        .openInformation(
+                                shell,
+                                Messages
+                                .getString("ActionRemove.removeOutput"), output); //$NON-NLS-1$
                     }
                 }
-                // else
-                // {
-                // System.out.println("hg remove: obj is not MercurialUtilities.isResourceInReposetory()");
-                // }
+            } catch (HgException e) {
+                MercurialEclipsePlugin.logError(e);
             }
-            // else
-            // {
-            // System.out.println("hg remove: obj not IResource");
-            // }
+
+            try {
+                MercurialStatusCache.getInstance().refresh(proj);
+            } catch (TeamException e) {
+                MercurialEclipsePlugin
+                .logError(
+                        Messages
+                        .getString("ActionRemove.unableToRefresh"), e); //$NON-NLS-1$
+            }
+            // MercurialEclipsePlugin.refreshProjectFlags(proj);
         }
+    }
+
+    private boolean confirmRemove(Shell shell, String fileName) {
+        return MessageDialog.openConfirm(shell,
+                Messages.getString("ActionRemove.removeFileQuestion"),
+                Messages.getString("ActionRemove.removeFileConfirmation")
+                + fileName
+                + Messages.getString("ActionRemove.removeFileConfirmation.2"));
     }
 
     /**
