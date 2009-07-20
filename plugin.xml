@@ -991,11 +991,12 @@
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
      </factory>
-    <factory
+   <!-- Adapt IResource to itself does not make sense at all and can only generates troubles 
+   <factory
        adaptableType="org.eclipse.core.resources.IResource"
        class="com.vectrace.MercurialEclipse.ResourceAdapterFactory">
        <adapter type="org.eclipse.core.resources.IResource"/>
-     </factory>
+     </factory> -->
    </extension>
    
    <!-- Views -->
