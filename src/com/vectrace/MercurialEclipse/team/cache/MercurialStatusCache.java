@@ -89,8 +89,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         private final Map<IProject, Set<IResource>> removed;
         private final Map<IProject, Set<IResource>> changed;
         private final Map<IProject, Set<IResource>> added;
-        private boolean completeStatus;
-        private boolean autoShare;
+        private final boolean completeStatus;
+        private final boolean autoShare;
 
         /**
          * @param removed
@@ -104,9 +104,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             this.added = added;
 
             completeStatus = Boolean
-                    .valueOf(
-                            HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                    "false")).booleanValue(); //$NON-NLS-1$
+            .valueOf(
+                    HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                            "false")).booleanValue(); //$NON-NLS-1$
             autoShare = Boolean.valueOf(
                     HgClients.getPreference(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, "false"))
                     .booleanValue();
@@ -133,7 +133,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             }
 
             // handle projects that contain a mercurial repository
-            if (delta.getFlags() == IResourceDelta.OPEN && res.isAccessible()
+            if (autoShare && delta.getFlags() == IResourceDelta.OPEN && res.isAccessible()
                     && RepositoryProvider.getProvider(res.getProject()) == null) {
                 final IProject project = res.getProject();
                 HgRoot hgRoot;
@@ -162,7 +162,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                             protected IStatus runSafe(IProgressMonitor monitor) {
                                 try {
                                     new InitOperation(activeWorkbenchWindow, project, root, root.getAbsolutePath())
-                                            .run(monitor);
+                                    .run(monitor);
                                 } catch (Exception e) {
                                     throw new RuntimeException(e);
                                 }
@@ -230,8 +230,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     private final class MemberStatusVisitor implements IResourceVisitor {
 
-        private BitSet bitSet;
-        private IResource parent;
+        private final BitSet bitSet;
+        private final IResource parent;
 
         public MemberStatusVisitor(IResource parent, BitSet bitSet) {
             this.bitSet = bitSet;
@@ -287,7 +287,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public static final char CHAR_DELETED = '!';
 
     protected int INTERESTING_CHANGES = IResourceDelta.CONTENT | IResourceDelta.MOVED_FROM | IResourceDelta.MOVED_TO
-            | IResourceDelta.OPEN | IResourceDelta.REPLACED | IResourceDelta.TYPE;
+    | IResourceDelta.OPEN | IResourceDelta.REPLACED | IResourceDelta.TYPE;
 
     private static final Object DUMMY = new Object();
 
@@ -395,7 +395,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     public boolean isSupervised(IResource resource) throws HgException {
         return MercurialUtilities.hgIsTeamProviderFor(resource, false)
-                && isSupervised(resource.getProject(), resource.getLocation());
+        && isSupervised(resource.getProject(), resource.getLocation());
     }
 
     public boolean isSupervised(IResource resource, IPath path) throws HgException {
@@ -426,7 +426,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                             // a directory is still supervised if one of the
                             // following bits is set
                             boolean supervised = status.get(BIT_ADDED) || status.get(BIT_CLEAN)
-                                    || status.get(BIT_DELETED) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
+                            || status.get(BIT_DELETED) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
                             return supervised;
                         }
                         return false;
@@ -477,8 +477,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                             // a directory is still supervised if one of the
                             // following bits is set
                             boolean supervised = status.get(BIT_CLEAN) || status.get(BIT_DELETED)
-                                    || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED) || status.get(BIT_CONFLICT)
-                                    || status.get(BIT_IGNORE);
+                            || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED) || status.get(BIT_CONFLICT)
+                            || status.get(BIT_IGNORE);
                             return !supervised;
                         }
                         return true;
@@ -651,12 +651,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         Set<IResource> ancestors = new HashSet<IResource>();
         boolean computeDeep = isComputeDeepStatus();
         boolean completeStatus = Boolean
-                .valueOf(
-                        HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-                                "false")).booleanValue(); //$NON-NLS-1$
+        .valueOf(
+                HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+                        "false")).booleanValue(); //$NON-NLS-1$
 
         for (IResource parent = resource.getParent(); parent != null && parent != resource.getProject().getParent(); parent = parent
-                .getParent()) {
+        .getParent()) {
             BitSet parentBitSet = statusMap.get(parent.getLocation());
             BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
             if (parentBitSet != null) {
@@ -685,9 +685,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      */
     private boolean isComputeDeepStatus() {
         boolean computeDeep = Boolean
-                .valueOf(
-                        HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
-                                "false")).booleanValue(); //$NON-NLS-1$
+        .valueOf(
+                HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
+                        "false")).booleanValue(); //$NON-NLS-1$
         return computeDeep;
     }
 
@@ -871,8 +871,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                                         .getString("MercurialStatusCache.AddingResourcesForDecoratorUpdate...")); //$NON-NLS-1$
                                 monitor.worked(1);
                                 monitor
-                                        .subTask(Messages
-                                                .getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
+                                .subTask(Messages
+                                        .getString("MercurialStatusCache.TriggeringDecoratorUpdate...")); //$NON-NLS-1$
                                 notifyChanged(resources);
                                 monitor.worked(1);
                             } finally {
@@ -983,7 +983,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 break;
             case IResource.FOLDER:
                 for (Iterator<IPath> iterator = new HashMap<IPath, BitSet>(statusMap).keySet().iterator(); iterator
-                        .hasNext();) {
+                .hasNext();) {
                     IPath memberPath = iterator.next();
                     if (memberPath.equals(resource.getLocation())) {
                         continue;
