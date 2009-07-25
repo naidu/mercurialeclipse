@@ -40,9 +40,9 @@ public final class CommitResourceLabelProvider extends LabelProvider implements
         case 0:
             return resource.getPath().toString();
         case 1:
-            return resource.getStatus();
+            return resource.getStatusMessage();
         case 2:
-            return resource.getStatus();
+            return resource.getStatusMessage();
         default:
             return "Col Error: " + columnIndex; //$NON-NLS-1$
         }

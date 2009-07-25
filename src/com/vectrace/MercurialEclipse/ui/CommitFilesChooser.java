@@ -55,12 +55,12 @@ import org.eclipse.swt.widgets.TableItem;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.TableColumnSorter;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
-import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -70,16 +70,16 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * 
  */
 public class CommitFilesChooser extends Composite {
-    private UntrackedFilesFilter untrackedFilesFilter;
-    private CommittableFilesFilter committableFilesFilter;
+    private final UntrackedFilesFilter untrackedFilesFilter;
+    private final CommittableFilesFilter committableFilesFilter;
     private final HgRoot root;
     private final boolean selectable;
     private Button showUntrackedFilesButton;
     private Button selectAllButton;
-    private CheckboxTableViewer viewer;
+    private final CheckboxTableViewer viewer;
     private final boolean untracked;
     private final boolean missing;
-    private ListenerList stateListeners = new ListenerList();
+    private final ListenerList stateListeners = new ListenerList();
     protected Control trayButton;
     protected boolean trayClosed = true;
     protected IFile selectedFile;
@@ -198,8 +198,8 @@ public class CommitFilesChooser extends Composite {
         data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
         trayControl.setLayoutData(data);
         int trayWidth = leftSeparator.computeSize(SWT.DEFAULT, clientArea.height).x
-                + sash.computeSize(SWT.DEFAULT, clientArea.height).x
-                + rightSeparator.computeSize(SWT.DEFAULT, clientArea.height).x + data.widthHint;
+        + sash.computeSize(SWT.DEFAULT, clientArea.height).x
+        + rightSeparator.computeSize(SWT.DEFAULT, clientArea.height).x + data.widthHint;
         Rectangle bounds = shell.getBounds();
         shell.setBounds(bounds.x - ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y,
                 bounds.width + trayWidth, bounds.height);
@@ -348,7 +348,7 @@ public class CommitFilesChooser extends Composite {
         // auto-check all tracked elements
         List<CommitResource> tracked = new ArrayList<CommitResource>();
         for (CommitResource commitResource : commitResources) {
-            if (commitResource.getStatus() != CommitDialog.FILE_UNTRACKED) {
+            if (MercurialStatusCache.CHAR_UNKNOWN != commitResource.getStatus()) {
                 tracked.add(commitResource);
             }
         }
@@ -377,7 +377,7 @@ public class CommitFilesChooser extends Composite {
                     list.add(resource.getResource());
                 } else {
                     for (String stat : status) {
-                        if (resource.getStatus().equals(stat)) {
+                        if (resource.getStatusMessage().equals(stat)) {
                             list.add(resource.getResource());
                             break;
                         }

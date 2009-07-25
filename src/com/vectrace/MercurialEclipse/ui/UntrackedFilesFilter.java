@@ -13,15 +13,14 @@ package com.vectrace.MercurialEclipse.ui;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
-import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public class UntrackedFilesFilter extends ViewerFilter 
+public class UntrackedFilesFilter extends ViewerFilter
 {
     private final boolean allowMissing;
 
-    public UntrackedFilesFilter(boolean allowMissing) 
-    {
+    public UntrackedFilesFilter(boolean allowMissing){
         super();
         this.allowMissing = allowMissing;
     }
@@ -30,15 +29,15 @@ public class UntrackedFilesFilter extends ViewerFilter
      * Filter out untracked files.
      */
     @Override
-    public boolean select(Viewer viewer, Object parentElement,Object element) 
-    {
-        if (element instanceof CommitResource) 
-        {
-            String str = ((CommitResource) element).getStatus();
-            if (str.startsWith(CommitDialog.FILE_UNTRACKED))
+    public boolean select(Viewer viewer, Object parentElement,Object element){
+        if (element instanceof CommitResource){
+            char status = ((CommitResource) element).getStatus();
+            if (status == MercurialStatusCache.CHAR_UNKNOWN) {
                 return false;
-            if (!allowMissing && str.startsWith(CommitDialog.FILE_DELETED))
+            }
+            if (!allowMissing && status == MercurialStatusCache.CHAR_DELETED) {
                 return false;
+            }
         }
         return true;
     }
