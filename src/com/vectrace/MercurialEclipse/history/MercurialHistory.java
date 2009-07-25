@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
- *     Stefan Groschupf          - logError 
+ *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
@@ -54,7 +54,7 @@ public class MercurialHistory extends FileHistory {
     }
 
     private static final class ChangeSetComparator implements
-            Comparator<ChangeSet>, Serializable {
+    Comparator<ChangeSet>, Serializable {
 
         private static final long serialVersionUID = 6661721027440425773L;
 
@@ -62,8 +62,7 @@ public class MercurialHistory extends FileHistory {
             int result = o2.getChangesetIndex() - o1.getChangesetIndex();
 
             // we need to cover the situation when repo-indices are the same
-            if (result == 0 && o1.getRealDate() != null
-                    && o2.getRealDate() != null) {
+            if (result == 0 && o1.getDate() != null && o2.getDate() != null) {
                 int dateCompare = o2.getRealDate().compareTo(o1.getRealDate());
                 if (dateCompare != 0) {
                     result = dateCompare;
@@ -75,17 +74,17 @@ public class MercurialHistory extends FileHistory {
     }
 
     private static final class RevisionComparator implements
-            Comparator<MercurialRevision>, Serializable {
-        
+    Comparator<MercurialRevision>, Serializable {
+
         private static final long serialVersionUID = 5305190339206751711L;
 
         public int compare(MercurialRevision o1, MercurialRevision o2) {
             int result = o2.getChangeSet().getChangesetIndex()
-                    - o1.getChangeSet().getChangesetIndex();
+            - o1.getChangeSet().getChangesetIndex();
 
             // we need to cover the situation when repo-indices are the same
-            if (result == 0 && o1.getChangeSet().getRealDate() != null
-                    && o2.getChangeSet().getRealDate() != null) {
+            if (result == 0 && o1.getChangeSet().getDate() != null
+                    && o2.getChangeSet().getDate() != null) {
                 int dateCompare = o2.getChangeSet().getRealDate().compareTo(
                         o1.getChangeSet().getRealDate());
                 if (dateCompare != 0) {
@@ -97,10 +96,10 @@ public class MercurialHistory extends FileHistory {
         }
     }
 
-    private static ChangeSetComparator csComparator = null;
-    private static RevisionComparator revComparator = null;
+    private static ChangeSetComparator csComparator;
+    private static RevisionComparator revComparator;
 
-    private IResource resource;
+    private final IResource resource;
     protected SortedSet<MercurialRevision> revisions;
     Map<Integer, GChangeSet> gChangeSets;
     private int bottom = 0;
@@ -165,14 +164,14 @@ public class MercurialHistory extends FileHistory {
     }
 
     public void refresh(IProgressMonitor monitor, int from)
-            throws CoreException {
+    throws CoreException {
         RepositoryProvider provider = RepositoryProvider.getProvider(resource
                 .getProject());
         if (provider != null && provider instanceof MercurialTeamProvider) {
             if (from == Integer.MAX_VALUE && revisions != null) {
                 // We're getting revisions up to the latest one available.
                 // So clear out the cached list, as it may contain revisions
-                // that no longer exist (e.g. after a strip/rollback). 
+                // that no longer exist (e.g. after a strip/rollback).
                 revisions.clear();
             }
             // We need these to be in order for the GChangeSets to display
@@ -183,7 +182,7 @@ public class MercurialHistory extends FileHistory {
 
             int logBatchSize = Integer.parseInt(MercurialUtilities
                     .getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                            "500")); //$NON-NLS-1$
+                    "500")); //$NON-NLS-1$
 
             // check if we have reached the bottom (initially = 0)
             if (from == this.bottom || from < 0) {
@@ -221,7 +220,7 @@ public class MercurialHistory extends FileHistory {
                     revisions = new TreeSet<MercurialRevision>(
                             getRevisionComparator());
                     List<GChangeSet> gLogChangeSets = new HgGLogClient(resource)
-                            .update(changeSets).getChangeSets();
+                    .update(changeSets).getChangeSets();
                     // put glog changesets in map for later referencing
                     gChangeSets = new HashMap<Integer, GChangeSet>(
                             gLogChangeSets.size());
@@ -239,7 +238,7 @@ public class MercurialHistory extends FileHistory {
                 }
             }
         }
-        
+
     }
 
     /**

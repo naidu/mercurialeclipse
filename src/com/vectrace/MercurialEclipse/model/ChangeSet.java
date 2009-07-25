@@ -14,6 +14,7 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -25,16 +26,20 @@ import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class ChangeSet implements Comparable<ChangeSet> {
+
+    private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm Z");
+    public static final Date UNKNOWN_DATE = new Date(0);
     public static enum Direction {
         INCOMING, OUTGOING, LOCAL;
     }
 
-    private int changesetIndex;
-    private String changeset;
+    private final HgRevision revision;
+    private final int changesetIndex;
+    private final String changeset;
+    private final String branch;
+    private final String user;
+    private final String date;
     private String tag;
-    private String branch;
-    private String user;
-    private String date;
     private FileStatus[] changedFiles;
     private String description;
     private String ageDate;
@@ -69,7 +74,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
         public Builder(int revision, String changeSet, String branch,
                 String date, String user) {
 
-            this.cs = new ChangeSet(revision, changeSet, user, date, branch);
+            this.cs = new ChangeSet(revision, changeSet, user, date, branch == null? "" : branch);
         }
 
         public Builder tag(String tag) {
@@ -123,7 +128,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
             this.cs.nodeShort = nodeShort;
             return this;
         }
-        
+
 
         public void patches(IFilePatch[] patches) {
             this.cs.patches = patches;
@@ -141,20 +146,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
             String[] parents) {
         this.changesetIndex = changesetIndex;
         this.changeset = changeSet;
+        this.revision = new HgRevision(changeset, changesetIndex);
         this.tag = tag;
         this.branch = branch;
         this.user = user;
         this.date = date;
         setDescription(description);
         setParents(parents);
-        try {
-            if (date != null) {
-                this.realDate = new SimpleDateFormat("yyyy-MM-dd hh:mm Z") //$NON-NLS-1$
-                        .parse(date);
-            }
-        } catch (Exception e) {
-            this.realDate = null;
-        }
     }
 
     private ChangeSet(int changesetIndex, String changeSet, String user,
@@ -171,16 +169,14 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public String getTag() {
-        if (tag != null && tag.equals("tip") && bundleFile != null) { //$NON-NLS-1$
-            tag = tag.concat(" [ ").concat(repository.toString()).concat(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
+        if ("tip".equals(tag) && bundleFile != null) { //$NON-NLS-1$
+            StringBuilder builder = new StringBuilder(tag).append(" [ ").append(repository.toString()).append(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
+            tag = builder.toString();
         }
         return tag;
     }
 
     public String getBranch() {
-        if (branch == null) {
-            return ""; //$NON-NLS-1$
-        }
         return branch;
     }
 
@@ -197,7 +193,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public HgRevision getRevision() {
-        return new HgRevision(changeset, changesetIndex);
+        return revision;
     }
 
     @Override
@@ -238,9 +234,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
         if (o.getChangeset().equals(this.getChangeset())) {
             return 0;
         }
-
-        if (realDate != null && o.getRealDate() != null) {
-            int dateCompare = this.getRealDate().compareTo(o.getRealDate());
+        if (getRealDate() != UNKNOWN_DATE && o.getRealDate() != UNKNOWN_DATE) {
+            int dateCompare = getRealDate().compareTo(o.getRealDate());
             if (dateCompare != 0) {
                 return dateCompare;
             }
@@ -250,8 +245,15 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj != null && obj instanceof ChangeSet) {
-            return this.compareTo((ChangeSet) obj) == 0;
+        if (obj instanceof ChangeSet) {
+            ChangeSet other = (ChangeSet) obj;
+            if(getChangeset().equals(other.getChangeset())){
+                return true;
+            }
+            if (date != null && date.equals(other.getDate())) {
+                return true;
+            }
+            return getChangesetIndex() == other.getChangesetIndex();
         }
         return false;
     }
@@ -266,12 +268,27 @@ public class ChangeSet implements Comparable<ChangeSet> {
         final int prime = 31;
         int result = 1;
         result = prime * result
-                + ((changeset == null) ? 0 : changeset.hashCode());
+        + ((changeset == null) ? 0 : changeset.hashCode());
         return result;
     }
 
+    /**
+     * @return never returns null. Returns {@link ChangeSet#UNKNOWN_DATE} if the date
+     * can't be parsed
+     */
     public Date getRealDate() {
-        return this.realDate;
+        try {
+            if (realDate == null) {
+                if (date != null) {
+                    realDate = SIMPLE_DATE_FORMAT.parse(date);
+                } else {
+                    realDate = UNKNOWN_DATE;
+                }
+            }
+        } catch (ParseException e) {
+            realDate = UNKNOWN_DATE;
+        }
+        return realDate;
     }
 
     /**
@@ -336,7 +353,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     public File getHgRoot() {
         return hgRoot;
     }
-    
+
     /**
      * @return the patch
      */
