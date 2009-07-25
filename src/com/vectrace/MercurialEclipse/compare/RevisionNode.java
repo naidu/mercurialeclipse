@@ -16,30 +16,33 @@ import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
-public class RevisionNode extends ResourceNode implements IStreamContentAccessor, ITypedElement
-{
-  private final IStorageMercurialRevision rev;
+public class RevisionNode extends ResourceNode implements IStreamContentAccessor, ITypedElement {
+    private final IStorageMercurialRevision rev;
 
-  public RevisionNode(IStorageMercurialRevision rev)
-  {
-    super(rev.getResource());
-    this.rev = rev;
-  }
+    public RevisionNode(IStorageMercurialRevision rev) {
+        super(rev.getResource());
+        this.rev = rev;
+    }
 
-  @Override
-  public String getName()
-  {
-    return rev.getName();
-  }
-  
-  @Override
-  public InputStream getContents() throws CoreException
-  {
-    return rev.getContents();
-  }
-  
-  public String getRevision() 
-  {
-      return rev.getRevision();
-  }
+    @Override
+    public String getName() {
+        return rev.getName();
+    }
+
+    @Override
+    public InputStream getContents() throws CoreException {
+        // prefetch byte content
+        getContent();
+        return super.getContents();
+    }
+
+    public String getRevision() {
+        return rev.getRevision();
+    }
+
+    @Override
+    protected InputStream createStream() throws CoreException {
+        // System.out.println("Creating stream...");
+        return rev.getContents();
+    }
 }
