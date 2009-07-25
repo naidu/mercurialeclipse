@@ -22,11 +22,13 @@ import org.eclipse.team.core.mapping.provider.SynchronizationScopeManager;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
 public class MercurialSynchronizeParticipant extends
 ModelSynchronizeParticipant {
@@ -143,4 +145,15 @@ ModelSynchronizeParticipant {
         return repositoryLocation;
     }
 
+    @Override
+    protected ModelSynchronizeParticipantActionGroup createMergeActionGroup() {
+        // allows us to contribute our own actions to the synchronize view via java code
+        return new MercurialSynchronizePageActionGroup();
+    }
+
+    @Override
+    protected boolean isViewerContributionsSupported() {
+        // allows us to contribute our own actions to the synchronize view via plugin.xml
+        return true;
+    }
 }
