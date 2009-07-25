@@ -31,20 +31,16 @@ public class HgRootClient {
     private final static Map<String, File> roots = new HashMap<String, File>();
 
     public static String getHgRoot(IResource resource) throws HgException {
-        return getHgRoot2(resource);
-        // HgCommand command = new HgCommand("root", proj, true);
-        // return new
-        // String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n",
-        // "");
-    }
-
-    private static String getHgRoot2(IResource resource) throws HgException {
         File root = getHgRootAsFile(resource);
         try {
             return root.getCanonicalPath();
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
+        // HgCommand command = new HgCommand("root", proj, true);
+        // return new
+        // String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n",
+        // "");
     }
 
     /**
@@ -57,30 +53,27 @@ public class HgRootClient {
         root = getHgRoot(root);
         return root;
     }
-    
+
     /**
-     * @param root
+     * @param file
      * @return
      * @throws HgException
      */
     public static File getHgRoot(File file) throws HgException {
-        String canonicalPath=null;
+        String canonicalPath;
         try {
-            canonicalPath = file.getCanonicalPath();
-            if(!file.isDirectory()) {
+            if(file.isFile()) {
                 canonicalPath = file.getParentFile().getCanonicalPath();
+            } else {
+                canonicalPath = file.getCanonicalPath();
             }
-            if(roots.containsKey(canonicalPath)) {
-                return roots.get(canonicalPath);
-            }
-        }
-        catch(IOException e) {
+        } catch(IOException e) {
             throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
         }
-        File root = file;
-        if (root.isFile()) {
-            root = root.getParentFile();
+        if(roots.containsKey(canonicalPath)) {
+            return roots.get(canonicalPath);
         }
+        File root = new File(canonicalPath);
 
         FilenameFilter hg = new FilenameFilter() {
             public boolean accept(File dir, String name) {
@@ -88,15 +81,13 @@ public class HgRootClient {
             }
         };
 
-        if (root != null) {
-            String[] rootContent = root.list(hg);
-            while (rootContent != null && rootContent.length < 1) {
-                root = root.getParentFile();
-                if (root == null) {
-                    break;
-                }
-                rootContent = root.list(hg);
+        String[] rootContent = root.list(hg);
+        while (rootContent != null && rootContent.length == 0) {
+            root = root.getParentFile();
+            if (root == null) {
+                break;
             }
+            rootContent = root.list(hg);
         }
         if (root == null) {
             throw new HgException(file.getName() + Messages.getString("HgRootClient.error.noRoot")); //$NON-NLS-1$
