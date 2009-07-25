@@ -60,14 +60,14 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     // The shared instance.
     private static MercurialEclipsePlugin plugin;
-    
+
     // the repository manager
     private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
     // the commit message manager
     private static HgCommitMessageManager commitMessageManager = new HgCommitMessageManager();
 
-    
+
     private boolean hgUsable = true;
 
     private ActiveChangeSetManager changeSetManager;
@@ -76,54 +76,43 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      * The constructor.
      */
     public MercurialEclipsePlugin() {
-        plugin = this;
+        // should NOT do anything until started by OSGI
     }
 
     @Override
     public void start(BundleContext context) throws Exception {
-        try {
-            super.start(context);
-            DefaultConfiguration cfg = new DefaultConfiguration();
-            HgClients.initialize(cfg, cfg, cfg);
-            new Job(
-                    "Starting MercurialEclipse.") {
-                /*
-                 * (non-Javadoc)
-                 * 
-                 * @see
-                 * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org
-                 * .eclipse.core.runtime.IProgressMonitor)
-                 */
-                @Override
-                protected IStatus run(IProgressMonitor monitor) {
-                    try {
-                        monitor.beginTask("Starting MercurialEclipse", 3);
-                        monitor.subTask("Checking Mercurial installation.");
-                        checkHgInstallation();
-                        monitor.done();
-                        // read known repositories
-                        monitor
-                                .subTask("Loading known Mercurial repositories.");
-                        repoManager.start();
-                        monitor.worked(1);
-                        // read in commit messages from disk
-                        monitor.subTask("Starting Commit Message manager.");
-                        commitMessageManager.start();
-                        monitor.worked(1);
-                        monitor.done();
-                        return new Status(IStatus.OK, ID, "MercurialEclipse started successfully.");
-                    } catch (Exception e) {
-                        MercurialEclipsePlugin.logError(e);
-                        return new Status(IStatus.ERROR, ID, e
-                                .getLocalizedMessage(), e);
-                    }
+        plugin = this;
+        super.start(context);
+        DefaultConfiguration cfg = new DefaultConfiguration();
+        HgClients.initialize(cfg, cfg, cfg);
+        new Job("Starting MercurialEclipse.") {
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                try {
+                    monitor.beginTask("Starting MercurialEclipse", 3);
+                    monitor.subTask("Checking Mercurial installation.");
+                    checkHgInstallation();
+                    monitor.done();
+                    // read known repositories
+                    monitor
+                    .subTask("Loading known Mercurial repositories.");
+                    repoManager.start();
+                    monitor.worked(1);
+                    // read in commit messages from disk
+                    monitor.subTask("Starting Commit Message manager.");
+                    commitMessageManager.start();
+                    monitor.worked(1);
+                    monitor.done();
+                    return new Status(IStatus.OK, ID, "MercurialEclipse started successfully.");
+                } catch (Exception e) {
+                    hgUsable = false;
+                    logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
+                    return new Status(IStatus.ERROR, ID, e
+                            .getLocalizedMessage(), e);
                 }
-            }.schedule();
-        } catch (Exception e) {
-            this.hgUsable = false;
-            logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
-        }
-        
+            }
+        }.schedule();
+
     }
 
     /**
@@ -224,7 +213,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     public static final void logInfo(String message, Throwable error) {
         getDefault().getLog()
-                .log(createStatus(message, 0, IStatus.INFO, error));
+        .log(createStatus(message, 0, IStatus.INFO, error));
     }
 
     private static IStatus createStatus(String msg, int code, int severity,
@@ -257,7 +246,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      */
     public static void runWithProgress(Shell parent, boolean cancelable,
             final IRunnableWithProgress runnable)
-            throws InvocationTargetException, InterruptedException {
+    throws InvocationTargetException, InterruptedException {
 
         boolean createdShell = false;
         Shell myParent = parent;
@@ -315,7 +304,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      */
     public static IWorkbenchPage getActivePage() {
         IWorkbenchWindow window = PlatformUI.getWorkbench()
-                .getActiveWorkbenchWindow();
+        .getActiveWorkbenchWindow();
         if (window == null) {
             return null;
         }
