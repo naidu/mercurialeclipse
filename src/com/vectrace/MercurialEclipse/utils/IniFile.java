@@ -61,6 +61,8 @@ import java.io.*;
 import java.util.*;
 import java.net.URL;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+
 /**
  * @author $Author: l2fprod $
  * @created 27 avril 2002
@@ -68,7 +70,7 @@ import java.net.URL;
  */
 public class IniFile {
 
-    Map<String,Map<String,String>> sections;
+    private final Map<String,Map<String,String>> sections;
 
     /**
      * Constructor for the IniFile object
@@ -100,20 +102,16 @@ public class IniFile {
      */
     public IniFile(URL url) throws IOException {
         this();
-        load(url.openStream());
-    }
-
-    /**
-     * Constructor for the IniFile object
-     * 
-     * @param input
-     *            Description of Parameter
-     * @exception IOException
-     *                Description of Exception
-     */
-    public IniFile(InputStream input) throws IOException {
-        this();
-        load(input);
+        InputStream in = url.openStream();
+        try {
+            load(in);
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -127,10 +125,9 @@ public class IniFile {
      *            The new KeyValue value
      */
     public void setKeyValue(String section, String key, String value) {
-        try {
-            getSection(section).put(key.toLowerCase(), value);
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+        Map<String, String> section2 = getSection(section);
+        if(section2 != null) {
+            section2.put(key.toLowerCase(), value);
         }
     }
 
@@ -178,11 +175,11 @@ public class IniFile {
      * @return The KeyValue value
      */
     public String getKeyValue(String section, String key) {
-        try {
-            return getSection(section).get(key.toLowerCase());
-        } catch (NullPointerException e) {
-            return null;
+        Map<String, String> section2 = getSection(section);
+        if(section2 != null) {
+            return section2.get(key.toLowerCase());
         }
+        return null;
     }
 
     /**
@@ -214,7 +211,7 @@ public class IniFile {
         if (value == null) {
             return defaultValue;
         }
-        
+
         try {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
@@ -232,7 +229,16 @@ public class IniFile {
      *                Description of Exception
      */
     public void load(String filename) throws FileNotFoundException {
-        load(new FileInputStream(filename));
+        FileInputStream in = new FileInputStream(filename);
+        try {
+            load(in);
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -244,7 +250,16 @@ public class IniFile {
      *                Description of Exception
      */
     public void save(String filename) throws IOException {
-        save(new FileOutputStream(filename));
+        FileOutputStream out = new FileOutputStream(filename);
+        try {
+            save(out);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+                // ignore
+            }
+        }
     }
 
     /**
@@ -253,7 +268,7 @@ public class IniFile {
      * @param in
      *            Description of Parameter
      */
-    public void load(InputStream in) {
+    private void load(InputStream in) {
         try {
             BufferedReader input = new BufferedReader(new InputStreamReader(in));
             String read;
@@ -265,7 +280,7 @@ public class IniFile {
                 } else if (read.startsWith("[")) {
                     // new section
                     section_name = read.substring(1, read.indexOf("]"))
-                            .toLowerCase();
+                    .toLowerCase();
                     section = sections.get(section_name);
                     if (section == null) {
                         section = new HashMap<String,String>();
@@ -274,13 +289,13 @@ public class IniFile {
                 } else if (read.indexOf("=") != -1 && section != null) {
                     // new key
                     String key = read.substring(0, read.indexOf("=")).trim()
-                            .toLowerCase();
+                    .toLowerCase();
                     String value = read.substring(read.indexOf("=") + 1).trim();
                     section.put(key, value);
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
         }
     }
 
@@ -290,7 +305,7 @@ public class IniFile {
      * @param out
      *            Description of Parameter
      */
-    public void save(OutputStream out) {
+    private void save(OutputStream out) {
         try {
             PrintWriter output = new PrintWriter(out);
             for (String section : sections.keySet()) {
@@ -303,8 +318,8 @@ public class IniFile {
             output.close();
             out.flush();
             out.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
         }
     }
 
