@@ -42,24 +42,24 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
         AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         try {
             final File bundleFile = File.createTempFile("bundleFile-".concat( //$NON-NLS-1$
                     res.getProject().getName()).concat("-"), ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
             bundleFile.deleteOnExit();
-            
-            
+
+
             command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
                     AbstractParseChangesetClient.getStyleFile(true)
-                            .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
-                            .getCanonicalPath());
+                    .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
+                    .getCanonicalPath());
 
             URI uri = repository.getUri();
             if (uri != null) {
                 command.addOptions(uri.toASCIIString());
             } else {
                 command.addOptions(repository.getLocation());
-            }            
+            }
 
             String result = command.executeToString();
             if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
@@ -73,7 +73,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
                 return null;
             }
-            throw new HgException(hg.getMessage(), hg);
+            throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
         }
