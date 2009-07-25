@@ -19,6 +19,7 @@ import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -64,6 +65,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -81,24 +83,25 @@ public class CommitDialog extends TitleAreaDialog {
     public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
     public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
     public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+    public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
 
     private String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
     private Combo oldCommitComboBox;
     private ISourceViewer commitTextBox;
     private CommitFilesChooser commitFilesList;
     private boolean selectableFiles;
-    private HgRoot root;
+    private final HgRoot root;
     private List<IResource> resourcesToAdd;
     private List<IResource> resourcesToCommit;
     private List<IResource> resourcesToRemove;
     private String commitMessage;
-    private IDocument commitTextDocument;
+    private final IDocument commitTextDocument;
     private SourceViewerDecorationSupport decorationSupport;
-    private List<IResource> inResources;
+    private final List<IResource> inResources;
     private Text userTextField;
     private String user;
     private Button revertCheckBox;
-    private ActiveChangeSetManager csManager = MercurialEclipsePlugin.getDefault().getChangeSetManager();
+    private final ActiveChangeSetManager csManager = MercurialEclipsePlugin.getDefault().getChangeSetManager();
 
     /**
      * @param shell
@@ -228,7 +231,7 @@ public class CommitDialog extends TitleAreaDialog {
             }
 
         });
-        
+
         commitTextBox.getTextWidget().addMouseListener(new MouseAdapter() {
             @Override
             public void mouseUp(MouseEvent e) {
@@ -246,7 +249,7 @@ public class CommitDialog extends TitleAreaDialog {
         final String oldCommits[] = MercurialEclipsePlugin.getCommitMessageManager().getCommitMessages();
         if (oldCommits.length > 0) {
             oldCommitComboBox = SWTWidgetHelper.createCombo(container);
-            oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$ 
+            oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
             oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
             for (int i = 0; i < oldCommits.length; i++) {
                 /*
@@ -260,7 +263,7 @@ public class CommitDialog extends TitleAreaDialog {
                     if (oldCommitComboBox.getSelectionIndex() != 0) {
                         commitTextDocument.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
                         commitTextBox.setSelectedRange(0, oldCommits[oldCommitComboBox.getSelectionIndex() - 1]
-                                .length());
+                                                                     .length());
                     }
 
                 }
@@ -305,28 +308,15 @@ public class CommitDialog extends TitleAreaDialog {
             }
 
             if (inResources.size() > 0) {
-                new RefreshJob(Messages.getString("CommitDialog.refreshing"), null, //$NON-NLS-1$
-                        inResources.get(0).getProject()).schedule();
+                // XXX fix for not refreshing after commit?
+                IProject project = inResources.get(0).getProject();
+                HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(project);
+                new RefreshJob(Messages.getString("CommitDialog.refreshing"), repoLocation, //$NON-NLS-1$
+                        project).schedule();
             }
 
             if (revertCheckBox.getSelection()) {
-                final List<IResource> revertResources = commitFilesList.getUncheckedResources(FILE_ADDED, FILE_DELETED,
-                        FILE_MODIFIED, FILE_REMOVED);
-                new SafeWorkspaceJob(Messages.getString("CommitDialog.revertJob.RevertingFiles")) { //$NON-NLS-1$
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe
-                     * (org.eclipse.core.runtime.IProgressMonitor)
-                     */
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        ActionRevert action = new ActionRevert();
-                        action.doRevert(monitor, revertResources);
-                        return super.runSafe(monitor);
-                    }
-                }.schedule();
-
+                revertResources();
             }
             super.okPressed();
         } catch (CoreException e) {
@@ -336,12 +326,17 @@ public class CommitDialog extends TitleAreaDialog {
 
     }
 
-    protected void setRoot(HgRoot root) {
-        this.root = root;
-    }
-
-    protected HgRoot getRoot() {
-        return root;
+    private void revertResources() {
+        final List<IResource> revertResources = commitFilesList.getUncheckedResources(FILE_ADDED, FILE_DELETED,
+                FILE_MODIFIED, FILE_REMOVED);
+        new SafeWorkspaceJob(Messages.getString("CommitDialog.revertJob.RevertingFiles")) { //$NON-NLS-1$
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                ActionRevert action = new ActionRevert();
+                action.doRevert(monitor, revertResources);
+                return super.runSafe(monitor);
+            }
+        }.schedule();
     }
 
     public List<IResource> getResourcesToRemove() {
@@ -354,7 +349,7 @@ public class CommitDialog extends TitleAreaDialog {
             commitTextDocument.set(msg);
         } else {
             commitTextDocument.set(defaultCommitMessage);
-            commitTextBox.setSelectedRange(0, defaultCommitMessage.length());    
+            commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
         }
     }
 
@@ -364,14 +359,14 @@ public class CommitDialog extends TitleAreaDialog {
     public String getUser() {
         return user;
     }
-    
+
     /*
      * Get a proposed comment by looking at the active change sets
      */
     private String getProposedComment(IResource[] resourcesToCommit) {
         StringBuffer comment = new StringBuffer();
         ChangeSet[] sets = csManager.getSets();
-      
+
         int numMatchedSets = 0;
         for (int i = 0; i < sets.length; i++) {
             ChangeSet set = sets[i];
