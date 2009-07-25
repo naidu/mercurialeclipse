@@ -102,7 +102,7 @@ public class MercurialUtilities {
     public static String getPreference(String preferenceConstant,
             String defaultIfNotSet) {
         IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore();
+        .getPreferenceStore();
         // This returns "" if not defined
         String pref = preferenceStore.getString(preferenceConstant);
 
@@ -197,7 +197,7 @@ public class MercurialUtilities {
     public static void configureHgExecutable() {
         new SafeUiJob(
                 Messages
-                        .getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
+                .getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
             /*
              * (non-Javadoc)
              * 
@@ -207,18 +207,18 @@ public class MercurialUtilities {
              */
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
-            String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
+                String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
                 String[] dsplIds = null;
                 Object data = null;
                 PreferenceDialog dlg = PreferencesUtil
-                        .createPreferenceDialogOn(
-                                getDisplay().getActiveShell(), pageId, dsplIds,
-                                data);
+                .createPreferenceDialogOn(
+                        getDisplay().getActiveShell(), pageId, dsplIds,
+                        data);
                 dlg
-                        .setErrorMessage(Messages
-                                .getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
-                                + Messages
-                                        .getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
+                .setErrorMessage(Messages
+                        .getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
+                        + Messages
+                        .getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
                 dlg.open();
                 return super.runSafe(monitor);
             }
@@ -240,10 +240,11 @@ public class MercurialUtilities {
      */
     public static boolean hgIsTeamProviderFor(IResource resource, boolean dialog) {
         // check, if we're team provider
-        if (resource == null
-                || resource.getProject() == null
-                || RepositoryProvider.getProvider(resource.getProject(),
-                        MercurialTeamProvider.ID) == null) {
+        if (resource == null) {
+            return false;
+        }
+        IProject project = resource.getProject();
+        if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
             return false;
         }
 
@@ -258,8 +259,7 @@ public class MercurialUtilities {
             return false;
         }
 
-        IFolder linkedParent = resource.getProject()
-                .getFolder(linkedParentName);
+        IFolder linkedParent = project.getFolder(linkedParentName);
         boolean isLinked = linkedParent.isLinked();
 
         // open dialog if resource is linked and flag is set to true
@@ -274,12 +274,12 @@ public class MercurialUtilities {
             }
             if (shell != null) {
                 MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages
-                                        .getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
-                                Messages
-                                        .getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
+                .openInformation(
+                        shell,
+                        Messages
+                        .getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
+                        Messages
+                        .getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
             }
         }
 
@@ -296,10 +296,10 @@ public class MercurialUtilities {
      */
     public static String getHGUsername() {
         IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore();
+        .getPreferenceStore();
         // This returns "" if not defined
         String executable = preferenceStore
-                .getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
+        .getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
         return executable;
     }
 
@@ -329,7 +329,7 @@ public class MercurialUtilities {
         try {
             return HgConfigClient.getHgConfigLine(ResourcesPlugin
                     .getWorkspace().getRoot().getLocation().toFile(),
-                    "ui.username"); //$NON-NLS-1$
+            "ui.username"); //$NON-NLS-1$
         } catch (HgException e) {
             return System.getProperty("user.name"); //$NON-NLS-1$
         }
@@ -348,7 +348,7 @@ public class MercurialUtilities {
         dlg.open();
     }
 
- 
+
     /**
      * Get the project for the selection (it use the first element)
      * 
@@ -491,14 +491,14 @@ public class MercurialUtilities {
         }
         return resource;
     }
-    
+
     public static boolean isCommandAvailable(String command,
             QualifiedName sessionPropertyName, String extensionEnabler)
-            throws HgException {
+    throws HgException {
         try {
             boolean returnValue;
             IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
-                    .getRoot();
+            .getRoot();
             Object prop = workspaceRoot.getSessionProperty(sessionPropertyName);
             if (prop != null) {
                 returnValue = ((Boolean) prop).booleanValue();
