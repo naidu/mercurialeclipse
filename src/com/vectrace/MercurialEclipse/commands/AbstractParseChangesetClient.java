@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.regex.Pattern;
 
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
@@ -58,9 +59,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * @author bastian
      * 
      */
-    private static final class ChangesetContentHandler implements
-            ContentHandler {
+    private static final class ChangesetContentHandler implements ContentHandler {
 
+        private static final String[] EMPTY = new String[] {};
         private String br;
         private String tg;
         private int rv;
@@ -73,26 +74,21 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private String de;
         private StringBuilder chars;
         private static IResource res;
-        private Direction direction;
-        private HgRepositoryLocation repository;
-        private File bundleFile;
-        private File hgRoot;
-        private Map<IPath, SortedSet<ChangeSet>> fileRevisions;
-        private Set<String> filesModified = new TreeSet<String>();
-        private Set<String> filesAdded = new TreeSet<String>();
-        private Set<String> filesRemoved = new TreeSet<String>();
+        private final Direction direction;
+        private final HgRepositoryLocation repository;
+        private final File bundleFile;
+        private final File hgRoot;
+        private final Map<IPath, SortedSet<ChangeSet>> fileRevisions;
+        private final Set<String> filesModified = new TreeSet<String>();
+        private final Set<String> filesAdded = new TreeSet<String>();
+        private final Set<String> filesRemoved = new TreeSet<String>();
         private Action action;
         private final IFilePatch[] patches;
+        private static final Pattern LT = Pattern.compile("&lt;");
+        private static final Pattern GT = Pattern.compile("&gt;");
+        private static final Pattern AMP = Pattern.compile("&amp;");
+        private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
 
-        /**
-         * @param res
-         * @param direction
-         * @param repository
-         * @param bundleFile
-         * @param hgRoot
-         * @param fileRevisions
-         * @param patches 
-         */
         public ChangesetContentHandler(IResource res, Direction direction,
                 HgRepositoryLocation repository, File bundleFile, File hgRoot,
                 Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {
@@ -105,9 +101,14 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             this.patches = patches;
         }
 
-        private String unescape(String string) {
-            return string.replaceAll("&lt;", "<").replaceAll("&gt;", ">") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                    .replaceAll("&amp;", "&"); //$NON-NLS-1$ //$NON-NLS-2$
+        private static String replaceAll(Pattern p, String source, String replacement){
+            return p.matcher(source).replaceAll(replacement);
+        }
+
+        private static String unescape(String string) {
+            String result = replaceAll(LT, string, "<");
+            result = replaceAll(GT, result, ">");
+            return replaceAll(AMP, result, "&");
         }
 
         /**
@@ -116,29 +117,26 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
          * @param string
          * @return
          */
-        private String untab(String string) {
-            return string.replaceAll("\n\t", "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+        private static String untab(String string) {
+            return replaceAll(NEWLINE_TAB, string, "\n"); //$NON-NLS-1$
         }
 
-        private String[] splitClean(String string, String sep) {
+        private static String[] splitClean(String string, String sep) {
             if (string == null || string.length() == 0) {
-                return new String[] {};
+                return EMPTY;
             }
             return string.split(sep);
         }
 
-        public void characters(char[] ch, int start, int length)
-                throws SAXException {
-            for (int i = start; i < start+length; i++) {
-                chars.append(ch[i]);
-            }
+        public void characters(char[] ch, int start, int length) {
+            chars.append(ch, start, length);
         }
 
         public void endDocument() throws SAXException {
         }
 
         public void endElement(String uri, String localName, String name)
-                throws SAXException {
+        throws SAXException {
 
             if (name.equals("de")) { //$NON-NLS-1$
                 de = chars.toString();
@@ -153,8 +151,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 csb.description(untab(unescape(de)));
                 csb.parents(splitClean(pr, " ")); //$NON-NLS-1$
 
-                csb.hgRoot(hgRoot).bundleFile(bundleFile)
-                        .repository(repository).direction(direction);
+                csb.hgRoot(hgRoot).bundleFile(bundleFile).repository(repository).direction(direction);
 
                 csb.bundleFile(bundleFile);
                 csb.direction(direction);
@@ -192,11 +189,11 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         }
 
         public void ignorableWhitespace(char[] ch, int start, int length)
-                throws SAXException {
+        throws SAXException {
         }
 
         public void processingInstruction(String target, String data)
-                throws SAXException {
+        throws SAXException {
         }
 
         public void setDocumentLocator(Locator locator) {
@@ -216,7 +213,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
              * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
              * <de>{desc|escape|tabindent}</de>
              */
-            this.chars = new StringBuilder();
+            this.chars = new StringBuilder(42);
             if (name.equals("br")) { //$NON-NLS-1$
                 this.br = atts.getValue(0);
             } else if (name.equals("tg")) { //$NON-NLS-1$
@@ -235,7 +232,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 this.au = atts.getValue(0);
             } else if (name.equals("pr")) { //$NON-NLS-1$
                 this.pr = atts.getValue(0);
-          /*  } else if (name.equals("de")) {
+                /*  } else if (name.equals("de")) {
                 this.de = untab(unescape(atts.getValue(0))); */
             } else if (name.equals("fl")) { //$NON-NLS-1$
                 this.action = FileStatus.Action.MODIFIED;
@@ -257,58 +254,38 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         }
 
         public void startPrefixMapping(String prefix, String uri)
-                throws SAXException {
+        throws SAXException {
         }
 
-        /**
-         * @param proj
-         * @param fileRevisions
-         * @param cs
-         * @throws HgException
-         * @throws IOException
-         */
-        private final void addChangesetToResourceMap(ChangeSet cs)
-                throws HgException {
+        private final void addChangesetToResourceMap(final ChangeSet cs)
+        throws HgException {
+            IPath repoPath;
             try {
-                if (cs.getChangedFiles() != null) {
-                    for (FileStatus file : cs.getChangedFiles()) {
-                        IPath root = new Path(cs.getHgRoot().getCanonicalPath());
-                        IPath fileRelPath = new Path(file.getPath());
-                        IPath fileAbsPath = root.append(fileRelPath);
-
-                        SortedSet<ChangeSet> revs = addChangeSetRevisions(cs,
-                                fileAbsPath);
-                        fileRevisions.put(fileAbsPath, revs);
-
-                    }
-                }
-
                 // hg root
-                IPath repoPath = new Path(cs.getHgRoot().getCanonicalPath());
-
-                SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(cs,
-                        repoPath);
-
-                fileRevisions.put(repoPath, projectRevs);
-
-                // given path
-                IPath path = res.getLocation();
-                SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, path);
-                fileRevisions.put(path, pathRevs);
-
+                repoPath = new Path(cs.getHgRoot().getCanonicalPath());
             } catch (IOException e) {
                 throw new HgException(e.getLocalizedMessage(), e);
             }
+            if (cs.getChangedFiles() != null) {
+                for (FileStatus file : cs.getChangedFiles()) {
+                    IPath fileAbsPath = repoPath.append(file.getPath());
+                    SortedSet<ChangeSet> revs = addChangeSetRevisions(cs,
+                            fileAbsPath);
+                    fileRevisions.put(fileAbsPath, revs);
+                }
+            }
+
+            SortedSet<ChangeSet> projectRevs = addChangeSetRevisions(cs, repoPath);
+
+            fileRevisions.put(repoPath, projectRevs);
+
+            // given path
+            IPath path = res.getLocation();
+            SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, path);
+            fileRevisions.put(path, pathRevs);
         }
 
-        /**
-         * @param fileRevisions
-         * @param cs
-         * @param res
-         * @return
-         */
-        private SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs,
-                IPath path) {
+        private SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs, IPath path) {
             SortedSet<ChangeSet> fileRevs = fileRevisions.get(path);
             if (fileRevs == null) {
                 fileRevs = new TreeSet<ChangeSet>();
@@ -316,7 +293,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             fileRevs.add(cs);
             return fileRevs;
         }
-
     }
 
     private static final String STYLE_SRC = "/styles/log_style"; //$NON-NLS-1$
@@ -359,22 +335,24 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         File stylefile = sl.append(style).toFile();
         File tmplfile = sl.append(style_tmpl).toFile();
 
-        ClassLoader cl = AbstractParseChangesetClient.class.getClassLoader();
-
         if (stylefile.canRead() && tmplfile.canRead()) {
             // Already have copies, return the file reference to the style file
             stylefile.deleteOnExit();
             tmplfile.deleteOnExit();
             return stylefile;
         }
+
+        ClassLoader cl = AbstractParseChangesetClient.class.getClassLoader();
         // Need to make copies into the state directory from the jar file.
         // set delete on exit so a new copy is made each time eclipse is started
         // so we don't use stale copies on plugin updates.
         InputStream styleistr = cl.getResourceAsStream(style_src);
         InputStream tmplistr = cl.getResourceAsStream(style_tmpl_src);
+        OutputStream styleostr = null;
+        OutputStream tmplostr = null;
         try {
-            OutputStream styleostr = new FileOutputStream(stylefile);
-            OutputStream tmplostr = new FileOutputStream(tmplfile);
+            styleostr = new FileOutputStream(stylefile);
+            tmplostr = new FileOutputStream(tmplfile);
             tmplfile.deleteOnExit();
 
             byte buffer[] = new byte[1024];
@@ -385,12 +363,24 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             while ((n = tmplistr.read(buffer)) != -1) {
                 tmplostr.write(buffer, 0, n);
             }
-            styleostr.close();
-            tmplostr.close();
-
             return stylefile;
         } catch (IOException e) {
             throw new HgException("Failed to setup hg style file", e); //$NON-NLS-1$
+        } finally {
+            try {
+                if(styleostr != null) {
+                    styleostr.close();
+                }
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+            try {
+                if(tmplostr != null) {
+                    tmplostr.close();
+                }
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
         }
     }
 
@@ -422,7 +412,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * 
      * @param input
      *            output from the hg log command
-     * @param proj
      * @param withFiles
      *            Are files included in the log output
      * @param direction
@@ -465,16 +454,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         return fileRevisions;
     }
 
-    /**
-     * @param hgRoot
-     * @param bundleFile
-     * @param repository
-     * @param direction
-     * @param res
-     * @param fileRevisions
-     * @param patches 
-     * @return
-     */
     private static ContentHandler getHandler(IResource res,
             Direction direction, HgRepositoryLocation repository,
             File bundleFile, File hgRoot,
