@@ -39,14 +39,14 @@ public class OutgoingChangesetCache extends AbstractCache {
      * The Map has the following structure: RepositoryLocation -> IResource ->
      * Changeset-Set
      */
-    private static Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> outgoingChangeSets;
-    private static Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
+    private final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> outgoingChangeSets;
+    private final Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
 
     private OutgoingChangesetCache() {
         outgoingChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
-    public static OutgoingChangesetCache getInstance() {
+    public synchronized static OutgoingChangesetCache getInstance() {
         if (instance == null) {
             instance = new OutgoingChangesetCache();
         }
@@ -78,7 +78,7 @@ public class OutgoingChangesetCache extends AbstractCache {
         if (MercurialStatusCache.getInstance().isSupervised(resource)) {
 
             Map<IPath, SortedSet<ChangeSet>> repoMap = outgoingChangeSets
-                    .get(repositoryLocation);
+            .get(repositoryLocation);
 
             SortedSet<ChangeSet> revisions = null;
             if (repoMap != null) {
@@ -109,7 +109,7 @@ public class OutgoingChangesetCache extends AbstractCache {
             lock.unlock();
         }
         Map<IPath, SortedSet<ChangeSet>> repoOutgoing = outgoingChangeSets
-                .get(repositoryLocation);
+        .get(repositoryLocation);
 
         SortedSet<ChangeSet> revisions = null;
         if (repoOutgoing != null) {
@@ -137,9 +137,9 @@ public class OutgoingChangesetCache extends AbstractCache {
      * 
      * @param resource
      * @param repositoryLocation
-     * @return
+     * @return never null
      */
-    public IResource[] getOutgoingMembers(IResource resource,
+    public Set<IResource> getOutgoingMembers(IResource resource,
             HgRepositoryLocation repositoryLocation) {
         ReentrantLock lock = getLock(resource);
         if (lock.isLocked()) {
@@ -147,9 +147,8 @@ public class OutgoingChangesetCache extends AbstractCache {
             lock.unlock();
         }
         Map<IPath, SortedSet<ChangeSet>> changeSets = outgoingChangeSets
-                .get(repositoryLocation);
-        Set<IResource> members = getMembers(resource, changeSets);
-        return members.toArray(new IResource[members.size()]);
+        .get(repositoryLocation);
+        return getMembers(resource, changeSets);
     }
 
     /**

@@ -10,11 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -39,30 +38,30 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * 
  */
 public class IncomingChangesetCache extends AbstractCache {
-    private static IncomingChangesetCache instance = null;
-    private static Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
+    private static IncomingChangesetCache instance;
+    private final Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
 
     /**
      * The Map has the following structure: RepositoryLocation -> IResource ->
      * Changeset-Set
      */
-    private static Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
+    private final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
 
     private IncomingChangesetCache() {
         incomingChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
-    public static IncomingChangesetCache getInstance() {
+    public synchronized static IncomingChangesetCache getInstance() {
         if (instance == null) {
             instance = new IncomingChangesetCache();
         }
         return instance;
     }
-    
+
     public synchronized void clear(HgRepositoryLocation repo) {
         incomingChangeSets.remove(repo);
     }
-    
+
     public synchronized void clear() {
         incomingChangeSets.clear();
         locks.clear();
@@ -86,19 +85,19 @@ public class IncomingChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
-            throws HgException {
+    throws HgException {
         ReentrantLock lock = getLock(objectResource);
         if (lock.isLocked()) {
             lock.lock();
             lock.unlock();
         }
         Set<HgRepositoryLocation> repos = MercurialEclipsePlugin
-                .getRepoManager().getAllProjectRepoLocations(
-                        objectResource.getProject());
+        .getRepoManager().getAllProjectRepoLocations(
+                objectResource.getProject());
 
         SortedSet<ChangeSet> allChanges = new TreeSet<ChangeSet>();
         for (Iterator<HgRepositoryLocation> iterator = repos.iterator(); iterator
-                .hasNext();) {
+        .hasNext();) {
             HgRepositoryLocation hgRepositoryLocation = iterator.next();
             SortedSet<ChangeSet> repoChanges = getIncomingChangeSets(
                     objectResource, hgRepositoryLocation);
@@ -126,7 +125,7 @@ public class IncomingChangesetCache extends AbstractCache {
             lock.unlock();
         }
         Map<IPath, SortedSet<ChangeSet>> repoIncoming = incomingChangeSets
-                .get(repositoryLocation);
+        .get(repositoryLocation);
 
         SortedSet<ChangeSet> revisions = null;
         if (repoIncoming != null) {
@@ -154,18 +153,18 @@ public class IncomingChangesetCache extends AbstractCache {
      * 
      * @param resource
      * @param repositoryLocation
-     * @return
+     * @return never null
      */
-    public IResource[] getIncomingMembers(IResource resource,
+    public Set<IResource> getIncomingMembers(IResource resource,
             HgRepositoryLocation repositoryLocation) {
         ReentrantLock lock = getLock(resource);
         try {
             lock.lock();
-            List<IResource> members = new ArrayList<IResource>();
+            Set<IResource> members = new HashSet<IResource>();
             Map<IPath, SortedSet<ChangeSet>> changeSets = incomingChangeSets
-                    .get(repositoryLocation);
+            .get(repositoryLocation);
             members.addAll(getMembers(resource, changeSets));
-            return members.toArray(new IResource[members.size()]);
+            return members;
         } finally {
             lock.unlock();
         }
@@ -180,10 +179,10 @@ public class IncomingChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public ChangeSet getNewestIncomingChangeSet(IResource objectResource)
-            throws HgException {
+    throws HgException {
         Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
-                .getRepoManager().getAllProjectRepoLocations(
-                        objectResource.getProject());
+        .getRepoManager().getAllProjectRepoLocations(
+                objectResource.getProject());
         SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>();
         for (HgRepositoryLocation hgRepositoryLocation : locs) {
             ChangeSet candidate = getNewestIncomingChangeSet(objectResource,
@@ -210,7 +209,7 @@ public class IncomingChangesetCache extends AbstractCache {
         if (MercurialStatusCache.getInstance().isSupervised(resource) || (!resource.exists())) {
 
             Map<IPath, SortedSet<ChangeSet>> repoMap = incomingChangeSets
-                    .get(repositoryLocation);
+            .get(repositoryLocation);
 
             SortedSet<ChangeSet> revisions = null;
             if (repoMap != null) {
@@ -242,7 +241,7 @@ public class IncomingChangesetCache extends AbstractCache {
                     .keySet()
                     .iterator(); iterator.hasNext();) {
                 Map<IPath, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
-                        .get(iterator.next());
+                .get(iterator.next());
                 if (currLocMap != null
                         && currLocMap.get(project.getLocation()) != null) {
                     return true;

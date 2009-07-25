@@ -12,7 +12,6 @@ package com.vectrace.MercurialEclipse.synchronize;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -94,13 +93,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 .getNewestOutgoingChangeSet(resource,
                         repositoryLocation);
 
-                // get newest incoming changeset
-                ChangeSet csIncoming = INCOMING_CACHE
-                .getNewestIncomingChangeSet(resource,
-                        repositoryLocation);
-
                 IResourceVariant outgoing;
-                IResourceVariant incoming;
 
                 // determine outgoing revision
                 IStorageMercurialRevision outgoingIStorage;
@@ -149,6 +142,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
                 // determine incoming revision
                 IStorageMercurialRevision incomingIStorage;
+                // get newest incoming changeset
+                ChangeSet csIncoming = INCOMING_CACHE.getNewestIncomingChangeSet(resource,
+                        repositoryLocation);
                 if (csIncoming != null) {
                     incomingIStorage = getIncomingIStorage(resource, csIncoming);
                 } else {
@@ -156,6 +152,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                     incomingIStorage = outgoingIStorage;
                 }
 
+                IResourceVariant incoming;
                 if (incomingIStorage != null) {
                     incoming = new MercurialResourceVariant(incomingIStorage);
                 } else {
@@ -195,30 +192,26 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
     @Override
     public boolean isSupervised(IResource resource) throws TeamException {
-
-        return STATUS_CACHE.isSupervised(resource)
-        && resource.getType() == IResource.FILE;
+        return resource.getType() == IResource.FILE && STATUS_CACHE.isSupervised(resource);
     }
 
     @Override
     public IResource[] members(IResource resource) throws TeamException {
         Set<IResource> members = new HashSet<IResource>();
-        IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
-        IResource[] outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(
+        Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
+        Set<IResource> outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(
                 resource, repositoryLocation);
-        IResource[] incomingMembers = INCOMING_CACHE.getIncomingMembers(
+        Set<IResource> incomingMembers = INCOMING_CACHE.getIncomingMembers(
                 resource, repositoryLocation);
 
-        if (localMembers != null && localMembers.length > 0) {
-            members.addAll(Arrays.asList(localMembers));
+        if (localMembers.size() > 0) {
+            members.addAll(localMembers);
         }
-
-        if (outgoingMembers != null && outgoingMembers.length > 0) {
-            members.addAll(Arrays.asList(outgoingMembers));
+        if (outgoingMembers.size() > 0) {
+            members.addAll(outgoingMembers);
         }
-
-        if (incomingMembers != null && incomingMembers.length > 0) {
-            members.addAll(Arrays.asList(incomingMembers));
+        if (incomingMembers.size() > 0) {
+            members.addAll(incomingMembers);
         }
 
         // we don't want ourself or the project as our member
@@ -260,8 +253,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             monitor
             .subTask(Messages
                     .getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-            IResource[] incomingMembers = null;
-            IResource[] outgoingMembers = null;
+            Set<IResource> incomingMembers = null;
+            Set<IResource> outgoingMembers = null;
             if (repositoryLocation != null) {
                 INCOMING_CACHE.clear(repositoryLocation);
                 INCOMING_CACHE.refreshIncomingChangeSets(project,
@@ -295,18 +288,16 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 return;
             }
             refreshed.add(project);
-            IResource[] localMembers = STATUS_CACHE.getLocalMembers(resource);
 
             Set<IResource> resourcesToRefresh = new HashSet<IResource>();
+            Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
+            resourcesToRefresh.addAll(localMembers);
 
-            if (localMembers != null) {
-                resourcesToRefresh.addAll(Arrays.asList(localMembers));
-            }
             if (incomingMembers != null) {
-                resourcesToRefresh.addAll(Arrays.asList(incomingMembers));
+                resourcesToRefresh.addAll(incomingMembers);
             }
             if (outgoingMembers != null) {
-                resourcesToRefresh.addAll(Arrays.asList(outgoingMembers));
+                resourcesToRefresh.addAll(outgoingMembers);
             }
 
             for (IResource res : resourcesToRefresh) {
@@ -344,8 +335,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
      * @return
      */
     public static Subscriber getInstance() {
-        MercurialSynchronizeSubscriber sub = new MercurialSynchronizeSubscriber();
-        return sub;
+        return new MercurialSynchronizeSubscriber();
     }
 
     /**
