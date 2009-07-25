@@ -13,7 +13,7 @@
  *     Bastian Doetsch	         - extraction from DecoratorStatus + additional methods
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
-
+ 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
