@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class CommitMergeHandler extends SingleResourceHandler {
-    
+
     /**
      * run the commit merge handler
      */
@@ -94,33 +94,29 @@ public class CommitMergeHandler extends SingleResourceHandler {
         Assert.isNotNull(message);
         IProject project = resource.getProject();
         Assert.isNotNull(resource.getProject());
-        
+
         // do hg call
         String result = HgCommitClient.commitProject(project, null, message);
-        
+
         // clear merge status in Eclipse
         project.setPersistentProperty(ResourceProperties.MERGING, null);
         project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-        
+
         // refresh caches
         new RefreshJob(Messages.getString("CommitMergeHandler.refreshStatusAndChangesetsAfterMergeCommit"), null, //$NON-NLS-1$
                 project).schedule();
         project.touch(null);
         new SafeUiJob(Messages.getString("CommitMergeHandler.clearingMergeView")) { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core
-             * .runtime.IProgressMonitor)
-             */
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
-                MergeView.getView().clearView();
+                MergeView view = MergeView.getView();
+                if(view != null) {
+                    view.clearView();
+                }
                 return super.runSafe(monitor);
             }
         }.schedule();
-        
+
         return result;
     }
 
