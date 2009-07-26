@@ -58,15 +58,15 @@ public class ChangePathsTableProvider extends TableViewer {
         table.setLinesVisible(true);
         table.setLayoutData(data);
         table.setLayout(layout);
-        
+
         this.addDoubleClickListener(new IDoubleClickListener() {
-            public void doubleClick(DoubleClickEvent event) {                
+            public void doubleClick(DoubleClickEvent event) {
                 IStructuredSelection sel = (IStructuredSelection) event
                         .getSelection();
                 FileStatus clickedFileStatus = (FileStatus) sel
                         .getFirstElement();
                 MercurialRevision rev = (MercurialRevision) getInput();
-                if (rev != null && clickedFileStatus != null) {                    
+                if (rev != null && clickedFileStatus != null) {
                     ChangeSet cs = rev.getChangeSet();
                     String[] parents = cs.getParents();
 
@@ -80,7 +80,7 @@ public class ChangePathsTableProvider extends TableViewer {
                             .getFileForLocation(fileAbsPath);
                         IStorageMercurialRevision thisRev = new IStorageMercurialRevision(file, cs.getChangeset());
                         IStorageMercurialRevision parentRev = new IStorageMercurialRevision(file, parents[0]);
-                        CompareUtils.openEditor(thisRev, parentRev, true, false);                        
+                        CompareUtils.openEditor(thisRev, parentRev, false, false);
                     } catch (IOException e) {
                         MercurialEclipsePlugin.logError(e);
                     }
