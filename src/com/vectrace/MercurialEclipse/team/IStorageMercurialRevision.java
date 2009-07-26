@@ -8,7 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan C                  - Code cleanup
- *     Bastian Doetsch			 - additions for sync
+ *     Bastian Doetsch           - additions for sync
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -37,21 +37,22 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 /**
  * @author zingo
- * 
+ *
  *         This is a IStorage subclass that can handle file revision
- * 
+ *
  */
 public class IStorageMercurialRevision implements IStorage {
     private String revision;
     private String global;
-    private IResource resource;
+    private final IResource resource;
     private ChangeSet changeSet;
     private HgRoot root;
-
+    private byte [] bytes;
+    
     /**
      * The recommended constructor to use is IStorageMercurialRevision(IResource res, String rev, String global,
      * ChangeSet cs)
-     * 
+     *
      */
     public IStorageMercurialRevision(IResource res, String changeset) {
         super();
@@ -70,7 +71,7 @@ public class IStorageMercurialRevision implements IStorage {
 
     /**
      * Constructs a new IStorageMercurialRevision with the given params.
-     * 
+     *
      * @param res
      *            the resource for which we want an IStorage revision
      * @param rev
@@ -90,7 +91,7 @@ public class IStorageMercurialRevision implements IStorage {
 
     /**
      * Constructs an {@link IStorageMercurialRevision} with the newest local changeset available.
-     * 
+     *
      * @param res
      *            the resource
      */
@@ -111,7 +112,7 @@ public class IStorageMercurialRevision implements IStorage {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
      */
     @SuppressWarnings("unchecked")
@@ -122,14 +123,15 @@ public class IStorageMercurialRevision implements IStorage {
         return null;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.core.resources.IStorage#getContents()
-     * 
-     * generate data content of the so called "file" in this case a revision, e.g. a hg cat --rev "rev" <file>
+    /**
+     * Generate data content of the so called "file" in this case a revision, e.g. a hg cat --rev "rev" %file%
+     * <p>
+     * {@inheritDoc}
      */
     public InputStream getContents() throws CoreException {
+        if(bytes != null){
+            return new ByteArrayInputStream(bytes);
+        }
         // Setup and run command
         String result = ""; //$NON-NLS-1$
         root = MercurialTeamProvider.getHgRoot(resource);
@@ -161,7 +163,9 @@ public class IStorageMercurialRevision implements IStorage {
         }
 
         try {
-            ByteArrayInputStream is = new ByteArrayInputStream(result.getBytes(root.getEncoding().name()));
+            byte[] bytes2 = result.getBytes(root.getEncoding().name());
+            ByteArrayInputStream is = new ByteArrayInputStream(bytes2);
+            bytes = bytes2;
             return is;
         } catch (UnsupportedEncodingException e) {
             throw new HgException(e.getLocalizedMessage(), e);
@@ -170,7 +174,7 @@ public class IStorageMercurialRevision implements IStorage {
 
     /*
      * (non-Javadoc)setContents(
-     * 
+     *
      * @see org.eclipse.core.resources.IStorage#getFullPath()
      */
     public IPath getFullPath() {
@@ -180,7 +184,7 @@ public class IStorageMercurialRevision implements IStorage {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.core.resources.IStorage#getName()
      */
     public String getName() {
@@ -199,9 +203,9 @@ public class IStorageMercurialRevision implements IStorage {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.core.resources.IStorage#isReadOnly()
-     * 
+     *
      * You can't write to other revisions then the current selected e.g. ReadOnly
      */
     public boolean isReadOnly() {
@@ -234,7 +238,7 @@ public class IStorageMercurialRevision implements IStorage {
     /**
      * This constructor is not recommended, as the revision index is not unique when working with other than the local
      * repository.
-     * 
+     *
      * @param res
      * @param rev
      */
