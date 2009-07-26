@@ -48,7 +48,7 @@ public class IStorageMercurialRevision implements IStorage {
     private ChangeSet changeSet;
     private HgRoot root;
     private byte [] bytes;
-    
+
     /**
      * The recommended constructor to use is IStorageMercurialRevision(IResource res, String rev, String global,
      * ChangeSet cs)
@@ -152,7 +152,8 @@ public class IStorageMercurialRevision implements IStorage {
                 }
 
             } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                return PatchUtils.getPatchedContents(file, changeSet.getPatches(), true);
+                bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
+                return new ByteArrayInputStream(bytes);
             } else {
                 // local: get the contents via cat
                 result = HgCatClient.getContent(file, changeSet.getChangesetIndex() + ""); //$NON-NLS-1$
@@ -163,10 +164,8 @@ public class IStorageMercurialRevision implements IStorage {
         }
 
         try {
-            byte[] bytes2 = result.getBytes(root.getEncoding().name());
-            ByteArrayInputStream is = new ByteArrayInputStream(bytes2);
-            bytes = bytes2;
-            return is;
+            bytes = result.getBytes(root.getEncoding().name());
+            return new ByteArrayInputStream(bytes);
         } catch (UnsupportedEncodingException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
