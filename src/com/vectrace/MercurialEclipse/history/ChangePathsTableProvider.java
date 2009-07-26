@@ -162,7 +162,12 @@ public class ChangePathsTableProvider extends TableViewer {
             } catch (HgException e) {
                 return EMPTY_CHANGE_PATHS;
             }
-            return map.get(rev.getResource().getLocation()).first().getChangedFiles();
+            if(map != null) {
+                return map.get(rev.getResource().getLocation()).first().getChangedFiles();
+            }
+            // TODO not sure why it happens (seems that this can be on first branched version)
+            // but sometimes hg returns a null version map...
+            return EMPTY_CHANGE_PATHS;
         }
 
         public void dispose() {
