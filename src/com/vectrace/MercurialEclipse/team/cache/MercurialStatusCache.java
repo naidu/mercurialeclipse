@@ -73,9 +73,9 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 /**
  * Caches the Mercurial Status of each file and offers methods for retrieving, clearing and refreshing repository state.
- * 
+ *
  * @author Bastian Doetsch
- * 
+ *
  */
 public class MercurialStatusCache extends AbstractCache implements IResourceChangeListener {
 
@@ -84,7 +84,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * @author bastian
-     * 
+     *
      */
     private final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
@@ -158,7 +158,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                                 + Messages.getString("MercurialStatusCache.autoshare.2")) { //$NON-NLS-1$
                             /*
                              * (non-Javadoc)
-                             * 
+                             *
                              * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob #runSafe
                              * (org.eclipse.core.runtime.IProgressMonitor)
                              */
@@ -179,46 +179,45 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 }
             }
 
-            if (res.getType() == IResource.FILE && !res.isTeamPrivateMember()
-                    && !res.isDerived() && !Team.isIgnoredHint(res)
-                    && (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) != null)) {
-
-                Set<IResource> addSet = added.get(project);
-                if (addSet == null) {
-                    addSet = new HashSet<IResource>();
-                }
-
-                Set<IResource> removeSet = removed.get(project);
-                if (removeSet == null) {
-                    removeSet = new HashSet<IResource>();
-                }
-
-                Set<IResource> changeSet = changed.get(project);
-                if (changeSet == null) {
-                    changeSet = new HashSet<IResource>();
-                }
-                int flag = delta.getFlags() & INTERESTING_CHANGES;
-                IResource resource = getResource(res);
-                // System.out.println("[ME-RV] " + res.getFullPath()
-                // + " interesting? Result: "
-                // + Integer.toHexString(flag));
-                switch (delta.getKind()) {
-                case IResourceDelta.ADDED:
-                    addSet.add(resource);
-                    added.put(project, addSet);
-                    break;
-                case IResourceDelta.CHANGED:
-                    if (flag != 0 && isSupervised(res)) {
-                        changeSet.add(resource);
-                        changed.put(project, changeSet);
+            if (!Team.isIgnoredHint(res) && (RepositoryProvider.getProvider(res.getProject(), MercurialTeamProvider.ID) != null)) {
+                if (res.getType() == IResource.FILE && !res.isTeamPrivateMember() && !res.isDerived()) {
+                    int flag = delta.getFlags() & INTERESTING_CHANGES;
+                    IResource resource = getResource(res);
+                    Set<IResource> addSet = added.get(project);
+                    if (addSet == null) {
+                        addSet = new HashSet<IResource>();
                     }
-                    break;
-                case IResourceDelta.REMOVED:
-                    if (isSupervised(res)) {
-                        removeSet.add(resource);
-                        removed.put(project, removeSet);
+
+                    Set<IResource> removeSet = removed.get(project);
+                    if (removeSet == null) {
+                        removeSet = new HashSet<IResource>();
                     }
-                    break;
+
+                    Set<IResource> changeSet = changed.get(project);
+                    if (changeSet == null) {
+                        changeSet = new HashSet<IResource>();
+                    }
+                    // System.out.println("[ME-RV] " + res.getFullPath()
+                    // + " interesting? Result: "
+                    // + Integer.toHexString(flag));
+                    switch (delta.getKind()) {
+                    case IResourceDelta.ADDED:
+                        addSet.add(resource);
+                        added.put(project, addSet);
+                        break;
+                    case IResourceDelta.CHANGED:
+                        if (flag != 0 && isSupervised(res)) {
+                            changeSet.add(resource);
+                            changed.put(project, changeSet);
+                        }
+                        break;
+                    case IResourceDelta.REMOVED:
+                        if (isSupervised(res)) {
+                            removeSet.add(resource);
+                            removed.put(project, removeSet);
+                        }
+                        break;
+                    }
                 }
                 // System.out
                 // .println("[ME-RV] Descending to next level (returning with true)");
@@ -363,7 +362,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Sets lock on HgRoot of given resource
-     * 
+     *
      * @param resource
      * @return
      * @throws HgException
@@ -391,7 +390,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Checks if status for given project is known.
-     * 
+     *
      * @param project
      *            the project to be checked
      * @return true if known, false if not.
@@ -409,9 +408,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Gets the status of the given resource from cache. The returned BitSet contains a BitSet of the status flags set.
-     * 
+     *
      * The flags correspond to the BIT_* constants in this class.
-     * 
+     *
      * @param resource
      *            the resource to get status for.
      * @return the BitSet with status flags.
@@ -476,7 +475,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     }
 
     /**
-     * 
+     *
      */
     public boolean hasUncommittedChanges(IResource[] resources) throws HgException {
         if (resources != null && resources.length > 0) {
@@ -528,7 +527,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Refreshes local repository status. No refresh of changesets.
-     * 
+     *
      * @param project
      * @throws TeamException
      */
@@ -742,7 +741,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Converts the given bit index to the status character Mercurial uses.
-     * 
+     *
      * @param bitIndex
      * @return
      */
@@ -771,7 +770,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Returns the status character used by Mercurial that applies to this resource
-     * 
+     *
      * @param resource
      *            the resource to query the status for
      * @return ! (deleted), R (removed), I (ignored), C (clean), ? (unknown), A (added) or M (modified)
@@ -785,7 +784,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Refreshes the status for each project in Workspace by questioning Mercurial.
-     * 
+     *
      * @throws TeamException
      *             if status check encountered problems.
      */
@@ -798,7 +797,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Checks whether Status of given resource is known.
-     * 
+     *
      * @param resource
      *            the resource to be checked
      * @return true if known, false if not
@@ -810,7 +809,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Gets all Projects managed by Mercurial whose status is known.
-     * 
+     *
      * @return an IProject[] of the projects
      */
     public IProject[] getAllManagedProjects() {
@@ -819,7 +818,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.core.resources.IResourceChangeListener#resourceChanged(org
      * .eclipse.core.resources.IResourceChangeEvent)
      */
@@ -931,7 +930,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Refreshes Status of resources in batches
-     * 
+     *
      * @param resources
      * @return
      * @throws HgException
@@ -975,7 +974,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Determines Members of given resource without adding itself.
-     * 
+     *
      * @param resource
      * @return never null
      * @throws HgException
@@ -1037,7 +1036,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Sets conflict marker on resource status
-     * 
+     *
      * @param local
      * @throws HgException
      */
@@ -1050,7 +1049,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * Removes conflict marker on resource status
-     * 
+     *
      * @param local
      * @throws HgException
      */
