@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -35,7 +36,6 @@ import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -46,7 +46,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 /**
  * @author zingo
- * 
+ *
  */
 public class ResourceDecorator extends LabelProvider implements
 ILightweightLabelDecorator, Observer
@@ -61,28 +61,28 @@ ILightweightLabelDecorator, Observer
     .getInstance();
 
     private static String[] fonts = new String[] {
-        HgDecoratorConstants.ADDED_FONT,
-        HgDecoratorConstants.CONFLICT_FONT,
-        HgDecoratorConstants.DELETED_FONT,
-        HgDecoratorConstants.REMOVED_FONT,
-        HgDecoratorConstants.UNKNOWN_FONT,
-        HgDecoratorConstants.IGNORED_FONT, HgDecoratorConstants.CHANGE_FONT };
+        ADDED_FONT,
+        CONFLICT_FONT,
+        DELETED_FONT,
+        REMOVED_FONT,
+        UNKNOWN_FONT,
+        IGNORED_FONT, CHANGE_FONT };
 
     private static String[] colors = new String[] {
-        HgDecoratorConstants.ADDED_BACKGROUND_COLOR,
-        HgDecoratorConstants.ADDED_FOREGROUND_COLOR,
-        HgDecoratorConstants.CHANGE_BACKGROUND_COLOR,
-        HgDecoratorConstants.CHANGE_FOREGROUND_COLOR,
-        HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR,
-        HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR,
-        HgDecoratorConstants.IGNORED_BACKGROUND_COLOR,
-        HgDecoratorConstants.IGNORED_FOREGROUND_COLOR,
-        HgDecoratorConstants.DELETED_BACKGROUND_COLOR,
-        HgDecoratorConstants.DELETED_FOREGROUND_COLOR,
-        HgDecoratorConstants.REMOVED_BACKGROUND_COLOR,
-        HgDecoratorConstants.REMOVED_FOREGROUND_COLOR,
-        HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR,
-        HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR };
+        ADDED_BACKGROUND_COLOR,
+        ADDED_FOREGROUND_COLOR,
+        CHANGE_BACKGROUND_COLOR,
+        CHANGE_FOREGROUND_COLOR,
+        CONFLICT_BACKGROUND_COLOR,
+        CONFLICT_FOREGROUND_COLOR,
+        IGNORED_BACKGROUND_COLOR,
+        IGNORED_FOREGROUND_COLOR,
+        DELETED_BACKGROUND_COLOR,
+        DELETED_FOREGROUND_COLOR,
+        REMOVED_BACKGROUND_COLOR,
+        REMOVED_FOREGROUND_COLOR,
+        UNKNOWN_BACKGROUND_COLOR,
+        UNKNOWN_FOREGROUND_COLOR };
 
     // set to true when having 2 different statuses in a folder flags it has
     // modified
@@ -102,7 +102,7 @@ ILightweightLabelDecorator, Observer
      * This method will ensure that the fonts and colors used by the decorator
      * are cached in the registries. This avoids having to syncExec when
      * decorating since we ensure that the fonts and colors are pre-created.
-     * 
+     *
      * @param f
      *            fonts ids to cache
      * @param c
@@ -229,60 +229,44 @@ ILightweightLabelDecorator, Observer
             overlay = DecoratorImages.modifiedDescriptor;
             prefix.append('>');
             if (coloriseLabels) {
-                setBackground(d,
-                        HgDecoratorConstants.CHANGE_BACKGROUND_COLOR);
-                setForeground(d,
-                        HgDecoratorConstants.CHANGE_FOREGROUND_COLOR);
-                setFont(d, HgDecoratorConstants.CHANGE_FONT);
+                setBackground(d, CHANGE_BACKGROUND_COLOR);
+                setForeground(d, CHANGE_FOREGROUND_COLOR);
+                setFont(d, CHANGE_FONT);
             }
         } else {
             switch (output.length() - 1) {
             case MercurialStatusCache.BIT_IGNORE:
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.IGNORED_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.IGNORED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.IGNORED_FONT);
+                    setBackground(d, IGNORED_BACKGROUND_COLOR);
+                    setForeground(d, IGNORED_FOREGROUND_COLOR);
+                    setFont(d, IGNORED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_MODIFIED:
                 overlay = DecoratorImages.modifiedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.CHANGE_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.CHANGE_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.CHANGE_FONT);
+                    setBackground(d, CHANGE_BACKGROUND_COLOR);
+                    setForeground(d, CHANGE_FOREGROUND_COLOR);
+                    setFont(d, CHANGE_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_ADDED:
                 overlay = DecoratorImages.addedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(d,
-                            HgDecoratorConstants.ADDED_BACKGROUND_COLOR);
-                    setForeground(d,
-                            HgDecoratorConstants.ADDED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.ADDED_FONT);
+                    setBackground(d, ADDED_BACKGROUND_COLOR);
+                    setForeground(d, ADDED_FOREGROUND_COLOR);
+                    setFont(d, ADDED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_UNKNOWN:
                 overlay = DecoratorImages.notTrackedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.UNKNOWN_FONT);
+                    setBackground(d, UNKNOWN_BACKGROUND_COLOR);
+                    setForeground(d, UNKNOWN_FOREGROUND_COLOR);
+                    setFont(d, UNKNOWN_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_CLEAN:
@@ -294,39 +278,27 @@ ILightweightLabelDecorator, Observer
                 overlay = DecoratorImages.removedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.REMOVED_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.REMOVED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.REMOVED_FONT);
+                    setBackground(d, REMOVED_BACKGROUND_COLOR);
+                    setForeground(d, REMOVED_FOREGROUND_COLOR);
+                    setFont(d, REMOVED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_DELETED:
                 overlay = DecoratorImages.deletedStillTrackedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.DELETED_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.DELETED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.DELETED_FONT);
+                    setBackground(d, DELETED_BACKGROUND_COLOR);
+                    setForeground(d, DELETED_FOREGROUND_COLOR);
+                    setFont(d, DELETED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_CONFLICT:
                 overlay = DecoratorImages.conflictDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.CONFLICT_FONT);
+                    setBackground(d, CONFLICT_BACKGROUND_COLOR);
+                    setForeground(d, CONFLICT_FOREGROUND_COLOR);
+                    setFont(d, CONFLICT_FONT);
                 }
                 break;
             }
