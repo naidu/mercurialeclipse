@@ -1041,7 +1041,7 @@
    <extension point="org.eclipse.ui.themes">
     <themeElementCategory
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts"
-        label="Mercurial Eclipse"/>
+        label="Mercurial"/>
     <colorDefinition 
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.addedForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"

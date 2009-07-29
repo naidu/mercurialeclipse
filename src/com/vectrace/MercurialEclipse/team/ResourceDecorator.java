@@ -24,12 +24,15 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.themes.ITheme;
+import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
@@ -84,10 +87,11 @@ ILightweightLabelDecorator, Observer
         UNKNOWN_BACKGROUND_COLOR,
         UNKNOWN_FOREGROUND_COLOR };
 
-    // set to true when having 2 different statuses in a folder flags it has
-    // modified
-    private static boolean folder_logic_2MM;
-    private final ITheme theme;
+    /** set to true when having 2 different statuses in a folder flags it has modified */
+    private boolean folder_logic_2MM;
+    private ITheme theme;
+    private boolean colorise;
+    private boolean showChangeset;
 
     public ResourceDecorator() {
         configureFromPreferences();
@@ -95,8 +99,26 @@ ILightweightLabelDecorator, Observer
         LOCAL_CACHE.addObserver(this);
         INCOMING_CACHE.addObserver(this);
         theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-        this.ensureFontAndColorsCreated(fonts, colors);
+        ensureFontAndColorsCreated(fonts, colors);
+
+        PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if(!IThemeManager.CHANGE_CURRENT_THEME.equals(event.getProperty())){
+                    return;
+                }
+                theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+                ensureFontAndColorsCreated(fonts, colors);
+            }
+        });
+
+        MercurialEclipsePlugin.getDefault()
+            .getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                configureFromPreferences();
+            }
+        });
     }
+
 
     /**
      * This method will ensure that the fonts and colors used by the decorator
@@ -133,12 +155,25 @@ ILightweightLabelDecorator, Observer
         super.dispose();
     }
 
-    private static void configureFromPreferences() {
+    /**
+     * Init all the options we need from preferences to avoid doing this all the time
+     */
+    private void configureFromPreferences() {
         IPreferenceStore store = MercurialEclipsePlugin.getDefault()
         .getPreferenceStore();
         folder_logic_2MM = MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM
-        .equals(store
+            .equals(store
                 .getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
+        colorise = Boolean.valueOf(
+                    HgClients.getPreference(
+                            MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
+                    "false")).booleanValue(); //$NON-NLS-1$
+        showChangeset = Boolean
+            .valueOf(
+                HgClients
+                .getPreference(
+                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                "false")).booleanValue(); //$NON-NLS-1$
     }
 
     public void decorate(Object element, IDecoration d) {
@@ -155,9 +190,6 @@ ILightweightLabelDecorator, Observer
                 return;
             }
 
-            boolean coloriseLabels = isColorise();
-
-            boolean showChangeset = isShowChangeset();
             if (showChangeset) {
                 // get recent project versions
                 if (!STATUS_CACHE.getLock(project).isLocked()
@@ -169,8 +201,7 @@ ILightweightLabelDecorator, Observer
                     // finished.
                     RefreshJob job = new RefreshJob(
                             Messages
-                            .getString("ResourceDecorator.refreshingChangesetDeco"), null, resource //$NON-NLS-1$
-                            .getProject(), showChangeset);
+                            .getString("ResourceDecorator.refreshingChangesetDeco"), null, project, showChangeset); //$NON-NLS-1$
                     job.schedule();
                     job.join();
                     return;
@@ -194,7 +225,7 @@ ILightweightLabelDecorator, Observer
             StringBuilder prefix = new StringBuilder(2);
             BitSet output = STATUS_CACHE.getStatus(resource);
             if (output != null) {
-                overlay = decorate(output, prefix, d, coloriseLabels);
+                overlay = decorate(output, prefix, d, colorise);
             } else {
                 // empty folder, do nothing
             }
@@ -364,35 +395,6 @@ ILightweightLabelDecorator, Observer
         d.setFont(theme.getFontRegistry().get(id));
     }
 
-    /**
-     * @return
-     */
-    private boolean isShowChangeset() {
-        boolean showChangeset = Boolean
-        .valueOf(
-                HgClients
-                .getPreference(
-                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                "false")).booleanValue(); //$NON-NLS-1$
-        return showChangeset;
-    }
-
-    private boolean isColorise() {
-        boolean colorise = Boolean.valueOf(
-                HgClients.getPreference(
-                        MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
-                "false")).booleanValue(); //$NON-NLS-1$
-        return colorise;
-    }
-
-    /**
-     * @param resource
-     * @param project
-     * @param cs
-     * @param suffix
-     * @return
-     * @throws HgException
-     */
     private String getSuffixForFiles(IResource resource, ChangeSet cs)
     throws HgException {
         String suffix = ""; //$NON-NLS-1$
@@ -416,19 +418,12 @@ ILightweightLabelDecorator, Observer
         return suffix;
     }
 
-    /**
-     * @param project
-     * @param changeSet
-     * @return
-     * @throws CoreException
-     * @throws IOException
-     */
     private String getSuffixForProject(IProject project) throws CoreException,
     IOException {
         ChangeSet changeSet = null;
         String suffix = ""; //$NON-NLS-1$
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
-            if (isShowChangeset()) {
+            if (showChangeset) {
                 LocalChangesetCache.getInstance().getLocalChangeSets(project);
             }
             changeSet = LocalChangesetCache.getInstance()
@@ -447,7 +442,7 @@ ILightweightLabelDecorator, Observer
             suffix += changeSet.getChangesetIndex() + hex;
 
             String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-            if (branch != null && branch.length() > 0 && !branch.equals("default")) { //$NON-NLS-1$
+            if (branch != null && branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
                 suffix += " @ " + branch; //$NON-NLS-1$
             }
 
@@ -463,15 +458,6 @@ ILightweightLabelDecorator, Observer
             suffix += " ]"; //$NON-NLS-1$
         }
         return suffix;
-    }
-
-    /**
-     * Called when the configuration of the decorator changes
-     */
-    public static void onConfigurationChanged() {
-        String decoratorId = getDecoratorId();
-        configureFromPreferences();
-        PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
     }
 
     /**
