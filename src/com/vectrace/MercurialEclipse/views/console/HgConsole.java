@@ -29,13 +29,14 @@ import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * Console that shows the output of Hg commands. It is shown as a page in the
  * generic console view. It supports coloring for message, command, and error
  * lines in addition the font can be configured.
- * 
+ *
  * @since 3.0
  */
 public class HgConsole extends MessageConsole {
@@ -66,12 +67,12 @@ public class HgConsole extends MessageConsole {
     private MessageConsoleStream messageStream;
     private MessageConsoleStream errorStream;
 
-    private ConsoleDocument document;
+    private final ConsoleDocument document;
 
-    // format for timings printed to console
-    private static final DateFormat TIME_FORMAT = new SimpleDateFormat(
+    // format for timings printed to console. Not static to avoid thread issues
+    private final DateFormat TIME_FORMAT = new SimpleDateFormat(
             "m:ss.SSS"); //$NON-NLS-1$
-    
+
 
     // Indicates whether the console is visible in the Console view
     private boolean visible = false;
@@ -95,7 +96,7 @@ public class HgConsole extends MessageConsole {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.ui.console.AbstractConsole#init()
      */
     @Override
@@ -196,10 +197,10 @@ public class HgConsole extends MessageConsole {
                     commandStream.println(myLine);
                     break;
                 case ConsoleDocument.MESSAGE:
-                    messageStream.println(myLine); //$NON-NLS-1$
+                    messageStream.println(myLine);
                     break;
                 case ConsoleDocument.ERROR:
-                    errorStream.println(myLine); //$NON-NLS-1$
+                    errorStream.println(myLine);
                     break;
                 }
             } else {
@@ -208,11 +209,6 @@ public class HgConsole extends MessageConsole {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.console.MessageConsole#dispose()
-     */
     @Override
     protected void dispose() {
         // Here we can't call super.dispose() because we actually want the
@@ -245,67 +241,39 @@ public class HgConsole extends MessageConsole {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.internal.cHg.core.client.listeners.IConsoleListener#
-     * commandInvoked(java.lang.String)
-     */
     public void commandInvoked(String line) {
         commandStarted = System.currentTimeMillis();
         appendLine(ConsoleDocument.COMMAND, line);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.internal.cHg.core.client.listeners.IConsoleListener#
-     * messageLineReceived(java.lang.String)
-     */
     public void messageLineReceived(String line, IStatus status) {
-        appendLine(ConsoleDocument.MESSAGE, line); //$NON-NLS-1$
+        appendLine(ConsoleDocument.MESSAGE, line);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.internal.cHg.core.client.listeners.IConsoleListener#
-     * errorLineReceived(java.lang.String)
-     */
     public void errorLineReceived(String line, IStatus status) {
-        appendLine(ConsoleDocument.ERROR, line); //$NON-NLS-1$
+        appendLine(ConsoleDocument.ERROR, line);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.internal.cHg.core.client.listeners.IConsoleListener#
-     * commandCompleted(org.eclipse.core.runtime.IStatus, java.lang.Exception)
-     */
+    private boolean isDebugTimeEnabled() {
+        return Boolean
+                .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
+    }
+
     public void commandCompleted(IStatus status, Throwable exception) {
-        long commandRuntime = System.currentTimeMillis() - commandStarted;
-        String time;
-        try {
-            time = Messages.getString("HgConsole.doneIn") + TIME_FORMAT.format(new Date(commandRuntime)) //$NON-NLS-1$
-                    + Messages.getString("HgConsole.minutes"); //$NON-NLS-1$
-        } catch (RuntimeException e) {
-            MercurialEclipsePlugin.logError(e);
-            time = Messages.getString("HgConsole.unknown"); //$NON-NLS-1$
-        }
+        String time = getTimeString();
         String statusText;
         if (status != null) {
-            boolean includeRoot = true;
+            boolean includeRoot;
+            statusText = status.getMessage();
+            if(time.length() > 0){
+                statusText += "(" + time + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            }
             if (status.getSeverity() == IStatus.ERROR) {
-                statusText = status.getMessage() + "(" + time + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                 appendLine(ConsoleDocument.ERROR, statusText);
                 includeRoot = false;
             } else {
-                statusText = time;
                 appendLine(ConsoleDocument.MESSAGE, statusText);
+                includeRoot = true;
             }
 
             outputStatus(status, includeRoot, includeRoot ? 0 : 1);
@@ -319,10 +287,29 @@ public class HgConsole extends MessageConsole {
             if (exception instanceof CoreException) {
                 outputStatus(((CoreException) exception).getStatus(), true, 1);
             }
-        } else {
+        } else if(isDebugTimeEnabled()){
             appendLine(ConsoleDocument.COMMAND, time);
         }
-        appendLine(ConsoleDocument.COMMAND, ""); //$NON-NLS-1$
+    }
+
+    /**
+     *
+     * @return empty string if time measurement was not enabled or we are failed to measure it
+     */
+    private String getTimeString() {
+        if(!isDebugTimeEnabled()){
+            return "";
+        }
+        String time;
+        long commandRuntime = System.currentTimeMillis() - commandStarted;
+        try {
+            time = Messages.getString("HgConsole.doneIn") + TIME_FORMAT.format(new Date(commandRuntime)) //$NON-NLS-1$
+                    + Messages.getString("HgConsole.minutes"); //$NON-NLS-1$
+        } catch (RuntimeException e) {
+            MercurialEclipsePlugin.logError(e);
+            time = ""; // Messages.getString("HgConsole.unknown"); //$NON-NLS-1$
+        }
+        return time;
     }
 
     private void outputStatus(IStatus status, boolean includeParent,
@@ -355,13 +342,6 @@ public class HgConsole extends MessageConsole {
         appendLine(ConsoleDocument.COMMAND, buffer.toString());
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.util.IPropertyChangeListener#propertyChange(org.eclipse
-     * .jface.util.PropertyChangeEvent)
-     */
     public void propertyChange(PropertyChangeEvent event) {
         String property = event.getProperty();
         // colors
@@ -408,7 +388,7 @@ public class HgConsole extends MessageConsole {
     /**
      * Returns the NLSd message based on the status returned from the Hg
      * command.
-     * 
+     *
      * @param status
      *            an NLSd message based on the status returned from the Hg
      *            command.
