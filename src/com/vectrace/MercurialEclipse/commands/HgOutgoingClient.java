@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
-    
+
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
         try {
@@ -35,12 +35,12 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
                     .getStyleFile(true).getCanonicalPath());
             setRepository(repository, command);
-            
+
             String result = getResult(command);
             if (result == null) {
                 return null;
             }
-            
+
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
                     res, result, true, Direction.OUTGOING, repository, null,
                     getOutgoingPatches(res, repository));
@@ -49,7 +49,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
-    
+
     private static IFilePatch[] getOutgoingPatches(IResource res,
             HgRepositoryLocation repository) throws HgException {
         String outgoingPatch = getOutgoingPatch(res, repository);
@@ -64,10 +64,10 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             }
             return result;
         } catch (HgException hg) {
-            if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
+            if (hg.getStatus().getCode() == 1) { 
                 return null;
             }
-            throw new HgException(hg.getMessage(), hg);
+            throw hg;
         }
     }
 
@@ -88,7 +88,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             command.addOptions(repository.getLocation());
         }
     }
-    
+
     private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository) throws HgException {
         AbstractShellCommand command = getCommand(res);
         command.addOptions("-p");

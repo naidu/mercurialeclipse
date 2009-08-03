@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * reserved. This program and the accompanying materials are made available
  * under the terms of the Eclipse Public License v1.0 which accompanies this
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
- * 
+ *
  * Contributors: Bastian Doetsch - implementation
  ******************************************************************************/
 public class HgIncomingClient extends AbstractParseChangesetClient {
@@ -30,7 +30,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      * Gets all File Revisions that are incoming and saves them in a bundle
      * file. There can be more than one revision per file as this method obtains
      * all new changesets.
-     * 
+     *
      * @param proj
      * @param repositories
      * @return Map containing all revisions of the IResources contained in the
@@ -70,7 +70,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                     Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
             return revisions;
         } catch (HgException hg) {
-            if (hg.getMessage().contains("return code: 1")) { //$NON-NLS-1$
+            if (hg.getStatus().getCode() == 1) {
                 return null;
             }
             throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);

@@ -46,4 +46,22 @@ public class HgException extends TeamException {
                 message, null));
     }
 
+    @Override
+    public String getMessage() {
+        IStatus status = getStatus();
+        StringBuilder sb = new StringBuilder(status.getMessage());
+        sb.append(", error code: ").append(status.getCode());
+        return sb.toString();
+    }
+
+    @Override
+    public String getLocalizedMessage() {
+        return getMessage();
+    }
+
+    @Override
+    public String toString() {
+        // never null
+        return getMessage();
+    }
 }

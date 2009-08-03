@@ -148,7 +148,13 @@ public abstract class AbstractShellCommand {
             List<String> cmd = getCommands();
             // don't output fallbackencoding
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-            final String commandInvoked = cmdString.substring(0, cmdString.length() - 1);
+            final String commandInvoked;
+            if(workingDir == null) {
+                commandInvoked = cmdString.substring(0, cmdString.length() - 1);
+            } else {
+                commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
+            }
+
 
             Charset charset = null;
             if (workingDir != null) {
@@ -188,16 +194,14 @@ public abstract class AbstractShellCommand {
                 final int exitCode = process.waitFor();
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    logConsoleCompleted(msg, exitCode, null);
                     if (isDebugMode()) {
-                        logConsoleMessage(msg, null);
+                        logConsoleCompleted(msg, exitCode, null);
                     }
                     return true;
                 }
 
                 // exit code > 0
-                final HgException hgex = new HgException("Process error, return code: " + exitCode //$NON-NLS-1$
-                        + ", message: " + getMessage(output)); //$NON-NLS-1$
+                final HgException hgex = new HgException(exitCode, getMessage(output));
 
                 // exit code == 1 usually isn't fatal.
                 logConsoleCompleted(msg, exitCode, hgex);
@@ -318,9 +322,6 @@ public abstract class AbstractShellCommand {
         return msg;
     }
 
-    /**
-     * @return
-     */
     private boolean isDebugMode() {
         return Boolean
                 .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
