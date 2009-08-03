@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
- *     Stefan Groschupf          - logError 
+ *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
@@ -26,10 +26,30 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 /**
  * @author zingo
- * 
+ *
  */
 public class MercurialRevision extends FileRevision {
-    
+
+    private final IResource resource;
+    private final ChangeSet changeSet;
+
+    /** Cached data */
+    private IStorageMercurialRevision iStorageMercurialRevision;
+    private final GChangeSet gChangeSet;
+    private String revision;
+    private String hash;
+    private final Signature signature;
+
+    public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet,
+            IResource resource, Signature sig) {
+        super();
+        this.changeSet = changeSet;
+        this.gChangeSet = gChangeSet;
+        this.revision = Integer.valueOf(changeSet.getChangesetIndex()).toString(); 
+        this.hash = changeSet.getChangeset();
+        this.resource = resource;
+        this.signature = sig;
+    }
 
     public Signature getSignature() {
         return signature;
@@ -75,25 +95,7 @@ public class MercurialRevision extends FileRevision {
         return true;
     }
 
-    private IResource resource;
-    private ChangeSet changeSet;
-    private IStorageMercurialRevision iStorageMercurialRevision; // Cached data
-    private final GChangeSet gChangeSet;
-    private String revision;
-    private String hash;
-    private Signature signature;
-    
-    public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet,
-            IResource resource, Signature sig) {
-        super();
-        this.changeSet = changeSet;
-        this.gChangeSet = gChangeSet;
 
-        this.revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
-        this.hash = changeSet.getChangeset();
-        this.resource = resource;
-        this.signature = sig;
-    }
 
     public ChangeSet getChangeSet() {
         return changeSet;
@@ -103,11 +105,6 @@ public class MercurialRevision extends FileRevision {
         return gChangeSet;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.history.IFileRevision#getName()
-     */
     public String getName() {
         return resource.getName();
     }
@@ -117,13 +114,6 @@ public class MercurialRevision extends FileRevision {
         return changeSet.getChangeset();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.core.history.IFileRevision#getStorage(org.eclipse.core
-     * .runtime.IProgressMonitor)
-     */
     public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
         if (iStorageMercurialRevision == null) {
             iStorageMercurialRevision = new IStorageMercurialRevision(resource,
@@ -132,22 +122,10 @@ public class MercurialRevision extends FileRevision {
         return iStorageMercurialRevision;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.history.IFileRevision#isPropertyMissing()
-     */
     public boolean isPropertyMissing() {
         return false;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.core.history.IFileRevision#withAllProperties(org.eclipse
-     * .core.runtime.IProgressMonitor)
-     */
     public IFileRevision withAllProperties(IProgressMonitor monitor)
             throws CoreException {
         return null;
@@ -186,5 +164,38 @@ public class MercurialRevision extends FileRevision {
     public IResource getResource() {
         return resource;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("hg rev [");
+        if (revision != null) {
+            builder.append("revision=");
+            builder.append(revision);
+            builder.append(", ");
+        }
+        if (changeSet != null) {
+            builder.append("changeSet=");
+            builder.append(changeSet);
+            builder.append(", ");
+        }
+        if (resource != null) {
+            builder.append("resource=");
+            builder.append(resource);
+            builder.append(", ");
+        }
+        if (signature != null) {
+            builder.append("signature=");
+            builder.append(signature);
+            builder.append(", ");
+        }
+        if (gChangeSet != null) {
+            builder.append("gChangeSet=");
+            builder.append(gChangeSet);
+        }
+        builder.append("]");
+        return builder.toString();
+    }
+
 
 }
