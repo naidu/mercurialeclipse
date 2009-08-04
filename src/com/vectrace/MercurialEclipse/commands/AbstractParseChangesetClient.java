@@ -41,6 +41,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -49,15 +50,15 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
  * objects.
- * 
+ *
  * @author Bastian Doetsch
- * 
+ *
  */
 abstract class AbstractParseChangesetClient extends AbstractClient {
 
     /**
      * @author bastian
-     * 
+     *
      */
     private static final class ChangesetContentHandler implements ContentHandler {
 
@@ -77,7 +78,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private final Direction direction;
         private final HgRepositoryLocation repository;
         private final File bundleFile;
-        private final File hgRoot;
+        private final HgRoot hgRoot;
         private final Map<IPath, SortedSet<ChangeSet>> fileRevisions;
         private final Set<String> filesModified = new TreeSet<String>();
         private final Set<String> filesAdded = new TreeSet<String>();
@@ -90,7 +91,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
 
         public ChangesetContentHandler(IResource res, Direction direction,
-                HgRepositoryLocation repository, File bundleFile, File hgRoot,
+                HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot,
                 Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {
             ChangesetContentHandler.res = res;
             this.direction = direction;
@@ -113,7 +114,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         /**
          * Remove a leading tab on each line in the string.
-         * 
+         *
          * @param string
          * @return
          */
@@ -311,7 +312,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * These style files are included in the plugin jar file and need to be
      * copied out of there into the plugin state area so a path can be given to
      * the hg command.
-     * 
+     *
      * @param withFiles
      *            return the style that includes the files if true.
      * @return a File reference to an existing file
@@ -389,7 +390,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * <p>
      * Format of input is defined in the two style files in /styles and is as
      * follows for each changeset.
-     * 
+     *
      * <pre>
      * &lt;cs&gt;
      * &lt;br v=&quot;{branches}&quot;/&gt;
@@ -407,9 +408,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * &lt;fd v=&quot;{file_dels}&quot;/&gt;
      * &lt;/cs&gt;
      * </pre>
-     * 
+     *
      * <br>
-     * 
+     *
      * @param input
      *            output from the hg log command
      * @param withFiles
@@ -433,7 +434,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             return fileRevisions;
         }
 
-        File hgRoot = MercurialTeamProvider.getHgRoot(res);
+        HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
         String myInput = "<top>" + input + "</top>"; //$NON-NLS-1$ //$NON-NLS-2$
         try {
             XMLReader reader = XMLReaderFactory.createXMLReader();
@@ -456,7 +457,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
     private static ContentHandler getHandler(IResource res,
             Direction direction, HgRepositoryLocation repository,
-            File bundleFile, File hgRoot,
+            File bundleFile, HgRoot hgRoot,
             Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {
         handler = new ChangesetContentHandler(res, direction, repository,
                 bundleFile, hgRoot, fileRevisions, patches);
@@ -467,7 +468,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * Clean the string of special chars that might be invalid for the XML
      * parser. Return the cleaned string (special chars replaced by ordinary
      * spaces).
-     * 
+     *
      * @param str
      *            the string to clean
      * @return the cleaned string

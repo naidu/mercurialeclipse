@@ -50,22 +50,22 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private HgRepositoryLocation repository;
     private Direction direction;
     private String summary;
-    private File hgRoot;
+    private HgRoot hgRoot;
     private IFilePatch[] patches;
 
     /**
      * This class is getting too tangled up with everything else, has a a large
      * amount of fields (17) and worse is that it is not immutable, which makes
      * the entanglement even more dangerous.
-     * 
+     *
      * My plan is to make it immutable by using the builder pattern and remove
      * all setters. FileStatus fetching may(or may not) be feasable to put
      * elsewhere or fetched "on-demand" by this class itself. Currently, it has
      * no operations and it purely a data class which isn't very OO efficent.
-     * 
+     *
      * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing,
      * isLocal)
-     * 
+     *
      */
 
     public static class Builder {
@@ -112,7 +112,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
             return this;
         }
 
-        public Builder hgRoot(File hgRoot) {
+        public Builder hgRoot(HgRoot hgRoot) {
             this.cs.hgRoot = hgRoot;
             return this;
         }
@@ -260,7 +260,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see java.lang.Object#hashCode()
      */
     @Override
@@ -348,9 +348,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     /**
-     * @return the hgRoot
+     * @return the hgRoot file (always as <b>canonical path</b>)
+     * @see File#getCanonicalPath()
      */
-    public File getHgRoot() {
+    public HgRoot getHgRoot() {
         return hgRoot;
     }
 
