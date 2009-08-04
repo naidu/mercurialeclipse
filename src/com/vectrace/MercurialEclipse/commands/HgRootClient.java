@@ -22,14 +22,19 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * Calls hg root
- * 
+ *
  * @author bastian
- * 
+ *
  */
 public class HgRootClient {
 
     private final static Map<String, File> roots = new HashMap<String, File>();
 
+    /**
+     * @param resource
+     * @return hg root as <b>canonical path</b> (see {@link File#getCanonicalPath()})
+     * @throws HgException
+     */
     public static String getHgRoot(IResource resource) throws HgException {
         File root = getHgRootAsFile(resource);
         try {
@@ -45,7 +50,7 @@ public class HgRootClient {
 
     /**
      * @param resource
-     * @return
+     * @return hg root as <b>canonical file</b> (see {@link File#getCanonicalFile()})
      * @throws HgException
      */
     public static File getHgRootAsFile(IResource resource) throws HgException {
@@ -56,7 +61,7 @@ public class HgRootClient {
 
     /**
      * @param file
-     * @return
+     * @return hg root as <b>canonical path</b> (see {@link File#getCanonicalPath()})
      * @throws HgException
      */
     public static File getHgRoot(File file) throws HgException {

@@ -13,14 +13,15 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.charset.Charset;
 
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
 /**
+ * Hg root represents the root of hg repository as <b>canonical path</b>
+ * (see {@link File#getCanonicalPath()})
+ *
  * @author bastian
- * 
  */
 public class HgRoot extends File {
 
@@ -29,41 +30,12 @@ public class HgRoot extends File {
     private Charset fallbackencoding;
     private File config;
 
-    /**
-     * @param pathname
-     */
-    public HgRoot(String pathname) {
-        super(pathname);
-        init();
+    public HgRoot(String pathname) throws IOException {
+        this(new File(pathname));
     }
 
     public HgRoot(File file) throws IOException {
-        this(file.getCanonicalPath());
-    }
-
-    /**
-     * @param uri
-     */
-    public HgRoot(URI uri) {
-        super(uri);
-        init();
-    }
-
-    /**
-     * @param parent
-     * @param child
-     */
-    public HgRoot(String parent, String child) {
-        super(parent, child);
-        init();
-    }
-
-    /**
-     * @param parent
-     * @param child
-     */
-    public HgRoot(File parent, String child) {
-        super(parent, child);
+        super(file.getCanonicalPath());
         init();
     }
 
@@ -84,14 +56,11 @@ public class HgRoot extends File {
         if (fallbackencoding == null) {
             if (fallback == null || fallback.length() == 0) {
                 fallback = "windows-1251";
-            } 
-            fallbackencoding = Charset.forName(fallback);    
+            }
+            fallbackencoding = Charset.forName(fallback);
         }
     }
 
-    /**
-     * @param enc
-     */
     public void setEncoding(Charset charset) {
         this.encoding = charset;
     }
