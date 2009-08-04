@@ -10,11 +10,11 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.ColumnWeightData;
@@ -35,7 +35,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -70,20 +69,14 @@ public class ChangePathsTableProvider extends TableViewer {
                     ChangeSet cs = rev.getChangeSet();
                     String[] parents = cs.getParents();
 
-                    IPath hgRoot;
-                    try {
-                        hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
-                        IPath fileRelPath = new Path(clickedFileStatus
-                                .getPath());
-                        IPath fileAbsPath = hgRoot.append(fileRelPath);
-                        IResource file = rev.getResource().getWorkspace().getRoot()
-                            .getFileForLocation(fileAbsPath);
-                        IStorageMercurialRevision thisRev = new IStorageMercurialRevision(file, cs.getChangeset());
-                        IStorageMercurialRevision parentRev = new IStorageMercurialRevision(file, parents[0]);
-                        CompareUtils.openEditor(thisRev, parentRev, false, false);
-                    } catch (IOException e) {
-                        MercurialEclipsePlugin.logError(e);
-                    }
+                    IPath hgRoot = new Path(cs.getHgRoot().getPath());
+                    IPath fileRelPath = new Path(clickedFileStatus.getPath());
+                    IPath fileAbsPath = hgRoot.append(fileRelPath);
+                    IResource file = ResourcesPlugin.getWorkspace().getRoot()
+                        .getFileForLocation(fileAbsPath);
+                    IStorageMercurialRevision thisRev = new IStorageMercurialRevision(file, cs.getChangeset());
+                    IStorageMercurialRevision parentRev = new IStorageMercurialRevision(file, parents[0]);
+                    CompareUtils.openEditor(thisRev, parentRev, false, false);
                 }
             }
         });

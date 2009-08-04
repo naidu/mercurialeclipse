@@ -260,13 +260,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         private final void addChangesetToResourceMap(final ChangeSet cs)
         throws HgException {
-            IPath repoPath;
-            try {
-                // hg root
-                repoPath = new Path(cs.getHgRoot().getCanonicalPath());
-            } catch (IOException e) {
-                throw new HgException(e.getLocalizedMessage(), e);
-            }
+            IPath repoPath = new Path(cs.getHgRoot().getPath());
+
             if (cs.getChangedFiles() != null) {
                 for (FileStatus file : cs.getChangedFiles()) {
                     IPath fileAbsPath = repoPath.append(file.getPath());
