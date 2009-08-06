@@ -68,7 +68,7 @@ public class SWTWidgetHelper {
         button.setLayoutData(data);
         return button;
     }
-    
+
     /**
      * @return
      */
@@ -102,7 +102,7 @@ public class SWTWidgetHelper {
         combo.setLayoutData(data);
         return combo;
     }
-    
+
 
     /**
      * Utility method that creates an editable combo box
@@ -233,6 +233,23 @@ public class SWTWidgetHelper {
     }
 
     /**
+     * Create a password entry field specific for this application
+     * 
+     * @param parent
+     *            the parent of the new text field
+     * @return the new password field
+     */
+    public static Text createPasswordField(Composite parent) {
+        Text text = new Text(parent, SWT.SINGLE | SWT.BORDER | SWT.PASSWORD );
+        GridData data = new GridData(GridData.FILL_HORIZONTAL);
+        data.verticalAlignment = GridData.CENTER;
+        data.grabExcessVerticalSpace = false;
+        data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH;
+        text.setLayoutData(data);
+        return text;
+    }
+
+    /**
      * Utility method to create a radio button
      * 
      * @param parent
@@ -309,7 +326,7 @@ public class SWTWidgetHelper {
             }
         });
         listViewer
-                .setComparator(new org.eclipse.ui.model.WorkbenchViewerComparator());
+        .setComparator(new org.eclipse.ui.model.WorkbenchViewerComparator());
 
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = heightHint;
@@ -353,7 +370,7 @@ public class SWTWidgetHelper {
             public String getText(Object element) {
                 ChangeSet cs = (ChangeSet) element;
                 return (cs.toString().concat("\t").concat(cs.getDate()).concat( //$NON-NLS-1$
-                        "\t").concat(cs.getUser())); //$NON-NLS-1$
+                "\t").concat(cs.getUser())); //$NON-NLS-1$
             }
         });
 
@@ -446,10 +463,10 @@ public class SWTWidgetHelper {
         // set up spell-check annotations
         final SourceViewerDecorationSupport decorationSupport = new SourceViewerDecorationSupport(
                 textBox, null, new DefaultMarkerAnnotationAccess(), EditorsUI
-                        .getSharedTextColors());
+                .getSharedTextColors());
 
         AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
-                .getAnnotationPreference(SpellingAnnotation.TYPE);
+        .getAnnotationPreference(SpellingAnnotation.TYPE);
 
         decorationSupport.setAnnotationPreference(pref);
         decorationSupport.install(EditorsUI.getPreferenceStore());
@@ -463,7 +480,7 @@ public class SWTWidgetHelper {
             }
         });
         GridData data = new GridData(GridData.FILL_BOTH);
-//        data.heightHint = heightHint;
+        //        data.heightHint = heightHint;
         textBox.getControl().setLayoutData(data);
         return textBox;
     }
