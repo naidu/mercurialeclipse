@@ -39,12 +39,13 @@ import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends SingleResourceHandler {
 
     @Override
-    protected void run(IResource resource) throws Exception {        
+    protected void run(IResource resource) throws Exception {
         merge(resource, getShell(), new NullProgressMonitor(), false, true);
     }
 
@@ -54,7 +55,7 @@ public class MergeHandler extends SingleResourceHandler {
      * @throws CoreException
      * @throws PartInitException
      */
-    public static String merge(IResource resource, Shell shell, IProgressMonitor monitor, 
+    public static String merge(IResource resource, Shell shell, IProgressMonitor monitor,
             boolean autoPickOtherHead, boolean showCommitDialog) throws HgException, CoreException,
             PartInitException {
         IProject project = resource.getProject();
@@ -66,18 +67,20 @@ public class MergeHandler extends SingleResourceHandler {
             if (!autoPickOtherHead) {
                 MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
                 mb.setText("Merge");
-                String csSummary = "Changeset: " + cs.getRevision().toString().substring(0, 20) + "\n" + 
+                String csSummary = "Changeset: " + cs.getRevision().toString().substring(0, 20) + "\n" +
                 "User: " + cs.getUser() + "\n" +
-                "Date: " + cs.getDate() + "\n" + 
+                "Date: " + cs.getDate() + "\n" +
                 "Summary: " + cs.getSummary();
 
                 String branch = cs.getBranch();
-                if (branch.equals(""))
+                if (branch.equals("")) {
                     branch = "default";
+                }
                 mb.setMessage(MessageFormat.format(Messages.getString("MergeHandler.mergeWithOtherHead"),
                         branch, csSummary));
-                if (mb.open() == SWT.NO)
+                if (mb.open() == SWT.NO) {
                     cs = null;
+                }
             }
         }
 
@@ -88,8 +91,9 @@ public class MergeHandler extends SingleResourceHandler {
             dialog.setDefaultShowingHeads(true);
             dialog.setDisallowSelectingParents(true);
 
-            if (dialog.open() != IDialogConstants.OK_ID)
+            if (dialog.open() != IDialogConstants.OK_ID) {
                 return "";
+            }
 
             cs = dialog.getChangeSet();
         }
@@ -121,7 +125,7 @@ public class MergeHandler extends SingleResourceHandler {
         return result;
     }
 
-    private static String commitMerge(IProgressMonitor monitor, final IResource resource, 
+    private static String commitMerge(IProgressMonitor monitor, final IResource resource,
             final Shell shell,  String mergeResult, boolean showCommitDialog)
             throws HgException, CoreException, InterruptedException {
         boolean commit = true;
@@ -136,7 +140,7 @@ public class MergeHandler extends SingleResourceHandler {
             .list(resource);
             monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
             for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
-                if (flaggedAdaptable.getFlag() == 'U') {
+                if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
                     commit = false;
                     break;
                 }
@@ -165,8 +169,9 @@ public class MergeHandler extends SingleResourceHandler {
     private static ChangeSet getOtherHeadInCurrentBranch(IProject project, DataLoader loader) throws HgException {
         ChangeSet[] heads = loader.getHeads();
         // have to be at least two heads total to do easy merge
-        if (heads.length < 2)
+        if (heads.length < 2) {
             return null;
+        }
 
         ChangeSet currentRevision = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
         String branch = currentRevision.getBranch();
@@ -174,14 +179,17 @@ public class MergeHandler extends SingleResourceHandler {
         ChangeSet candidate = null;
         for (ChangeSet cs : heads) {
             // must match branch
-            if (!cs.getBranch().equals(branch))
+            if (!cs.getBranch().equals(branch)) {
                 continue;
+            }
             // can't be the current
-            if (cs.equals(currentRevision))
+            if (cs.equals(currentRevision)) {
                 continue;
+            }
             // if we have more than one candidate, then have to ask user anyway.
-            if (candidate != null)
+            if (candidate != null) {
                 return null;
+            }
             candidate = cs;
         }
 

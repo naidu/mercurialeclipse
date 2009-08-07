@@ -36,7 +36,7 @@ public class RevisionNode extends ResourceNode implements IStreamContentAccessor
         return super.getContents();
     }
 
-    public String getRevision() {
+    public int getRevision() {
         return rev.getRevision();
     }
 
@@ -44,5 +44,17 @@ public class RevisionNode extends ResourceNode implements IStreamContentAccessor
     protected InputStream createStream() throws CoreException {
         // System.out.println("Creating stream...");
         return rev.getContents();
+    }
+
+    // to avoid FindBugs warnings
+    @Override
+    public boolean equals(Object other) {
+        return super.equals(other);
+    }
+    
+    // to avoid FindBugs warnings
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

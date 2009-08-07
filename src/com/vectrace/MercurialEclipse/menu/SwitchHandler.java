@@ -19,7 +19,6 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class SwitchHandler extends SingleResourceHandler {
 
@@ -43,10 +42,6 @@ public class SwitchHandler extends SingleResourceHandler {
             project.setPersistentProperty(ResourceProperties.MERGING, null);
             project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
             project.refreshLocal(IResource.DEPTH_INFINITE, null);
-            MergeView view = MergeView.getView();
-            if (view != null) {
-                view.clearView();
-            }
             // will trigger a FlagManager refresh
         }
     }

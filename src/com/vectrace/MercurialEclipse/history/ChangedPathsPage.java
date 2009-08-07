@@ -345,4 +345,8 @@ public class ChangedPathsPage {
 	public boolean isShowChangePaths() {
 		return showAffectedPaths;
 	}
+
+    public MercurialHistory getMercurialHistory() {
+        return page.getMercurialHistory();
+    }
 }

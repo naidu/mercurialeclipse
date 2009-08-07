@@ -72,10 +72,10 @@ import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
- * 
+ *
  * A commit dialog box allowing choosing of what files to commit and a commit message for those files. Untracked files
  * may also be chosen.
- * 
+ *
  */
 public class CommitDialog extends TitleAreaDialog {
     public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
@@ -137,7 +137,7 @@ public class CommitDialog extends TitleAreaDialog {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.jface.dialogs.TitleAreaDialog#createDialogArea(org.eclipse .swt.widgets.Composite)
      */
     @Override
@@ -333,7 +333,7 @@ public class CommitDialog extends TitleAreaDialog {
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
                 ActionRevert action = new ActionRevert();
-                action.doRevert(monitor, revertResources);
+                action.doRevert(monitor, revertResources, false);
                 return super.runSafe(monitor);
             }
         }.schedule();

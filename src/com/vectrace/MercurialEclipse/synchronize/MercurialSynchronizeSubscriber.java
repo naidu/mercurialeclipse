@@ -99,7 +99,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 IStorageMercurialRevision outgoingIStorage;
                 if (csOutgoing != null) {
                     outgoingIStorage = new IStorageMercurialRevision(resource,
-                            csOutgoing.getRevision().getRevision() + "", //$NON-NLS-1$
+                            csOutgoing.getRevision().getRevision(), 
                             csOutgoing.getChangeset(), csOutgoing);
 
                     outgoing = new MercurialResourceVariant(outgoingIStorage);
@@ -127,8 +127,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
                         // construct base revision
                         outgoingIStorage = new IStorageMercurialRevision(
-                                resource, String.valueOf(csOutgoing
-                                        .getChangesetIndex()), csOutgoing
+                                resource, csOutgoing
+                                        .getChangesetIndex(), csOutgoing
                                         .getChangeset(), csOutgoing);
 
                         outgoing = new MercurialResourceVariant(
@@ -185,7 +185,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     private IStorageMercurialRevision getIncomingIStorage(IResource resource,
             ChangeSet csRemote) {
         IStorageMercurialRevision incomingIStorage = new IStorageMercurialRevision(
-                resource, csRemote.getRevision().getRevision() + "", csRemote //$NON-NLS-1$
+                resource, csRemote.getRevision().getRevision(), csRemote 
                 .getChangeset(), csRemote);
         return incomingIStorage;
     }
@@ -339,7 +339,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     }
 
     /**
-     * 
+     *
      */
     private MercurialSynchronizeSubscriber() {
     }

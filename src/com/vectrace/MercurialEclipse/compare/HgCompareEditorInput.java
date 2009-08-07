@@ -25,54 +25,59 @@ import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 
 public class HgCompareEditorInput extends CompareEditorInput
 {
-  private static final Differencer DIFFERENCER = new Differencer();
+    private static final Differencer DIFFERENCER = new Differencer();
 
-  private final ResourceNode left;
-  private final ResourceNode ancestor;
-  private final ResourceNode right;
+    private final ResourceNode left;
+    private final ResourceNode ancestor;
+    private final ResourceNode right;
 
-  /*
-   * Does either a 2-way or 3-way compare, depending on if one is an ancestor
-   * of the other. If they are divergent, then it finds the common ancestor
-   * and does 3-way compare.
-   */
-  public HgCompareEditorInput(CompareConfiguration configuration,
-      IResource resource, ResourceNode left, ResourceNode right)
-  {
-    super(configuration);
-    this.left = left;
-    this.ancestor = findParentNodeIfExists(resource, left, right);
-    this.right = right;
-    setTitle(resource.getName());
-    configuration.setLeftLabel(left.getName());
-    // if left isn't a RevisionNode, then it must be the one on the filesystem
-    configuration.setLeftEditable(!(left instanceof RevisionNode));
-    configuration.setRightLabel(right.getName());
-    configuration.setRightEditable(false);
-  }
-
-
-  private ResourceNode findParentNodeIfExists(IResource resource, ResourceNode l, ResourceNode r) {
-      if (!(l instanceof RevisionNode && r instanceof RevisionNode))
-          return null;
-      
-      String lId = ((RevisionNode)l).getRevision();
-      String rId = ((RevisionNode)r).getRevision();
-      
-      try {
-        int commonAncestor = HgParentClient.findCommonAncestor(resource.getProject().getLocation().toFile(), lId, rId);
-        if (String.valueOf(commonAncestor).equals(lId))
-            return null;
-        if (String.valueOf(commonAncestor).equals(rId))
-            return null;
-        return new RevisionNode(new IStorageMercurialRevision(resource, commonAncestor));
-    } catch (HgException e) {
-        MercurialEclipsePlugin.logError(e);
-        return null;
+    /**
+     * Does either a 2-way or 3-way compare, depending on if one is an ancestor
+     * of the other. If they are divergent, then it finds the common ancestor
+     * and does 3-way compare.
+     */
+    public HgCompareEditorInput(CompareConfiguration configuration,
+            IResource resource, ResourceNode left, ResourceNode right)
+    {
+        super(configuration);
+        this.left = left;
+        this.ancestor = findParentNodeIfExists(resource, left, right);
+        this.right = right;
+        setTitle(resource.getName());
+        configuration.setLeftLabel(left.getName());
+        // if left isn't a RevisionNode, then it must be the one on the filesystem
+        configuration.setLeftEditable(!(left instanceof RevisionNode));
+        configuration.setRightLabel(right.getName());
+        configuration.setRightEditable(false);
     }
-  }
 
-  public HgCompareEditorInput(CompareConfiguration configuration,
+
+    private ResourceNode findParentNodeIfExists(IResource resource, ResourceNode l, ResourceNode r) {
+        if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
+            return null;
+        }
+
+        int lId = ((RevisionNode)l).getRevision();
+        int rId = ((RevisionNode)r).getRevision();
+
+        try {
+            int commonAncestor = HgParentClient.findCommonAncestor(
+                    resource.getProject().getLocation().toFile(),
+                    Integer.toString(lId), Integer.toString(rId));
+            if (commonAncestor == lId) {
+                return null;
+            }
+            if (commonAncestor == rId) {
+                return null;
+            }
+            return new RevisionNode(new IStorageMercurialRevision(resource, commonAncestor));
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            return null;
+        }
+    }
+
+    public HgCompareEditorInput(CompareConfiguration configuration,
             IResource leftResource, ResourceNode ancestor, ResourceNode right, boolean localEditable) {
         super(configuration);
         this.left = new ResourceNode(leftResource);
@@ -86,30 +91,29 @@ public class HgCompareEditorInput extends CompareEditorInput
         configuration.setRightEditable(false);
     }
 
-  @Override
-  protected Object prepareInput(IProgressMonitor monitor)
-      throws InvocationTargetException, InterruptedException
-  {
-    return DIFFERENCER.findDifferences(ancestor != null, monitor, null, ancestor, left, right);
-  }
-  
-  /* (non-Javadoc)
-   * @see org.eclipse.compare.CompareEditorInput#getOKButtonLabel()
-   */
-  @Override
-  public String getOKButtonLabel() {
-      if (getCompareConfiguration().isLeftEditable() || getCompareConfiguration().isRightEditable())
-          return "Save Changes";
-      return super.getOKButtonLabel();
-  }
-  
-  @Override
-  public void saveChanges(IProgressMonitor monitor) throws CoreException
-  {
-    boolean save = isSaveNeeded();
-    super.saveChanges(monitor);
-    if(save) {
-      ((IFile)left.getResource()).setContents(left.getContents(), true, true, monitor);
+    @Override
+    protected Object prepareInput(IProgressMonitor monitor)
+    throws InvocationTargetException, InterruptedException
+    {
+        return DIFFERENCER.findDifferences(ancestor != null, monitor, null, ancestor, left, right);
     }
-  }
+
+
+    @Override
+    public String getOKButtonLabel() {
+        if (getCompareConfiguration().isLeftEditable() || getCompareConfiguration().isRightEditable()) {
+            return "Save Changes";
+        }
+        return super.getOKButtonLabel();
+    }
+
+    @Override
+    public void saveChanges(IProgressMonitor monitor) throws CoreException
+    {
+        boolean save = isSaveNeeded();
+        super.saveChanges(monitor);
+        if(save) {
+            ((IFile)left.getResource()).setContents(left.getContents(), true, true, monitor);
+        }
+    }
 }

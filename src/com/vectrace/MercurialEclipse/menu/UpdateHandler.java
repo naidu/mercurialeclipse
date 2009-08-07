@@ -17,6 +17,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -27,24 +28,38 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class UpdateHandler extends SingleResourceHandler {
 
+    private String revision;
+    private boolean cleanEnabled;
+
     @Override
     public void run(IResource resource) throws Exception {
         final IProject project = resource.getProject();
         boolean dirty = HgStatusClient.isDirty(project);
         if (dirty) {
-            boolean result = MessageDialog.openQuestion(getShell(), "Uncommited Changes", 
-                    "Your project has uncommited changes.\nDo you really want to update?");
-            if (!result)
+            final boolean[] result = new boolean[1];
+            if(Display.getCurrent() == null){
+                Display.getDefault().syncExec(new Runnable() {
+                    public void run() {
+                        result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
+                        "Your project has uncommited changes.\nDo you really want to continue?");
+                    }
+                });
+            } else {
+                result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
+                "Your project has uncommited changes.\nDo you really want to continue?");
+            }
+            if (!result[0]) {
                 return;
+            }
         }
-        HgUpdateClient.update(project, null, false);
+        HgUpdateClient.update(project, revision, cleanEnabled);
         // reset merge properties
         project.setPersistentProperty(ResourceProperties.MERGING, null);
         project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
         new SafeWorkspaceJob("Refreshing project files...") {
             /*
              * (non-Javadoc)
-             * 
+             *
              * @see
              * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse
              * .core.runtime.IProgressMonitor)
@@ -58,11 +73,24 @@ public class UpdateHandler extends SingleResourceHandler {
                 } catch (CoreException e) {
                     MercurialEclipsePlugin.logError(e);
                     return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                            e.getLocalizedMessage(), e); 
+                            e.getLocalizedMessage(), e);
                 }
             }
         }.schedule();
-        
+
     }
 
+    /**
+     * @param revision the revision to use for the '-r' option, can be null
+     */
+    public void setRevision(String revision) {
+        this.revision = revision;
+    }
+
+    /**
+     * @param cleanEnabled true to add '-C' option
+     */
+    public void setCleanEnabled(boolean cleanEnabled) {
+        this.cleanEnabled = cleanEnabled;
+    }
 }

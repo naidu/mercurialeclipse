@@ -16,16 +16,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -42,12 +38,13 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
  *
  */
 public class IStorageMercurialRevision implements IStorage {
-    private String revision;
+    private int revision;
     private String global;
     private final IResource resource;
-    private ChangeSet changeSet;
-    private HgRoot root;
-    private byte [] bytes;
+    protected ChangeSet changeSet;
+    protected byte [] bytes;
+    private Exception error;
+
 
     /**
      * The recommended constructor to use is IStorageMercurialRevision(IResource res, String rev, String global,
@@ -58,12 +55,11 @@ public class IStorageMercurialRevision implements IStorage {
         super();
         resource = res;
         try {
-            ChangeSet cs = LocalChangesetCache.getInstance().getLocalChangeSet(res, changeset);
-            this.changeSet = cs;
-            this.revision = String.valueOf(cs.getChangesetIndex());
-            this.global = cs.getChangeset();
-        } catch (NumberFormatException e) {
-            MercurialEclipsePlugin.logError(e);
+            this.changeSet = LocalChangesetCache.getInstance().getLocalChangeSet(res, changeset);
+            if(changeSet != null){
+                this.revision = changeSet.getChangesetIndex();
+                this.global = changeSet.getChangeset();
+            }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
@@ -81,7 +77,7 @@ public class IStorageMercurialRevision implements IStorage {
      * @param cs
      *            the changeset object
      */
-    public IStorageMercurialRevision(IResource res, String rev, String global, ChangeSet cs) {
+    public IStorageMercurialRevision(IResource res, int rev, String global, ChangeSet cs) {
         super();
         this.revision = rev;
         this.global = global;
@@ -101,7 +97,7 @@ public class IStorageMercurialRevision implements IStorage {
         ChangeSet cs = null;
         try {
             cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(res);
-            this.revision = cs.getChangesetIndex() + ""; // should be fetched //$NON-NLS-1$
+            this.revision = cs.getChangesetIndex(); // should be fetched
             // from id
             this.global = cs.getChangeset();
             this.changeSet = cs;
@@ -110,11 +106,6 @@ public class IStorageMercurialRevision implements IStorage {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.core.runtime.IAdaptable#getAdapter(java.lang.Class)
-     */
     @SuppressWarnings("unchecked")
     public Object getAdapter(Class adapter) {
         if (adapter.equals(IResource.class)) {
@@ -134,81 +125,95 @@ public class IStorageMercurialRevision implements IStorage {
         }
         // Setup and run command
         String result = ""; //$NON-NLS-1$
-        root = MercurialTeamProvider.getHgRoot(resource);
-        IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
-        if (changeSet != null) {
-
-            // incoming: overlay repository with bundle and extract then via cat
-            if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
-
-                String bundleFile = null;
-                try {
-                    bundleFile = changeSet.getBundleFile().getCanonicalFile().getCanonicalPath();
-                } catch (IOException e) {
-                    throw new CoreException(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, e.getMessage(), e));
+        try {
+            IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
+            if (changeSet != null) {
+                // incoming: overlay repository with bundle and extract then via cat
+                if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
+                    try {
+                        String bundleFile = changeSet.getBundleFile().getCanonicalFile().getPath();
+                        if (bundleFile != null) {
+                            result = HgCatClient.getContentFromBundle(file, Integer.valueOf(changeSet.getChangesetIndex())
+                                    .toString(), bundleFile);
+                        }
+                    } catch (IOException e) {
+                        throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
+                    }
+                } else if (changeSet.getDirection() == Direction.OUTGOING) {
+                    bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
+                    return new ByteArrayInputStream(bytes);
+                } else {
+                    // local: get the contents via cat
+                    result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
                 }
-                if (bundleFile != null) {
-                    result = HgCatClient.getContentFromBundle(file, changeSet.getChangesetIndex() + "", bundleFile); //$NON-NLS-1$
-                }
-
-            } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
-                return new ByteArrayInputStream(bytes);
             } else {
-                // local: get the contents via cat
-                result = HgCatClient.getContent(file, changeSet.getChangesetIndex() + ""); //$NON-NLS-1$
+                // no changeset known
+                result = HgCatClient.getContent(file, null);
             }
-        } else {
-            // no changeset known
-            result = HgCatClient.getContent(file, null);
+        } catch (CoreException e) {
+            error = e;
+            bytes = new byte[0];
+            // core API ignores exceptions from this method, so we need to log them here
+            MercurialEclipsePlugin.logWarning("Failed to get revision content for " + toString(), e);
+            throw e;
         }
 
         try {
+            HgRoot root = MercurialTeamProvider.getHgRoot(resource);
             bytes = result.getBytes(root.getEncoding().name());
             return new ByteArrayInputStream(bytes);
         } catch (UnsupportedEncodingException e) {
+            error = e;
+            bytes = new byte[0];
+            // core API ignores exceptions from this method, so we need to log them here
+            MercurialEclipsePlugin.logWarning("Failed to get revision content for " + toString(), e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
 
-    /*
-     * (non-Javadoc)setContents(
-     *
-     * @see org.eclipse.core.resources.IStorage#getFullPath()
-     */
     public IPath getFullPath() {
-        return resource.getFullPath().append(revision != null ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
+        return resource.getFullPath().append(revision != 0 ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
                 : Messages.getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.core.resources.IStorage#getName()
-     */
     public String getName() {
+        // the getContents() call below is a workaround for the fact that the core API
+        // seems to ignore the failures in getContents() and do not update the storage name
+        // in this case. So we just call getContents (which result is buffered in any case)
+        // here, and remember the possible error.
+        try {
+            getContents();
+        } catch (CoreException e) {
+            error = e;
+            bytes = new byte[0];
+        }
         String name;
         if (changeSet != null) {
             name = resource.getName() + " [" + changeSet.toString() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
         } else {
             name = resource.getName();
         }
+        if(error != null){
+            String message = error.getMessage();
+            if (message.indexOf('\n') > 0) {
+                // name = message + ", " + name;
+                name = message.substring(0, message.indexOf('\n'));
+            } else {
+                name = message;
+            }
+        }
         return name;
     }
 
-    public String getRevision() {
+    public int getRevision() {
         return revision;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.core.resources.IStorage#isReadOnly()
-     *
+    /**
      * You can't write to other revisions then the current selected e.g. ReadOnly
      */
     public boolean isReadOnly() {
-        if (revision != null) {
+        if (revision != 0) {
             return true;
         }
         // if no revision resource is the current one e.g. editable :)
@@ -243,5 +248,33 @@ public class IStorageMercurialRevision implements IStorage {
      */
     public IStorageMercurialRevision(IResource res, int rev) {
         this(res, String.valueOf(rev));
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Hg revision [");
+        if (changeSet != null) {
+            builder.append("changeSet=");
+            builder.append(changeSet);
+            builder.append(", ");
+        }
+        if (revision != 0) {
+            builder.append("revision=");
+            builder.append(revision);
+            builder.append(", ");
+        }
+        if (global != null) {
+            builder.append("global=");
+            builder.append(global);
+            builder.append(", ");
+        }
+        if (resource != null) {
+            builder.append("resource=");
+            builder.append(resource);
+            builder.append(", ");
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

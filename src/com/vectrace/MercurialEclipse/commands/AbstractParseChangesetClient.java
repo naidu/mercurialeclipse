@@ -74,7 +74,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private String pr;
         private String de;
         private StringBuilder chars;
-        private static IResource res;
+        private final IPath res;
         private final Direction direction;
         private final HgRepositoryLocation repository;
         private final File bundleFile;
@@ -90,10 +90,10 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private static final Pattern AMP = Pattern.compile("&amp;");
         private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
 
-        public ChangesetContentHandler(IResource res, Direction direction,
+        public ChangesetContentHandler(IPath res, Direction direction,
                 HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot,
                 Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {
-            ChangesetContentHandler.res = res;
+            this.res = res;
             this.direction = direction;
             this.repository = repository;
             this.bundleFile = bundleFile;
@@ -275,10 +275,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
             fileRevisions.put(repoPath, projectRevs);
 
-            // given path
-            IPath path = res.getLocation();
-            SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, path);
-            fileRevisions.put(path, pathRevs);
+            SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, res);
+            fileRevisions.put(res, pathRevs);
         }
 
         private SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs, IPath path) {
@@ -416,31 +414,42 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * @param bundleFile
      * @return
      * @throws HgException
-     *             TODO
      */
     protected final static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(
             IResource res, String input, boolean withFiles,
             Direction direction, HgRepositoryLocation repository,
             File bundleFile, IFilePatch[] patches) throws HgException {
 
+        HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+        IPath path = res.getLocation();
+
+        return createMercurialRevisions(path, input, direction, repository, bundleFile, patches, hgRoot);
+    }
+
+    /**
+     * @param path full absolute file path, which MAY NOT EXIST in the local file system
+     *        (because it is the original path of moved or renamed file)
+     * @throws HgException
+     */
+    protected static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(IPath path, String input, Direction direction,
+            HgRepositoryLocation repository, File bundleFile, IFilePatch[] patches, HgRoot hgRoot)
+            throws HgException {
         Map<IPath, SortedSet<ChangeSet>> fileRevisions = new HashMap<IPath, SortedSet<ChangeSet>>();
 
         if (input == null || input.length() == 0) {
             return fileRevisions;
         }
-
-        HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
         String myInput = "<top>" + input + "</top>"; //$NON-NLS-1$ //$NON-NLS-2$
         try {
             XMLReader reader = XMLReaderFactory.createXMLReader();
-            reader.setContentHandler(getHandler(res, direction, repository,
+            reader.setContentHandler(getHandler(path, direction, repository,
                     bundleFile, hgRoot, fileRevisions, patches));
             reader.parse(new InputSource(new StringReader(myInput)));
         } catch (Exception e) {
             String nextTry = cleanControlChars(myInput);
             try {
                 XMLReader reader = XMLReaderFactory.createXMLReader();
-                reader.setContentHandler(getHandler(res, direction, repository,
+                reader.setContentHandler(getHandler(path, direction, repository,
                         bundleFile, hgRoot, fileRevisions, patches));
                 reader.parse(new InputSource(new StringReader(nextTry)));
             } catch (Exception e1) {
@@ -450,7 +459,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         return fileRevisions;
     }
 
-    private static ContentHandler getHandler(IResource res,
+    private static ContentHandler getHandler(IPath res,
             Direction direction, HgRepositoryLocation repository,
             File bundleFile, HgRoot hgRoot,
             Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {

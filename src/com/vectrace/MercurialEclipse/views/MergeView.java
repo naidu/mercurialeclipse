@@ -11,6 +11,9 @@
 package com.vectrace.MercurialEclipse.views;
 
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Set;
 
 import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IFile;
@@ -29,6 +32,7 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
@@ -37,24 +41,24 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
+import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
-public class MergeView extends ViewPart implements ISelectionListener {
+public class MergeView extends ViewPart implements ISelectionListener, Observer {
 
     public final static String ID = MergeView.class.getName();
 
@@ -68,7 +72,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
     private Action markResolvedAction;
 
     private Action markUnresolvedAction;
-    
+
     @Override
     public void createPartControl(final Composite parent) {
         parent.setLayout(new GridLayout(1, false));
@@ -134,6 +138,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
 
         createToolBar();
         getSite().getPage().addSelectionListener(this);
+        MercurialStatusCache.getInstance().addObserver(this);
     }
 
     private void createToolBar() {
@@ -143,18 +148,11 @@ public class MergeView extends ViewPart implements ISelectionListener {
             @Override
             public void run() {
                 try {
-                    currentProject.setPersistentProperty(
-                            ResourceProperties.MERGING, null);
-                    HgUpdateClient.update(currentProject, null, true);
-                    // reset merge properties
-                    currentProject.setPersistentProperty(
-                            ResourceProperties.MERGING, null);
-                    currentProject.setSessionProperty(
-                            ResourceProperties.MERGE_COMMIT_OFFERED, null);
-                    // trigger update of decorations
-                    currentProject.touch(null);
-                    currentProject.refreshLocal(IResource.DEPTH_INFINITE, null);
-                    clearView();
+                    UpdateHandler update = new UpdateHandler();
+                    update.setCleanEnabled(true);
+                    update.setRevision(".");
+                    update.setShell(table.getShell());
+                    update.run(currentProject);
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
                     statusLabel.setText(e.getLocalizedMessage());
@@ -170,12 +168,11 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     IFile file = getSelection();
                     if (file != null) {
                         if (HgResolveClient.checkAvailable()) {
-                            HgResolveClient.markResolved(file.getLocation()
-                                    .toFile());
+                            HgResolveClient.markResolved(file);
                         } else {
                             HgIMergeClient.markResolved(file);
                         }
-                        populateView();
+                        populateView(true);
                     }
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
@@ -192,12 +189,11 @@ public class MergeView extends ViewPart implements ISelectionListener {
                     IFile file = getSelection();
                     if (file != null) {
                         if (HgResolveClient.checkAvailable()) {
-                            HgResolveClient.markUnresolved(file.getLocation()
-                                    .toFile());
+                            HgResolveClient.markUnresolved(file);
                         } else {
                             HgIMergeClient.markUnresolved(file);
                         }
-                        populateView();
+                        populateView(true);
                     }
                 } catch (Exception e) {
                     MercurialEclipsePlugin.logError(e);
@@ -209,7 +205,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
         mgr.add(markUnresolvedAction);
     }
 
-    private void populateView() throws HgException {
+    private void populateView(boolean attemptToCommit) throws HgException {
         statusLabel.setText(currentProject.getName());
         List<FlaggedAdaptable> status = null;
         if (HgResolveClient.checkAvailable()) {
@@ -221,27 +217,27 @@ public class MergeView extends ViewPart implements ISelectionListener {
         table.removeAll();
         for (FlaggedAdaptable flagged : status) {
             TableItem row = new TableItem(table, SWT.NONE);
-            row.setText(0, flagged.getStatus()); //$NON-NLS-1$
+            row.setText(0, flagged.getStatus());
             IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
             row.setText(1, iFile.getProjectRelativePath().toString());
             row.setData(flagged);
-            if (flagged.getFlag() == 'U')
+            if (flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
                 row.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
+            }
         }
         abortAction.setEnabled(true);
         markResolvedAction.setEnabled(true);
         markUnresolvedAction.setEnabled(true);
-        
-        attemptToCommitMerge();
+
+        if(attemptToCommit) {
+            attemptToCommitMerge();
+        }
     }
 
-    /**
-     * 
-     */
     private void attemptToCommitMerge() {
         try {
             String mergeNode = currentProject.getPersistentProperty(ResourceProperties.MERGING);
-    
+
             // offer commit of merge exactly once if no conflicts
             // are found
             boolean allResolved = areAllResolved();
@@ -276,29 +272,21 @@ public class MergeView extends ViewPart implements ISelectionListener {
     }
 
     public void setCurrentProject(IProject project) {
-        try {
-            if (this.currentProject != project) {
-                if (project != null && project.isAccessible()) {
-                    String mergeNode = project
-                            .getPersistentProperty(ResourceProperties.MERGING);
-                    if (mergeNode != null) {
-                        this.currentProject = project;
-                        this.statusLabel.setText(Messages.getString("MergeView.mergeFilesOf") //$NON-NLS-1$
-                                + project.getName());
-                        populateView();
-                    } else {
-                        clearView();
-                    }
+        if (currentProject != project && project != null && project.isAccessible()) {
+            try {
+                if (project
+                        .getPersistentProperty(ResourceProperties.MERGING) != null) {
+                    currentProject = project;
+                    populateView(false);
+                } else {
+                    clearView();
                 }
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
             }
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
         }
     }
 
-    /**
-     * @return
-     */
     private boolean areAllResolved() {
         boolean allResolved = true;
         if (table.getItems() != null
@@ -306,7 +294,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
             for (TableItem item : table.getItems()) {
                 FlaggedAdaptable fa = (FlaggedAdaptable) item
                         .getData();
-                allResolved &= fa.getFlag() == 'R';
+                allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
             }
         }
         return allResolved;
@@ -342,6 +330,7 @@ public class MergeView extends ViewPart implements ISelectionListener {
     @Override
     public void dispose() {
         getSite().getPage().removeSelectionListener(this);
+        MercurialStatusCache.getInstance().deleteObserver(this);
         super.dispose();
     }
 
@@ -359,9 +348,22 @@ public class MergeView extends ViewPart implements ISelectionListener {
         return null;
     }
 
-    public static MergeView getView() {
-        return (MergeView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-                .getActivePage().findView(ID);
+    public void update(Observable o, Object arg) {
+        if(currentProject == null || !(arg instanceof Set<?>)){
+            return;
+        }
+        Set<?> set = (Set<?>) arg;
+
+        if(set.contains(currentProject)){
+            Display.getDefault().asyncExec(new Runnable() {
+
+                public void run() {
+                    IProject backup = currentProject;
+                    clearView();
+                    setCurrentProject(backup);
+                }
+            });
+        }
     }
 
 }
