@@ -41,7 +41,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class LocalChangesetCache extends AbstractCache {
 
@@ -58,7 +58,7 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
     /**
-     * 
+     *
      */
     private boolean isGetFileInformationForChangesets() {
         return Boolean
@@ -125,7 +125,7 @@ public class LocalChangesetCache extends AbstractCache {
 
     /**
      * Gets version for given resource.
-     * 
+     *
      * @param objectResource
      *            the resource to get status for.
      * @return a String with version information.
@@ -175,7 +175,7 @@ public class LocalChangesetCache extends AbstractCache {
 
     /**
      * Checks whether version is known.
-     * 
+     *
      * @param objectResource
      *            the resource to be checked.
      * @return true if known, false if not.
@@ -195,7 +195,7 @@ public class LocalChangesetCache extends AbstractCache {
      * See
      * {@link LocalChangesetCache#refreshAllLocalRevisions(IResource, boolean)}
      * Calls with limit = true.
-     * 
+     *
      * @param res
      * @throws HgException
      */
@@ -206,10 +206,10 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * See
      * {@link LocalChangesetCache#refreshAllLocalRevisions(IResource, boolean, boolean)}
-     * 
+     *
      * Obtains file information, if preference is set to display changeset
      * information on label decorator.
-     * 
+     *
      * @param res
      * @param limit
      * @throws HgException
@@ -223,11 +223,11 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
-     * 
+     *
      * If withFiles is true and a resource version can't be found in the topmost
      * revisions, the last revision of this file is obtained via additional
      * calls.
-     * 
+     *
      * @param res
      * @param limit
      *            whether to limit or to have full project log
@@ -249,7 +249,7 @@ public class LocalChangesetCache extends AbstractCache {
 
     /**
      * Gets the configured log batch size.
-     * 
+     *
      * @return
      */
     public int getLogBatchSize() {
@@ -280,7 +280,20 @@ public class LocalChangesetCache extends AbstractCache {
             boolean redecorate) throws HgException {
         Assert.isNotNull(res);
         Assert.isNotNull(nodeId);
-        if (STATUS_CACHE.isSupervised(res)) {
+        if(!res.exists()){
+            // the case for renamed (moved) or copied files which does not exist anymore
+            ChangeSet changeSet = getChangeSet(nodeId);
+            if (changeSet == null) {
+                changeSet = HgLogClient.getChangeset(res, nodeId,
+                        isGetFileInformationForChangesets());
+            }
+            SortedSet<ChangeSet> set = new TreeSet<ChangeSet>();
+            if (changeSet != null) {
+                set.add(changeSet);
+                addToNodeMap(set);
+            }
+            return changeSet;
+        } else if (STATUS_CACHE.isSupervised(res)) {
             ReentrantLock lock = getLock(res);
             try {
                 lock.lock();
@@ -302,7 +315,6 @@ public class LocalChangesetCache extends AbstractCache {
                     notifyChanged(res);
                 }
             }
-
         }
         return null;
     }
@@ -333,11 +345,11 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
-     * 
+     *
      * If a resource version can't be found in the topmost revisions, the last
      * revisions of this file (10% of limit number) are obtained via additional
      * calls.
-     * 
+     *
      * @param res
      * @param limit
      *            whether to limit or to have full project log
