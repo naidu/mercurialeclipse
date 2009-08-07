@@ -1,5 +1,5 @@
 #FindBugs User Preferences
-#Wed Jul 22 20:53:54 CEST 2009
+#Fri Aug 07 23:27:09 CEST 2009
 detectorAppendingToAnObjectOutputStream=AppendingToAnObjectOutputStream|true
 detectorBCPMethodReturnCheck=BCPMethodReturnCheck|false
 detectorBadAppletConstructor=BadAppletConstructor|false
@@ -62,7 +62,7 @@ detectorFindNullDerefsInvolvingNonShortCircuitEvaluation=FindNullDerefsInvolving
 detectorFindOpenStream=FindOpenStream|true
 detectorFindPuzzlers=FindPuzzlers|true
 detectorFindRefComparison=FindRefComparison|true
-detectorFindReturnRef=FindReturnRef|true
+detectorFindReturnRef=FindReturnRef|false
 detectorFindRunInvocations=FindRunInvocations|true
 detectorFindSelfComparison=FindSelfComparison|true
 detectorFindSelfComparison2=FindSelfComparison2|true

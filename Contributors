@@ -60,7 +60,7 @@ Jerome Negre -
 
 Bastian Doetsch - 
      I'm interested in Mercurial and MercurialEclipse so I started contributing a bit while learning. 
-	   I try to get the synchronize infrastructure to work.
+     I try to get the synchronize infrastructure to work.
      Zingos Comment: Well Bastian seem to learn fast :) the Time from the first small patch to large 
      contribution was quite small. Bastian is now driving the project forward.
      
@@ -77,3 +77,9 @@ Steeven Lee:
 Ismael Juma -
      I'm interested in moving from SVN to Mercurial at work and good Eclipse support is important.
      While testing the plugin I ran into some issues and decided to contribute.
+     
+Andrei Loskutov:
+     I've started to use hg because I was shocked that SVN can't propagate changes to renamed/moved files.
+     Because I'm Eclipse guy, I've started to use MercurialEclipse. To make my life 
+     easier I've started to fix the issues I found in the plugin. 
+     More info about me might be found at http://andrei.gmxhome.de
