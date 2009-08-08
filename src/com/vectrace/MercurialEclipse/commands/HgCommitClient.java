@@ -77,12 +77,7 @@ public class HgCommitClient {
 
     public static String commitProject(IProject project, String user,
             String message) throws HgException {
-        HgRoot hgroot;
-        try {
-            hgroot = new HgRoot(HgRootClient.getHgRoot(project));
-        } catch (IOException e) {
-            throw new HgException(e.getMessage(), e);
-        }
+        HgRoot hgroot = HgRootClient.getHgRoot(project);
         return commit(hgroot, new ArrayList<File>(), user, message);
         // HgCommand command = new HgCommand("commit", project, false);
         // command.setUsePreferenceTimeout(MercurialPreferenceConstants.

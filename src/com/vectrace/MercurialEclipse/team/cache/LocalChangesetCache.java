@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,6 +35,7 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -57,9 +57,6 @@ public class LocalChangesetCache extends AbstractCache {
         localChangeSets = new HashMap<IPath, SortedSet<ChangeSet>>();
     }
 
-    /**
-     *
-     */
     private boolean isGetFileInformationForChangesets() {
         return Boolean
         .valueOf(
@@ -322,7 +319,7 @@ public class LocalChangesetCache extends AbstractCache {
     public ChangeSet getCurrentWorkDirChangeset(IResource res)
     throws HgException {
         try {
-            File root = HgClients.getHgRoot(res.getLocation().toFile());
+            HgRoot root = HgClients.getHgRoot(res.getLocation().toFile());
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
             if (nodeId != null
                     && !nodeId
@@ -392,7 +389,7 @@ public class LocalChangesetCache extends AbstractCache {
                 }
 
                 Set<IPath> concernedPaths = new HashSet<IPath>();
-                File root = HgRootClient.getHgRootAsFile(res);
+                HgRoot root = HgRootClient.getHgRoot(res);
 
                 if (revisions != null && revisions.size() > 0) {
 
@@ -407,7 +404,7 @@ public class LocalChangesetCache extends AbstractCache {
                     } else {
                         // every changeset is at least stored for the repository
                         // root
-                        IPath rootPath = new Path(root.getCanonicalPath());
+                        IPath rootPath = new Path(root.getAbsolutePath());
                         localChangeSets.put(res.getLocation(), revisions
                                 .get(rootPath));
                     }
@@ -437,8 +434,6 @@ public class LocalChangesetCache extends AbstractCache {
                     }
 
                 }
-            } catch (IOException e) {
-                throw new HgException(e.getLocalizedMessage(), e);
             } finally {
                 lock.unlock();
                 notifyChanged(res);
@@ -446,10 +441,6 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    /**
-     * @param path
-     * @param changes
-     */
     private void addChangesToLocalCache(IPath path, SortedSet<ChangeSet> changes) {
         if (changes != null && changes.size() > 0) {
             SortedSet<ChangeSet> existing = localChangeSets.get(path);
@@ -462,20 +453,10 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    /**
-     * @return the localUpdateInProgress
-     * @throws HgException
-     */
     public boolean isLocalUpdateInProgress(IResource res) throws HgException {
         return getLock(res).isLocked();
     }
 
-    /**
-     * @param project
-     * @param branchName
-     * @return
-     * @throws HgException
-     */
     public SortedSet<ChangeSet> getLocalChangeSetsByBranch(IProject project,
             String branchName) throws HgException {
         ReentrantLock lock = getLock(project);

@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +33,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -99,7 +99,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                 IStorageMercurialRevision outgoingIStorage;
                 if (csOutgoing != null) {
                     outgoingIStorage = new IStorageMercurialRevision(resource,
-                            csOutgoing.getRevision().getRevision(), 
+                            csOutgoing.getRevision().getRevision(),
                             csOutgoing.getChangeset(), csOutgoing);
 
                     outgoing = new MercurialResourceVariant(outgoingIStorage);
@@ -111,9 +111,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
                                     resource.getLocation())) {
 
                         // Find current working directory changeset (not head)
-                        File root = new File(HgRootClient.getHgRoot(resource));
-                        String nodeId = HgIdentClient
-                        .getCurrentChangesetId(root);
+                        HgRoot root = HgRootClient.getHgRoot(resource);
+                        String nodeId = HgIdentClient.getCurrentChangesetId(root);
 
                         // try to get from cache (without loading)
                         csOutgoing = LocalChangesetCache.getInstance()
@@ -185,7 +184,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     private IStorageMercurialRevision getIncomingIStorage(IResource resource,
             ChangeSet csRemote) {
         IStorageMercurialRevision incomingIStorage = new IStorageMercurialRevision(
-                resource, csRemote.getRevision().getRevision(), csRemote 
+                resource, csRemote.getRevision().getRevision(), csRemote
                 .getChangeset(), csRemote);
         return incomingIStorage;
     }

@@ -20,12 +20,13 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * Base client class
  * @author bastian
- * 
+ *
  */
 public abstract class AbstractClient {
     /**
@@ -40,7 +41,7 @@ public abstract class AbstractClient {
         }
         return myWorkDir.getLocation().toFile();
     }
-    
+
     /**
      * @param path
      * @return
@@ -52,8 +53,8 @@ public abstract class AbstractClient {
         }
         return path.toFile();
     }
-    
-    protected static File getWorkingDirectory(File file) {        
+
+    protected static File getWorkingDirectory(File file) {
         if (file.isFile()) {
             return file.getParentFile();
         }
@@ -62,27 +63,25 @@ public abstract class AbstractClient {
 
     public AbstractClient() {
     }
-    
+
     /**
      * @return
      * @throws HgException
      */
-    public static File getHgRoot(IResource res) throws HgException {
+    public static HgRoot getHgRoot(IResource res) throws HgException {
         Assert.isNotNull(res);
-        return HgRootClient.getHgRootAsFile(res);                
+        return HgRootClient.getHgRoot(res);
     }
-    
-    public static File getHgRoot(IPath path) throws HgException {
+
+    public static HgRoot getHgRoot(IPath path) throws HgException {
         Assert.isNotNull(path);
-        File file = HgRootClient.getHgRoot(path.toFile());
-        return file;
+        return HgRootClient.getHgRoot(path.toFile());
     }
-    
-    public static File getHgRoot(File file) throws HgException {
-        File root = HgRootClient.getHgRoot(file);
-        return root;
+
+    public static HgRoot getHgRoot(File file) throws HgException {
+        return HgRootClient.getHgRoot(file);
     }
-    
+
     static List<File> toFiles(List<IResource> files) {
         List<File> toFiles = new ArrayList<File>();
         for (IResource r : files) {
@@ -90,7 +89,7 @@ public abstract class AbstractClient {
         }
         return toFiles;
     }
-    
+
     static List<String> toPaths(List<File> files) {
         List<String> paths = new ArrayList<String>();
         for (File f : files) {
@@ -103,7 +102,7 @@ public abstract class AbstractClient {
      * Checks whether a command is available in installed Mercurial version by
      * issuing hg help <commandName>. If Mercurial doesn't answer with
      * "hg: unknown command", it's available
-     * 
+     *
      * @param commandName
      *            the name of the command, e.g. "rebase"
      * @param extensionEnabler
@@ -148,5 +147,5 @@ public abstract class AbstractClient {
             cmd.addOptions(repo.getLocation());
         }
     }
-    
+
 }

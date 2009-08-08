@@ -47,13 +47,14 @@ import com.vectrace.MercurialEclipse.menu.QDeleteHandler;
 import com.vectrace.MercurialEclipse.menu.QImportHandler;
 import com.vectrace.MercurialEclipse.menu.QNewHandler;
 import com.vectrace.MercurialEclipse.menu.QRefreshHandler;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Patch;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.ui.PatchTable;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class PatchQueueView extends ViewPart implements ISelectionListener {
 
@@ -69,22 +70,12 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
     private Action qDeleteAction;
     private Action qFoldAction;
     private Action qImportAction;
-    private String currentHgRoot;
+    private HgRoot currentHgRoot;
     public final static String ID = PatchQueueView.class.getName();
 
-    /**
-     * 
-     */
     public PatchQueueView() {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.part.WorkbenchPart#createPartControl(org.eclipse.swt.widgets
-     * .Composite)
-     */
     @Override
     public void createPartControl(Composite parent) {
         parent.setLayout(new GridLayout(1, false));
@@ -110,9 +101,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         mgr.add(qDeleteAction);
     }
 
-    /**
-     * 
-     */
     private void createActions() {
         qImportAction = new Action("qimport") { //$NON-NLS-1$
             @Override
@@ -139,11 +127,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qNewAction.setEnabled(true);
 
         qRefreshAction = new Action("qrefresh") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 QRefreshHandler.openWizard(resource, getSite().getShell());
@@ -152,11 +135,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qRefreshAction.setEnabled(true);
 
         qPushAction = new Action("qpush") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 try {
@@ -175,11 +153,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qPushAction.setEnabled(true);
 
         qPopAction = new Action("qpop") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 try {
@@ -198,11 +171,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qPopAction.setEnabled(true);
 
         qPushAllAction = new Action("qpush all") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 try {
@@ -219,11 +187,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qPushAllAction.setEnabled(true);
 
         qPopAllAction = new Action("qpop all") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 try {
@@ -240,11 +203,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qPopAllAction.setEnabled(true);
 
         qFoldAction = new Action("qfold") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 try {
@@ -262,11 +220,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qFoldAction.setEnabled(true);
 
         qDeleteAction = new Action("qdel") { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.action.Action#run()
-             */
             @Override
             public void run() {
                 QDeleteHandler.openWizard(resource, getSite().getShell());
@@ -283,9 +236,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         qDeleteAction.setEnabled(true);
     }
 
-    /**
-     * 
-     */
     private void createMenus() {
         final IMenuManager menuMgr = getViewSite().getActionBars()
                 .getMenuManager();
@@ -300,19 +250,11 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         menuMgr.add(qDeleteAction);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.part.WorkbenchPart#setFocus()
-     */
     @Override
     public void setFocus() {
         populateTable();
     }
 
-    /**
-     * @throws HgException
-     */
     public void populateTable() {
         if (resource != null && resource.isAccessible()
                 && !resource.isDerived() && !resource.isLinked()
@@ -347,7 +289,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             && newResource.isAccessible()
                             && MercurialUtilities.hgIsTeamProviderFor(
                                     newResource, false)) {
-                        String newRoot = HgRootClient.getHgRoot(newResource);
+                        HgRoot newRoot = HgRootClient.getHgRoot(newResource);
                         if (!newRoot.equals(currentHgRoot)) {
                             currentHgRoot = newRoot;
                             resource = newResource;
@@ -363,7 +305,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 IFile file = (IFile) input.getAdapter(IFile.class);
                 if (file != null && file.isAccessible()
                         && MercurialUtilities.hgIsTeamProviderFor(file, false)) {
-                    String newRoot = HgRootClient.getHgRoot(file);
+                    HgRoot newRoot = HgRootClient.getHgRoot(file);
                     if (!newRoot.equals(currentHgRoot)) {
                         currentHgRoot = newRoot;
                         resource = file;
@@ -392,11 +334,6 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
         return view;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.part.WorkbenchPart#dispose()
-     */
     @Override
     public void dispose() {
         getSite().getPage().removeSelectionListener(this);

@@ -37,6 +37,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
@@ -55,9 +56,6 @@ public class QImportWizardPage extends HgWizardPage {
     private Group patchNameGroup;
     private boolean existing;
 
-    /**
-     * @param pageName
-     */
     public QImportWizardPage(String pageName, String title, String description,
             IResource resource, ImageDescriptor titleImage) {
         super(pageName, title, titleImage, description);
@@ -73,9 +71,6 @@ public class QImportWizardPage extends HgWizardPage {
         setControl(composite);
     }
 
-    /**
-     * @param composite
-     */
     private void createOptionGroup(Composite composite) {
         Group g = SWTWidgetHelper.createGroup(composite, Messages
                 .getString("QImportWizardPage.optionsGroup.title")); //$NON-NLS-1$
@@ -86,9 +81,6 @@ public class QImportWizardPage extends HgWizardPage {
         this.gitCheckBox.setSelection(true);
     }
 
-    /**
-     * @param composite
-     */
     private void createPatchNameGroup(Composite composite) {
         this.patchNameGroup = SWTWidgetHelper
                 .createGroup(
@@ -144,17 +136,10 @@ public class QImportWizardPage extends HgWizardPage {
         });
     }
 
-    /**
-     * @param file
-     * @param patchDir
-     * @throws IOException
-     * @throws HgException
-     */
     private void checkExisting(File file) throws IOException, HgException {
         setMessage(null);
-        String hgRoot = HgRootClient.getHgRoot(resource);
-        File patchDir = new File(hgRoot + File.separator
-                + ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
+        HgRoot hgRoot = HgRootClient.getHgRoot(resource);
+        File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
         File[] patches = patchDir.listFiles();
         if (patches != null) {
             for (File patch : patches) {
@@ -204,26 +189,11 @@ public class QImportWizardPage extends HgWizardPage {
         this.changesetTable.setEnabled(false);
 
         SelectionListener listener = new SelectionListener() {
-
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
-             * .swt.events.SelectionEvent)
-             */
             public void widgetSelected(SelectionEvent e) {
                 setPageComplete(true);
                 revisions = changesetTable.getSelections();
             }
 
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
@@ -232,71 +202,39 @@ public class QImportWizardPage extends HgWizardPage {
         this.changesetTable.addSelectionListener(listener);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish
-     * (org.eclipse.core.runtime.IProgressMonitor)
-     */
     @Override
     public boolean finish(IProgressMonitor monitor) {
         return super.finish(monitor);
     }
 
-    /**
-     * @return the revisions
-     */
     public ChangeSet[] getRevisions() {
         return revisions;
     }
 
-    /**
-     * @return the resource
-     */
     public IResource getResource() {
         return resource;
     }
 
-    /**
-     * @param resource
-     *            the resource to set
-     */
     public void setResource(IResource resource) {
         this.resource = resource;
     }
 
-    /**
-     * @return the revCheckBox
-     */
     public Button getRevCheckBox() {
         return revCheckBox;
     }
 
-    /**
-     * @return the patchFile
-     */
     public Text getPatchFile() {
         return patchFile;
     }
 
-    /**
-     * @return the forceCheckBox
-     */
     public Button getForceCheckBox() {
         return forceCheckBox;
     }
 
-    /**
-     * @return the gitCheckBox
-     */
     public Button getGitCheckBox() {
         return gitCheckBox;
     }
 
-    /**
-     * @return the existing
-     */
     public boolean isExisting() {
         return existing;
     }

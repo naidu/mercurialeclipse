@@ -20,39 +20,39 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgFilesystemObject extends File {
-    private HgRoot hgRoot;
+    private final HgRoot hgRoot;
 
     private static final long serialVersionUID = 1L;
 
     public HgFilesystemObject(String pathname) throws IOException,
             CoreException {
         super(pathname);
-        this.hgRoot = new HgRoot(HgClients.getHgRoot(this));
+        this.hgRoot = HgClients.getHgRoot(this);
     }
 
     public HgFilesystemObject(File file) throws IOException, CoreException {
         super(file.getCanonicalPath());
-        this.hgRoot = new HgRoot(HgClients.getHgRoot(this));
+        this.hgRoot = HgClients.getHgRoot(this);
     }
 
     public HgFilesystemObject(URI uri) throws IOException, CoreException {
         super(uri);
-        this.hgRoot = new HgRoot(HgClients.getHgRoot(this));
+        this.hgRoot = HgClients.getHgRoot(this);
     }
 
     public HgFilesystemObject(String parent, String child) throws IOException,
             CoreException {
         super(parent, child);
-        this.hgRoot = new HgRoot(HgClients.getHgRoot(this));
+        this.hgRoot = HgClients.getHgRoot(this);
     }
 
     public HgFilesystemObject(File parent, String child) throws IOException,
             CoreException {
         super(parent, child);
-        this.hgRoot = new HgRoot(HgClients.getHgRoot(this));
+        this.hgRoot = HgClients.getHgRoot(this);
     }
 
     public HgRoot getHgRoot() {
