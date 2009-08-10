@@ -43,12 +43,11 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public abstract class AbstractCache extends Observable {
 
-    protected final static Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
     protected final static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
 
     /**
      * @param repositoryLocation
-     * @param outgoing
+     * @param direction
      *            flag, which direction should be queried.
      * @param changeSetMap
      * @throws HgException
@@ -61,7 +60,7 @@ public abstract class AbstractCache extends Observable {
 
         // clear cache of old members
         final Map<IPath, SortedSet<ChangeSet>> removeMap = changeSetMap
-                .get(repositoryLocation);
+        .get(repositoryLocation);
 
         if (removeMap != null) {
             removeMap.clear();
@@ -71,11 +70,9 @@ public abstract class AbstractCache extends Observable {
         // get changesets from hg
         Map<IPath, SortedSet<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
-            resources = HgOutgoingClient.getOutgoing(project,
-                    repositoryLocation);
+            resources = HgOutgoingClient.getOutgoing(project, repositoryLocation);
         } else {
-            resources = HgIncomingClient.getHgIncoming(project,
-                    repositoryLocation);
+            resources = HgIncomingClient.getHgIncoming(project, repositoryLocation);
         }
 
         // add them to cache(s)
@@ -88,7 +85,7 @@ public abstract class AbstractCache extends Observable {
                 if (changes != null && changes.size() > 0) {
                     SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
                     ChangeSet[] changeSets = changes
-                            .toArray(new ChangeSet[changes.size()]);
+                    .toArray(new ChangeSet[changes.size()]);
 
                     if (changeSets != null) {
                         for (ChangeSet changeSet : changeSets) {
@@ -96,8 +93,8 @@ public abstract class AbstractCache extends Observable {
                             if (direction == Direction.INCOMING) {
                                 synchronized (nodeMap) {
                                     nodeMap
-                                            .put(changeSet.toString(),
-                                                    changeSet);
+                                    .put(changeSet.toString(),
+                                            changeSet);
                                     nodeMap.put(changeSet.getChangeset(),
                                             changeSet);
                                 }
@@ -106,7 +103,7 @@ public abstract class AbstractCache extends Observable {
                     }
 
                     Map<IPath, SortedSet<ChangeSet>> map = changeSetMap
-                            .get(repositoryLocation);
+                    .get(repositoryLocation);
                     if (map == null) {
                         map = new HashMap<IPath, SortedSet<ChangeSet>>();
                     }
@@ -126,20 +123,6 @@ public abstract class AbstractCache extends Observable {
                 AbstractCache.nodeMap.put(changeSet.toString(), changeSet);
                 AbstractCache.nodeMap.put(changeSet.getChangeset(), changeSet);
             }
-        }
-    }
-
-    protected void addToProjectResources(IProject project, IResource member) {
-        if (member.getType() == IResource.PROJECT) {
-            return;
-        }
-        synchronized (projectResources) {
-            Set<IResource> set = AbstractCache.projectResources.get(project);
-            if (set == null) {
-                set = new HashSet<IResource>();
-            }
-            set.add(member);
-            AbstractCache.projectResources.put(project, set);
         }
     }
 
@@ -200,9 +183,7 @@ public abstract class AbstractCache extends Observable {
     }
 
     /**
-     * @param resource
-     * @param members
-     * @param changeSets
+     * @return never null
      */
     protected Set<IResource> getMembers(IResource resource,
             Map<IPath, SortedSet<ChangeSet>> changeSets) {
@@ -210,7 +191,7 @@ public abstract class AbstractCache extends Observable {
         if (changeSets != null) {
             IWorkspaceRoot root = resource.getWorkspace().getRoot();
             for (Iterator<IPath> i = changeSets.keySet().iterator(); i
-                    .hasNext();) {
+            .hasNext();) {
                 IPath path = i.next();
                 IResource member = root.getFileForLocation(path);
                 if (member != null
@@ -233,10 +214,10 @@ public abstract class AbstractCache extends Observable {
     public IResource convertRepoRelPath(File hgRoot, IProject project, String repoRelPath) {
         // determine absolute path
         String resourceLocation = hgRoot.getAbsolutePath() + File.separator
-                + repoRelPath;                       
-        
+        + repoRelPath;
+
         IPath path = new Path(resourceLocation);
-        
+
         // determine project relative path
         int equalSegments = path.matchingFirstSegments(project
                 .getLocation());

@@ -11,6 +11,8 @@
 package com.vectrace.MercurialEclipse.utils;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,11 +30,12 @@ import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class PatchUtils {
 
@@ -88,7 +91,7 @@ public class PatchUtils {
     /**
      * Gets an input stream containing the patched contents of the given file.
      * It patches doesn't contain the file, the file contents are returned.
-     * 
+     *
      * @param file
      *            the file to be patched
      * @param patches
@@ -115,29 +118,46 @@ public class PatchUtils {
         return file.getContents();
     }
 
-    public static ResourceNode getResourceNodeFromInputStream(
-            IResource resource, final InputStream in) {
-        return new PatchUtils().new PatchResourceNode(resource, in);
+    public static byte[] getPatchedContentsAsBytes(IFile file,
+            IFilePatch[] patches, boolean reversed) throws CoreException {
+
+        InputStream stream = getPatchedContents(file, patches, reversed);
+        ByteArrayOutputStream bos = null;
+        try {
+            bos = new ByteArrayOutputStream();
+            byte[] tmpBytes = new byte[8192];
+            int read;
+            while((read = stream.read(tmpBytes)) > 0){
+                bos.write(tmpBytes, 0, read);
+            }
+        } catch (IOException e) {
+            MercurialEclipsePlugin.logError(e);
+            return new byte[0];
+        } finally {
+            try {
+                stream.close();
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+        return bos.toByteArray();
     }
 
-    private class PatchResourceNode extends ResourceNode implements
+    public static ResourceNode getResourceNodeFromInputStream(
+            IResource resource, final InputStream in) {
+        return new PatchResourceNode(resource, in);
+    }
+
+    private static class PatchResourceNode extends ResourceNode implements
             IStreamContentAccessor, ITypedElement {
 
-        private InputStream in;
+        private final InputStream in;
 
-        /**
-         * 
-         */
         public PatchResourceNode(IResource res, InputStream in) {
             super(res);
             this.in = in;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.compare.ResourceNode#getContents()
-         */
         @Override
         public InputStream getContents() throws CoreException {
             return in;

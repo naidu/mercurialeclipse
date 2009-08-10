@@ -15,15 +15,15 @@
 
 /**
  * Mercurial create Wizard
- * 
- * This wizard will dig up the project root and then 
- * it lets you modify the directory, when you are done it will 
+ *
+ * This wizard will dig up the project root and then
+ * it lets you modify the directory, when you are done it will
  * create a mercurial repository
- * 
+ *
  * It will follow the dirictory chain to the bottom to se is
  * there is a .hg directory someware, is so it will suggest that you use it
  * instead of creating a new repository.
- * 
+ *
  */
 package com.vectrace.MercurialEclipse.team;
 
@@ -52,7 +52,7 @@ import com.vectrace.MercurialEclipse.operations.InitOperation;
 
 /**
  * @author zingo
- * 
+ *
  */
 
 public class MercurialConfigurationWizard extends Wizard implements
@@ -127,8 +127,10 @@ public class MercurialConfigurationWizard extends Wizard implements
                         .setMessage(Messages.getString("MercurialConfigurationWizard.selectMercurialRootMsg")); //$NON-NLS-1$
 
                 hgPath = directoryDialog.open();
-                directoryText.setText(hgPath);
-                // directoryDialog.close();
+                if(hgPath != null) {
+                    directoryText.setText(hgPath);
+                    // directoryDialog.close();
+                }
             } else if (e.widget == restoreDefaultDirButton) {
                 hgPath = hgPathOriginal;
                 directoryText.setText(hgPath);
@@ -153,7 +155,7 @@ public class MercurialConfigurationWizard extends Wizard implements
     }
 
     private IProject project;
-    private String hgPath; 
+    private String hgPath;
     private HgRoot foundhgPath;
     private Text directoryText;
     private NewWizardPage page;

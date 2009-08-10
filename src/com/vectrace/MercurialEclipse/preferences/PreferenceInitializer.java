@@ -26,7 +26,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#initializeDefaultPreferences()
      */
     @Override
@@ -34,7 +34,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
         IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
         store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
         store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, System.getProperty ( "user.name" )); //$NON-NLS-1$
-        store.setDefault(MercurialPreferenceConstants.LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM);
+
+        // Andrei: not really sure why it was ever set to "modified" as default.
+        // "Highest" importance should be default, like "merge conflict"
+        // when having 2 different statuses in a folder it should have the more important one
+        store.setDefault(MercurialPreferenceConstants.LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB);
 
         // TODO this is currently required to see immediate changes on file state after editing
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, true);

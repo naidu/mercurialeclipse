@@ -1,5 +1,6 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.SortedSet;
@@ -11,17 +12,22 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.MercurialHistory;
+import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class HgLogClient extends AbstractParseChangesetClient {
 
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
-    
+
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         AbstractShellCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
         command
@@ -30,7 +36,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     }
 
     /**
-     * 
+     *
      * @param command
      *            a command with optionally its Files set
      * @return
@@ -66,7 +72,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
                         m.group(3), // date
                         m.group(4) // user
                         ).description(m.group(6)).build();
-                
+
                 changeSets[i] = changeSet;
             } else {
                 throw new HgException(Messages.getString("HgLogClient.parseException") + lines[i] + "'"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -99,13 +105,12 @@ public class HgLogClient extends AbstractParseChangesetClient {
         try {
             AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
                     false);
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
             command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
                     AbstractParseChangesetClient.getStyleFile(withFiles)
                             .getCanonicalPath());
 
-            if (startRev >= 0 && startRev != Integer.MAX_VALUE) {                
+            if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
                 int last = Math.max(startRev - limitNumber, 0);
                 command.addOptions("-r"); //$NON-NLS-1$
                 command.addOptions(startRev + ":" + last); //$NON-NLS-1$
@@ -134,7 +139,95 @@ public class HgLogClient extends AbstractParseChangesetClient {
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
-       
+
+    public static Map<IPath, SortedSet<ChangeSet>> getPathLog(boolean isFile, File path,
+            HgRoot root, int limitNumber, int startRev, boolean withFiles)
+            throws HgException {
+        try {
+            AbstractShellCommand command = new HgCommand("log", root, //$NON-NLS-1$
+                    false);
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+            command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+                    AbstractParseChangesetClient.getStyleFile(withFiles)
+                    .getCanonicalPath());
+
+            if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
+                int last = Math.max(startRev - limitNumber, 0);
+                command.addOptions("-r"); //$NON-NLS-1$
+                command.addOptions(startRev + ":" + last); //$NON-NLS-1$
+            }
+
+            if (limitNumber > 0) {
+                command.addOptions("-l", limitNumber + ""); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+
+            if (isFile) {
+                command.addOptions("-f"); //$NON-NLS-1$
+            }
+
+            command.addOptions(root.toRelative(path));
+
+            String result = command.executeToString();
+            if (result.length() == 0) {
+                return null;
+            }
+            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                    new Path(path.getAbsolutePath()),
+                    result, Direction.LOCAL, null, null, new IFilePatch[0], root);
+            return revisions;
+        } catch (IOException e) {
+            throw new HgException(e.getLocalizedMessage(), e);
+        }
+    }
+
+
+    public static ChangeSet getLogWithBranchInfo(MercurialRevision rev,
+            int limitNumber, MercurialHistory history) throws HgException {
+        ChangeSet changeSet = rev.getChangeSet();
+        Map<IPath, SortedSet<ChangeSet>> map = getProjectLog(rev.getResource(), limitNumber, changeSet
+                .getChangesetIndex(), true);
+        if(map != null) {
+            return map.get(rev.getResource().getLocation()).first();
+        }
+        File possibleParent = rev.getParent();
+        MercurialRevision next = rev;
+        if(possibleParent == null){
+            // go up one revision, looking for the fist time "branch" occurence
+            while((next = history.getNext(next)) != null){
+                if(next.getParent() == null) {
+                    possibleParent = HgStatusClient.getPossibleSourcePath(
+                            next.getResource().getLocation().toFile(), changeSet.getHgRoot(),
+                            next.getRevision());
+                    if(possibleParent != null){
+                        break;
+                    }
+                } else {
+                    possibleParent = next.getParent();
+                    break;
+                }
+            }
+            if(possibleParent != null) {
+                while((next = history.getPrev(next)) != rev){
+                    if(next == null) {
+                        break;
+                    }
+                    next.setParent(possibleParent);
+                }
+            }
+        }
+        if(possibleParent != null){
+            rev.setParent(possibleParent);
+            // TODO now one can check the changesets which may have exist for the *branched*
+            // file only.
+            map = getPathLog(rev.getResource().getType() == IResource.FILE,
+                    possibleParent, MercurialTeamProvider.getHgRoot(rev.getResource()),
+                    limitNumber, rev.getRevision(), true);
+            if(map!=null) {
+                return  map.get(new Path(possibleParent.getAbsolutePath())).first();
+            }
+        }
+        return null;
+    }
 
     /**
      * @param nodeId
@@ -146,7 +239,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         try {
             Assert.isNotNull(nodeId);
 
-            AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
+            AbstractShellCommand command = new HgCommand("log", res.getProject().getLocation().toFile(), //$NON-NLS-1$
                     false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);

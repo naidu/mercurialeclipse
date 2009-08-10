@@ -29,19 +29,19 @@ public class HgMergeClient extends AbstractClient {
             // take place.
             command.addOptions("--config", "ui.merge=simplemerge"); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        
+
         if (revision != null) {
             command.addOptions("-r", revision); //$NON-NLS-1$
         }
-        
+
         try {
             String result = command.executeToString();
             return result;
         } catch (HgException e) {
             // if conflicts aren't resolved and no merge tool is started, hg
             // exits with 1
-            if (!e.getMessage().startsWith("Process error, return code: 1")) { //$NON-NLS-1$
-                throw new HgException(e);
+            if (e.getStatus().getCode() != 1) { 
+                throw e;
             }
             return e.getMessage();
         }

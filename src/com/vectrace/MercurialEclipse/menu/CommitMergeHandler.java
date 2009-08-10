@@ -6,11 +6,8 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -18,10 +15,9 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class CommitMergeHandler extends SingleResourceHandler {
-    
+
     /**
      * run the commit merge handler
      */
@@ -94,33 +90,18 @@ public class CommitMergeHandler extends SingleResourceHandler {
         Assert.isNotNull(message);
         IProject project = resource.getProject();
         Assert.isNotNull(resource.getProject());
-        
+
         // do hg call
         String result = HgCommitClient.commitProject(project, null, message);
-        
+
         // clear merge status in Eclipse
         project.setPersistentProperty(ResourceProperties.MERGING, null);
         project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-        
+
         // refresh caches
         new RefreshJob(Messages.getString("CommitMergeHandler.refreshStatusAndChangesetsAfterMergeCommit"), null, //$NON-NLS-1$
                 project).schedule();
         project.touch(null);
-        new SafeUiJob(Messages.getString("CommitMergeHandler.clearingMergeView")) { //$NON-NLS-1$
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core
-             * .runtime.IProgressMonitor)
-             */
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                MergeView.getView().clearView();
-                return super.runSafe(monitor);
-            }
-        }.schedule();
-        
         return result;
     }
 

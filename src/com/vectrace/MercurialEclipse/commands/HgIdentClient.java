@@ -10,6 +10,7 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgIdentClient extends AbstractClient {
@@ -67,16 +68,16 @@ public class HgIdentClient extends AbstractClient {
 
     /**
      * Returns the current node-id as a String
-     * 
+     *
      * @param repository
      *            the root of the repository to identify
      * @return Returns the node-id for the current changeset
      * @throws HgException
      * @throws IOException
      */
-    public static String getCurrentChangesetId(File repository)
+    public static String getCurrentChangesetId(HgRoot repository)
     throws HgException, IOException {
-        StringBuilder pathStr = new StringBuilder(repository.getCanonicalPath());
+        StringBuilder pathStr = new StringBuilder(repository.getAbsolutePath());
         pathStr.append(File.separator).append(".hg");
         pathStr.append(File.separator).append("dirstate");
         FileInputStream reader;

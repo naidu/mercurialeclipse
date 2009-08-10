@@ -34,7 +34,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author zingo
- * 
+ *
  */
 public class MercurialTeamProvider extends RepositoryProvider {
 
@@ -55,7 +55,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
     private MercurialHistoryProvider FileHistoryProvider = null;
 
     /**
-	 * 
+	 *
 	 */
     public MercurialTeamProvider() {
         super();
@@ -78,9 +78,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
      * Determines if the resources hg root is known. If it isn't known, Mercurial is called to determine it. The result
      * will be saved as project session property on the resource's project with the qualified name
      * {@link ResourceProperties#HG_ROOT}.
-     * 
+     *
      * This property can be used to create a {@link java.io.File}.
-     * 
+     *
      * @param resource
      *            the resource to get the hg root for
      * @return the canonical file path of the HgRoot
@@ -89,29 +89,20 @@ public class MercurialTeamProvider extends RepositoryProvider {
     private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
         assert (resource != null);
         IProject project = resource.getProject();
+        if (project == null) {
+            throw new HgException("There is no hg repository here (.hg not found)!");
+        }
         HgRoot hgRoot = null;
-        String noHgFoundMsg = "There is no hg repository here (.hg not found)!";
-        if (project != null) {
-            try {
-                hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
-                if (hgRoot == null) {
-                    String rootPath = HgRootClient.getHgRoot(resource);
-                    if (rootPath == null || rootPath.length() == 0) {
-                            throw new HgException(noHgFoundMsg);
-                    }
-                    hgRoot = new HgRoot(new File(rootPath));
-                    setRepositoryEncoding(project, hgRoot);
-                    project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
-                }
-                MercurialTeamProvider.HG_ROOTS.put(project, Boolean.valueOf(false));
-            } catch (Exception e) {
-                // the first low of exception handling: either log it and do not throw,
-                // or throw and do not log.
-                // MercurialEclipsePlugin.logError(e);
-                throw new HgException(e.getLocalizedMessage(), e);
+        try {
+            hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
+            if (hgRoot == null) {
+                hgRoot = HgRootClient.getHgRoot(resource);
+                setRepositoryEncoding(project, hgRoot);
+                project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
             }
-        } else {
-            throw new HgException(noHgFoundMsg);
+            MercurialTeamProvider.HG_ROOTS.put(project, Boolean.FALSE);
+        } catch (CoreException e) {
+            throw new HgException(e);
         }
         return hgRoot;
     }
@@ -135,23 +126,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     private static HgRoot getHgRootFile(File file) throws HgException {
         assert (file != null);
-        try {
-            File rootFile = HgRootClient.getHgRoot(file);
-            HgRoot root = new HgRoot(rootFile);
-            return root;
-        } catch (Exception e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
+        return HgRootClient.getHgRoot(file);
     }
 
     /**
      * Determines if the resources hg root is known. If it isn't known, Mercurial is called to determine it. The result
      * will be saved as project persistent property on the resource's project with the qualified name
      * {@link ResourceProperties#HG_ROOT}.
-     * 
+     *
      * This property can be used to create a {@link java.io.File}.
-     * 
-     * @param File
+     *
+     * @param file
      *            the {@link java.io.File} to get the hg root for
      * @return the canonical file path of the HgRoot or null if no resource could be found in workspace that matches the
      *         file
@@ -168,10 +153,10 @@ public class MercurialTeamProvider extends RepositoryProvider {
     }
 
     /**
-     * Gets the project hgrc as a {@link java.io.File}.
-     * 
-     * @param project
-     *            the project to get the hgrc for
+     * Gets the resource hgrc as a {@link java.io.File}.
+     *
+     * @param resource
+     *            the resource to get the hgrc for
      * @return the {@link java.io.File} referencing the hgrc file, <code>null</code> if it doesn't exist.
      * @throws HgException
      *             if an error occured (e.g., no root could be found).
@@ -184,7 +169,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     /**
      * Gets the hg root of a resource as {@link java.io.File}.
-     * 
+     *
      * @param resource
      *            the resource to get the hg root for
      * @return the {@link java.io.File} referencing the hg root directory
@@ -202,7 +187,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     /**
      * Gets the hg root of a resource as {@link java.io.File}.
-     * 
+     *
      * @param file
      *            a {@link java.io.File}
      * @return the file object of the root.
@@ -213,11 +198,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
         return getAndStoreHgRoot(file);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.core.resources.IProjectNature#deconfigure()
-     */
     public void deconfigure() throws CoreException {
         IProject project = getProject();
         assert (project != null);
@@ -229,11 +209,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.RepositoryProvider#getID()
-     */
     @Override
     public String getID() {
         return ID;
@@ -244,11 +219,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
         return new HgMoveDeleteHook();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.RepositoryProvider#getFileHistoryProvider()
-     */
     @Override
     public IFileHistoryProvider getFileHistoryProvider() {
         if (FileHistoryProvider == null) {
@@ -258,21 +228,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
         return FileHistoryProvider;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResources()
-     */
     @Override
     public boolean canHandleLinkedResources() {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.core.RepositoryProvider#canHandleLinkedResourceURI()
-     */
     @Override
     public boolean canHandleLinkedResourceURI() {
         return canHandleLinkedResources();

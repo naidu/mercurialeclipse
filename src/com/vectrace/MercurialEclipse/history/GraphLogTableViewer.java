@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.vectrace.MercurialEclipse.history;
 
@@ -27,8 +27,8 @@ import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
 import com.vectrace.MercurialEclipse.model.GChangeSet.EdgeList;
 
 public class GraphLogTableViewer extends TableViewer {
-    private List<Color> colours = new ArrayList<Color>();
-    private MercurialHistoryPage mhp;
+    private final List<Color> colours = new ArrayList<Color>();
+    private final MercurialHistoryPage mhp;
 
     public GraphLogTableViewer(Composite parent, int style,
             MercurialHistoryPage mercurialHistoryPage) {
@@ -77,7 +77,7 @@ public class GraphLogTableViewer extends TableViewer {
                 MercurialEclipsePlugin.logError(e);
             }
         }
-        
+
         // validate signed changesets
         Signature sig = rev.getSignature();
         if (sig != null) {
@@ -92,8 +92,9 @@ public class GraphLogTableViewer extends TableViewer {
             }
         }
         if (mhp.getCurrentWorkdirChangeset() != null) {
-            if (rev.getRevision().equals(""+mhp.getCurrentWorkdirChangeset().getRevision().getRevision()))
+            if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getRevision().getRevision()) {
                 tableItem.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
+            }
         }
     }
 

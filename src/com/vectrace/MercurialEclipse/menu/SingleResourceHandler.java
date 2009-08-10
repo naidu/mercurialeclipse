@@ -25,16 +25,17 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
- * 
+ *
  */
 public abstract class SingleResourceHandler extends AbstractHandler {
 
     private IResource selection;
+    private Shell shell;
 
     protected Shell getShell() {
-        return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+        return shell != null? shell : PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
     }
 
     protected IResource getSelectedResource() {
@@ -68,6 +69,13 @@ public abstract class SingleResourceHandler extends AbstractHandler {
             throw new ExecutionException(e.getMessage(), e);
         }
         return null;
+    }
+
+    /**
+     * @param shell the shell to set, may be null
+     */
+    public void setShell(Shell shell) {
+        this.shell = shell;
     }
 
     protected abstract void run(IResource resource) throws Exception;

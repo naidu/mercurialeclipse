@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class HgCommand extends AbstractShellCommand {
@@ -52,7 +52,7 @@ public class HgCommand extends AbstractShellCommand {
 
     protected String getHgExecutable() {
         return HgClients.getExecutable();
-        
+
     }
 
     protected String getDefaultUserName() {
@@ -68,11 +68,10 @@ public class HgCommand extends AbstractShellCommand {
             List<IResource> resources) throws HgException, IOException {
         Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
         for (IResource resource : resources) {
-            HgRoot root = new HgRoot(MercurialTeamProvider.getHgRoot(resource)
-                    .getCanonicalPath());
+            HgRoot root = MercurialTeamProvider.getHgRoot(resource);
             List<IResource> list = result.get(root);
             if (list == null) {
-                list = new ArrayList<IResource>();                
+                list = new ArrayList<IResource>();
                 result.put(root, list);
             }
             list.add(resource);

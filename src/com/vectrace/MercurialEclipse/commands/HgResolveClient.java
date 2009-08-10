@@ -21,16 +21,18 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgResolveClient extends AbstractClient {
 
     /**
      * List merge state of files after merge
-     * 
+     *
      * @param res
      * @return
      * @throws HgException
@@ -56,19 +58,18 @@ public class HgResolveClient extends AbstractClient {
 
     /**
      * Mark a resource as resolved ("R")
-     * 
-     * @param res
-     * @return
-     * @throws HgException
      */
-    public static String markResolved(File file) throws HgException {
+    public static String markResolved(IFile ifile) throws HgException {
+        File file = ifile.getLocation().toFile();
         try {
             AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
                     getWorkingDirectory(file), false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
             command.addOptions("-m", file.getCanonicalPath()); //$NON-NLS-1$
-            return command.executeToString();
+            String result = command.executeToString();
+            refreshStatus(ifile);
+            return result;
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
@@ -76,15 +77,12 @@ public class HgResolveClient extends AbstractClient {
 
     /**
      * Try to resolve all unresolved files
-     * 
-     * @param file
-     * @return
-     * @throws HgException
      */
-    public static String resolveAll(File file) throws HgException {
+    public static String resolveAll(IResource res) throws HgException {
+        File file = res.getLocation().toFile();
         AbstractShellCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
                 false);
-        
+
         boolean useExternalMergeTool = Boolean.valueOf(
                 HgClients.getPreference(
                         MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
@@ -97,27 +95,37 @@ public class HgResolveClient extends AbstractClient {
         }
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
-        return command.executeToString();
+        String result = command.executeToString();
+        refreshStatus(res);
+        return result;
 
     }
 
     /**
      * Mark a resource as unresolved ("U")
-     * 
-     * @param res
-     * @return
-     * @throws HgException
      */
-    public static String markUnresolved(File file) throws HgException {
+    public static String markUnresolved(IFile ifile) throws HgException {
+        File file = ifile.getLocation().toFile();
         try {
             AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
                     getWorkingDirectory(file), false);
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
             command.addOptions("-u", file.getCanonicalPath()); //$NON-NLS-1$
-            return command.executeToString();
+            String result = command.executeToString();
+            refreshStatus(ifile);
+            return result;
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
+        }
+    }
+
+    private static void refreshStatus(IResource res) throws HgException {
+        MercurialStatusCache.getInstance().refreshStatus(res, null);
+        try {
+            res.touch(null);
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
         }
     }
 
@@ -126,7 +134,7 @@ public class HgResolveClient extends AbstractClient {
      * property on the workspace so that the check is only called once a
      * session. Changing hg version while leaving Eclipse running results in
      * undefined behavior.
-     * 
+     *
      * @return true if resolve is supported, false if not
      */
     public static boolean checkAvailable() throws HgException {

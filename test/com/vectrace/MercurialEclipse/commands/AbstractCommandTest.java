@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+
 import junit.framework.TestCase;
 
 /**
@@ -40,10 +42,6 @@ public class AbstractCommandTest extends TestCase {
         HgClients.initialize(cfg, cfg, cfg);
     }
 
-    /**
-     * @param where
-     * @throws IOException
-     */
     private void createEmptyRepository(File zip, File dest) throws IOException {
         try {
             ZipInputStream zipped = new ZipInputStream(new FileInputStream(zip));
@@ -76,16 +74,13 @@ public class AbstractCommandTest extends TestCase {
         }
     }
 
-    public final File getRepository() {
-        
+    public final HgRoot getRepository() throws IOException {
+
         String testRepoRoot = System.getProperty("java.io.tmpdir") + File.separator + "test/repo";
-        File where = new File(testRepoRoot);
+        HgRoot where = new HgRoot(testRepoRoot);
         return where;
     }
 
-    /* (non-Javadoc)
-     * @see junit.framework.TestCase#tearDown()
-     */
     @Override
     public final void tearDown() throws Exception {
         try {
@@ -97,7 +92,7 @@ public class AbstractCommandTest extends TestCase {
         }
     }
 
-    private void deleteRepository() {
+    private void deleteRepository() throws IOException {
         File repository = getRepository();
         delTree(repository);
         assertFalse("Unable to delete test repository", repository.exists());
@@ -120,9 +115,9 @@ public class AbstractCommandTest extends TestCase {
     }
 
     protected void addToRepository(File newFile) throws InterruptedException,
-            IOException {
-                Runtime runtime = Runtime.getRuntime();
-                runtime.exec("hg add " + newFile.getAbsolutePath(), null, getRepository()).waitFor();
-            }
+    IOException {
+        Runtime runtime = Runtime.getRuntime();
+        runtime.exec("hg add " + newFile.getCanonicalPath(), null, getRepository()).waitFor();
+    }
 
 }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.3"?>
 
-<!-- 
+<!--
 /*******************************************************************************
  * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
@@ -24,47 +24,47 @@
 
 <!--            Team exstension points                     -->
    <extension point="org.eclipse.team.core.repository">
-	  <repository
-    	 class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-    	 typeClass="com.vectrace.MercurialEclipse.team.MercurialTeamProviderType"
-		 id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-		  metaFilePaths=".hg/">
- 	  </repository>
+      <repository
+         class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
+         typeClass="com.vectrace.MercurialEclipse.team.MercurialTeamProviderType"
+         id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
+          metaFilePaths=".hg/">
+       </repository>
    </extension>
-   
-	<extension point="org.eclipse.team.ui.configurationWizards">
-	   <wizard
-	        name="Mercurial"
-	        icon="icons/mercurialeclipse.png"
-	        class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
-	        id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
-	   </wizard>
-	</extension>
-		
-     
-	<extension point="org.eclipse.team.ui.synchronizeParticipants">
-	   <participant
-	        icon="icons/mercurialeclipse.png"
-	        id="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
-	        class="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
-	        name="%mercurialSynchronization"
-	        persistent="true">
-	   </participant>
-	</extension>
 
-	<extension point= "org.eclipse.team.ui.synchronizeWizards" >
-	   <wizard
-	        name="Mercurial"
-			description="%mercurialSynchronizeWizard"
-	        icon="icons/mercurialeclipse.png"
-	        class="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard"
-	        id="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard">
-	   </wizard>
-	</extension>
+    <extension point="org.eclipse.team.ui.configurationWizards">
+       <wizard
+            name="%mercurial"
+            icon="icons/mercurialeclipse.png"
+            class="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard"
+            id="com.vectrace.MercurialEclipse.team.MercurialConfigurationWizard">
+       </wizard>
+    </extension>
 
 
-	<extension point="org.eclipse.ui.decorators">
-	    <decorator
+    <extension point="org.eclipse.team.ui.synchronizeParticipants">
+       <participant
+            icon="icons/mercurialeclipse.png"
+            id="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
+            class="com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant"
+            name="%mercurial"
+            persistent="true">
+       </participant>
+    </extension>
+
+    <extension point= "org.eclipse.team.ui.synchronizeWizards" >
+       <wizard
+            name="%mercurial"
+            description="%mercurialSynchronizeWizard"
+            icon="icons/mercurialeclipse.png"
+            class="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard"
+            id="com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard">
+       </wizard>
+    </extension>
+
+
+    <extension point="org.eclipse.ui.decorators">
+        <decorator
            adaptable="true"
            class="com.vectrace.MercurialEclipse.team.ResourceDecorator"
            icon="icons/mercury_Hg.png"
@@ -73,259 +73,285 @@
            lightweight="true"
            location="BOTTOM_RIGHT"
            state="true">
-	         <description>
-	            %labelDecorationsForMercurialEclipse
-	         </description>
-	         <enablement>
-               <objectClass name="org.eclipse.core.resources.IResource"/>                                              
-	         </enablement>
-	    </decorator>
-	</extension>
+             <description>
+                %labelDecorationsForMercurialEclipse
+             </description>
+             <enablement>
+               <objectClass name="org.eclipse.core.resources.IResource"/>
+             </enablement>
+        </decorator>
+    </extension>
 
-	<!-- propertyTesters -->
-	<extension point="org.eclipse.core.expressions.propertyTesters">
-		<!-- tests for added,clean,deleted,ignore,modified,removed,unknown -->
-	  	<propertyTester
-	         class="com.vectrace.MercurialEclipse.menu.FlagPropertyTester"
-	         id="com.vectrace.MercurialEclipse.propertyTester"
-	         namespace="com.vectrace.MercurialEclipse.propertyTester"
-	         properties="status"
-	         type="org.eclipse.core.resources.IResource">
-	  	</propertyTester>
-	</extension>
-	
-	<!-- expressions.definitions -->
-	<extension point="org.eclipse.core.expressions.definitions">
-		<!-- mercurial -->
-		<definition id="com.vectrace.MercurialEclipse.def.mercurial">
-			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">
-					<test
-					      property="org.eclipse.core.resources.projectPersistentProperty"
-					      args="org.eclipse.team.core.repository,com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-					</test>
-				</adapt>
-			</iterate>
-		</definition>
-		<!-- Must be file -->
-		<definition id="com.vectrace.MercurialEclipse.def.file">
-			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">
-					<adapt type="org.eclipse.core.resources.IFile"/>
-				</adapt>
-			</iterate>
-		</definition>
-		<!-- notInMercurial -->
-		<definition id="com.vectrace.MercurialEclipse.def.notInMercurial">
-			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">					
-						<test 
-						      property="com.vectrace.MercurialEclipse.propertyTester.status"
-						      args="unknown,ignore">
-						</test>
-				</adapt>
-			</iterate>
-		</definition>
-		<!-- hgUnknown -->
-		<definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
-			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">
-		    	       	<test property="com.vectrace.MercurialEclipse.propertyTester.status"
-	    		              args="unknown"/>
-						<not>
-							<test property="com.vectrace.MercurialEclipse.propertyTester.status"
-						      args="added,clean,modified"/>
-						</not>
-				</adapt>
-			</iterate>
-		</definition>
-		<!-- merging -->
-		<definition id="com.vectrace.MercurialEclipse.def.merging">
-			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">
-					<test
-					      property="org.eclipse.core.resources.projectPersistentProperty"
-					      args="com.vectrace.MercurialEclipse.merging">
-					</test>
-				</adapt>
-			</iterate>
-		</definition>
-		<!-- notMerging -->
-		<definition id="com.vectrace.MercurialEclipse.def.notMerging">
-			<iterate>
-				<adapt type="org.eclipse.core.resources.IResource">
-					<not>
-						<test
-						      property="org.eclipse.core.resources.projectPersistentProperty"
-						      args="com.vectrace.MercurialEclipse.merging">
-						</test>
-					</not>
-				</adapt>
-			</iterate>
-		</definition>
-	</extension>
+    <!-- propertyTesters -->
+    <extension point="org.eclipse.core.expressions.propertyTesters">
+        <!-- tests for added,clean,deleted,ignore,modified,removed,unknown -->
+          <propertyTester
+             class="com.vectrace.MercurialEclipse.menu.FlagPropertyTester"
+             id="com.vectrace.MercurialEclipse.propertyTester"
+             namespace="com.vectrace.MercurialEclipse.propertyTester"
+             properties="status"
+             type="org.eclipse.core.resources.IResource">
+          </propertyTester>
+    </extension>
 
-	<!-- commands -->
-	<extension point="org.eclipse.ui.commands">
-		<command
-        		categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		        id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
-		        name="%commitMerge"/>
-		<command id="com.vectrace.MercurialEclipse.menu.CommitHandler"
-				 categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%commit"/>
-		<command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
-				categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%update"/>
-		<command id="com.vectrace.MercurialEclipse.menu.TagHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%tags"/>
-		<command id="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
+    <!-- expressions.definitions -->
+    <extension point="org.eclipse.core.expressions.definitions">
+
+        <!-- mercurial -->
+        <definition id="com.vectrace.MercurialEclipse.def.mercurial">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <test
+                          property="org.eclipse.core.resources.projectPersistentProperty"
+                          args="org.eclipse.team.core.repository,com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+                    </test>
+                </adapt>
+            </iterate>
+        </definition>
+
+        <!-- Must be file -->
+        <definition id="com.vectrace.MercurialEclipse.def.file">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <adapt type="org.eclipse.core.resources.IFile"/>
+                </adapt>
+            </iterate>
+        </definition>
+
+        <!-- Must be project -->
+        <definition id="com.vectrace.MercurialEclipse.def.project">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <adapt type="org.eclipse.core.resources.IProject"/>
+                </adapt>
+            </iterate>
+        </definition>
+
+        <!-- notInMercurial -->
+        <definition id="com.vectrace.MercurialEclipse.def.notInMercurial">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                        <test
+                              property="com.vectrace.MercurialEclipse.propertyTester.status"
+                              args="unknown,ignore">
+                        </test>
+                </adapt>
+            </iterate>
+        </definition>
+
+        <!-- hgUnknown -->
+        <definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                           <test property="com.vectrace.MercurialEclipse.propertyTester.status"
+                              args="unknown"/>
+                        <not>
+                            <test property="com.vectrace.MercurialEclipse.propertyTester.status"
+                              args="added,clean,modified"/>
+                        </not>
+                </adapt>
+            </iterate>
+        </definition>
+
+        <!-- hgModified
+        <definition id="com.vectrace.MercurialEclipse.def.hgModified">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <test property="com.vectrace.MercurialEclipse.propertyTester.status"
+                      args="added,removed,modified,deleted"/>
+                </adapt>
+            </iterate>
+        </definition>
+        -->
+
+        <!-- merging -->
+        <definition id="com.vectrace.MercurialEclipse.def.merging">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <test
+                          property="org.eclipse.core.resources.projectPersistentProperty"
+                          args="com.vectrace.MercurialEclipse.merging">
+                    </test>
+                </adapt>
+            </iterate>
+        </definition>
+
+        <!-- notMerging -->
+        <definition id="com.vectrace.MercurialEclipse.def.notMerging">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <not>
+                        <test
+                              property="org.eclipse.core.resources.projectPersistentProperty"
+                              args="com.vectrace.MercurialEclipse.merging">
+                        </test>
+                    </not>
+                </adapt>
+            </iterate>
+        </definition>
+    </extension>
+
+    <!-- commands -->
+    <extension point="org.eclipse.ui.commands">
+        <command
+                categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                id="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
+                name="%commitMerge"/>
+        <command id="com.vectrace.MercurialEclipse.menu.CommitHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%commit"/>
+        <command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
+                categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%update"/>
+        <command id="com.vectrace.MercurialEclipse.menu.TagHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%tags"/>
+        <command id="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%bookmarks"/>
         <command id="com.vectrace.MercurialEclipse.menu.MergeHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%merge"/>
-		<command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%updateTo"/>
-		<command id="com.vectrace.MercurialEclipse.menu.AddHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%add"/>
-		<command id="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%ignore"/>
-		<command id="com.vectrace.MercurialEclipse.menu.RollbackHandler"
-		         name="%rollback"/>		
-		<command id="com.vectrace.MercurialEclipse.menu.PullHandler"
-				 categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%pull"/>
-		<command id="com.vectrace.MercurialEclipse.menu.PushHandler"
-				 categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%push"/>
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%merge"/>
+        <command id="com.vectrace.MercurialEclipse.menu.SwitchHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%updateTo"/>
+        <command id="com.vectrace.MercurialEclipse.menu.AddHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%add"/>
+        <command id="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%ignore"/>
+        <command id="com.vectrace.MercurialEclipse.menu.RollbackHandler"
+                 name="%rollback"/>
+        <command id="com.vectrace.MercurialEclipse.menu.PullHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%pull"/>
+        <command id="com.vectrace.MercurialEclipse.menu.PushHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%push"/>
         <command id="com.vectrace.MercurialEclipse.menu.RebaseHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
-                 name="%rebase"/>       		         		
-		<command id="com.vectrace.MercurialEclipse.menu.SignHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%sign"/>	                  
-		<command id="com.vectrace.MercurialEclipse.menu.BackoutHandler"
-		         categoryId="com.vectrace.MercurialEclipse.commandCategory"
-		         name="%backout"/>		
+                 name="%rebase"/>
+        <command id="com.vectrace.MercurialEclipse.menu.SignHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%sign"/>
+        <command id="com.vectrace.MercurialEclipse.menu.BackoutHandler"
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%backout"/>
         <command id="com.vectrace.MercurialEclipse.menu.TransplantHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%transplant"/>
         <command id="com.vectrace.MercurialEclipse.menu.StripHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%strip"/>
         <command id="com.vectrace.MercurialEclipse.menu.ServeHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%serve"/>
         <command id="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%branch"/>
         <command id="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
-                 name="%disconnect"/>        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%disconnect"/>
         <command id="com.vectrace.MercurialEclipse.menu.QImportHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%qimport"/>
         <command id="com.vectrace.MercurialEclipse.menu.QInitHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%qinit"/>
         <command id="com.vectrace.MercurialEclipse.menu.QNewHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
-                 name="%qnew"/>                                         
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%qnew"/>
         <command id="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%qrefresh"/>
         <command id="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
-                 name="%qdelete"/>            
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%qdelete"/>
         <command id="com.vectrace.MercurialEclipse.menu.SyncHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
-                 name="%synchronize"/>                      
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%synchronize"/>
         <command id="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory"        
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%refreshStatus"/>
         <command id="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%importPatchFromFileOrClipboard"
                  name="%importPatch"/>
         <command id="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%exportPatchToFileOrClipboard"
                  name="%exportPatch"/>
         <command id="com.vectrace.MercurialEclipse.menu.ShelveHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%shelveDescription"
                  name="%shelveName"/>
         <command id="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
-                 categoryId="com.vectrace.MercurialEclipse.commandCategory" 
+                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  description="%unshelveDescription"
-                 name="%unshelveName"/>                 
+                 name="%unshelveName"/>
         <category
               id="com.vectrace.MercurialEclipse.commandCategory"
-              name="Mercurial">
-        </category>                                       
-	</extension>
+              name="%mercurial">
+        </category>
+    </extension>
 
-	<!-- handlers -->
-	<extension point="org.eclipse.ui.handlers">
+    <!-- handlers -->
+    <extension point="org.eclipse.ui.handlers">
 
-		<!-- CommitMergeHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
-		         class="com.vectrace.MercurialEclipse.menu.CommitMergeHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler>
+        <!-- CommitMergeHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
+                 class="com.vectrace.MercurialEclipse.menu.CommitMergeHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
 
-		<!-- CommitHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.CommitHandler"
-		         class="com.vectrace.MercurialEclipse.menu.CommitHandler"/>
+        <!-- CommitHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.CommitHandler"
+                 class="com.vectrace.MercurialEclipse.menu.CommitHandler"/>
 
-		<!-- PushHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.PushHandler"
-		         class="com.vectrace.MercurialEclipse.menu.PushHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler>
+        <!-- PushHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.PushHandler"
+                 class="com.vectrace.MercurialEclipse.menu.PushHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
 
-		<!-- UpdateHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler"
-		         class="com.vectrace.MercurialEclipse.menu.UpdateHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler>
-		
-		<!-- RebaseHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.RebaseHandler"
+        <!-- UpdateHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler"
+                 class="com.vectrace.MercurialEclipse.menu.UpdateHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
+
+        <!-- RebaseHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.RebaseHandler"
                  class="com.vectrace.MercurialEclipse.menu.RebaseHandler">
             <enabledWhen>
                 <count value="1"/>
             </enabledWhen>
         </handler>
-		
-		<!-- PullHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.PullHandler"
-		         class="com.vectrace.MercurialEclipse.menu.PullHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler>				
 
-		<!-- TagHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.TagHandler"
-		         class="com.vectrace.MercurialEclipse.menu.TagHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler>
-		
-		<!-- BookmarkHandler -->
+        <!-- PullHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.PullHandler"
+                 class="com.vectrace.MercurialEclipse.menu.PullHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
+
+        <!-- TagHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.TagHandler"
+                 class="com.vectrace.MercurialEclipse.menu.TagHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
+
+        <!-- BookmarkHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
                  class="com.vectrace.MercurialEclipse.menu.BookmarkHandler">
             <enabledWhen>
@@ -333,505 +359,551 @@
             </enabledWhen>
         </handler>
 
-		<!-- MergeHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
-		         class="com.vectrace.MercurialEclipse.menu.MergeHandler">
-			<enabledWhen>
-				<and>
-					<count value="1"/>
-					<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
-				</and>
-			</enabledWhen>
-		</handler>
+        <!-- MergeHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
+                 class="com.vectrace.MercurialEclipse.menu.MergeHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+                </and>
+            </enabledWhen>
+        </handler>
 
-		<!-- SwitchHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
-		         class="com.vectrace.MercurialEclipse.menu.SwitchHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler>
+        <!-- SwitchHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
+                 class="com.vectrace.MercurialEclipse.menu.SwitchHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler>
 
-		<!-- GLogHandler -->
-		<!--handler commandId="com.vectrace.MercurialEclipse.menu.GLogHandler"
-		         class="com.vectrace.MercurialEclipse.menu.GLogHandler">
-			<enabledWhen>
-				<count value="1"/>
-			</enabledWhen>
-		</handler-->
-		
-		<!-- AddHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
-		         class="com.vectrace.MercurialEclipse.menu.AddHandler">
-			<enabledWhen>
-				<reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
-			</enabledWhen>
-		</handler>
+        <!-- GLogHandler -->
+        <!--handler commandId="com.vectrace.MercurialEclipse.menu.GLogHandler"
+                 class="com.vectrace.MercurialEclipse.menu.GLogHandler">
+            <enabledWhen>
+                <count value="1"/>
+            </enabledWhen>
+        </handler-->
 
-		<!-- HgIgnoreHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
-		         class="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler">
-			<enabledWhen>
-					<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-			</enabledWhen>
-		</handler>
-		<!-- SyncHandler -->
+        <!-- AddHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
+                 class="com.vectrace.MercurialEclipse.menu.AddHandler">
+            <enabledWhen>
+                <reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
+            </enabledWhen>
+        </handler>
+
+        <!-- HgIgnoreHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
+                 class="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler">
+            <enabledWhen>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+            </enabledWhen>
+        </handler>
+
+        <!-- SyncHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
                  class="com.vectrace.MercurialEclipse.menu.SyncHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
-		<!-- RollbackHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
-		         class="com.vectrace.MercurialEclipse.menu.RollbackHandler">
-			<enabledWhen>
-				<and>
-					<count value="1"/>					
-				</and>
-			</enabledWhen>
-		</handler>
-		
-		<!-- BackoutHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler"
-		         class="com.vectrace.MercurialEclipse.menu.BackoutHandler">
-			<enabledWhen>
-				<and>
-					<count value="1"/>					
-				</and>
-			</enabledWhen>
-		</handler>
-		
-		<!-- SignHandler -->
-		<handler commandId="com.vectrace.MercurialEclipse.menu.SignHandler"
-		         class="com.vectrace.MercurialEclipse.menu.SignHandler">
-			<enabledWhen>
-				<and>
-					<count value="1"/>					
-				</and>
-			</enabledWhen>
-		</handler>
-		
-	    <!-- TransplantHandler -->
+
+        <!-- RollbackHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
+                 class="com.vectrace.MercurialEclipse.menu.RollbackHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>
+                </and>
+            </enabledWhen>
+        </handler>
+
+        <!-- BackoutHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler"
+                 class="com.vectrace.MercurialEclipse.menu.BackoutHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>
+                </and>
+            </enabledWhen>
+        </handler>
+
+        <!-- SignHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.SignHandler"
+                 class="com.vectrace.MercurialEclipse.menu.SignHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>
+                </and>
+            </enabledWhen>
+        </handler>
+
+        <!-- TransplantHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler"
                  class="com.vectrace.MercurialEclipse.menu.TransplantHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
-        
+
         <!-- StripHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.StripHandler"
                  class="com.vectrace.MercurialEclipse.menu.StripHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- ServeHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.ServeHandler"
                  class="com.vectrace.MercurialEclipse.menu.ServeHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- AddBranchHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
                  class="com.vectrace.MercurialEclipse.menu.AddBranchHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- DisconnectHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
                  class="com.vectrace.MercurialEclipse.menu.DisconnectHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- QImportHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QImportHandler"
                  class="com.vectrace.MercurialEclipse.menu.QImportHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- QInitHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QInitHandler"
                  class="com.vectrace.MercurialEclipse.menu.QInitHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- QNewHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QNewHandler"
                  class="com.vectrace.MercurialEclipse.menu.QNewHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- QRefreshHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
                  class="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- QDeleteHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
                  class="com.vectrace.MercurialEclipse.menu.QDeleteHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- Shelve Handler  -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.ShelveHandler"
                  class="com.vectrace.MercurialEclipse.menu.ShelveHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- UnShelve Handler  -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
                  class="com.vectrace.MercurialEclipse.menu.UnShelveHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <!-- RefreshStatusHandler -->
         <handler commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                  class="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>                  
+                    <count value="1"/>
                 </and>
             </enabledWhen>
         </handler>
+
         <handler commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
                  class="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"/>
+
         <handler commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
                  class="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"/>
-	</extension>
+    </extension>
 
-	<extension point="org.eclipse.ui.menus">
-		<menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
-			<menu label="Team" id="team.main">
-				<separator name="group1" visible="true"/>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
-          icon="icons/actions/commit.gif"
-          label="%menuLabel.commitMerge">
-					<visibleWhen>
-						<and>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.merging"/>
-						</and>
-					</visibleWhen>
-				</command>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.PushHandler"
-          icon="icons/actions/commit.gif"
-          label="%menuLabel.push">
-					<visibleWhen>
-						<and>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
-						</and>
-					</visibleWhen>
-				</command>		
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.PullHandler"
-          icon="icons/actions/update.gif"
-          label="%menuLabel.pull">
-					<visibleWhen>
-						<and>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-							<reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
-						</and>
-					</visibleWhen>
-				</command>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler"
-          icon="icons/actions/update.gif"
-          label="%menuLabel.update">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-    <command
-          commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
-          icon="icons/actions/switch.gif"
-          label="%menuLabel.updateTo">
-       <visibleWhen>
-          <reference
-                definitionId="com.vectrace.MercurialEclipse.def.mercurial">
-          </reference>
-       </visibleWhen>
-    </command>
-				
-                
-				<separator name="group2" visible="false"/><!-- TODO visible="true" -->
-				<command commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
-					icon="icons/import.gif">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-				<command commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
-					icon="icons/export.gif">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-				<separator name="group3" visible="true"/>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.TagHandler"
-          icon="icons/tags.gif"
-          label="%menuLabel.tags">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
-          icon="icons/actions/tag.gif"
-          label="%menuLabel.bookmarks">
+    <!-- TODO Andrei:
+        the choise of "org.eclipse.ui.menus" instead of "org.eclipse.ui.popupMenus" causes
+        the silly second separator line just before the "properties" menu entry.
+        Seems to be a bug, because both team.ui and mercurial plugins defines "team.main"
+        menu in two different ways, so Eclipse is unhappy with this and generates some visual garbage.
+    -->
+    <extension point="org.eclipse.ui.menus">
+
+        <menuContribution locationURI="popup:org.eclipse.ui.popup.any?after=additions">
+
+            <menu label="%menuLabel.team" id="team.main">
+                <!--
+                Andrei: we cannot disable/enable visibility of the entire "team.main" menu
+                because it is used not only for Mercurial. So EACH hg command below MUST
+                have the "visibleWhen" block like this:
+                <visibleWhen>
+                   <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                </visibleWhen>
+                -->
+
+                <separator name="group1" visible="false"/>
+
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.CommitMergeHandler"
+                      icon="icons/actions/commit.gif">
                     <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.merging"/>
+                        </and>
                     </visibleWhen>
                 </command>
-    <command
-          commandId="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
-          icon="icons/actions/branch.gif"
-          label="%menuLabel.branch">
-       <visibleWhen>
-          <reference
-                definitionId="com.vectrace.MercurialEclipse.def.mercurial">
-          </reference>
-       </visibleWhen>
-    </command>
-    <command
-          commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
-          icon="icons/actions/merge.gif"
-          label="%menuLabel.merge">
-       <visibleWhen>
-          <reference
-                definitionId="com.vectrace.MercurialEclipse.def.mercurial">
-          </reference>
-       </visibleWhen>
-    </command>
-    <command
-          commandId="com.vectrace.MercurialEclipse.menu.RebaseHandler"
-          icon="icons/actions/merge.gif"
-          label="%menuLabel.rebase">
-       <visibleWhen>
-          <and>
-             <reference
-                   definitionId="com.vectrace.MercurialEclipse.def.mercurial">
-             </reference>
-             <reference
-                   definitionId="com.vectrace.MercurialEclipse.def.notMerging">
-             </reference>
-          </and>
-       </visibleWhen>
-    </command>
-	<separator name="group4" visible="true"/>				
-	
-				<separator name="group5" visible="true"/>
-				<menu label="%menuLabel.undo" id="team.main.com.vectrace.MercurialEclipse.menu.undo" icon="icons/undo_edit.gif">  
-    				<command
-              commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler"
-              icon="icons/actions/revert.gif"
-              label="%menuLabel.backout">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.PushHandler"
+                  icon="icons/actions/commit.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.PullHandler"
+                  icon="icons/actions/update.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.UpdateHandler"
+                  icon="icons/actions/update.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
+                  icon="icons/actions/switch.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <separator name="group2" visible="true"/>
+
+                <command commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
+                    icon="icons/import.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
+                    icon="icons/export.gif">
+                    <visibleWhen>
+                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                    </visibleWhen>
+                </command>
+
+                <separator name="group3" visible="true"/>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.TagHandler"
+                  icon="icons/tags.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.BookmarkHandler"
+                  icon="icons/actions/tag.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.AddBranchHandler"
+                  icon="icons/actions/branch.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
+                  icon="icons/actions/merge.gif">
+                    <visibleWhen>
+                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.RebaseHandler"
+                  icon="icons/actions/merge.gif">
+                   <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                   </visibleWhen>
+                </command>
+
+                <separator name="group4" visible="true"/>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
+                  icon="icons/clcl16/refresh.gif">
+                    <visibleWhen>
+                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
+                  icon="icons/actions/synch.gif">
+                    <visibleWhen>
+                        <and>
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <separator name="group5" visible="true"/>
+
+                <menu label="%menuLabel.undo"
+                    id="team.main.com.vectrace.MercurialEclipse.menu.undo" icon="icons/undo_edit.gif">
+                    <visibleWhen>
+                        <and>
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                        <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+
                     <command
-                          commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
-                          icon="icons/actions/revert.gif"
-                          label="%menuLabel.rollback">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
+                      commandId="com.vectrace.MercurialEclipse.menu.BackoutHandler"
+                      icon="icons/actions/revert.gif">
                     </command>
+
                     <command
-                          commandId="com.vectrace.MercurialEclipse.menu.StripHandler"
-                          icon="icons/actions/revert.gif"
-                          label="%menuLabel.strip">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
+                      commandId="com.vectrace.MercurialEclipse.menu.RollbackHandler"
+                      icon="icons/actions/revert.gif">
                     </command>
-                </menu>				
-				<separator name="group6" visible="true"/>				                               
-				<separator name="group7" visible="true"/>
-				<separator name="group8" visible="true"/>
-				<menu
-                      id="team.main.com.vectrace.MercurialEclipse.menu.extensions"
-                      label="%menuLabel.extensions">
-                       <menu
+
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.StripHandler"
+                      icon="icons/actions/revert.gif">
+                    </command>
+                </menu>
+
+                <menu
+                    id="team.main.com.vectrace.MercurialEclipse.menu.extensions"
+                    label="%menuLabel.extensions">
+                    <visibleWhen>
+                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                    </visibleWhen>
+
+                    <menu
                       id="team.main.com.vectrace.MercurialEclipse.menu.mqueue"
-                      label="%menuLabel.mqueue">       
-                    <command
-                          commandId="com.vectrace.MercurialEclipse.menu.QImportHandler"
-                          label="%menuLabel.qimport">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>                  
-                    <command
-                    commandId="com.vectrace.MercurialEclipse.menu.QInitHandler"
-                    label="%menuLabel.qinit">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>
-                    <command
-                          commandId="com.vectrace.MercurialEclipse.menu.QNewHandler"
-                          label="%menuLabel.qnew">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>
-                    <command
-                          commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler"
-                          label="%menuLabel.qrefresh">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>
-                    <command
-                          commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler"
-                          label="%menuLabel.qdelete">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>
-                </menu>     
-                    <command
-                        commandId="com.vectrace.MercurialEclipse.menu.ShelveHandler"
-                        icon="icons/export.gif"                          
-                        label="%commandLabel.shelve">
-                            <visibleWhen>
-                                <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                            </visibleWhen>
-                    </command>
-                    <command
-                        commandId="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
-                        icon="icons/import.gif"                          
-                        label="%commandLabel.unshelve">
-                            <visibleWhen>
-                                <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                            </visibleWhen>
-                    </command>  
-				    <command
-                        commandId="com.vectrace.MercurialEclipse.menu.SignHandler"
-                          icon="icons/clcl16/deadlock_view.gif"
-                          label="%menuLabel.sign">
-                                    <visibleWhen>
-                                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                                    </visibleWhen>
-                    </command>
-                    <command
-                          commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler"
-                          icon="icons/branches_rep.gif"
-                          label="%menuLabel.transplant">
-                        <visibleWhen>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                        </visibleWhen>
-                    </command>	
-                    </menu>			
-				<separator name="group9" visible="true"/>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.ServeHandler"
-          icon="icons/cview16/share_project.gif"
-          label="%menuLabel.serve">
-                    <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                    </visibleWhen>
-                </command>
-    <command
-          commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
-          icon="icons/actions/synch.gif"
-          label="%menuLabel.synchronize">
-       <visibleWhen>
-          <and>
-             <reference
-                   definitionId="com.vectrace.MercurialEclipse.def.mercurial">
-             </reference>
-          </and>
-       </visibleWhen>
-    </command>				
-				
-				<separator name="group10" visible="true"/>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
-          icon="icons/add.gif"
-          label="%menuLabel.add">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
-					</visibleWhen>
-				</command>
-				<!--
-				<command commandId="com.vectrace.MercurialEclipse.handlers.RemoveHandler"/>
-				-->
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler"
-          label="%menuLabel.ignore">
-					<visibleWhen>
-						<reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-					</visibleWhen>
-				</command>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
-          icon="icons/clcl16/refresh.gif"
-          label="%menuLabel.refreshStatus">
-                    <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                    </visibleWhen>
-                </command>
-				<command
-          commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
-          label="%menuLabel.disconnect">
-                    <visibleWhen>
-                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial"/>
-                    </visibleWhen>
-                </command>
-			</menu>
-		</menuContribution>
-	</extension>
+                      label="%menuLabel.mqueue">
 
+                        <command
+                          commandId="com.vectrace.MercurialEclipse.menu.QImportHandler">
+                        </command>
+
+                        <command
+                          commandId="com.vectrace.MercurialEclipse.menu.QInitHandler">
+                        </command>
+
+                        <command
+                          commandId="com.vectrace.MercurialEclipse.menu.QNewHandler">
+                        </command>
+
+                        <command
+                          commandId="com.vectrace.MercurialEclipse.menu.QRefreshHandler">
+                        </command>
+
+                        <command
+                          commandId="com.vectrace.MercurialEclipse.menu.QDeleteHandler">
+                        </command>
+                    </menu>
+
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.ShelveHandler"
+                      icon="icons/export.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </visibleWhen>
+                    </command>
+
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.UnShelveHandler"
+                      icon="icons/import.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </visibleWhen>
+                    </command>
+
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.SignHandler"
+                      icon="icons/clcl16/deadlock_view.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </visibleWhen>
+                    </command>
+
+                    <command
+                      commandId="com.vectrace.MercurialEclipse.menu.TransplantHandler"
+                      icon="icons/branches_rep.gif">
+                        <visibleWhen>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </visibleWhen>
+                    </command>
+                </menu>
+
+                <separator name="group6" visible="true"/>
+                <separator name="group7" visible="true"/>
+                <separator name="group8" visible="true"/>
+                <separator name="group9" visible="true"/>
+                <separator name="group10" visible="true"/>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
+                  icon="icons/add.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler">
+                    <visibleWhen>
+                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                    </visibleWhen>
+                </command>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.ServeHandler"
+                  icon="icons/cview16/share_project.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.DisconnectHandler"
+                      icon="platform:/plugin/org.eclipse.debug.ui/icons/full/elcl16/disconnect_co.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                        </and>
+                    </visibleWhen>
+                </command>
+
+                <separator name="targetGroup" />
+                <separator name="projectGroup" />
+
+            </menu>
+
+        </menuContribution>
+
+    </extension>
+
+   <!-- All Team menu -->
    <extension
          point="org.eclipse.ui.popupMenus">
 
-<!--            All Team menu                     -->
-              
        <objectContribution
            adaptable="true"
            objectClass="org.eclipse.core.resources.IResource"
@@ -840,8 +912,21 @@
                name="projectPersistentProperty"
                value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
            </filter>
-           
+
            <!-- Team -->
+
+           <!--
+            Action below overrides and moves the team.ui action to a different group
+           -->
+           <action
+               id="com.vectrace.MercurialEclipse.team.applyPatch"
+               class="org.eclipse.team.internal.ui.actions.ApplyPatchAction"
+               enablesFor="*"
+               menubarPath="team.main/group2"
+               label="%actionLabel.applyPatch"
+               overrideActionId="org.eclipse.team.ui.applyPatch">
+           </action>
+
            <action
                label="%actionLabel.remove"
                class="com.vectrace.MercurialEclipse.team.ActionRemove"
@@ -856,15 +941,18 @@
                     </objectClass>
                  </not>
               </enablement>
-           </action>           
+           </action>
+
            <action
                label="%actionLabel.showHistory"
                class="com.vectrace.MercurialEclipse.team.ActionChangeLog"
                icon="icons/history.gif"
                tooltip="%actionLabel.showHistoryTooltip"
                menubarPath="team.main/group4"
+               enablesFor="1"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
+
            <action
                label="%actionLabel.revert"
                class="com.vectrace.MercurialEclipse.team.ActionRevert"
@@ -873,15 +961,16 @@
                menubarPath="team.main/group5"
                id="com.vectrace.MercurialEclipse.team.ActionRevert">
            </action>
+
            <action
-	          class="com.vectrace.MercurialEclipse.team.ActionCommit"
-	          id="com.vectrace.MercurialEclipse.team.ActionCommit"
-	          icon="icons/actions/commit.gif"
-	          menubarPath="team.main/group1"
-	          label="%menuLabel.commit">
-	       </action>
-      </objectContribution>    
-      
+              class="com.vectrace.MercurialEclipse.team.ActionCommit"
+              id="com.vectrace.MercurialEclipse.team.ActionCommit"
+              icon="icons/actions/commit.gif"
+              menubarPath="team.main/group1"
+              label="%actionLabel.commit">
+           </action>
+      </objectContribution>
+
       <!-- File Team Menu -->
       <objectContribution
             adaptable="true"
@@ -890,8 +979,9 @@
            <filter
                name="projectPersistentProperty"
                value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
-           </filter>            
-                 <!-- Compare -->
+           </filter>
+
+           <!-- Compare -->
            <action
                label="%actionLabel.compare.anotherChangeset"
                class="com.vectrace.MercurialEclipse.team.CompareWithAction"
@@ -914,8 +1004,9 @@
                  class="com.vectrace.MercurialEclipse.team.ActionAnnotate"
                  icon="icons/annotate.gif"
                  id="com.vectrace.MercurialEclipse.team.ActionAnnotate"
-                 label="%menuLabel.showAnnotation"
-                 menubarPath="team.main/group4">
+                 label="%actionLabel.showAnnotation"
+                 menubarPath="team.main/group4"
+                 enablesFor="1">
            </action>
       </objectContribution>
    </extension>
@@ -924,30 +1015,30 @@
       <page class="com.vectrace.MercurialEclipse.preferences.GeneralPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage"
             category="org.eclipse.team.ui.TeamPreferences"
-            name="Mercurial"/>
+            name="%mercurial"/>
       <page class="com.vectrace.MercurialEclipse.preferences.TimeoutPreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
             category="com.vectrace.MercurialEclipse.prefspage"
-            name="%timeouts"/>  
+            name="%timeouts"/>
       <page class="com.vectrace.MercurialEclipse.preferences.PerformancePreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Performance"
             category="com.vectrace.MercurialEclipse.prefspage"
-            name="%performance"/>    
+            name="%performance"/>
       <page class="com.vectrace.MercurialEclipse.preferences.ConsolePreferencesPage"
             id="com.vectrace.MercurialEclipse.prefspage.Console"
             category="com.vectrace.MercurialEclipse.prefspage"
-            name="%console"/>     
-                      
+            name="%console"/>
+
    </extension>
 
    <extension point="org.eclipse.core.runtime.preferences">
       <initializer class="com.vectrace.MercurialEclipse.preferences.PreferenceInitializer"/>
    </extension>
-   
+
    <extension point="org.eclipse.ui.importWizards">
       <category
             id="com.vectrace.MercurialEclipse.wizards.sampleCategory"
-            name="Mercurial"/>
+            name="%mercurial"/>
       <wizard
             category="com.vectrace.MercurialEclipse.wizards.sampleCategory"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
@@ -959,12 +1050,12 @@
          </description>
       </wizard>
    </extension>
-   
+
 
    <extension point="org.eclipse.ui.newWizards">
       <category
             id="com.vectrace.MercurialEclipse"
-            name="Mercurial"/>
+            name="%mercurial"/>
       <wizard
             canFinishEarly="false"
             category="com.vectrace.MercurialEclipse"
@@ -991,20 +1082,20 @@
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
      </factory>
-   <!-- Adapt IResource to itself does not make sense at all and can only generates troubles 
+   <!-- Adapt IResource to itself does not make sense at all and can only generates troubles
    <factory
        adaptableType="org.eclipse.core.resources.IResource"
        class="com.vectrace.MercurialEclipse.ResourceAdapterFactory">
        <adapter type="org.eclipse.core.resources.IResource"/>
      </factory> -->
    </extension>
-   
+
    <!-- Views -->
-   
+
    <extension point="org.eclipse.ui.views">
       <category
             id="com.vectrace.MercurialEclipse.teamCategory"
-            name="Mercurial">
+            name="%mercurial">
       </category>
       <view
             category="com.vectrace.MercurialEclipse.teamCategory"
@@ -1013,7 +1104,7 @@
             id="com.vectrace.MercurialEclipse.views.MergeView"
             name="%mergeViewName">
       </view>
-      
+
       <view
             category="com.vectrace.MercurialEclipse.teamCategory"
             class="com.vectrace.MercurialEclipse.repository.RepositoriesView"
@@ -1037,12 +1128,12 @@
             label="%consoleName">
       </consoleFactory>
    </extension>
-   
+
    <extension point="org.eclipse.ui.themes">
     <themeElementCategory
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts"
-        label="Mercurial Eclipse"/>
-    <colorDefinition 
+        label="%mercurial"/>
+    <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.addedForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.addedForeground"
@@ -1051,7 +1142,7 @@
        %colorDefinition.description.addedForeground
        </description>
     </colorDefinition>
-    <colorDefinition 
+    <colorDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.addedBackgroundColor"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%colorDefinition.label.addedBackground"
@@ -1062,13 +1153,13 @@
     </colorDefinition>
     <fontDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.addedFont"
-       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
+       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%fontDefinition.label.addedFont">
        <description>
        %fontDefinition.description.addedFont
        </description>
     </fontDefinition>
-    <colorDefinition 
+    <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.unknownForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.unknownForeground"
@@ -1077,7 +1168,7 @@
        %colorDefinition.description.unknownForeground
        </description>
     </colorDefinition>
-    <colorDefinition 
+    <colorDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.unknownBackgroundColor"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%colorDefinition.label.unknownBackground"
@@ -1088,13 +1179,13 @@
     </colorDefinition>
     <fontDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.unknownFont"
-       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
+       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%fontDefinition.label.unknown">
        <description>
        %fontDefinition.description.unknown
        </description>
     </fontDefinition>
-    <colorDefinition 
+    <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.conflictForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.conflictForeground"
@@ -1103,7 +1194,7 @@
        %colorDefinition.description.conflictForeground
        </description>
     </colorDefinition>
-    <colorDefinition 
+    <colorDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.conflictBackgroundColor"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%colorDefinition.label.conflictBackground"
@@ -1114,13 +1205,13 @@
     </colorDefinition>
     <fontDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.conflictFont"
-       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
+       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%fontDefinition.label.conflict">
        <description>
        %fontDefinition.description.conflict
        </description>
     </fontDefinition>
-    <colorDefinition 
+    <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.deletedForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.deletedFg"
@@ -1129,7 +1220,7 @@
        %colorDefinition.description.deletedFg
        </description>
     </colorDefinition>
-    <colorDefinition 
+    <colorDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.deletedBackgroundColor"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%colorDefinition.label.deletedBg"
@@ -1140,13 +1231,13 @@
     </colorDefinition>
     <fontDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.deletedFont"
-       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
+       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%fontDefinition.label.deleted">
        <description>
        %fontDefinition.description.deleted
        </description>
     </fontDefinition>
-    <colorDefinition 
+    <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.removedForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.removedFg"
@@ -1155,7 +1246,7 @@
        %colorDefinition.description.removedFg
        </description>
     </colorDefinition>
-    <colorDefinition 
+    <colorDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.removedBackgroundColor"
        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%colorDefinition.label.removedBg"
@@ -1166,13 +1257,13 @@
     </colorDefinition>
     <fontDefinition
        id="com.vectrace.mercurialeclipse.ui.colorsandfonts.removedFont"
-       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
+       categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
        label="%fontDefinition.label.removed">
        <description>
        %fontDefinition.description.removed
        </description>
     </fontDefinition>
-    <colorDefinition 
+    <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.changedForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.changedFg"
@@ -1181,7 +1272,7 @@
         %colorDefinition.description.changedFg
         </description>
       </colorDefinition>
-      <colorDefinition 
+      <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.changedBackgroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.changedBg"
@@ -1189,16 +1280,16 @@
         <description>
         %colorDefinition.description.changedBg
         </description>
-      </colorDefinition>  
+      </colorDefinition>
       <fontDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.changedFont"
-        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"      
+        categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%fontDefinition.label.changed">
         <description>
         %fontDefinition.description.changed
         </description>
       </fontDefinition>
-      <colorDefinition 
+      <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.IgnoredForegroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.ignoredFg"
@@ -1207,7 +1298,7 @@
         %colorDefinition.description.ignoredFg
         </description>
       </colorDefinition>
-      <colorDefinition 
+      <colorDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.IgnoredBackgroundColor"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
         label="%colorDefinition.label.ignoredBg"
@@ -1215,7 +1306,7 @@
         <description>
         %colorDefinition.description.ignoredBg
         </description>
-      </colorDefinition>  
+      </colorDefinition>
       <fontDefinition
         id="com.vectrace.mercurialeclipse.ui.colorsandfonts.IgnoredFont"
         categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
@@ -1238,9 +1329,9 @@
             adaptable="true"
             class="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
             id="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
-            name="Mercurial"
+            name="%mercurial"
             objectClass="org.eclipse.core.resources.IProject">
       </page>
    </extension>
-   
+
 </plugin>

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -23,19 +24,21 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.themes.ITheme;
+import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -46,7 +49,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 /**
  * @author zingo
- * 
+ *
  */
 public class ResourceDecorator extends LabelProvider implements
 ILightweightLabelDecorator, Observer
@@ -61,33 +64,34 @@ ILightweightLabelDecorator, Observer
     .getInstance();
 
     private static String[] fonts = new String[] {
-        HgDecoratorConstants.ADDED_FONT,
-        HgDecoratorConstants.CONFLICT_FONT,
-        HgDecoratorConstants.DELETED_FONT,
-        HgDecoratorConstants.REMOVED_FONT,
-        HgDecoratorConstants.UNKNOWN_FONT,
-        HgDecoratorConstants.IGNORED_FONT, HgDecoratorConstants.CHANGE_FONT };
+        ADDED_FONT,
+        CONFLICT_FONT,
+        DELETED_FONT,
+        REMOVED_FONT,
+        UNKNOWN_FONT,
+        IGNORED_FONT, CHANGE_FONT };
 
     private static String[] colors = new String[] {
-        HgDecoratorConstants.ADDED_BACKGROUND_COLOR,
-        HgDecoratorConstants.ADDED_FOREGROUND_COLOR,
-        HgDecoratorConstants.CHANGE_BACKGROUND_COLOR,
-        HgDecoratorConstants.CHANGE_FOREGROUND_COLOR,
-        HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR,
-        HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR,
-        HgDecoratorConstants.IGNORED_BACKGROUND_COLOR,
-        HgDecoratorConstants.IGNORED_FOREGROUND_COLOR,
-        HgDecoratorConstants.DELETED_BACKGROUND_COLOR,
-        HgDecoratorConstants.DELETED_FOREGROUND_COLOR,
-        HgDecoratorConstants.REMOVED_BACKGROUND_COLOR,
-        HgDecoratorConstants.REMOVED_FOREGROUND_COLOR,
-        HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR,
-        HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR };
+        ADDED_BACKGROUND_COLOR,
+        ADDED_FOREGROUND_COLOR,
+        CHANGE_BACKGROUND_COLOR,
+        CHANGE_FOREGROUND_COLOR,
+        CONFLICT_BACKGROUND_COLOR,
+        CONFLICT_FOREGROUND_COLOR,
+        IGNORED_BACKGROUND_COLOR,
+        IGNORED_FOREGROUND_COLOR,
+        DELETED_BACKGROUND_COLOR,
+        DELETED_FOREGROUND_COLOR,
+        REMOVED_BACKGROUND_COLOR,
+        REMOVED_FOREGROUND_COLOR,
+        UNKNOWN_BACKGROUND_COLOR,
+        UNKNOWN_FOREGROUND_COLOR };
 
-    // set to true when having 2 different statuses in a folder flags it has
-    // modified
-    private static boolean folder_logic_2MM;
-    private final ITheme theme;
+    /** set to true when having 2 different statuses in a folder flags it has modified */
+    private boolean folder_logic_2MM;
+    private ITheme theme;
+    private boolean colorise;
+    private boolean showChangeset;
 
     public ResourceDecorator() {
         configureFromPreferences();
@@ -95,14 +99,32 @@ ILightweightLabelDecorator, Observer
         LOCAL_CACHE.addObserver(this);
         INCOMING_CACHE.addObserver(this);
         theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
-        this.ensureFontAndColorsCreated(fonts, colors);
+        ensureFontAndColorsCreated(fonts, colors);
+
+        PlatformUI.getWorkbench().getThemeManager().addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                if(!IThemeManager.CHANGE_CURRENT_THEME.equals(event.getProperty())){
+                    return;
+                }
+                theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+                ensureFontAndColorsCreated(fonts, colors);
+            }
+        });
+
+        MercurialEclipsePlugin.getDefault()
+            .getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                configureFromPreferences();
+            }
+        });
     }
+
 
     /**
      * This method will ensure that the fonts and colors used by the decorator
      * are cached in the registries. This avoids having to syncExec when
      * decorating since we ensure that the fonts and colors are pre-created.
-     * 
+     *
      * @param f
      *            fonts ids to cache
      * @param c
@@ -133,12 +155,25 @@ ILightweightLabelDecorator, Observer
         super.dispose();
     }
 
-    private static void configureFromPreferences() {
+    /**
+     * Init all the options we need from preferences to avoid doing this all the time
+     */
+    private void configureFromPreferences() {
         IPreferenceStore store = MercurialEclipsePlugin.getDefault()
         .getPreferenceStore();
         folder_logic_2MM = MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM
-        .equals(store
+            .equals(store
                 .getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
+        colorise = Boolean.valueOf(
+                    HgClients.getPreference(
+                            MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
+                    "false")).booleanValue(); //$NON-NLS-1$
+        showChangeset = Boolean
+            .valueOf(
+                HgClients
+                .getPreference(
+                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                "false")).booleanValue(); //$NON-NLS-1$
     }
 
     public void decorate(Object element, IDecoration d) {
@@ -155,9 +190,6 @@ ILightweightLabelDecorator, Observer
                 return;
             }
 
-            boolean coloriseLabels = isColorise();
-
-            boolean showChangeset = isShowChangeset();
             if (showChangeset) {
                 // get recent project versions
                 if (!STATUS_CACHE.getLock(project).isLocked()
@@ -169,8 +201,7 @@ ILightweightLabelDecorator, Observer
                     // finished.
                     RefreshJob job = new RefreshJob(
                             Messages
-                            .getString("ResourceDecorator.refreshingChangesetDeco"), null, resource //$NON-NLS-1$
-                            .getProject(), showChangeset);
+                            .getString("ResourceDecorator.refreshingChangesetDeco"), null, project, showChangeset); //$NON-NLS-1$
                     job.schedule();
                     job.join();
                     return;
@@ -194,7 +225,7 @@ ILightweightLabelDecorator, Observer
             StringBuilder prefix = new StringBuilder(2);
             BitSet output = STATUS_CACHE.getStatus(resource);
             if (output != null) {
-                overlay = decorate(output, prefix, d, coloriseLabels);
+                overlay = decorate(output, prefix, d, colorise);
             } else {
                 // empty folder, do nothing
             }
@@ -229,60 +260,44 @@ ILightweightLabelDecorator, Observer
             overlay = DecoratorImages.modifiedDescriptor;
             prefix.append('>');
             if (coloriseLabels) {
-                setBackground(d,
-                        HgDecoratorConstants.CHANGE_BACKGROUND_COLOR);
-                setForeground(d,
-                        HgDecoratorConstants.CHANGE_FOREGROUND_COLOR);
-                setFont(d, HgDecoratorConstants.CHANGE_FONT);
+                setBackground(d, CHANGE_BACKGROUND_COLOR);
+                setForeground(d, CHANGE_FOREGROUND_COLOR);
+                setFont(d, CHANGE_FONT);
             }
         } else {
             switch (output.length() - 1) {
             case MercurialStatusCache.BIT_IGNORE:
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.IGNORED_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.IGNORED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.IGNORED_FONT);
+                    setBackground(d, IGNORED_BACKGROUND_COLOR);
+                    setForeground(d, IGNORED_FOREGROUND_COLOR);
+                    setFont(d, IGNORED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_MODIFIED:
                 overlay = DecoratorImages.modifiedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.CHANGE_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.CHANGE_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.CHANGE_FONT);
+                    setBackground(d, CHANGE_BACKGROUND_COLOR);
+                    setForeground(d, CHANGE_FOREGROUND_COLOR);
+                    setFont(d, CHANGE_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_ADDED:
                 overlay = DecoratorImages.addedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(d,
-                            HgDecoratorConstants.ADDED_BACKGROUND_COLOR);
-                    setForeground(d,
-                            HgDecoratorConstants.ADDED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.ADDED_FONT);
+                    setBackground(d, ADDED_BACKGROUND_COLOR);
+                    setForeground(d, ADDED_FOREGROUND_COLOR);
+                    setFont(d, ADDED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_UNKNOWN:
                 overlay = DecoratorImages.notTrackedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.UNKNOWN_FONT);
+                    setBackground(d, UNKNOWN_BACKGROUND_COLOR);
+                    setForeground(d, UNKNOWN_FOREGROUND_COLOR);
+                    setFont(d, UNKNOWN_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_CLEAN:
@@ -294,39 +309,27 @@ ILightweightLabelDecorator, Observer
                 overlay = DecoratorImages.removedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.REMOVED_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.REMOVED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.REMOVED_FONT);
+                    setBackground(d, REMOVED_BACKGROUND_COLOR);
+                    setForeground(d, REMOVED_FOREGROUND_COLOR);
+                    setFont(d, REMOVED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_DELETED:
                 overlay = DecoratorImages.deletedStillTrackedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.DELETED_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.DELETED_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.DELETED_FONT);
+                    setBackground(d, DELETED_BACKGROUND_COLOR);
+                    setForeground(d, DELETED_FOREGROUND_COLOR);
+                    setFont(d, DELETED_FONT);
                 }
                 break;
             case MercurialStatusCache.BIT_CONFLICT:
                 overlay = DecoratorImages.conflictDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
-                    setBackground(
-                            d,
-                            HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR);
-                    setForeground(
-                            d,
-                            HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR);
-                    setFont(d, HgDecoratorConstants.CONFLICT_FONT);
+                    setBackground(d, CONFLICT_BACKGROUND_COLOR);
+                    setForeground(d, CONFLICT_FOREGROUND_COLOR);
+                    setFont(d, CONFLICT_FONT);
                 }
                 break;
             }
@@ -392,35 +395,6 @@ ILightweightLabelDecorator, Observer
         d.setFont(theme.getFontRegistry().get(id));
     }
 
-    /**
-     * @return
-     */
-    private boolean isShowChangeset() {
-        boolean showChangeset = Boolean
-        .valueOf(
-                HgClients
-                .getPreference(
-                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                "false")).booleanValue(); //$NON-NLS-1$
-        return showChangeset;
-    }
-
-    private boolean isColorise() {
-        boolean colorise = Boolean.valueOf(
-                HgClients.getPreference(
-                        MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
-                "false")).booleanValue(); //$NON-NLS-1$
-        return colorise;
-    }
-
-    /**
-     * @param resource
-     * @param project
-     * @param cs
-     * @param suffix
-     * @return
-     * @throws HgException
-     */
     private String getSuffixForFiles(IResource resource, ChangeSet cs)
     throws HgException {
         String suffix = ""; //$NON-NLS-1$
@@ -444,19 +418,12 @@ ILightweightLabelDecorator, Observer
         return suffix;
     }
 
-    /**
-     * @param project
-     * @param changeSet
-     * @return
-     * @throws CoreException
-     * @throws IOException
-     */
     private String getSuffixForProject(IProject project) throws CoreException,
     IOException {
         ChangeSet changeSet = null;
         String suffix = ""; //$NON-NLS-1$
         if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
-            if (isShowChangeset()) {
+            if (showChangeset) {
                 LocalChangesetCache.getInstance().getLocalChangeSets(project);
             }
             changeSet = LocalChangesetCache.getInstance()
@@ -475,7 +442,7 @@ ILightweightLabelDecorator, Observer
             suffix += changeSet.getChangesetIndex() + hex;
 
             String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-            if (branch != null && branch.length() > 0 && !branch.equals("default")) { //$NON-NLS-1$
+            if (branch != null && branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
                 suffix += " @ " + branch; //$NON-NLS-1$
             }
 
@@ -491,15 +458,6 @@ ILightweightLabelDecorator, Observer
             suffix += " ]"; //$NON-NLS-1$
         }
         return suffix;
-    }
-
-    /**
-     * Called when the configuration of the decorator changes
-     */
-    public static void onConfigurationChanged() {
-        String decoratorId = getDecoratorId();
-        configureFromPreferences();
-        PlatformUI.getWorkbench().getDecoratorManager().update(decoratorId);
     }
 
     /**

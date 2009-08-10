@@ -23,14 +23,14 @@ public class CompareUtils {
     public static void openEditor(IResource file, ChangeSet changeset,
             boolean dialog, boolean localEditable) {
         openEditor(file, new IStorageMercurialRevision(file, changeset
-                .getChangesetIndex()
-                + "", changeset.getChangeset(), changeset), dialog, localEditable); //$NON-NLS-1$
+                .getChangesetIndex(),
+                changeset.getChangeset(), changeset), dialog, localEditable); 
     }
 
     public static void openEditor(IResource file, ChangeSet changeset, boolean localEditable) {
         openEditor(file, new IStorageMercurialRevision(file, changeset
-                .getChangesetIndex()
-                + "", changeset.getChangeset(), changeset), false, localEditable); //$NON-NLS-1$
+                .getChangesetIndex(),
+                changeset.getChangeset(), changeset), false, localEditable); 
     }
 
     public static void openEditor(IResource file,
@@ -74,7 +74,7 @@ public class CompareUtils {
     /**
      * Opens a compare dialog and returns it. Unfortunately the dialog is
      * internal Eclipse API, so it might change in future Eclipse versions.
-     * 
+     *
      * @param left
      *            the left ResourceNode to determine the compare editor input
      * @param right
@@ -91,7 +91,7 @@ public class CompareUtils {
 
     /**
      * Opens a compare dialog using the given input.
-     * 
+     *
      * @param myShell
      * @param compareInput
      * @return

@@ -13,10 +13,13 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
@@ -34,7 +37,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author zingo
- * 
+ *
  */
 public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
@@ -49,7 +52,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
     /**
      * We can use this method to dispose of any system resources we previously
      * allocated.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#dispose
      */
     public void dispose() {
@@ -59,7 +62,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
     /**
      * We will cache window object in order to be able to provide parent shell
      * for the message dialog.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#init
      */
     public void init(IWorkbenchWindow w) {
@@ -69,23 +72,15 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
     /**
      * The action has been activated. The argument of the method represents the
      * 'real' action sitting in the workbench UI.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#run
      */
 
     @SuppressWarnings("unchecked")
     public void run(IAction action) {
-        IProject proj;
-        String repository;
         // String FullPath;
         Shell shell;
         IWorkbench workbench;
-
-        proj = MercurialUtilities.getProject(selection);
-        repository = MercurialUtilities.getRepositoryPath(proj);
-        if (repository == null) {
-            repository = "."; //never leave this empty add a . to point to current path //$NON-NLS-1$
-        }
 
         // Get shell & workbench
         if ((window != null) && (window.getShell() != null)) {
@@ -99,6 +94,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),
                 "remove", "-Af", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         Iterator itr = selection.iterator();
+        Set<IProject> projects = new HashSet<IProject>();
         while (itr.hasNext()) {
             Object obj = itr.next();
             if (!(obj instanceof IResource) || obj instanceof IProject) {
@@ -118,7 +114,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             if (!confirmRemove(shell, launchCmd[4])) {
                 continue;
             }
-
+            projects.add(resource.getProject());
             try {
                 String output = MercurialUtilities.executeCommand(
                         launchCmd, workingDir, false);
@@ -136,15 +132,18 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
                 MercurialEclipsePlugin.logError(e);
             }
 
+            // MercurialEclipsePlugin.refreshProjectFlags(proj);
+        }
+
+        for (IProject proj : projects) {
             try {
-                MercurialStatusCache.getInstance().refresh(proj);
+                MercurialStatusCache.getInstance().refreshStatus(proj, new NullProgressMonitor());
             } catch (TeamException e) {
                 MercurialEclipsePlugin
                 .logError(
                         Messages
                         .getString("ActionRemove.unableToRefresh"), e); //$NON-NLS-1$
             }
-            // MercurialEclipsePlugin.refreshProjectFlags(proj);
         }
     }
 
@@ -160,7 +159,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
      * Selection in the workbench has been changed. We can change the state of
      * the 'real' action here if we want, but this can only happen after the
      * delegate has been created.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#selectionChanged
      */
     public void selectionChanged(IAction action, ISelection in_selection) {

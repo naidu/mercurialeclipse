@@ -16,7 +16,9 @@ import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgClients;
@@ -24,6 +26,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgIMergeClient extends AbstractClient {
 
@@ -84,7 +87,17 @@ public class HgIMergeClient extends AbstractClient {
 
         command.addFiles(file.getProjectRelativePath().toOSString());
         String result = command.executeToString();
+        refreshStatus(file);
         return result;
+    }
+
+    private static void refreshStatus(IResource res) throws HgException {
+        MercurialStatusCache.getInstance().refreshStatus(res, null);
+        try {
+            res.touch(null);
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
     }
 
     public static String markUnresolved(IResource file) throws HgException {
@@ -96,6 +109,7 @@ public class HgIMergeClient extends AbstractClient {
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         command.addFiles(file.getProjectRelativePath().toOSString());
         String result = command.executeToString();
+        refreshStatus(file);
         return result;
     }
 

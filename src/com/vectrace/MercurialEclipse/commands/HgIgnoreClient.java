@@ -22,20 +22,20 @@ public class HgIgnoreClient {
 		String regexp = "^"+escape(file.getProjectRelativePath().toString())+"$"; //$NON-NLS-1$ //$NON-NLS-2$
 		addPattern(file.getProject(), "regexp", regexp); //$NON-NLS-1$
 	}
-	
+
 	public static void addFolder(IFolder folder) throws HgException {
 		String regexp = "^"+escape(folder.getProjectRelativePath().toString())+"$"; //$NON-NLS-1$ //$NON-NLS-2$
 		addPattern(folder.getProject(), "regexp", regexp); //$NON-NLS-1$
 	}
-	
+
 	public static void addRegexp(IProject project, String regexp) throws HgException {
 		addPattern(project, "regexp", regexp); //$NON-NLS-1$
 	}
-	
+
 	public static void addGlob(IProject project, String glob) throws HgException {
 		addPattern(project, "glob", glob); //$NON-NLS-1$
 	}
-	
+
 	private static String escape(String string) {
 		StringBuilder result = new StringBuilder();
 		int len = string.length();
@@ -56,20 +56,18 @@ public class HgIgnoreClient {
 				case ']':
 				case '{':
 				case '}':
-					result.append('\\');	
+					result.append('\\');
 			}
 			result.append(c);
 		}
 		return result.toString();
 	}
-	
+
 	private static void addPattern(IProject project, String syntax, String pattern) throws HgException {
 		//TODO use existing sections
 	    BufferedOutputStream buffer = null;
 		try {
-		    String path = HgRootClient.getHgRoot(project).concat(File.separator).concat(".hgignore"); //$NON-NLS-1$
-		    
-		    File hgignore = new File(path);
+		    File hgignore = new File(HgRootClient.getHgRoot(project), ".hgignore");
 		    // append to file if it exists, else create a new one
 			buffer = new BufferedOutputStream(new FileOutputStream(hgignore,true));
 			// write contents
@@ -92,7 +90,7 @@ public class HgIgnoreClient {
                 }
 		    }
 		}
-		
+
 	}
-	
+
 }

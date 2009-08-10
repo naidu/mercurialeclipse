@@ -41,6 +41,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -49,15 +50,15 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
  * objects.
- * 
+ *
  * @author Bastian Doetsch
- * 
+ *
  */
 abstract class AbstractParseChangesetClient extends AbstractClient {
 
     /**
      * @author bastian
-     * 
+     *
      */
     private static final class ChangesetContentHandler implements ContentHandler {
 
@@ -73,11 +74,11 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private String pr;
         private String de;
         private StringBuilder chars;
-        private static IResource res;
+        private final IPath res;
         private final Direction direction;
         private final HgRepositoryLocation repository;
         private final File bundleFile;
-        private final File hgRoot;
+        private final HgRoot hgRoot;
         private final Map<IPath, SortedSet<ChangeSet>> fileRevisions;
         private final Set<String> filesModified = new TreeSet<String>();
         private final Set<String> filesAdded = new TreeSet<String>();
@@ -89,10 +90,10 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private static final Pattern AMP = Pattern.compile("&amp;");
         private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
 
-        public ChangesetContentHandler(IResource res, Direction direction,
-                HgRepositoryLocation repository, File bundleFile, File hgRoot,
+        public ChangesetContentHandler(IPath res, Direction direction,
+                HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot,
                 Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {
-            ChangesetContentHandler.res = res;
+            this.res = res;
             this.direction = direction;
             this.repository = repository;
             this.bundleFile = bundleFile;
@@ -113,7 +114,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         /**
          * Remove a leading tab on each line in the string.
-         * 
+         *
          * @param string
          * @return
          */
@@ -259,13 +260,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
         private final void addChangesetToResourceMap(final ChangeSet cs)
         throws HgException {
-            IPath repoPath;
-            try {
-                // hg root
-                repoPath = new Path(cs.getHgRoot().getCanonicalPath());
-            } catch (IOException e) {
-                throw new HgException(e.getLocalizedMessage(), e);
-            }
+            IPath repoPath = new Path(cs.getHgRoot().getPath());
+
             if (cs.getChangedFiles() != null) {
                 for (FileStatus file : cs.getChangedFiles()) {
                     IPath fileAbsPath = repoPath.append(file.getPath());
@@ -279,10 +275,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
             fileRevisions.put(repoPath, projectRevs);
 
-            // given path
-            IPath path = res.getLocation();
-            SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, path);
-            fileRevisions.put(path, pathRevs);
+            SortedSet<ChangeSet> pathRevs = addChangeSetRevisions(cs, res);
+            fileRevisions.put(res, pathRevs);
         }
 
         private SortedSet<ChangeSet> addChangeSetRevisions(ChangeSet cs, IPath path) {
@@ -311,7 +305,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * These style files are included in the plugin jar file and need to be
      * copied out of there into the plugin state area so a path can be given to
      * the hg command.
-     * 
+     *
      * @param withFiles
      *            return the style that includes the files if true.
      * @return a File reference to an existing file
@@ -389,7 +383,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * <p>
      * Format of input is defined in the two style files in /styles and is as
      * follows for each changeset.
-     * 
+     *
      * <pre>
      * &lt;cs&gt;
      * &lt;br v=&quot;{branches}&quot;/&gt;
@@ -407,9 +401,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * &lt;fd v=&quot;{file_dels}&quot;/&gt;
      * &lt;/cs&gt;
      * </pre>
-     * 
+     *
      * <br>
-     * 
+     *
      * @param input
      *            output from the hg log command
      * @param withFiles
@@ -420,31 +414,42 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * @param bundleFile
      * @return
      * @throws HgException
-     *             TODO
      */
     protected final static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(
             IResource res, String input, boolean withFiles,
             Direction direction, HgRepositoryLocation repository,
             File bundleFile, IFilePatch[] patches) throws HgException {
 
+        HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+        IPath path = res.getLocation();
+
+        return createMercurialRevisions(path, input, direction, repository, bundleFile, patches, hgRoot);
+    }
+
+    /**
+     * @param path full absolute file path, which MAY NOT EXIST in the local file system
+     *        (because it is the original path of moved or renamed file)
+     * @throws HgException
+     */
+    protected static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(IPath path, String input, Direction direction,
+            HgRepositoryLocation repository, File bundleFile, IFilePatch[] patches, HgRoot hgRoot)
+            throws HgException {
         Map<IPath, SortedSet<ChangeSet>> fileRevisions = new HashMap<IPath, SortedSet<ChangeSet>>();
 
         if (input == null || input.length() == 0) {
             return fileRevisions;
         }
-
-        File hgRoot = MercurialTeamProvider.getHgRoot(res);
         String myInput = "<top>" + input + "</top>"; //$NON-NLS-1$ //$NON-NLS-2$
         try {
             XMLReader reader = XMLReaderFactory.createXMLReader();
-            reader.setContentHandler(getHandler(res, direction, repository,
+            reader.setContentHandler(getHandler(path, direction, repository,
                     bundleFile, hgRoot, fileRevisions, patches));
             reader.parse(new InputSource(new StringReader(myInput)));
         } catch (Exception e) {
             String nextTry = cleanControlChars(myInput);
             try {
                 XMLReader reader = XMLReaderFactory.createXMLReader();
-                reader.setContentHandler(getHandler(res, direction, repository,
+                reader.setContentHandler(getHandler(path, direction, repository,
                         bundleFile, hgRoot, fileRevisions, patches));
                 reader.parse(new InputSource(new StringReader(nextTry)));
             } catch (Exception e1) {
@@ -454,9 +459,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         return fileRevisions;
     }
 
-    private static ContentHandler getHandler(IResource res,
+    private static ContentHandler getHandler(IPath res,
             Direction direction, HgRepositoryLocation repository,
-            File bundleFile, File hgRoot,
+            File bundleFile, HgRoot hgRoot,
             Map<IPath, SortedSet<ChangeSet>> fileRevisions, IFilePatch[] patches) {
         handler = new ChangesetContentHandler(res, direction, repository,
                 bundleFile, hgRoot, fileRevisions, patches);
@@ -467,7 +472,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      * Clean the string of special chars that might be invalid for the XML
      * parser. Return the cleaned string (special chars replaced by ordinary
      * spaces).
-     * 
+     *
      * @param str
      *            the string to clean
      * @return the cleaned string

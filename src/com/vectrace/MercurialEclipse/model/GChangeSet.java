@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.vectrace.MercurialEclipse.model;
 
@@ -12,36 +12,35 @@ import com.vectrace.MercurialEclipse.model.GChangeSet.Edge.EdgeType;
 
 /**
  * Don't look at this code - your eyes will bleed.
- * 
+ *
  * Seriously. Turn back now.
  */
 public class GChangeSet {
 
-    public int getRev() {
-        return rev;
-    }
 
-    public void setRev(int rev) {
-        this.rev = rev;
-    }
-
-    private EdgeList middle = new EdgeList(true);
-    private EdgeList after = new EdgeList(false);
-    private int index;
+    private final EdgeList middle;
+    private final EdgeList after;
+    private final int index;
     private final RowCount rowCount;
-    private int rev;
+    private final int rev;
 
     public GChangeSet(RowCount rowCount, int index, String middleS,
             String afterS) {
         this.rowCount = rowCount;
         this.index = index;
+        middle = new EdgeList(true);
+        after = new EdgeList(false);
         middle.parse(middleS);
         after.parse(afterS);
         if (middleS != null && middleS.length() > 0) {
-            this.rev = Integer
-                .parseInt(middleS.substring(middleS.indexOf('*') + 1));
+            rev = Integer.parseInt(middleS.substring(middleS.indexOf('*') + 1));
+        } else {
+            rev = 0;
         }
-            
+    }
+
+    public int getRev() {
+        return rev;
     }
 
     public GChangeSet clean(GChangeSet last) {
@@ -67,9 +66,9 @@ public class GChangeSet {
 
     public class EdgeList {
 
-        private List<Edge> edges = new ArrayList<Edge>();
-        private Set<Integer> above = new HashSet<Integer>();
-        private boolean straight;
+        private final List<Edge> edges = new ArrayList<Edge>();
+        private final Set<Integer> above = new HashSet<Integer>();
+        private final boolean straight;
         private int[] jumps;
 
         public EdgeList(boolean straight) {
@@ -272,5 +271,21 @@ public class GChangeSet {
         public boolean isPlus() {
             return type == EdgeType.plus;
         }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("GChangeSet [rev=");
+        builder.append(rev);
+        builder.append(", index=");
+        builder.append(index);
+        builder.append(", ");
+        if (rowCount != null) {
+            builder.append("rowCount=");
+            builder.append(rowCount);
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

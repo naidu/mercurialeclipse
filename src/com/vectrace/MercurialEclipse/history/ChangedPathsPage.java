@@ -42,16 +42,16 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangedPathsPage {
 
-	private final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
-	private final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
-	private final String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
-	private final String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$
+	private final static String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	private final static String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
+	private final static String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
+	private final static String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$
 
-	private final String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
-	private final String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$
+	private final static String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
+	private final static String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$
 
-	private final int LAYOUT_HORIZONTAL = 1; //$NON-NLS-1$
-	private final int LAYOUT_VERTICAL = 2; //$NON-NLS-1$
+	private final static int LAYOUT_HORIZONTAL = 1;
+	private final static int LAYOUT_VERTICAL = 2;
 
 	private SashForm mainSashForm;
 	private SashForm innerSashForm;
@@ -63,7 +63,7 @@ public class ChangedPathsPage {
 	private StructuredViewer changePathsViewer;
 	private TextViewer textViewer;
 
-	private IPreferenceStore store = MercurialEclipsePlugin.getDefault()
+	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
 			.getPreferenceStore();
 	private ToggleAffectedPathsOptionAction[] toggleAffectedPathsLayoutActions;
 
@@ -345,4 +345,8 @@ public class ChangedPathsPage {
 	public boolean isShowChangePaths() {
 		return showAffectedPaths;
 	}
+
+    public MercurialHistory getMercurialHistory() {
+        return page.getMercurialHistory();
+    }
 }

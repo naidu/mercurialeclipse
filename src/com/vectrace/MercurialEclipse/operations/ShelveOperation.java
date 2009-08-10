@@ -29,16 +29,17 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgAtticClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class ShelveOperation extends HgOperation {
-    private IProject project;
+    private final IProject project;
 
     /**
      * @param part
@@ -66,24 +67,11 @@ public class ShelveOperation extends HgOperation {
         this.project = p;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
-     */
     @Override
     protected String getActionDescription() {
         return Messages.getString("ShelveOperation.shelvingChanges"); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core
-     * .runtime.IProgressMonitor)
-     */
     @Override
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
             InterruptedException {
@@ -113,7 +101,7 @@ public class ShelveOperation extends HgOperation {
                 String[] dirtyFiles = HgStatusClient.getDirtyFiles(project
                         .getLocation().toFile());
                 List<IResource> resources = new ArrayList<IResource>();
-                File root = HgClients.getHgRoot(project.getLocation().toFile());
+                HgRoot root = HgClients.getHgRoot(project.getLocation().toFile());
                 for (String f : dirtyFiles) {
                     IResource r = MercurialStatusCache.getInstance()
                             .convertRepoRelPath(root, project, f.substring(2));

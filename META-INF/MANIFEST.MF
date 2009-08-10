@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name.0
 Bundle-SymbolicName: com.vectrace.MercurialEclipse; singleton:=true
-Bundle-Version: 1.3.1096.qualifier
+Bundle-Version: 1.3.1126.qualifier
 Bundle-Activator: com.vectrace.MercurialEclipse.MercurialEclipsePlugin
 Bundle-Vendor: %Bundle-Vendor.0
 Bundle-Localization: plugin
@@ -32,6 +32,7 @@ Export-Package: com.vectrace.MercurialEclipse,
  com.vectrace.MercurialEclipse.dialogs,
  com.vectrace.MercurialEclipse.exception,
  com.vectrace.MercurialEclipse.history,
+ com.vectrace.MercurialEclipse.mapping,
  com.vectrace.MercurialEclipse.menu,
  com.vectrace.MercurialEclipse.model,
  com.vectrace.MercurialEclipse.operations,

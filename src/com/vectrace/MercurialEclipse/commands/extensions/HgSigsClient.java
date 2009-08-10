@@ -28,21 +28,20 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgSigsClient extends AbstractClient {
 
     /**
      * Gets signed changesets
-     * 
+     *
      * @param repoFile
      * @return the identifiers of signed changesets (rev:node)
      * @throws HgException
      */
     public static List<Signature> getSigs(File repoFile) throws HgException {
         try {
-            HgRoot root = new HgRoot(MercurialTeamProvider.getHgRoot(repoFile)
-                    .getCanonicalPath());
+            HgRoot root = MercurialTeamProvider.getHgRoot(repoFile);
             List<Signature> nodes = new ArrayList<Signature>();
             File sigFile = new File(root.getCanonicalPath().concat(File.separator).concat(".hgsigs")); //$NON-NLS-1$
             if (sigFile.exists()) {
@@ -57,7 +56,7 @@ public class HgSigsClient extends AbstractClient {
                       line = reader.readLine();
                   }
                 } catch (IOException e) {
-                    throw new HgException(e.getLocalizedMessage(), e);                    
+                    throw new HgException(e.getLocalizedMessage(), e);
                 } finally {
                     if (reader != null) {
                         reader.close();

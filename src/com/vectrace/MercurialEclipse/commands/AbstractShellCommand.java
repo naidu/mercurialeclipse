@@ -21,7 +21,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -39,15 +38,13 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
- * 
+ *
  */
 public abstract class AbstractShellCommand {
-    /**
-     * 
-     */
+
     public static final int DEFAULT_TIMEOUT = 360000;
 
-    private class InputStreamConsumer extends Thread {
+    private static class InputStreamConsumer extends Thread {
         private final InputStream stream;
         private final OutputStream output;
 
@@ -60,7 +57,7 @@ public abstract class AbstractShellCommand {
         public void run() {
             try {
                 int length;
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[8192];
                 while ((length = stream.read(buffer)) != -1) {
                     output.write(buffer, 0, length);
                 }
@@ -131,7 +128,7 @@ public abstract class AbstractShellCommand {
 
     /**
      * Execute a command.
-     * 
+     *
      * @param timeout
      *            -1 if no timeout, else the timeout in ms.
      * @return
@@ -151,8 +148,14 @@ public abstract class AbstractShellCommand {
             List<String> cmd = getCommands();
             // don't output fallbackencoding
             String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-            final String commandInvoked = cmdString.substring(0, cmdString.length() - 1);
-            
+            final String commandInvoked;
+            if(workingDir == null) {
+                commandInvoked = cmdString.substring(0, cmdString.length() - 1);
+            } else {
+                commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
+            }
+
+
             Charset charset = null;
             if (workingDir != null) {
                 HgRoot hgRoot;
@@ -175,7 +178,7 @@ public abstract class AbstractShellCommand {
             if (charset != null) {
                 env.put("HGENCODING", charset.name()); //$NON-NLS-1$
             }
-            
+
             builder.redirectErrorStream(true); // makes my life easier
             if (workingDir != null) {
                 builder.directory(workingDir);
@@ -191,16 +194,14 @@ public abstract class AbstractShellCommand {
                 final int exitCode = process.waitFor();
                 // everything fine
                 if (exitCode == 0 || !expectPositiveReturnValue) {
-                    logConsoleCompleted(msg, exitCode, null);
                     if (isDebugMode()) {
-                        logConsoleMessage(msg, null);
+                        logConsoleCompleted(msg, exitCode, null);
                     }
                     return true;
                 }
 
                 // exit code > 0
-                final HgException hgex = new HgException("Process error, return code: " + exitCode //$NON-NLS-1$
-                        + ", message: " + getMessage(output)); //$NON-NLS-1$
+                final HgException hgex = new HgException(exitCode, getMessage(output));
 
                 // exit code == 1 usually isn't fatal.
                 logConsoleCompleted(msg, exitCode, hgex);
@@ -321,9 +322,6 @@ public abstract class AbstractShellCommand {
         return msg;
     }
 
-    /**
-     * @return
-     */
     private boolean isDebugMode() {
         return Boolean
                 .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
@@ -331,7 +329,7 @@ public abstract class AbstractShellCommand {
 
     public String executeToString() throws HgException {
         byte[] bytes = executeToBytes();
-        if (bytes != null) {
+        if (bytes != null && bytes.length > 0) {
             try {
                 return new String(bytes, "UTF-8");
             } catch (UnsupportedEncodingException e) {
@@ -378,13 +376,13 @@ public abstract class AbstractShellCommand {
     protected abstract String getExecutable();
 
     public void addFiles(String... myFiles) {
-        addFiles(Arrays.asList(myFiles));
+        for (String file : myFiles) {
+            files.add(file);
+        }
     }
 
     public void addFiles(Collection<String> myFiles) {
-        for (String file : myFiles) {
-            this.files.add(file);
-        }
+        files.addAll(myFiles);
     }
 
     public void addFiles(IResource... resources) {
@@ -407,7 +405,7 @@ public abstract class AbstractShellCommand {
     }
 
     /**
-     * 
+     *
      */
     public void terminate() {
         if (consumer != null) {
@@ -428,5 +426,58 @@ public abstract class AbstractShellCommand {
      */
     public void setShowOnConsole(boolean b) {
         this.showOnConsole = b;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
+        builder.append(" [");
+        if (command != null) {
+            builder.append("command=");
+            builder.append(command);
+            builder.append(", ");
+        }
+        if (commands != null) {
+            builder.append("commands=");
+            builder.append(commands);
+            builder.append(", ");
+        }
+        if (options != null) {
+            builder.append("options=");
+            builder.append(options);
+            builder.append(", ");
+        }
+        if (workingDir != null) {
+            builder.append("workingDir=");
+            builder.append(workingDir);
+            builder.append(", ");
+        }
+        if (files != null) {
+            builder.append("files=");
+            builder.append(files);
+            builder.append(", ");
+        }
+        builder.append("escapeFiles=");
+        builder.append(escapeFiles);
+        builder.append(", ");
+        if (consumer != null) {
+            builder.append("consumer=");
+            builder.append(consumer);
+            builder.append(", ");
+        }
+        if (process != null) {
+            builder.append("process=");
+            builder.append(process);
+            builder.append(", ");
+        }
+        builder.append("showOnConsole=");
+        builder.append(showOnConsole);
+        builder.append(", ");
+        if (timeoutConstant != null) {
+            builder.append("timeoutConstant=");
+            builder.append(timeoutConstant);
+        }
+        builder.append("]");
+        return builder.toString();
     }
 }

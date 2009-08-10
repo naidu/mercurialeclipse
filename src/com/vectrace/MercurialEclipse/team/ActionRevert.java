@@ -29,7 +29,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
@@ -38,6 +37,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class ActionRevert implements IWorkbenchWindowActionDelegate {
@@ -53,7 +53,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     /**
      * We can use this method to dispose of any system resources we previously
      * allocated.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#dispose
      */
     public void dispose() {
@@ -62,7 +62,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     /**
      * We will cache window object in order to be able to provide parent shell
      * for the message dialog.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#init
      */
     public void init(IWorkbenchWindow w) {
@@ -72,64 +72,41 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     /**
      * The action has been activated. The argument of the method represents the
      * 'real' action sitting in the workbench UI.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#run
      */
 
     public void run(IAction action) {
-        Shell shell;
-        IWorkbench workbench;
-
+        if(window == null){
+            window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        }
         // do the actual work in here
         List<IResource> resources;
         try {
             root = null;
             resources = new ArrayList<IResource>();
 
-            for (Object obj : selection.toList()) {
-                if (obj instanceof IResource) {
-                    IResource resource = (IResource) obj;
-                    boolean merging = resource.getProject()
-                            .getPersistentProperty(ResourceProperties.MERGING) != null;
-                    boolean supervised = MercurialUtilities
-                            .hgIsTeamProviderFor(resource, false) == true;
+            boolean mergeIsRunning = collectResourcesToRevert(resources);
 
-                    if (supervised && !merging) {
-                        resources.add(resource);
-                        if (root == null) {
-                            root = MercurialTeamProvider.getHgRoot(resource);
-                        }
-                    }
-                }
-            }
-
-            if (resources.size() != 0) {
-                RevertDialog chooser = new RevertDialog(Display.getCurrent()
-                        .getActiveShell(), root);
-                chooser.setFiles(resources);
-                if (chooser.open() == Window.OK) {
-                    final List<IResource> result = chooser.getSelection();
-                    new SafeWorkspaceJob(Messages
-                            .getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
-                        @Override
-                        protected IStatus runSafe(IProgressMonitor monitor) {
-                            doRevert(monitor, result);
-                            return Status.OK_STATUS;
-                        }
-                    }.schedule();
-                }
+            if (resources.size() > 0 && !mergeIsRunning) {
+                openRevertDialog(resources, false);
             } else {
-                // Get shell & workbench
-                if ((window != null) && (window.getShell() != null)) {
-                    shell = window.getShell();
+                if(mergeIsRunning){
+                    boolean doRevert = MessageDialog
+                        .openConfirm(
+                            getShell(),
+                            Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
+                            Messages.getString("ActionRevert.mergeIsRunning")); //$NON-NLS-1$
+                    if(doRevert){
+                        openRevertDialog(resources, true);
+                    }
                 } else {
-                    workbench = PlatformUI.getWorkbench();
-                    shell = workbench.getActiveWorkbenchWindow().getShell();
+                    MessageDialog
+                            .openInformation(
+                                    getShell(),
+                                    Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
+                                    Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$
                 }
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages.getString("ActionRevert.HgRevert"), Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$ //$NON-NLS-2$
             }
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
@@ -137,14 +114,93 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         }
     }
 
-    public void doRevert(IProgressMonitor monitor, List<IResource> resources) {
-        // the last argument will be replaced with a path
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert", //$NON-NLS-1$
-                "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+    private Shell getShell() {
+        Shell shell;
+        // Get shell
+        if (window != null && window.getShell() != null) {
+            shell = window.getShell();
+        } else {
+            shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+        }
+        return shell;
+    }
+
+    private void openRevertDialog(List<IResource> resources, final boolean cleanAfterMerge) {
+        final List<IResource> result;
+        if(!cleanAfterMerge){
+            RevertDialog chooser = new RevertDialog(Display.getCurrent()
+                    .getActiveShell(), root);
+            chooser.setFiles(resources);
+            if (chooser.open() != Window.OK) {
+                return;
+            }
+            result = chooser.getSelection();
+        } else {
+            result = resources;
+        }
+
+        new SafeWorkspaceJob(Messages
+                .getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                doRevert(monitor, result, cleanAfterMerge);
+                return Status.OK_STATUS;
+            }
+        }.schedule();
+    }
+
+    private boolean collectResourcesToRevert(List<IResource> resources) throws CoreException, HgException {
+        boolean mergeIsRunning = false;
+        for (Object obj : selection.toList()) {
+            if (obj instanceof IResource) {
+                IResource resource = (IResource) obj;
+                boolean merging = resource.getProject()
+                        .getPersistentProperty(ResourceProperties.MERGING) != null;
+                if(merging){
+                    mergeIsRunning = true;
+                }
+                boolean supervised = MercurialUtilities
+                        .hgIsTeamProviderFor(resource, false) == true;
+
+                if (supervised) {
+                    resources.add(resource);
+                    if (root == null) {
+                        // XXX this does not work for projects from different hg roots
+                        root = MercurialTeamProvider.getHgRoot(resource);
+                    }
+                }
+            }
+        }
+        return mergeIsRunning;
+    }
+
+    public void doRevert(IProgressMonitor monitor, List<IResource> resources, boolean cleanAfterMerge) {
         monitor
                 .beginTask(
                         Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
+        if(!cleanAfterMerge) {
+            performRegularRevert(monitor, resources);
+        } else {
+            performRevertAfterMerge(monitor, resources);
+        }
 
+        for (IResource resource : resources) {
+            monitor
+                    .subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+            try {
+                resource.refreshLocal(IResource.DEPTH_ONE, monitor);
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+            monitor.worked(1);
+        }
+        monitor.done();
+    }
+
+    private void performRegularRevert(IProgressMonitor monitor, List<IResource> resources) {
+        // the last argument will be replaced with a path
+        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert", //$NON-NLS-1$
+                "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         for (IResource resource : resources) {
             if (monitor.isCanceled()) {
                 break;
@@ -166,25 +222,29 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 MercurialEclipsePlugin.logError(e);
             }
         }
+    }
 
-        for (IResource resource : resources) {
-            monitor
-                    .subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-            try {
-                resource.refreshLocal(IResource.DEPTH_ONE, monitor);
-            } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-            monitor.worked(1);
+    private void performRevertAfterMerge(IProgressMonitor monitor, List<IResource> resources) {
+        // see http://mercurial.selenic.com/wiki/FAQ#FAQ.2BAC8-CommonProblems.hg_status_shows_changed_files_but_hg_diff_doesn.27t.21
+        // To completely undo the uncommitted merge and discard all local modifications,
+        // you will need to issue a hg update -C -r . (note the "dot" at the end of the command).
+        try {
+            UpdateHandler update = new UpdateHandler();
+            update.setCleanEnabled(true);
+            update.setRevision(".");
+            update.setShell(getShell());
+            update.run(resources.get(0).getProject());
+        } catch (Exception e) {
+            MercurialEclipsePlugin.logError(e);
         }
-        monitor.done();
+
     }
 
     /**
      * Selection in the workbench has been changed. We can change the state of
      * the 'real' action here if we want, but this can only happen after the
      * delegate has been created.
-     * 
+     *
      * @see IWorkbenchWindowActionDelegate#selectionChanged
      */
     public void selectionChanged(IAction action, ISelection in_selection) {

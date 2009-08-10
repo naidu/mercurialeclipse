@@ -1,6 +1,5 @@
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.SortedSet;
@@ -79,7 +78,7 @@ public class IncomingPage extends HgWizardPage {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see
          * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
          * ()
@@ -91,7 +90,7 @@ public class IncomingPage extends HgWizardPage {
 
         /*
          * (non-Javadoc)
-         * 
+         *
          * @see
          * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
          * .core.runtime.IProgressMonitor)
@@ -183,7 +182,7 @@ public class IncomingPage extends HgWizardPage {
                 Messages.getString("IncomingPage.columnHeader.global"), //$NON-NLS-1$
                 Messages.getString("IncomingPage.columnHeader.date"), //$NON-NLS-1$
                 Messages.getString("IncomingPage.columnHeader.author"), //$NON-NLS-1$
-                Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ 
+                Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$
         int[] widths = { 42, 100, 122, 80, 80, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -252,19 +251,13 @@ public class IncomingPage extends HgWizardPage {
                 FileStatus clickedFileStatus = (FileStatus) sel
                         .getFirstElement();
                 if (cs != null && clickedFileStatus != null) {
-                    IPath hgRoot;
-                    try {
-                        hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
-                        IPath fileRelPath = new Path(clickedFileStatus
-                                .getPath());
-                        IPath fileAbsPath = hgRoot.append(fileRelPath);
-                        IResource file = project.getWorkspace().getRoot()
-                                .getFileForLocation(fileAbsPath);
-                        CompareUtils.openEditor(file, cs, true, true);
-                    } catch (IOException e) {
-                        setErrorMessage(e.getLocalizedMessage());
-                        MercurialEclipsePlugin.logError(e);
-                    }
+                    IPath hgRoot = new Path(cs.getHgRoot().getPath());
+                    IPath fileRelPath = new Path(clickedFileStatus
+                            .getPath());
+                    IPath fileAbsPath = hgRoot.append(fileRelPath);
+                    IResource file = project.getWorkspace().getRoot()
+                            .getFileForLocation(fileAbsPath);
+                    CompareUtils.openEditor(file, cs, true, true);
                 }
             }
         });

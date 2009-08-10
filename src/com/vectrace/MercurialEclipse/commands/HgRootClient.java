@@ -11,7 +11,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.io.FilenameFilter;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,81 +19,95 @@ import java.util.Map;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * Calls hg root
- * 
+ *
  * @author bastian
- * 
+ *
  */
 public class HgRootClient {
 
-    private final static Map<String, File> roots = new HashMap<String, File>();
-
-    public static String getHgRoot(IResource resource) throws HgException {
-        File root = getHgRootAsFile(resource);
-        try {
-            return root.getCanonicalPath();
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
-        // HgCommand command = new HgCommand("root", proj, true);
-        // return new
-        // String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n",
-        // "");
-    }
+    private final static Map<File, HgRoot> roots = new HashMap<File, HgRoot>();
 
     /**
      * @param resource
-     * @return
+     * @return hg root as <b>canonical file</b> (see {@link File#getCanonicalFile()})
      * @throws HgException
      */
-    public static File getHgRootAsFile(IResource resource) throws HgException {
-        File root = resource.getLocation().toFile();
-        root = getHgRoot(root);
-        return root;
+    public static HgRoot getHgRoot(IResource resource) throws HgException {
+        return getHgRoot(resource.getLocation().toFile());
     }
 
     /**
      * @param file
-     * @return
+     * @return hg root as <b>canonical path</b> (see {@link File#getCanonicalPath()})
      * @throws HgException
      */
-    public static File getHgRoot(File file) throws HgException {
-        String canonicalPath;
+    public static HgRoot getHgRoot(File file) throws HgException {
+        // HgCommand command = new HgCommand("root", proj, true);
+        // return new String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n", "");
+
+        File dir = file.isFile()? file.getParentFile() : file;
+        // test if we have the path "as is" already
+        HgRoot hgRoot = roots.get(dir);
+        if(hgRoot != null){
+            return hgRoot;
+        }
+        HgRoot testRoot;
         try {
-            if(file.isFile()) {
-                canonicalPath = file.getParentFile().getCanonicalPath();
-            } else {
-                canonicalPath = file.getCanonicalPath();
-            }
+            testRoot = new HgRoot(dir);
         } catch(IOException e) {
             throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
         }
-        if(roots.containsKey(canonicalPath)) {
-            return roots.get(canonicalPath);
+        // test with canonical version of the same file
+        hgRoot = roots.get(testRoot);
+        if(hgRoot != null){
+            // remember NON canonical version too
+            roots.put(dir, hgRoot);
+            return hgRoot;
         }
-        File root = new File(canonicalPath);
-
-        FilenameFilter hg = new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.equalsIgnoreCase(".hg"); //$NON-NLS-1$
-            }
-        };
-
-        String[] rootContent = root.list(hg);
-        while (rootContent != null && rootContent.length == 0) {
-            root = root.getParentFile();
-            if (root == null) {
-                break;
-            }
-            rootContent = root.list(hg);
-        }
+        // search up the parents recursive if we see .hg directory there
+        File root = findHgDir(testRoot);
         if (root == null) {
             throw new HgException(file.getName() + Messages.getString("HgRootClient.error.noRoot")); //$NON-NLS-1$
         }
-        roots.put(canonicalPath, root);
-        return root;
+        // .hg parent dire found
+        try {
+            hgRoot = new HgRoot(root);
+        } catch (IOException e) {
+            throw new HgException(Messages.getString("HgRootClient.error.cannotGetCanonicalPath")+file.getName()); //$NON-NLS-1$
+        }
+        roots.put(root, hgRoot);
+        return hgRoot;
+    }
+
+    /**
+     * Searches the .hg directory up in all parents of the given file
+     * @param startDir a directory
+     * @return directory named ".hg" (in any case), or null if the given file does not
+     * have parents wich contains .hg directory
+     */
+    private static File findHgDir(File startDir) {
+        FileFilter hg = new FileFilter() {
+            public boolean accept(File path) {
+                return path.getName().equalsIgnoreCase(".hg") && path.isDirectory(); //$NON-NLS-1$
+            }
+        };
+        File root = startDir;
+        File[] rootContent = root.listFiles(hg);
+        while (rootContent != null && rootContent.length == 0) {
+            root = root.getParentFile();
+            if (root == null) {
+                return null;
+            }
+            rootContent = root.listFiles(hg);
+        }
+        if(rootContent != null) {
+            return root;
+        }
+        return null;
     }
 
 }

@@ -10,11 +10,8 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.SortedSet;
-
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.ColumnWeightData;
@@ -35,12 +32,12 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
@@ -58,33 +55,33 @@ public class ChangePathsTableProvider extends TableViewer {
         table.setLinesVisible(true);
         table.setLayoutData(data);
         table.setLayout(layout);
-        
+
         this.addDoubleClickListener(new IDoubleClickListener() {
-            public void doubleClick(DoubleClickEvent event) {                
+            public void doubleClick(DoubleClickEvent event) {
                 IStructuredSelection sel = (IStructuredSelection) event
                         .getSelection();
                 FileStatus clickedFileStatus = (FileStatus) sel
                         .getFirstElement();
                 MercurialRevision rev = (MercurialRevision) getInput();
-                if (rev != null && clickedFileStatus != null) {                    
-                    ChangeSet cs = rev.getChangeSet();
-                    String[] parents = cs.getParents();
-
-                    IPath hgRoot;
-                    try {
-                        hgRoot = new Path(cs.getHgRoot().getCanonicalPath());
-                        IPath fileRelPath = new Path(clickedFileStatus
-                                .getPath());
-                        IPath fileAbsPath = hgRoot.append(fileRelPath);
-                        IResource file = rev.getResource().getWorkspace().getRoot()
-                            .getFileForLocation(fileAbsPath);
-                        IStorageMercurialRevision thisRev = new IStorageMercurialRevision(file, cs.getChangeset());
-                        IStorageMercurialRevision parentRev = new IStorageMercurialRevision(file, parents[0]);
-                        CompareUtils.openEditor(thisRev, parentRev, true, false);                        
-                    } catch (IOException e) {
-                        MercurialEclipsePlugin.logError(e);
-                    }
+                if (rev == null || clickedFileStatus == null) {
+                    return;
                 }
+                ChangeSet cs = rev.getChangeSet();
+                String[] parents = cs.getParents();
+
+                IPath hgRoot = new Path(cs.getHgRoot().getPath());
+                IPath fileRelPath = new Path(clickedFileStatus.getPath());
+                IPath fileAbsPath = hgRoot.append(fileRelPath);
+                IResource file = ResourcesPlugin.getWorkspace().getRoot()
+                    .getFileForLocation(fileAbsPath);
+                IStorageMercurialRevision thisRev = new IStorageMercurialRevision(file, cs.getChangeset());
+                IStorageMercurialRevision parentRev ;
+                if(cs.getRevision().getRevision() == 0 || parents.length == 0){
+                    parentRev = new NullRevision(file, cs);
+                } else {
+                    parentRev = new IStorageMercurialRevision(file, parents[0]);
+                }
+                CompareUtils.openEditor(thisRev, parentRev, false, false);
             }
         });
 
@@ -155,14 +152,18 @@ public class ChangePathsTableProvider extends TableViewer {
             }
 
             MercurialRevision rev = ((MercurialRevision) inputElement);
-            Map<IPath, SortedSet<ChangeSet>> map;
+            MercurialHistory history = page.getMercurialHistory();
+            ChangeSet cs;
             try {
-                map = HgLogClient.getProjectLog(rev.getResource(),
-                        1, rev.getChangeSet().getChangesetIndex(), true);
+                cs = HgLogClient.getLogWithBranchInfo(rev, 1, history);
             } catch (HgException e) {
                 return EMPTY_CHANGE_PATHS;
             }
-            return map.get(rev.getResource().getLocation()).first().getChangedFiles();
+            if(cs != null) {
+                return cs.getChangedFiles();
+            }
+            // but sometimes hg returns a null version map...
+            return EMPTY_CHANGE_PATHS;
         }
 
         public void dispose() {

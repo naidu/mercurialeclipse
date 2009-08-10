@@ -44,6 +44,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
     private IntegerFieldEditor highWaterMark;
     private IntegerFieldEditor width;
     private BooleanFieldEditor debug;
+    private BooleanFieldEditor debugTime;
 
     @Override
     protected void createFieldEditors() {
@@ -86,6 +87,12 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
                 Messages.getString("ConsolePreferencesPage.showAllHgMsg"), composite); //$NON-NLS-1$
         addField(debug);
 
+        // ** SHOW TIME
+        debugTime = new BooleanFieldEditor(
+                MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME,
+                Messages.getString("ConsolePreferencesPage.showCommandExecutionTime"), composite); //$NON-NLS-1$
+        addField(debugTime);
+
         createLabel(composite, Messages.getString("ConsolePreferencesPage.colorPrefs")); //$NON-NLS-1$
 
         // ** COLORS AND FONTS
@@ -104,10 +111,10 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
                 Messages.getString("ConsolePreferencesPage.errorColor"), composite); //$NON-NLS-1$
         addField(errorColorEditor);
 
-        //initIntegerFields();        
+        //initIntegerFields();
         width.setEnabled(store
                 .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_WRAP),
-                composite);        
+                composite);
         highWaterMark
                 .setEnabled(
                         store
@@ -125,9 +132,6 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
         width.setEnabled(wrap.getBooleanValue(), getFieldEditorParent());
     }
 
-    /**
-     * 
-     */
     private void initIntegerFields() {
         int currWatermark = highWaterMark.getIntValue();
         if (currWatermark < 1000) {
@@ -135,16 +139,16 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
             highWaterMark.setStringValue("1000");             //$NON-NLS-1$
         }
         int currWidth = width.getIntValue();
-        if (currWidth < 80) {            
+        if (currWidth < 80) {
             width.setStringValue("80"); //$NON-NLS-1$
             width.setValidRange(80, Integer.MAX_VALUE - 1);
-        }        
+        }
     }
 
     /**
      * Utility method that creates a label instance and sets the default layout
      * data.
-     * 
+     *
      * @param parent
      *            the parent for the new label
      * @param text
@@ -173,20 +177,11 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
         return editor;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
-     */
+
     public void init(IWorkbench workbench) {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.preference.IPreferencePage#performOk()
-     */
+
     @Override
     public boolean performOk() {
         boolean ok = super.performOk();

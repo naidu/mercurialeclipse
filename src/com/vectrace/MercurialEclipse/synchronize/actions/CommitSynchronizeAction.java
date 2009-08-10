@@ -16,7 +16,10 @@ import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
@@ -50,9 +53,59 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 						.getResource());
 			}
 		}
+		// XXX currently I have no idea why IDiffElement[] elements is empty...
+		if(selectedResources.size() == 0){
+		    IStructuredSelection sel = getStructuredSelection();
+		    Object[] objects = sel.toArray();
+		    for (Object object : objects) {
+		        if (object instanceof IResource) {
+	                selectedResources.add(((IResource) object));
+	            } else if (object instanceof IAdaptable){
+                    IAdaptable adaptable = (IAdaptable) object;
+                    IResource resource = (IResource) adaptable.getAdapter(IResource.class);
+                    if(resource != null){
+                        selectedResources.add(resource);
+                    }
+	            }
+            }
+		}
 		IResource[] resources = new IResource[selectedResources.size()];
 		selectedResources.toArray(resources);
 		return new CommitSynchronizeOperation(configuration, elements,
 				resources);
-	}	
+	}
+
+	@Override
+	protected void initialize(ISynchronizePageConfiguration configuration, ISelectionProvider selectionProvider) {
+	    // TODO Auto-generated method stub
+	    super.initialize(configuration, selectionProvider);
+	}
+
+	@Override
+	public boolean isEnabled() {
+	    // TODO Auto-generated method stub
+	    return super.isEnabled();
+	}
+
+	@Override
+	public boolean isHandled() {
+	    // TODO Auto-generated method stub
+	    return super.isHandled();
+	}
+
+	@Override
+	public void selectionChanged(ISelection selection) {
+	    // TODO Auto-generated method stub
+	    super.selectionChanged(selection);
+	}
+
+	@Override
+	protected boolean updateSelection(IStructuredSelection selection) {
+	    boolean updateSelection = super.updateSelection(selection);
+	    if(!updateSelection){
+	        // TODO implement constraints check here
+	        return true;
+	    }
+        return updateSelection;
+	}
 }

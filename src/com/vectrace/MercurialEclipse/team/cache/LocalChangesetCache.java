@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,42 +35,38 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class LocalChangesetCache extends AbstractCache {
-    /**
-     * 
-     */
+
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
-            .getInstance();
+    .getInstance();
 
-    private static LocalChangesetCache instance = null;
+    private static LocalChangesetCache instance;
 
-    private static Map<IPath, ReentrantLock> locks = new HashMap<IPath, ReentrantLock>();
-    private static Map<IPath, SortedSet<ChangeSet>> localChangeSets;
+    private final Map<IPath, ReentrantLock> locks = new HashMap<IPath, ReentrantLock>();
+    private final Map<IPath, SortedSet<ChangeSet>> localChangeSets;
 
     private LocalChangesetCache() {
         localChangeSets = new HashMap<IPath, SortedSet<ChangeSet>>();
     }
 
-    /**
-     * 
-     */
     private boolean isGetFileInformationForChangesets() {
         return Boolean
-                .valueOf(
-                        HgClients
-                                .getPreference(
-                                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                        "false")).booleanValue(); //$NON-NLS-1$
+        .valueOf(
+                HgClients
+                .getPreference(
+                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                "false")).booleanValue(); //$NON-NLS-1$
     }
 
-    public static LocalChangesetCache getInstance() {
+    public static synchronized LocalChangesetCache getInstance() {
         if (instance == null) {
             instance = new LocalChangesetCache();
         }
@@ -99,42 +94,42 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
     public SortedSet<ChangeSet> getLocalChangeSets(IResource objectResource)
-            throws HgException {
+    throws HgException {
+        IPath location = objectResource.getLocation();
         ReentrantLock lock = getLock(objectResource);
+        SortedSet<ChangeSet> revisions;
         try {
             lock.lock();
-            SortedSet<ChangeSet> revisions = localChangeSets.get(objectResource
-                    .getLocation());
+            revisions = localChangeSets.get(location);
             if (revisions == null) {
                 if (objectResource.getType() == IResource.FILE
                         || objectResource.getType() == IResource.PROJECT
                         && STATUS_CACHE.isSupervised(objectResource)
                         && !STATUS_CACHE.isAdded(objectResource.getProject(),
-                                objectResource.getLocation())) {
+                                location)) {
                     refreshAllLocalRevisions(objectResource);
-                    revisions = localChangeSets.get(objectResource
-                            .getLocation());
+                    revisions = localChangeSets.get(location);
                 }
             }
-            if (revisions != null) {
-                return Collections.unmodifiableSortedSet(revisions);
-            }
-            return null;
         } finally {
             lock.unlock();
         }
+        if (revisions != null) {
+            return Collections.unmodifiableSortedSet(revisions);
+        }
+        return null;
     }
 
     /**
      * Gets version for given resource.
-     * 
+     *
      * @param objectResource
      *            the resource to get status for.
      * @return a String with version information.
      * @throws HgException
      */
     public ChangeSet getNewestLocalChangeSet(IResource objectResource)
-            throws HgException {
+    throws HgException {
         ReentrantLock lock = getLock(objectResource);
         try {
             lock.lock();
@@ -177,7 +172,7 @@ public class LocalChangesetCache extends AbstractCache {
 
     /**
      * Checks whether version is known.
-     * 
+     *
      * @param objectResource
      *            the resource to be checked.
      * @return true if known, false if not.
@@ -197,8 +192,8 @@ public class LocalChangesetCache extends AbstractCache {
      * See
      * {@link LocalChangesetCache#refreshAllLocalRevisions(IResource, boolean)}
      * Calls with limit = true.
-     * 
-     * @param project
+     *
+     * @param res
      * @throws HgException
      */
     public void refreshAllLocalRevisions(IResource res) throws HgException {
@@ -208,16 +203,16 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * See
      * {@link LocalChangesetCache#refreshAllLocalRevisions(IResource, boolean, boolean)}
-     * 
+     *
      * Obtains file information, if preference is set to display changeset
      * information on label decorator.
-     * 
+     *
      * @param res
      * @param limit
      * @throws HgException
      */
     public void refreshAllLocalRevisions(IResource res, boolean limit)
-            throws HgException {
+    throws HgException {
         this.refreshAllLocalRevisions(res, limit,
                 isGetFileInformationForChangesets());
     }
@@ -225,12 +220,12 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
-     * 
+     *
      * If withFiles is true and a resource version can't be found in the topmost
      * revisions, the last revision of this file is obtained via additional
      * calls.
-     * 
-     * @param project
+     *
+     * @param res
      * @param limit
      *            whether to limit or to have full project log
      * @param withFiles
@@ -251,14 +246,14 @@ public class LocalChangesetCache extends AbstractCache {
 
     /**
      * Gets the configured log batch size.
-     * 
+     *
      * @return
      */
     public int getLogBatchSize() {
         int defaultLimit = 2000;
         String pref = HgClients.getPreference(
                 MercurialPreferenceConstants.LOG_BATCH_SIZE, String
-                        .valueOf(defaultLimit));
+                .valueOf(defaultLimit));
         try {
             defaultLimit = Integer.parseInt(pref);
             if (defaultLimit < 0) {
@@ -266,15 +261,15 @@ public class LocalChangesetCache extends AbstractCache {
             }
         } catch (NumberFormatException e) {
             MercurialEclipsePlugin
-                    .logWarning(
-                            Messages.getString("LocalChangesetCache.LogLimitNotCorrectlyConfigured"), //$NON-NLS-1$
-                            e);
+            .logWarning(
+                    Messages.getString("LocalChangesetCache.LogLimitNotCorrectlyConfigured"), //$NON-NLS-1$
+                    e);
         }
         return defaultLimit;
     }
 
     public ChangeSet getLocalChangeSet(IResource res, String nodeId)
-            throws HgException {
+    throws HgException {
         return getLocalChangeSet(res, nodeId, true);
     }
 
@@ -282,7 +277,20 @@ public class LocalChangesetCache extends AbstractCache {
             boolean redecorate) throws HgException {
         Assert.isNotNull(res);
         Assert.isNotNull(nodeId);
-        if (STATUS_CACHE.isSupervised(res)) {
+        if(!res.exists()){
+            // the case for renamed (moved) or copied files which does not exist anymore
+            ChangeSet changeSet = getChangeSet(nodeId);
+            if (changeSet == null) {
+                changeSet = HgLogClient.getChangeset(res, nodeId,
+                        isGetFileInformationForChangesets());
+            }
+            SortedSet<ChangeSet> set = new TreeSet<ChangeSet>();
+            if (changeSet != null) {
+                set.add(changeSet);
+                addToNodeMap(set);
+            }
+            return changeSet;
+        } else if (STATUS_CACHE.isSupervised(res)) {
             ReentrantLock lock = getLock(res);
             try {
                 lock.lock();
@@ -304,19 +312,18 @@ public class LocalChangesetCache extends AbstractCache {
                     notifyChanged(res);
                 }
             }
-
         }
         return null;
-    }        
+    }
 
     public ChangeSet getCurrentWorkDirChangeset(IResource res)
-            throws HgException {
+    throws HgException {
         try {
-            File root = HgClients.getHgRoot(res.getLocation().toFile());
+            HgRoot root = HgClients.getHgRoot(res.getLocation().toFile());
             String nodeId = HgIdentClient.getCurrentChangesetId(root);
             if (nodeId != null
                     && !nodeId
-                            .equals("0000000000000000000000000000000000000000")) { //$NON-NLS-1$
+                    .equals("0000000000000000000000000000000000000000")) { //$NON-NLS-1$
                 return getLocalChangeSet(res, nodeId, false);
             }
         } catch (IOException e) {
@@ -335,11 +342,11 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
-     * 
+     *
      * If a resource version can't be found in the topmost revisions, the last
      * revisions of this file (10% of limit number) are obtained via additional
      * calls.
-     * 
+     *
      * @param res
      * @param limit
      *            whether to limit or to have full project log
@@ -351,7 +358,7 @@ public class LocalChangesetCache extends AbstractCache {
      */
     public void refreshAllLocalRevisions(IResource res, boolean limit,
             int limitNumber, int startRev, boolean withFiles)
-            throws HgException {
+    throws HgException {
         Assert.isNotNull(res);
         if (null != RepositoryProvider.getProvider(res.getProject(),
                 MercurialTeamProvider.ID)
@@ -376,14 +383,14 @@ public class LocalChangesetCache extends AbstractCache {
                 }
 
                 Set<IPath> paths = new HashSet<IPath>();
-                IResource[] localMembers = STATUS_CACHE.getLocalMembers(res);
+                Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(res);
                 for (IResource resource : localMembers) {
                     paths.add(resource.getLocation());
                 }
 
                 Set<IPath> concernedPaths = new HashSet<IPath>();
-                File root = HgRootClient.getHgRootAsFile(res);
-                
+                HgRoot root = HgRootClient.getHgRoot(res);
+
                 if (revisions != null && revisions.size() > 0) {
 
                     concernedPaths.add(res.getLocation());
@@ -397,7 +404,7 @@ public class LocalChangesetCache extends AbstractCache {
                     } else {
                         // every changeset is at least stored for the repository
                         // root
-                        IPath rootPath = new Path(root.getCanonicalPath());
+                        IPath rootPath = new Path(root.getAbsolutePath());
                         localChangeSets.put(res.getLocation(), revisions
                                 .get(rootPath));
                     }
@@ -412,7 +419,7 @@ public class LocalChangesetCache extends AbstractCache {
                                 && withFiles
                                 && STATUS_CACHE.isSupervised(res.getProject(),
                                         path)
-                                && !STATUS_CACHE
+                                        && !STATUS_CACHE
                                         .isAdded(res.getProject(), path)) {
 
                             IResource myResource = super.convertRepoRelPath(
@@ -427,8 +434,6 @@ public class LocalChangesetCache extends AbstractCache {
                     }
 
                 }
-            } catch (IOException e) {
-                throw new HgException(e.getLocalizedMessage(), e);
             } finally {
                 lock.unlock();
                 notifyChanged(res);
@@ -436,10 +441,6 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    /**
-     * @param path
-     * @param changes
-     */
     private void addChangesToLocalCache(IPath path, SortedSet<ChangeSet> changes) {
         if (changes != null && changes.size() > 0) {
             SortedSet<ChangeSet> existing = localChangeSets.get(path);
@@ -452,20 +453,10 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    /**
-     * @return the localUpdateInProgress
-     * @throws HgException
-     */
     public boolean isLocalUpdateInProgress(IResource res) throws HgException {
         return getLock(res).isLocked();
     }
 
-    /**
-     * @param project
-     * @param branchName
-     * @return
-     * @throws HgException
-     */
     public SortedSet<ChangeSet> getLocalChangeSetsByBranch(IProject project,
             String branchName) throws HgException {
         ReentrantLock lock = getLock(project);
