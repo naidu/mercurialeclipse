@@ -441,8 +441,12 @@ ILightweightLabelDecorator, Observer
             // rev info
             suffix += changeSet.getChangesetIndex() + hex;
 
-            String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-            if (branch != null && branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
+            String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
+            if(branch == null) {
+                branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());                
+                project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+            }
+            if (branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
                 suffix += " @ " + branch; //$NON-NLS-1$
             }
 

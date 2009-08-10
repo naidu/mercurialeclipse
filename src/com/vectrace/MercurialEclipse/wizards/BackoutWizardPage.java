@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -24,16 +25,17 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
+import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class BackoutWizardPage extends HgWizardPage {
 
@@ -41,28 +43,15 @@ public class BackoutWizardPage extends HgWizardPage {
     private Text messageTextField;
     private Button mergeCheckBox;
     protected ChangeSet backoutRevision;
-    private IProject project;
+    private final IProject project;
     private Text userTextField;
 
-    /**
-     * @param string
-     * @param string2
-     * @param object
-     * @param project
-     */
     public BackoutWizardPage(String pageName, String title,
             ImageDescriptor image, IProject project) {
         super(pageName, title, image);
         this.project = project;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets
-     * .Composite)
-     */
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
@@ -115,7 +104,7 @@ public class BackoutWizardPage extends HgWizardPage {
                 Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
         this.mergeCheckBox.setSelection(true);
 
-        
+
         setControl(composite);
     }
 
@@ -124,11 +113,13 @@ public class BackoutWizardPage extends HgWizardPage {
         String msg = messageTextField.getText();
         boolean merge = mergeCheckBox.getSelection();
         backoutRevision = changesetTable.getSelection();
-        try {           
+        try {
             String result = HgBackoutClient.backout(project, backoutRevision,
                     merge, msg, userTextField.getText());
             HgClients.getConsole().printMessage(result, null);
-        } catch (HgException e) {
+            String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+            project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+        } catch (CoreException e) {
             MessageDialog.openError(getShell(), Messages
                     .getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
                     .getMessage());

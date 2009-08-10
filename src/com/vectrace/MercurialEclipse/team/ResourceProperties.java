@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.views.MergeView;
 
 /**
  * Contains the name of the properties set on IResources.
- * 
+ *
  * @see IResource#setPersistentProperty(QualifiedName, String)
  * @see IResource#setSessionProperty(QualifiedName, Object)
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -32,7 +32,7 @@ public interface ResourceProperties {
     /**
      * Qualified name for a persistent property that signifies that a project is
      * in merge state.
-     * 
+     *
      * @see MergeHandler
      * @see MercurialStatusCache
      * @see CommitMergeHandler
@@ -45,7 +45,7 @@ public interface ResourceProperties {
      * Qualified name for a session property on a project that signifies that
      * the commit dialog has already been shown, so the dialog doesn't pop up
      * automatically anymore.
-     * 
+     *
      * @see MergeView
      * @see CommitMergeHandler
      */
@@ -60,7 +60,7 @@ public interface ResourceProperties {
      */
     public static final QualifiedName RESOLVE_AVAILABLE = new QualifiedName(
             MercurialEclipsePlugin.ID, MergeView.ID + ".useResolve"); //$NON-NLS-1$
-    
+
     /**
      * Qualified name for a workspace session property that signifies whether
      * rebase is available.
@@ -75,6 +75,13 @@ public interface ResourceProperties {
      */
     public static final QualifiedName HG_ROOT = new QualifiedName(
             MercurialEclipsePlugin.ID, "hgRoot"); //$NON-NLS-1$
+
+    /**
+     * Qualified name for a project session property that stores the current
+     * hg branch.
+     */
+    public static final QualifiedName HG_BRANCH = new QualifiedName(
+            MercurialEclipsePlugin.ID, "hgBranch"); //$NON-NLS-1$
 
     /**
      * Qualified name for a workspace session property that signifies whether
