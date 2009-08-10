@@ -148,7 +148,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         setControl(composite);
     }
 
-    
+
 
     /**
      * @param composite
@@ -159,7 +159,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         Group g = SWTWidgetHelper.createGroup(urlComposite, Messages
                 .getString("ConfigurationWizardMainPage.urlGroup.title"), 4, //$NON-NLS-1$
-                GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+                GridData.FILL_HORIZONTAL);
 
         // repository Url
         SWTWidgetHelper.createLabel(g, Messages
@@ -175,11 +175,11 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             public void widgetSelected(SelectionEvent e) {
                 DirectoryDialog dialog = new DirectoryDialog(getShell());
                 dialog
-                        .setMessage(Messages
-                                .getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
+                .setMessage(Messages
+                        .getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
                 String dir = dialog.open();
-                if (dir != null) {                    
-//                    urlCombo.setText(new File(dir).toURI().toASCIIString());
+                if (dir != null) {
+                    //                    urlCombo.setText(new File(dir).toURI().toASCIIString());
                     getUrlCombo().setText(dir);
                 }
             }
@@ -197,7 +197,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                             .getString("PullPage.bundleDialog.text")); //$NON-NLS-1$
                     String file = dialog.open();
                     if (file != null) {
-//                        getUrlCombo().setText(new File(file).toURI().toASCIIString());
+                        //                        getUrlCombo().setText(new File(file).toURI().toASCIIString());
                         getUrlCombo().setText(file);
                     }
                 }
@@ -214,16 +214,16 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 setPageComplete(true);
             }
         });
-        
+
         urlCombo.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                
+
                 try {
                     // note that repo will not be null, will be blank
                     // repo if no existing one was found
                     HgRepositoryLocation repo = MercurialEclipsePlugin
-                        .getRepoManager().getRepoLocation(urlCombo.getText());
-                    
+                    .getRepoManager().getRepoLocation(urlCombo.getText());
+
                     String user = repo.getUser();
                     if (user != null && user.length() != 0) {
                         getUserCombo().setText(user);
@@ -256,7 +256,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         g = SWTWidgetHelper.createGroup(
                 authComposite,
                 Messages
-                        .getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
+                .getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
 
         // User name
         SWTWidgetHelper.createLabel(g, Messages
@@ -268,8 +268,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         // Password
         SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
-        passwordText = SWTWidgetHelper.createTextField(g);
-        passwordText.setEchoChar('*');
+        passwordText = SWTWidgetHelper.createPasswordField(g);
     }
 
     /*
@@ -377,7 +376,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 userNames = addToHistory(userNames, userCombo.getText(),
                         COMBO_HISTORY_LENGTH);
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
-            }            
+            }
         }
     }
 
@@ -388,7 +387,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private String[] updateHostNames() {
         String[] newHostNames = new String[0];
         Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
-                .getRepoManager().getAllRepoLocations();
+        .getRepoManager().getAllRepoLocations();
         if (repositories != null) {
             int i = 0;
             for (Iterator<HgRepositoryLocation> iterator = repositories
@@ -407,8 +406,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private void validateFields() {
         // first check the url of the repository
-        String url = urlCombo.getText();                
-        
+        String url = urlCombo.getText();
+
         if (url.length() == 0) {
             setErrorMessage(null);
             setPageComplete(false);
