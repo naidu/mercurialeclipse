@@ -1,5 +1,5 @@
 #FindBugs User Preferences
-#Fri Aug 07 23:27:09 CEST 2009
+#Mon Aug 10 23:32:46 CEST 2009
 detectorAppendingToAnObjectOutputStream=AppendingToAnObjectOutputStream|true
 detectorBCPMethodReturnCheck=BCPMethodReturnCheck|false
 detectorBadAppletConstructor=BadAppletConstructor|false
@@ -146,7 +146,7 @@ detectorUncallableMethodOfAnonymousClass=UncallableMethodOfAnonymousClass|true
 detectorUnnecessaryMath=UnnecessaryMath|true
 detectorUnreadFields=UnreadFields|true
 detectorUseObjectEquals=UseObjectEquals|true
-detectorUselessSubclassMethod=UselessSubclassMethod|false
+detectorUselessSubclassMethod=UselessSubclassMethod|true
 detectorVarArgsProblems=VarArgsProblems|true
 detectorVolatileUsage=VolatileUsage|true
 detectorWaitInLoop=WaitInLoop|true
