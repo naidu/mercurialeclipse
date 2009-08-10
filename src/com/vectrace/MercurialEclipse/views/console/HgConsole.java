@@ -179,8 +179,8 @@ public class HgConsole extends MessageConsole {
 
     private void appendLine(int type, String line) {
         HgConsoleHolder.getInstance().showConsole();
-        String myLine = line;
-        myLine = HTTP_PATTERN.matcher(line).replaceAll("http://***@"); //$NON-NLS-1$
+        String myLine = line == null? "" : line;
+        myLine = HTTP_PATTERN.matcher(myLine).replaceAll("http://***@"); //$NON-NLS-1$
         if (myLine.equals(line)) {
             myLine = HTTPS_PATTERN.matcher(line).replaceAll("https://***@"); //$NON-NLS-1$
         }
