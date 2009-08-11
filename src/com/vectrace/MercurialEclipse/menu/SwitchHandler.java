@@ -18,7 +18,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class SwitchHandler extends SingleResourceHandler {
 
@@ -39,10 +38,6 @@ public class SwitchHandler extends SingleResourceHandler {
         int result = dialog.open();
         if (result == IDialogConstants.OK_ID) {
             HgUpdateClient.update(project, dialog.getRevision(), true);
-            project.setPersistentProperty(ResourceProperties.MERGING, null);
-            project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-            project.refreshLocal(IResource.DEPTH_INFINITE, null);
-            // will trigger a FlagManager refresh
         }
     }
 

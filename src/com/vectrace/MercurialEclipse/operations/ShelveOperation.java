@@ -11,12 +11,14 @@
 package com.vectrace.MercurialEclipse.operations;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.ui.IWorkbenchPart;
@@ -119,7 +121,11 @@ public class ShelveOperation extends HgOperation {
 
                 File shelveDir = new File(root, ".hg" + File.separator //$NON-NLS-1$
                         + "mercurialeclipse-shelve-backups"); //$NON-NLS-1$
-                shelveDir.mkdir();
+                boolean mkdir = shelveDir.mkdir();
+                if(!mkdir && !shelveDir.exists()){
+                    throw new HgException(Messages
+                            .getString("ShelveOperation.error.shelfDirCreateFailed")); //$NON-NLS-1$
+                }
                 File shelveFile = new File(shelveDir, project.getName().concat(
                         "-patchfile.patch")); //$NON-NLS-1$
                 if (shelveFile.exists()) {
@@ -137,15 +143,10 @@ public class ShelveOperation extends HgOperation {
                 monitor.subTask(Messages
                         .getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
                 HgUpdateClient.update(project, currRev, true);
-                monitor.worked(1);
-                monitor.subTask(Messages
-                        .getString("ShelveOperation.refreshingResources")); //$NON-NLS-1$
-                for (IResource resource : resources) {
-                    resource.refreshLocal(IResource.DEPTH_ZERO, monitor);
-                }
-                monitor.worked(1);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
+            throw new InvocationTargetException(e, e.getLocalizedMessage());
+        }catch (CoreException e) {
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         } finally {
             monitor.done();

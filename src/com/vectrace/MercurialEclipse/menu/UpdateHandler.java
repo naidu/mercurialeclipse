@@ -12,19 +12,11 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class UpdateHandler extends SingleResourceHandler {
 
@@ -53,31 +45,6 @@ public class UpdateHandler extends SingleResourceHandler {
             }
         }
         HgUpdateClient.update(project, revision, cleanEnabled);
-        // reset merge properties
-        project.setPersistentProperty(ResourceProperties.MERGING, null);
-        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-        new SafeWorkspaceJob("Refreshing project files...") {
-            /*
-             * (non-Javadoc)
-             *
-             * @see
-             * com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse
-             * .core.runtime.IProgressMonitor)
-             */
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                try {
-                    project.refreshLocal(IResource.DEPTH_INFINITE, null);
-                    MercurialStatusCache.getInstance().notifyChanged(project);
-                    return super.runSafe(monitor);
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                            e.getLocalizedMessage(), e);
-                }
-            }
-        }.schedule();
-
     }
 
     /**

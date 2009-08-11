@@ -63,12 +63,10 @@ import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.RefreshLocalChangesetsJob;
-import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
@@ -86,10 +84,10 @@ public class MercurialHistoryPage extends HistoryPage {
     private ChangedPathsPage changedPaths;
 
     private ChangeSet currentWorkdirChangeset;
-    
+
     class RefreshMercurialHistory extends Job {
         MercurialHistory mercurialHistory;
-        private int from;
+        private final int from;
 
         public RefreshMercurialHistory(int from, MercurialHistory fileHistory) {
             super("Fetching Mercurial revisions..."); //$NON-NLS-1$
@@ -164,7 +162,7 @@ public class MercurialHistoryPage extends HistoryPage {
         }
     }
 
-    class ChangeSetLabelProvider extends LabelProvider implements
+    static class ChangeSetLabelProvider extends LabelProvider implements
             ITableLabelProvider {
 
         public String getColumnText(Object obj, int index) {
@@ -175,7 +173,7 @@ public class MercurialHistoryPage extends HistoryPage {
             }
 
             MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
-            ChangeSet changeSet = mercurialFileRevision.getChangeSet();            
+            ChangeSet changeSet = mercurialFileRevision.getChangeSet();
 
             switch (index) {
             case 1:
@@ -287,7 +285,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
         contributeActions();
     }
-    
+
     private void copyToClipboard() {
         IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
         Iterator<?> iterator = selection.iterator();
@@ -295,7 +293,7 @@ public class MercurialHistoryPage extends HistoryPage {
         for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
             text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
         }
-        
+
         text.append(System.getProperty("line.separator")); //$NON-NLS-1$
 
         while(iterator.hasNext()) {
@@ -306,7 +304,7 @@ public class MercurialHistoryPage extends HistoryPage {
             }
             text.append(System.getProperty("line.separator")); //$NON-NLS-1$
         }
-        new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()}, 
+        new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()},
                 new Transfer[]{ TextTransfer.getInstance() });
     }
 
@@ -322,19 +320,9 @@ public class MercurialHistoryPage extends HistoryPage {
                 try {
                     IProject project = resource.getProject();
                     Assert.isNotNull(project);
-                    HgUpdateClient.update(project, rev.getChangeSet()
-                            .getChangeset(), true);
-                    // update ends merges, so reset merge properties
-                    project.setPersistentProperty(ResourceProperties.MERGING,
-                            null);
-                    project.setSessionProperty(
-                            ResourceProperties.MERGE_COMMIT_OFFERED, null);
-                    new RefreshStatusJob(
-                            Messages.getString("MercurialHistoryPage.refreshJob.name"), //$NON-NLS-1$
-                            project).schedule();
-                    new RefreshLocalChangesetsJob(project).schedule();
+                    HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
                     refresh();
-                } catch (Exception e) {
+                } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
             }
@@ -448,7 +436,7 @@ public class MercurialHistoryPage extends HistoryPage {
     public boolean isValidInput(Object object) {
         return true;
     }
-    
+
     public ChangeSet getCurrentWorkdirChangeset() {
         return currentWorkdirChangeset;
     }
