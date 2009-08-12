@@ -16,10 +16,12 @@ import java.net.URI;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 public class HgPushPullClient extends AbstractClient {
 
@@ -38,7 +40,22 @@ public class HgPushPullClient extends AbstractClient {
         }
 
         addRepoToHgCommand(repo, command);
-        return new String(command.executeToBytes(timeout));
+        String result = new String(command.executeToBytes(timeout));
+
+        updateAfterPush(result, project, repo);
+        return result;
+    }
+
+    protected static void updateAfterPush(String result, IProject project, HgRepositoryLocation repo) throws HgException {
+        if (result.length() != 0) {
+            HgClients.getConsole().printMessage(result, null);
+        }
+
+        // It appears good. Stash the repo location.
+        MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
+                repo);
+
+        OutgoingChangesetCache.getInstance().clear(repo);
     }
 
     public static String pull(IResource resource,
@@ -62,16 +79,6 @@ public class HgPushPullClient extends AbstractClient {
                 timeout);
     }
 
-    /**
-     * @param resource
-     * @param changeset
-     * @param pullSource
-     * @param update
-     * @param force
-     * @param timeout
-     * @return
-     * @throws HgException
-     */
     public static String pull(IResource resource, ChangeSet changeset,
             String pullSource, boolean update, boolean rebase,
             boolean force, boolean timeout) throws HgException {
@@ -81,7 +88,7 @@ public class HgPushPullClient extends AbstractClient {
         }
         AbstractShellCommand command = new HgCommand("pull", workDir.getLocation() //$NON-NLS-1$
                 .toFile(), true);
-                
+
         if (update) {
             command.addOptions("--update"); //$NON-NLS-1$
         } else if (rebase) {
@@ -98,11 +105,17 @@ public class HgPushPullClient extends AbstractClient {
 
         command.addOptions(pullSource);
 
+        String result;
         if (timeout) {
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-            return new String(command.executeToBytes());
+            result = new String(command.executeToBytes());
+        } else {
+            result= new String(command.executeToBytes(Integer.MAX_VALUE));
         }
-        return new String(command.executeToBytes(Integer.MAX_VALUE));
+        if(update) {
+            new RefreshWorkspaceStatusJob(resource.getProject()).schedule();
+        }
+        return result;
     }
 }

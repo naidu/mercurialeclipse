@@ -28,18 +28,18 @@ import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
  * @author zingo
- * 
+ *
  */
 public class PushRepoWizard extends HgWizard {
 
     private IProject project;
-    private String projectName;
     private OutgoingPage outgoingPage;
 
     private PushRepoWizard() {
@@ -69,11 +69,6 @@ public class PushRepoWizard extends HgWizard {
         addPage(outgoingPage);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.wizard.Wizard#performFinish()
-     */
     @Override
     public boolean performFinish() {
         super.performFinish();
@@ -84,7 +79,7 @@ public class PushRepoWizard extends HgWizard {
 
             // Check that this project exist.
             if (project.getLocation() == null) {
-                String msg = Messages.getString("PushRepoWizard.project") + projectName //$NON-NLS-1$
+                String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
                         + Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
                 MercurialEclipsePlugin.logError(msg, null);
                 // System.out.println( string);
@@ -93,7 +88,7 @@ public class PushRepoWizard extends HgWizard {
 
             PushPullPage pushRepoPage = (PushPullPage) page;
 
-            int timeout = 300000;
+            int timeout = HgClients.getTimeOut(MercurialPreferenceConstants.PUSH_TIMEOUT);
             if (!pushRepoPage.isTimeout()) {
                 timeout = Integer.MAX_VALUE;
             }
@@ -113,7 +108,7 @@ public class PushRepoWizard extends HgWizard {
                     && pushRepoPage.getForestCheckBox().getSelection()) {
                 File forestRoot = MercurialTeamProvider.getHgRoot(
                         project.getLocation().toFile()).getParentFile();
-
+                
                 File snapFile = null;
                 String snapFileText = pushRepoPage.getSnapFileCombo().getText();
                 if (snapFileText.length() > 0) {

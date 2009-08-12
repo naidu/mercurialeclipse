@@ -13,19 +13,26 @@ package com.vectrace.MercurialEclipse.commands.extensions.forest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Set;
 
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
+import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgFpushPullClient extends AbstractClient {
+public class HgFpushPullClient extends HgPushPullClient {
 
     public static String fpush(File forestRoot, HgRepositoryLocation repo,
-            String revision, int timeout, File snapFile) throws HgException {
+            String revision, int timeout, File snapFile) throws CoreException {
+
         try {
             AbstractShellCommand command = new HgCommand("fpush",
                     forestRoot, true);
@@ -47,7 +54,13 @@ public class HgFpushPullClient extends AbstractClient {
                 command.addOptions(repo.getLocation());
             }
 
-            return new String(command.executeToBytes(timeout));
+            String result = new String(command.executeToBytes(timeout));
+            Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+            for (IProject project : projects) {
+                updateAfterPush(result, project, repo);
+            }
+
+            return result;
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
@@ -56,6 +69,7 @@ public class HgFpushPullClient extends AbstractClient {
     public static String fpull(File forestRoot, HgRepositoryLocation repo,
             boolean update, boolean timeout, ChangeSet changeset,
             boolean walkHg, File snapFile, boolean partial) throws HgException {
+
         URI uri = repo.getUri();
         String pullSource;
         if (uri != null) {
@@ -63,26 +77,6 @@ public class HgFpushPullClient extends AbstractClient {
         } else {
             pullSource = repo.getLocation();
         }
-
-        return fpull(forestRoot, update, timeout, changeset, walkHg, snapFile,
-                partial, pullSource);
-    }
-
-    /**
-     * @param resource
-     * @param update
-     * @param force
-     * @param timeout
-     * @param changeset
-     * @param pullSource
-     * @return
-     * @throws HgException
-     */
-    public static String fpull(File forestRoot, boolean update,
-            boolean timeout,
-            ChangeSet changeset, boolean walkHg, File snapFile,
-            boolean partial, String pullSource) throws HgException {
-
         try {
             AbstractShellCommand command = new HgCommand("fpull",
                     forestRoot, true);
@@ -101,7 +95,7 @@ public class HgFpushPullClient extends AbstractClient {
 
             if (walkHg) {
                 command.addOptions("--walkhg", "true");
-            } 
+            }
 
             if (partial) {
                 command.addOptions("--partial");
@@ -109,12 +103,21 @@ public class HgFpushPullClient extends AbstractClient {
 
             command.addOptions(pullSource);
 
+            String result;
             if (timeout) {
                 command
                         .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-                return new String(command.executeToBytes());
+                result = new String(command.executeToBytes());
+            } else {
+                result = new String(command.executeToBytes(Integer.MAX_VALUE));
             }
-            return new String(command.executeToBytes(Integer.MAX_VALUE));
+            if(update) {
+                Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+                for (IProject project : projects) {
+                    new RefreshWorkspaceStatusJob(project).schedule();
+                }
+            }
+            return result;
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
