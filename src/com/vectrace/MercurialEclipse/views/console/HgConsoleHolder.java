@@ -30,16 +30,16 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListener {
 
     private static final HgConsoleHolder instance = new HgConsoleHolder();
-    
+
     private HgConsole console;
-    
+
     private HgConsoleHolder() {
     }
-    
+
     public static HgConsoleHolder getInstance() {
         return instance;
     }
-    
+
     private void init() {
         if (!isInitialized()) {
             // install font
@@ -63,6 +63,7 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
     }
 
     public HgConsole showConsole() {
+        init();
         // register console
         IConsole[] existing = getConsoleManager().getConsoles();
         boolean exists = false;
@@ -84,7 +85,7 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
         if (showOnMessage) {
             getConsoleManager().showConsoleView(console);
         }
-        
+
         return console;
     }
 
@@ -96,9 +97,6 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
         }
     }
 
-    /**
-     * @return
-     */
     public HgConsole getConsole() {
         init();
         return console;
@@ -130,13 +128,6 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.core.runtime.Preferences.IPropertyChangeListener#propertyChange
-     * (org.eclipse.core.runtime.Preferences.PropertyChangeEvent)
-     */
     public void propertyChange(PropertyChangeEvent event) {
         console.propertyChange(event);
     }
