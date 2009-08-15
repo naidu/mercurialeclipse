@@ -48,7 +48,6 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.internal.core.subscribers.ActiveChangeSet;
-import org.eclipse.team.internal.core.subscribers.ActiveChangeSetManager;
 import org.eclipse.team.internal.core.subscribers.ChangeSet;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
@@ -63,6 +62,7 @@ import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
+import com.vectrace.MercurialEclipse.mapping.HgActiveChangeSetCollector;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -101,11 +101,8 @@ public class CommitDialog extends TitleAreaDialog {
     private Text userTextField;
     private String user;
     private Button revertCheckBox;
-    private final ActiveChangeSetManager csManager = MercurialEclipsePlugin.getDefault().getChangeSetManager();
+    private final HgActiveChangeSetCollector csManager;
 
-    /**
-     * @param shell
-     */
     public CommitDialog(Shell shell, HgRoot root, List<IResource> resources) {
         super(shell);
         setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
@@ -114,6 +111,7 @@ public class CommitDialog extends TitleAreaDialog {
         this.inResources = resources;
         this.selectableFiles = true;
         this.commitTextDocument = new Document();
+        csManager = MercurialEclipsePlugin.getDefault().createChangeSetManager(null);
     }
 
     public CommitDialog(Shell shell, HgRoot root, ArrayList<IResource> selectedResource, String defaultCommitMessage,
@@ -135,11 +133,6 @@ public class CommitDialog extends TitleAreaDialog {
         return resourcesToAdd;
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.jface.dialogs.TitleAreaDialog#createDialogArea(org.eclipse .swt.widgets.Composite)
-     */
     @Override
     protected Control createDialogArea(Composite parent) {
         Composite container = SWTWidgetHelper.createComposite(parent, 1);
@@ -173,24 +166,15 @@ public class CommitDialog extends TitleAreaDialog {
         return container;
     }
 
-    /**
-     * @param container
-     */
     private void createRevertCheckBox(Composite container) {
         this.revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
     }
 
-    /**
-     * @param container
-     */
     private void createFilesList(Composite container) {
         SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
         commitFilesList = new CommitFilesChooser(container, selectableFiles, this.inResources, this.root, true, true);
     }
 
-    /**
-     * @param container
-     */
     private void createUserCommitCombo(Composite container) {
         Composite comp = SWTWidgetHelper.createComposite(container, 2);
         SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
@@ -201,9 +185,6 @@ public class CommitDialog extends TitleAreaDialog {
         this.userTextField.setText(user);
     }
 
-    /**
-     * @param container
-     */
     private void createCommitTextBox(Composite container) {
         setMessage(Messages.getString("CommitDialog.commitTextLabel.text")); //$NON-NLS-1$
 
@@ -242,9 +223,6 @@ public class CommitDialog extends TitleAreaDialog {
         });
     }
 
-    /**
-     * @param container
-     */
     private void createOldCommitCombo(Composite container) {
         final String oldCommits[] = MercurialEclipsePlugin.getCommitMessageManager().getCommitMessages();
         if (oldCommits.length > 0) {
@@ -353,14 +331,11 @@ public class CommitDialog extends TitleAreaDialog {
         }
     }
 
-    /**
-     * @return the user
-     */
     public String getUser() {
         return user;
     }
 
-    /*
+    /**
      * Get a proposed comment by looking at the active change sets
      */
     private String getProposedComment(IResource[] resourcesToCommit) {

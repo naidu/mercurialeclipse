@@ -27,7 +27,6 @@ import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.internal.core.subscribers.ActiveChangeSetManager;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -38,8 +37,10 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.mapping.HgActiveChangeSetCollector;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
+import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -70,7 +71,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     private boolean hgUsable = true;
 
-    private ActiveChangeSetManager changeSetManager;
 
     /**
      * The constructor.
@@ -137,7 +137,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     /**
      * Gets the repository manager
-     * 
+     *
      * @return
      */
     static public HgRepositoryLocationManager getRepoManager() {
@@ -180,7 +180,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     /**
      * Returns an image descriptor for the image file at the given plug-in
      * relative path.
-     * 
+     *
      * @param path
      *            the path
      * @return the image descriptor
@@ -221,9 +221,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         return new Status(severity, ID, code, msg, ex);
     }
 
-    /**
-     * @param ex
-     */
     public final static void logError(Throwable ex) {
         logError(ex.getMessage(), ex);
     }
@@ -231,14 +228,14 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     /**
      * Creates a busy cursor and runs the specified runnable. May be called from
      * a non-UI thread.
-     * 
+     *
      * @param parent
      *            the parent Shell for the dialog
      * @param cancelable
      *            if true, the dialog will support cancelation
      * @param runnable
      *            the runnable
-     * 
+     *
      * @exception InvocationTargetException
      *                when an exception is thrown from the runnable
      * @exception InterruptedException
@@ -299,7 +296,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      * the active page may not be the one that the usr perceives as active in
      * some situations so this method of obtaining the activae page should only
      * be used if no other method is available.
-     * 
+     *
      * @return the active workbench page
      */
     public static IWorkbenchPage getActivePage() {
@@ -318,18 +315,13 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         return hgUsable;
     }
 
-    /**
-     * @return
-     */
     public static Display getStandardDisplay() {
         return PlatformUI.getWorkbench().getDisplay();
     }
 
-    public synchronized ActiveChangeSetManager getChangeSetManager() {
-        if (changeSetManager == null) {
-            changeSetManager = new HgActiveChangeSetCollector(
-                    MercurialSynchronizeSubscriber.getInstance());
-        }
-        return changeSetManager;
+    public HgActiveChangeSetCollector createChangeSetManager(HgRepositoryLocation repo) {
+        return new HgActiveChangeSetCollector(
+                    new MercurialSynchronizeSubscriber(new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
+                            .getAllManagedProjects()), repo));
     }
 }

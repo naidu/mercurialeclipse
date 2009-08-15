@@ -11,19 +11,16 @@
 package com.vectrace.MercurialEclipse.mapping;
 
 import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.internal.core.subscribers.ActiveChangeSet;
 import org.eclipse.team.internal.core.subscribers.SubscriberChangeSetManager;
 
-/**
- *
- */
 public class HgActiveChangeSetCollector extends SubscriberChangeSetManager {
 
 	public HgActiveChangeSetCollector(Subscriber subscriber) {
 		super(subscriber);
 	}
 
-	protected ActiveChangeSet doCreateSet(String name) {
+	@Override
+    protected HgActiveChangeSet doCreateSet(String name) {
 		return new HgActiveChangeSet(this, name);
 	}
 }
