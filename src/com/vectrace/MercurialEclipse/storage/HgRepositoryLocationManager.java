@@ -140,7 +140,10 @@ public class HgRepositoryLocationManager {
 
     public Set<HgRepositoryLocation> getAllProjectRepoLocations(IProject project) {
         SortedSet<HgRepositoryLocation> loc = projectRepos.get(project);
-        return Collections.unmodifiableSet(loc);
+        if(loc != null) {
+            return Collections.unmodifiableSet(loc);
+        }
+        return Collections.emptySet();
     }
 
     /**
