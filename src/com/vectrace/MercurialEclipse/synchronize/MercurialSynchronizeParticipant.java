@@ -12,7 +12,11 @@ package com.vectrace.MercurialEclipse.synchronize;
 
 import java.net.URISyntaxException;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
@@ -29,6 +33,7 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class MercurialSynchronizeParticipant extends
 ModelSynchronizeParticipant {
@@ -80,9 +85,6 @@ ModelSynchronizeParticipant {
         myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getSaveString());
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#restoreContext(org.eclipse.team.core.mapping.ISynchronizationScopeManager)
-     */
     @Override
     protected MergeContext restoreContext(ISynchronizationScopeManager manager) throws CoreException {
         // TODO probably it should do something more helpful
@@ -90,21 +92,29 @@ ModelSynchronizeParticipant {
         if(manager instanceof SynchronizationScopeManager){
             SynchronizationScopeManager manager2 = (SynchronizationScopeManager) manager;
             scope = manager2.getScope();
+            ResourceMapping[] mappings = scope.getMappings();
+            Set<IProject> projectSet = new HashSet<IProject>();
+            for (ResourceMapping mapping : mappings) {
+                IProject[] projects = mapping.getProjects();
+                for (IProject iProject : projects) {
+                    projectSet.add(iProject);
+                }
+            }
+            if(!projectSet.isEmpty()) {
+                scope = new RepositorySynchronizationScope(projectSet.toArray(new IProject[0]));
+            } else {
+                scope = new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
+                        .getAllManagedProjects());
+            }
         } else {
-            scope = new RepositorySynchronizationScope(null);
+            scope = new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
+                    .getAllManagedProjects());
         }
         MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(
                 scope, repositoryLocation);
         return new HgSubscriberMergeContext(subscriber, manager);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#initializeContext
-     * (org.eclipse.team.core.mapping.provider.SynchronizationContext)
-     */
     @Override
     protected void initializeContext(SynchronizationContext context) {
         if(context != null) {
@@ -112,9 +122,6 @@ ModelSynchronizeParticipant {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant#dispose()
-     */
     @Override
     public void dispose() {
         if(getContext() != null) {
