@@ -82,9 +82,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     @Override
     public void start(BundleContext context) throws Exception {
         plugin = this;
-        super.start(context);
         DefaultConfiguration cfg = new DefaultConfiguration();
         HgClients.initialize(cfg, cfg, cfg);
+        super.start(context);
+
         new Job("Starting MercurialEclipse.") {
             @Override
             protected IStatus run(IProgressMonitor monitor) {
@@ -112,7 +113,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                 }
             }
         }.schedule();
-
     }
 
     /**
@@ -137,8 +137,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     /**
      * Gets the repository manager
-     *
-     * @return
      */
     static public HgRepositoryLocationManager getRepoManager() {
         return repoManager;
@@ -186,8 +184,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      * @return the image descriptor
      */
     public static ImageDescriptor getImageDescriptor(String path) {
-        return AbstractUIPlugin.imageDescriptorFromPlugin(
-                "com.vectrace.MercurialEclipse", "icons/" + path); //$NON-NLS-1$ //$NON-NLS-2$
+        return AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
     }
 
     public static final void logError(String message, Throwable error) {

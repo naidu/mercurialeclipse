@@ -50,22 +50,22 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * Class that offers Utility methods for working with the plug-in.
- * 
+ *
  * @author zingo
- * 
+ *
  */
 public class MercurialUtilities {
 
     /**
      * This class is full of utilities metods, useful allover the place
      */
-    public MercurialUtilities() {
-
+    private MercurialUtilities() {
+        // don't call me
     }
 
     /**
      * Determines if the configured Mercurial executable can be called.
-     * 
+     *
      * @return true if no error occurred while calling the executable, false
      *         otherwise
      */
@@ -81,7 +81,7 @@ public class MercurialUtilities {
     /**
      * Returns the hg executable stored in the plug-in preferences. If it's not
      * defined, "hg" is returned as default.
-     * 
+     *
      * @return the path to the executable or, if not defined "hg"
      */
     public static String getHGExecutable() {
@@ -92,7 +92,7 @@ public class MercurialUtilities {
     /**
      * Fetches a preference from the plug-in's preference store. If no
      * preference could be found in the store, the given default is returned.
-     * 
+     *
      * @param preferenceConstant
      *            the string identifier for the constant.
      * @param defaultIfNotSet
@@ -115,13 +115,13 @@ public class MercurialUtilities {
     /**
      * Gets the configured executable if it's callable (@see
      * {@link MercurialUtilities#isHgExecutableCallable()}.
-     * 
+     *
      * If configureIfMissing is set to true, the configuration will be started
      * and afterwards the executable stored in the preferences will be checked
      * if it is callable. If true, it is returned, else "hg" will be returned.
      * If the parameter is set to false, it will returns "hg" if no preference
      * is set.
-     * 
+     *
      * @param configureIfMissing
      *            flag if configuration should be started if hg is not callable.
      * @return the hg executable path
@@ -139,11 +139,11 @@ public class MercurialUtilities {
 
     /**
      * Checks the GPG Executable is callable and returns it if it is.
-     * 
+     *
      * Otherwise, if configureIfMissing is set to true, configuration will be
      * started and the new command is tested for callability. If there's no
      * preference found after configuration, "gpg" will be returned as default.
-     * 
+     *
      * @param configureIfMissing
      *            flag, if configuration should be started if gpg is not
      *            callable.
@@ -178,7 +178,7 @@ public class MercurialUtilities {
 
     /**
      * Returns the executable for gpg. If it's not defined, false is returned
-     * 
+     *
      * @return gpg executable path or "gpg", if it's not set.
      */
     public static String getGpgExecutable() {
@@ -200,7 +200,7 @@ public class MercurialUtilities {
                 .getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
             /*
              * (non-Javadoc)
-             * 
+             *
              * @see
              * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core
              * .runtime.IProgressMonitor)
@@ -231,7 +231,7 @@ public class MercurialUtilities {
      * therefore false is returned. A linked file is not followed, so even if
      * there might be a hg repository in the linked files original location, we
      * won't handle such a resource as supervised.
-     * 
+     *
      * @param dialog
      *            flag to signify that an error message should be displayed if
      *            the resource is a linked resource Return true if the resource
@@ -291,7 +291,7 @@ public class MercurialUtilities {
     /**
      * Returns the username for hg as configured in preferences. If it's not
      * defined in the preference store, null is returned.
-     * 
+     *
      * @return hg username or null
      */
     public static String getHGUsername() {
@@ -308,10 +308,10 @@ public class MercurialUtilities {
      * preference set and configureIfMissing is true, start configuration of the
      * username and afterwards return the new preference. If nothing was
      * configured this could still be null!
-     * 
+     *
      * If configureIfMissing is false and no preference is set, the systems
      * property "user.name" is returned (@see {@link System#getProperty(String)}
-     * 
+     *
      * @param configureIfMissing
      *            true if configuration should be started, otherwise false
      * @return the username
@@ -351,7 +351,7 @@ public class MercurialUtilities {
 
     /**
      * Get the project for the selection (it use the first element)
-     * 
+     *
      * @param selection
      * @return
      */
@@ -375,9 +375,9 @@ public class MercurialUtilities {
      * Execute a command via the shell. Can throw HgException if the command
      * does not execute correctly. Exception will contain the error stream from
      * the command execution.
-     * 
+     *
      * @returns String containing the successful output
-     * 
+     *
      *          TODO: Should log failure. TODO: Should not return null for
      *          failure.
      */
@@ -397,7 +397,7 @@ public class MercurialUtilities {
 
     /**
      * Gets the working directory for an IResource
-     * 
+     *
      * @param obj
      *            the resource we need the working directory for
      * @return Workingdir of object or null if resource neither project, folder
@@ -443,7 +443,7 @@ public class MercurialUtilities {
 
     /**
      * Gets a resources name.
-     * 
+     *
      * @param obj
      *            an IResource
      * @return the name
@@ -454,7 +454,7 @@ public class MercurialUtilities {
 
     /**
      * Converts a {@link java.io.File} to a workspace resource
-     * 
+     *
      * @param file
      * @return
      * @throws HgException
@@ -478,7 +478,7 @@ public class MercurialUtilities {
 
     /**
      * Converts a path to a workspace resource
-     * 
+     *
      * @param file
      * @return the resource or null
      * @throws HgException
