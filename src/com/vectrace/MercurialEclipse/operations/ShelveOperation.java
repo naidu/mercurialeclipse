@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.operations;
 
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -100,14 +99,14 @@ public class ShelveOperation extends HgOperation {
 
                 monitor.subTask(Messages
                         .getString("ShelveOperation.determiningChanges")); //$NON-NLS-1$
-                String[] dirtyFiles = HgStatusClient.getDirtyFiles(project
+                HgRoot root = HgClients.getHgRoot(project.getLocation().toFile());
+                String[] dirtyFiles = HgStatusClient.getDirtyFiles(root, project
                         .getLocation().toFile());
                 List<IResource> resources = new ArrayList<IResource>();
-                HgRoot root = HgClients.getHgRoot(project.getLocation().toFile());
-                for (String f : dirtyFiles) {
-                    IResource r = MercurialStatusCache.getInstance()
-                            .convertRepoRelPath(root, project, f.substring(2));
-                    if (r.exists()) {
+                MercurialStatusCache cache = MercurialStatusCache.getInstance();
+                for (String rootRelativePath : dirtyFiles) {
+                    IResource r = cache.convertRepoRelPath(root, project, rootRelativePath);
+                    if (r != null && r.exists()) {
                         resources.add(r);
                     }
                 }
@@ -144,9 +143,7 @@ public class ShelveOperation extends HgOperation {
                         .getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
                 HgUpdateClient.update(project, currRev, true);
             }
-        } catch (IOException e) {
-            throw new InvocationTargetException(e, e.getLocalizedMessage());
-        }catch (CoreException e) {
+        } catch (CoreException e) {
             throw new InvocationTargetException(e, e.getLocalizedMessage());
         } finally {
             monitor.done();

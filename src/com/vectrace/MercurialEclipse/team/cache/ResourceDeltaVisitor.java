@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -85,46 +86,10 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
         // handle projects that contain a mercurial repository
         if (autoShare && delta.getFlags() == IResourceDelta.OPEN
                 && RepositoryProvider.getProvider(project) == null) {
-            HgRoot hgRoot;
-            try {
-                hgRoot = MercurialTeamProvider.getHgRoot(project);
-                MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
-                        + ". Detected repository location: " + hgRoot.getAbsolutePath(), null);
-            } catch (HgException e) {
-                hgRoot = null;
-                MercurialEclipsePlugin.logInfo("Autosharing: " + e.getLocalizedMessage(), e);
-            }
-            final HgRoot root = hgRoot;
-            if (root != null && root.length() > 0) {
-                final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-
-                try {
-                    new SafeWorkspaceJob(Messages.getString("MercurialStatusCache.autoshare.1") + project.getName() //$NON-NLS-1$
-                            + Messages.getString("MercurialStatusCache.autoshare.2")) { //$NON-NLS-1$
-                        /*
-                         * (non-Javadoc)
-                         *
-                         * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob #runSafe
-                         * (org.eclipse.core.runtime.IProgressMonitor)
-                         */
-                        @Override
-                        protected IStatus runSafe(IProgressMonitor monitor) {
-                            try {
-                                new InitOperation(activeWorkbenchWindow, project, root, root.getAbsolutePath())
-                                .run(monitor);
-                            } catch (Exception e) {
-                                throw new RuntimeException(e);
-                            }
-                            return super.runSafe(monitor);
-                        }
-                    }.schedule();
-                } catch (Exception e) {
-                    throw new HgException(e.getLocalizedMessage(), e);
-                }
-            }
+            autoshareProject(project);
         }
 
-        if (!Team.isIgnoredHint(res) && (RepositoryProvider.getProvider(res.getProject(), MercurialTeamProvider.ID) != null)) {
+        if (!Team.isIgnoredHint(res) && (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) != null)) {
             if (res.getType() == IResource.FILE && !res.isTeamPrivateMember() && !res.isDerived()) {
                 int flag = delta.getFlags() & MercurialStatusCache.INTERESTING_CHANGES;
                 IResource resource = getResource(res);
@@ -170,5 +135,39 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
         }
         // System.out.println("[ME-RV] Not descending (returning with false)");
         return false;
+    }
+
+    private void autoshareProject(final IProject project) throws HgException {
+        HgRoot hgRoot;
+        try {
+            hgRoot = MercurialTeamProvider.getHgRoot(project);
+            MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
+                    + ". Detected repository location: " + hgRoot.getAbsolutePath(), null);
+        } catch (HgException e) {
+            hgRoot = null;
+            MercurialEclipsePlugin.logInfo("Autosharing: " + e.getLocalizedMessage(), e);
+        }
+        final HgRoot root = hgRoot;
+        if (root != null && root.length() > 0) {
+            final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+
+            try {
+                new SafeWorkspaceJob(NLS.bind(Messages.mercurialStatusCache_autoshare, project.getName())) {
+
+                    @Override
+                    protected IStatus runSafe(IProgressMonitor monitor) {
+                        try {
+                            new InitOperation(activeWorkbenchWindow, project, root, root.getAbsolutePath())
+                            .run(monitor);
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        return super.runSafe(monitor);
+                    }
+                }.schedule();
+            } catch (Exception e) {
+                throw new HgException(e.getLocalizedMessage(), e);
+            }
+        }
     }
 }

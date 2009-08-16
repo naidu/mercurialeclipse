@@ -40,8 +40,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
         // when having 2 different statuses in a folder it should have the more important one
         store.setDefault(MercurialPreferenceConstants.LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB);
 
-        // TODO this is currently required to see immediate changes on file state after editing
-        store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, true);
+        store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, false);
+        store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
 
         store.setDefault(MercurialPreferenceConstants.LOG_BATCH_SIZE, 500);
         store.setDefault(MercurialPreferenceConstants.STATUS_BATCH_SIZE, 10);

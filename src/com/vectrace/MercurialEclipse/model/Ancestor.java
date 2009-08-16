@@ -20,10 +20,10 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class Ancestor {
-    private HgRoot root;
+    private final HgRoot root;
     private ChangeSet cs1;
     private ChangeSet cs2;
     private ChangeSet ancestor;
@@ -53,7 +53,7 @@ public class Ancestor {
                     ancestor = LocalChangesetCache.getInstance()
                             .getLocalChangeSet(
                                     MercurialUtilities.convert(root),
-                                    String.valueOf(ancestorIndex));
+                                    String.valueOf(ancestorIndex), true);
                     CACHE.put(getKey(), ancestor);
                 }
             } else {
@@ -68,9 +68,6 @@ public class Ancestor {
         return ancestor;
     }
 
-    /**
-     * @return
-     */
     private String getKey() {
         return cs1.getChangeset() + "|" + cs2.getChangeset(); //$NON-NLS-1$
     }

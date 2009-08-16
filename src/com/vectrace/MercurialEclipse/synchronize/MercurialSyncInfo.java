@@ -16,34 +16,30 @@ import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-
 /**
  * @author bastian
- * 
+ *
  */
 public class MercurialSyncInfo extends SyncInfo {
 
-
-    /**
-     * @param local
-     * @param base
-     * @param remote
-     * @param comparator
-     */
     public MercurialSyncInfo(IResource local, IResourceVariant base,
             IResourceVariant remote, IResourceVariantComparator comparator) {
         super(local, base, remote, comparator);
     }
 
     @Override
-    protected int calculateKind() throws TeamException {       
+    protected int calculateKind() throws TeamException {
         int description = super.calculateKind();
 
+        // this lead to the conflict propagation to the resources, but the conflict
+        // does not exist yet, it only can happen later during the update/merge.
+        // here we are in the synchronization view, so all changes we see are in the future
+        /*
         if (description == (CONFLICTING | CHANGE)) {
             // add resource conflict to status cache
             MercurialStatusCache.getInstance().addConflict(getLocal());
         }
+        */
         return description;
     }
 }

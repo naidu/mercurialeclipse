@@ -31,7 +31,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class OutgoingChangesetCache extends AbstractCache {
     private static OutgoingChangesetCache instance;
@@ -67,7 +67,7 @@ public class OutgoingChangesetCache extends AbstractCache {
     }
 
     public ChangeSet getNewestOutgoingChangeSet(IResource resource,
-            HgRepositoryLocation repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) {
 
         ReentrantLock lock = getLock(resource);
         if (lock.isLocked()) {
@@ -95,7 +95,7 @@ public class OutgoingChangesetCache extends AbstractCache {
     /**
      * Gets all outgoing changesets of the given location for the given
      * IResource.
-     * 
+     *
      * @param objectResource
      * @param repositoryLocation
      * @return
@@ -134,7 +134,7 @@ public class OutgoingChangesetCache extends AbstractCache {
     /**
      * Gets all resources that are changed in incoming changesets of given
      * repository, even resources not known in local workspace.
-     * 
+     *
      * @param resource
      * @param repositoryLocation
      * @return never null
@@ -154,7 +154,7 @@ public class OutgoingChangesetCache extends AbstractCache {
     /**
      * Gets all outgoing changesets by querying Mercurial and adds them to the
      * caches.
-     * 
+     *
      * @param project
      * @param repositoryLocation
      * @throws HgException

@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.team.cache;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -25,19 +26,19 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * Refreshes status, local changesets, incoming changesets and outgoing
  * changesets. If you only want to refresh the status use
  * {@link RefreshStatusJob}.
- * 
+ *
  * For big repositories this can be quite slow when "withFiles" is set to true
  * in constructor.
- * 
+ *
  * @author Bastian Doetsch
- * 
+ *
  */
 public final class RefreshJob extends SafeWorkspaceJob {
     private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
             .getInstance();
     private final HgRepositoryLocation repositoryLocation;
     private final IProject project;
-    private boolean withFiles = false;
+    private final boolean withFiles;
 
     public RefreshJob(String name, HgRepositoryLocation repositoryLocation,
             IProject project, boolean withFiles) {
@@ -62,54 +63,37 @@ public final class RefreshJob extends SafeWorkspaceJob {
 
     @Override
     protected IStatus runSafe(IProgressMonitor monitor) {
+        if(monitor == null){
+            monitor = new NullProgressMonitor();
+        }
+
         try {
             mercurialStatusCache.refreshStatus(project, monitor);
         } catch (HgException e1) {
             MercurialEclipsePlugin.logError(e1);
         }
 
-        if (monitor != null) {
-            monitor.subTask(Messages.getString("RefreshJob.UpdatingStatusAndVersionCache")); //$NON-NLS-1$
-        }
+        monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
         try {
-            if (monitor != null) {
-                monitor.subTask(Messages.getString("RefreshJob.LoadingLocalRevisions")); //$NON-NLS-1$
-            }
+            monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
             LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
                     true, withFiles);
-            if (monitor != null) {
-                monitor.worked(1);
-            }
+            monitor.worked(1);
             // incoming
             if (repositoryLocation != null) {
-                if (monitor != null) {
-                    monitor.subTask(Messages.getString("RefreshJob.LoadingIncomingRevisions") //$NON-NLS-1$
-                            + repositoryLocation);
-                }
+                monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + repositoryLocation);
                 IncomingChangesetCache.getInstance().refreshIncomingChangeSets(
                         project, repositoryLocation);
-                if (monitor != null) {
-                    monitor.worked(1);
-                }
+                monitor.worked(1);
 
-                if (monitor != null) {
-                    monitor.subTask(Messages.getString("RefreshJob.LoadingOutgoingRevisionsFor") //$NON-NLS-1$
-                            + repositoryLocation);
-                }
+                monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + repositoryLocation);
                 OutgoingChangesetCache.getInstance().refreshOutgoingChangeSets(
                         project, repositoryLocation);
-                if (monitor != null) {
-                    monitor.worked(1);
-                }
+                monitor.worked(1);
 
-                if (monitor != null) {
-                    monitor
-                            .subTask(Messages.getString("RefreshJob.AddingRemoteRepositoryToProjectRepositories")); //$NON-NLS-1$
-                }
+                monitor.subTask(Messages.refreshJob_AddingRemoteRepositoryToProjectRepositories);
 
-                if (monitor != null) {
-                    monitor.worked(1);
-                }
+                monitor.worked(1);
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);

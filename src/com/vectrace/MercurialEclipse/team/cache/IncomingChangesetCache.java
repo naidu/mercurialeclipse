@@ -35,7 +35,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class IncomingChangesetCache extends AbstractCache {
     private static IncomingChangesetCache instance;
@@ -79,7 +79,7 @@ public class IncomingChangesetCache extends AbstractCache {
     /**
      * Gets all incoming chnagesets of all known project locations for the given
      * IResource.
-     * 
+     *
      * @param objectResource
      * @return
      * @throws HgException
@@ -111,7 +111,7 @@ public class IncomingChangesetCache extends AbstractCache {
     /**
      * Gets all incoming changesets of the given location for the given
      * IResource.
-     * 
+     *
      * @param objectResource
      * @param repositoryLocation
      * @return
@@ -150,7 +150,7 @@ public class IncomingChangesetCache extends AbstractCache {
     /**
      * Gets all resources that are changed in incoming changesets of given
      * repository, even resources not known in local workspace.
-     * 
+     *
      * @param resource
      * @param repositoryLocation
      * @return never null
@@ -172,20 +172,17 @@ public class IncomingChangesetCache extends AbstractCache {
 
     /**
      * Gets the newest incoming changeset of <b>all repositories</b>.
-     * 
+     *
      * @param resource
      *            the resource to get the changeset for
-     * @return
-     * @throws HgException
      */
-    public ChangeSet getNewestIncomingChangeSet(IResource objectResource)
-    throws HgException {
+    public ChangeSet getNewestIncomingChangeSet(IResource resource) {
         Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
         .getRepoManager().getAllProjectRepoLocations(
-                objectResource.getProject());
+                resource.getProject());
         SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>();
         for (HgRepositoryLocation hgRepositoryLocation : locs) {
-            ChangeSet candidate = getNewestIncomingChangeSet(objectResource,
+            ChangeSet candidate = getNewestIncomingChangeSet(resource,
                     hgRepositoryLocation);
             if (candidate != null) {
                 changeSets.add(candidate);
@@ -198,7 +195,7 @@ public class IncomingChangesetCache extends AbstractCache {
     }
 
     public ChangeSet getNewestIncomingChangeSet(IResource resource,
-            HgRepositoryLocation repositoryLocation) throws HgException {
+            HgRepositoryLocation repositoryLocation) {
 
         ReentrantLock lock = getLock(resource);
         if (lock.isLocked()) {
@@ -225,7 +222,7 @@ public class IncomingChangesetCache extends AbstractCache {
 
     /**
      * Checks if incoming status for given project is known for any location.
-     * 
+     *
      * @param project
      *            the project to be checked
      * @return true if known, false if not.
@@ -254,7 +251,7 @@ public class IncomingChangesetCache extends AbstractCache {
     /**
      * Gets all incoming changesets by querying Mercurial and adds them to the
      * caches.
-     * 
+     *
      * @param project
      * @param repositoryLocation
      * @throws HgException

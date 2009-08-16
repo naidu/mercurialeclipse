@@ -29,6 +29,7 @@ public class HgStatusClient extends AbstractClient {
     public static String getStatus(IContainer root) throws HgException {
         return getStatus(root.getLocation().toFile());
     }
+
     public static String getStatus(File root) throws HgException {
         AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
         // modified, added, removed, deleted, unknown, ignored, clean
@@ -37,9 +38,9 @@ public class HgStatusClient extends AbstractClient {
         return command.executeToString();
     }
 
-    public static String getStatusWithoutIgnored(IResource res) throws HgException {
-        AbstractShellCommand command = new HgCommand("status", getWorkingDirectory(res.getProject()), //$NON-NLS-1$
-                true);
+    public static String getStatusWithoutIgnored(HgRoot root, IResource res) throws HgException {
+        AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduc"); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -89,15 +90,10 @@ public class HgStatusClient extends AbstractClient {
         return null;
     }
 
-    /**
-     * @param array
-     * @return
-     * @throws HgException
-     */
-    public static String getStatusWithoutIgnored(File file, List<IResource> files)
+    public static String getStatusWithoutIgnored(HgRoot root, List<IResource> files)
             throws HgException {
-        AbstractShellCommand command = new HgCommand("status", getWorkingDirectory(file), //$NON-NLS-1$
-                true);
+        AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         // modified, added, removed, deleted, unknown, ignored, clean
         command.addOptions("-marduc"); //$NON-NLS-1$
@@ -105,18 +101,25 @@ public class HgStatusClient extends AbstractClient {
         return command.executeToString();
     }
 
-    public static String[] getDirtyFiles(File file)
-            throws HgException {
-        AbstractShellCommand command = new HgCommand("status", getWorkingDirectory(file), //$NON-NLS-1$
-                true);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+    /**
+     * @return root relative paths of changed files, never null
+     */
+    public static String[] getDirtyFiles(HgRoot root, File file) throws HgException {
+        AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-mard"); //$NON-NLS-1$
         String result = command.executeToString();
         if (result == null || result.length() == 0) {
             return new String[0];
         }
-        return result.split("\n"); //$NON-NLS-1$
+        // now we will have status AND path info
+        String[] status = result.split("\n");
+        for (int i = 0; i < status.length; i++) {
+            // remove status info from status AND path line
+            status[i] = status[i].substring(2);
+        }
+        return status;
     }
 
     /**
@@ -133,7 +136,7 @@ public class HgStatusClient extends AbstractClient {
      *         at given version.
      * @throws HgException
      */
-    public static File getPossibleSourcePath(File file, HgRoot root, int firstKnownRevision) throws HgException{
+    public static File getPossibleSourcePath(HgRoot root, File file, int firstKnownRevision) throws HgException{
         AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-arC"); //$NON-NLS-1$

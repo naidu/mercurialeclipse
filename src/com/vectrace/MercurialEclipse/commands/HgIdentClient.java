@@ -9,6 +9,7 @@ import java.io.InputStream;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -48,10 +49,15 @@ public class HgIdentClient extends AbstractClient {
         return result;
     }
 
-    static String getCurrentChangesetId(InputStream inputStream) throws IOException {
+    static String getCurrentChangesetId(InputStream inputStream) throws HgException {
         StringBuilder id = new StringBuilder(20);
         byte[] first20bytes = new byte[20];
-        int read = inputStream.read(first20bytes);
+        int read;
+        try {
+            read = inputStream.read(first20bytes);
+        } catch (IOException e) {
+            throw new HgException(e.getMessage(), e);
+        }
         for (int i = 0; i < read; i += 4) {
             int next = getNextInt(first20bytes, i);
             String s = Integer.toHexString(next);
@@ -73,10 +79,8 @@ public class HgIdentClient extends AbstractClient {
      *            the root of the repository to identify
      * @return Returns the node-id for the current changeset
      * @throws HgException
-     * @throws IOException
      */
-    public static String getCurrentChangesetId(HgRoot repository)
-    throws HgException, IOException {
+    public static String getCurrentChangesetId(HgRoot repository) throws HgException {
         StringBuilder pathStr = new StringBuilder(repository.getAbsolutePath());
         pathStr.append(File.separator).append(".hg");
         pathStr.append(File.separator).append("dirstate");
@@ -89,7 +93,11 @@ public class HgIdentClient extends AbstractClient {
         try {
             return getCurrentChangesetId(reader);
         } finally {
-            reader.close();
+            try {
+                reader.close();
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
         }
     }
 }

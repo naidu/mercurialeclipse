@@ -412,7 +412,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
      *            Incoming, Outgoing or Local changesets
      * @param repository
      * @param bundleFile
-     * @return
+     * @return map where the key is an absolute file path
      * @throws HgException
      */
     protected final static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(
@@ -429,6 +429,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
     /**
      * @param path full absolute file path, which MAY NOT EXIST in the local file system
      *        (because it is the original path of moved or renamed file)
+     *
+     * @return map where the key is an absolute file path
      * @throws HgException
      */
     protected static Map<IPath, SortedSet<ChangeSet>> createMercurialRevisions(IPath path, String input, Direction direction,

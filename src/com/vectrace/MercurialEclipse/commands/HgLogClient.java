@@ -83,22 +83,34 @@ public class HgLogClient extends AbstractParseChangesetClient {
         return changeSets;
     }
 
+    /**
+     * @return map where the key is an absolute file path
+     */
     public static Map<IPath, SortedSet<ChangeSet>> getCompleteProjectLog(
             IResource res, boolean withFiles) throws HgException {
         return getProjectLog(res, -1, -1, withFiles);
     }
 
+    /**
+     * @return map where the key is an absolute file path
+     */
     public static Map<IPath, SortedSet<ChangeSet>> getProjectLogBatch(
             IResource res, int batchSize, int startRev, boolean withFiles)
             throws HgException {
         return getProjectLog(res, batchSize, startRev, withFiles);
     }
 
+    /**
+     * @return map where the key is an absolute file path
+     */
     public static Map<IPath, SortedSet<ChangeSet>> getRecentProjectLog(
             IResource res, int limitNumber, boolean withFiles) throws HgException {
         return getProjectLogBatch(res, limitNumber, -1, withFiles);
     }
 
+    /**
+     * @return map where the key is an absolute file path
+     */
     public static Map<IPath, SortedSet<ChangeSet>> getProjectLog(IResource res,
             int limitNumber, int startRev, boolean withFiles)
             throws HgException {
@@ -196,7 +208,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
             while((next = history.getNext(next)) != null){
                 if(next.getParent() == null) {
                     possibleParent = HgStatusClient.getPossibleSourcePath(
-                            next.getResource().getLocation().toFile(), changeSet.getHgRoot(),
+                            changeSet.getHgRoot(),
+                            next.getResource().getLocation().toFile(),
                             next.getRevision());
                     if(possibleParent != null){
                         break;

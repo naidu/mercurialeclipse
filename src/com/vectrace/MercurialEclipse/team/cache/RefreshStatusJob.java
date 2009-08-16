@@ -20,25 +20,18 @@ import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class RefreshStatusJob extends SafeWorkspaceJob {
-    /**
-     * 
-     */
+
     private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
             .getInstance();
     private IProject project;
 
-    /**
-     * @param name
-     * @param mercurialStatusCache
-     *            TODO
-     */
     public RefreshStatusJob(String name) {
         super(name);
     }
-    
+
     public RefreshStatusJob(String name, IProject project) {
         super(name);
         this.project = project;
@@ -47,7 +40,7 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
     @Override
     protected IStatus runSafe(IProgressMonitor monitor) {
         try {
-            monitor.beginTask(Messages.getString("RefreshStatusJob.OptainingMercurialStatusInformation"), 5); //$NON-NLS-1$
+            monitor.beginTask(Messages.refreshStatusJob_OptainingMercurialStatusInformation, 5);
             mercurialStatusCache.refreshStatus(project, monitor);
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);

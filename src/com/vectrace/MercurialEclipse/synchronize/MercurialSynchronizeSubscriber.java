@@ -13,11 +13,14 @@ package com.vectrace.MercurialEclipse.synchronize;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
@@ -43,7 +46,7 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
-public class MercurialSynchronizeSubscriber extends Subscriber {
+public class MercurialSynchronizeSubscriber extends Subscriber implements Observer {
 
     private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
     .getInstance();
@@ -54,9 +57,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
     .getInstance();
 
-    private ISynchronizationScope myScope;
+    private final ISynchronizationScope myScope;
     private IResource[] myRoots;
-    private HgRepositoryLocation repositoryLocation;
+    private final HgRepositoryLocation repositoryLocation;
     private IResourceVariantComparator comparator;
 
     public MercurialSynchronizeSubscriber(
@@ -64,6 +67,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
             HgRepositoryLocation repositoryLocation) {
         this.myScope = synchronizationScope;
         this.repositoryLocation = repositoryLocation;
+        STATUS_CACHE.addObserver(this);
     }
 
     @Override
@@ -81,106 +85,94 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
 
     @Override
     public SyncInfo getSyncInfo(IResource resource) throws TeamException {
+        if (!isInteresting(resource)) {
+            return null;
+        }
+        // get newest outgoing changeset
+        ChangeSet csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, repositoryLocation);
+
+        IStorageMercurialRevision outgoingIStorage;
         try {
-            if (resource != null
-                    && null != RepositoryProvider.getProvider(resource
-                            .getProject(), MercurialTeamProvider.ID)
-                            && resource.getProject().isAccessible()
-                            && (isSupervised(resource) || (!resource.exists()))) {
+            IResourceVariant outgoing;
+            // determine outgoing revision
+            if (csOutgoing != null) {
+                outgoingIStorage = new IStorageMercurialRevision(resource,
+                        csOutgoing.getRevision().getRevision(),
+                        csOutgoing.getChangeset(), csOutgoing);
 
-                // get newest outgoing changeset
-                ChangeSet csOutgoing = OUTGOING_CACHE
-                .getNewestOutgoingChangeSet(resource,
-                        repositoryLocation);
+                outgoing = new MercurialResourceVariant(outgoingIStorage);
+            } else {
+                // if outgoing != null it's our base, else we gotta
+                // construct one
+                if (resource.exists()
+                        && !STATUS_CACHE.isAdded(resource.getProject(),
+                                resource.getLocation())) {
 
-                IResourceVariant outgoing;
+                    // Find current working directory changeset (not head)
+                    HgRoot root = HgRootClient.getHgRoot(resource);
+                    String nodeId = HgIdentClient.getCurrentChangesetId(root);
 
-                // determine outgoing revision
-                IStorageMercurialRevision outgoingIStorage;
-                if (csOutgoing != null) {
-                    outgoingIStorage = new IStorageMercurialRevision(resource,
-                            csOutgoing.getRevision().getRevision(),
-                            csOutgoing.getChangeset(), csOutgoing);
+                    // try to get from cache (without loading)
+                    csOutgoing = LocalChangesetCache.getInstance().getChangeSet(nodeId);
+
+                    // okay, we gotta load the changeset via hg log
+                    if (csOutgoing == null) {
+                        csOutgoing = LocalChangesetCache.getInstance().getLocalChangeSet(resource, nodeId, true);
+                    }
+
+                    // construct base revision
+                    outgoingIStorage = new IStorageMercurialRevision(
+                            resource, csOutgoing
+                                    .getChangesetIndex(), csOutgoing
+                                    .getChangeset(), csOutgoing);
 
                     outgoing = new MercurialResourceVariant(outgoingIStorage);
                 } else {
-                    // if outgoing != null it's our base, else we gotta
-                    // construct one
-                    if (resource.exists()
-                            && !STATUS_CACHE.isAdded(resource.getProject(),
-                                    resource.getLocation())) {
-
-                        // Find current working directory changeset (not head)
-                        HgRoot root = HgRootClient.getHgRoot(resource);
-                        String nodeId = HgIdentClient.getCurrentChangesetId(root);
-
-                        // try to get from cache (without loading)
-                        csOutgoing = LocalChangesetCache.getInstance()
-                        .getChangeSet(nodeId);
-
-                        // okay, we gotta load the changeset via hg log
-                        if (csOutgoing == null) {
-                            csOutgoing = LocalChangesetCache.getInstance()
-                            .getLocalChangeSet(resource, nodeId);
-                        }
-
-                        // construct base revision
-                        outgoingIStorage = new IStorageMercurialRevision(
-                                resource, csOutgoing
-                                        .getChangesetIndex(), csOutgoing
-                                        .getChangeset(), csOutgoing);
-
-                        outgoing = new MercurialResourceVariant(
-                                outgoingIStorage);
-                    } else {
-                        // new incoming file - no local available
-                        outgoingIStorage = null;
-                        outgoing = null;
-                    }
+                    // new incoming file - no local available
+                    outgoingIStorage = null;
+                    outgoing = null;
                 }
-
-                // determine incoming revision
-                IStorageMercurialRevision incomingIStorage;
-                // get newest incoming changeset
-                ChangeSet csIncoming = INCOMING_CACHE.getNewestIncomingChangeSet(resource,
-                        repositoryLocation);
-                if (csIncoming != null) {
-                    incomingIStorage = getIncomingIStorage(resource, csIncoming);
-                } else {
-                    // if no incoming revision, incmoing = base/outgoing
-                    incomingIStorage = outgoingIStorage;
-                }
-
-                IResourceVariant incoming;
-                if (incomingIStorage != null) {
-                    incoming = new MercurialResourceVariant(incomingIStorage);
-                } else {
-                    // neither base nor outgoing nor incoming revision
-                    incoming = null;
-                }
-
-                // now create the sync info object. everything may be null,
-                // but resource and comparator
-
-                SyncInfo info = new MercurialSyncInfo(resource, outgoing,
-                        incoming, getResourceComparator());
-
-                info.init();
-                return info;
-
             }
-        } catch (Exception e) {
+
+            // determine incoming revision
+            IStorageMercurialRevision incomingIStorage;
+            // get newest incoming changeset
+            ChangeSet csIncoming = INCOMING_CACHE.getNewestIncomingChangeSet(resource,
+                    repositoryLocation);
+            if (csIncoming != null) {
+                incomingIStorage = getIncomingIStorage(resource, csIncoming);
+            } else {
+                // if no incoming revision, incmoing = base/outgoing
+                incomingIStorage = outgoingIStorage;
+            }
+
+            IResourceVariant incoming;
+            if (incomingIStorage != null) {
+                incoming = new MercurialResourceVariant(incomingIStorage);
+            } else {
+                // neither base nor outgoing nor incoming revision
+                incoming = null;
+            }
+
+            // now create the sync info object. everything may be null,
+            // but resource and comparator
+            SyncInfo info = new MercurialSyncInfo(resource, outgoing, incoming, getResourceComparator());
+
+            info.init();
+            return info;
+        } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
         }
         return null;
 
     }
 
-    /**
-     * @param resource
-     * @param csRemote
-     * @return
-     */
+    private boolean isInteresting(IResource resource) {
+        return resource != null
+                && RepositoryProvider.getProvider(resource.getProject(), MercurialTeamProvider.ID) != null
+                && (isSupervised(resource) || (!resource.exists()));
+    }
+
     private IStorageMercurialRevision getIncomingIStorage(IResource resource,
             ChangeSet csRemote) {
         IStorageMercurialRevision incomingIStorage = new IStorageMercurialRevision(
@@ -190,7 +182,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
     }
 
     @Override
-    public boolean isSupervised(IResource resource) throws TeamException {
+    public boolean isSupervised(IResource resource) {
         return resource.getType() == IResource.FILE && STATUS_CACHE.isSupervised(resource);
     }
 
@@ -312,7 +304,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         monitor
         .subTask(Messages
                 .getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
-        super.fireTeamResourceChange(changeEvents
+        fireTeamResourceChange(changeEvents
                 .toArray(new ISubscriberChangeEvent[changeEvents.size()]));
         monitor.worked(1);
         monitor.done();
@@ -330,17 +322,30 @@ public class MercurialSynchronizeSubscriber extends Subscriber {
         return myRoots;
     }
 
-    /**
-     * @return
-     */
-    public static Subscriber getInstance() {
-        return new MercurialSynchronizeSubscriber();
-    }
-
-    /**
-     *
-     */
-    private MercurialSynchronizeSubscriber() {
+    public void update(Observable o, Object arg) {
+        if(!(arg instanceof Set<?>)){
+            return;
+        }
+        List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
+        Set<?> resources = (Set<?>) arg;
+        IResource[] roots = roots();
+        for (Object res : resources) {
+            if(!(res instanceof IResource)) {
+                continue;
+            }
+            IResource resource = (IResource)res;
+            for (IResource root : roots) {
+                if(root.contains(resource)) {
+                    changeEvents.add(new SubscriberChangeEvent(this,
+                            ISubscriberChangeEvent.SYNC_CHANGED, resource));
+                    break;
+                }
+            }
+        }
+        if (changeEvents.size() > 0) {
+            fireTeamResourceChange(changeEvents
+                    .toArray(new ISubscriberChangeEvent[changeEvents.size()]));
+        }
     }
 
 }

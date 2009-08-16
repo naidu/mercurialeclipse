@@ -340,13 +340,7 @@ ILightweightLabelDecorator, Observer
     private void addChangesetInfo(IDecoration d, IResource resource, IProject project, StringBuilder prefix)
     throws CoreException, IOException {
         // label info for incoming changesets
-        ChangeSet newestIncomingChangeSet = null;
-        try {
-            newestIncomingChangeSet = INCOMING_CACHE
-            .getNewestIncomingChangeSet(resource);
-        } catch (HgException e1) {
-            MercurialEclipsePlugin.logError(e1);
-        }
+        ChangeSet newestIncomingChangeSet = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
 
         if (newestIncomingChangeSet != null) {
             if (prefix.length() == 0) {
@@ -443,7 +437,7 @@ ILightweightLabelDecorator, Observer
 
             String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
             if(branch == null) {
-                branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());                
+                branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
                 project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
             }
             if (branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$

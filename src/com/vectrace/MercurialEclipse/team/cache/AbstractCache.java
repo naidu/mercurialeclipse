@@ -34,12 +34,13 @@ import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author bastian
- * 
+ *
  */
 public abstract class AbstractCache extends Observable {
 
@@ -114,9 +115,6 @@ public abstract class AbstractCache extends Observable {
         }
     }
 
-    /**
-     * @param changes
-     */
     protected void addToNodeMap(SortedSet<ChangeSet> changes) {
         for (ChangeSet changeSet : changes) {
             synchronized (AbstractCache.nodeMap) {
@@ -128,7 +126,7 @@ public abstract class AbstractCache extends Observable {
 
     /**
      * Gets Changeset by its identifier
-     * 
+     *
      * @param changeSet
      *            string in format rev:nodeshort or rev:node
      * @return
@@ -137,18 +135,12 @@ public abstract class AbstractCache extends Observable {
         return AbstractCache.nodeMap.get(changeSet);
     }
 
-    /**
-     * @param resource
-     */
     public void notifyChanged(final IResource resource) {
         Set<IResource> resources = new HashSet<IResource>();
         resources.add(resource);
         notifyChanged(resources);
     }
 
-    /**
-     * @param resources
-     */
     public void notifyChanged(Set<IResource> resources) {
         HashSet<IResource> set = new HashSet<IResource>();
         set.addAll(resources);
@@ -206,29 +198,22 @@ public abstract class AbstractCache extends Observable {
     }
 
     /**
-     * @param hgRoot
-     * @param project
-     * @param repoRelPath
-     * @return
+     * @param hgRoot non null
+     * @param project non null
+     * @param repoRelPath path <b>relative</b> to the hg root
+     * @return may return null, if the path is not found in the project
      */
-    public IResource convertRepoRelPath(File hgRoot, IProject project, String repoRelPath) {
+    public IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
         // determine absolute path
-        String resourceLocation = hgRoot.getAbsolutePath() + File.separator
-        + repoRelPath;
-
+        String resourceLocation = hgRoot.getAbsolutePath() + File.separator + repoRelPath;
         IPath path = new Path(resourceLocation);
 
         // determine project relative path
-        int equalSegments = path.matchingFirstSegments(project
-                .getLocation());
+        int equalSegments = path.matchingFirstSegments(project.getLocation());
         path = path.removeFirstSegments(equalSegments);
-        IResource member = project.findMember(path);
-        return member;
+        return project.findMember(path);
     }
 
-    /**
-     * 
-     */
     public synchronized static void clearNodeMap() {
         nodeMap.clear();
     }
