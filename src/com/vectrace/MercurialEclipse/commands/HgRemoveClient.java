@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgRemoveClient {
 
@@ -33,15 +34,11 @@ public class HgRemoveClient {
         AbstractShellCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
         command.addOptions("--force"); //$NON-NLS-1$
         command.addFiles(resource);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
         command.executeToBytes();
+        MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
     }
 
-    /**
-     * @param filesToRemove
-     * @throws HgException 
-     */
     public static void removeResources(List<IResource> resources) throws HgException {
         Map<HgRoot, List<IResource>> resourcesByRoot;
         try {
@@ -55,12 +52,9 @@ public class HgRemoveClient {
             int size = resources.size();
             int delta = AbstractShellCommand.MAX_PARAMS - 1;
             for (int i = 0; i < size; i += delta) {
-                AbstractShellCommand command = new HgCommand("remove", root, //$NON-NLS-1$
-                        true);
-                command
-                        .setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-                command.addFiles(mapEntry.getValue().subList(i,
-                        Math.min(i + delta, size)));
+                AbstractShellCommand command = new HgCommand("remove", root, true); //$NON-NLS-1$
+                command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+                command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
                 command.executeToBytes();
             }
         }

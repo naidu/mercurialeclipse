@@ -13,7 +13,7 @@
  *     Bastian Doetsch	         - extraction from DecoratorStatus + additional methods
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
- 
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -146,11 +147,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     private final class MemberStatusVisitor implements IResourceVisitor {
 
         private final BitSet bitSet;
+        private final BitSet temp;
         private final IResource parent;
 
         public MemberStatusVisitor(IResource parent, BitSet bitSet) {
             this.bitSet = bitSet;
             this.parent = parent;
+            temp = new BitSet(MAX_BITS_COUNT);
         }
 
         public boolean visit(IResource resource) throws CoreException {
@@ -167,7 +170,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             if (!resource.equals(parent)) {
                 BitSet memberBitSet = statusMap.get(resource.getLocation());
                 if (memberBitSet != null) {
-                    bitSet.or(memberBitSet);
+                    temp.clear();
+                    temp.or(memberBitSet);
+                    temp.andNot(IGNORED_MASK);
+                    if(memberBitSet.intersects(MODIFIED_MASK)){
+                        temp.set(BIT_MODIFIED);
+                    }
+                    bitSet.or(temp);
                 }
             }
             return true;
@@ -193,6 +202,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public final static int BIT_IMPOSSIBLE = 7;
     public final static int BIT_CONFLICT = 8;
 
+    /** maximum bits count used in the cache */
+    private final static int MAX_BITS_COUNT = BIT_CONFLICT + 1;
+
     public static final char CHAR_MODIFIED = 'M';
     public static final char CHAR_ADDED = 'A';
     public static final char CHAR_UNKNOWN = '?';
@@ -203,8 +215,26 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public static final char CHAR_UNRESOLVED = 'U';
     public static final char CHAR_RESOLVED = 'R';
 
-    protected static final int INTERESTING_CHANGES = IResourceDelta.CONTENT | IResourceDelta.MOVED_FROM | IResourceDelta.MOVED_TO
-    | IResourceDelta.OPEN | IResourceDelta.REPLACED | IResourceDelta.TYPE;
+    /**
+     * If the child file has any of the bits set in the range from {@link #BIT_IGNORE}
+     * to {@link #BIT_ADDED}, we do not propagate this bits to the parent directory directly,
+     * but propagate only bits covered by the {@link #MODIFIED_MASK}
+     */
+    private static final BitSet IGNORED_MASK = new BitSet(MAX_BITS_COUNT);
+
+    /**
+     * We propagate only {@link #BIT_MODIFIED} bit to the parent directory, if any of bits
+     * in the range from {@link #BIT_DELETED} to {@link #BIT_MODIFIED} is set on the child file.
+     */
+    private static final BitSet MODIFIED_MASK = new BitSet(MAX_BITS_COUNT);
+
+    static {
+        IGNORED_MASK.set(BIT_IGNORE, BIT_ADDED);
+        MODIFIED_MASK.set(BIT_DELETED, BIT_MODIFIED);
+    }
+
+    protected static final int INTERESTING_CHANGES = IResourceDelta.CONTENT | IResourceDelta.MOVED_FROM
+        | IResourceDelta.MOVED_TO | IResourceDelta.OPEN | IResourceDelta.REPLACED | IResourceDelta.TYPE;
 
     private static final Object DUMMY = new Object();
 
@@ -240,7 +270,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                         initPreferences();
                     }
                 });
-        // new RefreshStatusJob("Initializing Mercurial plugin...").schedule();
     }
 
     public static final MercurialStatusCache getInstance() {
@@ -434,6 +463,15 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return false;
     }
 
+    public boolean isRemoved(IResource resource) {
+        Assert.isNotNull(resource);
+        BitSet status = getStatus(resource);
+        if(status == null){
+            return false;
+        }
+        return status.get(BIT_REMOVED) || status.get(BIT_DELETED);
+    }
+
     private static IProgressMonitor checkMonitor(IProgressMonitor monitor){
         if(monitor == null){
             return new NullProgressMonitor();
@@ -547,13 +585,22 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
             IResource member = convertRepoRelPath(root, project, localName);
 
-            // doesn't belong to our project (can happen if root is above
-            // project level)
+            // doesn't belong to our project (can happen if root is above project level)
+            // or simply deleted, so can't be found...
             if (member == null) {
-                continue;
+                if(getBitIndex(status.charAt(0)) == BIT_REMOVED){
+                    IPath path = new Path(new File(root, localName).getAbsolutePath());
+                    // creates a handle to non-existent file. This is ok.
+                    member = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(path);
+                    if(member == null || !member.getProject().equals(project)) {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
             }
 
-            BitSet bitSet = new BitSet();
+            BitSet bitSet = new BitSet(MAX_BITS_COUNT);
             boolean ignoredHint = Team.isIgnoredHint(member);
             if (ignoredHint) {
                 bitSet.set(BIT_IGNORE);
@@ -583,9 +630,15 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             IPath location = parent.getLocation();
             BitSet parentBitSet = statusMap.get(location);
             BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
-            // should not propagate ignore to parents
-            cloneBitSet.clear(BIT_IGNORE);
-            cloneBitSet.clear(BIT_CLEAN);
+
+            // should not propagate ignores states to parents
+            cloneBitSet.andNot(IGNORED_MASK);
+            boolean intersects = resourceBitSet.intersects(MODIFIED_MASK);
+            if(intersects) {
+                cloneBitSet.set(BIT_MODIFIED);
+            } else {
+                cloneBitSet.set(BIT_CLEAN);
+            }
 
             if (parentBitSet != null) {
                 if (!complete && computeDeep && resource.getType() != IResource.PROJECT) {
@@ -595,6 +648,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                             parent.accept(visitor, IResource.DEPTH_ONE, false);
                         } catch (CoreException e) {
                             MercurialEclipsePlugin.logError(e);
+                        }
+                        if(parentBitSet.intersects(MODIFIED_MASK)){
+                            cloneBitSet.or(parentBitSet);
                         }
                     }
                 } else {
@@ -838,7 +894,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     private Set<IResource> addConflict(IResource local) {
         BitSet status = getStatus(local);
         if(status == null){
-            status = new BitSet();
+            status = new BitSet(MAX_BITS_COUNT);
             status.set(BIT_CONFLICT);
             statusMap.put(local.getLocation(), status);
         } else {

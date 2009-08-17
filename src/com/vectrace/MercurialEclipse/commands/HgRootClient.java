@@ -49,7 +49,7 @@ public class HgRootClient {
         // HgCommand command = new HgCommand("root", proj, true);
         // return new String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n", "");
 
-        File dir = file.isFile()? file.getParentFile() : file;
+        File dir = file.isFile() || !file.exists()? file.getParentFile() : file;
         // test if we have the path "as is" already
         HgRoot hgRoot = roots.get(dir);
         if(hgRoot != null){

@@ -1,13 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2006 Subclipse project and others.
+ * Copyright (c) 2005-2009 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Subclipse project committers - initial API and implementation
- *     Bastian Doetsch				- Adaption to Mercurial
+ * Andrei	implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -25,33 +24,33 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 /**
- * Get action that appears in the synchronize view. It's main purpose is to
- * filter the selection and delegate its execution to the get operation.
+ * @author Andrei
+ *
  */
-public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
+public class RevertSynchronizeAction  extends SynchronizeModelAction {
 
-	public ShowHistorySynchronizeAction(String text,
-			ISynchronizePageConfiguration configuration) {
-		super(text, configuration);
-	}
+    public RevertSynchronizeAction(String text,
+            ISynchronizePageConfiguration configuration) {
+        super(text, configuration);
+    }
 
-	public ShowHistorySynchronizeAction(String text,
-			ISynchronizePageConfiguration configuration,
-			ISelectionProvider selectionProvider) {
-		super(text, configuration, selectionProvider);
-	}
+    public RevertSynchronizeAction(String text,
+            ISynchronizePageConfiguration configuration,
+            ISelectionProvider selectionProvider) {
+        super(text, configuration, selectionProvider);
+    }
 
-	@Override
-	protected SynchronizeModelOperation getSubscriberOperation(
-			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
-		List<IResource> selectedResources = new ArrayList<IResource>(
-				elements.length);
-		for (int i = 0; i < elements.length; i++) {
-			if (elements[i] instanceof ISynchronizeModelElement) {
-				selectedResources.add(((ISynchronizeModelElement) elements[i])
-						.getResource());
-			}
-		}
+    @Override
+    protected SynchronizeModelOperation getSubscriberOperation(
+            ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+        List<IResource> selectedResources = new ArrayList<IResource>(
+                elements.length);
+        for (int i = 0; i < elements.length; i++) {
+            if (elements[i] instanceof ISynchronizeModelElement) {
+                selectedResources.add(((ISynchronizeModelElement) elements[i])
+                        .getResource());
+            }
+        }
         // XXX currently I have no idea why IDiffElement[] elements is empty...
         if(selectedResources.size() == 0){
             IStructuredSelection sel = getStructuredSelection();
@@ -68,11 +67,12 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
                 }
             }
         }
-		IResource[] resources = new IResource[selectedResources.size()];
-		selectedResources.toArray(resources);
-		return new ShowHistorySynchronizeOperation(configuration, elements,
-				resources);
-	}
+        IResource[] resources = new IResource[selectedResources.size()];
+        selectedResources.toArray(resources);
+        return new RevertSynchronizeOperation(configuration, elements,
+                resources);
+    }
+
 
     @Override
     protected boolean updateSelection(IStructuredSelection selection) {

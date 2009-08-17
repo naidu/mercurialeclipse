@@ -102,11 +102,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
 
                 outgoing = new MercurialResourceVariant(outgoingIStorage);
             } else {
-                // if outgoing != null it's our base, else we gotta
-                // construct one
-                if (resource.exists()
-                        && !STATUS_CACHE.isAdded(resource.getProject(),
-                                resource.getLocation())) {
+                // if outgoing != null it's our base, else we gotta construct one
+                boolean exists = resource.exists();
+                if (exists && !STATUS_CACHE.isAdded(resource.getProject(), resource.getLocation())
+                        || (!exists && STATUS_CACHE.isRemoved(resource))) {
 
                     // Find current working directory changeset (not head)
                     HgRoot root = HgRootClient.getHgRoot(resource);
@@ -121,10 +120,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
                     }
 
                     // construct base revision
-                    outgoingIStorage = new IStorageMercurialRevision(
-                            resource, csOutgoing
-                                    .getChangesetIndex(), csOutgoing
-                                    .getChangeset(), csOutgoing);
+                    outgoingIStorage = new IStorageMercurialRevision(resource,
+                            csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
 
                     outgoing = new MercurialResourceVariant(outgoingIStorage);
                 } else {

@@ -26,6 +26,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
         super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+                new RevertSynchronizeAction("Revert",
+                        configuration, getVisibleRootsSelectionProvider()));
+
+        super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+                ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new PullSynchronizeAction("Pull",
                         configuration, getVisibleRootsSelectionProvider(), false));
 
