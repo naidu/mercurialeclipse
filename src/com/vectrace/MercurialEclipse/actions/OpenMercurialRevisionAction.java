@@ -54,7 +54,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
@@ -62,14 +62,14 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
             IWorkbenchAdapter, IStorageEditorInput {
 
         private IFileRevision fileRevision;
-        private IStorageMercurialRevision storage;
+        private MercurialRevisionStorage storage;
 
         public MercurialRevisionEditorInput(IFileRevision revision) {
             // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::MercurialRevisionEditorInput()");
 
             this.fileRevision = revision;
             try {
-                this.storage = (IStorageMercurialRevision) revision.getStorage(new NullProgressMonitor());
+                this.storage = (MercurialRevisionStorage) revision.getStorage(new NullProgressMonitor());
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }

@@ -21,7 +21,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class HgCompareEditorInput extends CompareEditorInput
 {
@@ -70,7 +70,7 @@ public class HgCompareEditorInput extends CompareEditorInput
             if (commonAncestor == rId) {
                 return null;
             }
-            return new RevisionNode(new IStorageMercurialRevision(resource, commonAncestor));
+            return new RevisionNode(new MercurialRevisionStorage(resource, commonAncestor));
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;

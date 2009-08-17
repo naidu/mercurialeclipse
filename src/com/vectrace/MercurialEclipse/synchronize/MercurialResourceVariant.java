@@ -15,12 +15,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
 
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class MercurialResourceVariant implements IResourceVariant {
-    private final IStorageMercurialRevision rev;
+    private final MercurialRevisionStorage rev;
 
-    public MercurialResourceVariant(IStorageMercurialRevision rev) {
+    public MercurialResourceVariant(MercurialRevisionStorage rev) {
         this.rev = rev;
     }
 
@@ -47,7 +47,7 @@ public class MercurialResourceVariant implements IResourceVariant {
     /**
      * @return the rev
      */
-    public IStorageMercurialRevision getRev() {
+    public MercurialRevisionStorage getRev() {
         return rev;
     }
 

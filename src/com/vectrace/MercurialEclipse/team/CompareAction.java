@@ -30,7 +30,7 @@ public class CompareAction extends SingleFileAction {
 
         // mercurial version
         RevisionNode rightNode = new RevisionNode(
-                new IStorageMercurialRevision(file));
+                new MercurialRevisionStorage(file));
         CompareUtils.openEditor(leftNode, rightNode, false, true);
     }
 

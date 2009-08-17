@@ -36,7 +36,7 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -74,12 +74,12 @@ public class ChangePathsTableProvider extends TableViewer {
                 IPath fileAbsPath = hgRoot.append(fileRelPath);
                 IResource file = ResourcesPlugin.getWorkspace().getRoot()
                     .getFileForLocation(fileAbsPath);
-                IStorageMercurialRevision thisRev = new IStorageMercurialRevision(file, cs.getChangeset());
-                IStorageMercurialRevision parentRev ;
+                MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
+                MercurialRevisionStorage parentRev ;
                 if(cs.getRevision().getRevision() == 0 || parents.length == 0){
                     parentRev = new NullRevision(file, cs);
                 } else {
-                    parentRev = new IStorageMercurialRevision(file, parents[0]);
+                    parentRev = new MercurialRevisionStorage(file, parents[0]);
                 }
                 CompareUtils.openEditor(thisRev, parentRev, false, false);
             }

@@ -37,7 +37,7 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
  *         This is a IStorage subclass that can handle file revision
  *
  */
-public class IStorageMercurialRevision implements IStorage {
+public class MercurialRevisionStorage implements IStorage {
     private int revision;
     private String global;
     private final IResource resource;
@@ -47,11 +47,11 @@ public class IStorageMercurialRevision implements IStorage {
 
 
     /**
-     * The recommended constructor to use is IStorageMercurialRevision(IResource res, String rev, String global,
+     * The recommended constructor to use is MercurialRevisionStorage(IResource res, String rev, String global,
      * ChangeSet cs)
      *
      */
-    public IStorageMercurialRevision(IResource res, String changeset) {
+    public MercurialRevisionStorage(IResource res, String changeset) {
         super();
         resource = res;
         try {
@@ -66,7 +66,7 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * Constructs a new IStorageMercurialRevision with the given params.
+     * Constructs a new MercurialRevisionStorage with the given params.
      *
      * @param res
      *            the resource for which we want an IStorage revision
@@ -77,7 +77,7 @@ public class IStorageMercurialRevision implements IStorage {
      * @param cs
      *            the changeset object
      */
-    public IStorageMercurialRevision(IResource res, int rev, String global, ChangeSet cs) {
+    public MercurialRevisionStorage(IResource res, int rev, String global, ChangeSet cs) {
         super();
         this.revision = rev;
         this.global = global;
@@ -86,12 +86,12 @@ public class IStorageMercurialRevision implements IStorage {
     }
 
     /**
-     * Constructs an {@link IStorageMercurialRevision} with the newest local changeset available.
+     * Constructs an {@link MercurialRevisionStorage} with the newest local changeset available.
      *
      * @param res
      *            the resource
      */
-    public IStorageMercurialRevision(IResource res) {
+    public MercurialRevisionStorage(IResource res) {
         super();
         this.resource = res;
         ChangeSet cs = null;
@@ -173,7 +173,7 @@ public class IStorageMercurialRevision implements IStorage {
 
     public IPath getFullPath() {
         return resource.getFullPath().append(revision != 0 ? (" [" + revision + "]") //$NON-NLS-1$ //$NON-NLS-2$
-                : Messages.getString("IStorageMercurialRevision.parentChangeset")); //$NON-NLS-1$
+                : Messages.getString("MercurialRevisionStorage.parentChangeset")); //$NON-NLS-1$
     }
 
     public String getName() {
@@ -246,7 +246,7 @@ public class IStorageMercurialRevision implements IStorage {
      * @param res
      * @param rev
      */
-    public IStorageMercurialRevision(IResource res, int rev) {
+    public MercurialRevisionStorage(IResource res, int rev) {
         this(res, String.valueOf(rev));
     }
 

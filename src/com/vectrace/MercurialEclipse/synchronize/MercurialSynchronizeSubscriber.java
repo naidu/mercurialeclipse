@@ -38,7 +38,7 @@ import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -91,12 +91,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
         // get newest outgoing changeset
         ChangeSet csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, repositoryLocation);
 
-        IStorageMercurialRevision outgoingIStorage;
+        MercurialRevisionStorage outgoingIStorage;
         try {
             IResourceVariant outgoing;
             // determine outgoing revision
             if (csOutgoing != null) {
-                outgoingIStorage = new IStorageMercurialRevision(resource,
+                outgoingIStorage = new MercurialRevisionStorage(resource,
                         csOutgoing.getRevision().getRevision(),
                         csOutgoing.getChangeset(), csOutgoing);
 
@@ -120,7 +120,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
                     }
 
                     // construct base revision
-                    outgoingIStorage = new IStorageMercurialRevision(resource,
+                    outgoingIStorage = new MercurialRevisionStorage(resource,
                             csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
 
                     outgoing = new MercurialResourceVariant(outgoingIStorage);
@@ -132,7 +132,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
             }
 
             // determine incoming revision
-            IStorageMercurialRevision incomingIStorage;
+            MercurialRevisionStorage incomingIStorage;
             // get newest incoming changeset
             ChangeSet csIncoming = INCOMING_CACHE.getNewestIncomingChangeSet(resource,
                     repositoryLocation);
@@ -170,9 +170,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
                 && (isSupervised(resource) || (!resource.exists()));
     }
 
-    private IStorageMercurialRevision getIncomingIStorage(IResource resource,
+    private MercurialRevisionStorage getIncomingIStorage(IResource resource,
             ChangeSet csRemote) {
-        IStorageMercurialRevision incomingIStorage = new IStorageMercurialRevision(
+        MercurialRevisionStorage incomingIStorage = new MercurialRevisionStorage(
                 resource, csRemote.getRevision().getRevision(), csRemote
                 .getChangeset(), csRemote);
         return incomingIStorage;

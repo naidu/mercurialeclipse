@@ -14,12 +14,12 @@ import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.runtime.CoreException;
 
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class RevisionNode extends ResourceNode implements IStreamContentAccessor, ITypedElement {
-    private final IStorageMercurialRevision rev;
+    private final MercurialRevisionStorage rev;
 
-    public RevisionNode(IStorageMercurialRevision rev) {
+    public RevisionNode(MercurialRevisionStorage rev) {
         super(rev.getResource());
         this.rev = rev;
     }

@@ -53,7 +53,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
@@ -107,9 +107,9 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
                             parents[1]);
 
                     RevisionNode mergeNode = new RevisionNode(
-                            new IStorageMercurialRevision(file, mergeNodeId));
+                            new MercurialRevisionStorage(file, mergeNodeId));
                     RevisionNode ancestorNode = new RevisionNode(
-                            new IStorageMercurialRevision(file, ancestor));
+                            new MercurialRevisionStorage(file, ancestor));
 
                     HgCompareEditorInput compareInput = new HgCompareEditorInput(
                             new CompareConfiguration(), file, ancestorNode,

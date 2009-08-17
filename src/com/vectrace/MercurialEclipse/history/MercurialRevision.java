@@ -26,7 +26,7 @@ import org.eclipse.team.core.history.provider.FileRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 /**
  * @author zingo
@@ -38,7 +38,7 @@ public class MercurialRevision extends FileRevision {
     private final ChangeSet changeSet;
 
     /** Cached data */
-    private IStorageMercurialRevision iStorageMercurialRevision;
+    private MercurialRevisionStorage mercurialRevisionStorage;
     private final GChangeSet gChangeSet;
     private final int revision;
     private String hash;
@@ -120,18 +120,18 @@ public class MercurialRevision extends FileRevision {
     }
 
     public IStorage getStorage(IProgressMonitor monitor) throws CoreException {
-        if (iStorageMercurialRevision == null) {
+        if (mercurialRevisionStorage == null) {
             if((resource == null || !resource.exists()) && parent != null){
                 IResource parentRes =  ResourcesPlugin.getWorkspace().getRoot()
                     .getFileForLocation(new Path(parent.getAbsolutePath()));
-                iStorageMercurialRevision = new IStorageMercurialRevision(parentRes,
+                mercurialRevisionStorage = new MercurialRevisionStorage(parentRes,
                         revision, hash, changeSet);
             } else {
-                iStorageMercurialRevision = new IStorageMercurialRevision(resource,
+                mercurialRevisionStorage = new MercurialRevisionStorage(resource,
                         revision, hash, changeSet);
             }
         }
-        return iStorageMercurialRevision;
+        return mercurialRevisionStorage;
     }
 
     public boolean isPropertyMissing() {

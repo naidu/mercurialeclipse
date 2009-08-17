@@ -11,7 +11,7 @@ import org.eclipse.jface.window.Window;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 /**
  * This class helps to invoke the compare facilities of Eclipse.
@@ -22,19 +22,19 @@ public class CompareUtils {
 
     public static void openEditor(IResource file, ChangeSet changeset,
             boolean dialog, boolean localEditable) {
-        openEditor(file, new IStorageMercurialRevision(file, changeset
+        openEditor(file, new MercurialRevisionStorage(file, changeset
                 .getChangesetIndex(),
                 changeset.getChangeset(), changeset), dialog, localEditable); 
     }
 
     public static void openEditor(IResource file, ChangeSet changeset, boolean localEditable) {
-        openEditor(file, new IStorageMercurialRevision(file, changeset
+        openEditor(file, new MercurialRevisionStorage(file, changeset
                 .getChangesetIndex(),
                 changeset.getChangeset(), changeset), false, localEditable); 
     }
 
     public static void openEditor(IResource file,
-            IStorageMercurialRevision right, boolean dialog, boolean localEditable) {
+            MercurialRevisionStorage right, boolean dialog, boolean localEditable) {
         ResourceNode leftNode = null;
         if (file != null) {
             leftNode = new ResourceNode(file);
@@ -42,8 +42,8 @@ public class CompareUtils {
         openEditor(leftNode, getNode(right), dialog, localEditable);
     }
 
-    public static void openEditor(IStorageMercurialRevision left,
-            IStorageMercurialRevision right, boolean dialog, boolean localEditable) {
+    public static void openEditor(MercurialRevisionStorage left,
+            MercurialRevisionStorage right, boolean dialog, boolean localEditable) {
         ResourceNode leftNode, rightNode;
         if (right == null) {
             // comparing with filesystem
@@ -123,7 +123,7 @@ public class CompareUtils {
                 leftNode, rightNode);
     }
 
-    private static RevisionNode getNode(IStorageMercurialRevision rev) {
+    private static RevisionNode getNode(MercurialRevisionStorage rev) {
         return rev == null ? null : new RevisionNode(rev);
     }
 

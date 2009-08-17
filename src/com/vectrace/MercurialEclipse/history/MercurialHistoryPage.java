@@ -65,7 +65,7 @@ import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -384,7 +384,7 @@ public class MercurialHistoryPage extends HistoryPage {
             @Override
             public void run() {
                 try {
-                    IStorageMercurialRevision secondSelection = getStorage(1);
+                    MercurialRevisionStorage secondSelection = getStorage(1);
                     boolean localEditable = secondSelection == null;
                     CompareUtils.openEditor(getStorage(0), secondSelection,
                             false, localEditable);
@@ -401,7 +401,7 @@ public class MercurialHistoryPage extends HistoryPage {
                         && (size == 1 || size == 2);
             }
 
-            private IStorageMercurialRevision getStorage(int i)
+            private MercurialRevisionStorage getStorage(int i)
                     throws CoreException {
                 IStructuredSelection selection = (IStructuredSelection) viewer
                         .getSelection();
@@ -410,7 +410,7 @@ public class MercurialHistoryPage extends HistoryPage {
                     return null;
                 }
                 MercurialRevision rev = (MercurialRevision) revs[i];
-                return (IStorageMercurialRevision) rev.getStorage(null);
+                return (MercurialRevisionStorage) rev.getStorage(null);
             }
         };
     }

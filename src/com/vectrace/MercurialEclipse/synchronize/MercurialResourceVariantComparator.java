@@ -21,7 +21,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -48,7 +48,7 @@ public class MercurialResourceVariantComparator implements
                 int status = bitSet.length() - 1;
                 if (status == MercurialStatusCache.BIT_CLEAN) {
                     if (repoRevision != null) {
-                        IStorageMercurialRevision remoteIStorage = (IStorageMercurialRevision) repoRevision
+                        MercurialRevisionStorage remoteIStorage = (MercurialRevisionStorage) repoRevision
                                 .getStorage(null);
                         ChangeSet cs = remoteIStorage.getChangeSet();
 

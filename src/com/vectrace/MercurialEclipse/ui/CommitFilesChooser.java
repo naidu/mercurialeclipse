@@ -59,7 +59,7 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.IStorageMercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
@@ -273,7 +273,7 @@ public class CommitFilesChooser extends Composite {
         if (selectedFile == null) {
             return null;
         }
-        IStorageMercurialRevision iStorage = new IStorageMercurialRevision(selectedFile);
+        MercurialRevisionStorage iStorage = new MercurialRevisionStorage(selectedFile);
         ResourceNode right = new RevisionNode(iStorage);
         ResourceNode left = new ResourceNode(selectedFile);
         return CompareUtils.getCompareInput(left, right, false);
