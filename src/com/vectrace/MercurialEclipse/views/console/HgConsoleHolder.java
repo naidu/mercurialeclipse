@@ -31,7 +31,9 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 
     private static final HgConsoleHolder instance = new HgConsoleHolder();
 
-    private HgConsole console;
+    private volatile HgConsole console;
+
+    private boolean showOnMessage;
 
     private HgConsoleHolder() {
     }
@@ -41,20 +43,22 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
     }
 
     private void init() {
-        if (!isInitialized()) {
-            // install font
-            Font f = PlatformUI
-                    .getWorkbench()
-                    .getThemeManager()
-                    .getCurrentTheme()
-                    .getFontRegistry()
-                    .get(MercurialPreferenceConstants.PREF_CONSOLE_FONT);
+        if (isInitialized()) {
+            return;
+        }
+        synchronized(this){
+            if (isInitialized()) {
+                return;
+            }
             console = new HgConsole();
+            // install font
+            Font f = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getFontRegistry().get(
+                    MercurialPreferenceConstants.PREF_CONSOLE_FONT);
             console.setFont(f);
-            console.initialize();
+            showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
+                    MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
             JFaceResources.getFontRegistry().addListener(this);
-            MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                    .addPropertyChangeListener(this);
+            MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(this);
         }
     }
 
@@ -64,25 +68,19 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 
     public HgConsole showConsole() {
         init();
-        // register console
-        IConsole[] existing = getConsoleManager().getConsoles();
-        boolean exists = false;
-        for (int i = 0; i < existing.length; i++) {
-            if (console == existing[i]) {
-                exists = true;
-            }
-        }
-        if (!exists) {
-            getConsoleManager().addConsoles(new IConsole[] { console });
-        }
-
-        boolean showOnMessage = Boolean
-                .parseBoolean(MercurialUtilities
-                        .getPreference(
-                                MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
-                                "false")); //$NON-NLS-1$
 
         if (showOnMessage) {
+            // register console
+            IConsole[] existing = getConsoleManager().getConsoles();
+            boolean exists = false;
+            for (int i = 0; i < existing.length; i++) {
+                if (console == existing[i]) {
+                    exists = true;
+                }
+            }
+            if (!exists) {
+                getConsoleManager().addConsoles(new IConsole[] { console });
+            }
             getConsoleManager().showConsoleView(console);
         }
 
@@ -129,12 +127,14 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
     }
 
     public void propertyChange(PropertyChangeEvent event) {
-        console.propertyChange(event);
+        if(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
+            showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
+                    MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
+        } else {
+            console.propertyChange(event);
+        }
     }
 
-    /**
-     * @return the consoleManager
-     */
     private IConsoleManager getConsoleManager() {
         return ConsolePlugin.getDefault().getConsoleManager();
     }
