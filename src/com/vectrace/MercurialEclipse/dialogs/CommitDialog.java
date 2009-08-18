@@ -111,7 +111,7 @@ public class CommitDialog extends TitleAreaDialog {
         this.inResources = resources;
         this.selectableFiles = true;
         this.commitTextDocument = new Document();
-        csManager = MercurialEclipsePlugin.getDefault().createChangeSetManager(null);
+        csManager = MercurialEclipsePlugin.getDefault().createChangeSetManager();
     }
 
     public CommitDialog(Shell shell, HgRoot root, ArrayList<IResource> selectedResource, String defaultCommitMessage,

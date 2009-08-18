@@ -10,11 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.diff.IDiff;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.synchronize.SyncInfo;
 
 /**
  * @author bastian
@@ -23,48 +27,56 @@ import org.eclipse.team.core.subscribers.Subscriber;
 public class HgSubscriberMergeContext extends
         org.eclipse.team.core.subscribers.SubscriberMergeContext {
 
-    /**
-     * @param subscriber
-     * @param manager
-     */
+
     public HgSubscriberMergeContext(Subscriber subscriber,
             ISynchronizationScopeManager manager) {
         super(subscriber, manager);
         initialize();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.core.mapping.provider.MergeContext#makeInSync(org.eclipse
-     * .team.core.diff.IDiff, org.eclipse.core.runtime.IProgressMonitor)
+    /**
+     * Called after "Overwrite" action is executed
+     * <p>
+     * {@inheritDoc}
      */
     @Override
     protected void makeInSync(IDiff diff, IProgressMonitor monitor)
             throws CoreException {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.core.mapping.IMergeContext#markAsMerged(org.eclipse.
-     * team.core.diff.IDiff, boolean, org.eclipse.core.runtime.IProgressMonitor)
-     */
     public void markAsMerged(IDiff node, boolean inSyncHint,
             IProgressMonitor monitor) throws CoreException {
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.core.mapping.IMergeContext#reject(org.eclipse.team.core
-     * .diff.IDiff, org.eclipse.core.runtime.IProgressMonitor)
-     */
     public void reject(IDiff diff, IProgressMonitor monitor)
             throws CoreException {
     }
+
+    /**
+     * "Synchronize", part 2
+     * <p>
+     * {@inheritDoc}
+     */
+    @Override
+    public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
+        super.refresh(traversals, flags, monitor);
+    }
+
+    /**
+     * "Synchronize", part 1
+     * <p>
+     * {@inheritDoc}
+     */
+    @Override
+    public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
+        super.refresh(mappings, monitor);
+    }
+
+    @Override
+    protected SyncInfo getSyncInfo(IResource resource) throws CoreException {
+        return super.getSyncInfo(resource);
+    }
+
+
 
 }

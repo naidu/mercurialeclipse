@@ -18,6 +18,7 @@ import java.util.Set;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -39,14 +40,14 @@ import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
+import com.vectrace.MercurialEclipse.synchronize.SingleRepoSubscriber;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * @author bastian
- * 
+ *
  */
-public class MercurialParticipantSynchronizeWizard extends
-ModelParticipantWizard implements IWorkbenchWizard {
+public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizard implements IWorkbenchWizard {
 
     private static final String SECTION_NAME = "MercurialParticipantSynchronizeWizard";
     private static final String PROP_PASSWORD = "password";
@@ -185,9 +186,6 @@ ModelParticipantWizard implements IWorkbenchWizard {
         return super.performFinish();
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.ui.synchronize.ParticipantSynchronizeWizard#createParticipant()
-     */
     protected final void createParticipant2() {
         ISynchronizeParticipant participant = createParticipant(Utils.getResourceMappings(projects));
         TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{participant});
@@ -195,47 +193,69 @@ ModelParticipantWizard implements IWorkbenchWizard {
         participant.run(null /* no site */);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.team.ui.synchronize.ModelParticipantWizard#createParticipant
-     * (org.eclipse.core.resources.mapping.ResourceMapping[])
-     */
     @Override
     protected ISynchronizeParticipant createParticipant(
             ResourceMapping[] selectedMappings) {
         String url = pageProperties.getProperty(PROP_URL);
         String user = pageProperties.getProperty(PROP_USER);
         String pass = pageProperties.getProperty(PROP_PASSWORD);
+        HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
         HgRepositoryLocation repo;
         try {
-            repo = MercurialEclipsePlugin.getRepoManager().getRepoLocation(url,
-                    user, pass);
-
-            // TODO implementation is incomplete
-            ISynchronizationScope scope = new RepositorySynchronizationScope(getRootResources());
-
-            MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(
-                    scope, repo);
-
-            SubscriberScopeManager manager = new SubscriberScopeManager(
-                    "HgSubscriberScopeManager", selectedMappings, subscriber, //$NON-NLS-1$
-                    false);
-
-            MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
-
-            return new MercurialSynchronizeParticipant(ctx, repo);
+            repo = repoManager.getRepoLocation(url, user, pass);
         } catch (URISyntaxException e) {
             MercurialEclipsePlugin.logError(e);
             page.setErrorMessage(e.getLocalizedMessage());
+            return null;
         }
-        return null;
+
+        // TODO implementation is incomplete
+        Set<IProject> selectedProjects = new HashSet<IProject>();
+        for (ResourceMapping mapping : selectedMappings) {
+            IProject[] projects2 = mapping.getProjects();
+            for (IProject iProject : projects2) {
+                selectedProjects.add(iProject);
+            }
+        }
+        if (selectedProjects.isEmpty()) {
+            return null;
+        }
+
+        IResource[] array = getRootResources();
+        if(array.length > selectedProjects.size()){
+            array = selectedProjects.toArray(new IResource[0]);
+        }
+
+        Set<IProject> repoProjects = repoManager.getAllRepoLocationProjects(repo);
+        for (IResource resource : array) {
+            IProject project = resource.getProject();
+            if(repoProjects.contains(project)){
+                continue;
+            }
+            try {
+                repoManager.addRepoLocation(project, repo);
+                // TODO is it required?
+                // HgRepositoryLocation repoLocation = repoManager.getDefaultProjectRepoLocation(project);
+                //if(repoLocation == null){
+                // repoManager.setDefaultProjectRepository(project, repo);
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+
+        ISynchronizationScope scope = new RepositorySynchronizationScope(array);
+
+        MercurialSynchronizeSubscriber subscriber = new SingleRepoSubscriber(scope, repo);
+
+        SubscriberScopeManager manager = new SubscriberScopeManager(
+                "HgSubscriberScopeManager", selectedMappings, subscriber, //$NON-NLS-1$
+                false);
+
+        MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
+
+        return new MercurialSynchronizeParticipant(ctx, repo);
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench, org.eclipse.jface.viewers.IStructuredSelection)
-     */
     public void init(IWorkbench workbench, IStructuredSelection selection) {
         if(selection != null && !selection.isEmpty()){
             Object[] array = selection.toArray();

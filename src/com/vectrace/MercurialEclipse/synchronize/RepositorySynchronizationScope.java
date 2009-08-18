@@ -44,23 +44,14 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         listeners = new ListenerList(ListenerList.IDENTITY);
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#addScopeChangeListener(org.eclipse.team.core.mapping.ISynchronizationScopeChangeListener)
-     */
     public void addScopeChangeListener(ISynchronizationScopeChangeListener listener) {
         listeners.add(listener);
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#asInputScope()
-     */
     public ISynchronizationScope asInputScope() {
         return this;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#contains(org.eclipse.core.resources.IResource)
-     */
     public boolean contains(IResource resource) {
         ResourceTraversal[] traversals = getTraversals();
         if(traversals == null){
@@ -74,24 +65,15 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getContext()
-     */
     public ResourceMappingContext getContext() {
         // TODO unclear
         return ResourceMappingContext.LOCAL_CONTEXT;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getInputMappings()
-     */
     public ResourceMapping[] getInputMappings() {
         return Utils.getResourceMappings(getRoots());
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getMapping(java.lang.Object)
-     */
     public ResourceMapping getMapping(Object modelObject) {
         ResourceMapping[] mappings = getMappings();
         for (ResourceMapping mapping : mappings) {
@@ -102,17 +84,14 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getMappings()
-     */
     public ResourceMapping[] getMappings() {
         return getInputMappings();
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getMappings(java.lang.String)
-     */
     public ResourceMapping[] getMappings(String modelProviderId) {
+        if(!isSupportedModelProvider(modelProviderId)){
+            return null;
+        }
         Set<ResourceMapping> result = new HashSet<ResourceMapping>();
         ResourceMapping[] mappings = getMappings();
         for (ResourceMapping mapping : mappings) {
@@ -123,24 +102,22 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         return result.toArray(new ResourceMapping[result.size()]);
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getModelProviders()
-     */
+    private boolean isSupportedModelProvider(String modelProviderId) {
+        return ModelProvider.RESOURCE_MODEL_PROVIDER_ID.equals(modelProviderId);
+    }
+
     public ModelProvider[] getModelProviders() {
         Set<ModelProvider> result = new HashSet<ModelProvider>();
         ResourceMapping[] mappings = getMappings();
         for (ResourceMapping mapping : mappings) {
             ModelProvider modelProvider = mapping.getModelProvider();
-            if (modelProvider != null) {
+            if (modelProvider != null && isSupportedModelProvider(modelProvider.getId())) {
                 result.add(modelProvider);
             }
         }
         return result.toArray(new ModelProvider[result.size()]);
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getProjects()
-     */
     public IProject[] getProjects() {
         Set<IProject> projects = new HashSet<IProject>();
         for (IResource res : roots) {
@@ -149,24 +126,15 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         return projects.toArray(new IProject[projects.size()]);
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getRoots()
-     */
     public IResource[] getRoots() {
         return roots;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getTraversals()
-     */
     public ResourceTraversal[] getTraversals() {
         return new ResourceTraversal[] {
                 new ResourceTraversal(getRoots(), IResource.DEPTH_INFINITE, IContainer.EXCLUDE_DERIVED) };
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getTraversals(org.eclipse.core.resources.mapping.ResourceMapping)
-     */
     public ResourceTraversal[] getTraversals(ResourceMapping mapping) {
         try {
             return mapping.getTraversals(getContext(), new NullProgressMonitor());
@@ -176,31 +144,19 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#getTraversals(java.lang.String)
-     */
     public ResourceTraversal[] getTraversals(String modelProviderId) {
         // TODO Auto-generated method stub
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#hasAdditionalMappings()
-     */
     public boolean hasAdditionalMappings() {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#hasAdditonalResources()
-     */
     public boolean hasAdditonalResources() {
         return false;
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#refresh(org.eclipse.core.resources.mapping.ResourceMapping[])
-     */
     public void refresh(ResourceMapping[] mappings) {
         if(!listeners.isEmpty()){
             Object[] objects = listeners.getListeners();
@@ -210,9 +166,6 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
         }
     }
 
-    /* (non-Javadoc)
-     * @see org.eclipse.team.core.mapping.ISynchronizationScope#removeScopeChangeListener(org.eclipse.team.core.mapping.ISynchronizationScopeChangeListener)
-     */
     public void removeScopeChangeListener(ISynchronizationScopeChangeListener listener) {
         listeners.remove(listener);
     }

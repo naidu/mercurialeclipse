@@ -59,14 +59,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
 
     private final ISynchronizationScope myScope;
     private IResource[] myRoots;
-    private final HgRepositoryLocation repositoryLocation;
     private IResourceVariantComparator comparator;
 
     public MercurialSynchronizeSubscriber(
-            ISynchronizationScope synchronizationScope,
-            HgRepositoryLocation repositoryLocation) {
+            ISynchronizationScope synchronizationScope) {
         this.myScope = synchronizationScope;
-        this.repositoryLocation = repositoryLocation;
         STATUS_CACHE.addObserver(this);
     }
 
@@ -88,8 +85,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
         if (!isInteresting(resource)) {
             return null;
         }
+        HgRepositoryLocation repositoryLocation = getRepo(resource);
+
         // get newest outgoing changeset
-        ChangeSet csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, repositoryLocation);
+        ChangeSet csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, repositoryLocation );
 
         MercurialRevisionStorage outgoingIStorage;
         try {
@@ -185,6 +184,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
 
     @Override
     public IResource[] members(IResource resource) throws TeamException {
+        HgRepositoryLocation repositoryLocation = getRepo(resource);
         Set<IResource> members = new HashSet<IResource>();
         Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
         Set<IResource> outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(
@@ -217,19 +217,18 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
             toRefresh = ResourcesPlugin.getWorkspace().getRoot().getProjects();
         }
         Set<IProject> refreshed = new HashSet<IProject>(toRefresh.length);
-        monitor
-        .beginTask(
-                Messages
-                .getString("MercurialSynchronizeSubscriber.refreshing") + getName() + Messages.getString("MercurialSynchronizeSubscriber.refreshing.2") //$NON-NLS-1$ //$NON-NLS-2$
-                + repositoryLocation + "...", 10); //$NON-NLS-1$
-        monitor
-        .subTask(Messages
-                .getString("MercurialSynchronizeSubscriber.refreshingResources")); //$NON-NLS-1$
         List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
         for (IResource resource : toRefresh) {
             if (monitor.isCanceled()) {
                 return;
             }
+            HgRepositoryLocation repositoryLocation = getRepo(resource);
+            monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshing") + getName() //$NON-NLS-1$
+                    + Messages.getString("MercurialSynchronizeSubscriber.refreshing.2")  //$NON-NLS-1$
+                    + repositoryLocation + "...", 10); //$NON-NLS-1$
+            monitor
+            .subTask(Messages
+                    .getString("MercurialSynchronizeSubscriber.refreshingResources")); //$NON-NLS-1$
             IProject project = resource.getProject();
 
             if (refreshed.contains(project)) {
@@ -305,6 +304,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber implements Observ
                 .toArray(new ISubscriberChangeEvent[changeEvents.size()]));
         monitor.worked(1);
         monitor.done();
+    }
+
+    protected HgRepositoryLocation getRepo(IResource resource){
+        return MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(resource.getProject());
     }
 
     @Override

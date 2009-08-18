@@ -41,6 +41,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
+import com.vectrace.MercurialEclipse.synchronize.SingleRepoSubscriber;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -318,7 +319,13 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     public HgActiveChangeSetCollector createChangeSetManager(HgRepositoryLocation repo) {
         return new HgActiveChangeSetCollector(
-                    new MercurialSynchronizeSubscriber(new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
+                    new SingleRepoSubscriber(new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
                             .getAllManagedProjects()), repo));
+    }
+
+    public HgActiveChangeSetCollector createChangeSetManager() {
+        return new HgActiveChangeSetCollector(
+                new MercurialSynchronizeSubscriber(new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
+                        .getAllManagedProjects())));
     }
 }

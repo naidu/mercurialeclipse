@@ -151,11 +151,19 @@ public class HgRepositoryLocationManager {
      * @return a set of projects we know managed at given location, never null
      */
     public Set<IProject> getAllRepoLocationProjects(HgRepositoryLocation repo) {
+        synchronized (projectRepos) {
+            try {
+                getProjectRepos();
+            } catch (Exception e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
         Set<IProject> loc = projectRepos.keySet();
 
         Set<IProject> projects = new HashSet<IProject>();
         for (IProject project : loc) {
-            if(repo.equals(projectRepos.get(project))){
+            SortedSet<HgRepositoryLocation> set = projectRepos.get(project);
+            if(set != null && set.contains(repo)){
                 projects.add(project);
             }
         }
