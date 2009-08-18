@@ -72,7 +72,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
     /**
      * ConfigurationWizardMainPage constructor.
-     * 
+     *
      * @param pageName
      *            the name of the page
      * @param title
@@ -90,7 +90,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      * and excessively long histories. The assumption is made that all histories
      * should be of length
      * <code>ConfigurationWizardMainPage.COMBO_HISTORY_LENGTH</code>.
-     * 
+     *
      * @param history
      *            the current history
      * @param newEntry
@@ -101,28 +101,26 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private String[] addToHistory(String[] history, String newEntry,
             int limitHistory) {
-        ArrayList<String> l = new ArrayList<String>();
+        ArrayList<String> list = new ArrayList<String>();
         if (history != null) {
-            l.addAll(Arrays.asList(history));
+            list.addAll(Arrays.asList(history));
         }
 
-        l.remove(newEntry);
-        l.add(0, newEntry);
+        list.remove(newEntry);
+        list.add(0, newEntry);
 
         // since only one new item was added, we can be over the limit
         // by at most one item
-        if (l.size() > COMBO_HISTORY_LENGTH && limitHistory > 0) {
-            l.remove(COMBO_HISTORY_LENGTH);
+        if (list.size() > COMBO_HISTORY_LENGTH && limitHistory > 0) {
+            list.remove(COMBO_HISTORY_LENGTH);
         }
 
-        String[] r = new String[l.size()];
-        l.toArray(r);
-        return r;
+        return list.toArray(new String[list.size()]);
     }
 
     /**
      * Creates the UI part of the page.
-     * 
+     *
      * @param parent
      *            the parent of the created widgets
      */
@@ -148,12 +146,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         setControl(composite);
     }
 
-
-
-    /**
-     * @param composite
-     * @param listener
-     */
     private void createUrlControl(Composite composite, Listener listener) {
         Composite urlComposite = SWTWidgetHelper.createComposite(composite, 4);
 
@@ -205,11 +197,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         }
 
         urlCombo.addModifyListener(new ModifyListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.swt.events.ModifyListener#modifyText(org.eclipse.swt.events.ModifyEvent)
-             */
             public void modifyText(ModifyEvent e) {
                 setPageComplete(true);
             }
@@ -222,7 +209,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     // note that repo will not be null, will be blank
                     // repo if no existing one was found
                     HgRepositoryLocation repo = MercurialEclipsePlugin
-                    .getRepoManager().getRepoLocation(urlCombo.getText());
+                        .getRepoManager().getRepoLocation(getUrlText());
 
                     String user = repo.getUser();
                     if (user != null && user.length() != 0) {
@@ -245,10 +232,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         });
     }
 
-    /**
-     * @param composite
-     * @param listener
-     */
     private void createAuthenticationControl(Composite composite,
             Listener listener) {
         Group g;
@@ -271,23 +254,9 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         passwordText = SWTWidgetHelper.createPasswordField(g);
     }
 
-    /*
-     * private void setDefaultLocation(ComboViewer locations) { try {
-     * HgRepositoryLocation defaultLocation = null; Map<String,
-     * HgRepositoryLocation> paths = HgPathsClient
-     * .getPaths(resource.getProject()); if
-     * (paths.containsKey(HgPathsClient.DEFAULT_PULL)) { defaultLocation =
-     * paths.get(HgPathsClient.DEFAULT_PULL); } else if
-     * (paths.containsKey(HgPathsClient.DEFAULT)) { defaultLocation =
-     * paths.get(HgPathsClient.DEFAULT); } if (defaultLocation != null) {
-     * locations.add(defaultLocation); locations .setSelection(new
-     * StructuredSelection(defaultLocation)); } } catch (HgException e) {
-     * MercurialEclipsePlugin.logError(e); } }
-     */
-
     /**
      * Utility method to create an editable combo box
-     * 
+     *
      * @param parent
      *            the parent of the combo box
      * @return the created combo
@@ -308,10 +277,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         // Set the result to be the current values
         Properties result = new Properties();
         if (showCredentials) {
-            result.setProperty("user", userCombo.getText()); //$NON-NLS-1$
+            result.setProperty("user", getUserText()); //$NON-NLS-1$
             result.setProperty("password", passwordText.getText()); //$NON-NLS-1$
         }
-        result.setProperty("url", urlCombo.getText()); //$NON-NLS-1$
+        result.setProperty("url", getUrlText()); //$NON-NLS-1$
         this.properties = result;
 
         saveWidgetValues();
@@ -373,17 +342,21 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                 if (userNames == null) {
                     userNames = new String[0];
                 }
-                userNames = addToHistory(userNames, userCombo.getText(),
+                userNames = addToHistory(userNames, getUserText(),
                         COMBO_HISTORY_LENGTH);
                 dialogSettings.put(STORE_USERNAME_ID, userNames);
             }
         }
     }
 
-    /**
-     * @param hostNames
-     * @return
-     */
+    private String getUserText() {
+        return userCombo.getText().trim();
+    }
+
+    private String getUrlText() {
+        return urlCombo.getText().trim();
+    }
+
     private String[] updateHostNames() {
         String[] newHostNames = new String[0];
         Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
@@ -406,7 +379,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      */
     private void validateFields() {
         // first check the url of the repository
-        String url = urlCombo.getText();
+        String url = getUrlText();
 
         if (url.length() == 0) {
             setErrorMessage(null);
