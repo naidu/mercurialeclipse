@@ -129,6 +129,7 @@ public class MercurialRevision extends FileRevision {
             } else {
                 mercurialRevisionStorage = new MercurialRevisionStorage(resource,
                         revision, hash, changeSet);
+                mercurialRevisionStorage.setParent(parent);
             }
         }
         return mercurialRevisionStorage;

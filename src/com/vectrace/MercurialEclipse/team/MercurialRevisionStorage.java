@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -20,8 +21,11 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.resources.ResourceAttributes;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -44,7 +48,7 @@ public class MercurialRevisionStorage implements IStorage {
     protected ChangeSet changeSet;
     protected byte [] bytes;
     private Exception error;
-
+    private File parent;
 
     /**
      * The recommended constructor to use is MercurialRevisionStorage(IResource res, String rev, String global,
@@ -106,6 +110,13 @@ public class MercurialRevisionStorage implements IStorage {
         }
     }
 
+    /**
+     * @param parent the parent (ancestor file name before rename/copy), might be null
+     */
+    public void setParent(File parent) {
+        this.parent = parent;
+    }
+
     @SuppressWarnings("unchecked")
     public Object getAdapter(Class adapter) {
         if (adapter.equals(IResource.class)) {
@@ -127,30 +138,19 @@ public class MercurialRevisionStorage implements IStorage {
         String result = ""; //$NON-NLS-1$
         try {
             IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
-            if (changeSet != null) {
-                // incoming: overlay repository with bundle and extract then via cat
-                if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
-                    try {
-                        String bundleFile = changeSet.getBundleFile().getCanonicalFile().getPath();
-                        if (bundleFile != null) {
-                            result = HgCatClient.getContentFromBundle(file, Integer.valueOf(changeSet.getChangesetIndex())
-                                    .toString(), bundleFile);
-                        }
-                    } catch (IOException e) {
-                        throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
-                    }
-                } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                    bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
-                    return new ByteArrayInputStream(bytes);
-                } else {
-                    // local: get the contents via cat
-                    result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
-                }
-            } else {
-                // no changeset known
-                result = HgCatClient.getContent(file, null);
-            }
+            result = fetchStringContent(result, file);
         } catch (CoreException e) {
+
+            if(parent != null){
+                IFile file = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
+                        new Path(parent.getAbsolutePath()));
+                try {
+                    result = fetchStringContent(result, file);
+                    return createStreamContent(result);
+                } catch (CoreException e2) {
+                    e = e2;
+                }
+            }
             error = e;
             bytes = new byte[0];
             // core API ignores exceptions from this method, so we need to log them here
@@ -158,6 +158,10 @@ public class MercurialRevisionStorage implements IStorage {
             throw e;
         }
 
+        return createStreamContent(result);
+    }
+
+    private InputStream createStreamContent(String result) throws HgException {
         try {
             HgRoot root = MercurialTeamProvider.getHgRoot(resource);
             bytes = result.getBytes(root.getEncoding().name());
@@ -169,6 +173,33 @@ public class MercurialRevisionStorage implements IStorage {
             MercurialEclipsePlugin.logWarning("Failed to get revision content for " + toString(), e);
             throw new HgException(e.getLocalizedMessage(), e);
         }
+    }
+
+    private String fetchStringContent(String result, IFile file) throws HgException, CoreException {
+        if (changeSet != null) {
+            // incoming: overlay repository with bundle and extract then via cat
+            if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
+                try {
+                    String bundleFile = changeSet.getBundleFile().getCanonicalFile().getPath();
+                    if (bundleFile != null) {
+                        result = HgCatClient.getContentFromBundle(file, Integer.valueOf(changeSet.getChangesetIndex())
+                                .toString(), bundleFile);
+                    }
+                } catch (IOException e) {
+                    throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
+                }
+            } else if (changeSet.getDirection() == Direction.OUTGOING) {
+                bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
+                return new ByteArrayInputStream(bytes).toString();
+            } else {
+                // local: get the contents via cat
+                result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
+            }
+        } else {
+            // no changeset known
+            result = HgCatClient.getContent(file, null);
+        }
+        return result;
     }
 
     public IPath getFullPath() {
@@ -272,6 +303,11 @@ public class MercurialRevisionStorage implements IStorage {
         if (resource != null) {
             builder.append("resource=");
             builder.append(resource);
+            builder.append(", ");
+        }
+        if (parent != null) {
+            builder.append("parent=");
+            builder.append(parent);
             builder.append(", ");
         }
         builder.append("]");
