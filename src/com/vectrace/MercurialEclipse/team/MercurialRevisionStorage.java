@@ -134,18 +134,17 @@ public class MercurialRevisionStorage implements IStorage {
         if(bytes != null){
             return new ByteArrayInputStream(bytes);
         }
-        // Setup and run command
-        String result = ""; //$NON-NLS-1$
+        String result;
         try {
             IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
-            result = fetchStringContent(result, file);
+            result = fetchStringContent(file);
         } catch (CoreException e) {
 
             if(parent != null){
                 IFile file = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
                         new Path(parent.getAbsolutePath()));
                 try {
-                    result = fetchStringContent(result, file);
+                    result = fetchStringContent(file);
                     return createStreamContent(result);
                 } catch (CoreException e2) {
                     e = e2;
@@ -175,29 +174,28 @@ public class MercurialRevisionStorage implements IStorage {
         }
     }
 
-    private String fetchStringContent(String result, IFile file) throws HgException, CoreException {
-        if (changeSet != null) {
-            // incoming: overlay repository with bundle and extract then via cat
-            if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
-                try {
-                    String bundleFile = changeSet.getBundleFile().getCanonicalFile().getPath();
-                    if (bundleFile != null) {
-                        result = HgCatClient.getContentFromBundle(file, Integer.valueOf(changeSet.getChangesetIndex())
-                                .toString(), bundleFile);
-                    }
-                } catch (IOException e) {
-                    throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
-                }
-            } else if (changeSet.getDirection() == Direction.OUTGOING) {
-                bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
-                return new ByteArrayInputStream(bytes).toString();
-            } else {
-                // local: get the contents via cat
-                result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
-            }
-        } else {
+    private String fetchStringContent(IFile file) throws CoreException {
+        if (changeSet == null) {
             // no changeset known
-            result = HgCatClient.getContent(file, null);
+            return HgCatClient.getContent(file, null);
+        }
+        String result;
+        // Setup and run command
+        if (changeSet.getDirection() == Direction.INCOMING && changeSet.getBundleFile() != null) {
+            // incoming: overlay repository with bundle and extract then via cat
+            try {
+                result = HgCatClient.getContentFromBundle(file,
+                        Integer.valueOf(changeSet.getChangesetIndex()).toString(),
+                        changeSet.getBundleFile().getCanonicalPath());
+            } catch (IOException e) {
+                throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
+            }
+        } else if (changeSet.getDirection() == Direction.OUTGOING) {
+            bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
+            result = new ByteArrayInputStream(bytes).toString();
+        } else {
+            // local: get the contents via cat
+            result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
         }
         return result;
     }
