@@ -192,7 +192,7 @@ public class MercurialRevisionStorage implements IStorage {
             }
         } else if (changeSet.getDirection() == Direction.OUTGOING) {
             bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
-            result = new ByteArrayInputStream(bytes).toString();
+            result = new String(bytes);
         } else {
             // local: get the contents via cat
             result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
