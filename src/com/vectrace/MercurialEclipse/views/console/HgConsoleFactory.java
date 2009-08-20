@@ -10,14 +10,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
-import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsoleFactory;
 
 /**
  * Console factory is used to show the console from the Console view
  * "Open Console" drop-down action. This factory is registered via the
  * org.eclipse.ui.console.consoleFactory extension point.
- * 
+ *
  * @since 3.1
  */
 /*
@@ -25,12 +24,11 @@ import org.eclipse.ui.console.IConsoleFactory;
  * stateless even though we want to have at most a single console.
  */
 public class HgConsoleFactory implements IConsoleFactory {
-    
+
     public HgConsoleFactory() {
     }
-    
+
     public void openConsole() {
-        ConsolePlugin.getDefault().getConsoleManager().showConsoleView(
-                HgConsoleHolder.getInstance().showConsole());
+        HgConsoleHolder.getInstance().showConsole(true);
     }
 }

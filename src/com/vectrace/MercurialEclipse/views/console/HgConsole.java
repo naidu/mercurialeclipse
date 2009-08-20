@@ -41,7 +41,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public class HgConsole extends MessageConsole {
 
-    // created colors for each line type - must be disposed at shutdown
+    /** created colors for each line type - must be disposed at shutdown*/
     private Color commandColor;
     private Color messageColor;
     private Color errorColor;
@@ -50,36 +50,31 @@ public class HgConsole extends MessageConsole {
     private final static String SSH_PATTERN_STRING = "[sS][sS][hH].*[@]"; //$NON-NLS-1$
     private final static String SVN_PATTERN_STRING = "[sS][vV][nN].*[@]"; //$NON-NLS-1$
 
-    private final static Pattern HTTP_PATTERN = Pattern
-            .compile(HTTP_PATTERN_STRING);
-    private final static Pattern HTTPS_PATTERN = Pattern
-            .compile(HTTPS_PATTERN_STRING);
-    private final static Pattern SSH_PATTERN = Pattern
-            .compile(SSH_PATTERN_STRING);
-    private final static Pattern SVN_PATTERN = Pattern
-            .compile(SVN_PATTERN_STRING);
+    private final static Pattern HTTP_PATTERN = Pattern.compile(HTTP_PATTERN_STRING);
+    private final static Pattern HTTPS_PATTERN = Pattern.compile(HTTPS_PATTERN_STRING);
+    private final static Pattern SSH_PATTERN = Pattern.compile(SSH_PATTERN_STRING);
+    private final static Pattern SVN_PATTERN = Pattern.compile(SVN_PATTERN_STRING);
 
-    // used to time the commands
+    /** used to time the commands*/
     private long commandStarted = 0;
 
-    // streams for each command type - each stream has its own color
+    /** streams for each command type - each stream has its own color */
     private MessageConsoleStream commandStream;
     private MessageConsoleStream messageStream;
     private MessageConsoleStream errorStream;
 
     private final ConsoleDocument document;
 
-    // format for timings printed to console. Not static to avoid thread issues
-    private final DateFormat TIME_FORMAT = new SimpleDateFormat(
-            "m:ss.SSS"); //$NON-NLS-1$
+    /** format for timings printed to console. Not static to avoid thread issues*/
+    private final DateFormat TIME_FORMAT = new SimpleDateFormat("m:ss.SSS"); //$NON-NLS-1$
 
 
-    // Indicates whether the console is visible in the Console view
+    /** Indicates whether the console is visible in the Console view */
     private boolean visible = false;
-    // Indicates whether the console's streams have been initialized
+    /** Indicates whether the console's streams have been initialized */
     private boolean initialized = false;
 
-    /*
+    /**
      * Constant used for indenting error status printing
      */
     private static final String NESTING = "   "; //$NON-NLS-1$
@@ -89,16 +84,10 @@ public class HgConsole extends MessageConsole {
      * console page yet.
      */
     public HgConsole() {
-        super(
-                "Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
+        super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
         document = new ConsoleDocument();
     }
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.ui.console.AbstractConsole#init()
-     */
     @Override
     protected void init() {
         // Called when console is added to the console view
@@ -137,7 +126,7 @@ public class HgConsole extends MessageConsole {
         }
     }
 
-    /*
+    /**
      * Initialize thre streams of the console. Must be called from the UI
      * thread.
      */
@@ -178,7 +167,7 @@ public class HgConsole extends MessageConsole {
     }
 
     private void appendLine(int type, String line) {
-        HgConsoleHolder.getInstance().showConsole();
+        HgConsoleHolder.getInstance().showConsole(false);
         String myLine = line == null? "" : line;
         myLine = HTTP_PATTERN.matcher(myLine).replaceAll("http://***@"); //$NON-NLS-1$
         if (myLine.equals(line)) {

@@ -34,6 +34,7 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
     private volatile HgConsole console;
 
     private boolean showOnMessage;
+    private boolean registered;
 
     private HgConsoleHolder() {
     }
@@ -66,25 +67,36 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
         return console != null;
     }
 
-    public HgConsole showConsole() {
+    public HgConsole showConsole(boolean force) {
         init();
 
-        if (showOnMessage) {
+        if (force || showOnMessage) {
             // register console
-            IConsole[] existing = getConsoleManager().getConsoles();
-            boolean exists = false;
-            for (int i = 0; i < existing.length; i++) {
-                if (console == existing[i]) {
-                    exists = true;
-                }
-            }
-            if (!exists) {
-                getConsoleManager().addConsoles(new IConsole[] { console });
-            }
+            registerConsole();
             getConsoleManager().showConsoleView(console);
         }
 
         return console;
+    }
+
+    public void registerConsole() {
+        boolean exists = isConsoleRegistered();
+        if (!exists) {
+            getConsoleManager().addConsoles(new IConsole[] { console });
+        }
+    }
+
+    public boolean isConsoleRegistered() {
+        if(registered){
+            return true;
+        }
+        IConsole[] existing = getConsoleManager().getConsoles();
+        for (int i = 0; i < existing.length; i++) {
+            if (console == existing[i]) {
+                registered = true;
+            }
+        }
+        return registered;
     }
 
     public void closeConsole() {
@@ -105,7 +117,7 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
             IConsole c = consoles[i];
             if (console == c) {
                 console.init();
-                showConsole();
+                showConsole(true);
                 break;
             }
         }
