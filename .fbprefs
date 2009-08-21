@@ -1,5 +1,5 @@
 #FindBugs User Preferences
-#Mon Aug 10 23:32:46 CEST 2009
+#Fri Aug 21 22:57:26 CEST 2009
 detectorAppendingToAnObjectOutputStream=AppendingToAnObjectOutputStream|true
 detectorBCPMethodReturnCheck=BCPMethodReturnCheck|false
 detectorBadAppletConstructor=BadAppletConstructor|false
@@ -39,7 +39,7 @@ detectorFindBadCast2=FindBadCast2|true
 detectorFindBadEqualsImplementation=FindBadEqualsImplementation|false
 detectorFindBadForLoop=FindBadForLoop|true
 detectorFindBugsSummaryStats=FindBugsSummaryStats|true
-detectorFindCircularDependencies=FindCircularDependencies|true
+detectorFindCircularDependencies=FindCircularDependencies|false
 detectorFindDeadLocalStores=FindDeadLocalStores|true
 detectorFindDoubleCheck=FindDoubleCheck|true
 detectorFindEmptySynchronizedBlock=FindEmptySynchronizedBlock|true
