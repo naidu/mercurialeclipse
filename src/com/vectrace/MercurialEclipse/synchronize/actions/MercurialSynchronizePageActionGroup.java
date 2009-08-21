@@ -10,40 +10,70 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.viewers.AbstractTreeViewer;
+import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
+import org.eclipse.ui.IActionBars;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
+
+    private final IAction expandAction;
+
+    public MercurialSynchronizePageActionGroup() {
+        super();
+        expandAction = new Action("Expand All",
+                MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif") ) {
+            @Override
+            public void run() {
+                Viewer viewer = getConfiguration().getPage().getViewer();
+                if(viewer instanceof AbstractTreeViewer){
+                    AbstractTreeViewer treeViewer = (AbstractTreeViewer) viewer;
+                    treeViewer.expandAll();
+                }
+            }
+        };
+    }
 
     @Override
     public void initialize(ISynchronizePageConfiguration configuration) {
         super.initialize(configuration);
 
-        super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+        appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new CommitSynchronizeAction("Commit",
                         configuration, getVisibleRootsSelectionProvider()));
 
-        super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+        appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new RevertSynchronizeAction("Revert",
                         configuration, getVisibleRootsSelectionProvider()));
 
-        super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+        appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new PullSynchronizeAction("Pull",
                         configuration, getVisibleRootsSelectionProvider(), false));
 
-        super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+        appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new PullSynchronizeAction("Pull and Update",
                         configuration, getVisibleRootsSelectionProvider(), true));
 
-        super.appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+        appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new ShowHistorySynchronizeAction("Show History",
                         configuration, getVisibleRootsSelectionProvider()));
     }
 
-
+    @Override
+    public void fillActionBars(IActionBars actionBars) {
+        super.fillActionBars(actionBars);
+        IToolBarManager manager = actionBars.getToolBarManager();
+        appendToGroup(manager, ISynchronizePageConfiguration.NAVIGATE_GROUP, expandAction);
+    }
 }
