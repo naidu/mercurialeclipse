@@ -43,11 +43,7 @@ import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
 import com.vectrace.MercurialEclipse.synchronize.SingleRepoSubscriber;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
-import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -96,8 +92,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                     checkHgInstallation();
                     monitor.done();
                     // read known repositories
-                    monitor
-                    .subTask("Loading known Mercurial repositories.");
+                    monitor.subTask("Loading known Mercurial repositories.");
                     repoManager.start();
                     monitor.worked(1);
                     // read in commit messages from disk
@@ -109,8 +104,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                 } catch (Exception e) {
                     hgUsable = false;
                     logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
-                    return new Status(IStatus.ERROR, ID, e
-                            .getLocalizedMessage(), e);
+                    return new Status(IStatus.ERROR, ID, e.getLocalizedMessage(), e);
                 }
             }
         }.schedule();
@@ -122,17 +116,17 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      */
     public void checkHgInstallation() {
         try {
-            this.hgUsable = true;
+            hgUsable = true;
             MercurialUtilities.getHGExecutable(true);
             String result = HgDebugInstallClient.debugInstall();
             if (result.endsWith("No problems detected")) { //$NON-NLS-1$
-                this.hgUsable = true;
+                hgUsable = true;
                 return;
             }
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e);
-            this.hgUsable = false;
+            hgUsable = false;
         }
     }
 
@@ -155,11 +149,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     @Override
     public void stop(BundleContext context) throws Exception {
         try {
-            MercurialStatusCache.getInstance().clear();
-            AbstractCache.clearNodeMap();
-            LocalChangesetCache.getInstance().clear();
-            IncomingChangesetCache.getInstance().clear();
-            OutgoingChangesetCache.getInstance().clear();
             repoManager.stop();
             // save commit messages to disk
             commitMessageManager.stop();
@@ -189,8 +178,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     }
 
     public static final void logError(String message, Throwable error) {
-        getDefault().getLog().log(
-                createStatus(message, 0, IStatus.ERROR, error));
+        getDefault().getLog().log(createStatus(message, 0, IStatus.ERROR, error));
     }
 
     public static void showError(final Throwable error) {
@@ -205,13 +193,11 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
     }
 
     public static final void logWarning(String message, Throwable error) {
-        getDefault().getLog().log(
-                createStatus(message, 0, IStatus.WARNING, error));
+        getDefault().getLog().log(createStatus(message, 0, IStatus.WARNING, error));
     }
 
     public static final void logInfo(String message, Throwable error) {
-        getDefault().getLog()
-        .log(createStatus(message, 0, IStatus.INFO, error));
+        getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
     }
 
     private static IStatus createStatus(String msg, int code, int severity,
@@ -298,17 +284,13 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
      * @return the active workbench page
      */
     public static IWorkbenchPage getActivePage() {
-        IWorkbenchWindow window = PlatformUI.getWorkbench()
-        .getActiveWorkbenchWindow();
+        IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         if (window == null) {
             return null;
         }
         return window.getActivePage();
     }
 
-    /**
-     * @return the hgUsable
-     */
     public boolean isHgUsable() {
         return hgUsable;
     }
