@@ -366,6 +366,7 @@
                 <and>
                     <count value="1"/>
                     <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
                 </and>
             </enabledWhen>
         </handler>
@@ -608,6 +609,7 @@
                         <and>
                             <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
                             <reference definitionId="com.vectrace.MercurialEclipse.def.merging"/>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
                         </and>
                     </visibleWhen>
                 </command>
@@ -716,7 +718,10 @@
                   commandId="com.vectrace.MercurialEclipse.menu.MergeHandler"
                   icon="icons/actions/merge.gif">
                     <visibleWhen>
-                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                       </and>
                     </visibleWhen>
                 </command>
 
