@@ -292,8 +292,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         }
 
         Set<IResource> resourcesToRefresh = new HashSet<IResource>();
-        monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingResources"),
-                projects.size() * 3 + 2);
 
         for (IProject project : projects) {
             HgRepositoryLocation repositoryLocation = getRepo(project);
@@ -344,7 +342,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
         fireTeamResourceChange(changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]));
         monitor.worked(1);
-        monitor.done();
+        // should not call it, we do not own the monitor...
+        // monitor.done();
     }
 
     private List<ISubscriberChangeEvent> createEvents(IResource[] resources,

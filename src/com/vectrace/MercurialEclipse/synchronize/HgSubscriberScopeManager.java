@@ -26,6 +26,7 @@ import org.eclipse.team.core.subscribers.SubscriberScopeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
@@ -44,6 +45,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
         MercurialStatusCache.getInstance().addObserver(this);
         IncomingChangesetCache.getInstance().addObserver(this);
         OutgoingChangesetCache.getInstance().addObserver(this);
+        LocalChangesetCache.getInstance().addObserver(this);
     }
 
     public void update(Observable o, Object arg) {
@@ -54,6 +56,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
         Set<?> resources = (Set<?>) arg;
         IResource[] roots = getSubscriber().roots();
         boolean projectRefresh = false;
+        int flags = ISubscriberChangeEvent.SYNC_CHANGED;
         for (Object res : resources) {
             if(!(res instanceof IResource)) {
                 continue;
@@ -61,7 +64,6 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
             IResource resource = (IResource)res;
             for (IResource root : roots) {
                 if(root.contains(resource)) {
-                    int flags = ISubscriberChangeEvent.SYNC_CHANGED;
                     if(resource.contains(root)){
                         projectRefresh = true;
                     }
@@ -82,7 +84,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
             int flag = 0;
             if (o instanceof IncomingChangesetCache) {
                 flag = INCOMING;
-            } else if (o instanceof OutgoingChangesetCache) {
+            } else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache ) {
                 flag = OUTGOING;
             } else if (o instanceof MercurialStatusCache) {
                 flag = LOCAL;
@@ -107,6 +109,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
         MercurialStatusCache.getInstance().deleteObserver(this);
         IncomingChangesetCache.getInstance().deleteObserver(this);
         OutgoingChangesetCache.getInstance().deleteObserver(this);
+        LocalChangesetCache.getInstance().deleteObserver(this);
         super.dispose();
     }
 
