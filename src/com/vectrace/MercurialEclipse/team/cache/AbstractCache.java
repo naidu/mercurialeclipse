@@ -13,21 +13,25 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.io.File;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -37,118 +41,144 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
+ * This is the base class for 4 different caches we have in the current code:
+ * <p>
+ * Caches for local resources, do not maintain their state and has to be managed by clients:
+ * <ul>
+ * <li>{@link MercurialStatusCache} - maintains the Eclipse {@link IResource} states</li>
+ * <li>{@link LocalChangesetCache} - maintains the known changesets in the local hg repository</li>
+ * </ul>
+ * <p>
+ * Caches for remote resources and semi-automatically maintain their state:
+ * <ul>
+ * <li>{@link OutgoingChangesetCache} - maintains new changesets in the local hg repository</li>
+ * <li>{@link IncomingChangesetCache} - maintains new changesets in the remote hg repository</li>
+ * </ul>
  * @author bastian
- *
+ * @author Andrei Loskutov
  */
 public abstract class AbstractCache extends Observable {
 
-    protected final static Map<String, ChangeSet> nodeMap = new TreeMap<String, ChangeSet>();
+    private final Map<IProject, Map<String, ChangeSet>> changesets = new HashMap<IProject, Map<String, ChangeSet>>();
 
     /**
-     * @param repositoryLocation
      * @param direction
      *            flag, which direction should be queried.
-     * @param changeSetMap
-     * @throws HgException
      */
     protected void addResourcesToCache(
             IProject project,
-            HgRepositoryLocation repositoryLocation,
+            HgRepositoryLocation repository,
             Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> changeSetMap,
             Direction direction) throws HgException {
 
         // clear cache of old members
-        final Map<IPath, SortedSet<ChangeSet>> removeMap = changeSetMap
-        .get(repositoryLocation);
+        final Map<IPath, SortedSet<ChangeSet>> removeMap = changeSetMap.get(repository);
 
         if (removeMap != null) {
             removeMap.clear();
-            changeSetMap.remove(repositoryLocation);
+            changeSetMap.remove(repository);
         }
 
         // get changesets from hg
         Map<IPath, SortedSet<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
-            resources = HgOutgoingClient.getOutgoing(project, repositoryLocation);
+            resources = HgOutgoingClient.getOutgoing(project, repository);
         } else {
-            resources = HgIncomingClient.getHgIncoming(project, repositoryLocation);
+            resources = HgIncomingClient.getHgIncoming(project, repository);
         }
 
+        HashMap<IPath, SortedSet<ChangeSet>> map = new HashMap<IPath, SortedSet<ChangeSet>>();
+        changeSetMap.put(repository, map);
+        IPath projectPath = project.getLocation();
+        map.put(projectPath, new TreeSet<ChangeSet>());
+
         // add them to cache(s)
-        if (resources != null && resources.size() > 0) {
-
-            for (Map.Entry<IPath, SortedSet<ChangeSet>> mapEntry : resources.entrySet()) {
-                IPath path = mapEntry.getKey();
-                SortedSet<ChangeSet> changes = mapEntry.getValue();
-
-                if (changes != null && changes.size() > 0) {
-                    SortedSet<ChangeSet> revisions = new TreeSet<ChangeSet>();
-                    ChangeSet[] changeSets = changes
-                    .toArray(new ChangeSet[changes.size()]);
-
-                    if (changeSets != null) {
-                        for (ChangeSet changeSet : changeSets) {
-                            revisions.add(changeSet);
-                            if (direction == Direction.INCOMING) {
-                                synchronized (nodeMap) {
-                                    nodeMap
-                                    .put(changeSet.toString(),
-                                            changeSet);
-                                    nodeMap.put(changeSet.getChangeset(),
-                                            changeSet);
-                                }
-                            }
-                        }
-                    }
-
-                    Map<IPath, SortedSet<ChangeSet>> map = changeSetMap
-                    .get(repositoryLocation);
-                    if (map == null) {
-                        map = new HashMap<IPath, SortedSet<ChangeSet>>();
-                    }
-                    map.put(path, revisions);
-                    changeSetMap.put(repositoryLocation, map);
-                }
+        for (Map.Entry<IPath, SortedSet<ChangeSet>> mapEntry : resources.entrySet()) {
+            IPath path = mapEntry.getKey();
+            SortedSet<ChangeSet> changes = mapEntry.getValue();
+            if (changes != null && changes.size() > 0) {
+                // XXX Andrei: we remember only incoming changesets because outgoing should be in the local cache already?
+                //if (direction == Direction.INCOMING) {
+                    addChangesets(project, changes);
+                //}
+                map.put(path, changes);
+                map.get(projectPath).addAll(changes);
             }
         }
     }
 
-    protected void addToNodeMap(SortedSet<ChangeSet> changes) {
-        for (ChangeSet changeSet : changes) {
-            synchronized (AbstractCache.nodeMap) {
-                AbstractCache.nodeMap.put(changeSet.toString(), changeSet);
-                AbstractCache.nodeMap.put(changeSet.getChangeset(), changeSet);
+    protected void addChangesets(IProject project, Set<ChangeSet> changes) {
+        synchronized (changesets) {
+            Map<String, ChangeSet> map = changesets.get(project);
+            if(map == null){
+                map = new ConcurrentHashMap<String, ChangeSet>();
+                changesets.put(project, map);
+            }
+            for (ChangeSet changeSet : changes) {
+                map.put(changeSet.toString(), changeSet);
+                map.put(changeSet.getChangeset(), changeSet);
             }
         }
     }
 
     /**
-     * Gets Changeset by its identifier
+     * Gets changeset by its identifier
      *
-     * @param changeSet
+     * @param changesetId
      *            string in format rev:nodeshort or rev:node
-     * @return
+     * @return may return null, if changeset is not known
      */
-    public ChangeSet getChangeSet(String changeSet) {
-        return AbstractCache.nodeMap.get(changeSet);
-    }
-
-    public void notifyChanged(final IResource resource) {
-        Set<IResource> resources = new HashSet<IResource>();
-        resources.add(resource);
-        notifyChanged(resources);
-    }
-
-    public void notifyChanged(Set<IResource> resources) {
-        HashSet<IResource> set = new HashSet<IResource>();
-        set.addAll(resources);
-        for (IResource r : resources) {
-            set.addAll(getMembers(r));
+    public ChangeSet getChangeset(IProject project, String changesetId) {
+        Map<String, ChangeSet> map;
+        synchronized (changesets) {
+            map = changesets.get(project);
         }
-        setChanged();
-        notifyObservers(set);
+        if(map != null) {
+            return map.get(changesetId);
+        }
+        return null;
+    }
+
+    /**
+     * Spawns an update job to notify all the clients about given resource changes
+     * @param resource non null
+     */
+    protected void notifyChanged(final IResource resource, boolean expandMembers) {
+        final Set<IResource> resources = new HashSet<IResource>();
+        resources.add(resource);
+        notifyChanged(resources, expandMembers);
+    }
+
+    /**
+     * Spawns an update job to notify all the clients about given resource changes
+     * @param resources non null
+     */
+    protected void notifyChanged(final Set<IResource> resources, final boolean expandMembers) {
+        Job job = new Job("hg cache clients update..."){
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                Set<IResource> set;
+                if(!expandMembers){
+                    set = resources;
+                } else {
+                    set = new HashSet<IResource>(resources);
+                    for (IResource r : resources) {
+                        if(monitor.isCanceled()){
+                            return Status.CANCEL_STATUS;
+                        }
+                        set.addAll(getMembers(r));
+                    }
+                }
+                setChanged();
+                notifyObservers(set);
+                return Status.OK_STATUS;
+            }
+        };
+        job.setSystem(true);
+        job.schedule();
     }
 
     protected Set<IResource> getMembers(IResource r) {
@@ -180,18 +210,15 @@ public abstract class AbstractCache extends Observable {
     protected Set<IResource> getMembers(IResource resource,
             Map<IPath, SortedSet<ChangeSet>> changeSets) {
         Set<IResource> members = new HashSet<IResource>();
-        if (changeSets != null) {
-            IWorkspaceRoot root = resource.getWorkspace().getRoot();
-            for (Iterator<IPath> i = changeSets.keySet().iterator(); i
-            .hasNext();) {
-                IPath path = i.next();
-                IResource member = root.getFileForLocation(path);
-                if (member != null
-                        && member.getType() != IResource.FOLDER
-                        && resource.getLocation().isPrefixOf(
-                                member.getLocation())) {
-                    members.add(member);
-                }
+        if (changeSets == null) {
+            return members;
+        }
+        IWorkspaceRoot root = resource.getWorkspace().getRoot();
+        IPath location = ResourceUtils.getPath(resource);
+        for (IPath path : changeSets.keySet()) {
+            IFile member = root.getFileForLocation(path);
+            if (member != null && location.isPrefixOf(member.getLocation())) {
+                members.add(member);
             }
         }
         return members;
@@ -214,8 +241,16 @@ public abstract class AbstractCache extends Observable {
         return project.findMember(path);
     }
 
-    public synchronized static void clearNodeMap() {
-        nodeMap.clear();
+    protected boolean clearChangesets(IProject project) {
+        synchronized (changesets){
+            Map<String, ChangeSet> map = changesets.remove(project);
+            return map != null && !map.isEmpty();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName();
     }
 
 }

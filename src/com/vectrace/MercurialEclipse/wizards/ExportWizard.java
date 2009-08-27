@@ -31,23 +31,19 @@ import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
 public class ExportWizard extends HgWizard {
 
-    private ExportPage sourcePage;
+    private final ExportPage sourcePage;
     private List<IResource> resources;
     private Location location;
-    private HgRoot root;
+    private final HgRoot root;
     // operation result returned from another thread
     private String result;
     private ArrayList<String> options;
-    private ExportOptionsPage optionsPage;
+    private final ExportOptionsPage optionsPage;
 
-    /**
-     * @param root
-     * @param resource
-     */
     public ExportWizard(List<IResource> resources, HgRoot root) {
         super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
-        sourcePage = new ExportPage(resources, root);
+        sourcePage = new ExportPage(resources);
         addPage(sourcePage);
         initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
@@ -58,11 +54,6 @@ public class ExportWizard extends HgWizard {
         this.root = root;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.wizard.Wizard#performFinish()
-     */
     @Override
     public boolean performFinish() {
         sourcePage.finish(null);

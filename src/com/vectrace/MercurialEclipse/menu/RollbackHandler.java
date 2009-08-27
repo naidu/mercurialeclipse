@@ -29,7 +29,7 @@ public class RollbackHandler extends SingleResourceHandler {
         String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
         project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        new RefreshJob(Messages.getString("RollbackHandler.refresh"),null,project).schedule(); //$NON-NLS-1$
+        new RefreshJob(Messages.getString("RollbackHandler.refresh"), project).schedule(); //$NON-NLS-1$
     }
 
 }

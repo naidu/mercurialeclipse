@@ -32,7 +32,6 @@ public class Messages extends NLS {
     public static String mercurialStatusCache_RefreshingResources;
     public static String mercurialStatusCache_RefreshStatus;
     public static String mercurialStatusCache_UnknownStatus;
-    public static String refreshJob_AddingRemoteRepositoryToProjectRepositories;
     public static String refreshJob_LoadingIncomingRevisions;
     public static String refreshJob_LoadingLocalRevisions;
     public static String refreshJob_LoadingOutgoingRevisionsFor;

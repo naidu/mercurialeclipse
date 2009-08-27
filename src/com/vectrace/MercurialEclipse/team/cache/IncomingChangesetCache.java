@@ -12,13 +12,10 @@ package com.vectrace.MercurialEclipse.team.cache;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -34,12 +31,33 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
- * @author bastian
+ * The cache keeps the state automatically (and fetches the data on client request only), to avoid
+ * unneeded client-server communication.
+ * <p>
+ * There is no guarantee that the data in the cache is up-to-date with the server. To get the
+ * latest data, clients have explicitely refresh or clean the cache before using it.
+ * <p>
+ * The cache has empty ("invalid" state) before the first client request and automatically
+ * retrieves the data on first client request. So it becames "valid" state and does not refresh the
+ * data until some operation "clears" or explicitely requests a "refresh" of the cache. After the
+ * "clear" operation the cache is going to the initial "invalid" state again. After "clear" and
+ * "refresh", a notification is sent to the observing clients.
+ * <p>
+ * <b>Implementation note 1</b> this cache <b>automatically</b> keeps the "valid" state for given
+ * project/repository pair. Before each "get" request the cache validates itself. If the cached
+ * value is NULL, then the cache state is invalid, and new data is fetched. If the cached value is
+ * an object (even empty set), then the cache is "valid" (there is simply no data on the server).
+ * <p>
+ * <b>Implementation note 2</b> the cache sends different notifications depending on what kind of
+ * "state change" happened. After "clear", a set with only one "project" object is sent. After
+ * "refresh", a set with all changed elements is sent, which may also include a project.
  *
+ * @author bastian
+ * @author Andrei Loskutov
  */
 public class IncomingChangesetCache extends AbstractCache {
+
     private static IncomingChangesetCache instance;
-    private final Map<IResource, ReentrantLock> locks = new HashMap<IResource, ReentrantLock>();
 
     /**
      * The Map has the following structure: RepositoryLocation -> IResource ->
@@ -48,6 +66,7 @@ public class IncomingChangesetCache extends AbstractCache {
     private final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
 
     private IncomingChangesetCache() {
+        super();
         incomingChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
@@ -58,116 +77,85 @@ public class IncomingChangesetCache extends AbstractCache {
         return instance;
     }
 
-    public synchronized void clear(HgRepositoryLocation repo) {
-        incomingChangeSets.remove(repo);
-    }
-
-    public synchronized void clear() {
-        incomingChangeSets.clear();
-        locks.clear();
-    }
-
-    private ReentrantLock getLock(IResource objectResource) {
-        ReentrantLock lock = locks.get(objectResource.getProject());
-        if (lock == null) {
-            lock = new ReentrantLock();
-            locks.put(objectResource.getProject(), lock);
+    public void clear(HgRepositoryLocation repo) {
+        synchronized (incomingChangeSets) {
+            incomingChangeSets.remove(repo);
         }
-        return lock;
+        Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+        for (IProject project : projects) {
+            clearChangesets(project);
+        }
     }
 
     /**
-     * Gets all incoming chnagesets of all known project locations for the given
-     * IResource.
-     *
-     * @param objectResource
-     * @return
-     * @throws HgException
+     * @param notify true to send a notification if the cache state changes after this operation,
+     * false to supress the event notification
      */
-    public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource)
-    throws HgException {
-        ReentrantLock lock = getLock(objectResource);
-        if (lock.isLocked()) {
-            lock.lock();
-            lock.unlock();
-        }
-        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin
-        .getRepoManager().getAllProjectRepoLocations(
-                objectResource.getProject());
-
-        SortedSet<ChangeSet> allChanges = new TreeSet<ChangeSet>();
-        for (Iterator<HgRepositoryLocation> iterator = repos.iterator(); iterator
-        .hasNext();) {
-            HgRepositoryLocation hgRepositoryLocation = iterator.next();
-            SortedSet<ChangeSet> repoChanges = getIncomingChangeSets(
-                    objectResource, hgRepositoryLocation);
-            if (repoChanges != null) {
-                allChanges.addAll(repoChanges);
+    public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
+        synchronized (incomingChangeSets) {
+            Map<IPath, SortedSet<ChangeSet>> map = incomingChangeSets.get(repo);
+            if(map != null){
+                SortedSet<ChangeSet> removed = map.remove(project.getLocation());
+                if(removed == null || removed.isEmpty()){
+                    // cache was already empty, no change
+                    notify = false;
+                }
+                notify &= clearChangesets(project);
+            } else {
+                // cache was already empty, no change
+                notify = false;
             }
         }
-        return Collections.unmodifiableSortedSet(allChanges);
+        if(notify) {
+            notifyChanged(project, false);
+        }
     }
 
     /**
      * Gets all incoming changesets of the given location for the given
      * IResource.
      *
-     * @param objectResource
-     * @param repositoryLocation
-     * @return
-     * @throws HgException
+     * @return never null
      */
-    public SortedSet<ChangeSet> getIncomingChangeSets(IResource objectResource,
-            HgRepositoryLocation repositoryLocation) throws HgException {
-        ReentrantLock lock = getLock(objectResource);
-        if (lock.isLocked()) {
-            lock.lock();
-            lock.unlock();
-        }
-        Map<IPath, SortedSet<ChangeSet>> repoIncoming = incomingChangeSets
-        .get(repositoryLocation);
-
-        SortedSet<ChangeSet> revisions = null;
-        if (repoIncoming != null) {
-            revisions = repoIncoming.get(objectResource.getLocation());
-        }
-        if (revisions == null) {
-            refreshIncomingChangeSets(objectResource.getProject(),
-                    repositoryLocation);
-            repoIncoming = incomingChangeSets.get(repositoryLocation);
-            if (repoIncoming != null) {
-                revisions = repoIncoming.get(objectResource.getLocation());
+    public SortedSet<ChangeSet> getIncomingChangeSets(IResource resource,
+            HgRepositoryLocation repository) throws HgException {
+        synchronized (incomingChangeSets){
+            Map<IPath, SortedSet<ChangeSet>> incoming = incomingChangeSets.get(repository);
+            if (incoming == null
+                    || ((resource instanceof IProject) && incoming.get(resource.getLocation()) == null)) {
+                // lazy loading: refresh cache on demand only.
+                refreshIncomingChangeSets(resource.getProject(), repository);
+                incoming = incomingChangeSets.get(repository);
+            }
+            if (incoming != null) {
+                SortedSet<ChangeSet> revisions = incoming.get(resource.getLocation());
+                if (revisions != null) {
+                    return Collections.unmodifiableSortedSet(revisions);
+                }
             }
         }
-
-        if (revisions != null) {
-            return Collections.unmodifiableSortedSet(incomingChangeSets.get(
-                    repositoryLocation).get(objectResource.getLocation()));
-        }
-        return null;
+        return new TreeSet<ChangeSet>();
     }
 
     /**
      * Gets all resources that are changed in incoming changesets of given
      * repository, even resources not known in local workspace.
      *
-     * @param resource
-     * @param repositoryLocation
      * @return never null
      */
     public Set<IResource> getIncomingMembers(IResource resource,
-            HgRepositoryLocation repositoryLocation) {
-        ReentrantLock lock = getLock(resource);
-        try {
-            lock.lock();
-            Set<IResource> members = new HashSet<IResource>();
-            Map<IPath, SortedSet<ChangeSet>> changeSets = incomingChangeSets
-            .get(repositoryLocation);
-            members.addAll(getMembers(resource, changeSets));
-            return members;
-        } finally {
-            lock.unlock();
+            HgRepositoryLocation repository) throws HgException {
+        synchronized (incomingChangeSets){
+            Map<IPath, SortedSet<ChangeSet>> changeSets = getIncomingMap(resource, repository);
+            return getMembers(resource, changeSets);
         }
+    }
+
+    private Map<IPath, SortedSet<ChangeSet>> getIncomingMap(IResource resource, HgRepositoryLocation repository)
+            throws HgException {
+        // make sure data is there: will refresh incoming if needed
+        getIncomingChangeSets(resource, repository);
+        return incomingChangeSets.get(repository);
     }
 
     /**
@@ -176,14 +164,12 @@ public class IncomingChangesetCache extends AbstractCache {
      * @param resource
      *            the resource to get the changeset for
      */
-    public ChangeSet getNewestIncomingChangeSet(IResource resource) {
+    public ChangeSet getNewestIncomingChangeSet(IResource resource) throws HgException {
         Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
-        .getRepoManager().getAllProjectRepoLocations(
-                resource.getProject());
+            .getRepoManager().getAllProjectRepoLocations(resource.getProject());
         SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>();
-        for (HgRepositoryLocation hgRepositoryLocation : locs) {
-            ChangeSet candidate = getNewestIncomingChangeSet(resource,
-                    hgRepositoryLocation);
+        for (HgRepositoryLocation repository : locs) {
+            ChangeSet candidate = getNewestIncomingChangeSet(resource, repository);
             if (candidate != null) {
                 changeSets.add(candidate);
             }
@@ -195,57 +181,21 @@ public class IncomingChangesetCache extends AbstractCache {
     }
 
     public ChangeSet getNewestIncomingChangeSet(IResource resource,
-            HgRepositoryLocation repositoryLocation) {
+            HgRepositoryLocation repository) throws HgException {
 
-        ReentrantLock lock = getLock(resource);
-        if (lock.isLocked()) {
-            lock.lock();
-            lock.unlock();
-        }
+        if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
+            synchronized (incomingChangeSets){
+                Map<IPath, SortedSet<ChangeSet>> repoMap = getIncomingMap(resource, repository);
 
-        if (MercurialStatusCache.getInstance().isSupervised(resource) || (!resource.exists())) {
-
-            Map<IPath, SortedSet<ChangeSet>> repoMap = incomingChangeSets
-            .get(repositoryLocation);
-
-            SortedSet<ChangeSet> revisions = null;
-            if (repoMap != null) {
-                revisions = repoMap.get(resource.getLocation());
-            }
-
-            if (revisions != null && revisions.size() > 0) {
-                return revisions.last();
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Checks if incoming status for given project is known for any location.
-     *
-     * @param project
-     *            the project to be checked
-     * @return true if known, false if not.
-     */
-    public boolean isIncomingStatusKnown(IProject project) {
-        ReentrantLock lock = getLock(project);
-        if (lock.isLocked()) {
-            lock.lock();
-            lock.unlock();
-        }
-        if (incomingChangeSets != null && incomingChangeSets.size() > 0) {
-            for (Iterator<HgRepositoryLocation> iterator = incomingChangeSets
-                    .keySet()
-                    .iterator(); iterator.hasNext();) {
-                Map<IPath, SortedSet<ChangeSet>> currLocMap = incomingChangeSets
-                .get(iterator.next());
-                if (currLocMap != null
-                        && currLocMap.get(project.getLocation()) != null) {
-                    return true;
+                if (repoMap != null) {
+                    SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
+                    if (revisions != null && revisions.size() > 0) {
+                        return revisions.last();
+                    }
                 }
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -256,27 +206,18 @@ public class IncomingChangesetCache extends AbstractCache {
      * @param repositoryLocation
      * @throws HgException
      */
-    public void refreshIncomingChangeSets(IProject project,
+    private void refreshIncomingChangeSets(IProject project,
             HgRepositoryLocation repositoryLocation) throws HgException {
         Assert.isNotNull(project);
 
-        // check if mercurial is team provider and if we're working on an
-        // open project
-        if (null != RepositoryProvider.getProvider(project,
-                MercurialTeamProvider.ID)
-                && project.isOpen()) {
+        // check if mercurial is team provider and if we're working on an open project
+        if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) && project.isOpen()) {
 
             // lock the cache till update is complete
-            ReentrantLock lock = getLock(project);
-            try {
-                lock.lock();
-                addResourcesToCache(project, repositoryLocation,
-                        incomingChangeSets, Direction.INCOMING);
-
-            } finally {
-                lock.unlock();
-                notifyChanged(project);
+            synchronized (incomingChangeSets){
+                addResourcesToCache(project, repositoryLocation, incomingChangeSets, Direction.INCOMING);
             }
+            notifyChanged(project, true);
         }
     }
 }

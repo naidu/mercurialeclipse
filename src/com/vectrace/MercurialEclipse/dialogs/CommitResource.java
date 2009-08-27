@@ -32,7 +32,7 @@ public class CommitResource {
             return CommitDialog.FILE_REMOVED;
         case MercurialStatusCache.CHAR_UNKNOWN:
             return CommitDialog.FILE_UNTRACKED;
-        case MercurialStatusCache.CHAR_DELETED:
+        case MercurialStatusCache.CHAR_MISSING:
             return CommitDialog.FILE_DELETED;
         case MercurialStatusCache.CHAR_CLEAN:
             return CommitDialog.FILE_CLEAN;

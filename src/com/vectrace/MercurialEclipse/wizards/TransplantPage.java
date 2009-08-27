@@ -44,12 +44,12 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class TransplantPage extends ConfigurationWizardMainPage {
 
     private IProject project;
-    private List<String> nodeIds = new ArrayList<String>();
+    private final List<String> nodeIds = new ArrayList<String>();
     private boolean branch;
     private String branchName;
     private boolean all;
@@ -57,7 +57,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
     private Button branchCheckBox;
     private Combo branchNameCombo;
     private Button allCheckBox;
-    private SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(
+    private final SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(
             Collections.reverseOrder());
 
     public TransplantPage(String pageName, String title,
@@ -72,30 +72,24 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         Composite composite = (Composite) getControl();
 
         ModifyListener urlModifyListener = new ModifyListener() {
-
             public void modifyText(ModifyEvent e) {
                 try {
                     HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
                             .getRepoLocation(getUrlCombo().getText());
                     setErrorMessage(null);
                     SortedSet<ChangeSet> changes = IncomingChangesetCache
-                            .getInstance().getIncomingChangeSets(project,
-                                    repoLocation);
-                    if (changes != null) {
-                        changesets.clear();
-                        changesets.addAll(changes);
-                        populateChangesetTable();
-                    }
+                            .getInstance().getIncomingChangeSets(project, repoLocation);
+                    changesets.clear();
+                    changesets.addAll(changes);
+                    populateChangesetTable();
                 } catch (HgException e1) {
-                    setErrorMessage(Messages
-                            .getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$)
+                    setErrorMessage(Messages.getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$)
                     MercurialEclipsePlugin.logError(e1);
-                } catch (URISyntaxException e1) {                    
+                } catch (URISyntaxException e1) {
                     setErrorMessage(e1.getLocalizedMessage());
                 }
 
             }
-
         };
         getUrlCombo().addModifyListener(urlModifyListener);
 
@@ -103,11 +97,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         addChangesetGroup(composite);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#canFlipToNextPage()
-     */
     @Override
     public boolean canFlipToNextPage() {
         return super.canFlipToNextPage();
@@ -126,9 +115,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         setPageComplete(valid);
     }
 
-    /**
-     * @param composite
-     */
     private void addBranchGroup(Composite composite) {
         // now the branch group
         Group branchGroup = SWTWidgetHelper.createGroup(composite, Messages
@@ -138,9 +124,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         createBranchNameCombo(branchGroup);
     }
 
-    /**
-     * @param branchGroup
-     */
     private void createBranchNameCombo(Group branchGroup) {
         SWTWidgetHelper.createLabel(branchGroup, Messages
                 .getString("TransplantPage.branchLabel.title")); //$NON-NLS-1$
@@ -178,9 +161,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         this.branchNameCombo.addSelectionListener(branchNameComboListener);
     }
 
-    /**
-     * @param branchGroup
-     */
     private void createAllCheckBox(Group branchGroup) {
         this.allCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
                 .getString("TransplantPage.allCheckBox.title.1") //$NON-NLS-1$
@@ -188,20 +168,11 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         this.allCheckBox.setEnabled(false);
 
         SelectionListener allCheckBoxListener = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetDefaultSelected(org.eclipse.swt.events.SelectionEvent)
-             */
+
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
 
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse.swt.events.SelectionEvent)
-             */
             public void widgetSelected(SelectionEvent e) {
                 all = allCheckBox.getSelection();
                 validatePage();
@@ -211,9 +182,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         this.allCheckBox.addSelectionListener(allCheckBoxListener);
     }
 
-    /**
-     * @param branchGroup
-     */
     private void createBranchCheckBox(Group branchGroup) {
         this.branchCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
                 .getString("TransplantPage.branchCheckBox.title")); //$NON-NLS-1$
@@ -249,9 +217,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         this.branchCheckBox.addSelectionListener(branchCheckBoxListener);
     }
 
-    /**
-     * @param composite
-     */
     private void addChangesetGroup(Composite composite) {
         // table of changesets
         Group changeSetGroup = SWTWidgetHelper.createGroup(
@@ -298,9 +263,6 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         populateChangesetTable();
     }
 
-    /**
-     * 
-     */
     private void populateBranchNameCombo() {
         try {
             Branch[] branches = HgBranchClient.getBranches(project);
@@ -323,52 +285,30 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         return super.finish(monitor);
     }
 
-    /**
-     * @return the project
-     */
     public IProject getProject() {
         return project;
     }
 
-    /**
-     * @param project
-     *            the project to set
-     */
     public void setProject(IProject project) {
         this.project = project;
     }
 
-    /**
-     * @return
-     */
     public boolean isBranch() {
         return this.branch;
     }
 
-    /**
-     * @return the nodeIds
-     */
     public List<String> getNodeIds() {
         return nodeIds;
     }
 
-    /**
-     * @return
-     */
     public String getBranchName() {
         return this.branchName;
     }
 
-    /**
-     * @return
-     */
     public boolean isAll() {
         return this.all;
     }
 
-    /**
-     * @return the changesets
-     */
     public SortedSet<ChangeSet> getChangesets() {
         return changesets;
     }

@@ -12,19 +12,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
-import java.util.Collections;
-import java.util.SortedSet;
-import java.util.TreeSet;
-
 import org.eclipse.core.resources.IProject;
-
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 public class ProjectDataLoader extends DataLoader {
 
-	private IProject project;
+	private final IProject project;
 
 	public ProjectDataLoader(IProject project) {
 		this.project = project;
@@ -35,11 +27,4 @@ public class ProjectDataLoader extends DataLoader {
 		return project;
 	}
 
-	@Override
-	public ChangeSet[] getRevisions() throws HgException {
-	    SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
-	    changesets.addAll(LocalChangesetCache.getInstance().getLocalChangeSets(project));	    
-		super.changeSets = changesets.toArray(new ChangeSet[changesets.size()]);
-		return changeSets;
-	}
 }

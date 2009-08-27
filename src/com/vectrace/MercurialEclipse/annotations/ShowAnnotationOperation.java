@@ -54,9 +54,9 @@ import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgFile;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ShowAnnotationOperation extends TeamOperation {
     private final class MercurialRevision extends Revision {
@@ -112,7 +112,7 @@ public class ShowAnnotationOperation extends TeamOperation {
             throws HgException {
         super(part);
         this.remoteFile = remoteFile;
-        this.res = MercurialUtilities.convert(remoteFile);
+        this.res = ResourceUtils.convert(remoteFile);
     }
 
     public void run(IProgressMonitor monitor) throws InvocationTargetException,

@@ -54,11 +54,11 @@ import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- * 
+ *
  */
 public class RevisionChooserDialog extends Dialog {
 
-        
+
     private final DataLoader dataLoader;
 	private final String title;
 	private Text text;
@@ -66,9 +66,9 @@ public class RevisionChooserDialog extends Dialog {
 	private Tag tag;
     private Branch branch;
     private Bookmark bookmark;
-    private boolean defaultShowingHeads = false;
-    private boolean disallowSelectingParents = false;
-    
+    private boolean defaultShowingHeads;
+    private boolean disallowSelectingParents;
+
 	private final int[] parents;
 
 	private ChangeSet changeSet;
@@ -85,14 +85,14 @@ public class RevisionChooserDialog extends Dialog {
         super(parentShell);
         setShellStyle(getShellStyle() | SWT.RESIZE);
         this.title = title;
-        this.dataLoader = loader;
+        dataLoader = loader;
         int[] p = {};
         try {
             p = loader.getParents();
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
-        this.parents = p;
+        parents = p;
     }
 
     @Override
@@ -129,7 +129,7 @@ public class RevisionChooserDialog extends Dialog {
             MercurialEclipsePlugin.logError(e);
         }
         createTagTabItem(tabFolder);
-        createBranchTabItem(tabFolder);        
+        createBranchTabItem(tabFolder);
         createHeadTabItem(tabFolder);
 
         return composite;
@@ -139,29 +139,25 @@ public class RevisionChooserDialog extends Dialog {
 	protected void okPressed() {
 		String[] split = text.getText().split(":"); //$NON-NLS-1$
 		revision = split[0].trim();
-		
 		if (changeSet == null) {
+		    IProject project = dataLoader.getProject();
+		    LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
-					changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        tag.getRevision() + ":"+tag.getGlobalId());				 //$NON-NLS-1$
-			}
-			else if(branch != null) {
-			    changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        branch.getRevision() + ":"+branch.getGlobalId());      //$NON-NLS-1$
+			    changeSet = localCache.getChangeset(project, tag.getRevision() + ":" + tag.getGlobalId()); //$NON-NLS-1$
+			} else if(branch != null) {
+                changeSet = localCache.getChangeset(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
 			} else if (bookmark != null) {
-                changeSet = LocalChangesetCache.getInstance().getChangeSet(
-                        bookmark.getRevision() + ":" //$NON-NLS-1$
-                                + bookmark.getShortNodeId());
+                changeSet = localCache.getChangeset(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
 			}
 		}
 		if (changeSet != null) {
-            this.revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
+            revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
         }
-		
+
 		if (revision.length() == 0) {
 			revision = null;
 		}
-		
+
 		if (disallowSelectingParents) {
 		    for (int p : parents) {
 		        if (String.valueOf(p).equals(revision)) {
@@ -173,7 +169,7 @@ public class RevisionChooserDialog extends Dialog {
 		        }
 		    }
 		}
-		
+
 		super.okPressed();
 	}
 
@@ -201,7 +197,7 @@ public class RevisionChooserDialog extends Dialog {
                 text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
             }
-            
+
             @Override
             public void widgetDefaultSelected(SelectionEvent e) {
                 okPressed();
@@ -216,7 +212,7 @@ public class RevisionChooserDialog extends Dialog {
         TabItem item = new TabItem(folder, SWT.NONE);
         item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
-        final TagTable table = new TagTable(folder);
+        final TagTable table = new TagTable(folder, dataLoader.getProject());
         table.highlightParents(parents);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -225,7 +221,7 @@ public class RevisionChooserDialog extends Dialog {
 			@Override
             public void widgetSelected(SelectionEvent e) {
                 text.setText(table.getSelection().getName());
-                tag = table.getSelection(); 
+                tag = table.getSelection();
                 branch = null;
                 bookmark = null;
                 changeSet = null;
@@ -268,7 +264,7 @@ public class RevisionChooserDialog extends Dialog {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 text.setText(table.getSelection().getName());
-                branch = table.getSelection(); 
+                branch = table.getSelection();
                 tag = null;
                 bookmark = null;
                 changeSet = null;
@@ -297,7 +293,7 @@ public class RevisionChooserDialog extends Dialog {
         item.setControl(table);
         return item;
     }
-    
+
     protected TabItem createBookmarkTabItem(TabFolder folder) {
         TabItem item = new TabItem(folder, SWT.NONE);
         item.setText(Messages.getString("RevisionChooserDialog.bookmarkTab.name")); //$NON-NLS-1$
@@ -330,7 +326,7 @@ public class RevisionChooserDialog extends Dialog {
                 .getProject(), false);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
         table.highlightParents(parents);
-        
+
         table.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
@@ -350,7 +346,7 @@ public class RevisionChooserDialog extends Dialog {
                     protected IStatus runSafe(IProgressMonitor monitor) {
                         try {
                             table.setAutoFetch(false);
-                            
+
                             ChangeSet[] revisions = dataLoader.getHeads();
                             table.setChangesets(revisions);
                             return Status.OK_STATUS;
@@ -364,8 +360,9 @@ public class RevisionChooserDialog extends Dialog {
         });
 
         item.setControl(table);
-        if (defaultShowingHeads)
+        if (defaultShowingHeads) {
             folder.setSelection(item);
+        }
         return item;
     }
 

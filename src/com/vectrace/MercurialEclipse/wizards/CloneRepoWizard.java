@@ -36,28 +36,20 @@ import com.vectrace.MercurialEclipse.operations.CreateProjectOperation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
-/*
- * 
+/**
+ *
  * This class implements the import wizard extension and the new wizard
  * extension.
- * 
+ *
  */
-
 public class CloneRepoWizard extends HgWizard implements IImportWizard {
     private ClonePage clonePage;
 
-    /**
-     * @param windowTitle
-     */
+
     public CloneRepoWizard() {
         super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.wizard.Wizard#performFinish()
-     */
     @Override
     public boolean performFinish() {
         clonePage.finish(null);
@@ -94,7 +86,9 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
             MessageDialog
                     .openError(
                             Display.getCurrent().getActiveShell(),
-                            "Error occurred while cloning", Messages.getString("CloneRepoWizard.project") + res.getName() + Messages.getString("CloneRepoWizard.alreadyExists")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            "Error occurred while cloning",
+                            Messages.getString("CloneRepoWizard.project") + res.getName()
+                            + Messages.getString("CloneRepoWizard.alreadyExists"));
             return false;
         }
 
@@ -108,16 +102,16 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
         File parDirFile = new File(parentDirectory);
         final File[] filesBefore = parDirFile.listFiles();
         boolean forest = false;
-        
+
         if (clonePage.isShowForest()) {
             forest = clonePage.getForestCheckBox().getSelection();
         }
-        
+
         boolean svn = false;
         if (clonePage.isShowSvn()) {
             svn = clonePage.getSvnCheckBox().getSelection();
         }
-        
+
         try {
             // run clone
             CloneOperation cloneOperation = new CloneOperation(getContainer(),
@@ -162,7 +156,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
 
             // create project(s)
             List<File> projectFiles = null;
-            if (clonePage.getSearchProjectFilesCheckBox().getSelection()) {                
+            if (clonePage.getSearchProjectFilesCheckBox().getSelection()) {
                 HgFolder folder = new HgFolder(cloneDirectory.getCanonicalPath());
                 projectFiles = folder.getProjectFiles();
             }
@@ -173,7 +167,8 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                         cloneName);
                 getContainer().run(true, false, op);
                 new RefreshJob(
-                        Messages.getString("CloneRepoWizard.refreshJob.name"), null, op.getProject()).schedule(); //$NON-NLS-1$
+                        Messages.getString("CloneRepoWizard.refreshJob.name"), //$NON-NLS-1$
+                        op.getProject()).schedule();
             } else {
                 for (File file : projectFiles) {
                     CreateProjectOperation op = new CreateProjectOperation(
@@ -182,7 +177,8 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                     getContainer().run(true, false, op);
                     new RefreshJob(
                             Messages
-                                    .getString("CloneRepoWizard.refreshJob.name"), null, op.getProject()).schedule(); //$NON-NLS-1$
+                                    .getString("CloneRepoWizard.refreshJob.name"), //$NON-NLS-1$
+                                    op.getProject()).schedule();
                 }
             }
 
@@ -200,12 +196,6 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
         return true;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.IWorkbenchWizard#init(org.eclipse.ui.IWorkbench,
-     *      org.eclipse.jface.viewers.IStructuredSelection)
-     */
     public void init(IWorkbench workbench, IStructuredSelection selection) {
         setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);

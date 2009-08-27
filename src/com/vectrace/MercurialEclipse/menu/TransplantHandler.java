@@ -25,7 +25,7 @@ public class TransplantHandler extends SingleResourceHandler {
         TransplantWizard transplantWizard = new TransplantWizard(project);                       
         WizardDialog transplantWizardDialog = new WizardDialog(getShell(),transplantWizard);
         transplantWizardDialog.open();
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project);
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
     }
 
 }

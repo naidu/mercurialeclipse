@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -37,6 +37,7 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -52,6 +53,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
@@ -67,10 +69,10 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 /**
- * Caches the Mercurial Status of each file and offers methods for retrieving, clearing and refreshing repository state.
+ * Caches the Mercurial Status of each file and offers methods for retrieving, clearing and
+ * refreshing repository state.
  *
  * @author Bastian Doetsch
- *
  */
 public class MercurialStatusCache extends AbstractCache implements IResourceChangeListener {
 
@@ -194,7 +196,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     public final static int BIT_IGNORE = 0;
     public final static int BIT_CLEAN = 1;
-    public final static int BIT_DELETED = 2;
+    /** file is tracked by hg, but it is missing on a disk (probably deleted by external command) */
+    public final static int BIT_MISSING = 2;
     public final static int BIT_REMOVED = 3;
     public final static int BIT_UNKNOWN = 4;
     public final static int BIT_ADDED = 5;
@@ -211,7 +214,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public static final char CHAR_CLEAN = 'C';
     public static final char CHAR_IGNORED = 'I';
     public static final char CHAR_REMOVED = 'R';
-    public static final char CHAR_DELETED = '!';
+    public static final char CHAR_MISSING = '!';
     public static final char CHAR_UNRESOLVED = 'U';
     public static final char CHAR_RESOLVED = 'R';
 
@@ -224,46 +227,36 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     /**
      * We propagate only {@link #BIT_MODIFIED} bit to the parent directory, if any of bits
-     * in the range from {@link #BIT_DELETED} to {@link #BIT_MODIFIED} is set on the child file.
+     * in the range from {@link #BIT_MISSING} to {@link #BIT_MODIFIED} is set on the child file.
      */
     private static final BitSet MODIFIED_MASK = new BitSet(MAX_BITS_COUNT);
 
     static {
         IGNORED_MASK.set(BIT_IGNORE, BIT_ADDED);
-        MODIFIED_MASK.set(BIT_DELETED, BIT_MODIFIED);
+        MODIFIED_MASK.set(BIT_MISSING, BIT_MODIFIED);
     }
 
-    protected static final int INTERESTING_CHANGES = IResourceDelta.CONTENT | IResourceDelta.MOVED_FROM
-        | IResourceDelta.MOVED_TO | IResourceDelta.OPEN | IResourceDelta.REPLACED | IResourceDelta.TYPE;
+    protected static final int MASK_CHANGED = IResourceDelta.OPEN | IResourceDelta.CONTENT
+        | IResourceDelta.MOVED_FROM | IResourceDelta.REPLACED | IResourceDelta.TYPE;
 
-    private static final Object DUMMY = new Object();
+    protected static final int MASK_DELTA = MASK_CHANGED | IResourceDelta.MOVED_TO
+        | IResourceDelta.ADDED | IResourceDelta.COPIED_FROM | IResourceDelta.REMOVED;
 
     /** Used to store the last known status of a resource */
-    private final Map<IPath, BitSet> statusMap = new ConcurrentHashMap<IPath, BitSet>();
+    private final ConcurrentHashMap<IPath, BitSet> statusMap = new ConcurrentHashMap<IPath, BitSet>();
+    private final Object statusUpdateLock = new byte[0];
 
     /** Used to store which projects have already been parsed */
-    private final Map<IProject, Object> knownStatus = new ConcurrentHashMap<IProject, Object>();
-
-    /* Access to this map must be protected with a synchronized lock itself */
-    private final Map<IProject, ReentrantLock> locks = new HashMap<IProject, ReentrantLock>();
+    private final ConcurrentHashMap<IProject, HgRoot> knownStatus = new ConcurrentHashMap<IProject, HgRoot>();
 
     private final Map<IProject, Set<IResource>> projectResources = new HashMap<IProject, Set<IResource>>();
     private boolean computeDeepStatus;
     private boolean completeStatus;
     private int statusBatchSize;
 
-    private static final ReentrantLock DUMMY_LOCK = new ReentrantLock(){
-        @Override
-        public void lock() {}
-        @Override
-        public void unlock() {}
-        @Override
-        public boolean isLocked() {return false;}
-    };
-
     private MercurialStatusCache() {
         initPreferences();
-        ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+        ResourcesPlugin.getWorkspace().addResourceChangeListener(this, MASK_DELTA);
         MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(
                 new IPropertyChangeListener() {
                     public void propertyChange(PropertyChangeEvent event) {
@@ -291,47 +284,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     }
 
     /**
-     * Clears the known status of all resources and projects. and calls for an update of decoration
-     */
-    public synchronized void clear() {
-        /*
-         * While this clearing of status is a "naive" implementation, it is simple.
-         */
-        statusMap.clear();
-        knownStatus.clear();
-        projectResources.clear();
-        synchronized (locks) {
-            locks.clear();
-        }
-        getInstance().setChanged();
-        getInstance().notifyObservers(knownStatus);
-    }
-
-    /**
-     * Sets lock on HgRoot of given resource
-     */
-    public ReentrantLock getLock(IResource resource) {
-        IProject project = resource.getProject();
-        synchronized (locks) {
-            ReentrantLock lock = locks.get(project);
-            if (lock == null) {
-                if (!resource.isAccessible() || resource.isDerived() || resource.isLinked()
-                        || !MercurialUtilities.hgIsTeamProviderFor(resource, false)) {
-                    lock = DUMMY_LOCK;
-                    // TODO we could put the dummy lock here, but then it would forever
-                    // stay in the cache, because NOBODY refresh it today.
-                    // so if a previously not managed project would became a hg project
-                    // it would NOT have a lock anymore
-                } else {
-                    lock = new ReentrantLock();
-                    locks.put(project, lock);
-                }
-            }
-            return lock;
-        }
-    }
-
-    /**
      * Checks if status for given project is known.
      *
      * @param project
@@ -339,13 +291,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * @return true if known, false if not.
      */
     public boolean isStatusKnown(IProject project) {
-        ReentrantLock lock = getLock(project);
-        try {
-            lock.lock();
-            return knownStatus.containsKey(project);
-        } finally {
-            lock.unlock();
-        }
+        return knownStatus.containsKey(project);
     }
 
     /**
@@ -358,13 +304,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * @return the BitSet with status flags, MAY RETURN NULL, if status is unknown yet
      */
     public BitSet getStatus(IResource resource) {
-        ReentrantLock lock = getLock(resource);
-        try {
-            lock.lock();
-            return statusMap.get(resource.getLocation());
-        } finally {
-            lock.unlock();
-        }
+        return statusMap.get(resource.getLocation());
     }
 
     public boolean isSupervised(IResource resource) {
@@ -381,34 +321,27 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             return false;
         }
 
-        ReentrantLock lock = getLock(resource);
-
         IProject project = resource.getProject();
         if (project.isAccessible() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
             if (path.equals(project.getLocation())) {
                 return true;
             }
-            try {
-                lock.lock();
-                BitSet status = statusMap.get(path);
-                if (status != null) {
-                    switch (status.length() - 1) {
-                    case MercurialStatusCache.BIT_IGNORE:
-                    case MercurialStatusCache.BIT_UNKNOWN:
-                        File fileSystemResource = path.toFile();
-                        if (fileSystemResource.isDirectory() && status.length() > 1) {
-                            // a directory is still supervised if one of the
-                            // following bits is set
-                            boolean supervised = status.get(BIT_ADDED) || status.get(BIT_CLEAN)
-                            || status.get(BIT_DELETED) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
-                            return supervised;
-                        }
-                        return false;
+            BitSet status = statusMap.get(path);
+            if (status != null) {
+                switch (status.length() - 1) {
+                case MercurialStatusCache.BIT_IGNORE:
+                case MercurialStatusCache.BIT_UNKNOWN:
+                    File fileSystemResource = path.toFile();
+                    if (fileSystemResource.isDirectory() && status.length() > 1) {
+                        // a directory is still supervised if one of the
+                        // following bits is set
+                        boolean supervised = status.get(BIT_ADDED) || status.get(BIT_CLEAN)
+                        || status.get(BIT_MISSING) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
+                        return supervised;
                     }
-                    return true;
+                    return false;
                 }
-            } finally {
-                lock.unlock();
+                return true;
             }
         }
         return false;
@@ -432,32 +365,22 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         Assert.isNotNull(resource);
         Assert.isNotNull(path);
         if (null != RepositoryProvider.getProvider(resource.getProject(), MercurialTeamProvider.ID)) {
-            // if (path.equals(project.getLocation())) {
-            // // FIX ME: This breaks on new projects without changelog
-            // return false;
-            // }
-            ReentrantLock lock = getLock(resource);
-            try {
-                lock.lock();
-                BitSet status = statusMap.get(path);
-                if (status != null) {
-                    switch (status.length() - 1) {
-                    case MercurialStatusCache.BIT_ADDED:
-                        File fileSystemResource = path.toFile();
-                        if (fileSystemResource.isDirectory() && status.length() > 1) {
-                            // a directory is still supervised if one of the
-                            // following bits is set
-                            boolean supervised = status.get(BIT_CLEAN) || status.get(BIT_DELETED)
-                            || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED) || status.get(BIT_CONFLICT)
-                            || status.get(BIT_IGNORE);
-                            return !supervised;
-                        }
-                        return true;
+            BitSet status = statusMap.get(path);
+            if (status != null) {
+                switch (status.length() - 1) {
+                case MercurialStatusCache.BIT_ADDED:
+                    File fileSystemResource = path.toFile();
+                    if (fileSystemResource.isDirectory() && status.length() > 1) {
+                        // a directory is still supervised if one of the
+                        // following bits is set
+                        boolean supervised = status.get(BIT_CLEAN) || status.get(BIT_MISSING)
+                        || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED) || status.get(BIT_CONFLICT)
+                        || status.get(BIT_IGNORE);
+                        return !supervised;
                     }
-                    return false;
+                    return true;
                 }
-            } finally {
-                lock.unlock();
+                return false;
             }
         }
         return false;
@@ -469,7 +392,31 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         if(status == null){
             return false;
         }
-        return status.get(BIT_REMOVED) || status.get(BIT_DELETED);
+        return status.get(BIT_REMOVED);
+    }
+
+    public Set<IResource> getResources(int statusBit, IProject project){
+        Set<IResource> resources = new HashSet<IResource>();
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+
+        Set<Entry<IPath,BitSet>> entrySet = statusMap.entrySet();
+        for (Entry<IPath, BitSet> entry : entrySet) {
+            BitSet status = entry.getValue();
+            if(status != null && status.get(statusBit)){
+                IPath path = entry.getKey();
+                // we don't know if it is a file or folder...
+                IFile location = root.getFileForLocation(path);
+                if(location != null && location.getProject().equals(project)) {
+                    resources.add(location);
+                } else {
+                    IContainer container = root.getContainerForLocation(path);
+                    if(location != null && location.getProject().equals(project)) {
+                        resources.add(container);
+                    }
+                }
+            }
+        }
+        return resources;
     }
 
     private static IProgressMonitor checkMonitor(IProgressMonitor monitor){
@@ -498,35 +445,31 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         // status for files, folders and project
         Set<IResource> resources = getLocalMembers(res);
         monitor.worked(1);
-        ReentrantLock lock = getLock(res);
+
+        HgRoot root = AbstractClient.getHgRoot(res);
+        String output = HgStatusClient.getStatusWithoutIgnored(root, res);
+        monitor.worked(1);
+
         Set<IResource> changed;
-        try {
-            lock.lock();
+        synchronized (statusUpdateLock) {
             for (IResource resource : resources) {
                 statusMap.remove(resource.getLocation());
             }
-            monitor.worked(1);
-
             statusMap.remove(res.getLocation());
-            HgRoot root = AbstractClient.getHgRoot(res);
-            String output = HgStatusClient.getStatusWithoutIgnored(root, res);
             monitor.worked(1);
-
             changed = parseStatus(root, res, output);
-            monitor.worked(1);
-
-            try {
-                String mergeNode = HgStatusClient.getMergeStatus(res);
-                project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
-            } catch (CoreException e) {
-                throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
-            }
-            changed.addAll(checkForConflict(project));
-        } finally {
-            lock.unlock();
         }
         monitor.worked(1);
-        notifyChanged(changed);
+
+        try {
+            String mergeNode = HgStatusClient.getMergeStatus(res);
+            project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
+        } catch (CoreException e) {
+            throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+        }
+        changed.addAll(checkForConflict(project));
+        monitor.worked(1);
+        notifyChanged(changed, false);
 
         monitor.worked(1);
         return changed;
@@ -573,16 +516,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     private Set<IResource> parseStatus(HgRoot root, final IResource res, String output) {
         IProject project = res.getProject();
         if (res.getType() == IResource.PROJECT) {
-            knownStatus.put(project, DUMMY);
+            knownStatus.put(project, root);
         }
         // we need the project for performance reasons - gotta hand it to
         // addToProjectResources
         Set<IResource> changed = new HashSet<IResource>();
+        IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
         Scanner scanner = new Scanner(output);
         while (scanner.hasNext()) {
             String status = scanner.next();
             String localName = scanner.nextLine().trim();
-
             IResource member = convertRepoRelPath(root, project, localName);
 
             // doesn't belong to our project (can happen if root is above project level)
@@ -591,7 +534,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 if(getBitIndex(status.charAt(0)) == BIT_REMOVED){
                     IPath path = new Path(new File(root, localName).getAbsolutePath());
                     // creates a handle to non-existent file. This is ok.
-                    member = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(path);
+                    member = workspaceRoot.getFileForLocation(path);
                     if(member == null || !member.getProject().equals(project)) {
                         continue;
                     }
@@ -610,7 +553,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             }
             statusMap.put(member.getLocation(), bitSet);
 
-            if (!ignoredHint && member.getType() == IResource.FILE && getBitIndex(status.charAt(0)) != BIT_IGNORE) {
+            if (!ignoredHint && member.getType() == IResource.FILE
+                    && getBitIndex(status.charAt(0)) != BIT_IGNORE) {
                 addToProjectResources(project, member);
             }
 
@@ -625,7 +569,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         Set<IResource> ancestors = new HashSet<IResource>();
         boolean computeDeep = isComputeDeepStatus();
         boolean complete = isCompleteStatus();
-        IResource parent = resource.getParent();
+        IContainer parent = resource.getParent();
         for (; parent != null && parent != project.getParent(); parent = parent.getParent()) {
             IPath location = parent.getLocation();
             BitSet parentBitSet = statusMap.get(location);
@@ -675,7 +619,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public int getBitIndex(char status) {
         switch (status) {
         case '!':
-            return BIT_DELETED;
+            return BIT_MISSING;
         case 'R':
             return BIT_REMOVED;
         case 'I':
@@ -700,8 +644,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      */
     private char getStatusChar(int bitIndex) {
         switch (bitIndex) {
-        case BIT_DELETED:
-            return CHAR_DELETED;
+        case BIT_MISSING:
+            return CHAR_MISSING;
         case BIT_REMOVED:
             return CHAR_REMOVED;
         case BIT_IGNORE:
@@ -816,14 +760,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 // call hg with batch
                 HgRoot root = AbstractClient.getHgRoot(resource);
                 String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
-                changed.addAll(parseStatus(root, resource, output));
+                synchronized (statusUpdateLock) {
+                    changed.addAll(parseStatus(root, resource, output));
+                }
                 currentBatch.clear();
             }
         }
         if(!resources.isEmpty()) {
             changed.addAll(checkForConflict(project));
         }
-        notifyChanged(changed);
+        notifyChanged(changed, false);
         return changed;
     }
 
@@ -839,52 +785,45 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      */
     public Set<IResource> getLocalMembers(IResource resource) {
         Set<IResource> members = new HashSet<IResource>();
-        ReentrantLock lock = getLock(resource);
-        try {
-            lock.lock();
-            switch (resource.getType()) {
-            case IResource.FILE:
-                break;
-            case IResource.PROJECT:
-                synchronized (projectResources) {
-                    Set<IResource> resources = projectResources.get(resource);
-                    if (resources != null) {
-                        members.addAll(resources);
-                        members.remove(resource);
-                    }
-                }
-                break;
-            case IResource.FOLDER:
-                for (IPath memberPath : statusMap.keySet()) {
-                    if (memberPath.equals(resource.getLocation())) {
-                        continue;
-                    }
-
-                    IContainer container = (IContainer) resource;
-                    IResource foundMember = container.findMember(memberPath, false);
-                    if (foundMember != null) {
-                        members.add(foundMember);
-                    }
+        switch (resource.getType()) {
+        case IResource.FILE:
+            break;
+        case IResource.PROJECT:
+            synchronized (projectResources) {
+                Set<IResource> resources = projectResources.get(resource);
+                if (resources != null) {
+                    members.addAll(resources);
+                    members.remove(resource);
                 }
             }
-            members.remove(resource);
-            return members;
-        } finally {
-            lock.unlock();
+            break;
+        case IResource.FOLDER:
+            for (IPath memberPath : statusMap.keySet()) {
+                if (memberPath.equals(resource.getLocation())) {
+                    continue;
+                }
+
+                IContainer container = (IContainer) resource;
+                IResource foundMember = container.findMember(memberPath, false);
+                if (foundMember != null) {
+                    members.add(foundMember);
+                }
+            }
         }
+        members.remove(resource);
+        return members;
     }
 
-    public void clear(IProject project) {
-        ReentrantLock lock = getLock(project);
-        try {
-            lock.lock();
-            Set<IResource> members = getMembers(project);
+    public void clear(IProject project, boolean notify) {
+        Set<IResource> members = getMembers(project);
+        synchronized (statusUpdateLock) {
             for (IResource resource : members) {
                 statusMap.remove(resource.getLocation());
             }
             statusMap.remove(project.getLocation());
-        } finally {
-            lock.unlock();
+        }
+        if(notify) {
+            notifyChanged(project, false);
         }
     }
 
@@ -918,12 +857,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             return true;
         }
         return false;
-    }
-
-    @Override
-    public void notifyChanged(Set<IResource> resources) {
-        setChanged();
-        notifyObservers(resources);
     }
 
     private void initPreferences(){

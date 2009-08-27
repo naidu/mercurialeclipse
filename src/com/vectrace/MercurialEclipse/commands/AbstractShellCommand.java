@@ -40,7 +40,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  * @author bastian
  *
  */
-public abstract class AbstractShellCommand {
+public abstract class AbstractShellCommand extends AbstractClient {
 
     public static final int DEFAULT_TIMEOUT = 360000;
 
@@ -48,7 +48,8 @@ public abstract class AbstractShellCommand {
         private final InputStream stream;
         private final OutputStream output;
 
-        public InputStreamConsumer(InputStream stream, OutputStream output) {
+        public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
+            super(name);
             this.output = output;
             this.stream = new BufferedInputStream(stream);
         }
@@ -67,7 +68,7 @@ public abstract class AbstractShellCommand {
                 }
             } finally {
                 try {
-                    this.stream.close();
+                    stream.close();
                 } catch (IOException e) {
                     HgClients.logError(e);
                 }
@@ -84,24 +85,23 @@ public abstract class AbstractShellCommand {
     protected String command;
     protected List<String> commands;
     protected boolean escapeFiles;
-    protected List<String> options = new ArrayList<String>();
+    protected List<String> options;
     protected File workingDir;
-    final List<String> files = new ArrayList<String>();
+    protected final List<String> files;
 
     private String timeoutConstant;
     private InputStreamConsumer consumer;
     private Process process;
     private boolean showOnConsole = true;
 
-    // private HgConsole console;
-
     protected AbstractShellCommand() {
-        // this.console = MercurialUtilities.getMercurialConsole();
+        super();
+        options = new ArrayList<String>();
+        files = new ArrayList<String>();
     }
 
     public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
         this();
-        this.command = null;
         this.escapeFiles = escapeFiles;
         this.workingDir = workingDir;
         this.commands = commands;
@@ -109,21 +109,20 @@ public abstract class AbstractShellCommand {
 
     public void addOptions(String... optionsToAdd) {
         for (String option : optionsToAdd) {
-            this.options.add(option);
+            options.add(option);
         }
     }
 
     public byte[] executeToBytes() throws HgException {
         int timeout = DEFAULT_TIMEOUT;
-        if (this.timeoutConstant != null) {
-            timeout = HgClients.getTimeOut(this.timeoutConstant);
-
+        if (timeoutConstant != null) {
+            timeout = HgClients.getTimeOut(timeoutConstant);
         }
         return executeToBytes(timeout);
     }
 
     public byte[] executeToBytes(int timeout) throws HgException {
-        return this.executeToBytes(timeout, true);
+        return executeToBytes(timeout, true);
     }
 
     /**
@@ -184,7 +183,7 @@ public abstract class AbstractShellCommand {
                 builder.directory(workingDir);
             }
             process = builder.start();
-            consumer = new InputStreamConsumer(process.getInputStream(), output);
+            consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
             consumer.start();
 
             logConsoleCommandInvoked(commandInvoked);
@@ -222,18 +221,12 @@ public abstract class AbstractShellCommand {
         }
     }
 
-    /**
-     * @param commandInvoked
-     */
     protected void logConsoleCommandInvoked(final String commandInvoked) {
         if (showOnConsole) {
             new SafeWorkspaceJob("Writing to console") {
                 @Override
                 public IStatus runSafe(IProgressMonitor monitor) {
-                    monitor.beginTask("Writinng to console", 2);
-                    monitor.worked(1);
                     getConsole().commandInvoked(commandInvoked);
-                    monitor.worked(1);
                     monitor.done();
                     return super.runSafe(monitor);
                 }
@@ -241,18 +234,12 @@ public abstract class AbstractShellCommand {
         }
     }
 
-    /**
-     * @param msg
-     */
     protected void logConsoleMessage(final String msg, final Throwable t) {
         if (showOnConsole) {
             new SafeWorkspaceJob("Writing to console") {
                 @Override
                 public IStatus runSafe(IProgressMonitor monitor) {
-                    monitor.beginTask("Writinng to console", 2);
-                    monitor.worked(1);
                     getConsole().printMessage(msg, t);
-                    monitor.worked(1);
                     monitor.done();
                     return super.runSafe(monitor);
                 }
@@ -260,23 +247,16 @@ public abstract class AbstractShellCommand {
         }
     }
 
-    /**
-     * @param msg
-     * @param hgEx
-     */
     protected void logConsoleError(final String msg, final HgException hgEx) {
         if (showOnConsole) {
             new SafeWorkspaceJob("Writing to console...") {
                 @Override
                 public IStatus runSafe(IProgressMonitor monitor) {
-                    monitor.beginTask("Writinng to console", 2);
-                    monitor.worked(1);
                     if (msg != null) {
                         getConsole().printError(msg, hgEx);
                     } else {
                         getConsole().printError(hgEx.getMessage(), hgEx);
                     }
-                    monitor.worked(1);
                     monitor.done();
                     return super.runSafe(monitor);
                 }
@@ -284,20 +264,12 @@ public abstract class AbstractShellCommand {
         }
     }
 
-    /**
-     * @param msg
-     * @param exitCode
-     * @param hgex
-     */
     private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
         if (showOnConsole) {
             new SafeWorkspaceJob("Writing to console...") {
                 @Override
                 public IStatus runSafe(IProgressMonitor monitor) {
-                    monitor.beginTask("Writinng to console", 2);
-                    monitor.worked(1);
                     getConsole().commandCompleted(exitCode, msg, hgex);
-                    monitor.worked(1);
                     monitor.done();
                     return super.runSafe(monitor);
                 }
@@ -318,7 +290,6 @@ public abstract class AbstractShellCommand {
                 msg = baos.toString();
             }
         }
-
         return msg;
     }
 
@@ -387,26 +358,20 @@ public abstract class AbstractShellCommand {
 
     public void addFiles(IResource... resources) {
         for (IResource resource : resources) {
-            this.files.add(resource.getLocation().toOSString());
+            files.add(resource.getLocation().toOSString());
         }
     }
 
     public void addFiles(List<? extends IResource> resources) {
         for (IResource resource : resources) {
-            this.files.add(resource.getLocation().toOSString());
+            files.add(resource.getLocation().toOSString());
         }
     }
 
-    /**
-     * @param cloneTimeout
-     */
     public void setUsePreferenceTimeout(String cloneTimeout) {
         this.timeoutConstant = cloneTimeout;
     }
 
-    /**
-     *
-     */
     public void terminate() {
         if (consumer != null) {
             consumer.interrupt();
@@ -414,18 +379,12 @@ public abstract class AbstractShellCommand {
         process.destroy();
     }
 
-    /**
-     * @return the console
-     */
     private IConsole getConsole() {
         return HgClients.getConsole();
     }
 
-    /**
-     * @param b
-     */
     public void setShowOnConsole(boolean b) {
-        this.showOnConsole = b;
+        showOnConsole = b;
     }
 
     @Override

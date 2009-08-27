@@ -12,7 +12,7 @@ import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-public class HgIgnoreClient {
+public class HgIgnoreClient extends AbstractClient {
 
 	public static void addExtension(IFile file) throws HgException {
 		addPattern(file.getProject(), "regexp", escape("."+file.getFileExtension())+"$"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -67,7 +67,7 @@ public class HgIgnoreClient {
 		//TODO use existing sections
 	    BufferedOutputStream buffer = null;
 		try {
-		    File hgignore = new File(HgRootClient.getHgRoot(project), ".hgignore");
+		    File hgignore = new File(getHgRoot(project), ".hgignore");
 		    // append to file if it exists, else create a new one
 			buffer = new BufferedOutputStream(new FileOutputStream(hgignore,true));
 			// write contents

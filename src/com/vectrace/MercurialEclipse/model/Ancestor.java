@@ -15,8 +15,8 @@ import java.util.Map;
 
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -52,7 +52,7 @@ public class Ancestor {
                             cs1, cs2);
                     ancestor = LocalChangesetCache.getInstance()
                             .getLocalChangeSet(
-                                    MercurialUtilities.convert(root),
+                                    ResourceUtils.convert(root),
                                     String.valueOf(ancestorIndex), true);
                     CACHE.put(getKey(), ancestor);
                 }

@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 
@@ -52,7 +53,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
         this.added = added;
         cache = MercurialStatusCache.getInstance();
         completeStatus = Boolean
-        .valueOf(
+            .valueOf(
                 HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
                 "false")).booleanValue(); //$NON-NLS-1$
         autoShare = Boolean.valueOf(
@@ -60,114 +61,91 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
                 .booleanValue();
     }
 
-    private IResource getResource(IResource res) {
-        IResource myRes = res;
-        if (completeStatus) {
-            myRes = res.getProject();
-        }
-        return myRes;
-    }
-
     public boolean visit(IResourceDelta delta) throws CoreException {
         IResource res = delta.getResource();
-        // System.out.println("[ME-RV] Flags: "
-        // + Integer.toHexString(delta.getFlags()));
-        // System.out.println("[ME-RV] Kind: "
-        // + Integer.toHexString(delta.getKind()));
-        // System.out.println("[ME-RV] Resource: " + res.getFullPath());
-        if(!res.isAccessible()){
-            return false;
-        }
         if (res.getType() == IResource.ROOT) {
             return true;
         }
         final IProject project = res.getProject();
 
         // handle projects that contain a mercurial repository
-        if (autoShare && delta.getFlags() == IResourceDelta.OPEN
+        if (autoShare && delta.getFlags() == IResourceDelta.OPEN && project.isAccessible()
                 && RepositoryProvider.getProvider(project) == null) {
             autoshareProject(project);
+            // stop tracking changes: after auto-share is completed, we will do a full refresh anyway
+            return false;
         }
 
-        if (!Team.isIgnoredHint(res) && (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) != null)) {
-            if (res.getType() == IResource.FILE && !res.isTeamPrivateMember() && !res.isDerived()) {
-                int flag = delta.getFlags() & MercurialStatusCache.INTERESTING_CHANGES;
-                IResource resource = getResource(res);
-                Set<IResource> addSet = added.get(project);
-                if (addSet == null) {
-                    addSet = new HashSet<IResource>();
-                }
+        if (Team.isIgnoredHint(res) || (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null)
+                || res.isTeamPrivateMember() || res.isDerived()) {
+            return false;
+        }
+        // System.out.println("Observing change on: " + res);
 
-                Set<IResource> removeSet = removed.get(project);
-                if (removeSet == null) {
-                    removeSet = new HashSet<IResource>();
+        // NB: the resource may not exist at this point (deleted/moved)
+        // so any access to the IResource's API should be checked against null
+        if (res.getType() == IResource.FILE) {
+            IResource resource = completeStatus? project : res;
+            switch (delta.getKind()) {
+            case IResourceDelta.ADDED:
+                addResource(added, project, resource);
+                // System.out.println("\t ADDED: " + resource);
+                break;
+            case IResourceDelta.CHANGED:
+                if (hasChangedBits(delta)
+                        && cache.isSupervised(project, ResourceUtils.getPath(res))) {
+                    addResource(changed, project, resource);
+                    // System.out.println("\t CHANGED: " + resource);
                 }
-
-                Set<IResource> changeSet = changed.get(project);
-                if (changeSet == null) {
-                    changeSet = new HashSet<IResource>();
+                break;
+            case IResourceDelta.REMOVED:
+                if (cache.isSupervised(project, ResourceUtils.getPath(res))) {
+                    addResource(removed, project, resource);
+                    // System.out.println("\t REMOVED: " + resource);
                 }
-                // System.out.println("[ME-RV] " + res.getFullPath()
-                // + " interesting? Result: "
-                // + Integer.toHexString(flag));
-                switch (delta.getKind()) {
-                case IResourceDelta.ADDED:
-                    addSet.add(resource);
-                    added.put(project, addSet);
-                    break;
-                case IResourceDelta.CHANGED:
-                    if (flag != 0 && cache.isSupervised(res)) {
-                        changeSet.add(resource);
-                        changed.put(project, changeSet);
-                    }
-                    break;
-                case IResourceDelta.REMOVED:
-                    if (cache.isSupervised(res)) {
-                        removeSet.add(resource);
-                        removed.put(project, removeSet);
-                    }
-                    break;
-                }
+                break;
             }
-            // System.out
-            // .println("[ME-RV] Descending to next level (returning with true)");
-            return true;
         }
-        // System.out.println("[ME-RV] Not descending (returning with false)");
-        return false;
+        return true;
     }
 
-    private void autoshareProject(final IProject project) throws HgException {
-        HgRoot hgRoot;
+
+    private void addResource(Map<IProject, Set<IResource>> map, IProject project, IResource res){
+        Set<IResource> set = map.get(project);
+        if(set == null) {
+            set = new HashSet<IResource>();
+            map.put(project, set);
+        }
+        set.add(res);
+    }
+
+    private boolean hasChangedBits(IResourceDelta delta){
+        return (delta.getFlags() & MercurialStatusCache.MASK_CHANGED) != 0;
+    }
+
+    private void autoshareProject(final IProject project) {
+        final HgRoot hgRoot;
         try {
             hgRoot = MercurialTeamProvider.getHgRoot(project);
             MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
                     + ". Detected repository location: " + hgRoot.getAbsolutePath(), null);
         } catch (HgException e) {
-            hgRoot = null;
-            MercurialEclipsePlugin.logInfo("Autosharing: " + e.getLocalizedMessage(), e);
+            MercurialEclipsePlugin.logInfo("Autosharing failed: " + e.getLocalizedMessage(), e);
+            return;
         }
-        final HgRoot root = hgRoot;
-        if (root != null && root.length() > 0) {
-            final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+        final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 
-            try {
-                new SafeWorkspaceJob(NLS.bind(Messages.mercurialStatusCache_autoshare, project.getName())) {
-
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        try {
-                            new InitOperation(activeWorkbenchWindow, project, root, root.getAbsolutePath())
-                            .run(monitor);
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                        return super.runSafe(monitor);
-                    }
-                }.schedule();
-            } catch (Exception e) {
-                throw new HgException(e.getLocalizedMessage(), e);
+        new SafeWorkspaceJob(NLS.bind(Messages.mercurialStatusCache_autoshare, project.getName())) {
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                try {
+                    new InitOperation(activeWorkbenchWindow, project, hgRoot, hgRoot.getAbsolutePath())
+                    .run(monitor);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+                return super.runSafe(monitor);
             }
-        }
+        }.schedule();
     }
 }

@@ -24,14 +24,14 @@ import com.vectrace.MercurialEclipse.wizards.PullRepoWizard;
 public class PullHandler extends SingleResourceHandler {
 
     @Override
-    protected void run(final IResource resource) throws Exception {        
-        PullRepoWizard pullRepoWizard = new PullRepoWizard(resource);                       
+    protected void run(final IResource resource) throws Exception {
+        PullRepoWizard pullRepoWizard = new PullRepoWizard(resource.getProject());
         WizardDialog pullWizardDialog = new WizardDialog(getShell(),pullRepoWizard);
         pullWizardDialog.open();
         new SafeWorkspaceJob("Refreshing local resources.") {
             /*
              * (non-Javadoc)
-             * 
+             *
              * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
              */
             @Override
@@ -45,7 +45,7 @@ public class PullHandler extends SingleResourceHandler {
                 return super.runSafe(monitor);
             }
         }.schedule();
-        
+
     }
 
 }

@@ -17,17 +17,18 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /**
  * Calls hg strip
- * 
+ *
  * @author bastian
- * 
+ *
  */
 public class HgStripClient {
     /**
      * strip a revision and all later revs on the same branch
-     * 
+     *
      * @param proj
      * @param backup
      * @param changeset
@@ -40,9 +41,9 @@ public class HgStripClient {
         AbstractShellCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        
+
         command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
+
         if (saveUnrelated) {
             command.addOptions("--backup"); //$NON-NLS-1$
         }
@@ -53,6 +54,8 @@ public class HgStripClient {
             command.addOptions("-f"); //$NON-NLS-1$
         }
         command.addOptions(changeset.getChangeset());
-        return command.executeToString();
+        String result = command.executeToString();
+        new RefreshJob("Refreshing hg caches", proj).schedule();
+        return result;
     }
 }

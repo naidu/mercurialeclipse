@@ -26,12 +26,10 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
@@ -348,29 +346,6 @@ public class MercurialUtilities {
         dlg.open();
     }
 
-
-    /**
-     * Get the project for the selection (it use the first element)
-     *
-     * @param selection
-     * @return
-     */
-    public static IProject getProject(IStructuredSelection selection) {
-        Object obj;
-        obj = selection.getFirstElement();
-        if ((obj != null) && (obj instanceof IResource)) {
-            return ((IResource) obj).getProject();
-        }
-        return null;
-    }
-
-    /**
-     * Convenience method to return the OS specific path to the repository.
-     */
-    static public String getRepositoryPath(IProject project) {
-        return project.getLocation().toOSString();
-    }
-
     /**
      * Execute a command via the shell. Can throw HgException if the command
      * does not execute correctly. Exception will contain the error stream from
@@ -395,29 +370,6 @@ public class MercurialUtilities {
         return legacyAdaptor;
     }
 
-    /**
-     * Gets the working directory for an IResource
-     *
-     * @param obj
-     *            the resource we need the working directory for
-     * @return Workingdir of object or null if resource neither project, folder
-     *         or file
-     */
-    public static File getWorkingDir(IResource obj) {
-
-        File workingDir;
-        if (obj.getType() == IResource.PROJECT) {
-            workingDir = (obj.getLocation()).toFile();
-        } else if (obj.getType() == IResource.FOLDER) {
-            workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
-        } else if (obj.getType() == IResource.FILE) {
-            workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
-        } else {
-            workingDir = null;
-        }
-        return workingDir;
-    }
-
     private static class LegacyAdaptor extends HgCommand {
 
         protected LegacyAdaptor(String command, File workingDir,
@@ -439,57 +391,6 @@ public class MercurialUtilities {
         public byte[] executeToBytes() throws HgException {
             return super.executeToBytes();
         }
-    }
-
-    /**
-     * Gets a resources name.
-     *
-     * @param obj
-     *            an IResource
-     * @return the name
-     */
-    public static String getResourceName(IResource obj) {
-        return (obj.getLocation()).lastSegment();
-    }
-
-    /**
-     * Converts a {@link java.io.File} to a workspace resource
-     *
-     * @param file
-     * @return
-     * @throws HgException
-     */
-    public static IResource convert(File file) throws HgException {
-        try {
-            IResource resource;
-            IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-            if (file.isDirectory()) {
-                resource = root.getContainerForLocation(new Path(file
-                        .getCanonicalPath()));
-            } else {
-                resource = root.getFileForLocation(new Path(file
-                        .getCanonicalPath()));
-            }
-            return resource;
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
-    }
-
-    /**
-     * Converts a path to a workspace resource
-     *
-     * @param file
-     * @return the resource or null
-     * @throws HgException
-     */
-    public static IResource convert(String path) throws HgException {
-        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-        IResource resource = root.getFileForLocation(new Path(path));
-        if (resource == null) {
-            resource = root.getContainerForLocation(new Path(path));
-        }
-        return resource;
     }
 
     public static boolean isCommandAvailable(String command,

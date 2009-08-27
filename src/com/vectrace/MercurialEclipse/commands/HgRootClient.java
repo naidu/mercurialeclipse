@@ -16,10 +16,9 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Calls hg root
@@ -27,18 +26,9 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  * @author bastian
  *
  */
-public class HgRootClient {
+public class HgRootClient extends AbstractClient {
 
     private final static Map<File, HgRoot> roots = new HashMap<File, HgRoot>();
-
-    /**
-     * @param resource
-     * @return hg root as <b>canonical file</b> (see {@link File#getCanonicalFile()})
-     * @throws HgException
-     */
-    public static HgRoot getHgRoot(IResource resource) throws HgException {
-        return getHgRoot(resource.getLocation().toFile());
-    }
 
     /**
      * @param file
@@ -49,7 +39,7 @@ public class HgRootClient {
         // HgCommand command = new HgCommand("root", proj, true);
         // return new String(command.executeToBytes(Integer.MAX_VALUE)).replaceAll("\n", "");
 
-        File dir = file.isFile() || !file.exists()? file.getParentFile() : file;
+        File dir = ResourceUtils.getFirstExistingDirectory(file);
         // test if we have the path "as is" already
         HgRoot hgRoot = roots.get(dir);
         if(hgRoot != null){

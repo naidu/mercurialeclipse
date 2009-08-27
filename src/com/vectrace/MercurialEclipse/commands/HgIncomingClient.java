@@ -1,8 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
+ * reserved. This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Bastian Doetsch - implementation
+ ******************************************************************************/
+
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 
@@ -16,14 +26,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-/*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
- * reserved. This program and the accompanying materials are made available
- * under the terms of the Eclipse Public License v1.0 which accompanies this
- * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
- *
- * Contributors: Bastian Doetsch - implementation
- ******************************************************************************/
 public class HgIncomingClient extends AbstractParseChangesetClient {
 
     /**
@@ -31,9 +33,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      * file. There can be more than one revision per file as this method obtains
      * all new changesets.
      *
-     * @param proj
-     * @param repositories
-     * @return Map containing all revisions of the IResources contained in the
+     * @return Never return null. Map containing all revisions of the IResources contained in the
      *         Changesets. The sorting is ascending by date.
      * @throws HgException
      */
@@ -41,29 +41,30 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             HgRepositoryLocation repository) throws HgException {
         AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
-        command
-        .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        final File bundleFile;
         try {
-            final File bundleFile = File.createTempFile("bundleFile-".concat( //$NON-NLS-1$
-                    res.getProject().getName()).concat("-"), ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
+            bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
+                    res.getProject().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
             bundleFile.deleteOnExit();
-
-
             command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
                     AbstractParseChangesetClient.getStyleFile(true)
                     .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
                     .getCanonicalPath());
+        } catch (IOException e) {
+            throw new HgException(e.getMessage(), e);
+        }
 
-            URI uri = repository.getUri();
-            if (uri != null) {
-                command.addOptions(uri.toASCIIString());
-            } else {
-                command.addOptions(repository.getLocation());
-            }
-
+        URI uri = repository.getUri();
+        if (uri != null) {
+            command.addOptions(uri.toASCIIString());
+        } else {
+            command.addOptions(repository.getLocation());
+        }
+        try {
             String result = command.executeToString();
             if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
-                return null;
+                return new HashMap<IPath, SortedSet<ChangeSet>>();
             }
             Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
                     res, result, true,
@@ -71,11 +72,9 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             return revisions;
         } catch (HgException hg) {
             if (hg.getStatus().getCode() == 1) {
-                return null;
+                return new HashMap<IPath, SortedSet<ChangeSet>>();
             }
             throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
-        } catch (IOException e) {
-            throw new HgException(e.getMessage(), e);
         }
     }
 }

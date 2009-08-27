@@ -1,25 +1,29 @@
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class HgCatClient {
+public class HgCatClient extends AbstractClient {
 
-    public static String getContent(IFile file, String revision)
+    public static String getContent(IFile resource, String revision)
             throws HgException {
-        AbstractShellCommand command = new HgCommand("cat", file.getProject() //$NON-NLS-1$
-                .getLocation().toFile(), true);
+        HgRoot hgRoot = getHgRoot(resource);
+        File file = ResourceUtils.getFileHandle(resource);
+        AbstractShellCommand command = new HgCommand("cat", hgRoot, true);
         if (revision != null && revision.length() != 0) {
             command.addOptions("--rev", revision); //$NON-NLS-1$
 
         }
         command.addOptions("--decode"); //$NON-NLS-1$
-        command.addOptions(file.getProjectRelativePath().toOSString());
+        command.addOptions(hgRoot.toRelative(file));
         return command.executeToString();
     }
 

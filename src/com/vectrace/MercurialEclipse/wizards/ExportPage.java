@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     steeven                    - implementation 
+ *     steeven                    - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -21,31 +21,27 @@ import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.LocationChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 
-/*
+/**
  * A wizard page which will allow the user to choose location to export patch.
- * 
+ *
  */
-
 public class ExportPage extends HgWizardPage implements Listener {
 
     protected final List<IResource> resources;
 
-    private HgRoot root;
     private CommitFilesChooser commitFiles;
 
     private LocationChooser locationChooser;
 
-    public ExportPage(List<IResource> resources, HgRoot root) {
+    public ExportPage(List<IResource> resources) {
         super(Messages.getString("ExportWizard.pageName"), Messages //$NON-NLS-1$
                 .getString("ExportWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
         this.resources = resources;
-        this.root = root;
     }
 
     protected boolean validatePage() {
@@ -74,9 +70,7 @@ public class ExportPage extends HgWizardPage implements Listener {
         locationChooser.setLayoutData(data);
 
         // TODO no diff for untracked files, bug?
-        commitFiles = new CommitFilesChooser(composite, true, resources,
-                root,
-                false, false);
+        commitFiles = new CommitFilesChooser(composite, true, resources, false, false);
         commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
         commitFiles.addStateListener(this);
 
@@ -96,13 +90,6 @@ public class ExportPage extends HgWizardPage implements Listener {
         return locationChooser.getCheckedLocation();
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse
-     * .core.runtime.IProgressMonitor)
-     */
     @Override
     public boolean finish(IProgressMonitor monitor) {
         locationChooser.saveSettings();

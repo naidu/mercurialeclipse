@@ -29,7 +29,7 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
         {
             put("added", MercurialStatusCache.BIT_ADDED); //$NON-NLS-1$
             put("clean", MercurialStatusCache.BIT_CLEAN); //$NON-NLS-1$
-            put("deleted", MercurialStatusCache.BIT_DELETED); //$NON-NLS-1$
+            put("deleted", MercurialStatusCache.BIT_MISSING); //$NON-NLS-1$
             put("ignore", MercurialStatusCache.BIT_IGNORE); //$NON-NLS-1$
             put("modified", MercurialStatusCache.BIT_MODIFIED); //$NON-NLS-1$
             put("removed", MercurialStatusCache.BIT_REMOVED); //$NON-NLS-1$

@@ -37,11 +37,10 @@ import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- * 
+ *
  */
 public class TagDialog extends Dialog {
 
-    boolean revisionsLoaded;
     private final IProject project;
 
     // main TabItem
@@ -126,7 +125,7 @@ public class TagDialog extends Dialog {
         label.setText(Messages.getString("TagDialog.existingTags")); //$NON-NLS-1$
         label.setLayoutData(createGridData(1));
 
-        final TagTable table = new TagTable(composite);
+        final TagTable table = new TagTable(composite, project);
         table.hideTip();
         GridData data = new GridData(GridData.FILL_BOTH);
         data.heightHint = 150;
@@ -223,7 +222,7 @@ public class TagDialog extends Dialog {
                     if (changeset != null) {
                     targetRevision = Integer.toString(changeset
                             .getChangesetIndex());
-                }                
+                }
             }
         });
 

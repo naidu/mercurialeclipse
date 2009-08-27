@@ -4,14 +4,14 @@ import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class HgUpdateClient {
 
     public static void update(final IProject project, String revision, boolean clean)
             throws HgException {
         AbstractShellCommand command = new HgCommand("update", project, false); //$NON-NLS-1$
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
         if (revision != null) {
             command.addOptions("-r", revision); //$NON-NLS-1$
         }
@@ -21,5 +21,6 @@ public class HgUpdateClient {
         command.executeToBytes();
 
         new RefreshWorkspaceStatusJob(project).schedule();
+        new RefreshJob("Refreshing " + project.getName(), project).schedule();
     }
 }

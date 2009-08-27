@@ -14,22 +14,19 @@ package com.vectrace.MercurialEclipse.commands;
 import java.net.URI;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class HgPushPullClient extends AbstractClient {
 
     public static String push(IProject project, HgRepositoryLocation repo,
             boolean force, String revision, int timeout) throws HgException {
         AbstractShellCommand command = new HgCommand("push", project, true); //$NON-NLS-1$
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
         if (force) {
             command.addOptions("-f"); //$NON-NLS-1$
@@ -40,30 +37,17 @@ public class HgPushPullClient extends AbstractClient {
         }
 
         addRepoToHgCommand(repo, command);
-        String result = new String(command.executeToBytes(timeout));
-
-        updateAfterPush(result, project, repo);
-        return result;
+        return new String(command.executeToBytes(timeout));
     }
 
-    protected static void updateAfterPush(String result, IProject project, HgRepositoryLocation repo) throws HgException {
-        if (result.length() != 0) {
-            HgClients.getConsole().printMessage(result, null);
-        }
 
-        // It appears good. Stash the repo location.
-        MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
-                repo);
 
-        OutgoingChangesetCache.getInstance().clear(repo);
-    }
-
-    public static String pull(IResource resource,
+    public static String pull(IProject project,
             HgRepositoryLocation location, boolean update) throws HgException {
-        return pull(resource, null, location, update, false, false, false);
+        return pull(project, null, location, update, false, false, false);
     }
 
-    public static String pull(IResource resource, ChangeSet changeset,
+    public static String pull(IProject project, ChangeSet changeset,
             HgRepositoryLocation repo, boolean update, boolean rebase,
             boolean force, boolean timeout) throws HgException {
 
@@ -75,18 +59,14 @@ public class HgPushPullClient extends AbstractClient {
             pullSource = repo.getLocation();
         }
 
-        return pull(resource, changeset, pullSource, update, rebase, force,
-                timeout);
+        return pull(project, changeset, pullSource, update, rebase, force, timeout);
     }
 
-    public static String pull(IResource resource, ChangeSet changeset,
+    public static String pull(IProject project, ChangeSet changeset,
             String pullSource, boolean update, boolean rebase,
             boolean force, boolean timeout) throws HgException {
-        IResource workDir = resource;
-        if (resource.getType() == IResource.FILE) {
-            workDir = resource.getParent();
-        }
-        AbstractShellCommand command = new HgCommand("pull", workDir.getLocation() //$NON-NLS-1$
+
+        AbstractShellCommand command = new HgCommand("pull", project.getLocation() //$NON-NLS-1$
                 .toFile(), true);
 
         if (update) {
@@ -107,15 +87,15 @@ public class HgPushPullClient extends AbstractClient {
 
         String result;
         if (timeout) {
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
             result = new String(command.executeToBytes());
         } else {
-            result= new String(command.executeToBytes(Integer.MAX_VALUE));
+            result = new String(command.executeToBytes(Integer.MAX_VALUE));
         }
         if(update) {
-            new RefreshWorkspaceStatusJob(resource.getProject()).schedule();
+            new RefreshWorkspaceStatusJob(project).schedule();
         }
+        new RefreshJob("Refreshing " + project.getName(), project).schedule();
         return result;
     }
 }

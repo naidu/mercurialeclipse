@@ -20,8 +20,6 @@ import org.eclipse.core.runtime.Status;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
     private final IProject project;
@@ -45,9 +43,6 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
             // refresh resources
             project.refreshLocal(IResource.DEPTH_INFINITE, null);
 
-            // refresh status for resources
-            MercurialStatusCache.getInstance().refreshStatus(project, monitor);
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
             return super.runSafe(monitor);
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);

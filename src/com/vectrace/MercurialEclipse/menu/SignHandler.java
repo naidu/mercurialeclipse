@@ -25,7 +25,7 @@ public class SignHandler extends SingleResourceHandler {
         SignWizard signWizard = new SignWizard(project);
         WizardDialog dialog = new WizardDialog(getShell(), signWizard);
         dialog.open();
-        new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"),null, project).schedule(); //$NON-NLS-1$
+        new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
     }
 
 }

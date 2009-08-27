@@ -47,8 +47,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.team.internal.core.subscribers.ActiveChangeSet;
-import org.eclipse.team.internal.core.subscribers.ChangeSet;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 import org.eclipse.ui.texteditor.AnnotationPreference;
@@ -62,12 +60,9 @@ import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
-import com.vectrace.MercurialEclipse.mapping.HgActiveChangeSetCollector;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
-import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -89,8 +84,8 @@ public class CommitDialog extends TitleAreaDialog {
     private Combo oldCommitComboBox;
     private ISourceViewer commitTextBox;
     private CommitFilesChooser commitFilesList;
-    private boolean selectableFiles;
-    private final HgRoot root;
+    /** set to false if used during merge operation*/
+    private boolean allowFileSelection;
     private List<IResource> resourcesToAdd;
     private List<IResource> resourcesToCommit;
     private List<IResource> resourcesToRemove;
@@ -98,26 +93,24 @@ public class CommitDialog extends TitleAreaDialog {
     private final IDocument commitTextDocument;
     private SourceViewerDecorationSupport decorationSupport;
     private final List<IResource> inResources;
+    private IResource mergeProject;
     private Text userTextField;
     private String user;
     private Button revertCheckBox;
-    private final HgActiveChangeSetCollector csManager;
 
-    public CommitDialog(Shell shell, HgRoot root, List<IResource> resources) {
+    public CommitDialog(Shell shell, List<IResource> resources) {
         super(shell);
         setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
         setBlockOnOpen(false);
-        this.root = root;
-        this.inResources = resources;
-        this.selectableFiles = true;
-        this.commitTextDocument = new Document();
-        csManager = MercurialEclipsePlugin.getDefault().createChangeSetManager();
+        inResources = resources;
+        allowFileSelection = true;
+        commitTextDocument = new Document();
     }
 
-    public CommitDialog(Shell shell, HgRoot root, ArrayList<IResource> selectedResource, String defaultCommitMessage,
-            boolean selectableFiles) {
-        this(shell, root, selectedResource);
-        this.selectableFiles = selectableFiles;
+    public CommitDialog(Shell shell, IProject mergeProject, String defaultCommitMessage) {
+        this(shell, null);
+        this.mergeProject = mergeProject;
+        this.allowFileSelection = false;
         this.defaultCommitMessage = defaultCommitMessage;
     }
 
@@ -172,7 +165,15 @@ public class CommitDialog extends TitleAreaDialog {
 
     private void createFilesList(Composite container) {
         SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-        commitFilesList = new CommitFilesChooser(container, selectableFiles, this.inResources, this.root, true, true);
+        List<IResource> resources;
+        if (allowFileSelection) {
+            resources = inResources;
+        } else {
+            resources = new ArrayList<IResource>();
+            resources.add(mergeProject);
+        }
+
+        commitFilesList = new CommitFilesChooser(container, allowFileSelection, resources, true, true);
     }
 
     private void createUserCommitCombo(Composite container) {
@@ -278,19 +279,11 @@ public class CommitDialog extends TitleAreaDialog {
                 user = HgClients.getDefaultUserName();
             }
 
-            if (!selectableFiles) {
-                // commit merge
-                CommitMergeHandler.commitMerge(inResources.get(0), messageToCommit);
+            if (!allowFileSelection) {
+                // it was a commit after merge
+                CommitMergeHandler.commitMerge(mergeProject.getProject(), messageToCommit);
             } else {
                 HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
-            }
-
-            if (inResources.size() > 0) {
-                // XXX fix for not refreshing after commit?
-                IProject project = inResources.get(0).getProject();
-                HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(project);
-                new RefreshJob(Messages.getString("CommitDialog.refreshing"), repoLocation, //$NON-NLS-1$
-                        project).schedule();
             }
 
             if (revertCheckBox.getSelection()) {
@@ -311,7 +304,12 @@ public class CommitDialog extends TitleAreaDialog {
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
                 ActionRevert action = new ActionRevert();
-                action.doRevert(monitor, revertResources, false);
+                try {
+                    action.doRevert(monitor, revertResources, false);
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logError(e);
+                    return e.getStatus();
+                }
                 return super.runSafe(monitor);
             }
         }.schedule();
@@ -322,62 +320,12 @@ public class CommitDialog extends TitleAreaDialog {
     }
 
     private void setupDefaultCommitMessage() {
-        String msg = getProposedComment(inResources.toArray(new IResource[inResources.size()]));
-        if (msg != null && msg.length() > 0) {
-            commitTextDocument.set(msg);
-        } else {
-            commitTextDocument.set(defaultCommitMessage);
-            commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
-        }
+        commitTextDocument.set(defaultCommitMessage);
+        commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
     }
 
     public String getUser() {
         return user;
-    }
-
-    /**
-     * Get a proposed comment by looking at the active change sets
-     */
-    private String getProposedComment(IResource[] resourcesToCommit) {
-        StringBuffer comment = new StringBuffer();
-        ChangeSet[] sets = csManager.getSets();
-
-        int numMatchedSets = 0;
-        for (int i = 0; i < sets.length; i++) {
-            ChangeSet set = sets[i];
-            if (isUserSet(set) && containsOne(set, resourcesToCommit)) {
-                if (numMatchedSets > 0) {
-                    comment.append(System.getProperty("line.separator")); //$NON-NLS-1$
-                }
-                comment.append(set.getComment());
-                numMatchedSets++;
-            }
-        }
-        return comment.toString();
-    }
-
-    private boolean isUserSet(ChangeSet set) {
-        if (set instanceof ActiveChangeSet) {
-            ActiveChangeSet acs = (ActiveChangeSet) set;
-            return acs.isUserCreated();
-        }
-        return false;
-    }
-
-    private boolean containsOne(ChangeSet set, IResource[] resourcesToCommit) {
-        for (int j = 0; j < resourcesToCommit.length; j++) {
-            IResource resource = resourcesToCommit[j];
-            if (set.contains(resource)) {
-                return true;
-            }
-            if (set instanceof ActiveChangeSet) {
-                ActiveChangeSet acs = (ActiveChangeSet) set;
-                if (acs.getDiffTree().members(resource).length > 0) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 }

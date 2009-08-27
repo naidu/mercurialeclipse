@@ -70,7 +70,7 @@ public class RebaseOperation extends HgOperation {
                     baseRev, destRev, collapse, cont, abort);                       
             monitor.worked(1);            
             monitor.subTask(Messages.getString("RebaseOperation.refreshing")); //$NON-NLS-1$
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res);
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(res, true);
             monitor.worked(1);
         } catch (HgException e) {
             throw new InvocationTargetException(e, e.getLocalizedMessage());

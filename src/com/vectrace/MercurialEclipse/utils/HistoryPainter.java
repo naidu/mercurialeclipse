@@ -36,8 +36,8 @@ public class HistoryPainter {
 			SWT.COLOR_DARK_CYAN };
 
 	private HistoryPainterRevision roof;
-	private SortedSet<HistoryPainterRevision> revisions = new TreeSet<HistoryPainterRevision>();
-	private SortedSet<HistoryPainterEdge> startedEdges = new TreeSet<HistoryPainterEdge>();
+	private final SortedSet<HistoryPainterRevision> revisions = new TreeSet<HistoryPainterRevision>();
+	private final SortedSet<HistoryPainterEdge> startedEdges = new TreeSet<HistoryPainterEdge>();
 
 	private List<HistoryPainterRevision> searchList;
 
@@ -101,7 +101,7 @@ public class HistoryPainter {
 				// set lane of edge target revision
 				parent.setLane(parentLane);
 			}
-			
+
 			rev.setLanes(Math.max(lane, startedEdges.size()));
 		}
 	}
@@ -148,8 +148,6 @@ public class HistoryPainter {
 
 		int index = Collections.binarySearch(searchList, key);
 		HistoryPainterRevision rev = searchList.get(index);
-
-		System.out.println(rev.toString());
 
 		// draw lane with revision circles
 		for (int currLane = 0; currLane < rev.getLanes(); currLane++) {
@@ -206,7 +204,7 @@ public class HistoryPainter {
 	private void drawBranch(HistoryPainterRevision rev, int pad, GC gc,
 			int arcOffsetY, int startX, int endY) {
 		// arc out to outgoingEdges, if they are in different lanes
-		for (HistoryPainterRevision parent : rev.getParents()) {			
+		for (HistoryPainterRevision parent : rev.getParents()) {
 			int circleWidth = pad
 					* Math.abs(rev.getLane() - parent.getLane());
 

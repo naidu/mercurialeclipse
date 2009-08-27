@@ -35,7 +35,7 @@ public class UntrackedFilesFilter extends ViewerFilter
             if (status == MercurialStatusCache.CHAR_UNKNOWN) {
                 return false;
             }
-            if (!allowMissing && status == MercurialStatusCache.CHAR_DELETED) {
+            if (!allowMissing && status == MercurialStatusCache.CHAR_MISSING) {
                 return false;
             }
         }

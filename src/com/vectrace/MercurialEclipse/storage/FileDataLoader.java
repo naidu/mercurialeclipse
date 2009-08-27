@@ -12,21 +12,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.SortedSet;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 
-import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-
 public class FileDataLoader extends DataLoader {
 
-	private IFile file;
+	private final IFile file;
 
 	public FileDataLoader(IFile file) {
 		this.file = file;
@@ -37,21 +28,4 @@ public class FileDataLoader extends DataLoader {
 		return file.getProject();
 	}
 
-	@Override
-	public ChangeSet[] getRevisions() throws HgException {
-	    LocalChangesetCache.getInstance().refreshAllLocalRevisions(file, false);
-		SortedSet<ChangeSet> csSet = LocalChangesetCache.getInstance().getLocalChangeSets(file);
-		
-		if (IncomingChangesetCache.getInstance().isIncomingStatusKnown(
-				getProject())) {
-			SortedSet<ChangeSet> incomingChangeSets = IncomingChangesetCache.getInstance().getIncomingChangeSets(file);
-			csSet.addAll(incomingChangeSets);
-		}		
-		
-		ChangeSet[] changeSetArray = csSet.toArray(
-				new ChangeSet[csSet.size()]);
-		Collections.reverse(Arrays.asList(changeSetArray));
-		super.changeSets = changeSetArray;
-		return changeSets;
-	}
 }

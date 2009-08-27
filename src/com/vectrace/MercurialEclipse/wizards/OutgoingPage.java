@@ -28,27 +28,16 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class OutgoingPage extends IncomingPage {
     private boolean svn;
     private class GetOutgoingOperation extends HgOperation {
-        
-        /**
-         * @param context
-         */
+
         public GetOutgoingOperation(IRunnableContext context) {
             super(context);
-
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see
-         * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
-         * ()
-         */
         @Override
         protected String getActionDescription() {
             return Messages.getString("OutgoingPage.getOutgoingOperation.description"); //$NON-NLS-1$
@@ -65,30 +54,24 @@ public class OutgoingPage extends IncomingPage {
         }
 
         private SortedSet<ChangeSet> getOutgoingInternal() {
+            if (isSvn()) {
+                return new TreeSet<ChangeSet>();
+            }
+            HgRepositoryLocation remote = getLocation();
             try {
-                if (!isSvn()) {
-                    HgRepositoryLocation remote = getLocation();
-                    SortedSet<ChangeSet> changesets = OutgoingChangesetCache
-                            .getInstance().getOutgoingChangeSets(getProject(),
-                                    remote);
-                    if (changesets != null) {
-                        SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
-                                Collections.reverseOrder());
-                        revertedSet.addAll(changesets);
-                        return revertedSet;
-                    }
-                }
+                SortedSet<ChangeSet> changesets = OutgoingChangesetCache
+                        .getInstance().getOutgoingChangeSets(getProject(), remote);
+                SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+                revertedSet.addAll(changesets);
+                return revertedSet;
             } catch (HgException e) {
                 MercurialEclipsePlugin.showError(e);
+                return new TreeSet<ChangeSet>();
             }
-            return new TreeSet<ChangeSet>();
         }
 
     }
 
-    /**
-     * @param pageName
-     */
     protected OutgoingPage(String pageName) {
         super(pageName);
         this.setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
@@ -97,27 +80,15 @@ public class OutgoingPage extends IncomingPage {
                         + Messages.getString("OutgoingPage.description2")); //$NON-NLS-1$
     }
 
-    /**
-     * @param outgoingInternal
-     */
     public void setChangeSets(SortedSet<ChangeSet> outgoingInternal) {
         super.setChangesets(outgoingInternal);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.IncomingPage#getChangesets()
-     */
     @Override
     public SortedSet<ChangeSet> getChangesets() {
         return super.getChangesets();
     }
 
-    /**
-     * @throws InvocationTargetException
-     * @throws InterruptedException
-     */
     @Override
     protected void getInputForPage() throws InvocationTargetException,
             InterruptedException {
@@ -125,31 +96,17 @@ public class OutgoingPage extends IncomingPage {
                 new GetOutgoingOperation(getContainer()));
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.IncomingPage#createControl(org.
-     * eclipse.swt.widgets.Composite)
-     */
     @Override
     public void createControl(Composite parent) {
         super.createControl(parent);
         getRevisionCheckBox().setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
     }
 
-    /**
-     * @return the svn
-     */
     @Override
     public boolean isSvn() {
         return svn;
     }
 
-    /**
-     * @param svn
-     *            the svn to set
-     */
     @Override
     public void setSvn(boolean svn) {
         this.svn = svn;

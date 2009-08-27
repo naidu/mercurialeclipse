@@ -15,7 +15,6 @@
 package com.vectrace.MercurialEclipse.annotations;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -30,14 +29,18 @@ import java.util.regex.Pattern;
 import org.eclipse.core.resources.IFile;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgFile;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class AnnotateCommand {
     private static final Pattern ANNOTATE = Pattern
             .compile("^\\s*(.+[^ ])\\s+(\\w+)\\s+(\\w+)\\s+(\\w+ \\w+ \\w+ \\w+:\\w+:\\w+ \\w+ [\\+\\-]\\w+).*: (.*)$"); //$NON-NLS-1$
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat(
+
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
             "EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
 
     private final HgFile file;
@@ -47,19 +50,18 @@ public class AnnotateCommand {
     }
 
     public AnnotateBlocks execute() throws HgException {
-        IFile resource = (IFile) MercurialUtilities.convert(file);
+        IFile resource = (IFile) ResourceUtils.convert(file);
 
         if (!MercurialUtilities.hgIsTeamProviderFor(resource, true)) {
             return null;
         }
-        File workingDir = MercurialUtilities.getWorkingDir(resource);
-        String FullPath = MercurialUtilities.getResourceName(resource);
+        HgRoot root = AbstractClient.getHgRoot(resource);
+        String relPath = root.toRelative(resource.getLocation().toFile());
         String launchCmd[] = { MercurialUtilities.getHGExecutable(),
                 "annotate", "--user", "--number", "--changeset", "--date", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-                "--", FullPath }; //$NON-NLS-1$
+                "--", relPath }; //$NON-NLS-1$
 
-        String output = MercurialUtilities.executeCommand(launchCmd,
-                workingDir, true);
+        String output = MercurialUtilities.executeCommand(launchCmd, root, true);
         if (output == null) {
             return null;
         }
@@ -70,14 +72,13 @@ public class AnnotateCommand {
         return createFromStdOut(new InputStreamReader(contents));
     }
 
-    protected static AnnotateBlocks createFromStdOut(Reader contents) {
+    protected static synchronized AnnotateBlocks createFromStdOut(Reader contents) {
         AnnotateBlocks blocks = new AnnotateBlocks();
-        String line = null;
         try {
             BufferedReader reader = new BufferedReader(contents);
             int count = 0;
-            for (line = reader.readLine(); line != null; line = reader
-                    .readLine()) {
+            String line;
+            while ((line = reader.readLine()) != null) {
                 if (line.trim().length() == 0) {
                     // ignore empty lines
                     continue;

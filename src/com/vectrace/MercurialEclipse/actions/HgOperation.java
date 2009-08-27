@@ -29,33 +29,18 @@ public abstract class HgOperation extends TeamOperation {
 
     protected String result;
 
-    /**
-     * @param part
-     */
     public HgOperation(IWorkbenchPart part) {
         super(part);
     }
 
-    /**
-     * @param context
-     */
     public HgOperation(IRunnableContext context) {
         super(context);
     }
 
-    /**
-     * @param part
-     * @param context
-     */
     public HgOperation(IWorkbenchPart part, IRunnableContext context) {
         super(part, context);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core.runtime.IProgressMonitor)
-     */
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
             InterruptedException {
         // TODO: Would be nice to have something that indicates progress
@@ -63,8 +48,7 @@ public abstract class HgOperation extends TeamOperation {
         monitor.beginTask(getActionDescription(), 1);
 
         try {
-            result = MercurialUtilities.executeCommand(getHgCommand(),
-                    getHgWorkingDir(), true);
+            result = MercurialUtilities.executeCommand(getHgCommand(), getHgWorkingDir(), true);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(
                     getActionDescription() + Messages.getString("HgOperation.failed"), e); //$NON-NLS-1$
@@ -77,7 +61,7 @@ public abstract class HgOperation extends TeamOperation {
         return null;
     }
 
-    protected File getHgWorkingDir() {
+    protected File getHgWorkingDir() throws HgException {
         return null;
     }
 

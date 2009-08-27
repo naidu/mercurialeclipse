@@ -77,6 +77,9 @@ public class HgSubscriberMergeContext extends
         return super.getSyncInfo(resource);
     }
 
-
+    @Override
+    public void dispose() {
+        super.dispose();
+    }
 
 }

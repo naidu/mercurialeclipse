@@ -69,32 +69,15 @@ public class IncomingPage extends HgWizardPage {
 
     private class GetIncomingOperation extends HgOperation {
 
-        /**
-         * @param context
-         */
         public GetIncomingOperation(IRunnableContext context) {
             super(context);
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see
-         * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
-         * ()
-         */
         @Override
         protected String getActionDescription() {
             return Messages.getString("IncomingPage.getIncomingOperation.description"); //$NON-NLS-1$
         }
 
-        /*
-         * (non-Javadoc)
-         *
-         * @see
-         * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
-         * .core.runtime.IProgressMonitor)
-         */
         @Override
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
@@ -106,31 +89,26 @@ public class IncomingPage extends HgWizardPage {
         }
 
         private SortedSet<ChangeSet> getIncomingInternal() {
+            if (isSvn()) {
+                return new TreeSet<ChangeSet>();
+            }
             try {
-                if (!isSvn()) {
-                    HgRepositoryLocation remote = location;
-                    SortedSet<ChangeSet> set = IncomingChangesetCache
-                            .getInstance().getIncomingChangeSets(project,
-                                    remote);
-                    if (set != null) {
-                        SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(
-                                Collections.reverseOrder());
-                        revertedSet.addAll(set);
-                        return revertedSet;
-                    }
-                }
+                SortedSet<ChangeSet> set = IncomingChangesetCache.getInstance().getIncomingChangeSets(
+                        project, location);
+                SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+                revertedSet.addAll(set);
+                return revertedSet;
             } catch (HgException e) {
                 MercurialEclipsePlugin.showError(e);
+                return new TreeSet<ChangeSet>();
             }
-            return new TreeSet<ChangeSet>();
         }
-
     }
 
     protected IncomingPage(String pageName) {
         super(pageName);
-        this.setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
-        this.setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
+        setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
+        setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
     }
 
     @Override
@@ -150,10 +128,6 @@ public class IncomingPage extends HgWizardPage {
         }
     }
 
-    /**
-     * @throws InvocationTargetException
-     * @throws InterruptedException
-     */
     protected void getInputForPage() throws InvocationTargetException,
             InterruptedException {
         getContainer().run(true, false,
@@ -182,7 +156,8 @@ public class IncomingPage extends HgWizardPage {
                 Messages.getString("IncomingPage.columnHeader.global"), //$NON-NLS-1$
                 Messages.getString("IncomingPage.columnHeader.date"), //$NON-NLS-1$
                 Messages.getString("IncomingPage.columnHeader.author"), //$NON-NLS-1$
-                Messages.getString("IncomingPage.columnHeader.branch"), Messages.getString("IncomingPage.columnHeader.summary") }; //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("IncomingPage.columnHeader.branch"), //$NON-NLS-1$
+                Messages.getString("IncomingPage.columnHeader.summary") };  //$NON-NLS-1$
         int[] widths = { 42, 100, 122, 80, 80, 150 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -203,8 +178,8 @@ public class IncomingPage extends HgWizardPage {
         table.setHeaderVisible(true);
         table.setLinesVisible(true);
         titles = new String[] {
-                Messages
-                        .getString("IncomingPage.fileStatusTable.columnTitle.status"), Messages.getString("IncomingPage.fileStatusTable.columnTitle.path") }; //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("IncomingPage.fileStatusTable.columnTitle.status"), //$NON-NLS-1$
+                Messages.getString("IncomingPage.fileStatusTable.columnTitle.path") }; //$NON-NLS-1$
         widths = new int[] { 80, 400 };
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
@@ -214,7 +189,7 @@ public class IncomingPage extends HgWizardPage {
 
         Group group = SWTWidgetHelper.createGroup(container, Messages
                 .getString("IncomingPage.group.title")); //$NON-NLS-1$
-        this.revisionCheckBox = SWTWidgetHelper.createCheckBox(group, Messages
+        revisionCheckBox = SWTWidgetHelper.createCheckBox(group, Messages
                 .getString("IncomingPage.revisionCheckBox.title")); //$NON-NLS-1$
         makeActions();
     }
@@ -285,30 +260,18 @@ public class IncomingPage extends HgWizardPage {
         }
     }
 
-    /**
-     * @param project
-     */
     public void setProject(IProject project) {
         this.project = project;
     }
 
-    /**
-     * @param repo
-     */
     public void setLocation(HgRepositoryLocation repo) {
         this.location = repo;
     }
 
-    /**
-     * @return the revisionCheckBox
-     */
     public Button getRevisionCheckBox() {
         return revisionCheckBox;
     }
 
-    /**
-     * @return the revision
-     */
     public ChangeSet getRevision() {
         return revision;
     }
@@ -317,17 +280,10 @@ public class IncomingPage extends HgWizardPage {
         return changesets;
     }
 
-    /**
-     * @param svn
-     *            the svn to set
-     */
     public void setSvn(boolean svn) {
         this.svn = svn;
     }
 
-    /**
-     * @return the svn
-     */
     public boolean isSvn() {
         return svn;
     }

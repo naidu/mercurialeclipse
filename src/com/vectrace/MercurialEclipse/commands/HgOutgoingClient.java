@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
 
@@ -28,26 +29,29 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
 
+    /**
+     * @return never return null
+     */
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
+        AbstractShellCommand command = getCommand(res);
         try {
-            AbstractShellCommand command = getCommand(res);
             command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
                     .getStyleFile(true).getCanonicalPath());
-            setRepository(repository, command);
-
-            String result = getResult(command);
-            if (result == null) {
-                return null;
-            }
-
-            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
-                    res, result, true, Direction.OUTGOING, repository, null,
-                    getOutgoingPatches(res, repository));
-            return revisions;
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
+        setRepository(repository, command);
+
+        String result = getResult(command);
+        if (result == null) {
+            return new HashMap<IPath, SortedSet<ChangeSet>>();
+        }
+
+        Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+                res, result, true, Direction.OUTGOING, repository, null,
+                getOutgoingPatches(res, repository));
+        return revisions;
     }
 
     private static IFilePatch[] getOutgoingPatches(IResource res,
@@ -64,18 +68,17 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
             }
             return result;
         } catch (HgException hg) {
-            if (hg.getStatus().getCode() == 1) { 
+            if (hg.getStatus().getCode() == 1) {
                 return null;
             }
             throw hg;
         }
     }
 
-    private static AbstractShellCommand getCommand(IResource res) throws HgException {
+    private static AbstractShellCommand getCommand(IResource res) {
         AbstractShellCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
                 false);
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         return command;
     }
 

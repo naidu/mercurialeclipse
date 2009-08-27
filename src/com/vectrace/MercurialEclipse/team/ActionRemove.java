@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -32,7 +31,9 @@ import org.eclipse.ui.IWorkbenchWindowActionDelegate;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -109,15 +110,15 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
             // in the future this could check is this is another repository
 
             // Setup and run command
-            File workingDir = MercurialUtilities.getWorkingDir(resource);
-            launchCmd[4] = MercurialUtilities.getResourceName(resource);
-            if (!confirmRemove(shell, launchCmd[4])) {
-                continue;
-            }
-            projects.add(resource.getProject());
             try {
+                HgRoot root = AbstractClient.getHgRoot(resource);
+                launchCmd[4] = root.toRelative(resource.getLocation().toFile());
+                if (!confirmRemove(shell, launchCmd[4])) {
+                    continue;
+                }
+                projects.add(resource.getProject());
                 String output = MercurialUtilities.executeCommand(
-                        launchCmd, workingDir, false);
+                        launchCmd, root, false);
                 if (output != null) {
                     // output output in a window
                     if (output.length() != 0) {

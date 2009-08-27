@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.util.Set;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -36,29 +38,25 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public final class RefreshJob extends SafeWorkspaceJob {
     private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
             .getInstance();
-    private final HgRepositoryLocation repositoryLocation;
     private final IProject project;
     private final boolean withFiles;
 
-    public RefreshJob(String name, HgRepositoryLocation repositoryLocation,
-            IProject project, boolean withFiles) {
+    public RefreshJob(String name, IProject project, boolean withFiles) {
         super(name);
-        this.repositoryLocation = repositoryLocation;
         this.project = project;
         this.withFiles = withFiles;
     }
 
-    public RefreshJob(String name, HgRepositoryLocation repositoryLocation,
-            IProject project) {
-        super(name);
-        this.repositoryLocation = repositoryLocation;
-        this.project = project;
-        this.withFiles = Boolean
-                .valueOf(
-                        HgClients
-                                .getPreference(
-                                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                                        "false")).booleanValue(); //$NON-NLS-1$
+
+    public RefreshJob(String name, IProject project) {
+        this(name, project, getWithFilesProperty());
+    }
+
+    private static boolean getWithFilesProperty() {
+        return Boolean.valueOf(
+                HgClients.getPreference(
+                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+                        "false")).booleanValue();
     }
 
     @Override
@@ -67,32 +65,28 @@ public final class RefreshJob extends SafeWorkspaceJob {
             monitor = new NullProgressMonitor();
         }
 
-        try {
-            mercurialStatusCache.refreshStatus(project, monitor);
-        } catch (HgException e1) {
-            MercurialEclipsePlugin.logError(e1);
+        if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+            System.out.println("Refresh Job for: " + project);
         }
 
-        monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
         try {
-            monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project,
-                    true, withFiles);
+            monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
+            mercurialStatusCache.clear(project, false);
+            mercurialStatusCache.refreshStatus(project, monitor);
             monitor.worked(1);
-            // incoming
-            if (repositoryLocation != null) {
+
+            monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
+            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
+            monitor.worked(1);
+
+            Set<HgRepositoryLocation> repoLocations = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
+            for (HgRepositoryLocation repositoryLocation : repoLocations) {
                 monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + repositoryLocation);
-                IncomingChangesetCache.getInstance().refreshIncomingChangeSets(
-                        project, repositoryLocation);
+                IncomingChangesetCache.getInstance().clear(repositoryLocation, project, true);
                 monitor.worked(1);
 
                 monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + repositoryLocation);
-                OutgoingChangesetCache.getInstance().refreshOutgoingChangeSets(
-                        project, repositoryLocation);
-                monitor.worked(1);
-
-                monitor.subTask(Messages.refreshJob_AddingRemoteRepositoryToProjectRepositories);
-
+                OutgoingChangesetCache.getInstance().clear(repositoryLocation, project, true);
                 monitor.worked(1);
             }
         } catch (HgException e) {
