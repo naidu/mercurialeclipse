@@ -34,8 +34,13 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
  */
 public class HgSubscriberScopeManager extends SubscriberScopeManager implements Observer {
 
+    public static final int INCOMING = -1;
+    public static final int OUTGOING = -2;
+    public static final int LOCAL = -3;
+
+
     public HgSubscriberScopeManager(ResourceMapping[] inputMappings, MercurialSynchronizeSubscriber subscriber) {
-        super("HgSubscriberScopeManager", inputMappings, subscriber, false);
+        super(HgSubscriberScopeManager.class.getSimpleName(), inputMappings, subscriber, false);
         MercurialStatusCache.getInstance().addObserver(this);
         IncomingChangesetCache.getInstance().addObserver(this);
         OutgoingChangesetCache.getInstance().addObserver(this);
@@ -65,34 +70,32 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
                 }
             }
         }
-        if (changeEvents.size() > 0) {
 
-            if(resources.size() == 1 && projectRefresh){
-                if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-                    System.out.println("! Refresh from: " + o + " : " + resources.size());
-                }
-                int flag = 0;
-                if(o instanceof IncomingChangesetCache){
-                    flag = -1;
-                }
-                if(o instanceof OutgoingChangesetCache){
-                    flag = -2;
-                }
-                if(o instanceof MercurialStatusCache){
-                    flag = -3;
-                }
-                try {
-                    ((MercurialSynchronizeSubscriber)getSubscriber()).refresh(roots, flag, new NullProgressMonitor());
-                } catch (TeamException e) {
-                    // TODO Auto-generated catch block
-                    MercurialEclipsePlugin.logError(e);
-                }
-            } else {
-                if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-                    System.out.println("Refresh from: " + o + " : " + resources.size());
-                }
+        if (changeEvents.size() == 0) {
+            return;
+        }
+
+        if(resources.size() == 1 && projectRefresh){
+            if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+                System.out.println("\n! Refresh from: " + o + " : " + resources.size() + "\n");
             }
-
+            int flag = 0;
+            if (o instanceof IncomingChangesetCache) {
+                flag = INCOMING;
+            } else if (o instanceof OutgoingChangesetCache) {
+                flag = OUTGOING;
+            } else if (o instanceof MercurialStatusCache) {
+                flag = LOCAL;
+            }
+            try {
+                ((MercurialSynchronizeSubscriber)getSubscriber()).refresh(roots, flag, new NullProgressMonitor());
+            } catch (TeamException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        } else {
+            if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+                System.out.println("\nRefresh from: " + o + " : " + resources.size() + "\n");
+            }
             ISubscriberChangeEvent[] deltas = changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]);
             ((MercurialSynchronizeSubscriber)getSubscriber()).fireTeamResourceChange(deltas);
         }

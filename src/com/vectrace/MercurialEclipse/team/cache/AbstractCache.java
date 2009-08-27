@@ -63,6 +63,12 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public abstract class AbstractCache extends Observable {
 
     private final Map<IProject, Map<String, ChangeSet>> changesets = new HashMap<IProject, Map<String, ChangeSet>>();
+    protected final boolean debug;
+
+
+    public AbstractCache() {
+        debug = MercurialEclipsePlugin.getDefault().isDebugging();
+    }
 
     /**
      * @param direction
@@ -73,6 +79,10 @@ public abstract class AbstractCache extends Observable {
             HgRepositoryLocation repository,
             Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> changeSetMap,
             Direction direction) throws HgException {
+
+        if(debug) {
+            System.out.println("\n!fetch " + direction + " for " + project);
+        }
 
         // clear cache of old members
         final Map<IPath, SortedSet<ChangeSet>> removeMap = changeSetMap.get(repository);
