@@ -64,9 +64,9 @@ public final class CommitResourceUtil {
         while (st.hasMoreTokens()) {
             String status = st.nextToken(" ").trim();
             String fileName = st.nextToken("\n").trim();
-            if(status.startsWith("?")){
-                continue;
-            }
+//            if(status.startsWith("?")){
+//                continue;
+//            }
             Path path = new Path(new File(root, fileName).getAbsolutePath());
             IResource statusResource = workspaceRoot.getFileForLocation(path);
             if (!Team.isIgnoredHint(statusResource)) {
