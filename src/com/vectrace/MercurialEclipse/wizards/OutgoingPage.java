@@ -48,7 +48,7 @@ public class OutgoingPage extends IncomingPage {
                 throws InvocationTargetException, InterruptedException {
             monitor.beginTask(Messages.getString("OutgoingPage.getOutgoingOperation.beginTask"), 1); //$NON-NLS-1$
             monitor.subTask(Messages.getString("OutgoingPage.getOutgoingOperation.call")); //$NON-NLS-1$
-            setChangeSets(getOutgoingInternal());
+            setChangesets(getOutgoingInternal());
             monitor.worked(1);
             monitor.done();
         }
@@ -80,7 +80,8 @@ public class OutgoingPage extends IncomingPage {
                         + Messages.getString("OutgoingPage.description2")); //$NON-NLS-1$
     }
 
-    public void setChangeSets(SortedSet<ChangeSet> outgoingInternal) {
+    @Override
+    public void setChangesets(SortedSet<ChangeSet> outgoingInternal) {
         super.setChangesets(outgoingInternal);
     }
 

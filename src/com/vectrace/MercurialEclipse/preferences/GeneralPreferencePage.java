@@ -41,7 +41,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 public class GeneralPreferencePage extends FieldEditorPreferencePage implements
 IWorkbenchPreferencePage {
 
-    private final class LabelDecoratorRadioGroupFieldEditor extends
+    private static final class LabelDecoratorRadioGroupFieldEditor extends
     RadioGroupFieldEditor {
         private LabelDecoratorRadioGroupFieldEditor(String name,
                 String labelText, int numColumns, String[][] labelAndValues,
@@ -57,7 +57,7 @@ IWorkbenchPreferencePage {
         }
     }
 
-    private final class MercurialExecutableFileFieldEditor extends
+    private static final class MercurialExecutableFileFieldEditor extends
     FileFieldEditor {
         private MercurialExecutableFileFieldEditor(String name,
                 String labelText, Composite parent) {
@@ -74,7 +74,7 @@ IWorkbenchPreferencePage {
         }
     }
 
-    private final class GpgExecutableFileFieldEditor extends FileFieldEditor {
+    private static final class GpgExecutableFileFieldEditor extends FileFieldEditor {
         private GpgExecutableFileFieldEditor(String name, String labelText,
                 Composite parent) {
             super(name, labelText, parent);
@@ -155,11 +155,6 @@ IWorkbenchPreferencePage {
         addField(commitSizeEditor);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
-     */
     public void init(IWorkbench workbench) {
     }
 

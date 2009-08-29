@@ -59,7 +59,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ShowAnnotationOperation extends TeamOperation {
-    private final class MercurialRevision extends Revision {
+    private static final class MercurialRevision extends Revision {
         private final CommitterColors colors;
 
         private final ChangeSet entry;
@@ -106,7 +106,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 
     private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
     private final HgFile remoteFile;
-    private IResource res;
+    private final IResource res;
 
     public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
             throws HgException {
@@ -143,7 +143,7 @@ public class ShowAnnotationOperation extends TeamOperation {
                         editor
                                 .showRevisionInformation(
                                         information,
-                                        HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER); //$NON-NLS-1$
+                                        HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER);
 
                     }
                     moni.done();
@@ -158,11 +158,6 @@ public class ShowAnnotationOperation extends TeamOperation {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.team.ui.TeamOperation#getGotoAction()
-     */
     @Override
     protected IAction getGotoAction() {
         return super.getGotoAction();

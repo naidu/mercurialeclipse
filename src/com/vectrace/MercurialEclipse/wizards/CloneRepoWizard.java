@@ -18,11 +18,13 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
@@ -182,18 +184,27 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard {
                 }
             }
 
-        } catch (Exception e) {
-            if (e.getCause() != null) {
-                clonePage.setErrorMessage(e.getCause().getLocalizedMessage());
-            } else {
-                clonePage.setErrorMessage(e.getLocalizedMessage());
-            }
-            MercurialEclipsePlugin.logError(Messages
-                    .getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
-            return false;
+        } catch (InvocationTargetException e) {
+            return handle(e);
+        } catch (InterruptedException e) {
+            return handle(e);
+        } catch (IOException e) {
+            return handle(e);
+        } catch (CoreException e) {
+            return handle(e);
         }
-
         return true;
+    }
+
+    private boolean handle(Exception e) {
+        if (e.getCause() != null) {
+            clonePage.setErrorMessage(e.getCause().getLocalizedMessage());
+        } else {
+            clonePage.setErrorMessage(e.getLocalizedMessage());
+        }
+        MercurialEclipsePlugin.logError(Messages
+                .getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
+        return false;
     }
 
     public void init(IWorkbench workbench, IStructuredSelection selection) {

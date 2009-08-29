@@ -20,69 +20,34 @@ import org.eclipse.core.runtime.CoreException;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgFolder extends HgFilesystemObject {
-    /**
-     * 
-     */
-    private static final long serialVersionUID = 1L;
-    private List<File> projectFiles;
 
-    /**
-     * @param pathname
-     * @throws CoreException
-     * @throws IOException
-     */
+    private static final long serialVersionUID = 1L;
+
     public HgFolder(String pathname) throws IOException, CoreException {
         super(pathname);
     }
 
-    /**
-     * @param uri
-     * @throws CoreException
-     * @throws IOException
-     */
     public HgFolder(URI uri) throws IOException, CoreException {
         super(uri);
     }
 
-    /**
-     * @param parent
-     * @param child
-     * @throws CoreException
-     * @throws IOException
-     */
     public HgFolder(String parent, String child) throws IOException,
             CoreException {
         super(parent, child);
     }
 
-    /**
-     * @param parent
-     * @param child
-     * @throws CoreException
-     * @throws IOException
-     */
     public HgFolder(File parent, String child) throws IOException,
             CoreException {
         super(parent, child);
     }
 
-    /**
-     * @param file
-     * @throws CoreException
-     * @throws IOException
-     */
     public HgFolder(File file) throws IOException, CoreException {
         super(file);
     }
 
-    /**
-     * @return the projectFile
-     * @throws CoreException
-     * @throws IOException
-     */
     public List<File> getProjectFiles() throws IOException, CoreException {
         List<File> pFiles = new ArrayList<File>();
         File[] subFiles = this.listFiles();
@@ -98,8 +63,11 @@ public class HgFolder extends HgFilesystemObject {
                 }
             }
         }
-        projectFiles = pFiles;
-        return this.projectFiles;
+        return pFiles;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
 }

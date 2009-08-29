@@ -8,7 +8,7 @@
  * Contributors:
  *     Gunnar Ahlberg            - implementation
  *     VecTrace (Zingo Andersen) - updateing it
- *     Jérôme Nègre              - adding label decorator section 
+ *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
@@ -37,18 +37,13 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 public class TimeoutPreferencePage extends FieldEditorPreferencePage
         implements IWorkbenchPreferencePage {
 
-   
-    private class TimeoutFieldEditor extends IntegerFieldEditor {
+
+    private static class TimeoutFieldEditor extends IntegerFieldEditor {
         private TimeoutFieldEditor(String name, String labelText,
                 Composite parent) {
             super(name, labelText, parent);
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see org.eclipse.jface.preference.FieldEditor#load()
-         */
         @Override
         public void load() {
             super.load();
@@ -73,7 +68,7 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
      * editor knows how to save and restore itself.
      */
     @Override
-    public void createFieldEditors() {               
+    public void createFieldEditors() {
 
         // timeout preferences
         addField(new TimeoutFieldEditor(
@@ -117,11 +112,6 @@ public class TimeoutPreferencePage extends FieldEditorPreferencePage
                 Messages.getString("TimeoutPreferencePage.field.remove"), getFieldEditorParent())); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
-     */
     public void init(IWorkbench workbench) {
     }
 

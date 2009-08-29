@@ -30,10 +30,10 @@ import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
 public class ImportWizard extends HgWizard {
 
-    private ImportPage sourcePage;
-    private ImportOptionsPage optionsPage;
+    private final ImportPage sourcePage;
+    private final ImportOptionsPage optionsPage;
     private Location location;
-    private IProject project;
+    private final IProject project;
     private String result;
     private ArrayList<String> options;
 
@@ -58,7 +58,7 @@ public class ImportWizard extends HgWizard {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.jface.wizard.Wizard#performFinish()
      */
     @Override
@@ -111,15 +111,21 @@ public class ImportWizard extends HgWizard {
             try {
                 file = ClipboardUtils.clipboardToTempFile("mercurial_", //$NON-NLS-1$
                         ".patch"); //$NON-NLS-1$
-                if (file != null)
+                if (file != null) {
                     HgPatchClient.importPatch(project, file, options);
+                }
             } finally {
-                if (file != null)
-                    file.delete();
+                if (file != null && file.exists()) {
+                    boolean deleted = file.delete();
+                    if(!deleted){
+                        MercurialEclipsePlugin.logError("Failed to delete clipboard content file: " + file, null);
+                    }
+                }
             }
 
-        } else
+        } else {
             HgPatchClient.importPatch(project, location.getFile(), options);
+        }
         project.refreshLocal(0, null);
     }
 }

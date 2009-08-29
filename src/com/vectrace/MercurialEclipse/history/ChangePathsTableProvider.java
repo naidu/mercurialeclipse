@@ -114,7 +114,7 @@ public class ChangePathsTableProvider extends TableViewer {
     private static final int COL_ACTION = 0;
     private static final int COL_PATH = 1;
 
-    private class ChangePathLabelProvider extends LabelProvider implements
+    private static class ChangePathLabelProvider extends LabelProvider implements
             ITableLabelProvider {
         public Image getColumnImage(Object element, int columnIndex) {
             return null;

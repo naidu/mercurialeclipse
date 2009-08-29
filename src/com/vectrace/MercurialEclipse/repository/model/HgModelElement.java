@@ -28,15 +28,15 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public abstract class HgModelElement implements IWorkbenchAdapter, IAdaptable {
 
-    private IRunnableContext runnableContext;
-
     @SuppressWarnings("unchecked")
     public Object getAdapter(Class adapter) {
-        if (adapter == IWorkbenchAdapter.class)
+        if (adapter == IWorkbenchAdapter.class) {
             return this;
+        }
         if ((adapter == IDeferredWorkbenchAdapter.class)
-                && this instanceof IDeferredWorkbenchAdapter)
+                && this instanceof IDeferredWorkbenchAdapter) {
             return this;
+        }
         return null;
     }
 
@@ -83,7 +83,7 @@ public abstract class HgModelElement implements IWorkbenchAdapter, IAdaptable {
 
     /**
      * Method internalGetChildren.
-     * 
+     *
      * @param o
      * @return Object[]
      */
@@ -107,20 +107,17 @@ public abstract class HgModelElement implements IWorkbenchAdapter, IAdaptable {
 
     /**
      * Returns the runnableContext.
-     * 
+     *
      * @return IRunnableContext
      */
     public IRunnableContext getRunnableContext() {
-        if (runnableContext == null) {
-            return new IRunnableContext() {
-                public void run(boolean fork, boolean cancelable,
-                        IRunnableWithProgress runnable)
-                        throws InvocationTargetException, InterruptedException {
-                    MercurialEclipsePlugin.runWithProgress(null, cancelable, runnable);
-                }
-            };
-        }
-        return runnableContext;
+        return new IRunnableContext() {
+            public void run(boolean fork, boolean cancelable,
+                    IRunnableWithProgress runnable)
+                    throws InvocationTargetException, InterruptedException {
+                MercurialEclipsePlugin.runWithProgress(null, cancelable, runnable);
+            }
+        };
     }
 
 }

@@ -20,6 +20,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IProjectDescription;
 import org.eclipse.core.resources.IWorkspace;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -34,7 +35,7 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class CreateProjectOperation extends HgOperation {
 
@@ -45,9 +46,6 @@ public class CreateProjectOperation extends HgOperation {
     private IProject project;
     private final File projectDirectory;
 
-    /**
-     * @param context
-     */
     public CreateProjectOperation(IRunnableContext context,
             File projectDirectory, File projectFile, HgRepositoryLocation repo,
             boolean readProjectFile, String projectName) {
@@ -59,21 +57,11 @@ public class CreateProjectOperation extends HgOperation {
         this.projectDirectory = projectDirectory;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
-     */
     @Override
     protected String getActionDescription() {
         return Messages.getString("CreateProjectOperation.taskDescription"); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core.runtime.IProgressMonitor)
-     */
     @Override
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
     InterruptedException {
@@ -144,7 +132,11 @@ public class CreateProjectOperation extends HgOperation {
             // associate new project with MercurialEclipse
             registerWithTeamProvider(p, monitor);
             this.project = p;
-        } catch (Exception e) {
+        } catch (HgException e) {
+            throw e;
+        } catch (CoreException e) {
+            throw new HgException(e.getMessage(), e);
+        } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
         } finally {
             try {
@@ -152,24 +144,16 @@ public class CreateProjectOperation extends HgOperation {
                     in.close();
                 }
             } catch (IOException e) {
-                // ignore : we cannot read the file, so it's like it is not
-                // there
+                // ignore : we cannot read the file, so it's like it is not there
             }
         }
     }
 
-    /**
-     * @param monitor
-     * @throws InvocationTargetException
-     * @throws HgException
-     */
     private void registerWithTeamProvider(IProject p, IProgressMonitor monitor)
     throws HgException {
         try {
             // Register the project with Team. This will bring all the
-            // files
-            // that
-            // we cloned into the project.
+            // files that we cloned into the project.
             monitor
             .subTask(Messages
                     .getString("CloneRepoWizard.subTask.registeringProject1") + p.getName() //$NON-NLS-1$
@@ -191,9 +175,6 @@ public class CreateProjectOperation extends HgOperation {
         }
     }
 
-    /**
-     * @return the project
-     */
     public IProject getProject() {
         return project;
     }

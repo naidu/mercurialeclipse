@@ -23,18 +23,18 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgServeClient {
 
-    class HgServeJob extends SafeWorkspaceJob {
-        private IResource hgRoot = null;
-        private boolean ipv6;
-        private String name;
-        private String prefix;
-        private int port;
-        private String webdirConf;
-        private boolean stdio;
+    static class HgServeJob extends SafeWorkspaceJob {
+        private final IResource hgRoot;
+        private final boolean ipv6;
+        private final String name;
+        private final String prefix;
+        private final int port;
+        private final String webdirConf;
+        private final boolean stdio;
 
         public HgServeJob(IResource hgRoot, int port, String prefix,
                 String name, String webdirConf, boolean ipv6, boolean stdio) {
@@ -49,11 +49,6 @@ public class HgServeClient {
             this.stdio = stdio;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
-         */
         @Override
         protected IStatus runSafe(IProgressMonitor monitor) {
             try {
@@ -63,11 +58,6 @@ public class HgServeClient {
                 SafeWorkspaceJob job = new SafeWorkspaceJob(
                         Messages.getString("HgServeClient.serverThread.name") + command.getCommands().toString().replace(",", "")) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
-                     */
                     @Override
                     protected IStatus runSafe(IProgressMonitor m) {
                         try {
@@ -96,25 +86,11 @@ public class HgServeClient {
     }
 
     public void serve(IResource hgRoot, int port, String prefixPath,
-            String name, String webdirConf, boolean stdio, boolean ipv6)
-            throws IOException {
+            String name, String webdirConf, boolean stdio, boolean ipv6) {
         new HgServeJob(hgRoot, port, prefixPath, name, webdirConf, ipv6, stdio)
                 .schedule();
     }
 
-    /**
-     * 
-     * @param hgRoot
-     * @param port
-     * @param prefixPath
-     * @param name
-     * @param webdirConf
-     * @param stdio
-     * @param ipv6
-     * @return the command
-     * @throws HgException
-     * @throws IOException
-     */
     private static AbstractShellCommand getCommand(IResource hgRoot, int port,
             String prefixPath, String name, String webdirConf, boolean stdio,
             boolean ipv6) throws IOException {

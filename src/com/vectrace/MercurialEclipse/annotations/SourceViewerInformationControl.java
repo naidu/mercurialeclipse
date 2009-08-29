@@ -8,7 +8,7 @@
  * Contributors:
  *     IBM Corporation   - initial API and implementation
  *     Charles O'Farrell - copy from subclipse
- *     StefanC           - code cleenup 
+ *     StefanC           - code cleenup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
@@ -17,17 +17,30 @@ import java.util.Map;
 
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.text.*;
+import org.eclipse.jface.text.Document;
+import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.IInformationControl;
+import org.eclipse.jface.text.IInformationControlExtension;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
-import org.eclipse.swt.events.*;
-import org.eclipse.swt.graphics.*;
+import org.eclipse.swt.events.DisposeEvent;
+import org.eclipse.swt.events.DisposeListener;
+import org.eclipse.swt.events.FocusListener;
+import org.eclipse.swt.events.KeyEvent;
+import org.eclipse.swt.events.KeyListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.Point;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
 
@@ -36,18 +49,18 @@ import org.eclipse.ui.editors.text.TextSourceViewerConfiguration;
  * Displays information in a source viewer.
  *
  * @since 3.0
- * 
+ *
  * This class is copied from org.eclipse.jface.text.source.projection.SourceViewerInformationControl
  * Several changes are made in order to handle hover for H annotations
  */
 class SourceViewerInformationControl implements IInformationControl, IInformationControlExtension, DisposeListener {
 
-	private final class HgTextSourceViewerConfiguration extends TextSourceViewerConfiguration {
+	private static final class HgTextSourceViewerConfiguration extends TextSourceViewerConfiguration {
 		private HgTextSourceViewerConfiguration(IPreferenceStore store) {
 			super(store);
 		}
 
-		
+
 		    @Override
 			protected Map<String,? extends Object> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
 		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor",  //$NON-NLS-1$
@@ -70,7 +83,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 	/** The control's text widget */
 	private StyledText fText;
 	/** The control's source viewer */
-	private SourceViewer fViewer;
+	private final SourceViewer fViewer;
 	/** The optional status field. */
 	private Label fStatusField;
 	/** The separator for the optional status field. */
@@ -140,7 +153,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		// Source viewer
 		fViewer= new SourceViewer(composite, null, style);
 		fViewer.setEditable(false);
-		
+
 		// configure hyperlink detectors
 		// fViewer.configure(new SourceViewerConfiguration());
 		fViewer.configure(new HgTextSourceViewerConfiguration(EditorsUI.getPreferenceStore()));
@@ -192,10 +205,6 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		addDisposeListener(this);
 	}
 
-	/**
-	 * @see org.eclipse.jface.text.IInformationControlExtension2#setInput(java.lang.Object)
-	 * @param input the input object
-	 */
 	public void setInput(Object input) {
 		if (input instanceof String) {
             setInformation((String)input);
@@ -204,9 +213,6 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
         }
 	}
 
-	/*
-	 * @see IInformationControl#setInformation(String)
-	 */
 	public void setInformation(String content) {
 		if (content == null) {
 			fViewer.setInput(null);
@@ -215,7 +221,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 		IDocument doc= new Document(content);
 		fViewer.setInput(doc);
-		
+
 		// decorate text
 		StyleRange styleRange = new StyleRange();
 		styleRange.start = 0;
@@ -224,16 +230,10 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
     fViewer.getTextWidget().setStyleRange(styleRange);
 	}
 
-	/*
-	 * @see IInformationControl#setVisible(boolean)
-	 */
 	public void setVisible(boolean visible) {
 			fShell.setVisible(visible);
 	}
 
-	/*
-	 * @see org.eclipse.swt.events.DisposeListener#widgetDisposed(org.eclipse.swt.events.DisposeEvent)
-	 */
 	public void widgetDisposed(DisposeEvent event) {
 		if (fStatusTextFont != null && !fStatusTextFont.isDisposed()) {
             fStatusTextFont.dispose();
@@ -244,9 +244,6 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		fText= null;
 	}
 
-	/*
-	 * @see org.eclipse.jface.text.IInformationControl#dispose()
-	 */
 	public final void dispose() {
 		if (fShell != null && !fShell.isDisposed()) {
             fShell.dispose();
@@ -255,9 +252,6 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
         }
 	}
 
-	/*
-	 * @see IInformationControl#setSize(int, int)
-	 */
 	public void setSize(int width, int height) {
 
 		if (fStatusField != null) {
@@ -273,24 +267,15 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
         }
 	}
 
-	/*
-	 * @see IInformationControl#setLocation(Point)
-	 */
 	public void setLocation(Point location) {
 		fShell.setLocation(location);
 	}
 
-	/*
-	 * @see IInformationControl#setSizeConstraints(int, int)
-	 */
 	public void setSizeConstraints(int maxWidth, int maxHeight) {
 		fMaxWidth= maxWidth;
 		fMaxHeight= maxHeight;
 	}
 
-	/*
-	 * @see IInformationControl#computeSizeHint()
-	 */
 	public Point computeSizeHint() {
 		// compute the preferred size
 		int x= SWT.DEFAULT;
@@ -311,66 +296,39 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		return size;
 	}
 
-	/*
-	 * @see IInformationControl#addDisposeListener(DisposeListener)
-	 */
 	public void addDisposeListener(DisposeListener listener) {
 		fShell.addDisposeListener(listener);
 	}
 
-	/*
-	 * @see IInformationControl#removeDisposeListener(DisposeListener)
-	 */
 	public void removeDisposeListener(DisposeListener listener) {
 		fShell.removeDisposeListener(listener);
 	}
 
-	/*
-	 * @see IInformationControl#setForegroundColor(Color)
-	 */
 	public void setForegroundColor(Color foreground) {
 		fText.setForeground(foreground);
 	}
 
-	/*
-	 * @see IInformationControl#setBackgroundColor(Color)
-	 */
 	public void setBackgroundColor(Color background) {
 		fText.setBackground(background);
 	}
 
-	/*
-	 * @see IInformationControl#isFocusControl()
-	 */
 	public boolean isFocusControl() {
 		return fText.isFocusControl();
 	}
 
-	/*
-	 * @see IInformationControl#setFocus()
-	 */
 	public void setFocus() {
 		fShell.forceFocus();
 		fText.setFocus();
 	}
 
-	/*
-	 * @see IInformationControl#addFocusListener(FocusListener)
-	 */
 	public void addFocusListener(FocusListener listener) {
 		fText.addFocusListener(listener);
 	}
 
-	/*
-	 * @see IInformationControl#removeFocusListener(FocusListener)
-	 */
 	public void removeFocusListener(FocusListener listener) {
 		fText.removeFocusListener(listener);
 	}
 
-	/*
-	 * @see IInformationControlExtension#hasContents()
-	 */
 	public boolean hasContents() {
 		return fText.getCharCount() > 0;
 	}
