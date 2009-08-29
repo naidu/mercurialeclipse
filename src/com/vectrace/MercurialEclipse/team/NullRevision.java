@@ -25,7 +25,7 @@ public class NullRevision extends MercurialRevisionStorage {
      */
     public NullRevision(IResource res, ChangeSet cs) {
         super(res, 0, null, null);
-        bytes = new byte[0];
+        content = new ContentHolder((byte[])null);
         changeSet = cs;
     }
 
