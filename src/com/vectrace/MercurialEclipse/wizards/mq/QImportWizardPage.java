@@ -143,8 +143,8 @@ public class QImportWizardPage extends HgWizardPage {
         File[] patches = patchDir.listFiles();
         if (patches != null) {
             for (File patch : patches) {
-                if (patch.getCanonicalPath().equals(file.getCanonicalPath())
-                        || patch.getName().equals(file.getName())) {
+                if (patch.getName().equals(file.getName())
+                        || patch.getCanonicalPath().equals(file.getCanonicalPath())) {
                     setMessage(Messages
                             .getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
                     existing = true;
