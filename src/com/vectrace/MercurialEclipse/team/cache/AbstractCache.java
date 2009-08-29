@@ -115,7 +115,6 @@ public abstract class AbstractCache extends Observable {
                     addChangesets(project, changes);
                 //}
                 map.put(path, changes);
-                map.get(projectPath).addAll(changes);
             }
         }
     }
