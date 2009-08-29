@@ -203,7 +203,7 @@ public class RevisionChooserDialog extends Dialog {
                 okPressed();
             }
         });
-        table.setEnabled(true);
+
         item.setControl(table);
         return item;
     }
