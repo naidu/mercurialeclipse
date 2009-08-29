@@ -110,7 +110,7 @@ public class OutgoingChangesetCache extends AbstractCache {
     public ChangeSet getNewestOutgoingChangeSet(IResource resource,
             HgRepositoryLocation repositoryLocation) throws HgException {
 
-        if (MercurialStatusCache.getInstance().isSupervised(resource)) {
+        if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
 
             synchronized(outgoingChangeSets){
                 Map<IPath, SortedSet<ChangeSet>> repoMap = getOutgoingMap(resource, repositoryLocation);

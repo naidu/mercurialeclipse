@@ -18,7 +18,6 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -33,6 +32,7 @@ import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.Team;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
@@ -223,6 +223,14 @@ public class MercurialUtilities {
         }.schedule();
     }
 
+    public static boolean isPossiblySupervised(IResource resource){
+        boolean isInHg = hgIsTeamProviderFor(resource, false);
+        if(!isInHg){
+            return false;
+        }
+        return !(Team.isIgnoredHint(resource) || resource.isTeamPrivateMember() || resource.isDerived());
+    }
+
     /**
      * Checks if the given resource is controlled by MercurialEclipse. If the
      * given resource is linked, it is not controlled by MercurialEclipse and
@@ -252,13 +260,7 @@ public class MercurialUtilities {
         }
 
         // Check to se if resource is not in a link
-        String linkedParentName = resource.getProjectRelativePath().segment(0);
-        if (linkedParentName == null) {
-            return false;
-        }
-
-        IFolder linkedParent = project.getFolder(linkedParentName);
-        boolean isLinked = linkedParent.isLinked();
+        boolean isLinked = resource.isLinked(IResource.CHECK_ANCESTORS);
 
         // open dialog if resource is linked and flag is set to true
         if (dialog && isLinked) {
@@ -266,8 +268,7 @@ public class MercurialUtilities {
             IWorkbench workbench = null;
 
             workbench = PlatformUI.getWorkbench();
-            if (workbench != null
-                    && workbench.getActiveWorkbenchWindow() != null) {
+            if (workbench != null && workbench.getActiveWorkbenchWindow() != null) {
                 shell = workbench.getActiveWorkbenchWindow().getShell();
             }
             if (shell != null) {

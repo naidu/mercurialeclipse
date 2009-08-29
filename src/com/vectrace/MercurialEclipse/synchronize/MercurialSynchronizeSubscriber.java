@@ -43,6 +43,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -182,7 +183,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         if (csIncoming != null) {
             incomingIStorage = getIncomingIStorage(resource, csIncoming);
         } else {
-            // if no incoming revision, incmoing = base/outgoing
+            // if no incoming revision, incoming = base/outgoing
             incomingIStorage = outgoingIStorage;
         }
 
@@ -223,7 +224,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
     @Override
     public boolean isSupervised(IResource resource) {
-        return resource.getType() == IResource.FILE && STATUS_CACHE.isSupervised(resource);
+        return resource.getType() == IResource.FILE && MercurialUtilities.isPossiblySupervised(resource);
     }
 
     @Override

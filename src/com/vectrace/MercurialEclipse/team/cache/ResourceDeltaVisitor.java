@@ -23,7 +23,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.RepositoryProvider;
-import org.eclipse.team.core.Team;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 
@@ -35,6 +34,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
@@ -76,8 +76,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
             return false;
         }
 
-        if (Team.isIgnoredHint(res) || (RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null)
-                || res.isTeamPrivateMember() || res.isDerived()) {
+        if (!MercurialUtilities.isPossiblySupervised(res)) {
             return false;
         }
         // System.out.println("Observing change on: " + res);

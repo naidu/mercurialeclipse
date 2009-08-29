@@ -227,8 +227,11 @@ public abstract class AbstractCache extends Observable {
         IPath location = ResourceUtils.getPath(resource);
         for (IPath path : changeSets.keySet()) {
             IFile member = root.getFileForLocation(path);
-            if (member != null && location.isPrefixOf(member.getLocation())) {
-                members.add(member);
+            if (member != null) {
+                IPath memberLocation = ResourceUtils.getPath(member);
+                if (location.isPrefixOf(memberLocation)) {
+                    members.add(member);
+                }
             }
         }
         return members;

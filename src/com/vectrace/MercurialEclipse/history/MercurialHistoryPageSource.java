@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.ui.history.HistoryPageSource;
 import org.eclipse.ui.part.Page;
 
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -24,19 +25,23 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  */
 public class MercurialHistoryPageSource extends HistoryPageSource {
 
-    public MercurialHistoryPageSource(
-            MercurialHistoryProvider fileHistoryProvider) {
+    public MercurialHistoryPageSource(MercurialHistoryProvider fileHistoryProvider) {
         super();
     }
 
     public boolean canShowHistoryFor(Object object) {
-        if (object instanceof IResource) {
-            IResource resource = (IResource) object;
-            MercurialStatusCache cache = MercurialStatusCache.getInstance();
-            return cache.isSupervised(resource) && !(cache.isAdded(resource.getProject(), resource.getLocation()));
+        if (!(object instanceof IResource)) {
+            return false;
         }
-        return true;
-
+        IResource resource = (IResource) object;
+        MercurialStatusCache cache = MercurialStatusCache.getInstance();
+        if(resource.exists()) {
+            return cache.isSupervised(resource)
+                && !(cache.isAdded(resource.getProject(), resource.getLocation()));
+        }
+        // allow to show history for files which are already deleted and committed
+        // (neither in the cache nor on disk)
+        return MercurialUtilities.isPossiblySupervised(resource);
     }
 
     public Page createPage(Object object) {
