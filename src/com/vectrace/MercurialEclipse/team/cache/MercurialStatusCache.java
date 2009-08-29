@@ -291,7 +291,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * @return true if known, false if not.
      */
     public boolean isStatusKnown(IProject project) {
-        return knownStatus.containsKey(project);
+        synchronized (statusUpdateLock){
+            return knownStatus.containsKey(project);
+        }
     }
 
     /**
