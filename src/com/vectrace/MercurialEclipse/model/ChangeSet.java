@@ -21,9 +21,14 @@ import java.util.Date;
 import java.util.List;
 
 import org.eclipse.compare.patch.IFilePatch;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ChangeSet implements Comparable<ChangeSet> {
 
@@ -50,7 +55,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private HgRepositoryLocation repository;
     private Direction direction;
     private String summary;
-    private HgRoot hgRoot;
+    private final HgRoot hgRoot;
     private IFilePatch[] patches;
 
     /**
@@ -72,9 +77,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
         private ChangeSet cs;
 
         public Builder(int revision, String changeSet, String branch,
-                String date, String user) {
+                String date, String user, HgRoot root) {
 
-            this.cs = new ChangeSet(revision, changeSet, user, date, branch == null? "" : branch);
+            this.cs = new ChangeSet(revision, changeSet, user, date, branch == null? "" : branch, root);
         }
 
         public Builder tag(String tag) {
@@ -112,11 +117,6 @@ public class ChangeSet implements Comparable<ChangeSet> {
             return this;
         }
 
-        public Builder hgRoot(HgRoot hgRoot) {
-            this.cs.hgRoot = hgRoot;
-            return this;
-        }
-
         // what is ageDate? Can it be derived from date and now()
         public Builder ageDate(String ageDate) {
             this.cs.ageDate = ageDate;
@@ -143,7 +143,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     private ChangeSet(int changesetIndex, String changeSet, String tag,
             String branch, String user, String date, String description,
-            String[] parents) {
+            String[] parents, HgRoot root) {
         this.changesetIndex = changesetIndex;
         this.changeset = changeSet;
         this.revision = new HgRevision(changeset, changesetIndex);
@@ -151,13 +151,14 @@ public class ChangeSet implements Comparable<ChangeSet> {
         this.branch = branch;
         this.user = user;
         this.date = date;
+        this.hgRoot = root;
         setDescription(description);
         setParents(parents);
     }
 
     private ChangeSet(int changesetIndex, String changeSet, String user,
-            String date, String branch) {
-        this(changesetIndex, changeSet, null, branch, user, date, "", null); //$NON-NLS-1$
+            String date, String branch, HgRoot root) {
+        this(changesetIndex, changeSet, null, branch, user, date, "", null, root); //$NON-NLS-1$
     }
 
     public int getChangesetIndex() {
@@ -217,6 +218,55 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     /**
+     * @param resource  non null
+     * @return true if the given resource was removed in this changeset
+     */
+   public boolean isRemoved(IResource resource) {
+       Action action = FileStatus.Action.REMOVED;
+       return contains(resource, action);
+   }
+
+   /**
+    * @param resource  non null
+    * @return true if the given resource was added in this changeset
+    */
+   public boolean isAdded(IResource resource) {
+       Action action = FileStatus.Action.ADDED;
+       return contains(resource, action);
+   }
+
+   /**
+    * @param resource  non null
+    * @return true if the given resource was modified in this changeset
+    */
+   public boolean isModified(IResource resource) {
+       Action action = FileStatus.Action.MODIFIED;
+       return contains(resource, action);
+   }
+
+   /**
+    * @param resource non null
+    * @param action non null
+    * @return true if this changeset contains a resource with given action state
+    */
+   private boolean contains(IResource resource, Action action) {
+       if(changedFiles.length == 0){
+           return false;
+       }
+       boolean match = false;
+       IPath path = new Path(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
+       for (FileStatus fileStatus : changedFiles) {
+           if(fileStatus.getAction() == action){
+               if(path.equals(new Path(fileStatus.getPath()))){
+                   match = true;
+                   break;
+               }
+           }
+       }
+       return match;
+   }
+
+    /**
      * @return the ageDate
      */
     public String getAgeDate() {
@@ -234,13 +284,14 @@ public class ChangeSet implements Comparable<ChangeSet> {
         if (o.getChangeset().equals(this.getChangeset())) {
             return 0;
         }
-        if (getRealDate() != UNKNOWN_DATE && o.getRealDate() != UNKNOWN_DATE) {
-            int dateCompare = getRealDate().compareTo(o.getRealDate());
-            if (dateCompare != 0) {
-                return dateCompare;
-            }
+        int result = this.getChangesetIndex() - o.getChangesetIndex();
+        if(result != 0){
+            return result;
         }
-        return this.getChangesetIndex() - o.getChangesetIndex();
+        if (getRealDate() != UNKNOWN_DATE && o.getRealDate() != UNKNOWN_DATE) {
+            return getRealDate().compareTo(o.getRealDate());
+        }
+        return 0;
     }
 
     @Override

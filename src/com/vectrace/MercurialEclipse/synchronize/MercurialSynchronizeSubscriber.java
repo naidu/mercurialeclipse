@@ -181,7 +181,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
         MercurialRevisionStorage incomingIStorage;
         if (csIncoming != null) {
-            incomingIStorage = getIncomingIStorage(resource, csIncoming);
+            boolean fileRemoved = csIncoming.isRemoved(resource);
+            if(fileRemoved){
+                incomingIStorage = null;
+            } else {
+                incomingIStorage = getIncomingIStorage(resource, csIncoming);
+            }
         } else {
             // if no incoming revision, incoming = base/outgoing
             incomingIStorage = outgoingIStorage;

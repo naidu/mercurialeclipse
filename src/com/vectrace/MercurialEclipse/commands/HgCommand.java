@@ -13,7 +13,11 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.util.List;
+
 import org.eclipse.core.resources.IContainer;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  *
@@ -26,6 +30,7 @@ public class HgCommand extends AbstractShellCommand {
     }
 
     public HgCommand(String command, File workingDir, boolean escapeFiles) {
+        super();
         this.command = command;
         this.workingDir = workingDir;
         this.escapeFiles = escapeFiles;
@@ -42,7 +47,10 @@ public class HgCommand extends AbstractShellCommand {
 
     protected String getHgExecutable() {
         return HgClients.getExecutable();
+    }
 
+    public HgRoot getHgRoot() throws HgException{
+        return getHgRoot(workingDir);
     }
 
     protected String getDefaultUserName() {
