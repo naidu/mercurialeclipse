@@ -8,19 +8,19 @@ public class FileStatus {
 		REMOVED('R');
 
 		private char action;
-		
+
 		private Action(char action) {
 			this.action = action;
 		}
-		
+
 		@Override
 		public String toString() {
 			return Character.toString(action);
 		}
 	}
 
-	private Action action;
-	private String path;
+	private final Action action;
+	private final String path;
 
 	public FileStatus(Action action, String path) {
 		this.action = action;
@@ -34,4 +34,21 @@ public class FileStatus {
 	public String getPath() {
 		return path;
 	}
+
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("FileStatus [");
+        if (action != null) {
+            builder.append("action=");
+            builder.append(action.name());
+            builder.append(", ");
+        }
+        if (path != null) {
+            builder.append("path=");
+            builder.append(path);
+        }
+        builder.append("]");
+        return builder.toString();
+    }
 }
