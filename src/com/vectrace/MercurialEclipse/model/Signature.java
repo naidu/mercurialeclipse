@@ -10,8 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
-import java.io.IOException;
-
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
@@ -19,64 +18,49 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * @author bastian
  *
  */
-public class Signature {      
+public class Signature {
 
-    private HgRoot root;
+    private final HgRoot root;
     private String key;
     private String nodeId;
     private boolean valid;
     private boolean checked;
-    
-    /**
-     * @param key
-     * @param nodeId
-     * @param root
-     */
+
     public Signature(String key, String nodeId, HgRoot root) {
         this.key = key;
         this.nodeId = nodeId;
         this.root = root;
     }
 
-    public boolean validate() throws HgException {
+    public boolean validate() {
         if (checked) {
             return isValid();
         }
         try {
-            String result = HgSigsClient.checkSig(root.getCanonicalFile(),
-                    nodeId);
-            if (!result.contains("No valid signature for")) { //$NON-NLS-1$
+            String result = HgSigsClient.checkSig(root, nodeId);
+            if (result != null && !result.contains("No valid signature for")) { //$NON-NLS-1$
                 valid = true;
                 key = result.split("\n")[1].trim(); //$NON-NLS-1$
-            }            
+            }
             checked = true;
             return valid;
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
+        } catch (HgException e) {
+            checked = true;
+            valid = false;
+            MercurialEclipsePlugin.logError(e);
+            return false;
         }
     }
-    
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#toString()
-     */
+
     @Override
     public String toString() {
         return valid + ":" + key + ", " + nodeId; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    /**
-     * @param key
-     *            the key to set
-     */
     public void setKey(String key) {
         this.key = key;
     }
 
-    /**
-     * @return the key
-     */
     public String getKey() {
         return key;
     }
@@ -96,21 +80,14 @@ public class Signature {
         return nodeId;
     }
 
-    /**
-     * @param valid
-     *            the valid to set
-     */
     public void setValid(boolean valid) {
         this.valid = valid;
     }
 
-    /**
-     * @return the valid
-     */
     public boolean isValid() {
         return valid;
     }
-    
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -160,5 +137,5 @@ public class Signature {
         }
         return true;
     }
-    
+
 }
