@@ -174,7 +174,9 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * Refreshes all local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
-     *
+     * <p>
+     * A clear of all existing data for the given resource is triggered.
+     * <p>
      * If withFiles is true and a resource version can't be found in the topmost
      * revisions, the last revision of this file is obtained via additional
      * calls.
@@ -191,7 +193,9 @@ public class LocalChangesetCache extends AbstractCache {
         Assert.isNotNull(res);
         IProject project = res.getProject();
         if (project.isOpen() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
-            refreshAllLocalRevisions(res, limit, getLogBatchSize(), -1, withFiles);
+            clear(res, false);
+            fetchLocalRevisions(res, limit, getLogBatchSize(), -1, withFiles);
+            notifyChanged(res, withFiles);
         }
     }
 
@@ -254,10 +258,8 @@ public class LocalChangesetCache extends AbstractCache {
 
 
     /**
-     * Refreshes all local revisions. If limit is set, it looks up the default
+     * Fetches local revisions. If limit is set, it looks up the default
      * number of revisions to get and fetches the topmost till limit is reached.
-     * <p>
-     * A clear of all existing data for the given resource is triggered.
      *
      * If a resource version can't be found in the topmost revisions, the last
      * revisions of this file (10% of limit number) are obtained via additional
@@ -272,15 +274,13 @@ public class LocalChangesetCache extends AbstractCache {
      *            the revision to start with
      * @throws HgException
      */
-    public void refreshAllLocalRevisions(IResource res, boolean limit,
+    public void fetchLocalRevisions(IResource res, boolean limit,
             int limitNumber, int startRev, boolean withFiles) throws HgException {
         Assert.isNotNull(res);
         IProject project = res.getProject();
         if (!project.isOpen() || !STATUS_CACHE.isSupervised(res)) {
             return;
         }
-
-        clear(res, false);
 
         Map<IPath, SortedSet<ChangeSet>> revisions;
         if (limit) {
@@ -319,7 +319,6 @@ public class LocalChangesetCache extends AbstractCache {
                 addChangesToLocalCache(project, path, changes);
             }
         }
-        notifyChanged(res, withFiles);
     }
 
     /**
