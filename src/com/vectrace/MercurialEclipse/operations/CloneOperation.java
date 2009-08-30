@@ -12,10 +12,8 @@ package com.vectrace.MercurialEclipse.operations;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
-import java.util.List;
 
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
@@ -28,23 +26,17 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class CloneOperation extends HgOperation {
 
-    private String parentDirectory;
-    private HgRepositoryLocation repo;
-    private boolean noUpdate;
-    private boolean pull;
-    private boolean uncompressed;
-    private boolean timeout;
-    private String rev;
-    private String cloneName;
-    private List<File> projectFiles;
-    private Path projectLocation;
-    private boolean forest;
-    private boolean svn;
+    private final String parentDirectory;
+    private final HgRepositoryLocation repo;
+    private final boolean noUpdate;
+    private final boolean pull;
+    private final boolean uncompressed;
+    private final boolean timeout;
+    private final String rev;
+    private final String cloneName;
+    private final boolean forest;
+    private final boolean svn;
 
-    /**
-     * @param svn
-     * @param name
-     */
     public CloneOperation(IRunnableContext context, String parentDirectory,
             HgRepositoryLocation repo, boolean noUpdate, boolean pull,
             boolean uncompressed, boolean timeout, String rev,
@@ -62,31 +54,21 @@ public class CloneOperation extends HgOperation {
         this.svn = svn;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.operation.IRunnableWithProgress#run(org.eclipse.core
-     * .runtime.IProgressMonitor)
-     */
     @Override
     public void run(IProgressMonitor m) throws InvocationTargetException,
             InterruptedException {
 
-        m.beginTask(Messages.getString("CloneRepoWizard.operation.name"), 50); //$NON-NLS-1$        
+        m.beginTask(Messages.getString("CloneRepoWizard.operation.name"), 50); //$NON-NLS-1$
 
-        m
-                .subTask(Messages
+        m.subTask(Messages
                         .getString("CloneRepoWizard.subTaskParentDirectory.name") + parentDirectory); //$NON-NLS-1$
         m.worked(1);
 
-        m
-                .subTask(Messages
+        m.subTask(Messages
                         .getString("CloneRepoWizard.subTaskCloneDirectory.name") + cloneName); //$NON-NLS-1$
         m.worked(1);
 
         try {
-
             m.subTask(Messages
                     .getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
             if (svn) {
@@ -104,34 +86,11 @@ public class CloneOperation extends HgOperation {
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
-     */
     @Override
     protected String getActionDescription() {
         return Messages.getString("CloneRepoWizard.actionDescription.1") + repo + Messages.getString("CloneRepoWizard.actionDescription.2") + cloneName; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    /**
-     * @return the projectFiles
-     */
-    public List<File> getProjectFiles() {
-        return projectFiles;
-    }
-
-    /**
-     * @return the projectLocation
-     */
-    public Path getProjectLocation() {
-        return projectLocation;
-    }
-
-    /**
-     * @return the parentDirectory
-     */
     public String getParentDirectory() {
         return parentDirectory;
     }

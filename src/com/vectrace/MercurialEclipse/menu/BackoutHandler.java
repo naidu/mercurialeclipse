@@ -28,7 +28,7 @@ public class BackoutHandler extends SingleResourceHandler {
         dialog.setBlockOnOpen(true);
         dialog.open();
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project);
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
     }
 
 }

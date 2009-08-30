@@ -37,7 +37,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQFoldClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPopClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQPushClient;
@@ -289,7 +289,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                             && newResource.isAccessible()
                             && MercurialUtilities.hgIsTeamProviderFor(
                                     newResource, false)) {
-                        HgRoot newRoot = HgRootClient.getHgRoot(newResource);
+                        HgRoot newRoot = AbstractClient.getHgRoot(newResource);
                         if (!newRoot.equals(currentHgRoot)) {
                             currentHgRoot = newRoot;
                             resource = newResource;
@@ -305,7 +305,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
                 IFile file = (IFile) input.getAdapter(IFile.class);
                 if (file != null && file.isAccessible()
                         && MercurialUtilities.hgIsTeamProviderFor(file, false)) {
-                    HgRoot newRoot = HgRootClient.getHgRoot(file);
+                    HgRoot newRoot = AbstractClient.getHgRoot(file);
                     if (!newRoot.equals(currentHgRoot)) {
                         currentHgRoot = newRoot;
                         resource = file;

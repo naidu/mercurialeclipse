@@ -314,6 +314,7 @@ public class HgRepositoryLocationManager {
 
     /**
      * Returns the default repository location for a project, if it is set.
+     * @return may return null
      */
     public HgRepositoryLocation getDefaultProjectRepoLocation(IProject project) {
         try {
@@ -364,14 +365,16 @@ public class HgRepositoryLocationManager {
 
     /**
      * Get a repo by its URL. If URL is unknown, returns a new location.
+     * @return never returns null
      */
     public HgRepositoryLocation getRepoLocation(String url)
             throws URISyntaxException {
-        return this.getRepoLocation(url, null, null);
+        return getRepoLocation(url, null, null);
     }
 
     /**
      * Get a repo by its URL. If URL is unknown, returns a new location.
+     * @return never returns null
      */
     public HgRepositoryLocation getRepoLocation(String url, String user,
             String pass) throws URISyntaxException {
@@ -383,12 +386,12 @@ public class HgRepositoryLocationManager {
         }
 
         // make a new location if no matches exist or it's a different user
-        location = new HgRepositoryLocation(null, url, user, pass);
-        return location;
+        return new HgRepositoryLocation(null, url, user, pass);
     }
 
     /**
      * Simple search on existing repos.
+     * @return may return null
      */
     private HgRepositoryLocation matchRepoLocation(String url) {
         for (HgRepositoryLocation loc : repos) {

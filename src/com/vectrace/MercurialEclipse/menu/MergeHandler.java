@@ -22,7 +22,6 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -46,19 +45,11 @@ public class MergeHandler extends SingleResourceHandler {
 
     @Override
     protected void run(IResource resource) throws Exception {
-        merge(resource, getShell(), new NullProgressMonitor(), false, true);
+        merge(resource.getProject(), getShell(), new NullProgressMonitor(), false, true);
     }
 
-    /**
-     * @param resource
-     * @throws HgException
-     * @throws CoreException
-     * @throws PartInitException
-     */
-    public static String merge(IResource resource, Shell shell, IProgressMonitor monitor,
-            boolean autoPickOtherHead, boolean showCommitDialog) throws HgException, CoreException,
-            PartInitException {
-        IProject project = resource.getProject();
+    public static String merge(IProject project, Shell shell, IProgressMonitor monitor,
+            boolean autoPickOtherHead, boolean showCommitDialog) throws HgException, CoreException {
         DataLoader loader = new ProjectDataLoader(project);
 
         // can we do the equivalent of plain "hg merge"?
@@ -105,7 +96,7 @@ public class MergeHandler extends SingleResourceHandler {
         String result = ""; //$NON-NLS-1$
         boolean useResolve = isHgResolveAvailable();
         if (useResolve) {
-            result = HgMergeClient.merge(resource, cs.getRevision().getChangeset(),
+            result = HgMergeClient.merge(project, cs.getRevision().getChangeset(),
                     useExternalMergeTool);
         } else {
             result = HgIMergeClient.merge(project, cs.getRevision().getChangeset());
@@ -113,8 +104,8 @@ public class MergeHandler extends SingleResourceHandler {
 
         project.setPersistentProperty(ResourceProperties.MERGING, cs.getChangeset());
         try {
-            result += commitMerge(monitor, resource, shell, result, showCommitDialog);
-        } catch (Exception e) {
+            result += commitMerge(monitor, project, shell, result, showCommitDialog);
+        } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e);
         }
@@ -125,9 +116,8 @@ public class MergeHandler extends SingleResourceHandler {
         return result;
     }
 
-    private static String commitMerge(IProgressMonitor monitor, final IResource resource,
-            final Shell shell,  String mergeResult, boolean showCommitDialog)
-            throws HgException, CoreException, InterruptedException {
+    private static String commitMerge(IProgressMonitor monitor, final IProject project,
+            final Shell shell,  String mergeResult, boolean showCommitDialog) throws CoreException {
         boolean commit = true;
 
         String output = "";
@@ -136,8 +126,7 @@ public class MergeHandler extends SingleResourceHandler {
                 commit = false;
             }
         } else {
-            List<FlaggedAdaptable> mergeAdaptables = HgResolveClient
-            .list(resource);
+            List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(project);
             monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
             for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
                 if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
@@ -151,9 +140,9 @@ public class MergeHandler extends SingleResourceHandler {
             monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
             output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
             if (!showCommitDialog) {
-                output += CommitMergeHandler.commitMerge(resource);
+                output += CommitMergeHandler.commitMerge(project);
             } else {
-                output += new CommitMergeHandler().commitMergeWithCommitDialog(resource, shell);
+                output += new CommitMergeHandler().commitMergeWithCommitDialog(project, shell);
             }
             monitor.worked(1);
         } else {
@@ -161,7 +150,7 @@ public class MergeHandler extends SingleResourceHandler {
             .getActiveWorkbenchWindow().getActivePage().showView(
                     MergeView.ID);
             view.clearView();
-            view.setCurrentProject(resource.getProject());
+            view.setCurrentProject(project);
         }
         return output;
     }
@@ -197,9 +186,6 @@ public class MergeHandler extends SingleResourceHandler {
         return candidate;
     }
 
-    /**
-     * @return
-     */
     private static boolean isHgResolveAvailable() throws HgException {
         return HgResolveClient.checkAvailable();
     }

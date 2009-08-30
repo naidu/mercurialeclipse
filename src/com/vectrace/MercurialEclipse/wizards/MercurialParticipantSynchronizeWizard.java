@@ -23,12 +23,13 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.provider.MergeContext;
-import org.eclipse.team.core.subscribers.SubscriberScopeManager;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.team.ui.synchronize.ISynchronizeParticipantReference;
 import org.eclipse.team.ui.synchronize.ModelParticipantWizard;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWizard;
@@ -37,6 +38,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
+import com.vectrace.MercurialEclipse.synchronize.HgSubscriberScopeManager;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
@@ -186,6 +188,7 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
         return super.performFinish();
     }
 
+    @SuppressWarnings("restriction")
     protected final void createParticipant2() {
         ISynchronizeParticipant participant = createParticipant(Utils.getResourceMappings(projects));
         TeamUI.getSynchronizeManager().addSynchronizeParticipants(new ISynchronizeParticipant[]{participant});
@@ -194,8 +197,8 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
     }
 
     @Override
-    protected ISynchronizeParticipant createParticipant(
-            ResourceMapping[] selectedMappings) {
+    protected ISynchronizeParticipant createParticipant(ResourceMapping[] selectedMappings) {
+
         String url = pageProperties.getProperty(PROP_URL);
         String user = pageProperties.getProperty(PROP_USER);
         String pass = pageProperties.getProperty(PROP_PASSWORD);
@@ -203,6 +206,11 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
         HgRepositoryLocation repo;
         try {
             repo = repoManager.getRepoLocation(url, user, pass);
+            if(pass != null && user != null){
+                if(!pass.equals(repo.getPassword())){
+                    repo = repoManager.updateRepoLocation(url, null, user, pass);
+                }
+            }
         } catch (URISyntaxException e) {
             MercurialEclipsePlugin.logError(e);
             page.setErrorMessage(e.getLocalizedMessage());
@@ -221,6 +229,10 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
             return null;
         }
 
+        // this is a hack to get only selected entries. I can't find the setting which
+        // says to the selection page to provide really only things which are *selected*
+        // so if it reports that user has selected MORE then we initially given to it,
+        // then it's just kidding...
         IResource[] array = getRootResources();
         if(array.length > selectedProjects.size()){
             array = selectedProjects.toArray(new IResource[0]);
@@ -235,24 +247,34 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
             try {
                 repoManager.addRepoLocation(project, repo);
                 // TODO is it required?
-                // HgRepositoryLocation repoLocation = repoManager.getDefaultProjectRepoLocation(project);
-                //if(repoLocation == null){
-                // repoManager.setDefaultProjectRepository(project, repo);
+                HgRepositoryLocation repoLocation = repoManager.getDefaultProjectRepoLocation(project);
+                if(repoLocation == null){
+                    repoManager.setDefaultProjectRepository(project, repo);
+                }
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }
         }
 
-        ISynchronizationScope scope = new RepositorySynchronizationScope(array);
+        ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
+                MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
 
+        // try to reuse participants which may already existing
+        // not doing this would lead to the state where many sync. participants would listen
+        // to resource changes and update/request same data/cashes many times
+        if(participant != null){
+            try {
+                return participant.getParticipant();
+            } catch (TeamException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+
+        // Create a new participant for given repo/project pair
+        ISynchronizationScope scope = new RepositorySynchronizationScope(repo, array);
         MercurialSynchronizeSubscriber subscriber = new SingleRepoSubscriber(scope, repo);
-
-        SubscriberScopeManager manager = new SubscriberScopeManager(
-                "HgSubscriberScopeManager", selectedMappings, subscriber, //$NON-NLS-1$
-                false);
-
+        HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
         MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
-
         return new MercurialSynchronizeParticipant(ctx, repo);
     }
 

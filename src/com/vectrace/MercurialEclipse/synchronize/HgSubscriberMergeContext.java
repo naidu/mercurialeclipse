@@ -19,6 +19,7 @@ import org.eclipse.team.core.diff.IDiff;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * @author bastian
@@ -77,6 +78,13 @@ public class HgSubscriberMergeContext extends
         return super.getSyncInfo(resource);
     }
 
-
+    @Override
+    public void dispose() {
+        // avoid silly NPE's in the team API code if they try to dispose compare
+        // editors on shutdown, we don't care
+        if(!PlatformUI.getWorkbench().isClosing()) {
+            super.dispose();
+        }
+    }
 
 }

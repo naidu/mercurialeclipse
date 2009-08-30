@@ -29,7 +29,7 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -119,7 +119,7 @@ public class HgResourceMapping extends ResourceMapping {
     @Override
     public ResourceTraversal[] getTraversals(ResourceMappingContext context,
             IProgressMonitor monitor) throws CoreException {
-        IResource resource = MercurialUtilities.convert(file);
+        IResource resource = ResourceUtils.convert(file);
         int depth = IResource.DEPTH_ZERO;        
         ResourceTraversal resourceTraversal = new ResourceTraversal(
                 new IResource[] { resource }, depth, IContainer.EXCLUDE_DERIVED);

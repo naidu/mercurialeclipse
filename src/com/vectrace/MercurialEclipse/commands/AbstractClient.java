@@ -22,6 +22,7 @@ import org.eclipse.core.runtime.IPath;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Base client class
@@ -29,56 +30,40 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  *
  */
 public abstract class AbstractClient {
-    /**
-     * @param resource
-     * @return
-     */
-    protected static File getWorkingDirectory(IResource resource) {
-        Assert.isNotNull(resource);
-        IResource myWorkDir = resource;
-        if (resource.getType()==IResource.FILE) {
-            myWorkDir = resource.getParent();
-        }
-        return myWorkDir.getLocation().toFile();
+
+    public AbstractClient() {
+        super();
     }
 
-    /**
-     * @param path
-     * @return
-     */
+    protected static File getWorkingDirectory(IResource resource) {
+        File file = ResourceUtils.getFileHandle(resource);
+        return getWorkingDirectory(file);
+    }
+
     protected static File getWorkingDirectory(IPath path) {
-        Assert.isNotNull(path);
-        if (path.toFile().isFile()) {
-            return path.toFile().getParentFile();
-        }
-        return path.toFile();
+        return getWorkingDirectory(path.toFile());
     }
 
     protected static File getWorkingDirectory(File file) {
-        if (file.isFile()) {
-            return file.getParentFile();
-        }
-        return file;
-    }
-
-    public AbstractClient() {
+        return ResourceUtils.getFirstExistingDirectory(file);
     }
 
     /**
-     * @return
+     * @param resource
+     * @return hg root as <b>canonical file</b> (see {@link File#getCanonicalFile()})
      * @throws HgException
      */
-    public static HgRoot getHgRoot(IResource res) throws HgException {
-        Assert.isNotNull(res);
-        return HgRootClient.getHgRoot(res);
+    public static HgRoot getHgRoot(IResource resource) throws HgException {
+        File file = ResourceUtils.getFileHandle(resource);
+        return HgRootClient.getHgRoot(file);
     }
 
     public static HgRoot getHgRoot(IPath path) throws HgException {
-        Assert.isNotNull(path);
-        return HgRootClient.getHgRoot(path.toFile());
+        return getHgRoot(path.toFile());
     }
 
     public static HgRoot getHgRoot(File file) throws HgException {
+        Assert.isNotNull(file);
         return HgRootClient.getHgRoot(file);
     }
 
@@ -135,10 +120,6 @@ public abstract class AbstractClient {
         return returnValue;
     }
 
-    /**
-     * @param repo
-     * @param cmd
-     */
     protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) {
         URI uri = repo.getUri();
         if (uri != null ) {

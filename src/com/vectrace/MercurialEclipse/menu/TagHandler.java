@@ -9,7 +9,7 @@ import com.vectrace.MercurialEclipse.dialogs.TagDialog;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  *
  */public class TagHandler extends SingleResourceHandler {
@@ -18,7 +18,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 	protected void run(IResource resource) throws Exception {
 		IProject project = resource.getProject();
 		TagDialog dialog = new TagDialog(getShell(), project);
-		
+
 		if(dialog.open() == IDialogConstants.OK_ID) {
 			HgTagClient.addTag(
 					resource,
@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 					null, //user
 					dialog.isLocal(),
 					dialog.isForced());
-			new RefreshJob(Messages.getString("TagHandler.refreshing"),null,project).schedule(); //$NON-NLS-1$
+			new RefreshJob(Messages.getString("TagHandler.refreshing"), project).schedule(); //$NON-NLS-1$
 		}
 	}
 

@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.IOException;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -29,11 +27,11 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class ServeWizardPage extends HgWizardPage {
 
-    private IResource hgroot;
+    private final IResource hgroot;
     private Text nameTextField;
     private Text prefixTextField;
     private Button defaultCheckBox;
@@ -42,23 +40,12 @@ public class ServeWizardPage extends HgWizardPage {
     private Button stdioCheckBox;
     private Text webdirConfTextField;
 
-    /**
-     * @param string
-     * @param string2
-     * @param object
-     * @param project
-     */
     public ServeWizardPage(String pageName, String title,
             ImageDescriptor image, IResource hgRoot) {
         super(pageName, title, image);
         this.hgroot = hgRoot;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-     */
     public void createControl(Composite parent) {
         Composite composite = SWTWidgetHelper.createComposite(parent, 3);
         // server settings
@@ -68,8 +55,8 @@ public class ServeWizardPage extends HgWizardPage {
         settingsGroup.setEnabled(false);
 
         this.defaultCheckBox = SWTWidgetHelper.createCheckBox(defaultsGroup, Messages.getString("ServeWizardPage.defaultCheckBox.title")); //$NON-NLS-1$
-        this.defaultCheckBox.setSelection(true);        
-        
+        this.defaultCheckBox.setSelection(true);
+
 
         final Label portLabel = SWTWidgetHelper.createLabel(settingsGroup,
                 Messages.getString("ServeWizardPage.portLabel.title")); //$NON-NLS-1$
@@ -102,7 +89,7 @@ public class ServeWizardPage extends HgWizardPage {
         this.ipv6CheckBox = SWTWidgetHelper.createCheckBox(settingsGroup,
                 Messages.getString("ServeWizardPage.ipv6CheckBox.title")); //$NON-NLS-1$
         this.ipv6CheckBox.setEnabled(false);
-        
+
         SelectionListener defaultCheckBoxListener = new SelectionListener() {
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
@@ -110,7 +97,7 @@ public class ServeWizardPage extends HgWizardPage {
 
             public void widgetSelected(SelectionEvent e) {
                 settingsGroup.setEnabled(!defaultCheckBox.getSelection());
-                portLabel.setEnabled(!defaultCheckBox.getSelection());                
+                portLabel.setEnabled(!defaultCheckBox.getSelection());
                 portTextField.setEnabled(!defaultCheckBox.getSelection());
                 nameLabel.setEnabled(!defaultCheckBox.getSelection());
                 nameTextField.setEnabled(!defaultCheckBox.getSelection());
@@ -123,7 +110,7 @@ public class ServeWizardPage extends HgWizardPage {
                 ipv6CheckBox.setEnabled(!defaultCheckBox.getSelection());
             }
         };
-        
+
         this.defaultCheckBox.addSelectionListener(defaultCheckBoxListener);
         setControl(composite);
         setPageComplete(true);
@@ -139,9 +126,6 @@ public class ServeWizardPage extends HgWizardPage {
                     .getText(), webdirConfTextField.getText(), stdioCheckBox
                     .getSelection(), ipv6CheckBox.getSelection());
         } catch (NumberFormatException e) {
-            MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
-        } catch (IOException e) {
             MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e);
         }

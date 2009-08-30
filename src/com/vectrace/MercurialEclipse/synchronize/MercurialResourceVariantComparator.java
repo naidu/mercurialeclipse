@@ -78,7 +78,7 @@ public class MercurialResourceVariantComparator implements
 
     public boolean compare(IResourceVariant base, IResourceVariant remote) {
         MercurialResourceVariant mrv = (MercurialResourceVariant) remote;
-        if (mrv.getRev().getChangeSet().getBranch().equals(
+        if (csWorkDir != null && mrv.getRev().getChangeSet().getBranch().equals(
                 csWorkDir.getBranch())) {
             return base.getContentIdentifier().equals(
                     remote.getContentIdentifier());

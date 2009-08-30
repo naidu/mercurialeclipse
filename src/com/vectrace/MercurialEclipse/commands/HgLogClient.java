@@ -29,31 +29,25 @@ public class HgLogClient extends AbstractParseChangesetClient {
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
 
     public static ChangeSet[] getHeads(IProject project) throws HgException {
-        AbstractShellCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+        HgCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         return getRevisions(command);
     }
 
     /**
-     *
      * @param command
      *            a command with optionally its Files set
-     * @return
-     * @throws HgException
      */
-    private static ChangeSet[] getRevisions(AbstractShellCommand command)
+    private static ChangeSet[] getRevisions(HgCommand command)
             throws HgException {
         command.addOptions("--template", //$NON-NLS-1$
                 "{rev}:{node} {date|isodate} {author|person}#{branches}**#{desc|firstline}\n"); //$NON-NLS-1$
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
         String[] lines = null;
         try {
             lines = command.executeToString().split("\n"); //$NON-NLS-1$
         } catch (HgException e) {
-            if (!e
-                    .getMessage()
+            if (!e.getMessage()
                     .contains(
                             "abort: can only follow copies/renames for explicit file names")) { //$NON-NLS-1$
                 throw new HgException(e);
@@ -62,6 +56,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         }
         int length = lines.length;
         ChangeSet[] changeSets = new ChangeSet[length];
+        HgRoot root = command.getHgRoot();
         for (int i = 0; i < length; i++) {
             Matcher m = GET_REVISIONS_PATTERN.matcher(lines[i]);
             if (m.matches()) {
@@ -70,8 +65,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
                         m.group(2), // changeset
                         m.group(5), // branch
                         m.group(3), // date
-                        m.group(4) // user
-                        ).description(m.group(6)).build();
+                        m.group(4), // user
+                        root).description(m.group(6)).build();
 
                 changeSets[i] = changeSet;
             } else {
@@ -242,10 +237,6 @@ public class HgLogClient extends AbstractParseChangesetClient {
         return null;
     }
 
-    /**
-     * @param nodeId
-     * @throws HgException
-     */
     public static ChangeSet getChangeset(IResource res, String nodeId,
             boolean withFiles) throws HgException {
 

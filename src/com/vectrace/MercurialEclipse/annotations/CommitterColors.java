@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 
+ * Copyright (c)
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -20,9 +20,9 @@ import org.eclipse.swt.graphics.RGB;
 
 /**
  * This was copied from internal CVS UI code
- * 
+ *
  * Default implementation, assigns random colors to revisions based on committer id.
- * 
+ *
  * @since 3.2
  */
 final class CommitterColors {
@@ -30,7 +30,7 @@ final class CommitterColors {
 
 	/**
 	 * Returns the committer color singleton.
-	 * 
+	 *
 	 * @return the committer color singleton
 	 */
 	public static CommitterColors getDefault() {
@@ -41,7 +41,7 @@ final class CommitterColors {
 	}
 
 	/** The color map. */
-	private Map<String,RGB> fColors= new HashMap<String,RGB>();
+	private final Map<String,RGB> fColors= new HashMap<String,RGB>();
 
 	/** The number of colors that have been issued. */
 	private int fCount= 0;
@@ -52,7 +52,7 @@ final class CommitterColors {
 	/**
 	 * Returns a unique color description for each string passed in. Colors for new committers are
 	 * allocated to be as different as possible from the existing colors.
-	 * 
+	 *
 	 * @param committer the committers unique name
 	 * @return the corresponding color
 	 */
@@ -73,7 +73,7 @@ final class CommitterColors {
 
 	private float computeHue(int ordinal) {
 		int base= 3;
-		int l= ordinal < base ? 0 : (int) Math.floor(Math.log(ordinal / base) / Math.log(2));
+		int l= ordinal < base ? 0 : (int) Math.floor(Math.log(ordinal / (double)base) / Math.log(2));
 		int m= ((int) Math.pow(2, l)) * base;
 		int j= ordinal < base ? ordinal : ordinal - m;
 		float offset= ordinal < base ? 0.0f : (float) (180.0f / base / Math.pow(2, l));

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -26,7 +27,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class TagTable extends Composite {
@@ -34,12 +35,15 @@ public class TagTable extends Composite {
     private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getItalic(
             JFaceResources.DIALOG_FONT);
 
-    private Table table;
+    private final Table table;
     private int[] parents;
     private boolean showTip = true;
 
-    public TagTable(Composite parent) {
+    private final IProject project;
+
+    public TagTable(Composite parent, IProject project) {
         super(parent, SWT.NONE);
+        this.project = project;
 
         this.setLayout(new GridLayout());
         this.setLayoutData(new GridData());
@@ -70,6 +74,7 @@ public class TagTable extends Composite {
 
     public void setTags(Tag[] tags) {
         table.removeAll();
+        LocalChangesetCache cache = LocalChangesetCache.getInstance();
         for (Tag tag : tags) {
             if (showTip || !"tip".equals(tag.getName())) { //$NON-NLS-1$
                 TableItem row = new TableItem(table, SWT.NONE);
@@ -79,8 +84,9 @@ public class TagTable extends Composite {
                 row.setText(0, Integer.toString(tag.getRevision()));
                 row.setText(1, tag.getGlobalId());
                 row.setText(2, tag.getName());
-                row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal") : Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$ //$NON-NLS-2$
-                ChangeSet changeSet = LocalChangesetCache.getInstance().getChangeSet(""+tag.getRevision()+":"+tag.getGlobalId());
+                row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal")  //$NON-NLS-1$
+                        : Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$
+                ChangeSet changeSet = cache.getChangeset(project, tag.getRevision() + ":" + tag.getGlobalId());
                 if(changeSet != null){
                     row.setText(4, changeSet.getSummary());
                 }
@@ -103,16 +109,18 @@ public class TagTable extends Composite {
 
     private boolean isParent(int r) {
         switch (parents.length) {
-            case 2:
-                if (r == parents[1]) {
-                    return true;
-                }
-            case 1:
-                if (r == parents[0]) {
-                    return true;
-                }
-            default:
-                return false;
+        case 2:
+            if (r == parents[1]) {
+                return true;
+            }
+            //$FALL-THROUGH$
+        case 1:
+            if (r == parents[0]) {
+                return true;
+            }
+            //$FALL-THROUGH$
+        default:
+            return false;
         }
     }
 

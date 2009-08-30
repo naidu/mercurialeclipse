@@ -17,15 +17,11 @@ import java.io.InputStream;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.compare.IStreamContentAccessor;
-import org.eclipse.compare.ITypedElement;
-import org.eclipse.compare.ResourceNode;
 import org.eclipse.compare.patch.ApplyPatchOperation;
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.compare.patch.IFilePatchResult;
 import org.eclipse.compare.patch.PatchConfiguration;
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
@@ -38,6 +34,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  *
  */
 public class PatchUtils {
+
+    public static final Pattern DIFF_START_PATTERN = Pattern.compile("^diff -r ", Pattern.MULTILINE);
 
     /**
      * @param outgoingPatch
@@ -143,28 +141,5 @@ public class PatchUtils {
         return bos.toByteArray();
     }
 
-    public static ResourceNode getResourceNodeFromInputStream(
-            IResource resource, final InputStream in) {
-        return new PatchResourceNode(resource, in);
-    }
-
-    private static class PatchResourceNode extends ResourceNode implements
-            IStreamContentAccessor, ITypedElement {
-
-        private final InputStream in;
-
-        public PatchResourceNode(IResource res, InputStream in) {
-            super(res);
-            this.in = in;
-        }
-
-        @Override
-        public InputStream getContents() throws CoreException {
-            return in;
-        }
-    }
-
-    public static final Pattern DIFF_START_PATTERN = Pattern.compile(
-            "^diff -r ", Pattern.MULTILINE);
 
 }

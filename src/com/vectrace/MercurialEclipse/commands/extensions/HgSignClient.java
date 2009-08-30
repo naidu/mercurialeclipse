@@ -28,19 +28,19 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * Client for hg sign
- * 
+ *
  * @author Bastian Doetsch
- * 
+ *
  */
 public class HgSignClient {
 
-    
-    
+
+
     /**
      * Calls hg sign. add a signature for the current or given revision If no
      * revision is given, the parent of the working directory is used, or tip if
      * no revision is checked out.
-     * 
+     *
      * @param directory
      *            the current project (working directory)
      * @param cs
@@ -62,7 +62,7 @@ public class HgSignClient {
      *            the passphrase or null
      * @author Bastian Doetsch
      * @return
-     * 
+     *
      */
     public static String sign(File directory, ChangeSet cs, String key,
             String message, String user, boolean local, boolean force,
@@ -79,7 +79,7 @@ public class HgSignClient {
                 fw.write(passphrase.concat("\n")); //$NON-NLS-1$
                 fw.flush();
                 cmd = cmd.concat(" --passphrase-file ").concat( //$NON-NLS-1$
-                        file.getCanonicalFile().getCanonicalPath());
+                        file.getCanonicalPath());
             } catch (IOException e) {
                 throw new HgException(e.getMessage());
             } finally {
@@ -104,7 +104,7 @@ public class HgSignClient {
         } else {
             command.addOptions("-m", message, "-u", user); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        
+
         command.addOptions(cs.getChangeset());
         String result;
         try {

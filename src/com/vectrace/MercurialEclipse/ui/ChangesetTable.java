@@ -32,12 +32,10 @@ import org.eclipse.swt.widgets.TableItem;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class ChangesetTable extends Composite {
@@ -45,9 +43,9 @@ public class ChangesetTable extends Composite {
     private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
             .getItalic(JFaceResources.DIALOG_FONT);
 
-    private Table table;
+    private final Table table;
     private int[] parents;
-    private IResource resource;
+    private final IResource resource;
 
     private ChangeSet[] changesets = new ChangeSet[0];
     private int logBatchSize;
@@ -64,7 +62,7 @@ public class ChangesetTable extends Composite {
             boolean autoFetch) {
         this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
                 | SWT.V_SCROLL | SWT.H_SCROLL, resource);
-        this.autoFetch = autoFetch;        
+        this.autoFetch = autoFetch;
     }
 
     public ChangesetTable(Composite parent, int tableStyle, IResource resource,
@@ -74,7 +72,7 @@ public class ChangesetTable extends Composite {
     }
 
     /**
-     * 
+     *
      */
     public ChangesetTable(Composite parent, int tableStyle, IResource resource) {
         super(parent, SWT.NONE);
@@ -105,14 +103,10 @@ public class ChangesetTable extends Composite {
                 TableItem tableItem = (TableItem) e.item;
                 ChangeSet cs = (ChangeSet) tableItem.getData();
                 if (table.isEnabled()
-                        && tableItem
-                        .equals(table.getItems()[table.getItemCount() - 1])
+                        && tableItem.equals(table.getItems()[table.getItemCount() - 1])
                         && cs.getChangesetIndex() > 0) {
-                    logBatchSize = Integer
-                            .parseInt(MercurialUtilities
-                                    .getPreference(
-                                            MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                                            "100")); //$NON-NLS-1$
+                    // limit log to allow "smooth" scrolling (not too small and not too big)
+                    logBatchSize = 200;
                     try {
                         int startRev = cs.getChangesetIndex() - 1;
                         updateTable(startRev);
@@ -141,17 +135,17 @@ public class ChangesetTable extends Composite {
     private void updateTable(int startRev) throws HgException {
         if (resource != null && table.isEnabled() && autoFetch) {
             if (startRev - logBatchSize > 0 || bottomNotFetched) {
-                LocalChangesetCache.getInstance().refreshAllLocalRevisions(
+                LocalChangesetCache.getInstance().fetchLocalRevisions(
                         resource, true, logBatchSize, startRev, false);
             }
             SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
                     .getLocalChangeSets(resource);
-            
+
             // only fetch rev 0:0+logbatchsize once
             if (set.size() == 0 || set.first().getChangesetIndex() == 0) {
-                bottomNotFetched = false;            
+                bottomNotFetched = false;
             }
-            
+
             SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
                     Collections.reverseOrder());
             reverseOrderSet.addAll(set);
@@ -223,10 +217,12 @@ public class ChangesetTable extends Composite {
             if (r == parents[1]) {
                 return true;
             }
+            //$FALL-THROUGH$
         case 1:
             if (r == parents[0]) {
                 return true;
             }
+            //$FALL-THROUGH$
         default:
             return false;
         }

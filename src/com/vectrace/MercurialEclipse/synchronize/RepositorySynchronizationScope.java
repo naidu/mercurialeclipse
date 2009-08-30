@@ -28,7 +28,7 @@ import org.eclipse.team.core.mapping.ISynchronizationScopeChangeListener;
 import org.eclipse.team.internal.ui.Utils;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author Andrei
@@ -37,10 +37,13 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 
     private final IResource[] roots;
     private final ListenerList listeners;
+    private final HgRepositoryLocation repo;
 
-    public RepositorySynchronizationScope(IResource[] roots) {
-        this.roots = roots != null? roots : MercurialStatusCache.getInstance()
-                .getAllManagedProjects();
+    public RepositorySynchronizationScope(HgRepositoryLocation repo, IResource[] roots) {
+        this.repo = repo;
+        this.roots = roots != null ? roots :
+            MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo)
+                .toArray(new IResource[0]);
         listeners = new ListenerList(ListenerList.IDENTITY);
     }
 
@@ -168,6 +171,10 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 
     public void removeScopeChangeListener(ISynchronizationScopeChangeListener listener) {
         listeners.remove(listener);
+    }
+
+    public HgRepositoryLocation getRepositoryLocation() {
+        return repo;
     }
 
 }

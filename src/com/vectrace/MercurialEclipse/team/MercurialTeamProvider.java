@@ -22,15 +22,18 @@ import java.util.Map;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
@@ -52,7 +55,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     private static final Map<IProject, Boolean> HG_ROOTS = new HashMap<IProject, Boolean>();
 
-    private MercurialHistoryProvider FileHistoryProvider = null;
+    private MercurialHistoryProvider FileHistoryProvider;
 
     /**
 	 *
@@ -63,15 +66,43 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     @Override
     public void configureProject() throws CoreException {
-        getProject().refreshLocal(IResource.DEPTH_INFINITE, null);
-        getHgRoot(getProject());
+        IProject project = getProject();
+        HG_ROOTS.put(project, Boolean.TRUE);
+        getHgRoot(project);
+        project.refreshLocal(IResource.DEPTH_INFINITE, null);
 
         // try to find .hg directory to set it as private member
-        IResource hgDir = getProject().findMember(".hg"); //$NON-NLS-1$
+        IResource hgDir = project.findMember(".hg"); //$NON-NLS-1$
         if (hgDir != null && hgDir.exists()) {
             hgDir.setTeamPrivateMember(true);
             hgDir.setDerived(true);
         }
+    }
+
+    public void deconfigure() throws CoreException {
+        IProject project = getProject();
+        assert (project != null);
+        // cleanup
+        HG_ROOTS.put(project, Boolean.FALSE);
+        project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
+        project.setPersistentProperty(ResourceProperties.MERGING, null);
+        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+    }
+
+    /**
+     * Checks if the given project is controlled by MercurialEclipse.
+     *
+     * @return true, if MercurialEclipse provides team functions to this
+     *         project, false otherwise.
+     */
+    public static boolean hgIsTeamProviderFor(IProject project){
+        Assert.isNotNull(project);
+        Boolean result = HG_ROOTS.get(project);
+        if(result == null){
+            result = Boolean.valueOf(RepositoryProvider.getProvider(project, ID) != null);
+            HG_ROOTS.put(project, result);
+        }
+        return result.booleanValue();
     }
 
     /**
@@ -89,18 +120,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
     private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
         assert (resource != null);
         IProject project = resource.getProject();
-        if (project == null) {
-            throw new HgException("There is no hg repository here (.hg not found)!");
+        if (project == null || !resource.exists()) {
+            return AbstractClient.getHgRoot(resource);
         }
-        HgRoot hgRoot = null;
+        HgRoot hgRoot;
         try {
             hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
             if (hgRoot == null) {
-                hgRoot = HgRootClient.getHgRoot(resource);
+                hgRoot = AbstractClient.getHgRoot(resource);
                 setRepositoryEncoding(project, hgRoot);
                 project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
             }
-            MercurialTeamProvider.HG_ROOTS.put(project, Boolean.FALSE);
         } catch (CoreException e) {
             throw new HgException(e);
         }
@@ -145,7 +175,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
      */
     private static HgRoot getAndStoreHgRoot(File file) throws CoreException {
         assert (file != null);
-        IResource resource = MercurialUtilities.convert(file);
+        IResource resource = ResourceUtils.convert(file);
         if (resource != null) {
             return getAndStoreHgRoot(resource);
         }
@@ -196,17 +226,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
     public static HgRoot getHgRoot(File file) throws CoreException {
         assert (file != null);
         return getAndStoreHgRoot(file);
-    }
-
-    public void deconfigure() throws CoreException {
-        IProject project = getProject();
-        assert (project != null);
-        // cleanup
-        HG_ROOTS.remove(project);
-        project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
-        project.setPersistentProperty(ResourceProperties.MERGING, null);
-        project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-
     }
 
     @Override

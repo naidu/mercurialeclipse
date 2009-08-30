@@ -24,11 +24,8 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 public abstract class DataLoader {
-	ChangeSet[] changeSets;
 
 	public abstract IProject getProject();
-
-	public abstract ChangeSet[] getRevisions() throws HgException;
 
 	public Tag[] getTags() throws HgException {
 		return HgTagClient.getTags(getProject());
@@ -46,63 +43,5 @@ public abstract class DataLoader {
 		return HgParentClient.getParents(getProject());
 	}
 
-	/**
-	 * Searches for the complete changeset associated with a revision. This
-	 * method must be called after getRevisions().
-	 * 
-	 * @param revision
-	 * @return
-	 */
-	public ChangeSet getChangeSetByRevision(int revision) {
-		for (ChangeSet changeSet : changeSets) {
-			if (changeSet.getRevision().getRevision() == revision) {
-				return changeSet;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Searches for the complete changeset associated with the given string in
-	 * tag, node, and node short entries. This method must be called after
-	 * getRevisions().
-	 * 
-	 * @param tagOrNode
-	 * @return
-	 */
-	public ChangeSet searchChangeSet(String tagOrNode) {
-		for (ChangeSet changeSet : changeSets) {
-			if (changeSet.getTag().equals(tagOrNode)
-					|| changeSet.getChangeset().equals(tagOrNode)
-					|| changeSet.getNodeShort().equals(tagOrNode)) {
-				return changeSet;
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Gets the revision, which was tagged with the tag.
-	 * 
-	 * @param tag
-	 * @return
-	 */
-	public ChangeSet getChangeSetByTag(Tag tag) {
-		for (int i = 0; i < changeSets.length; i++) {
-			ChangeSet cs = changeSets[i];
-			if (cs.getTag().equals(tag.getName())
-					|| cs.getChangeset().equals(tag.getGlobalId())
-					|| cs.getChangesetIndex() == tag.getRevision()) {
-				return cs;
-			} 
-			if (cs.getChangesetIndex() > tag.getRevision()) {
-				if (i > 0) {
-					return changeSets[i - 1];
-				}
-				return changeSets[0];				
-			}
-		}
-		return null;
-	}
 
 }

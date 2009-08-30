@@ -35,15 +35,9 @@ import org.osgi.framework.BundleContext;
 
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
-import com.vectrace.MercurialEclipse.mapping.HgActiveChangeSetCollector;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
-import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
-import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
-import com.vectrace.MercurialEclipse.synchronize.SingleRepoSubscriber;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * The main plugin class to be used in the desktop.
@@ -68,7 +62,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     private boolean hgUsable = true;
 
-
     /**
      * The constructor.
      */
@@ -78,10 +71,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     @Override
     public void start(BundleContext context) throws Exception {
+        super.start(context);
         plugin = this;
         DefaultConfiguration cfg = new DefaultConfiguration();
         HgClients.initialize(cfg, cfg, cfg);
-        super.start(context);
 
         new Job("Starting MercurialEclipse.") {
             @Override
@@ -108,7 +101,9 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
                 }
             }
         }.schedule();
+
     }
+
 
     /**
      * Checks if Mercurial is configured properly by issuing the hg debuginstall
@@ -299,15 +294,4 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         return PlatformUI.getWorkbench().getDisplay();
     }
 
-    public HgActiveChangeSetCollector createChangeSetManager(HgRepositoryLocation repo) {
-        return new HgActiveChangeSetCollector(
-                    new SingleRepoSubscriber(new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
-                            .getAllManagedProjects()), repo));
-    }
-
-    public HgActiveChangeSetCollector createChangeSetManager() {
-        return new HgActiveChangeSetCollector(
-                new MercurialSynchronizeSubscriber(new RepositorySynchronizationScope(MercurialStatusCache.getInstance()
-                        .getAllManagedProjects())));
-    }
 }

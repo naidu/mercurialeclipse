@@ -38,15 +38,13 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class BookmarkDialog extends TrayDialog {
 
-    private IProject project;
+    private final IProject project;
     private ChangesetTable csTable;
-    private Button revCheckBox;
     private Text bmNameTextBox;
-    private Button createButton;
     private Button renameCheckBox;
     private BookmarkTable bookmarkTable;
     private Text newBmNameTextBox;
@@ -90,13 +88,6 @@ public class BookmarkDialog extends TrayDialog {
         item.setControl(c);
 
         Listener tabSl = new Listener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.
-             * widgets.Event)
-             */
             public void handleEvent(Event event) {
                 if (event.type == SWT.Show) {
                     modifyTab = false;
@@ -118,14 +109,7 @@ public class BookmarkDialog extends TrayDialog {
         this.csTable.setEnabled(true);
 
         SelectionListener sl = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
-            public void widgetDefaultSelected(SelectionEvent e) {
+             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
 
@@ -147,13 +131,6 @@ public class BookmarkDialog extends TrayDialog {
         item.setControl(c);
 
         Listener tabSl = new Listener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.widgets.Listener#handleEvent(org.eclipse.swt.
-             * widgets.Event)
-             */
             public void handleEvent(Event event) {
                 if (event.type == SWT.Show) {
                     modifyTab = true;
@@ -169,13 +146,6 @@ public class BookmarkDialog extends TrayDialog {
         this.bookmarkTable = new BookmarkTable(selGroup, project);
         this.bookmarkTable.setLayoutData(layoutData);
         SelectionListener sl = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
@@ -187,28 +157,14 @@ public class BookmarkDialog extends TrayDialog {
         this.bookmarkTable.addSelectionListener(sl);
 
         Group renameGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.renameGroup.label")); //$NON-NLS-1$
-        this.deleteCheckBox(SWTWidgetHelper.createCheckBox(renameGroup,
+        this.setDeleteCheckBox(SWTWidgetHelper.createCheckBox(renameGroup,
                 Messages.getString("BookmarkDialog.option.delete"))); //$NON-NLS-1$
 
         SelectionListener delSl = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
 
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
-             * .swt.events.SelectionEvent)
-             */
             public void widgetSelected(SelectionEvent e) {
                 boolean selection = deleteCheckBox.getSelection();
                 if (selection) {
@@ -230,24 +186,11 @@ public class BookmarkDialog extends TrayDialog {
         renameLabel.setEnabled(false);
 
         SelectionListener renSl = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
+
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
 
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
-             * .swt.events.SelectionEvent)
-             */
             public void widgetSelected(SelectionEvent e) {
                 boolean selection = renameCheckBox.getSelection();
                 if (selection) {
@@ -262,11 +205,6 @@ public class BookmarkDialog extends TrayDialog {
         return item;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.Dialog#okPressed()
-     */
     @Override
     protected void okPressed() {
         try {
@@ -295,66 +233,30 @@ public class BookmarkDialog extends TrayDialog {
         super.okPressed();
     }
 
-    /**
-     * @return the project
-     */
     public IProject getProject() {
         return project;
     }
 
-    /**
-     * @return the csTable
-     */
     public ChangesetTable getCsTable() {
         return csTable;
     }
 
-    /**
-     * @return the revCheckBox
-     */
-    public Button getRevCheckBox() {
-        return revCheckBox;
-    }
-
-    /**
-     * @return the bmNameTextBox
-     */
     public Text getBmNameTextBox() {
         return bmNameTextBox;
     }
 
-    /**
-     * @return the createButton
-     */
-    public Button getCreateButton() {
-        return createButton;
-    }
-
-    /**
-     * @return the renameCheckBox
-     */
     public Button getRenameCheckBox() {
         return renameCheckBox;
     }
 
-    /**
-     * @return the bookmarkTable
-     */
     public BookmarkTable getBookmarkTable() {
         return bookmarkTable;
     }
 
-    /**
-     * @param deleteCheckBox
-     *            the deleteCheckBox to set
-     */
-    public void deleteCheckBox(Button deleteCheckBox) {
+    public void setDeleteCheckBox(Button deleteCheckBox) {
         this.deleteCheckBox = deleteCheckBox;
     }
 
-    /**
-     * @return the deleteCheckBox
-     */
     public Button getDeleteCheckBox() {
         return deleteCheckBox;
     }

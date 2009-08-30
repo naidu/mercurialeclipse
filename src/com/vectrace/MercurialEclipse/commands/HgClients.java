@@ -13,12 +13,14 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.io.IOException;
 
+import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Stefan
- * 
+ *
  */
 public final class HgClients {
 
@@ -33,9 +35,6 @@ public final class HgClients {
         HgClients.error = errorHandler;
     }
 
-    /**
-     * @return
-     */
     public static String getExecutable() {
         if (config == null) {
             throw new IllegalStateException(
@@ -44,9 +43,6 @@ public final class HgClients {
         return config.getExecutable();
     }
 
-    /**
-     * @return
-     */
     public static String getDefaultUserName() {
         if (config == null) {
             throw new IllegalStateException(
@@ -55,9 +51,6 @@ public final class HgClients {
         return config.getDefaultUserName();
     }
 
-    /**
-     * @return
-     */
     public static IConsole getConsole() {
         if (console == null) {
             throw new IllegalStateException(
@@ -66,26 +59,15 @@ public final class HgClients {
         return console;
     }
 
-    /**
-     * @param e
-     */
     public static void logError(IOException e) {
         error.logError(e);
     }
 
-    /**
-     * @param string
-     * @param e
-     */
     public static void logWarning(String message, Throwable e) {
         error.logWarning(message, e);
         MercurialEclipsePlugin.logWarning(message, e);
     }
 
-    /**
-     * @param timeoutConstant
-     * @return
-     */
     public static int getTimeOut(String commandId) {
         return config.getTimeOut(commandId);
     }
@@ -94,8 +76,12 @@ public final class HgClients {
             String defaultIfNotSet) {
         return config.getPreference(preferenceConstant, defaultIfNotSet);
     }
-    
+
     public static HgRoot getHgRoot(File file) {
         return config.getHgRoot(file);
+    }
+
+    public static HgRoot getHgRoot(IResource resource) {
+        return config.getHgRoot(ResourceUtils.getFileHandle(resource));
     }
 }

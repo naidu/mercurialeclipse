@@ -12,18 +12,12 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  *
@@ -36,6 +30,7 @@ public class HgCommand extends AbstractShellCommand {
     }
 
     public HgCommand(String command, File workingDir, boolean escapeFiles) {
+        super();
         this.command = command;
         this.workingDir = workingDir;
         this.escapeFiles = escapeFiles;
@@ -52,7 +47,10 @@ public class HgCommand extends AbstractShellCommand {
 
     protected String getHgExecutable() {
         return HgClients.getExecutable();
+    }
 
+    public HgRoot getHgRoot() throws HgException{
+        return getHgRoot(workingDir);
     }
 
     protected String getDefaultUserName() {
@@ -62,21 +60,6 @@ public class HgCommand extends AbstractShellCommand {
     protected void addUserName(String user) {
         this.options.add("-u"); //$NON-NLS-1$
         this.options.add(user != null ? user : getDefaultUserName());
-    }
-
-    protected static Map<HgRoot, List<IResource>> groupByRoot(
-            List<IResource> resources) throws HgException, IOException {
-        Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
-        for (IResource resource : resources) {
-            HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-            List<IResource> list = result.get(root);
-            if (list == null) {
-                list = new ArrayList<IResource>();
-                result.put(root, list);
-            }
-            list.add(resource);
-        }
-        return result;
     }
 
     @Override

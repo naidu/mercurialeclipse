@@ -11,7 +11,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
-import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -40,7 +40,6 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.AbstractCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -146,12 +145,8 @@ ILightweightLabelDecorator, Observer
     @Override
     public void dispose() {
         STATUS_CACHE.deleteObserver(this);
-        STATUS_CACHE.clear();
         INCOMING_CACHE.deleteObserver(this);
-        INCOMING_CACHE.clear();
         LOCAL_CACHE.deleteObserver(this);
-        LOCAL_CACHE.clear();
-        AbstractCache.clearNodeMap();
         super.dispose();
     }
 
@@ -192,23 +187,18 @@ ILightweightLabelDecorator, Observer
 
             if (showChangeset) {
                 // get recent project versions
-                if (!STATUS_CACHE.getLock(project).isLocked()
-                        && !STATUS_CACHE.isStatusKnown(project)
-                        && !LOCAL_CACHE.isLocalUpdateInProgress(project)
-                        && !LOCAL_CACHE.isLocalUpdateInProgress(resource)
-                        && !LOCAL_CACHE.isLocallyKnown(project)) {
-                    // LOCAL_CACHE notifies resource decorator when it's
-                    // finished.
+                if (!STATUS_CACHE.isStatusKnown(project) && !LOCAL_CACHE.isLocallyKnown(project)) {
+                    // LOCAL_CACHE notifies resource decorator when it's finished.
                     RefreshJob job = new RefreshJob(
                             Messages
-                            .getString("ResourceDecorator.refreshingChangesetDeco"), null, project, showChangeset); //$NON-NLS-1$
+                            .getString("ResourceDecorator.refreshingChangesetDeco"), project, showChangeset); //$NON-NLS-1$
                     job.schedule();
                     job.join();
                     return;
                 }
             } else {
-                if (!STATUS_CACHE.getLock(project).isLocked()
-                        && !STATUS_CACHE.isStatusKnown(project)) {
+                if (/*!STATUS_CACHE.getLock(project).isLocked() &&*/
+                         !STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
                             Messages
                             .getString("ResourceDecorator.updatingStatusForProject.1") + project.getName() //$NON-NLS-1$
@@ -314,7 +304,7 @@ ILightweightLabelDecorator, Observer
                     setFont(d, REMOVED_FONT);
                 }
                 break;
-            case MercurialStatusCache.BIT_DELETED:
+            case MercurialStatusCache.BIT_MISSING:
                 overlay = DecoratorImages.deletedStillTrackedDescriptor;
                 prefix.append('>');
                 if (coloriseLabels) {
@@ -338,7 +328,8 @@ ILightweightLabelDecorator, Observer
     }
 
     private void addChangesetInfo(IDecoration d, IResource resource, IProject project, StringBuilder prefix)
-    throws CoreException, IOException {
+        throws CoreException {
+
         // label info for incoming changesets
         ChangeSet newestIncomingChangeSet = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
 
@@ -389,14 +380,10 @@ ILightweightLabelDecorator, Observer
         d.setFont(theme.getFontRegistry().get(id));
     }
 
-    private String getSuffixForFiles(IResource resource, ChangeSet cs)
-    throws HgException {
+    private String getSuffixForFiles(IResource resource, ChangeSet cs) throws HgException {
         String suffix = ""; //$NON-NLS-1$
         // suffix for files
-        if (!LOCAL_CACHE.isLocalUpdateInProgress(resource.getProject())
-                && !STATUS_CACHE.isAdded(resource.getProject(), resource
-                        .getLocation())
-                        && !LOCAL_CACHE.isLocalUpdateInProgress(resource)) {
+        if (!STATUS_CACHE.isAdded(resource.getProject(), resource.getLocation())) {
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
                 suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
@@ -412,20 +399,18 @@ ILightweightLabelDecorator, Observer
         return suffix;
     }
 
-    private String getSuffixForProject(IProject project) throws CoreException,
-    IOException {
+    private String getSuffixForProject(IProject project) throws CoreException {
         ChangeSet changeSet = null;
         String suffix = ""; //$NON-NLS-1$
-        if (!LOCAL_CACHE.isLocalUpdateInProgress(project)) {
-            if (showChangeset) {
-                LocalChangesetCache.getInstance().getLocalChangeSets(project);
-            }
-            changeSet = LocalChangesetCache.getInstance()
-            .getCurrentWorkDirChangeset(project);
-        } else {
-            suffix = Messages.getString("ResourceDecorator.new"); //$NON-NLS-1$
+
+        if (showChangeset) {
+            LocalChangesetCache.getInstance().getLocalChangeSets(project);
         }
-        if (changeSet != null) {
+        changeSet = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
+
+        if (changeSet == null) {
+            suffix = Messages.getString("ResourceDecorator.new"); //$NON-NLS-1$
+        } else {
             suffix = " [ "; //$NON-NLS-1$
             String hex = ":" + changeSet.getNodeShort(); //$NON-NLS-1$
             String tags = changeSet.getTag();

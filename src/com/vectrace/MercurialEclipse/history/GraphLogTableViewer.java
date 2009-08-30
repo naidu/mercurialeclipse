@@ -20,7 +20,6 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
@@ -81,14 +80,10 @@ public class GraphLogTableViewer extends TableViewer {
         // validate signed changesets
         Signature sig = rev.getSignature();
         if (sig != null) {
-            try {
-                if (sig.validate()) {
-                    tableItem.setBackground(colours.get(0));
-                } else {
-                    tableItem.setBackground(colours.get(2));
-                }
-            } catch (HgException e) {
-                MercurialEclipsePlugin.logError(e);
+            if (sig.validate()) {
+                tableItem.setBackground(colours.get(0));
+            } else {
+                tableItem.setBackground(colours.get(2));
             }
         }
         if (mhp.getCurrentWorkdirChangeset() != null) {

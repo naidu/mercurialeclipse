@@ -27,8 +27,7 @@ public class StripHandler extends SingleResourceHandler {
         dialog.setBlockOnOpen(true);
         dialog.open();
         project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        LocalChangesetCache.getInstance().clear(resource.getProject());
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(resource.getProject());
+        LocalChangesetCache.getInstance().refreshAllLocalRevisions(resource.getProject(), true);
     }
 
 }

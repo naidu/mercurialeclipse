@@ -7,15 +7,15 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
- *     Stefan Groschupf          - logError 
+ *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 
 /*
  * OpenMercurialRevisionAction
- * 
+ *
  * Open an "old" revision in an editor from like "History" view.
- * 
+ *
  */
 package com.vectrace.MercurialEclipse.actions;
 
@@ -58,10 +58,10 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 
-    public class MercurialRevisionEditorInput extends PlatformObject implements
+    public static class MercurialRevisionEditorInput extends PlatformObject implements
             IWorkbenchAdapter, IStorageEditorInput {
 
-        private IFileRevision fileRevision;
+        private final IFileRevision fileRevision;
         private MercurialRevisionStorage storage;
 
         public MercurialRevisionEditorInput(IFileRevision revision) {
@@ -227,7 +227,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
                             MercurialEclipsePlugin.logError(e);
                             return new Status(IStatus.ERROR,"com.vectrace.MercurialEclipse",e.getMessage());                             //$NON-NLS-1$
                         }
-                        
+
                     }
                 };
                 runnable.schedule();

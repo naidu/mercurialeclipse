@@ -20,16 +20,18 @@ import org.eclipse.swt.dnd.Transfer;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ClipboardUtils {
     /**
      * copy string to clipboard
-     * 
+     *
      * @param result
      */
     public static void copyToClipboard(final String result) {
-        if (result == null)
+        if (result == null) {
             return;
+        }
         if (MercurialEclipsePlugin.getStandardDisplay().getThread() == Thread
                 .currentThread()) {
             Clipboard cb = new Clipboard(MercurialEclipsePlugin
@@ -71,27 +73,32 @@ public class ClipboardUtils {
             throws HgException {
         File file = null;
         String txt = getClipboardString();
-        if (txt == null || txt.trim().length() == 0)
+        if (txt == null || txt.trim().length() == 0) {
             return null;
+        }
         FileWriter w = null;
         try {
             file = File.createTempFile(prefix, suffix);
             w = new FileWriter(file);
             w.write(txt);
-            w.close();
             return file;
         } catch (IOException e) {
-            if (w != null)
+            if (file != null && file.exists()) {
+                boolean deleted = file.delete();
+                if(!deleted){
+                    MercurialEclipsePlugin.logError("Failed to delete clipboard content file: " + file, null);
+                }
+            }
+            throw new HgException(Messages
+                    .getString("ClipboardUtils.error.writeTempFile"), e); //$NON-NLS-1$
+        } finally {
+            if (w != null) {
                 try {
                     w.close();
                 } catch (IOException e1) {
                     MercurialEclipsePlugin.logError(e1);
                 }
-            if (file != null && file.exists())
-                file.delete();
-            throw new HgException(Messages
-                    .getString("ClipboardUtils.error.writeTempFile"), e); //$NON-NLS-1$
-
+            }
         }
     }
 

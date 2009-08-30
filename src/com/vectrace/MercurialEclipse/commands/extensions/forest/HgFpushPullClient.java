@@ -27,43 +27,35 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class HgFpushPullClient extends HgPushPullClient {
 
     public static String fpush(File forestRoot, HgRepositoryLocation repo,
             String revision, int timeout, File snapFile) throws CoreException {
 
-        try {
-            AbstractShellCommand command = new HgCommand("fpush",
-                    forestRoot, true);
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
-
-            if (snapFile != null) {
+        AbstractShellCommand command = new HgCommand("fpush", forestRoot, true);
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
+        if (snapFile != null) {
+            try {
                 command.addOptions("--snapfile", snapFile.getCanonicalPath());
+            } catch (IOException e) {
+                throw new HgException(e.getLocalizedMessage(), e);
             }
-
-            if (revision != null && revision.length() > 0) {
-                command.addOptions("-r", revision.trim());
-            }
-
-            URI uri = repo.getUri();
-            if (uri != null) {
-                command.addOptions(uri.toASCIIString());
-            } else {
-                command.addOptions(repo.getLocation());
-            }
-
-            String result = new String(command.executeToBytes(timeout));
-            Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-            for (IProject project : projects) {
-                updateAfterPush(result, project, repo);
-            }
-
-            return result;
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
         }
+
+        if (revision != null && revision.length() > 0) {
+            command.addOptions("-r", revision.trim());
+        }
+
+        URI uri = repo.getUri();
+        if (uri != null) {
+            command.addOptions(uri.toASCIIString());
+        } else {
+            command.addOptions(repo.getLocation());
+        }
+
+        return new String(command.executeToBytes(timeout));
     }
 
     public static String fpull(File forestRoot, HgRepositoryLocation repo,
@@ -77,49 +69,47 @@ public class HgFpushPullClient extends HgPushPullClient {
         } else {
             pullSource = repo.getLocation();
         }
-        try {
-            AbstractShellCommand command = new HgCommand("fpull",
-                    forestRoot, true);
+        AbstractShellCommand command = new HgCommand("fpull", forestRoot, true);
 
-            if (update) {
-                command.addOptions("--update");
-            }
+        if (update) {
+            command.addOptions("--update");
+        }
+        if (changeset != null) {
+            command.addOptions("--rev", changeset.getChangeset());
+        }
 
-            if (changeset != null) {
-                command.addOptions("--rev", changeset.getChangeset());
-            }
-
-            if (snapFile != null) {
+        if (snapFile != null) {
+            try {
                 command.addOptions("--snapfile", snapFile.getCanonicalPath());
+            } catch (IOException e) {
+                throw new HgException(e.getLocalizedMessage(), e);
             }
+        }
 
-            if (walkHg) {
-                command.addOptions("--walkhg", "true");
-            }
+        if (walkHg) {
+            command.addOptions("--walkhg", "true");
+        }
 
-            if (partial) {
-                command.addOptions("--partial");
-            }
+        if (partial) {
+            command.addOptions("--partial");
+        }
 
-            command.addOptions(pullSource);
+        command.addOptions(pullSource);
 
-            String result;
-            if (timeout) {
-                command
-                        .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-                result = new String(command.executeToBytes());
-            } else {
-                result = new String(command.executeToBytes(Integer.MAX_VALUE));
-            }
-            if(update) {
-                Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-                for (IProject project : projects) {
+        String result;
+        if (timeout) {
+            command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+            result = new String(command.executeToBytes());
+        } else {
+            result = new String(command.executeToBytes(Integer.MAX_VALUE));
+        }
+            Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+            for (IProject project : projects) {
+                if(update) {
                     new RefreshWorkspaceStatusJob(project).schedule();
                 }
+                new RefreshJob("Refreshing " + project.getName(), project).schedule();
             }
-            return result;
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
+        return result;
     }
 }

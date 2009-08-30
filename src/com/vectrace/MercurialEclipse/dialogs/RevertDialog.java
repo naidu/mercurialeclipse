@@ -23,7 +23,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -31,7 +30,6 @@ public class RevertDialog extends TitleAreaDialog {
 
     private List<IResource> resources;
     private CommitFilesChooser selectFilesList;
-    private HgRoot root;
     private List<IResource> selection;
 
     public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
@@ -42,18 +40,17 @@ public class RevertDialog extends TitleAreaDialog {
 
     /**
      * Create the dialog
-     * 
+     *
      * @param parentShell
      */
-    public RevertDialog(Shell parentShell, HgRoot root) {
+    public RevertDialog(Shell parentShell) {
         super(parentShell);
         setShellStyle(getShellStyle() | SWT.RESIZE);
-        this.root = root;
     }
 
     /**
      * Create contents of the dialog
-     * 
+     *
      * @param parent
      */
     @Override
@@ -69,7 +66,7 @@ public class RevertDialog extends TitleAreaDialog {
     }
 
     private void createFilesList(Composite container) {
-        selectFilesList = new CommitFilesChooser(container, true, resources, root, false, true);
+        selectFilesList = new CommitFilesChooser(container, true, resources, false, true);
     }
 
     public void setFiles(List<IResource> resources) {
@@ -88,9 +85,6 @@ public class RevertDialog extends TitleAreaDialog {
         setFiles(Arrays.asList(commitResources));
     }
 
-    /**
-     * @return the selection
-     */
     public List<IResource> getSelection() {
         return selection;
     }

@@ -27,10 +27,13 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 
 /**
@@ -101,39 +104,30 @@ public class PushRepoWizard extends HgWizard {
                 }
             }
             String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
-            if (pushRepoPage.isShowSvn()
-                    && pushRepoPage.getSvnCheckBox().getSelection()) {
+            boolean isForest = false;
+            if (pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection()) {
                 result += HgSvnClient.push(project.getLocation().toFile());
-            } else if (pushRepoPage.isShowForest()
-                    && pushRepoPage.getForestCheckBox().getSelection()) {
+            } else if (pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection()) {
                 File forestRoot = MercurialTeamProvider.getHgRoot(
                         project.getLocation().toFile()).getParentFile();
-                
+
                 File snapFile = null;
                 String snapFileText = pushRepoPage.getSnapFileCombo().getText();
                 if (snapFileText.length() > 0) {
                     snapFile = new File(snapFileText);
                 }
-                result += HgFpushPullClient.fpush(forestRoot, repo, changeset,
-                        timeout, snapFile);
+                result += HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
+                isForest = true;
             } else {
-                result += HgPushPullClient.push(project, repo, pushRepoPage
-                        .isForce(), changeset, timeout);
-            }
-            if (result.length() != 0) {
-                HgClients.getConsole().printMessage(result, null);
+                result += HgPushPullClient.push(project, repo, pushRepoPage.isForce(), changeset, timeout);
             }
 
-            // It appears good. Stash the repo location.
-            MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
-                    repo);
+            updateAfterPush(result, project, repo, isForest);
 
-            OutgoingChangesetCache.getInstance().clear(repo);
         } catch (URISyntaxException e) {
-            MessageDialog
-                    .openError(
-                            Display.getCurrent().getActiveShell(),
-                            Messages.getString("PushRepoWizard.malformedUrl"), e.getMessage()); //$NON-NLS-1$
+            MessageDialog.openError(
+                    Display.getCurrent().getActiveShell(),
+                    Messages.getString("PushRepoWizard.malformedUrl"), e.getMessage()); //$NON-NLS-1$
             return false;
 
         } catch (Exception e) {
@@ -143,6 +137,24 @@ public class PushRepoWizard extends HgWizard {
             return false;
         }
         return true;
+    }
+
+    private static void updateAfterPush(String result, IProject project, HgRepositoryLocation repo, boolean isForest) throws HgException {
+        if (result.length() != 0) {
+            HgClients.getConsole().printMessage(result, null);
+        }
+
+        // It appears good. Stash the repo location.
+        MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
+
+        if(isForest){
+            IncomingChangesetCache.getInstance().clear(repo);
+            OutgoingChangesetCache.getInstance().clear(repo);
+        } else {
+            IncomingChangesetCache.getInstance().clear(repo, project, true);
+            OutgoingChangesetCache.getInstance().clear(repo, project, true);
+        }
+        MercurialStatusCache.getInstance().refreshStatus(project, null);
     }
 
     /**

@@ -25,8 +25,8 @@ public class DisconnectHandler extends SingleResourceHandler {
         IProject project = resource.getProject();
         project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
         RepositoryProvider.unmap(project);
-        MercurialStatusCache.getInstance().clear(project);
-        LocalChangesetCache.getInstance().clear(project);
+        MercurialStatusCache.getInstance().clear(project, false);
+        LocalChangesetCache.getInstance().clear(project, false);
     }
 
 }

@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.BitSet;
+
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IStorage;
@@ -33,6 +35,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 /**
@@ -42,13 +45,61 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
  *
  */
 public class MercurialRevisionStorage implements IStorage {
+    private static final ByteArrayInputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
     private int revision;
     private String global;
     private final IResource resource;
     protected ChangeSet changeSet;
-    protected byte [] bytes;
-    private Exception error;
+    protected ContentHolder content;
     private File parent;
+
+    protected class ContentHolder {
+        private final byte[] bytes;
+        private final String string;
+        private Throwable error;
+
+        private ContentHolder(byte [] b, String str, Throwable t) {
+            bytes = b;
+            string = str;
+            error = t;
+        }
+
+        public ContentHolder(byte [] bytes) {
+            this(bytes, null, null);
+        }
+
+        public ContentHolder(String string) {
+            this(null, string, null);
+        }
+
+        public ContentHolder(Throwable t) {
+            this(null, null, t);
+        }
+
+        private InputStream createStreamContent(String result) throws HgException {
+            try {
+                HgRoot root = MercurialTeamProvider.getHgRoot(resource);
+                return new ByteArrayInputStream(result.getBytes(root.getEncoding().name()));
+            } catch (UnsupportedEncodingException e) {
+                error = e;
+                // core API ignores exceptions from this method, so we need to log them here
+                MercurialEclipsePlugin.logWarning("Failed to get revision content for " +
+                        MercurialRevisionStorage.this.toString(), e);
+                return EMPTY_STREAM;
+            }
+        }
+
+        public InputStream createStream() throws HgException {
+            if (bytes != null) {
+                return new ByteArrayInputStream(bytes);
+            } else if(string != null && error == null){
+                return createStreamContent(string);
+            } else {
+                return EMPTY_STREAM;
+            }
+        }
+
+    }
 
     /**
      * The recommended constructor to use is MercurialRevisionStorage(IResource res, String rev, String global,
@@ -131,53 +182,37 @@ public class MercurialRevisionStorage implements IStorage {
      * {@inheritDoc}
      */
     public InputStream getContents() throws CoreException {
-        if(bytes != null){
-            return new ByteArrayInputStream(bytes);
+        if(content != null){
+            return content.createStream();
         }
-        String result;
         try {
             IFile file = resource.getProject().getFile(resource.getProjectRelativePath());
-            result = fetchStringContent(file);
+            content = fetchContent(file);
         } catch (CoreException e) {
 
             if(parent != null){
                 IFile file = ResourcesPlugin.getWorkspace().getRoot().getFileForLocation(
                         new Path(parent.getAbsolutePath()));
                 try {
-                    result = fetchStringContent(file);
-                    return createStreamContent(result);
+                    content = fetchContent(file);
+                    return content.createStream();
                 } catch (CoreException e2) {
                     e = e2;
                 }
             }
-            error = e;
-            bytes = new byte[0];
+            content = new ContentHolder(e);
             // core API ignores exceptions from this method, so we need to log them here
             MercurialEclipsePlugin.logWarning("Failed to get revision content for " + toString(), e);
             throw e;
         }
 
-        return createStreamContent(result);
+        return content.createStream();
     }
 
-    private InputStream createStreamContent(String result) throws HgException {
-        try {
-            HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-            bytes = result.getBytes(root.getEncoding().name());
-            return new ByteArrayInputStream(bytes);
-        } catch (UnsupportedEncodingException e) {
-            error = e;
-            bytes = new byte[0];
-            // core API ignores exceptions from this method, so we need to log them here
-            MercurialEclipsePlugin.logWarning("Failed to get revision content for " + toString(), e);
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
-    }
-
-    private String fetchStringContent(IFile file) throws CoreException {
+    private ContentHolder fetchContent(IFile file) throws CoreException {
         if (changeSet == null) {
             // no changeset known
-            return HgCatClient.getContent(file, null);
+            return new ContentHolder(HgCatClient.getContent(file, null));
         }
         String result;
         // Setup and run command
@@ -191,13 +226,16 @@ public class MercurialRevisionStorage implements IStorage {
                 throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
             }
         } else if (changeSet.getDirection() == Direction.OUTGOING) {
-            bytes = PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true);
-            result = new String(bytes);
+            return new ContentHolder(PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true));
         } else {
             // local: get the contents via cat
+            BitSet status = MercurialStatusCache.getInstance().getStatus(file);
+            if(status != null && status.get(MercurialStatusCache.BIT_UNKNOWN)){
+                return new ContentHolder((byte[])null);
+            }
             result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
         }
-        return result;
+        return new ContentHolder(result);
     }
 
     public IPath getFullPath() {
@@ -213,8 +251,7 @@ public class MercurialRevisionStorage implements IStorage {
         try {
             getContents();
         } catch (CoreException e) {
-            error = e;
-            bytes = new byte[0];
+            content = new ContentHolder(e);
         }
         String name;
         if (changeSet != null) {
@@ -222,8 +259,8 @@ public class MercurialRevisionStorage implements IStorage {
         } else {
             name = resource.getName();
         }
-        if(error != null){
-            String message = error.getMessage();
+        if(content.error != null){
+            String message = content.error.getMessage();
             if (message.indexOf('\n') > 0) {
                 // name = message + ", " + name;
                 name = message.substring(0, message.indexOf('\n'));

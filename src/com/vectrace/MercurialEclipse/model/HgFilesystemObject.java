@@ -14,8 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import org.eclipse.core.runtime.CoreException;
-
 import com.vectrace.MercurialEclipse.commands.HgClients;
 
 /**
@@ -27,35 +25,42 @@ public class HgFilesystemObject extends File {
 
     private static final long serialVersionUID = 1L;
 
-    public HgFilesystemObject(String pathname) throws IOException,
-            CoreException {
+    public HgFilesystemObject(String pathname) {
         super(pathname);
         this.hgRoot = HgClients.getHgRoot(this);
     }
 
-    public HgFilesystemObject(File file) throws IOException, CoreException {
+    public HgFilesystemObject(File file) throws IOException {
         super(file.getCanonicalPath());
         this.hgRoot = HgClients.getHgRoot(this);
     }
 
-    public HgFilesystemObject(URI uri) throws IOException, CoreException {
+    public HgFilesystemObject(URI uri) {
         super(uri);
         this.hgRoot = HgClients.getHgRoot(this);
     }
 
-    public HgFilesystemObject(String parent, String child) throws IOException,
-            CoreException {
+    public HgFilesystemObject(String parent, String child) {
         super(parent, child);
         this.hgRoot = HgClients.getHgRoot(this);
     }
 
-    public HgFilesystemObject(File parent, String child) throws IOException,
-            CoreException {
+    public HgFilesystemObject(File parent, String child) {
         super(parent, child);
         this.hgRoot = HgClients.getHgRoot(this);
     }
 
     public HgRoot getHgRoot() {
         return hgRoot;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 }

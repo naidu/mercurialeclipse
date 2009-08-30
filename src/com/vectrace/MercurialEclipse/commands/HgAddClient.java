@@ -1,6 +1,5 @@
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -10,18 +9,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class HgAddClient {
+public class HgAddClient extends AbstractClient {
 
     public static void addResources(List<IResource> resources,
             IProgressMonitor monitor) throws HgException {
-        Map<HgRoot, List<IResource>> resourcesByRoot;
-        try {
-            resourcesByRoot = HgCommand
-                    .groupByRoot(resources);
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
+        Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
         for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
             HgRoot root = mapEntry.getKey();
             if (monitor != null) {

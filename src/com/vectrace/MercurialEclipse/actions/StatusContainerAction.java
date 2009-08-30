@@ -13,74 +13,59 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
-import java.io.File;
 import java.util.ArrayList;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.operation.IRunnableContext;
 
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author Peter
- * 
- * Mercurial status operation.
+ *
+ *         Mercurial status operation.
  *
  */
-public class StatusContainerAction extends HgOperation
-{
+public class StatusContainerAction extends HgOperation {
 
-  private IResource[] resources;
+    private final IResource[] resources;
 
-  /**
-   * @param context
-   */
-  public StatusContainerAction(IRunnableContext context, IResource[] resources)
-  {
-    super(context);
+    public StatusContainerAction(IRunnableContext context, IResource[] resources) {
+        super(context);
 
-    this.resources = resources;
-  }
-
-  @Override
-protected String[] getHgCommand()
-  {
-    ArrayList<String> launchCmd = new ArrayList<String>(resources.length + 4);
-    launchCmd.add(MercurialUtilities.getHGExecutable());
-    launchCmd.add("status"); //$NON-NLS-1$
-    launchCmd.add("--"); //$NON-NLS-1$
-    if( resources.length == 0 )
-    {
-//    	System.out.println("StatusContainerAction::getHgCommand() resources.length == 0");
+        this.resources = resources;
     }
-    for(int res = 0; res < resources.length; res++)
-    {
-      // Mercurial doesn't control directories or projects and so will just return that they're
-      // untracked.
-      launchCmd.add(resources[res].getLocation().toOSString());
+
+    @Override
+    protected String[] getHgCommand() {
+        ArrayList<String> launchCmd = new ArrayList<String>(resources.length + 4);
+        launchCmd.add(MercurialUtilities.getHGExecutable());
+        launchCmd.add("status"); //$NON-NLS-1$
+        launchCmd.add("--"); //$NON-NLS-1$
+        if (resources.length == 0) {
+            // System.out.println("StatusContainerAction::getHgCommand() resources.length == 0");
+        }
+        for (int res = 0; res < resources.length; res++) {
+            // Mercurial doesn't control directories or projects and so will just return that they're
+            // untracked.
+            launchCmd.add(resources[res].getLocation().toOSString());
+        }
+        launchCmd.trimToSize();
+
+        return launchCmd.toArray(new String[0]);
     }
-    launchCmd.trimToSize();
-    
-    return launchCmd.toArray(new String[0]);
-  }
 
-  @Override
-protected File getHgWorkingDir()
-  {
-    return MercurialUtilities.getWorkingDir(resources[0]);
-  }
+    @Override
+    public HgRoot getHgWorkingDir() throws HgException {
+        return AbstractClient.getHgRoot(resources[0]);
+    }
 
-  
-  @Override
-protected String getActionDescription()
-  {
-    return Messages.getString("StatusContainerAction.job.description1") + resources[0].getLocation() + Messages.getString("StatusContainerAction.job.description.2"); //$NON-NLS-1$ //$NON-NLS-2$
-  }
+    @Override
+    protected String getActionDescription() {
+        return Messages.getString("StatusContainerAction.job.description1") + resources[0].getLocation() + Messages.getString("StatusContainerAction.job.description.2"); //$NON-NLS-1$ //$NON-NLS-2$
+    }
 
-  public File getWorkingDir()
-  {
-    return getHgWorkingDir();
-  }
-
-  
 }

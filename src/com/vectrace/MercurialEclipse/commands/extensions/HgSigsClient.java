@@ -17,6 +17,9 @@ import java.io.LineNumberReader;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.CoreException;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
@@ -32,6 +35,8 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class HgSigsClient extends AbstractClient {
 
+    private static HgException notAvailable;
+
     /**
      * Gets signed changesets
      *
@@ -39,11 +44,11 @@ public class HgSigsClient extends AbstractClient {
      * @return the identifiers of signed changesets (rev:node)
      * @throws HgException
      */
-    public static List<Signature> getSigs(File repoFile) throws HgException {
+    public static List<Signature> getSigs(File repoFile) throws CoreException {
         try {
             HgRoot root = MercurialTeamProvider.getHgRoot(repoFile);
             List<Signature> nodes = new ArrayList<Signature>();
-            File sigFile = new File(root.getCanonicalPath().concat(File.separator).concat(".hgsigs")); //$NON-NLS-1$
+            File sigFile = new File(root, ".hgsigs"); //$NON-NLS-1$
             if (sigFile.exists()) {
                 LineNumberReader reader = null;
                 try {
@@ -64,21 +69,33 @@ public class HgSigsClient extends AbstractClient {
                 }
             }
             return nodes;
-        } catch (Exception e) {
+        } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
     }
 
     /**
-     * @param file
-     * @param cs
-     * @throws HgException
+     * @return may return null, if "sigcheck" command is not available
+     * @throws HgException if command failed
      */
     public static String checkSig(File file, String nodeId) throws HgException {
-        AbstractShellCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
-                false);
-        c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
-        c.addOptions(nodeId);
-        return c.executeToString();
+        if(notAvailable != null){
+            return null;
+        }
+        try {
+            AbstractShellCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
+                    false);
+            c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
+            c.addOptions(nodeId);
+            return c.executeToString();
+        } catch (HgException e) {
+            String message = e.getMessage();
+            if(message != null && message.contains("unknown") && message.contains("'sigcheck'")){
+                MercurialEclipsePlugin.logError(e);
+                notAvailable = e;
+                return null;
+            }
+            throw e;
+        }
     }
 }

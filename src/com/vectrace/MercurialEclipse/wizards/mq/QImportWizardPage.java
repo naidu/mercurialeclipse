@@ -34,7 +34,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgRootClient;
+import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -138,13 +138,13 @@ public class QImportWizardPage extends HgWizardPage {
 
     private void checkExisting(File file) throws IOException, HgException {
         setMessage(null);
-        HgRoot hgRoot = HgRootClient.getHgRoot(resource);
+        HgRoot hgRoot = AbstractClient.getHgRoot(resource);
         File patchDir = new File(hgRoot, ".hg" + File.separator + "patches"); //$NON-NLS-1$ //$NON-NLS-2$
         File[] patches = patchDir.listFiles();
         if (patches != null) {
             for (File patch : patches) {
-                if (patch.getCanonicalPath().equals(file.getCanonicalPath())
-                        || patch.getName().equals(file.getName())) {
+                if (patch.getName().equals(file.getName())
+                        || patch.getCanonicalPath().equals(file.getCanonicalPath())) {
                     setMessage(Messages
                             .getString("QImportWizardPage.message.Existing")); //$NON-NLS-1$
                     existing = true;

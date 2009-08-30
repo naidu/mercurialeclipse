@@ -84,11 +84,27 @@ public class HgIdentClient extends AbstractClient {
         StringBuilder pathStr = new StringBuilder(repository.getAbsolutePath());
         pathStr.append(File.separator).append(".hg");
         pathStr.append(File.separator).append("dirstate");
-        FileInputStream reader;
+        FileInputStream reader = null;
         try {
             reader = new FileInputStream(pathStr.toString());
         } catch (FileNotFoundException e) {
-            return null;
+            // sometimes hg is writing the file at same time we trying to read from it
+            // this happens especially if we run many add/remove operations
+            synchronized (HgIdentClient.class) {
+                try {
+                    HgIdentClient.class.wait(300);
+                } catch (InterruptedException e1) {
+                    MercurialEclipsePlugin.logError(e1);
+                }
+            }
+            try {
+                reader = new FileInputStream(pathStr.toString());
+            } catch (FileNotFoundException e1) {
+                MercurialEclipsePlugin.logError(e1);
+            }
+            if(reader == null) {
+                throw new HgException("Dirstate failed for the path: " + pathStr, e);
+            }
         }
         try {
             return getCurrentChangesetId(reader);

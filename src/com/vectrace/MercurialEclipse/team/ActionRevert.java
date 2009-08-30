@@ -13,10 +13,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -35,16 +40,18 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ActionRevert implements IWorkbenchWindowActionDelegate {
     private IWorkbenchWindow window;
-    // private IWorkbenchPart targetPart;
     private IStructuredSelection selection;
-    private HgRoot root;
 
     public ActionRevert() {
         super();
@@ -80,37 +87,34 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         if(window == null){
             window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
         }
-        // do the actual work in here
-        List<IResource> resources;
+        List<IResource> resources = new ArrayList<IResource>();
+        boolean mergeIsRunning;
         try {
-            root = null;
-            resources = new ArrayList<IResource>();
-
-            boolean mergeIsRunning = collectResourcesToRevert(resources);
-
-            if (resources.size() > 0 && !mergeIsRunning) {
-                openRevertDialog(resources, false);
-            } else {
-                if(mergeIsRunning){
-                    boolean doRevert = MessageDialog
-                        .openConfirm(
-                            getShell(),
-                            Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
-                            Messages.getString("ActionRevert.mergeIsRunning")); //$NON-NLS-1$
-                    if(doRevert){
-                        openRevertDialog(resources, true);
-                    }
-                } else {
-                    MessageDialog
-                            .openInformation(
-                                    getShell(),
-                                    Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
-                                    Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$
-                }
-            }
+            mergeIsRunning = collectResourcesToRevert(resources);
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
             MercurialEclipsePlugin.showError(e);
+            return;
+        }
+        if (resources.size() > 0 && !mergeIsRunning) {
+            openRevertDialog(resources, false);
+        } else {
+            if(mergeIsRunning){
+                boolean doRevert = MessageDialog
+                    .openConfirm(
+                        getShell(),
+                        Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
+                        Messages.getString("ActionRevert.mergeIsRunning")); //$NON-NLS-1$
+                if(doRevert){
+                    openRevertDialog(resources, true);
+                }
+            } else {
+                MessageDialog
+                    .openInformation(
+                        getShell(),
+                        Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
+                        Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$
+            }
         }
     }
 
@@ -128,8 +132,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
     private void openRevertDialog(List<IResource> resources, final boolean cleanAfterMerge) {
         final List<IResource> result;
         if(!cleanAfterMerge){
-            RevertDialog chooser = new RevertDialog(Display.getCurrent()
-                    .getActiveShell(), root);
+            RevertDialog chooser = new RevertDialog(Display.getCurrent().getActiveShell());
             chooser.setFiles(resources);
             if (chooser.open() != Window.OK) {
                 return;
@@ -139,11 +142,15 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             result = resources;
         }
 
-        new SafeWorkspaceJob(Messages
-                .getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
+        new SafeWorkspaceJob(Messages.getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
-                doRevert(monitor, result, cleanAfterMerge);
+                try {
+                    doRevert(monitor, result, cleanAfterMerge);
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logError(e);
+                    return e.getStatus();
+                }
                 return Status.OK_STATUS;
             }
         }.schedule();
@@ -159,72 +166,139 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                 if(merging){
                     mergeIsRunning = true;
                 }
-                boolean supervised = MercurialUtilities
-                        .hgIsTeamProviderFor(resource, false) == true;
+                boolean supervised = MercurialUtilities.hgIsTeamProviderFor(resource, false);
 
                 if (supervised) {
                     resources.add(resource);
-                    if (root == null) {
-                        // XXX this does not work for projects from different hg roots
-                        root = MercurialTeamProvider.getHgRoot(resource);
-                    }
                 }
             }
         }
         return mergeIsRunning;
     }
 
-    public void doRevert(IProgressMonitor monitor, List<IResource> resources, boolean cleanAfterMerge) {
-        monitor
-                .beginTask(
-                        Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
-        if(!cleanAfterMerge) {
-            performRegularRevert(monitor, resources);
+    public void doRevert(IProgressMonitor monitor, List<IResource> resources, boolean cleanAfterMerge)
+            throws HgException {
+
+        monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
+
+        Map<IProject, List<IResource>> filesToRevert = ResourceUtils.groupByProject(resources);
+        Set<IProject> projects = filesToRevert.keySet();
+
+        // collect removed file state NOW
+        MercurialStatusCache cache = MercurialStatusCache.getInstance();
+
+        Map<IProject, Set<IResource>> removedFilesBefore = getFiles(MercurialStatusCache.BIT_REMOVED, projects);
+        Map<IProject, Set<IResource>> addedFilesBefore = getFiles(MercurialStatusCache.BIT_ADDED,
+                removedFilesBefore.keySet());
+
+        // keep track only for projects where both add AND remove is reported
+        removedFilesBefore.keySet().retainAll(addedFilesBefore.keySet());
+
+        // perform revert
+        if(cleanAfterMerge) {
+            for (Entry<IProject, List<IResource>> entry : filesToRevert.entrySet()) {
+                performRevertAfterMerge(monitor, entry.getKey(), entry.getValue());
+            }
         } else {
-            performRevertAfterMerge(monitor, resources);
+            Map<HgRoot, List<IResource>> rootToFiles = ResourceUtils.groupByRoot(resources);
+            for (Entry<HgRoot, List<IResource>> entry : rootToFiles.entrySet()) {
+                performRegularRevert(monitor, entry.getKey(), entry.getValue());
+            }
         }
 
         for (IResource resource : resources) {
-            monitor
-                    .subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+            monitor.subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             try {
+                BitSet status = cache.getStatus(resource);
+                if(status != null && status.get(MercurialStatusCache.BIT_ADDED)){
+                    // added files didn't change content after we un-add them, so we have
+                    // give Eclipse a hint to start some extra refresh work.
+                    resource.touch(monitor);
+                }
+                // we still need to trigger a refresh to avoid confusing editors opened on
+                // these files. Without refresh, they complain that the files are changed but not refreshed
                 resource.refreshLocal(IResource.DEPTH_ONE, monitor);
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }
             monitor.worked(1);
         }
+
+        for (Entry<IProject, Set<IResource>> entry : removedFilesBefore.entrySet()) {
+            cache.refreshStatus(entry.getKey(), monitor);
+        }
+
+        // we are looking for files, which are NOT in the "reverted" files list
+        // and which are NOT marked as deleted in the latest cached state
+        // BUT which was marked as deleted before the revert operation.
+
+        // These "deleted before, do not reverted and missing in the status now" files are
+        // the source files recreated after the revert of a "move (rm + add)" operation.
+        // We have to tell Eclipse, that the files are "living" again in the resources tree
+
+        Map<IProject, Set<IResource>> filesToUpdate = new HashMap<IProject, Set<IResource>>();
+        Map<IProject, Set<IResource>> removedFilesAfter = getFiles(
+                MercurialStatusCache.BIT_REMOVED, removedFilesBefore.keySet());
+
+        for (Entry<IProject, Set<IResource>> entry : removedFilesBefore.entrySet()) {
+            IProject projBefore = entry.getKey();
+            Set<IResource> removedBefore = entry.getValue();
+            Set<IResource> removedAfter = removedFilesAfter.get(projBefore);
+            if(removedAfter != null && !removedAfter.isEmpty()) {
+                removedBefore.removeAll(removedAfter);
+            }
+            List<IResource> reverted = filesToRevert.get(projBefore);
+            if(reverted != null && !reverted.isEmpty()) {
+                removedBefore.removeAll(reverted);
+            }
+            if(!removedBefore.isEmpty()){
+                filesToUpdate.put(projBefore, removedBefore);
+            }
+        }
+
+        for (Entry<IProject, Set<IResource>> entry : filesToUpdate.entrySet()) {
+            Set<IResource> removed = entry.getValue();
+            for (IResource resource : removed) {
+                try {
+                    resource.refreshLocal(IResource.DEPTH_ONE, monitor);
+                } catch (CoreException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+        }
         monitor.done();
     }
 
-    private void performRegularRevert(IProgressMonitor monitor, List<IResource> resources) {
-        // the last argument will be replaced with a path
-        String launchCmd[] = { MercurialUtilities.getHGExecutable(), "revert", //$NON-NLS-1$
-                "--no-backup", "--", "" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        for (IResource resource : resources) {
-            if (monitor.isCanceled()) {
-                break;
-            }
-            // Resource could be inside a link or something do nothing
-            // in the future this could check is this is another repository
-
-            // Setup and run command
-            File workingDir = resource.getParent().getLocation().toFile();
-            launchCmd[4] = resource.getName();
-            // System.out.println("Revert = " + FullPath);
-            // IResourceChangeEvent event = new IResourceChangeEvent();
-            try {
-                monitor
-                        .subTask(Messages.getString("ActionRevert.reverting") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-                MercurialUtilities.executeCommand(launchCmd, workingDir, true);
-                monitor.worked(1);
-            } catch (HgException e) {
-                MercurialEclipsePlugin.logError(e);
+    /**
+     * @param projects
+     * @param statusBit one of {@link MercurialStatusCache} status bits
+     * @return a map where the files with the specified state are grouped by the project.
+     * Projects with no files of given state are not included into the map
+     */
+    private Map<IProject, Set<IResource>> getFiles(int statusBit, Set<IProject> projects) {
+        MercurialStatusCache cache = MercurialStatusCache.getInstance();
+        Map<IProject, Set<IResource>> resources = new HashMap<IProject, Set<IResource>>();
+        for (IProject project : projects) {
+            Set<IResource> removed = cache.getResources(statusBit, project);
+            if(!removed.isEmpty()) {
+                resources.put(project, removed);
             }
         }
+        return resources;
     }
 
-    private void performRevertAfterMerge(IProgressMonitor monitor, List<IResource> resources) {
+    private void performRegularRevert(IProgressMonitor monitor, HgRoot root, List<IResource> resources) throws HgException {
+        // the last argument will be replaced with a path
+        HgCommand command = new HgCommand("revert", root, true); //$NON-NLS-1$
+        command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
+        command.addOptions("--no-backup");
+        command.addFiles(resources);
+        monitor.subTask(Messages.getString("ActionRevert.reverting") + root.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+        command.executeToString();
+        monitor.worked(1);
+    }
+
+    private void performRevertAfterMerge(IProgressMonitor monitor, IProject root, List<IResource> resources) {
         // see http://mercurial.selenic.com/wiki/FAQ#FAQ.2BAC8-CommonProblems.hg_status_shows_changed_files_but_hg_diff_doesn.27t.21
         // To completely undo the uncommitted merge and discard all local modifications,
         // you will need to issue a hg update -C -r . (note the "dot" at the end of the command).
@@ -233,7 +307,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             update.setCleanEnabled(true);
             update.setRevision(".");
             update.setShell(getShell());
-            update.run(resources.get(0).getProject());
+            update.run(root);
         } catch (Exception e) {
             MercurialEclipsePlugin.logError(e);
         }

@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.synchronize;
 
 import java.net.URISyntaxException;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,8 +22,6 @@ import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
-import org.eclipse.team.core.mapping.provider.SynchronizationScopeManager;
-import org.eclipse.team.core.subscribers.SubscriberScopeManager;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
@@ -52,7 +49,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
     public MercurialSynchronizeParticipant(MergeContext ctx, HgRepositoryLocation repositoryLocation) {
         super(ctx);
         this.repositoryLocation = repositoryLocation;
-        this.secondaryId = new Date().toString();
+        secondaryId = "" + repositoryLocation.getLocation();
         try {
             ISynchronizeParticipantDescriptor descriptor = TeamUI
                 .getSynchronizeManager().getParticipantDescriptor(getId());
@@ -64,13 +61,13 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
     @Override
     public void init(String secId, IMemento memento) throws PartInitException {
-        this.secondaryId = secId;
+        secondaryId = secId;
 
         IMemento myMemento = memento.getChild(MercurialSynchronizeParticipant.class.getName());
         String uri = myMemento.getString(REPOSITORY_LOCATION);
 
         try {
-            this.repositoryLocation = MercurialEclipsePlugin.getRepoManager().getRepoLocation(uri);
+            repositoryLocation = MercurialEclipsePlugin.getRepoManager().getRepoLocation(uri);
         } catch (URISyntaxException e) {
             throw new PartInitException(e.getLocalizedMessage(), e);
         }
@@ -129,10 +126,10 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
         } else {
             repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repositoryLocation);
         }
-        ISynchronizationScope scope = new RepositorySynchronizationScope(repoProjects.toArray(new IProject[0]));
+        ISynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocation,
+                repoProjects.toArray(new IProject[0]));
         MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
-        SynchronizationScopeManager manager2 = new SubscriberScopeManager(subscriber.getName(),
-                scope.getMappings(), subscriber, false);
+        HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(), subscriber);
         return new HgSubscriberMergeContext(subscriber, manager2);
     }
 

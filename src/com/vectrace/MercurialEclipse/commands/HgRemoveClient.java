@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -22,8 +21,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-public class HgRemoveClient {
+public class HgRemoveClient extends AbstractClient {
 
     public static void removeResource(IResource resource,
             IProgressMonitor monitor) throws HgException {
@@ -40,12 +40,8 @@ public class HgRemoveClient {
     }
 
     public static void removeResources(List<IResource> resources) throws HgException {
-        Map<HgRoot, List<IResource>> resourcesByRoot;
-        try {
-            resourcesByRoot = HgCommand.groupByRoot(resources);
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
+        Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
+
         for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
             HgRoot root = mapEntry.getKey();
             // if there are too many resources, do several calls

@@ -144,19 +144,15 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             } else if (name.equals("cs")) { //$NON-NLS-1$
 
 
-                ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di,
-                        unescape(au));
+                ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di, unescape(au), hgRoot);
                 csb.tag(tg);
                 csb.nodeShort(ns);
                 csb.ageDate(da);
                 csb.description(untab(unescape(de)));
                 csb.parents(splitClean(pr, " ")); //$NON-NLS-1$
 
-                csb.hgRoot(hgRoot).bundleFile(bundleFile).repository(repository).direction(direction);
-
                 csb.bundleFile(bundleFile);
                 csb.direction(direction);
-                csb.hgRoot(hgRoot);
                 csb.repository(repository);
                 csb.patches(patches);
 
@@ -175,11 +171,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 ChangeSet changeSet = csb.build();
 
                 // changeset to resources & project
-                try {
-                    addChangesetToResourceMap(changeSet);
-                } catch (HgException e) {
-                    throw new SAXException(e);
-                }
+                addChangesetToResourceMap(changeSet);
                 filesModified.clear();
                 filesAdded.clear();
                 filesRemoved.clear();
@@ -214,52 +206,50 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
              * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
              * <de>{desc|escape|tabindent}</de>
              */
-            this.chars = new StringBuilder(42);
+            chars = new StringBuilder(42);
             if (name.equals("br")) { //$NON-NLS-1$
-                this.br = atts.getValue(0);
+                br = atts.getValue(0);
             } else if (name.equals("tg")) { //$NON-NLS-1$
-                this.tg = atts.getValue(0);
+                tg = atts.getValue(0);
             } else if (name.equals("rv")) { //$NON-NLS-1$
-                this.rv = Integer.parseInt(atts.getValue(0));
+                rv = Integer.parseInt(atts.getValue(0));
             } else if (name.equals("ns")) { //$NON-NLS-1$
-                this.ns = atts.getValue(0);
+                ns = atts.getValue(0);
             } else if (name.equals("nl")) { //$NON-NLS-1$
-                this.nl = atts.getValue(0);
+                nl = atts.getValue(0);
             } else if (name.equals("di")) { //$NON-NLS-1$
-                this.di = atts.getValue(0);
+                di = atts.getValue(0);
             } else if (name.equals("da")) { //$NON-NLS-1$
-                this.da = atts.getValue(0);
+                da = atts.getValue(0);
             } else if (name.equals("au")) { //$NON-NLS-1$
-                this.au = atts.getValue(0);
+                au = atts.getValue(0);
             } else if (name.equals("pr")) { //$NON-NLS-1$
-                this.pr = atts.getValue(0);
+                pr = atts.getValue(0);
                 /*  } else if (name.equals("de")) {
-                this.de = untab(unescape(atts.getValue(0))); */
+                de = untab(unescape(atts.getValue(0))); */
             } else if (name.equals("fl")) { //$NON-NLS-1$
-                this.action = FileStatus.Action.MODIFIED;
+                action = FileStatus.Action.MODIFIED;
             } else if (name.equals("fa")) { //$NON-NLS-1$
-                this.action = FileStatus.Action.ADDED;
+                action = FileStatus.Action.ADDED;
             } else if (name.equals("fd")) { //$NON-NLS-1$
-                this.action = FileStatus.Action.REMOVED;
+                action = FileStatus.Action.REMOVED;
             } else if (name.equals("f")) { //$NON-NLS-1$
-                if (this.action == Action.ADDED) {
+                if (action == Action.ADDED) {
                     filesAdded.add(atts.getValue(0));
                     filesModified.remove(atts.getValue(0));
-                } else if (this.action == Action.MODIFIED) {
+                } else if (action == Action.MODIFIED) {
                     filesModified.add(atts.getValue(0));
-                } else if (this.action == Action.REMOVED) {
+                } else if (action == Action.REMOVED) {
                     filesRemoved.add(atts.getValue(0));
                     filesModified.remove(atts.getValue(0));
                 }
             }
         }
 
-        public void startPrefixMapping(String prefix, String uri)
-        throws SAXException {
+        public void startPrefixMapping(String prefix, String uri) throws SAXException {
         }
 
-        private final void addChangesetToResourceMap(final ChangeSet cs)
-        throws HgException {
+        private final void addChangesetToResourceMap(final ChangeSet cs) {
             IPath repoPath = new Path(cs.getHgRoot().getPath());
 
             if (cs.getChangedFiles() != null) {

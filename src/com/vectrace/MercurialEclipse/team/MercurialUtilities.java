@@ -18,7 +18,6 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.io.IOException;
 
-import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -26,15 +25,14 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.team.core.Team;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
@@ -225,6 +223,14 @@ public class MercurialUtilities {
         }.schedule();
     }
 
+    public static boolean isPossiblySupervised(IResource resource){
+        boolean isInHg = hgIsTeamProviderFor(resource, false);
+        if(!isInHg){
+            return false;
+        }
+        return !(Team.isIgnoredHint(resource) || resource.isTeamPrivateMember() || resource.isDerived());
+    }
+
     /**
      * Checks if the given resource is controlled by MercurialEclipse. If the
      * given resource is linked, it is not controlled by MercurialEclipse and
@@ -254,13 +260,7 @@ public class MercurialUtilities {
         }
 
         // Check to se if resource is not in a link
-        String linkedParentName = resource.getProjectRelativePath().segment(0);
-        if (linkedParentName == null) {
-            return false;
-        }
-
-        IFolder linkedParent = project.getFolder(linkedParentName);
-        boolean isLinked = linkedParent.isLinked();
+        boolean isLinked = resource.isLinked(IResource.CHECK_ANCESTORS);
 
         // open dialog if resource is linked and flag is set to true
         if (dialog && isLinked) {
@@ -268,8 +268,7 @@ public class MercurialUtilities {
             IWorkbench workbench = null;
 
             workbench = PlatformUI.getWorkbench();
-            if (workbench != null
-                    && workbench.getActiveWorkbenchWindow() != null) {
+            if (workbench != null && workbench.getActiveWorkbenchWindow() != null) {
                 shell = workbench.getActiveWorkbenchWindow().getShell();
             }
             if (shell != null) {
@@ -348,29 +347,6 @@ public class MercurialUtilities {
         dlg.open();
     }
 
-
-    /**
-     * Get the project for the selection (it use the first element)
-     *
-     * @param selection
-     * @return
-     */
-    public static IProject getProject(IStructuredSelection selection) {
-        Object obj;
-        obj = selection.getFirstElement();
-        if ((obj != null) && (obj instanceof IResource)) {
-            return ((IResource) obj).getProject();
-        }
-        return null;
-    }
-
-    /**
-     * Convenience method to return the OS specific path to the repository.
-     */
-    static public String getRepositoryPath(IProject project) {
-        return project.getLocation().toOSString();
-    }
-
     /**
      * Execute a command via the shell. Can throw HgException if the command
      * does not execute correctly. Exception will contain the error stream from
@@ -395,29 +371,6 @@ public class MercurialUtilities {
         return legacyAdaptor;
     }
 
-    /**
-     * Gets the working directory for an IResource
-     *
-     * @param obj
-     *            the resource we need the working directory for
-     * @return Workingdir of object or null if resource neither project, folder
-     *         or file
-     */
-    public static File getWorkingDir(IResource obj) {
-
-        File workingDir;
-        if (obj.getType() == IResource.PROJECT) {
-            workingDir = (obj.getLocation()).toFile();
-        } else if (obj.getType() == IResource.FOLDER) {
-            workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
-        } else if (obj.getType() == IResource.FILE) {
-            workingDir = (obj.getLocation()).removeLastSegments(1).toFile();
-        } else {
-            workingDir = null;
-        }
-        return workingDir;
-    }
-
     private static class LegacyAdaptor extends HgCommand {
 
         protected LegacyAdaptor(String command, File workingDir,
@@ -439,57 +392,6 @@ public class MercurialUtilities {
         public byte[] executeToBytes() throws HgException {
             return super.executeToBytes();
         }
-    }
-
-    /**
-     * Gets a resources name.
-     *
-     * @param obj
-     *            an IResource
-     * @return the name
-     */
-    public static String getResourceName(IResource obj) {
-        return (obj.getLocation()).lastSegment();
-    }
-
-    /**
-     * Converts a {@link java.io.File} to a workspace resource
-     *
-     * @param file
-     * @return
-     * @throws HgException
-     */
-    public static IResource convert(File file) throws HgException {
-        try {
-            IResource resource;
-            IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-            if (file.isDirectory()) {
-                resource = root.getContainerForLocation(new Path(file
-                        .getCanonicalPath()));
-            } else {
-                resource = root.getFileForLocation(new Path(file
-                        .getCanonicalPath()));
-            }
-            return resource;
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
-    }
-
-    /**
-     * Converts a path to a workspace resource
-     *
-     * @param file
-     * @return the resource or null
-     * @throws HgException
-     */
-    public static IResource convert(String path) throws HgException {
-        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-        IResource resource = root.getFileForLocation(new Path(path));
-        if (resource == null) {
-            resource = root.getContainerForLocation(new Path(path));
-        }
-        return resource;
     }
 
     public static boolean isCommandAvailable(String command,

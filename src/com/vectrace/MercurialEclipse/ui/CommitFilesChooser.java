@@ -58,21 +58,20 @@ import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
-import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * TODO enable tree/flat view switch
- * 
+ *
  * @author steeven
- * 
+ *
  */
 public class CommitFilesChooser extends Composite {
     private final UntrackedFilesFilter untrackedFilesFilter;
     private final CommittableFilesFilter committableFilesFilter;
-    private final HgRoot root;
     private final boolean selectable;
     private Button showUntrackedFilesButton;
     private Button selectAllButton;
@@ -90,18 +89,14 @@ public class CommitFilesChooser extends Composite {
     private Sash sash;
     private DiffTray tray;
 
-    /**
-     * @return the viewer
-     */
     public CheckboxTableViewer getViewer() {
         return viewer;
     }
 
     public CommitFilesChooser(Composite container, boolean selectable,
-            List<IResource> resources, HgRoot hgRoot, boolean showUntracked, boolean showMissing) {
+            List<IResource> resources, boolean showUntracked, boolean showMissing) {
         super(container, container.getStyle());
         this.selectable = selectable;
-        this.root = hgRoot;
         this.untracked = showUntracked;
         this.missing = showMissing;
         this.untrackedFilesFilter = new UntrackedFilesFilter(missing);
@@ -135,9 +130,6 @@ public class CommitFilesChooser extends Composite {
         makeActions();
     }
 
-    /**
-     * 
-     */
     private void createFileSelectionListener() {
         getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
             public void selectionChanged(SelectionChangedEvent event) {
@@ -164,9 +156,6 @@ public class CommitFilesChooser extends Composite {
         });
     }
 
-    /**
-     * @param container
-     */
     private void createShowDiffButton(Composite container) {
         trayButton = SWTWidgetHelper.createPushButton(container, Messages
                 .getString("CommitFilesChooser.showDiffButton.text"), //$NON-NLS-1$
@@ -180,9 +169,6 @@ public class CommitFilesChooser extends Composite {
         });
     }
 
-    /**
-     * 
-     */
     private void openSash() {
         DiffTray t = new DiffTray(getCompareEditorInput());
         final Shell shell = getShell();
@@ -265,9 +251,6 @@ public class CommitFilesChooser extends Composite {
         showUntrackedFilesButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
     }
 
-    /**
-     * @return
-     */
     protected CompareEditorInput getCompareEditorInput() {
 
         if (selectedFile == null) {
@@ -343,7 +326,13 @@ public class CommitFilesChooser extends Composite {
 
     public void setResources(List<IResource> resources) {
         IResource[] res = resources.toArray(new IResource[0]);
-        CommitResource[] commitResources = new CommitResourceUtil(root).getCommitResources(res);
+        CommitResource[] commitResources;
+        try {
+            commitResources = new CommitResourceUtil().getCommitResources(res);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            commitResources = new CommitResource[0];
+        }
         getViewer().setInput(commitResources);
         // auto-check all tracked elements
         List<CommitResource> tracked = new ArrayList<CommitResource>();
@@ -388,9 +377,6 @@ public class CommitFilesChooser extends Composite {
         return list;
     }
 
-    /**
-     * @param exportPage
-     */
     public void addStateListener(Listener listener) {
         stateListeners.add(listener);
     }
@@ -401,9 +387,6 @@ public class CommitFilesChooser extends Composite {
         }
     }
 
-    /**
-     * 
-     */
     private void closeSash() {
         if (tray == null) {
             throw new IllegalStateException("Tray was not open"); //$NON-NLS-1$
@@ -423,9 +406,6 @@ public class CommitFilesChooser extends Composite {
         shell.setBounds(bounds.x + ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y, bounds.width - trayWidth, bounds.height);
     }
 
-    /**
-     * 
-     */
     private void showDiffForSelection() {
         if (trayClosed && selectedFile != null) {
             try {
