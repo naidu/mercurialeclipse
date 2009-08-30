@@ -15,7 +15,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -25,7 +24,7 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
     private final IProject project;
 
     public RefreshWorkspaceStatusJob(IProject project) {
-        super("Refreshing project status...");
+        super("Refreshing status for project " + project.getName() + "...");
         this.project = project;
     }
 
@@ -41,13 +40,12 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
             project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
 
             // refresh resources
-            project.refreshLocal(IResource.DEPTH_INFINITE, null);
+            project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
             return super.runSafe(monitor);
         } catch (CoreException e) {
             MercurialEclipsePlugin.logError(e);
-            return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                    e.getLocalizedMessage(), e);
+            return e.getStatus();
         }
     }
 }
