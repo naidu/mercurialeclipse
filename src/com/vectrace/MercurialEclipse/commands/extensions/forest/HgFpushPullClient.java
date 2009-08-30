@@ -17,6 +17,8 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
@@ -104,11 +106,19 @@ public class HgFpushPullClient extends HgPushPullClient {
             result = new String(command.executeToBytes(Integer.MAX_VALUE));
         }
             Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-            for (IProject project : projects) {
+            for (final IProject project : projects) {
                 if(update) {
-                    new RefreshWorkspaceStatusJob(project).schedule();
+                    RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
+                    job.addJobChangeListener(new JobChangeAdapter(){
+                       @Override
+                        public void done(IJobChangeEvent event) {
+                            new RefreshJob("Refreshing " + project.getName(), project).schedule();
+                        }
+                    });
+                    job.schedule();
+                } else {
+                    new RefreshJob("Refreshing " + project.getName(), project).schedule();
                 }
-                new RefreshJob("Refreshing " + project.getName(), project).schedule();
             }
         return result;
     }

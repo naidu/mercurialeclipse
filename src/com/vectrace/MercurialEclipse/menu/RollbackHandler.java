@@ -14,10 +14,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 
-import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgRollbackClient;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class RollbackHandler extends SingleResourceHandler {
 
@@ -26,10 +23,6 @@ public class RollbackHandler extends SingleResourceHandler {
         IProject project = resource.getProject();
         String result = HgRollbackClient.rollback(project);
         MessageDialog.openInformation(getShell(),Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
-        String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-        project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
-        new RefreshJob(Messages.getString("RollbackHandler.refresh"), project).schedule(); //$NON-NLS-1$
     }
 
 }

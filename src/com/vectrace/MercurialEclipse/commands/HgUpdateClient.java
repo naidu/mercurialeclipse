@@ -1,6 +1,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -20,7 +22,13 @@ public class HgUpdateClient {
         }
         command.executeToBytes();
 
-        new RefreshWorkspaceStatusJob(project).schedule();
-        new RefreshJob("Refreshing " + project.getName(), project).schedule();
+        RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
+        job.addJobChangeListener(new JobChangeAdapter(){
+           @Override
+            public void done(IJobChangeEvent event) {
+                new RefreshJob("Refreshing " + project.getName(), project).schedule();
+            }
+        });
+        job.schedule();
     }
 }
