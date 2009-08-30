@@ -16,6 +16,7 @@ package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -180,8 +181,14 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         new SafeUiJob(Messages.getString("MercurialEclipsePlugin.showError")) { //$NON-NLS-1$
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
+                IStatus status;
+                if(error instanceof CoreException){
+                    status = ((CoreException) error).getStatus();
+                } else {
+                    status = createStatus(error.getMessage(), 0, IStatus.ERROR, error);
+                }
                 ErrorDialog.openError(null, Messages.getString("MercurialEclipsePlugin.unexpectedError"), error.getMessage(), //$NON-NLS-1$
-                        createStatus(error.getMessage(), 0, IStatus.ERROR, error));
+                        status);
                 return super.runSafe(monitor);
             }
         }.schedule();
