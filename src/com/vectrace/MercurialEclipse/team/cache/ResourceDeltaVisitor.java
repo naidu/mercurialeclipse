@@ -45,6 +45,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
     private final boolean completeStatus;
     private final boolean autoShare;
     private final MercurialStatusCache cache;
+    private int resourcesCount;
 
     ResourceDeltaVisitor(Map<IProject, Set<IResource>> removed, Map<IProject, Set<IResource>> changed,
             Map<IProject, Set<IResource>> added) {
@@ -84,28 +85,41 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
         // NB: the resource may not exist at this point (deleted/moved)
         // so any access to the IResource's API should be checked against null
         if (res.getType() == IResource.FILE) {
-            IResource resource = completeStatus? project : res;
+            IResource resource = isCompleteStatusRequested()? project : res;
             switch (delta.getKind()) {
             case IResourceDelta.ADDED:
                 addResource(added, project, resource);
                 // System.out.println("\t ADDED: " + resource);
+                if(isCompleteStatusRequested()){
+                    return false;
+                }
                 break;
             case IResourceDelta.CHANGED:
                 if (hasChangedBits(delta)
                         && cache.isSupervised(project, ResourceUtils.getPath(res))) {
                     addResource(changed, project, resource);
                     // System.out.println("\t CHANGED: " + resource);
+                    if(isCompleteStatusRequested()){
+                        return false;
+                    }
                 }
                 break;
             case IResourceDelta.REMOVED:
                 if (cache.isSupervised(project, ResourceUtils.getPath(res))) {
                     addResource(removed, project, resource);
                     // System.out.println("\t REMOVED: " + resource);
+                    if(isCompleteStatusRequested()){
+                        return false;
+                    }
                 }
                 break;
             }
         }
         return true;
+    }
+
+    private boolean isCompleteStatusRequested() {
+        return completeStatus || resourcesCount > MercurialStatusCache.NUM_CHANGED_FOR_COMPLETE_STATUS;
     }
 
 
@@ -116,6 +130,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
             map.put(project, set);
         }
         set.add(res);
+        resourcesCount ++;
     }
 
     private boolean hasChangedBits(IResourceDelta delta){

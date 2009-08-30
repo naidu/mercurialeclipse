@@ -195,7 +195,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         getDefault().getLog().log(createStatus(message, 0, IStatus.INFO, error));
     }
 
-    private static IStatus createStatus(String msg, int code, int severity,
+    public static IStatus createStatus(String msg, int code, int severity,
             Throwable ex) {
         return new Status(severity, ID, code, msg, ex);
     }

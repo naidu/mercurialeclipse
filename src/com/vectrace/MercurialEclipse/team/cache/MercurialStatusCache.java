@@ -44,6 +44,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
@@ -77,38 +78,34 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 public class MercurialStatusCache extends AbstractCache implements IResourceChangeListener {
 
     private static final int STATUS_BATCH_SIZE = 10;
-    private static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
+    static final int NUM_CHANGED_FOR_COMPLETE_STATUS = 50;
 
     /**
      * @author Andrei
      */
     private final class ProjectUpdateJob extends Job {
 
-        private final Set<IResource> removedSet;
-        private final Set<IResource> changedSet;
         private final IProject project;
-        private final Set<IResource> addedSet;
+        private final Set<IResource> resources;
 
         private ProjectUpdateJob(Set<IResource> removedSet, Set<IResource> changedSet,
                 IProject project, Set<IResource> addedSet) {
             super(Messages.mercurialStatusCache_RefreshStatus);
+            this.project = project;
+            resources = new HashSet<IResource>();
             if(removedSet != null) {
-                this.removedSet = removedSet;
-            } else {
-                this.removedSet = Collections.emptySet();
+                resources.addAll(removedSet);
             }
             if(changedSet != null) {
-                this.changedSet = changedSet;
-            } else {
-                this.changedSet = Collections.emptySet();
+                resources.addAll(changedSet);
             }
             if(addedSet != null) {
-                this.addedSet = addedSet;
-            } else {
-                this.addedSet = Collections.emptySet();
+                resources.addAll(addedSet);
             }
-
-            this.project = project;
+            if(resources.contains(project) || resources.size() > NUM_CHANGED_FOR_COMPLETE_STATUS){
+                resources.clear();
+                resources.add(project);
+            }
         }
 
 
@@ -119,21 +116,15 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 updateProject(monitor);
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
-                return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, e.getLocalizedMessage(), e);
+                return e.getStatus();
             }  finally {
                 monitor.done();
             }
             return Status.OK_STATUS;
         }
 
-
         private void updateProject(IProgressMonitor monitor) throws HgException {
-            Set<IResource> resources = new HashSet<IResource>();
-            resources.addAll(changedSet);
-            resources.addAll(addedSet);
-            resources.addAll(removedSet);
-
-            if (resources.size() > NUM_CHANGED_FOR_COMPLETE_STATUS || resources.contains(project)) {
+            if (resources.size() == 1 && resources.contains(project)) {
                 monitor.beginTask(NLS.bind(Messages.mercurialStatusCache_RefreshingProject, project.getName()), 1);
                 // do not need to call notifyChanged(resources): refreshStatus() does it already
                 refreshStatus(project, monitor);
@@ -143,6 +134,31 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 refreshStatus(resources, project);
             }
             monitor.worked(1);
+        }
+
+        @Override
+        public boolean belongsTo(Object family) {
+            return ProjectUpdateJob.class.equals(family);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(!(obj instanceof ProjectUpdateJob)){
+                return false;
+            }
+            ProjectUpdateJob job = (ProjectUpdateJob) obj;
+            if(resources.size() != job.resources.size()){
+                return false;
+            }
+            if(!project.equals(job.project)){
+                return false;
+            }
+            return resources.containsAll(job.resources);
+        }
+
+        @Override
+        public int hashCode() {
+            return resources.size() + project.getName().hashCode();
         }
     }
 
@@ -255,6 +271,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     private int statusBatchSize;
 
     private MercurialStatusCache() {
+        super();
         initPreferences();
         ResourcesPlugin.getWorkspace().addResourceChangeListener(this, MASK_DELTA);
         MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(
@@ -431,25 +448,30 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     /**
      * Refreshes local repository status and notifies the listeners about changes. No refresh of changesets.
      */
-    public Set<IResource> refreshStatus(final IResource res, IProgressMonitor anyMonitor) throws HgException {
+    public void refreshStatus(final IResource res, IProgressMonitor monitor) throws HgException {
         Assert.isNotNull(res);
-        IProgressMonitor monitor = checkMonitor(anyMonitor);
+        monitor = checkMonitor(monitor);
         monitor.subTask(Messages.mercurialStatusCache_Refreshing + res.getName());
 
         IProject project = res.getProject();
-        if (!project.isOpen() || null == RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
-            return Collections.emptySet();
+
+        if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(res)) {
+            return;
         }
-        if (res.isTeamPrivateMember() || res.isDerived()) {
-            return Collections.emptySet();
-        }
+
         // members should contain folders and project, so we clear
         // status for files, folders and project
         Set<IResource> resources = getLocalMembers(res);
+        if(monitor.isCanceled()){
+            return;
+        }
         monitor.worked(1);
 
         HgRoot root = AbstractClient.getHgRoot(res);
         String output = HgStatusClient.getStatusWithoutIgnored(root, res);
+        if(monitor.isCanceled()){
+            return;
+        }
         monitor.worked(1);
 
         Set<IResource> changed;
@@ -459,7 +481,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             }
             statusMap.remove(res.getLocation());
             monitor.worked(1);
+            if(monitor.isCanceled()){
+                return;
+            }
             changed = parseStatus(root, res, output);
+        }
+        if(monitor.isCanceled()){
+            return;
         }
         monitor.worked(1);
 
@@ -470,11 +498,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
         }
         changed.addAll(checkForConflict(project));
+        if(monitor.isCanceled()){
+            return;
+        }
         monitor.worked(1);
         notifyChanged(changed, false);
 
         monitor.worked(1);
-        return changed;
     }
 
     private Set<IResource> checkForConflict(final IProject project) throws HgException {
@@ -525,15 +555,21 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         Set<IResource> changed = new HashSet<IResource>();
         IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
         Scanner scanner = new Scanner(output);
+        List<String> strangeStates = new ArrayList<String>();
         while (scanner.hasNext()) {
             String status = scanner.next();
             String localName = scanner.nextLine().trim();
+            if(status.length() > 1){
+                strangeStates.add(status + " " + localName);
+                continue;
+            }
+            char statusChar = status.charAt(0);
             IResource member = convertRepoRelPath(root, project, localName);
 
             // doesn't belong to our project (can happen if root is above project level)
             // or simply deleted, so can't be found...
             if (member == null) {
-                if(getBitIndex(status.charAt(0)) == BIT_REMOVED){
+                if(getBitIndex(statusChar) == BIT_REMOVED){
                     IPath path = new Path(new File(root, localName).getAbsolutePath());
                     // creates a handle to non-existent file. This is ok.
                     member = workspaceRoot.getFileForLocation(path);
@@ -550,17 +586,27 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             if (ignoredHint) {
                 bitSet.set(BIT_IGNORE);
             } else {
-                bitSet.set(getBitIndex(status.charAt(0)));
+                bitSet.set(getBitIndex(statusChar));
                 changed.add(member);
             }
             statusMap.put(member.getLocation(), bitSet);
 
             if (!ignoredHint && member.getType() == IResource.FILE
-                    && getBitIndex(status.charAt(0)) != BIT_IGNORE) {
+                    && getBitIndex(statusChar) != BIT_IGNORE) {
                 addToProjectResources(project, member);
             }
 
             changed.addAll(setStatusToAncestors(member, bitSet));
+        }
+        if(strangeStates.size() > 0){
+            IStatus [] states = new IStatus[strangeStates.size()];
+            for (int i = 0; i < states.length; i++) {
+                states[i] = MercurialEclipsePlugin.createStatus(strangeStates.get(i), IStatus.OK, IStatus.INFO, null);
+            }
+            String message = "Strange status received form hg";
+            MultiStatus st = new MultiStatus(MercurialEclipsePlugin.ID, IStatus.OK, states,
+                    message, new Exception(message));
+            MercurialEclipsePlugin.getDefault().getLog().log(st);
         }
         return changed;
     }
@@ -724,7 +770,18 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     private void projectChanged(final IProject project, final Set<IResource> addedSet, final Set<IResource> removedSet,
             final Set<IResource> changedSet) {
-        new ProjectUpdateJob(removedSet, changedSet, project, addedSet).schedule();
+        ProjectUpdateJob updateJob = new ProjectUpdateJob(removedSet, changedSet, project, addedSet);
+        Job[] jobs = Job.getJobManager().find(ProjectUpdateJob.class);
+        for (Job job : jobs) {
+            if(updateJob.equals(job)){
+                job.cancel();
+                if(debug){
+                    System.out.println("Status cache update cancelled for: "
+                            + ((ProjectUpdateJob) job).project.getName());
+                }
+            }
+        }
+        updateJob.schedule(100);
     }
 
     /**
