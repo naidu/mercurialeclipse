@@ -111,6 +111,19 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
                     if(isCompleteStatusRequested()){
                         return false;
                     }
+                } else {
+                    // check the parent folder: if the file had "unknown" state, folder was
+                    // marked as "modified". Now the file is deleted, so we should try
+                    // to refresh the folder state
+                    res = res.getParent();
+                    if (res != null && cache.isSupervised(project, ResourceUtils.getPath(res))){
+                        resource = isCompleteStatusRequested()? project : res;
+                        addResource(changed, project, resource);
+                        // System.out.println("\t CHANGED: " + resource);
+                        if(isCompleteStatusRequested()){
+                            return false;
+                        }
+                    }
                 }
                 break;
             }
