@@ -43,6 +43,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 public abstract class AbstractShellCommand extends AbstractClient {
 
     public static final int DEFAULT_TIMEOUT = 360000;
+    // private static final Object executionLock = new Object();
 
     private static class InputStreamConsumer extends Thread {
         private final InputStream stream;
@@ -182,30 +183,36 @@ public abstract class AbstractShellCommand extends AbstractClient {
             if (workingDir != null) {
                 builder.directory(workingDir);
             }
-            process = builder.start();
-            consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
-            consumer.start();
+            final String msg;
+            // TODO Andrei: I see sometimes that hg has errors if it runs in parallel
+            // locking here would serialize all hg access from plugin.
+            // not sure if it is worth...
+            //synchronized (executionLock) {
+                process = builder.start();
+                consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
+                consumer.start();
 
-            logConsoleCommandInvoked(commandInvoked);
-            consumer.join(timeout); // 30 seconds timeout
-            final String msg = getMessage(output);
-            if (!consumer.isAlive()) {
-                final int exitCode = process.waitFor();
-                // everything fine
-                if (exitCode == 0 || !expectPositiveReturnValue) {
-                    if (isDebugMode()) {
-                        logConsoleCompleted(msg, exitCode, null);
+                logConsoleCommandInvoked(commandInvoked);
+                consumer.join(timeout); // 30 seconds timeout
+                msg = getMessage(output);
+                if (!consumer.isAlive()) {
+                    final int exitCode = process.waitFor();
+                    // everything fine
+                    if (exitCode == 0 || !expectPositiveReturnValue) {
+                        if (isDebugMode()) {
+                            logConsoleCompleted(msg, exitCode, null);
+                        }
+                        return true;
                     }
-                    return true;
+
+                    // exit code > 0
+                    final HgException hgex = new HgException(exitCode, getMessage(output));
+
+                    // exit code == 1 usually isn't fatal.
+                    logConsoleCompleted(msg, exitCode, hgex);
+                    throw hgex;
                 }
-
-                // exit code > 0
-                final HgException hgex = new HgException(exitCode, getMessage(output));
-
-                // exit code == 1 usually isn't fatal.
-                logConsoleCompleted(msg, exitCode, hgex);
-                throw hgex;
-            }
+            //}
             // command timeout
             final HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
             logConsoleError(msg, hgEx);
