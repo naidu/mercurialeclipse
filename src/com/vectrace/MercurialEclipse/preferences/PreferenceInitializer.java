@@ -42,6 +42,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, false);
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
+        store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET, false);
 
         store.setDefault(MercurialPreferenceConstants.LOG_BATCH_SIZE, 500);
         store.setDefault(MercurialPreferenceConstants.STATUS_BATCH_SIZE, 10);
