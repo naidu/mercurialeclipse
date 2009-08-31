@@ -53,7 +53,7 @@ public class Ancestor {
                     ancestor = LocalChangesetCache.getInstance()
                             .getLocalChangeSet(
                                     ResourceUtils.convert(root),
-                                    String.valueOf(ancestorIndex), true);
+                                    String.valueOf(ancestorIndex));
                     CACHE.put(getKey(), ancestor);
                 }
             } else {

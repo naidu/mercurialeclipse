@@ -52,7 +52,7 @@ public class HgCommitClient extends AbstractClient {
         Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(resources);
         Set<IProject> keySet = byProject.keySet();
         for (IProject project : keySet) {
-            new RefreshJob("Refreshing " + project.getName(), project).schedule();
+            new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_OUTGOING).schedule();
         }
     }
 
@@ -91,7 +91,7 @@ public class HgCommitClient extends AbstractClient {
         command.addUserName(quote(user));
         command.addOptions("-m", quote(message)); //$NON-NLS-1$
         String result = command.executeToString();
-        new RefreshJob("Refreshing " + project.getName(), project).schedule();
+        new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_OUTGOING).schedule();
         return result;
     }
 

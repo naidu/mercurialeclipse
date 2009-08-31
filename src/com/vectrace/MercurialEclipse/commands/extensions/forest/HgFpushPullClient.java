@@ -112,12 +112,12 @@ public class HgFpushPullClient extends HgPushPullClient {
                     job.addJobChangeListener(new JobChangeAdapter(){
                        @Override
                         public void done(IJobChangeEvent event) {
-                            new RefreshJob("Refreshing " + project.getName(), project).schedule();
+                            new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_INCOMING).schedule();
                         }
                     });
                     job.schedule();
                 } else {
-                    new RefreshJob("Refreshing " + project.getName(), project).schedule();
+                    new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_INCOMING).schedule();
                 }
             }
         return result;

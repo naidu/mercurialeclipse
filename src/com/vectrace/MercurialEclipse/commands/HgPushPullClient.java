@@ -94,17 +94,18 @@ public class HgPushPullClient extends AbstractClient {
         } else {
             result = new String(command.executeToBytes(Integer.MAX_VALUE));
         }
+        final int flags = RefreshJob.LOCAL_AND_INCOMING;
         if(update) {
             RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
             job.addJobChangeListener(new JobChangeAdapter(){
                @Override
                 public void done(IJobChangeEvent event) {
-                    new RefreshJob("Refreshing " + project.getName(), project).schedule();
+                    new RefreshJob("Refreshing " + project.getName(), project, flags).schedule();
                 }
             });
             job.schedule();
         } else {
-            new RefreshJob("Refreshing " + project.getName(), project).schedule();
+            new RefreshJob("Refreshing " + project.getName(), project, flags).schedule();
         }
         return result;
     }

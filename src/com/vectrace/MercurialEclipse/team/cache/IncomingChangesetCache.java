@@ -104,6 +104,16 @@ public class IncomingChangesetCache extends AbstractCache {
         }
     }
 
+    @Override
+    protected void clearProjectCache(IProject project) {
+        super.clearProjectCache(project);
+        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager()
+                .getAllProjectRepoLocations(project);
+        for (HgRepositoryLocation repo : repos) {
+            clear(repo, project, false);
+        }
+    }
+
     /**
      * Gets all incoming changesets of the given location for the given
      * IResource.

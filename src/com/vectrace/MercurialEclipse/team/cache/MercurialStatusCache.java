@@ -49,15 +49,13 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
@@ -166,26 +164,30 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
         private final BitSet bitSet;
         private final BitSet temp;
-        private final IResource parent;
+        private final IContainer parent;
+        private final boolean privateMember;
+        private final boolean derived;
 
-        public MemberStatusVisitor(IResource parent, BitSet bitSet) {
+        public MemberStatusVisitor(IContainer parent, BitSet bitSet) {
             this.bitSet = bitSet;
             this.parent = parent;
+            privateMember = parent.isTeamPrivateMember();
+            derived = parent.isDerived();
             temp = new BitSet(MAX_BITS_COUNT);
         }
 
         public boolean visit(IResource resource) throws CoreException {
-            if (parent.isTeamPrivateMember()) {
+            if (privateMember) {
                 resource.setTeamPrivateMember(true);
                 return false;
             }
 
-            if (parent.isDerived()) {
+            if (derived) {
                 resource.setDerived(true);
                 return false;
             }
 
-            if (!resource.equals(parent)) {
+            if (resource != parent) {
                 BitSet memberBitSet = statusMap.get(resource.getLocation());
                 if (memberBitSet != null) {
                     temp.clear();
@@ -272,14 +274,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     private MercurialStatusCache() {
         super();
-        initPreferences();
-        ResourcesPlugin.getWorkspace().addResourceChangeListener(this, MASK_DELTA);
-        MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(
-                new IPropertyChangeListener() {
-                    public void propertyChange(PropertyChangeEvent event) {
-                        initPreferences();
-                    }
-                });
+        ResourcesPlugin.getWorkspace().addResourceChangeListener(this,
+                IResourceChangeEvent.POST_CHANGE);
     }
 
     public static final MercurialStatusCache getInstance() {
@@ -327,43 +323,40 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     }
 
     public boolean isSupervised(IResource resource) {
-        return MercurialUtilities.hgIsTeamProviderFor(resource, false)
-        && isSupervised(resource.getProject(), resource.getLocation());
+        return isSupervised(resource, resource.getLocation());
     }
 
     public boolean isSupervised(IResource resource, IPath path) {
         Assert.isNotNull(resource);
         Assert.isNotNull(path);
-
-        // check for Eclipse ignore settings
-        if (Team.isIgnoredHint(resource)) {
+        BitSet status = statusMap.get(path);
+        if(status == null){
             return false;
         }
-
         IProject project = resource.getProject();
-        if (project.isAccessible() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
-            if (path.equals(project.getLocation())) {
-                return true;
-            }
-            BitSet status = statusMap.get(path);
-            if (status != null) {
-                switch (status.length() - 1) {
-                case MercurialStatusCache.BIT_IGNORE:
-                case MercurialStatusCache.BIT_UNKNOWN:
-                    File fileSystemResource = path.toFile();
-                    if (fileSystemResource.isDirectory() && status.length() > 1) {
-                        // a directory is still supervised if one of the
-                        // following bits is set
-                        boolean supervised = status.get(BIT_ADDED) || status.get(BIT_CLEAN)
-                        || status.get(BIT_MISSING) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
-                        return supervised;
-                    }
+        if (path.equals(project.getLocation())) {
+            return project.isAccessible() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID);
+        }
+        switch (status.length() - 1) {
+        case MercurialStatusCache.BIT_IGNORE:
+        case MercurialStatusCache.BIT_UNKNOWN:
+            if (resource.getType() != IResource.FILE && status.length() > 1) {
+                if(!project.isAccessible() || null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)){
                     return false;
                 }
-                return true;
+                // check for Eclipse ignore settings
+                if (Team.isIgnoredHint(resource)) {
+                    return false;
+                }
+                // a directory is still supervised if one of the
+                // following bits is set
+                boolean supervised = status.get(BIT_ADDED) || status.get(BIT_CLEAN)
+                || status.get(BIT_MISSING) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
+                return supervised;
             }
+            return false;
         }
-        return false;
+        return true;
 
     }
 
@@ -873,13 +866,29 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return members;
     }
 
+    @Override
+    protected void clearProjectCache(IProject project) {
+        super.clearProjectCache(project);
+        clear(project, false);
+        knownStatus.remove(project);
+        synchronized (projectResources){
+            projectResources.remove(project);
+        }
+    }
+
     public void clear(IProject project, boolean notify) {
         Set<IResource> members = getMembers(project);
         synchronized (statusUpdateLock) {
             for (IResource resource : members) {
-                statusMap.remove(resource.getLocation());
+                IPath location = resource.getLocation();
+                if(location != null) {
+                    statusMap.remove(location);
+                }
             }
-            statusMap.remove(project.getLocation());
+            IPath location = project.getLocation();
+            if(location != null) {
+                statusMap.remove(project.getLocation());
+            }
         }
         if(notify) {
             notifyChanged(project, false);
@@ -918,25 +927,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return false;
     }
 
-    private void initPreferences(){
-        computeDeepStatus = Boolean.valueOf(
-                HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, "false"))
-                .booleanValue();
-        completeStatus = Boolean.valueOf(
-                HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, "false"))
-                .booleanValue();
+    @Override
+    protected void configureFromPreferences(IPreferenceStore store){
+        computeDeepStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS);
+        completeStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS);
         // TODO: group batches by repo root
-        String pref = HgClients.getPreference(MercurialPreferenceConstants.STATUS_BATCH_SIZE, String
-                .valueOf(STATUS_BATCH_SIZE));
 
-        statusBatchSize = STATUS_BATCH_SIZE;
-        if (pref.length() > 0) {
-            try {
-                statusBatchSize = Integer.parseInt(pref);
-            } catch (NumberFormatException e) {
-                MercurialEclipsePlugin.logWarning(Messages
-                        .mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, e);
-            }
+        statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE);// STATUS_BATCH_SIZE;
+        if (statusBatchSize < 0) {
+            statusBatchSize = STATUS_BATCH_SIZE;
+            MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
         }
     }
 

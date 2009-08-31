@@ -24,7 +24,12 @@ import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceChangeEvent;
+import org.eclipse.core.resources.IResourceChangeListener;
+import org.eclipse.core.resources.IResourceDelta;
+import org.eclipse.core.resources.IResourceDeltaVisitor;
 import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -32,6 +37,9 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -65,9 +73,66 @@ public abstract class AbstractCache extends Observable {
     private final Map<IProject, Map<String, ChangeSet>> changesets = new HashMap<IProject, Map<String, ChangeSet>>();
     protected final boolean debug;
 
-
     public AbstractCache() {
+        super();
         debug = MercurialEclipsePlugin.getDefault().isDebugging();
+        final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+        configureFromPreferences(store);
+        store.addPropertyChangeListener(new IPropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent event) {
+                configureFromPreferences(store);
+            }
+        });
+        ResourcesPlugin.getWorkspace().addResourceChangeListener(new IResourceChangeListener() {
+
+            public void resourceChanged(IResourceChangeEvent event) {
+                if (event.getType() != IResourceChangeEvent.POST_CHANGE) {
+                    return;
+                }
+                try {
+                    ProjectDeltaVisitor visitor = new ProjectDeltaVisitor();
+                    event.getDelta().accept(visitor);
+                } catch (CoreException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+
+            }
+        }, IResourceChangeEvent.POST_CHANGE);
+    }
+
+    private class ProjectDeltaVisitor implements IResourceDeltaVisitor {
+
+        public boolean visit(IResourceDelta delta) throws CoreException {
+            IResource res = delta.getResource();
+            if (res.getType() == IResource.ROOT) {
+                return true;
+            }
+            if (res.getType() != IResource.PROJECT) {
+                return false;
+            }
+            IProject project = (IProject) res;
+            if(delta.getKind() == IResourceDelta.REMOVED ||
+                    ((delta.getFlags() & IResourceDelta.OPEN) != 0 && !project.isOpen())){
+                clearProjectCache(project);
+            }
+            return false;
+        }
+    }
+
+
+    /**
+     * Clients has to override and cleanup all caches related to given project.
+     * Clients has to call super method implementation first.
+     */
+    protected void clearProjectCache(IProject project){
+        clearChangesets(project);
+    }
+
+    /**
+     * does nothing, clients has to override and update preferences
+     */
+    protected void configureFromPreferences(IPreferenceStore store) {
+        // does nothing
     }
 
     /**
@@ -192,7 +257,7 @@ public abstract class AbstractCache extends Observable {
 
     protected Set<IResource> getMembers(IResource r) {
         HashSet<IResource> set = new HashSet<IResource>();
-        if (r instanceof IContainer) {
+        if (r instanceof IContainer && r.isAccessible()) {
             IContainer cont = (IContainer) r;
             try {
                 IResource[] members = cont.members();

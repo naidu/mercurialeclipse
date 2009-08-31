@@ -100,6 +100,16 @@ public class OutgoingChangesetCache extends AbstractCache {
         }
     }
 
+    @Override
+    protected void clearProjectCache(IProject project) {
+        super.clearProjectCache(project);
+        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager()
+                .getAllProjectRepoLocations(project);
+        for (HgRepositoryLocation repo : repos) {
+            clear(repo, project, false);
+        }
+    }
+
     public ChangeSet getNewestOutgoingChangeSet(IResource resource,
             HgRepositoryLocation repositoryLocation) throws HgException {
 
