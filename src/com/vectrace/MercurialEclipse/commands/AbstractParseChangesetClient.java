@@ -89,6 +89,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
         private static final Pattern GT = Pattern.compile("&gt;");
         private static final Pattern AMP = Pattern.compile("&amp;");
         private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
+        private static final Pattern WORDS =  Pattern.compile(" ");
 
         public ChangesetContentHandler(IPath res, Direction direction,
                 HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot,
@@ -122,11 +123,12 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
             return replaceAll(NEWLINE_TAB, string, "\n"); //$NON-NLS-1$
         }
 
-        private static String[] splitClean(String string, String sep) {
+
+        private static String[] splitWords(String string) {
             if (string == null || string.length() == 0) {
                 return EMPTY;
             }
-            return string.split(sep);
+            return WORDS.split(string);
         }
 
         public void characters(char[] ch, int start, int length) {
@@ -149,7 +151,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 csb.nodeShort(ns);
                 csb.ageDate(da);
                 csb.description(untab(unescape(de)));
-                csb.parents(splitClean(pr, " ")); //$NON-NLS-1$
+                csb.parents(splitWords(pr));
 
                 csb.bundleFile(bundleFile);
                 csb.direction(direction);
