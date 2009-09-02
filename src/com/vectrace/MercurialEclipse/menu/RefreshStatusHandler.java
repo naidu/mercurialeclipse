@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -22,27 +21,22 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class RefreshStatusHandler extends SingleResourceHandler {
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
-     */
     @Override
     protected void run(final IResource resource) throws Exception {
         new SafeWorkspaceJob(Messages.getString("RefreshStatusHandler.refreshingResource")+resource.getName()+"...") { //$NON-NLS-1$ //$NON-NLS-2$
-            /* (non-Javadoc)
-             * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
-             */
+
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
                 try {
                     MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
-                    return new Status(IStatus.ERROR,MercurialEclipsePlugin.ID,e.getMessage(),e);
+                    return e.getStatus();
                 }
                 return super.runSafe(monitor);
             }
         }.schedule();
     }
 
-    
+
 }

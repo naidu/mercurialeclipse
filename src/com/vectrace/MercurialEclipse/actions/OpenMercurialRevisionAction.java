@@ -33,7 +33,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.PlatformObject;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.content.IContentType;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -109,8 +108,7 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
         }
 
         public ImageDescriptor getImageDescriptor() {
-            System.out
-                    .println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()"); //$NON-NLS-1$
+            // System.out.println("OpenMercurialRevisionAction::MercurialRevisionEditorInput::getImageDescriptor()"); //$NON-NLS-1$
             return null;
         }
 
@@ -204,30 +202,25 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
                         IStorage file;
                         try {
                             file = revision.getStorage(monitor);
-                            String id = getEditorID(file.getName(), file
-                                    .getContents());
+                            String id = getEditorID(file.getName(), file.getContents());
 
                             if (file instanceof IFile) {
-                                // if this is the current workspace file, open
-                                // it
-                                IDE.openEditor(page.getSite().getPage(),
-                                        (IFile) file);
+                                // if this is the current workspace file, open it
+                                IDE.openEditor(page.getSite().getPage(), (IFile) file);
                             } else {
                                 // not current revision
-                                MercurialRevisionEditorInput fileRevEditorInput = new MercurialRevisionEditorInput(
-                                        revision);
+                                MercurialRevisionEditorInput fileRevEditorInput =
+                                    new MercurialRevisionEditorInput(revision);
                                 if (!editorAlreadyOpenOnContents(fileRevEditorInput)) {
                                     // !editorAlreadyOpenOnContents(fileRevEditorInput)");
-                                    page.getSite().getPage().openEditor(
-                                            fileRevEditorInput, id);
+                                    page.getSite().getPage().openEditor(fileRevEditorInput, id);
                                 }
                             }
                             return super.runSafe(monitor);
                         } catch (CoreException e) {
                             MercurialEclipsePlugin.logError(e);
-                            return new Status(IStatus.ERROR,"com.vectrace.MercurialEclipse",e.getMessage());                             //$NON-NLS-1$
+                            return e.getStatus();
                         }
-
                     }
                 };
                 runnable.schedule();

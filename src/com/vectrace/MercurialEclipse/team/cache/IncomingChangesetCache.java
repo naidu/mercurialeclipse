@@ -95,19 +95,22 @@ public class IncomingChangesetCache extends AbstractCache {
         synchronized (incomingChangeSets) {
             Map<IPath, SortedSet<ChangeSet>> map = incomingChangeSets.get(repo);
             if(map != null){
-                SortedSet<ChangeSet> removed = map.remove(project.getLocation());
-                if(removed == null || removed.isEmpty()){
-                    // cache was already empty, no change
-                    notify = false;
-                }
-                notify &= clearChangesets(project);
-            } else {
-                // cache was already empty, no change
-                notify = false;
+                map.remove(project.getLocation());
+                clearChangesets(project);
             }
         }
         if(notify) {
             notifyChanged(project, false);
+        }
+    }
+
+    @Override
+    protected void clearProjectCache(IProject project) {
+        super.clearProjectCache(project);
+        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager()
+                .getAllProjectRepoLocations(project);
+        for (HgRepositoryLocation repo : repos) {
+            clear(repo, project, false);
         }
     }
 

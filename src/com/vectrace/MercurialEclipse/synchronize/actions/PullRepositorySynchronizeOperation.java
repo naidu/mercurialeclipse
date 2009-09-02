@@ -14,10 +14,8 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
@@ -29,10 +27,10 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 
 public class PullRepositorySynchronizeOperation extends SynchronizeModelOperation {
-    private org.eclipse.core.resources.IProject project;
-    private ISynchronizePageConfiguration configuration;
-    private MercurialSynchronizeParticipant participant;
-    private boolean update;
+    private final org.eclipse.core.resources.IProject project;
+    private final ISynchronizePageConfiguration configuration;
+    private final MercurialSynchronizeParticipant participant;
+    private final boolean update;
 
     public PullRepositorySynchronizeOperation(
             ISynchronizePageConfiguration configuration,
@@ -58,17 +56,12 @@ public class PullRepositorySynchronizeOperation extends SynchronizeModelOperatio
 
                     if (loc != null) {
                         HgPushPullClient.pull(project, loc, update);
-                        project.refreshLocal(IResource.DEPTH_INFINITE, moni);
                     }
 
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
-                    return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,"Couldn't pull+update: "+e.getMessage(), e);
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,"Couldn't refresh: "+e.getMessage(), e);
+                    return e.getStatus();
                 }
-
                 return super.runSafe(moni);
             }
 

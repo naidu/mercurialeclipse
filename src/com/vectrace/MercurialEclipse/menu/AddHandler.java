@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -64,7 +65,7 @@ public class AddHandler extends MultipleResourcesHandler {
             untrackedFiles.put(project, files);
             untrackedFolders.put(project, folders);
         }
-       
+
         ViewerFilter untrackedFilter = new UntrackedResourcesFilter(untrackedFiles,
                 untrackedFolders);
 
@@ -79,18 +80,28 @@ public class AddHandler extends MultipleResourcesHandler {
         dialog.setInitialElementSelections(resources);
         dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
         dialog.addFilter(untrackedFilter);
+        Set<IContainer> expanded = new HashSet<IContainer>();
+        for (IResource resource : resources) {
+            IContainer parent = resource.getParent();
+            while(parent != null && !expanded.contains(parent)){
+                if(parent.getType() == IResource.ROOT){
+                    break;
+                }
+                expanded.add(parent);
+                parent = parent.getParent();
+            }
+        }
+        dialog.setExpandedElements(expanded.toArray(new IContainer[0]));
         if (dialog.open() == IDialogConstants.OK_ID) {
         	HgAddClient.addResources(keepFiles(dialog.getResult()), null);
         	for (IProject proj : roots) {
         	    new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), proj).schedule();     //$NON-NLS-1$
-            }			
+            }
         }
     }
 
     /**
      * Only keep IFiles
-     * @param objects
-     * @return
      */
     private List<IResource> keepFiles(Object[] objects) {
         List<IResource> files = new ArrayList<IResource>();

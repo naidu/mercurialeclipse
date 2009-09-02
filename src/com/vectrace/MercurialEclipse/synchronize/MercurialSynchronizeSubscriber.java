@@ -139,7 +139,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
                     // okay, we gotta load the changeset via hg log
                     if (csOutgoing == null) {
-                        csOutgoing = LOCAL_CACHE.getLocalChangeSet(resource, nodeId, true);
+                        csOutgoing = LOCAL_CACHE.getLocalChangeSet(resource, nodeId);
                     }
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);

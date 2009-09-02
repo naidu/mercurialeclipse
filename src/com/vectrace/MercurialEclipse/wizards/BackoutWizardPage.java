@@ -25,11 +25,9 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
-import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -117,8 +115,7 @@ public class BackoutWizardPage extends HgWizardPage {
             String result = HgBackoutClient.backout(project, backoutRevision,
                     merge, msg, userTextField.getText());
             HgClients.getConsole().printMessage(result, null);
-            String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-            project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+
         } catch (CoreException e) {
             MessageDialog.openError(getShell(), Messages
                     .getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$

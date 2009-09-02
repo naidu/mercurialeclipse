@@ -11,9 +11,11 @@
 package com.vectrace.MercurialEclipse.team;
 
 import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -36,10 +38,8 @@ import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -50,17 +50,12 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
  * @author zingo
  *
  */
-public class ResourceDecorator extends LabelProvider implements
-ILightweightLabelDecorator, Observer
-// FlagManagerListener
-{
+public class ResourceDecorator extends LabelProvider implements ILightweightLabelDecorator, Observer {
 
-    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache
-    .getInstance();
-    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache
-    .getInstance();
-    private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache
-    .getInstance();
+    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
+    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
+    private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
+
 
     private static String[] fonts = new String[] {
         ADDED_FONT,
@@ -86,6 +81,14 @@ ILightweightLabelDecorator, Observer
         UNKNOWN_BACKGROUND_COLOR,
         UNKNOWN_FOREGROUND_COLOR };
 
+    private static final Set<String> interestingPrefs = new HashSet<String>();
+    static {
+        interestingPrefs.add(LABELDECORATOR_LOGIC_2MM);
+        interestingPrefs.add(LABELDECORATOR_LOGIC);
+        interestingPrefs.add(PREF_DECORATE_WITH_COLORS);
+        interestingPrefs.add(RESOURCE_DECORATOR_SHOW_CHANGESET);
+    }
+
     /** set to true when having 2 different statuses in a folder flags it has modified */
     private boolean folder_logic_2MM;
     private ITheme theme;
@@ -95,7 +98,6 @@ ILightweightLabelDecorator, Observer
     public ResourceDecorator() {
         configureFromPreferences();
         STATUS_CACHE.addObserver(this);
-        LOCAL_CACHE.addObserver(this);
         INCOMING_CACHE.addObserver(this);
         theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
         ensureFontAndColorsCreated(fonts, colors);
@@ -113,7 +115,11 @@ ILightweightLabelDecorator, Observer
         MercurialEclipsePlugin.getDefault()
             .getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent event) {
-                configureFromPreferences();
+                if(interestingPrefs.contains(event.getProperty())){
+                    configureFromPreferences();
+                    fireLabelProviderChanged(new LabelProviderChangedEvent(
+                            ResourceDecorator.this));
+                }
             }
         });
     }
@@ -146,7 +152,6 @@ ILightweightLabelDecorator, Observer
     public void dispose() {
         STATUS_CACHE.deleteObserver(this);
         INCOMING_CACHE.deleteObserver(this);
-        LOCAL_CACHE.deleteObserver(this);
         super.dispose();
     }
 
@@ -154,21 +159,10 @@ ILightweightLabelDecorator, Observer
      * Init all the options we need from preferences to avoid doing this all the time
      */
     private void configureFromPreferences() {
-        IPreferenceStore store = MercurialEclipsePlugin.getDefault()
-        .getPreferenceStore();
-        folder_logic_2MM = MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM
-            .equals(store
-                .getString(MercurialPreferenceConstants.LABELDECORATOR_LOGIC));
-        colorise = Boolean.valueOf(
-                    HgClients.getPreference(
-                            MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
-                    "false")).booleanValue(); //$NON-NLS-1$
-        showChangeset = Boolean
-            .valueOf(
-                HgClients
-                .getPreference(
-                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                "false")).booleanValue(); //$NON-NLS-1$
+        IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+        folder_logic_2MM = LABELDECORATOR_LOGIC_2MM.equals(store.getString(LABELDECORATOR_LOGIC));
+        colorise = store.getBoolean(PREF_DECORATE_WITH_COLORS);
+        showChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_CHANGESET);
     }
 
     public void decorate(Object element, IDecoration d) {
@@ -188,17 +182,16 @@ ILightweightLabelDecorator, Observer
             if (showChangeset) {
                 // get recent project versions
                 if (!STATUS_CACHE.isStatusKnown(project) && !LOCAL_CACHE.isLocallyKnown(project)) {
-                    // LOCAL_CACHE notifies resource decorator when it's finished.
+                    // STATUS_CACHE notifies resource decorator when it's finished.
                     RefreshJob job = new RefreshJob(
                             Messages
-                            .getString("ResourceDecorator.refreshingChangesetDeco"), project, showChangeset); //$NON-NLS-1$
+                            .getString("ResourceDecorator.refreshingChangesetDeco"), project, RefreshJob.LOCAL); //$NON-NLS-1$
                     job.schedule();
                     job.join();
-                    return;
+//                    return;
                 }
             } else {
-                if (/*!STATUS_CACHE.getLock(project).isLocked() &&*/
-                         !STATUS_CACHE.isStatusKnown(project)) {
+                if (!STATUS_CACHE.isStatusKnown(project)) {
                     RefreshStatusJob job = new RefreshStatusJob(
                             Messages
                             .getString("ResourceDecorator.updatingStatusForProject.1") + project.getName() //$NON-NLS-1$
@@ -207,7 +200,7 @@ ILightweightLabelDecorator, Observer
                             + resource.getName(), project);
                     job.schedule();
                     job.join();
-                    return;
+//                    return;
                 }
             }
 
@@ -364,7 +357,7 @@ ILightweightLabelDecorator, Observer
             MercurialEclipsePlugin
             .logWarning(
                     Messages
-                    .getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e); //$NON-NLS-1$
+                    .getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e);
         }
     }
 
@@ -387,12 +380,12 @@ ILightweightLabelDecorator, Observer
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
                 suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
-                + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+                + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
 
                 if (cs != null) {
-                    suffix += "< [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$ //$NON-NLS-2$
-                    + cs.getNodeShort() + " - " + cs.getAgeDate() //$NON-NLS-1$
-                    + " - " + cs.getUser() + "]"; //$NON-NLS-1$ //$NON-NLS-2$
+                    suffix += "< [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
+                    + cs.getNodeShort() + " - " + cs.getAgeDate()
+                    + " - " + cs.getUser() + "]";
                 }
             }
         }
@@ -409,10 +402,10 @@ ILightweightLabelDecorator, Observer
         changeSet = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
 
         if (changeSet == null) {
-            suffix = Messages.getString("ResourceDecorator.new"); //$NON-NLS-1$
+            suffix = Messages.getString("ResourceDecorator.new");
         } else {
             suffix = " [ "; //$NON-NLS-1$
-            String hex = ":" + changeSet.getNodeShort(); //$NON-NLS-1$
+            String hex = ":" + changeSet.getNodeShort();
             String tags = changeSet.getTag();
             String merging = project
             .getPersistentProperty(ResourceProperties.MERGING);
@@ -426,26 +419,23 @@ ILightweightLabelDecorator, Observer
                 project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
             }
             if (branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
-                suffix += " @ " + branch; //$NON-NLS-1$
+                suffix += " @ " + branch;
             }
 
             // tags
             if (tags != null && tags.length() > 0) {
-                suffix += " (" + tags + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                suffix += " (" + tags + ")";
             }
 
             // merge info
             if (merging != null && merging.length() > 0) {
-                suffix += Messages.getString("ResourceDecorator.merging") + merging; //$NON-NLS-1$
+                suffix += Messages.getString("ResourceDecorator.merging") + merging;
             }
-            suffix += " ]"; //$NON-NLS-1$
+            suffix += " ]";
         }
         return suffix;
     }
 
-    /**
-     * @return
-     */
     public static String getDecoratorId() {
         String decoratorId = ResourceDecorator.class.getName();
         return decoratorId;
@@ -470,9 +460,6 @@ ILightweightLabelDecorator, Observer
         }
     }
 
-    /**
-     * @param notification
-     */
     private void fireNotification(List<IResource> notification) {
         LabelProviderChangedEvent event = new LabelProviderChangedEvent(this,
                 notification.toArray());
