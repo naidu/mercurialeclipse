@@ -36,7 +36,10 @@ public class HgSvnClient extends AbstractClient {
         cmd.addOptions("pull"); //$NON-NLS-1$
         String result = cmd.executeToString();
         IProject project = resource.getProject();
-        new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_INCOMING).schedule();
+        // The reason to use "all" instead of only "local + incoming", is that we can pull
+        // from another repo as the sync clients for given project may use
+        // in this case, we also need to update "outgoing" changesets
+        new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.ALL).schedule();
         return result;
     }
 

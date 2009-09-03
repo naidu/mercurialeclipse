@@ -94,7 +94,10 @@ public class HgPushPullClient extends AbstractClient {
         } else {
             result = new String(command.executeToBytes(Integer.MAX_VALUE));
         }
-        final int flags = RefreshJob.LOCAL_AND_INCOMING;
+        // The reason to use "all" instead of only "local + incoming", is that we can pull
+        // from another repo as the sync clients for given project may use
+        // in this case, we also need to update "outgoing" changesets
+        final int flags = RefreshJob.ALL;
         if(update) {
             RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
             job.addJobChangeListener(new JobChangeAdapter(){
