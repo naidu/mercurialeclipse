@@ -35,7 +35,6 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -131,7 +130,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
                 try {
                     // Find current working directory changeset (not head)
-                    HgRoot root = AbstractClient.getHgRoot(resource);
+                    HgRoot root = MercurialTeamProvider.getHgRoot(resource);
                     String nodeId = HgIdentClient.getCurrentChangesetId(root);
 
                     // try to get from cache (without loading)
