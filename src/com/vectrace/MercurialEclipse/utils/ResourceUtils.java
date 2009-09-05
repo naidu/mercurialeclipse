@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -112,6 +113,22 @@ public class ResourceUtils {
             path = path.getParentFile();
         }
         return path;
+    }
+
+    /**
+     * For a given path, tries to find out first <b>existing</b> parent directory
+     * @param res may be null
+     * @return may return null
+     */
+    public static IContainer getFirstExistingDirectory(IResource res) {
+        IContainer parent = res instanceof IContainer? (IContainer)res : res.getParent();
+        while (parent != null && !parent.exists()) {
+            parent = parent.getParent();
+            if(parent instanceof IWorkspaceRoot){
+                return null;
+            }
+        }
+        return parent;
     }
 
     /**

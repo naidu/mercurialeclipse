@@ -61,6 +61,7 @@ public class HgSubscriberMergeContext extends
     @Override
     public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
         super.refresh(traversals, flags, monitor);
+        monitor.done();
     }
 
     /**

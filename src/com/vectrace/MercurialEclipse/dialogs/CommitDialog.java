@@ -160,7 +160,9 @@ public class CommitDialog extends TitleAreaDialog {
     }
 
     private void createRevertCheckBox(Composite container) {
-        this.revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
+        if(allowFileSelection) {
+            this.revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
+        }
     }
 
     private void createFilesList(Composite container) {
@@ -286,7 +288,7 @@ public class CommitDialog extends TitleAreaDialog {
                 HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
             }
 
-            if (revertCheckBox.getSelection()) {
+            if (allowFileSelection && revertCheckBox.getSelection()) {
                 revertResources();
             }
             super.okPressed();
@@ -305,7 +307,7 @@ public class CommitDialog extends TitleAreaDialog {
             protected IStatus runSafe(IProgressMonitor monitor) {
                 ActionRevert action = new ActionRevert();
                 try {
-                    action.doRevert(monitor, revertResources, false);
+                    action.doRevert(monitor, revertResources, new ArrayList<IResource>(), false);
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
                     return e.getStatus();

@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -131,22 +133,26 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 
     private void openRevertDialog(List<IResource> resources, final boolean cleanAfterMerge) {
         final List<IResource> result;
+        final List<IResource> untracked;
         if(!cleanAfterMerge){
             RevertDialog chooser = new RevertDialog(Display.getCurrent().getActiveShell());
             chooser.setFiles(resources);
             if (chooser.open() != Window.OK) {
                 return;
             }
-            result = chooser.getSelection();
+            result = chooser.getSelectionForHgRevert();
+            untracked = chooser.getUntrackedSelection();
         } else {
             result = resources;
+            // TODO allow to revert untracked files after the merge too
+            untracked = new ArrayList<IResource>();
         }
 
         new SafeWorkspaceJob(Messages.getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
             @Override
             protected IStatus runSafe(IProgressMonitor monitor) {
                 try {
-                    doRevert(monitor, result, cleanAfterMerge);
+                    doRevert(monitor, result, untracked, cleanAfterMerge);
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
                     return e.getStatus();
@@ -176,13 +182,16 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         return mergeIsRunning;
     }
 
-    public void doRevert(IProgressMonitor monitor, List<IResource> resources, boolean cleanAfterMerge)
-            throws HgException {
+    public void doRevert(IProgressMonitor monitor, List<IResource> resources,
+            List<IResource> untracked, boolean cleanAfterMerge) throws HgException {
 
         monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
 
         Map<IProject, List<IResource>> filesToRevert = ResourceUtils.groupByProject(resources);
         Set<IProject> projects = filesToRevert.keySet();
+
+        // cleanup untracked files first
+        deleteUntrackedFiles(untracked, monitor);
 
         // collect removed file state NOW
         MercurialStatusCache cache = MercurialStatusCache.getInstance();
@@ -267,6 +276,47 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
             }
         }
         monitor.done();
+    }
+
+    /**
+     *  Deletes given resources and cleans up the cache state for them
+     */
+    private void deleteUntrackedFiles(List<IResource> untracked, IProgressMonitor monitor) {
+        MercurialStatusCache cache = MercurialStatusCache.getInstance();
+        for (IResource resource : untracked) {
+            try {
+                IContainer parent = null;
+                if(resource instanceof IFile){
+                    parent = resource.getParent();
+                    if(parent instanceof IProject && ".project".equals(resource.getName())){
+                        MercurialEclipsePlugin.logInfo(
+                                "Will NOT delete .project file from project " + parent.getName(),
+                                null);
+                        // do not revert .project file....
+                        continue;
+                    }
+                    resource.delete(IResource.FORCE | IResource.KEEP_HISTORY, monitor);
+                } else if(!(resource instanceof IProject)){
+                    resource.delete(IResource.KEEP_HISTORY, monitor);
+                }
+                deleteEmptyDirs(parent, monitor);
+                cache.clearStatusCache(resource);
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+    }
+
+    /**
+     *  Recursive deletes empty directories, starting with given one
+     */
+    private void deleteEmptyDirs(IContainer dir, IProgressMonitor monitor) throws CoreException {
+        int memberFlags = IContainer.INCLUDE_HIDDEN | IContainer.INCLUDE_TEAM_PRIVATE_MEMBERS;
+        if (dir != null && !(dir instanceof IProject) && dir.members(memberFlags).length == 0) {
+            IContainer parent = dir.getParent();
+            dir.delete(false, monitor);
+            deleteEmptyDirs(parent, monitor);
+        }
     }
 
     /**

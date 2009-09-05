@@ -19,7 +19,7 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.core.resources.IContainer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -234,49 +234,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
     @Override
     public IResource[] members(IResource resource) throws TeamException {
-
-        HgRepositoryLocation repositoryLocation = getRepo(resource);
-        Set<IResource> members = new HashSet<IResource>();
-        Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
-        if (localMembers.size() > 0) {
-            members.addAll(localMembers);
-        }
-
-        Set<IResource> outgoingMembers;
-        Set<IResource> incomingMembers;
-        try {
-            if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
-                // waiting didn't worked for us...
-                return getAllWithoutGivenOne(resource, members);
-            }
-            if(resource instanceof IContainer && debug) {
-                System.out.println("get members: " + resource);
-            }
-            // this can trigger a refresh and a call to the remote server...
-            outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(resource, repositoryLocation);
-            incomingMembers = INCOMING_CACHE.getIncomingMembers(resource, repositoryLocation);
-        } catch (InterruptedException e) {
-            MercurialEclipsePlugin.logError(e);
-            return getAllWithoutGivenOne(resource, members);
-        } finally {
-            sema.release();
-        }
-
-        if (outgoingMembers.size() > 0) {
-            members.addAll(outgoingMembers);
-        }
-        if (incomingMembers.size() > 0) {
-            members.addAll(incomingMembers);
-        }
-
-        // we don't want ourself or the project as our member
-        return getAllWithoutGivenOne(resource, members);
-    }
-
-    private IResource[] getAllWithoutGivenOne(IResource resource, Set<IResource> members) {
-        members.remove(resource.getProject());
-        members.remove(resource);
-        return members.toArray(new IResource[members.size()]);
+        return new IResource[0];
     }
 
     /**
@@ -304,14 +262,20 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if (repositoryLocation == null) {
                 continue;
             }
-
+            monitor.beginTask(getName(), 5);
             // clear caches in any case, but refresh them only if project exists
             boolean forceRefresh = project.exists();
 
             try {
                 sema.acquire();
                 if(debug) {
-                    System.out.println("going to refresh: " + project + ", depth: " + flag);
+                    System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
+                }
+                monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
+                refreshLocal(flag, monitor, project, forceRefresh);
+                monitor.worked(1);
+                if (monitor.isCanceled()) {
+                    return;
                 }
                 monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
                 refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh);
@@ -330,13 +294,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             } finally {
                 sema.release();
             }
-
-            monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
-            refreshLocal(flag, monitor, project, forceRefresh);
-            monitor.worked(1);
-            if (monitor.isCanceled()) {
-                return;
-            }
         }
 
         List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
@@ -348,8 +305,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
         fireTeamResourceChange(changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]));
         monitor.worked(1);
-        // should not call it, we do not own the monitor...
-        // monitor.done();
+        monitor.done();
     }
 
     private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -358,7 +314,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(resource.getType() == IResource.FILE) {
                 resourcesToRefresh.add(resource);
             } else {
-                Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
+                Set<IFile> localMembers = STATUS_CACHE.getLocalMembers(resource);
                 resourcesToRefresh.addAll(localMembers);
             }
         }

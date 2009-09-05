@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -31,6 +32,7 @@ public class RevertDialog extends TitleAreaDialog {
     private List<IResource> resources;
     private CommitFilesChooser selectFilesList;
     private List<IResource> selection;
+    private List<IResource> untrackedSelection;
 
     public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
     public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
@@ -66,7 +68,7 @@ public class RevertDialog extends TitleAreaDialog {
     }
 
     private void createFilesList(Composite container) {
-        selectFilesList = new CommitFilesChooser(container, true, resources, false, true);
+        selectFilesList = new CommitFilesChooser(container, true, resources, true, true);
     }
 
     public void setFiles(List<IResource> resources) {
@@ -76,7 +78,16 @@ public class RevertDialog extends TitleAreaDialog {
 
     @Override
     protected void okPressed() {
-        this.selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+        selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+        untrackedSelection = selectFilesList.getCheckedResources(FILE_UNTRACKED);
+        if(!untrackedSelection.isEmpty()){
+            boolean confirm = MessageDialog.openConfirm(getShell(), "Please confirm delete",
+                    "You have selected to revert untracked files." +
+            		"\nThis files will be now deleted.\n\nContinue?");
+            if(!confirm){
+                return;
+            }
+        }
         super.okPressed();
 
     }
@@ -85,7 +96,11 @@ public class RevertDialog extends TitleAreaDialog {
         setFiles(Arrays.asList(commitResources));
     }
 
-    public List<IResource> getSelection() {
+    public List<IResource> getSelectionForHgRevert() {
         return selection;
+    }
+
+    public List<IResource> getUntrackedSelection() {
+        return untrackedSelection;
     }
 }
