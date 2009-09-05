@@ -84,7 +84,7 @@ public class HgConsole extends MessageConsole {
      * console page yet.
      */
     public HgConsole() {
-        super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("icons/mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
+        super("Mercurial Console", MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png")); //$NON-NLS-1$ //$NON-NLS-2$
         document = new ConsoleDocument();
     }
 
