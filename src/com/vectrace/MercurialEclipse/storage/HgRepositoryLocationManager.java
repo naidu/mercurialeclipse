@@ -46,6 +46,7 @@ import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
 import com.vectrace.MercurialEclipse.repository.RepositoryResourcesManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 /**
  * A manager for all Mercurial repository locations.
@@ -105,8 +106,10 @@ public class HgRepositoryLocationManager {
             }
 
         }
-        loadProjectRepos();
-
+        Set<IProject> managedProjects = loadProjectRepos();
+        for (IProject project : managedProjects) {
+            new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule(50);
+        }
     }
 
     /**
@@ -183,6 +186,30 @@ public class HgRepositoryLocationManager {
     }
 
     /**
+     * Add a repository location to the database without to triggering loadRepos again
+     */
+    private boolean internalAddRepoLocation(IProject project, HgRepositoryLocation loc) {
+        if (loc == null) {
+            return false;
+        }
+
+        addRepoLocation(loc);
+
+        synchronized (projectRepos) {
+
+            SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
+            if (repoSet == null) {
+                repoSet = new TreeSet<HgRepositoryLocation>();
+            }
+            repoSet.add(loc);
+            projectRepos.put(project, repoSet);
+        }
+
+        return true;
+    }
+
+
+    /**
      * Add a repository location to the database. Associate a repository
      * location to a particular project.
      *
@@ -223,8 +250,9 @@ public class HgRepositoryLocationManager {
         return projectRepos;
     }
 
-    private void loadProjectRepos() throws IOException, HgException {
+    private Set<IProject> loadProjectRepos() throws IOException, HgException {
         projectRepos.clear();
+        Set<IProject> managedProjects = new HashSet<IProject>();
         IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
                 .getProjects();
 
@@ -243,7 +271,7 @@ public class HgRepositoryLocationManager {
                             entry.getValue(),
                             entry.getKey(),
                             null, null);
-                    addRepoLocation(project, loc);
+                    internalAddRepoLocation(project, loc);
                 } catch (URISyntaxException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
@@ -255,7 +283,7 @@ public class HgRepositoryLocationManager {
                 if (url != null) {
                     HgRepositoryLocation srcRepository = updateRepoLocation(
                             url, null, null, null);
-                    addRepoLocation(project, srcRepository);
+                    internalAddRepoLocation(project, srcRepository);
                 } else {
                     createSrcRepository = true;
                 }
@@ -276,7 +304,7 @@ public class HgRepositoryLocationManager {
                         try {
                             HgRepositoryLocation loc = updateRepoLocation(
                                     line, null, null, null);
-                            addRepoLocation(project, loc);
+                            internalAddRepoLocation(project, loc);
 
                             if (createSrcRepository) {
 
@@ -293,7 +321,9 @@ public class HgRepositoryLocationManager {
                     reader.close();
                 }
             }
+            managedProjects.add(project);
         }
+        return managedProjects;
     }
 
     public void setDefaultProjectRepository(IProject project,
