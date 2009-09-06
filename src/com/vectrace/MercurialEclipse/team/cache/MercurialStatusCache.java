@@ -225,7 +225,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 
     /** maximum bits count used in the cache */
-    private final static int MAX_BITS_COUNT = BIT_CONFLICT + 1;
+    private final static int MAX_BITS_COUNT = 9;
 
     public static final char CHAR_MODIFIED = 'M';
     public static final char CHAR_ADDED = 'A';
