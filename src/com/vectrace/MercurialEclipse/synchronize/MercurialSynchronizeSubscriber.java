@@ -125,7 +125,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         } else {
             // if outgoing != null it's our base, else we gotta construct one
             boolean exists = resource.exists();
-            if (exists && !STATUS_CACHE.isAdded(resource.getProject(), resource.getLocation())
+            if (exists && !STATUS_CACHE.isAdded(resource.getLocation())
                     || (!exists && STATUS_CACHE.isRemoved(resource))) {
 
                 try {

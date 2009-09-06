@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
-import java.util.BitSet;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.variants.IResourceVariant;
@@ -37,43 +35,40 @@ public class MercurialResourceVariantComparator implements
 
     public boolean compare(IResource local, IResourceVariant repoRevision) {
         try {
-
             if (csWorkDir == null) {
                 csWorkDir = LocalChangesetCache.getInstance()
                         .getCurrentWorkDirChangeset(local);
             }
-
-            BitSet bitSet = statusCache.getStatus(local);
-            if (bitSet != null) {
-                int status = bitSet.length() - 1;
-                if (status == MercurialStatusCache.BIT_CLEAN) {
-                    if (repoRevision != null) {
-                        MercurialRevisionStorage remoteIStorage = (MercurialRevisionStorage) repoRevision
-                                .getStorage(null);
-                        ChangeSet cs = remoteIStorage.getChangeSet();
-
-                        // if this is outgoing or incoming, it can't be equal to
-                        // any other changeset
-                        if ((cs.getDirection() == Direction.INCOMING || cs
-                                .getDirection() == Direction.OUTGOING)
-                                && cs.getBranch().equals(csWorkDir.getBranch())) {
-                            return false;
-                        }
-                    }
-
-                    // resource is clean and we compare against our local
-                    // repository
-                    return true;
-
-                }
-            }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
+            return false;
+        }
+
+        if (!statusCache.isClean(local)) {
+            return false;
+        }
+        if(repoRevision == null){
+            return true;
+        }
+
+        try {
+            MercurialRevisionStorage remoteIStorage = (MercurialRevisionStorage) repoRevision
+            .getStorage(null);
+            ChangeSet cs = remoteIStorage.getChangeSet();
+
+            // if this is outgoing or incoming, it can't be equal to
+            // any other changeset
+            if ((cs.getDirection() == Direction.INCOMING || cs
+                    .getDirection() == Direction.OUTGOING)
+                    && cs.getBranch().equals(csWorkDir.getBranch())) {
+                return false;
+            }
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);
+            return false;
         }
-        return false;
-
+        // resource is clean and we compare against our local repository
+        return true;
     }
 
     public boolean compare(IResourceVariant base, IResourceVariant remote) {

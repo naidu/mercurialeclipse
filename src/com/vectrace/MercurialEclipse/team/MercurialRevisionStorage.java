@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.BitSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -229,8 +228,7 @@ public class MercurialRevisionStorage implements IStorage {
             return new ContentHolder(PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true));
         } else {
             // local: get the contents via cat
-            BitSet status = MercurialStatusCache.getInstance().getStatus(file);
-            if(status != null && status.get(MercurialStatusCache.BIT_UNKNOWN)){
+            if(MercurialStatusCache.getInstance().isUnknown(file)){
                 return new ContentHolder((byte[])null);
             }
             result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());

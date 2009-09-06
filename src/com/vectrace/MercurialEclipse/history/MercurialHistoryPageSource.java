@@ -36,8 +36,7 @@ public class MercurialHistoryPageSource extends HistoryPageSource {
         IResource resource = (IResource) object;
         MercurialStatusCache cache = MercurialStatusCache.getInstance();
         if(resource.exists()) {
-            return cache.isSupervised(resource)
-                && !(cache.isAdded(resource.getProject(), resource.getLocation()));
+            return cache.isSupervised(resource) && !cache.isAdded(resource.getLocation());
         }
         // allow to show history for files which are already deleted and committed
         // (neither in the cache nor on disk)

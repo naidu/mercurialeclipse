@@ -121,7 +121,13 @@ public class ResourceUtils {
      * @return may return null
      */
     public static IContainer getFirstExistingDirectory(IResource res) {
+        if(res == null){
+            return null;
+        }
         IContainer parent = res instanceof IContainer? (IContainer)res : res.getParent();
+        if(parent instanceof IWorkspaceRoot){
+            return null;
+        }
         while (parent != null && !parent.exists()) {
             parent = parent.getParent();
             if(parent instanceof IWorkspaceRoot){

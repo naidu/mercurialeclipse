@@ -26,15 +26,14 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
 
     private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
             .getInstance();
-    private IProject project;
-
-    public RefreshStatusJob(String name) {
-        super(name);
-    }
+    private final IProject project;
 
     public RefreshStatusJob(String name, IProject project) {
         super(name);
         this.project = project;
+        if(false && MercurialEclipsePlugin.getDefault().isDebugging()){
+            new Exception("refreshStatus " + project).printStackTrace();
+        }
     }
 
     @Override

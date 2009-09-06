@@ -14,7 +14,6 @@ import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
@@ -40,11 +39,10 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.Bits;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 /**
  * @author zingo
@@ -182,33 +180,29 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
             if (showChangeset) {
                 // get recent project versions
                 if (!STATUS_CACHE.isStatusKnown(project) && !LOCAL_CACHE.isLocallyKnown(project)) {
-                    // STATUS_CACHE notifies resource decorator when it's finished.
-                    RefreshJob job = new RefreshJob(
-                            Messages
-                            .getString("ResourceDecorator.refreshingChangesetDeco"), project, RefreshJob.LOCAL); //$NON-NLS-1$
-                    job.schedule();
-                    job.join();
-//                    return;
+                    // simply wait until the cache sends us an event
+                    d.addOverlay(DecoratorImages.notTrackedDescriptor);
+                    if(resource == project){
+                        d.addSuffix(" [ Hg status pending... ]");
+                    }
+                    return;
                 }
             } else {
                 if (!STATUS_CACHE.isStatusKnown(project)) {
-                    RefreshStatusJob job = new RefreshStatusJob(
-                            Messages
-                            .getString("ResourceDecorator.updatingStatusForProject.1") + project.getName() //$NON-NLS-1$
-                            + Messages
-                            .getString("ResourceDecorator.updatingStatusForProject.2") //$NON-NLS-1$
-                            + resource.getName(), project);
-                    job.schedule();
-                    job.join();
-//                    return;
+                    // simply wait until the cache sends us an event
+                    d.addOverlay(DecoratorImages.notTrackedDescriptor);
+                    if(resource == project){
+                        d.addSuffix(" [ Hg status pending... ]");
+                    }
+                    return;
                 }
             }
 
             ImageDescriptor overlay = null;
             StringBuilder prefix = new StringBuilder(2);
-            BitSet output = STATUS_CACHE.getStatus(resource);
+            Integer output = STATUS_CACHE.getStatus(resource);
             if (output != null) {
-                overlay = decorate(output, prefix, d, colorise);
+                overlay = decorate(output.intValue(), prefix, d, colorise);
             } else {
                 // empty folder, do nothing
             }
@@ -233,13 +227,16 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         }
     }
 
-    private ImageDescriptor decorate(BitSet output, StringBuilder prefix, IDecoration d, boolean coloriseLabels) {
+    /**
+     * @param statusBits non null hg status bits from cache
+     */
+    private ImageDescriptor decorate(int statusBits, StringBuilder prefix, IDecoration d, boolean coloriseLabels) {
         ImageDescriptor overlay = null;
         // BitSet output = fr.getStatus();
         // "ignore" does not really count as modified
         if (folder_logic_2MM
-                && (output.cardinality() > 2 || (output.cardinality() == 2 && !output
-                        .get(MercurialStatusCache.BIT_IGNORE)))) {
+                && (Bits.cardinality(statusBits) > 2 || (Bits.cardinality(statusBits) == 2 && !Bits.contains(statusBits,
+                        MercurialStatusCache.BIT_IGNORE)))) {
             overlay = DecoratorImages.modifiedDescriptor;
             prefix.append('>');
             if (coloriseLabels) {
@@ -248,7 +245,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 setFont(d, CHANGE_FONT);
             }
         } else {
-            switch (output.length() - 1) {
+            switch (Bits.highestBit(statusBits)) {
             case MercurialStatusCache.BIT_IGNORE:
                 if (coloriseLabels) {
                     setBackground(d, IGNORED_BACKGROUND_COLOR);
@@ -376,7 +373,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
     private String getSuffixForFiles(IResource resource, ChangeSet cs) throws HgException {
         String suffix = ""; //$NON-NLS-1$
         // suffix for files
-        if (!STATUS_CACHE.isAdded(resource.getProject(), resource.getLocation())) {
+        if (!STATUS_CACHE.isAdded(resource.getLocation())) {
             ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
             if (fileCs != null) {
                 suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$

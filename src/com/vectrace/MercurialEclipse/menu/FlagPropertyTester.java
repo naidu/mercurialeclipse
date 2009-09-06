@@ -11,7 +11,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import java.util.BitSet;
+import static com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache.*;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,39 +24,46 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
 
     public final static String PROPERTY_STATUS = "status"; //$NON-NLS-1$
-    
-    @SuppressWarnings("serial")
+
+    @SuppressWarnings({ "serial", "boxing" })
     private final static Map<Object, Integer> BIT_MAP = new HashMap<Object, Integer>() {
         {
-            put("added", MercurialStatusCache.BIT_ADDED); //$NON-NLS-1$
-            put("clean", MercurialStatusCache.BIT_CLEAN); //$NON-NLS-1$
-            put("deleted", MercurialStatusCache.BIT_MISSING); //$NON-NLS-1$
-            put("ignore", MercurialStatusCache.BIT_IGNORE); //$NON-NLS-1$
-            put("modified", MercurialStatusCache.BIT_MODIFIED); //$NON-NLS-1$
-            put("removed", MercurialStatusCache.BIT_REMOVED); //$NON-NLS-1$
-            put("unknown", MercurialStatusCache.BIT_UNKNOWN); //$NON-NLS-1$
+            put("added", BIT_ADDED); //$NON-NLS-1$
+            put("clean", BIT_CLEAN); //$NON-NLS-1$
+            put("deleted", BIT_MISSING); //$NON-NLS-1$
+            put("ignore", BIT_IGNORE); //$NON-NLS-1$
+            put("modified", BIT_MODIFIED); //$NON-NLS-1$
+            put("removed", BIT_REMOVED); //$NON-NLS-1$
+            put("unknown", BIT_UNKNOWN); //$NON-NLS-1$
         }
     };
-    
+
     public boolean test(Object receiver, String property, Object[] args, Object expectedValue) {
         if(PROPERTY_STATUS.equals(property)) {
             try {
                 IResource res = (IResource)receiver;
-                BitSet test = new BitSet();
+                int test = 0;
                 for(Object arg: args) {
-                    test.set(BIT_MAP.get(arg));
+                    Integer statusBit = BIT_MAP.get(arg);
+                    if(statusBit == null){
+                        String message = "Could not test status " + property + " on "  //$NON-NLS-1$ //$NON-NLS-2$
+                            + receiver + " for argument: " + arg; //$NON-NLS-1$
+                        MercurialEclipsePlugin.logWarning(message, new IllegalArgumentException(message));
+                        continue;
+                    }
+                    test |= statusBit.intValue();
                 }
-                BitSet status = MercurialStatusCache.getInstance().getStatus(res);
+                Integer status = MercurialStatusCache.getInstance().getStatus(res);
                 if (status != null) {
-                    test.and(status);                
-                    return !test.isEmpty();
-                }                
+                    test &= status.intValue();
+                    return test != 0;
+                }
             } catch (Exception e) {
-                MercurialEclipsePlugin.logWarning("Could not test status field "+expectedValue+" on "+receiver, e); //$NON-NLS-1$ //$NON-NLS-2$
+                MercurialEclipsePlugin.logWarning("Could not test status " + property + " on " + receiver, e); //$NON-NLS-1$ //$NON-NLS-2$
                 return false;
             }
         }
         return false;
     }
-    
+
 }

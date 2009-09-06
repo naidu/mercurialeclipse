@@ -14,7 +14,6 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -218,8 +217,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
         for (IResource resource : resources) {
             monitor.subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
             try {
-                BitSet status = cache.getStatus(resource);
-                if(status != null && status.get(MercurialStatusCache.BIT_ADDED)){
+                if(cache.isAdded(ResourceUtils.getPath(resource))){
                     // added files didn't change content after we un-add them, so we have
                     // give Eclipse a hint to start some extra refresh work.
                     resource.touch(monitor);

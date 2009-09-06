@@ -16,17 +16,16 @@ package com.vectrace.MercurialEclipse.team.cache;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
@@ -163,28 +162,24 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     private final class MemberStatusVisitor implements IResourceVisitor {
 
-        private final BitSet bitSet;
-        private final BitSet temp;
+        private int bitSet;
         private final IContainer parent;
 
-        public MemberStatusVisitor(IContainer parent, BitSet bitSet) {
+        public MemberStatusVisitor(IContainer parent, int bitSet) {
             this.bitSet = bitSet;
             this.parent = parent;
-            temp = new BitSet(MAX_BITS_COUNT);
         }
 
         public boolean visit(IResource resource) throws CoreException {
             if (resource != parent) {
                 IPath location = ResourceUtils.getPath(resource);
-                BitSet memberBitSet = statusMap.get(location);
+                Integer memberBitSet = statusMap.get(location);
                 if (memberBitSet != null) {
-                    temp.clear();
-                    temp.or(memberBitSet);
-                    temp.andNot(IGNORED_MASK);
-                    if(memberBitSet.intersects(MODIFIED_MASK)){
-                        temp.set(BIT_MODIFIED);
+                    int temp = Bits.clear(memberBitSet.intValue(), IGNORED_MASK);
+                    if(Bits.contains(memberBitSet.intValue(), MODIFIED_MASK)){
+                        temp |= BIT_MODIFIED;
                     }
-                    bitSet.or(temp);
+                    bitSet |= temp;
                 }
             }
             return true;
@@ -213,7 +208,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     public final static Integer _IGNORE = Integer.valueOf(BIT_IGNORE);
     public final static Integer _CLEAN = Integer.valueOf(BIT_CLEAN);
-    /** file is tracked by hg, but it is missing on a disk (probably deleted by external command) */
     public final static Integer _MISSING = Integer.valueOf(BIT_MISSING);
     public final static Integer _REMOVED = Integer.valueOf(BIT_REMOVED);
     public final static Integer _UNKNOWN = Integer.valueOf(BIT_UNKNOWN);
@@ -222,38 +216,43 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public final static Integer _IMPOSSIBLE = Integer.valueOf(BIT_IMPOSSIBLE);
     public final static Integer _CONFLICT = Integer.valueOf(BIT_CONFLICT);
 
-
-
     /** maximum bits count used in the cache */
-    private final static int MAX_BITS_COUNT = 9;
+//    private final static int MAX_BITS_COUNT = 9;
 
-    public static final char CHAR_MODIFIED = 'M';
-    public static final char CHAR_ADDED = 'A';
-    public static final char CHAR_UNKNOWN = '?';
-    public static final char CHAR_CLEAN = 'C';
     public static final char CHAR_IGNORED = 'I';
-    public static final char CHAR_REMOVED = 'R';
+    public static final char CHAR_CLEAN = 'C';
     public static final char CHAR_MISSING = '!';
+    public static final char CHAR_REMOVED = 'R';
+    public static final char CHAR_UNKNOWN = '?';
+    public static final char CHAR_ADDED = 'A';
+    public static final char CHAR_MODIFIED = 'M';
     public static final char CHAR_UNRESOLVED = 'U';
     public static final char CHAR_RESOLVED = 'R';
 
     /**
-     * If the child file has any of the bits set in the range from {@link #BIT_IGNORE}
-     * to {@link #BIT_ADDED}, we do not propagate this bits to the parent directory directly,
-     * but propagate only bits covered by the {@link #MODIFIED_MASK}
+     * If the child file has any of the bits set: BIT_IGNORE | BIT_CLEAN |
+     *  BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED,
+     * we do not propagate this bits to the parent directory directly,
+     * but propagate only {@link #BIT_MODIFIED} or {@link #BIT_CONFLICT}
      */
-    private static final BitSet IGNORED_MASK = new BitSet(MAX_BITS_COUNT);
+    private static final int IGNORED_MASK = BIT_IGNORE | BIT_CLEAN |
+            BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED;
 
     /**
-     * We propagate only {@link #BIT_MODIFIED} bit to the parent directory, if any of bits
-     * in the range from {@link #BIT_MISSING} to {@link #BIT_MODIFIED} is set on the child file.
+     * We propagate only {@link #BIT_MODIFIED} bit to the parent directory, if any from bits:
+     * BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED | BIT_MODIFIED is set on the child file.
      */
-    private static final BitSet MODIFIED_MASK = new BitSet(MAX_BITS_COUNT);
+    private static final int MODIFIED_MASK = BIT_MISSING | BIT_REMOVED |
+            BIT_UNKNOWN | BIT_ADDED | BIT_MODIFIED;
 
-    static {
-        IGNORED_MASK.set(BIT_IGNORE, BIT_ADDED);
-        MODIFIED_MASK.set(BIT_MISSING, BIT_MODIFIED);
-    }
+    /** a directory is still supervised if one of the following bits is set */
+    private static final int DIR_SUPERVISED_MASK = BIT_ADDED | BIT_CLEAN | BIT_MISSING
+         | BIT_MODIFIED | BIT_REMOVED | BIT_CONFLICT;
+
+    /**  an "added" directory is only added if NONE of the following bits is set */
+    private static final int DIR_NOT_ADDED_MASK = BIT_CLEAN | BIT_MISSING
+        | BIT_MODIFIED | BIT_REMOVED | BIT_CONFLICT | BIT_IGNORE;
+
 
     protected static final int MASK_CHANGED = IResourceDelta.OPEN | IResourceDelta.CONTENT
         | IResourceDelta.MOVED_FROM | IResourceDelta.REPLACED | IResourceDelta.TYPE;
@@ -262,7 +261,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         | IResourceDelta.ADDED | IResourceDelta.COPIED_FROM | IResourceDelta.REMOVED;
 
     /** Used to store the last known status of a resource */
-    private final /*ConcurrentHash*/Map<IPath, BitSet> statusMap = new /*Concurrent*/HashMap<IPath, BitSet>();
+    private final /*ConcurrentHash*/Map<IPath, Integer> statusMap = new /*Concurrent*/HashMap<IPath, Integer>();
     private final BitMap bitMap;
     private final Object statusUpdateLock = new byte[0];
 
@@ -272,40 +271,86 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     private boolean computeDeepStatus;
     private boolean completeStatus;
     private int statusBatchSize;
+    private static final Set<IResource> EMPTY_SET = new HashSet<IResource>();
 
     static class BitMap {
-        private final /*ConcurrentHash*/Map<Integer, Set<IPath>> map =
-            new /*Concurrent*/HashMap<Integer, Set<IPath>>();
+        private final Set<IPath> IGNORE_SET = new HashSet<IPath>();
+        // don't waste space with most popular state
+        // private final Set<IPath> MAP_CLEAN = new HashSet<IPath>();
+        private final Set<IPath> MISSING_SET = new HashSet<IPath>();
+        private final Set<IPath> REMOVED_SET = new HashSet<IPath>();
+        private final Set<IPath> UNKNOWN_SET = new HashSet<IPath>();
+        private final Set<IPath> ADDED_SET = new HashSet<IPath>();
+        private final Set<IPath> MODIFIED_SET = new HashSet<IPath>();
+        private final Set<IPath> CONFLICT_SET = new HashSet<IPath>();
+        // we do not cache impossible values
+        // private final Set<IPath> MAP_IMPOSSIBLE = new HashSet<IPath>();
 
         public BitMap() {
-            map.put(_IGNORE, new HashSet<IPath>());
-            map.put(_CLEAN, new HashSet<IPath>());
-            map.put(_MISSING, new HashSet<IPath>());
-            map.put(_REMOVED, new HashSet<IPath>());
-            map.put(_UNKNOWN, new HashSet<IPath>());
-            map.put(_ADDED, new HashSet<IPath>());
-            map.put(_MODIFIED, new HashSet<IPath>());
-            map.put(_CONFLICT, new HashSet<IPath>());
-            map.put(_IMPOSSIBLE, new HashSet<IPath>());
+
         }
 
-        void put(IPath path, BitSet set){
+        void put(IPath path, Integer set){
             // removed is the first one for speed
-            if(set.get(BIT_REMOVED)){
-                map.get(_REMOVED).add(path);
+            int mask = set.intValue();
+            if((mask & BIT_REMOVED) != 0){
+                REMOVED_SET.add(path);
+            }
+            if((mask & BIT_MISSING) != 0){
+                MISSING_SET.add(path);
+            }
+            if((mask & BIT_UNKNOWN) != 0){
+                UNKNOWN_SET.add(path);
+            }
+            if((mask & BIT_ADDED) != 0){
+                ADDED_SET.add(path);
+            }
+            if((mask & BIT_MODIFIED) != 0){
+                MODIFIED_SET.add(path);
+            }
+            if((mask & BIT_CONFLICT) != 0){
+                CONFLICT_SET.add(path);
+            }
+            if((mask & BIT_IGNORE) != 0){
+                IGNORE_SET.add(path);
             }
         }
 
-        Set<IPath> get(Integer bit){
-            return map.get(bit);
+        Set<IPath> get(int bit){
+            switch (bit) {
+            case BIT_REMOVED:
+                return REMOVED_SET;
+            case BIT_MISSING:
+                return MISSING_SET;
+            case BIT_UNKNOWN:
+                return UNKNOWN_SET;
+            case BIT_ADDED:
+                return ADDED_SET;
+            case BIT_MODIFIED:
+                return MODIFIED_SET;
+            case BIT_CONFLICT:
+                return CONFLICT_SET;
+            case BIT_IGNORE:
+                return IGNORE_SET;
+            default:
+                return null;
+            }
         }
 
         public void remove(IPath path) {
-            map.get(_REMOVED).remove(path);
+            remove(path, REMOVED_SET);
+            remove(path, MISSING_SET);
+            remove(path, UNKNOWN_SET);
+            remove(path, ADDED_SET);
+            remove(path, MODIFIED_SET);
+            remove(path, CONFLICT_SET);
+            remove(path, IGNORE_SET);
         }
-        public void remove(IPath path, BitSet set) {
-            // TODO write for all states
-            map.get(_REMOVED).remove(path);
+
+        public void remove(IPath path, Set<IPath> set) {
+            if(!set.isEmpty()) {
+                set.remove(path);
+            }
         }
     }
 
@@ -342,7 +387,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      *            the resource to get status for.
      * @return the BitSet with status flags, MAY RETURN NULL, if status is unknown yet
      */
-    public BitSet getStatus(IResource resource) {
+    public Integer getStatus(IResource resource) {
         return statusMap.get(resource.getLocation());
     }
 
@@ -353,30 +398,26 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public boolean isSupervised(IResource resource, IPath path) {
         Assert.isNotNull(resource);
         Assert.isNotNull(path);
-        BitSet status = statusMap.get(path);
-        if(status == null){
+        Integer statusInt = statusMap.get(path);
+        if(statusInt == null){
             return false;
         }
         IProject project = resource.getProject();
         if (path.equals(project.getLocation())) {
             return project.isAccessible() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID);
         }
-        switch (status.length() - 1) {
-        case MercurialStatusCache.BIT_IGNORE:
-        case MercurialStatusCache.BIT_UNKNOWN:
-            if (resource.getType() != IResource.FILE && status.length() > 1) {
-                if(!project.isAccessible() || null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)){
-                    return false;
-                }
+        int status = statusInt.intValue();
+        int highestBit = Bits.highestBit(status);
+        switch (highestBit) {
+        case BIT_IGNORE:
+        case BIT_UNKNOWN:
+            if (resource.getType() != IResource.FILE && highestBit != BIT_IGNORE) {
                 // check for Eclipse ignore settings
                 if (Team.isIgnoredHint(resource)) {
                     return false;
                 }
-                // a directory is still supervised if one of the
-                // following bits is set
-                boolean supervised = status.get(BIT_ADDED) || status.get(BIT_CLEAN)
-                || status.get(BIT_MISSING) || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED);
-                return supervised;
+                // a directory is still supervised if one of the lower bits set
+                return Bits.contains(status, DIR_SUPERVISED_MASK);
             }
             return false;
         }
@@ -384,47 +425,61 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     }
 
-    public boolean isAdded(IResource resource, IPath path) {
-        Assert.isNotNull(resource);
+    public boolean isAdded(IPath path) {
         Assert.isNotNull(path);
-        if (null != RepositoryProvider.getProvider(resource.getProject(), MercurialTeamProvider.ID)) {
-            BitSet status = statusMap.get(path);
-            if (status != null) {
-                switch (status.length() - 1) {
-                case MercurialStatusCache.BIT_ADDED:
-                    File fileSystemResource = path.toFile();
-                    if (fileSystemResource.isDirectory() && status.length() > 1) {
-                        // a directory is still supervised if one of the
-                        // following bits is set
-                        boolean supervised = status.get(BIT_CLEAN) || status.get(BIT_MISSING)
-                        || status.get(BIT_MODIFIED) || status.get(BIT_REMOVED) || status.get(BIT_CONFLICT)
-                        || status.get(BIT_IGNORE);
-                        return !supervised;
-                    }
-                    return true;
-                }
-                return false;
+        Integer statusInt = statusMap.get(path);
+        if(statusInt == null){
+            return false;
+        }
+        int status = statusInt.intValue();
+        if (Bits.highestBit(status) == BIT_ADDED) {
+            File fileSystemResource = path.toFile();
+            if (fileSystemResource.isDirectory()) {
+                return Bits.contains(status, DIR_NOT_ADDED_MASK);
             }
+            return true;
         }
         return false;
     }
 
     public boolean isRemoved(IResource resource) {
         Assert.isNotNull(resource);
-        BitSet status = getStatus(resource);
+        Integer status = getStatus(resource);
         if(status == null){
             return false;
         }
-        return status.get(BIT_REMOVED);
+        return Bits.contains(status.intValue(), BIT_REMOVED);
+    }
+
+    public boolean isUnknown(IResource resource) {
+        Assert.isNotNull(resource);
+        Integer status = getStatus(resource);
+        if(status == null){
+            return false;
+        }
+        return Bits.contains(status.intValue(), BIT_UNKNOWN);
+    }
+
+    public boolean isClean(IResource resource) {
+        Assert.isNotNull(resource);
+        Integer status = getStatus(resource);
+        if(status == null){
+            return false;
+        }
+        return Bits.contains(status.intValue(), BIT_CLEAN);
     }
 
     public Set<IResource> getResources(int statusBit, IContainer folder){
-        Set<IResource> resources = new HashSet<IResource>();
+        Set<IResource> resources;
         IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-        IPath parentPath = ResourceUtils.getPath(folder);
         // TODO write for all states
         if(statusBit == BIT_REMOVED){
-            Set<IPath> set = bitMap.get(_REMOVED);
+            Set<IPath> set = bitMap.get(BIT_REMOVED);
+            if(set == null || set.isEmpty()){
+                return EMPTY_SET;
+            }
+            IPath parentPath = ResourceUtils.getPath(folder);
+            resources = new HashSet<IResource>();
             for (IPath path : set) {
              // we don't know if it is a file or folder...
                 IFile tmp = root.getFileForLocation(path);
@@ -442,10 +497,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 }
             }
         } else {
-            Set<Entry<IPath,BitSet>> entrySet = statusMap.entrySet();
-            for (Entry<IPath, BitSet> entry : entrySet) {
-                BitSet status = entry.getValue();
-                if(status != null && status.get(statusBit)){
+            resources = new HashSet<IResource>();
+            Set<Entry<IPath,Integer>> entrySet = statusMap.entrySet();
+            IPath parentPath = ResourceUtils.getPath(folder);
+            for (Entry<IPath, Integer> entry : entrySet) {
+                Integer status = entry.getValue();
+                if(status != null && Bits.contains(status.intValue(), statusBit)){
                     IPath path = entry.getKey();
                     // we don't know if it is a file or folder...
                     IFile tmp = root.getFileForLocation(path);
@@ -478,6 +535,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * Refreshes local repository status and notifies the listeners about changes. No refresh of changesets.
      */
     public void refreshStatus(final IResource res, IProgressMonitor monitor) throws HgException {
+        if(false && debug){
+            new Exception("refreshStatus " + res).printStackTrace();
+        }
         Assert.isNotNull(res);
         monitor = checkMonitor(monitor);
         monitor.subTask(Messages.mercurialStatusCache_Refreshing + res.getName());
@@ -490,14 +550,14 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 
         HgRoot root = AbstractClient.getHgRoot(res);
-        String output = HgStatusClient.getStatusWithoutIgnored(root, res);
-        if(monitor.isCanceled()){
-            return;
-        }
-        monitor.worked(1);
 
         Set<IResource> changed;
         synchronized (statusUpdateLock) {
+            String output = HgStatusClient.getStatusWithoutIgnored(root, res);
+            if(monitor.isCanceled()){
+                return;
+            }
+            monitor.worked(1);
             // clear status for files, folders or project
             if(res instanceof IProject){
                 clearProjectCache(project);
@@ -585,32 +645,40 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return changed;
     }
 
+    Pattern NEWLINE = Pattern.compile("\n");
+
     /**
      * @param output must contain file paths as paths relative to the hg root
      * @return
      */
     private Set<IResource> parseStatus(HgRoot root, final IProject project, String output) {
+        long start = System.currentTimeMillis();
 
         // we need the project for performance reasons - gotta hand it to
         // addToProjectResources
         Set<IResource> changed = new HashSet<IResource>();
         IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-        Scanner scanner = new Scanner(output);
+
         List<String> strangeStates = new ArrayList<String>();
-        while (scanner.hasNext()) {
-            String status = scanner.next();
-            String localName = scanner.nextLine().trim();
-            if(status.length() > 1){
-                strangeStates.add(status + " " + localName);
+        String[] lines = NEWLINE.split(output);
+        for (String line : lines) {
+            if(line.length() <= 2){
+                strangeStates.add(line);
                 continue;
             }
-            char statusChar = status.charAt(0);
+
+            int bit = getBit(line.charAt(0));
+            if(bit == BIT_IMPOSSIBLE){
+                strangeStates.add(line);
+                continue;
+            }
+            String localName = line.substring(2);
             IResource member = convertRepoRelPath(root, project, localName);
 
             // doesn't belong to our project (can happen if root is above project level)
             // or simply deleted, so can't be found...
             if (member == null) {
-                if(getBitIndex(statusChar) == BIT_REMOVED){
+                if(bit == BIT_REMOVED){
                     IPath path = new Path(new File(root, localName).getAbsolutePath());
                     // creates a handle to non-existent file. This is ok.
                     member = workspaceRoot.getFileForLocation(path);
@@ -622,12 +690,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 }
             }
 
-            BitSet bitSet = new BitSet(MAX_BITS_COUNT);
+            Integer bitSet;
             boolean ignoredHint = Team.isIgnoredHint(member);
             if (ignoredHint) {
-                bitSet.set(BIT_IGNORE);
+                bitSet = _IGNORE;
             } else {
-                bitSet.set(getBitIndex(statusChar));
+                bitSet = Integer.valueOf(bit);
                 changed.add(member);
             }
             setStatus(member.getLocation(), bitSet);
@@ -644,15 +712,18 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                     message, new Exception(message));
             MercurialEclipsePlugin.getDefault().getLog().log(st);
         }
+        if(debug){
+            System.out.println("Parse status took: " + (System.currentTimeMillis() - start));
+        }
         return changed;
     }
 
-    private void setStatus(IPath location, BitSet bitSet) {
-        statusMap.put(location, bitSet);
-        bitMap.put(location, bitSet);
+    private void setStatus(IPath location, Integer status) {
+        statusMap.put(location, status);
+        bitMap.put(location, status);
     }
 
-    private Set<IResource> setStatusToAncestors(IResource resource, BitSet resourceBitSet) {
+    private Set<IResource> setStatusToAncestors(IResource resource, Integer resourceBitSet) {
         // ancestors
         IProject project = resource.getProject();
         Set<IResource> ancestors = new HashSet<IResource>();
@@ -661,23 +732,28 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         IContainer parent = resource.getParent();
         for (; parent != null && parent != project.getParent(); parent = parent.getParent()) {
             IPath location = parent.getLocation();
-            BitSet parentBitSet = statusMap.get(location);
-            BitSet cloneBitSet = (BitSet) resourceBitSet.clone();
+            int parentBitSet = 0;
+            {
+                Integer parentBits = statusMap.get(location);
+                if(parentBits != null){
+                    parentBitSet = parentBits.intValue();
+                }
+            }
+            int cloneBitSet = resourceBitSet.intValue();
 
             // should not propagate ignores states to parents
-            cloneBitSet.andNot(IGNORED_MASK);
-            boolean intersects = resourceBitSet.intersects(MODIFIED_MASK);
+            // TODO issue 237: "two status feature"
+            cloneBitSet = Bits.clear(cloneBitSet, IGNORED_MASK);
+            boolean intersects = Bits.contains(resourceBitSet.intValue(), MODIFIED_MASK);
             if(intersects) {
-                cloneBitSet.set(BIT_MODIFIED);
+                cloneBitSet |= BIT_MODIFIED;
             } else {
-                cloneBitSet.set(BIT_CLEAN);
+                cloneBitSet |= BIT_CLEAN;
             }
-            if(parentBitSet == null){
-                parentBitSet = new BitSet(MAX_BITS_COUNT);
-            }
+
             if (!complete && computeDeep && resource.getType() != IResource.PROJECT) {
                 if (parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
-                    IResourceVisitor visitor = new MemberStatusVisitor(parent, cloneBitSet);
+                    MemberStatusVisitor visitor = new MemberStatusVisitor(parent, cloneBitSet);
                     try {
                         // this is for some reason 30% slow as members()
                         // parent.accept(visitor, IResource.DEPTH_ONE, false);
@@ -699,15 +775,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                             MercurialEclipsePlugin.logError(e);
                         }
                     }
+                    cloneBitSet = visitor.bitSet;
 
-                    if(parentBitSet.intersects(MODIFIED_MASK)){
-                        cloneBitSet.or(parentBitSet);
-                    }
+//                    if(Bits.contains(parentBitSet, MODIFIED_MASK)){
+//                        cloneBitSet |= parentBitSet;
+//                    }
                 }
             } else {
-                cloneBitSet.or(parentBitSet);
+                cloneBitSet |= parentBitSet;
             }
-            setStatus(location, cloneBitSet);
+            setStatus(location, Integer.valueOf(cloneBitSet));
             ancestors.add(parent);
         }
         return ancestors;
@@ -721,7 +798,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return completeStatus;
     }
 
-    public int getBitIndex(char status) {
+    private int getBit(char status) {
         switch (status) {
         case '!':
             return BIT_MISSING;
@@ -738,49 +815,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         case 'M':
             return BIT_MODIFIED;
         default:
-            String msg = Messages.mercurialStatusCache_UnknownStatus + status + "'"; //$NON-NLS-1$
-            MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
             return BIT_IMPOSSIBLE;
         }
-    }
-
-    /**
-     * Converts the given bit index to the status character Mercurial uses.
-     */
-    private char getStatusChar(int bitIndex) {
-        switch (bitIndex) {
-        case BIT_MISSING:
-            return CHAR_MISSING;
-        case BIT_REMOVED:
-            return CHAR_REMOVED;
-        case BIT_IGNORE:
-            return CHAR_IGNORED;
-        case BIT_CLEAN:
-            return CHAR_CLEAN;
-        case BIT_UNKNOWN:
-            return CHAR_UNKNOWN;
-        case BIT_ADDED:
-            return CHAR_ADDED;
-        case BIT_MODIFIED:
-            return CHAR_MODIFIED;
-        default:
-            String msg = Messages.mercurialStatusCache_UnknownStatus + bitIndex + "'"; //$NON-NLS-1$
-            MercurialEclipsePlugin.logWarning(msg, new HgException(msg));
-            return BIT_IMPOSSIBLE;
-        }
-    }
-
-    /**
-     * Returns the status character used by Mercurial that applies to this resource
-     *
-     * @param resource
-     *            the resource to query the status for
-     * @return ! (deleted), R (removed), I (ignored), C (clean), ? (unknown), A (added) or M (modified)
-     */
-    public char getStatusChar(IResource resource) {
-        BitSet status = getStatus(resource);
-        char statusChar = getStatusChar(status.length() - 1);
-        return statusChar;
     }
 
     /**
@@ -875,18 +911,26 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             }
             if (currentBatch.size() % batchSize == 0 || !iterator.hasNext()) {
                 // call hg with batch
-                String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
                 synchronized (statusUpdateLock) {
                     for (IResource curr : currentBatch) {
+                        boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
                         clearStatusCache(curr);
-                        if(!curr.exists()){
+                        if(unknown && !curr.exists()){
                             // remember parents of deleted files: we must update their state
                             IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
-                            if(directory != null) {
+                            while(directory != null) {
                                 changed.add(directory);
+                                IPath parentPath = directory.getLocation();
+                                bitMap.remove(parentPath);
+                                statusMap.remove(parentPath);
+                                directory = ResourceUtils.getFirstExistingDirectory(directory.getParent());
                             }
+                            // recursive recalculate parents state
+                            // TODO better to combine it with parse status below...
+                            setStatusToAncestors(curr, _CLEAN);
                         }
                     }
+                    String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
                     changed.addAll(parseStatus(root, project, output));
                 }
                 currentBatch.clear();
@@ -901,8 +945,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     public void clearStatusCache(IResource resource) {
         synchronized (statusUpdateLock) {
+            IPath parentPath = ResourceUtils.getPath(resource);
             if(resource instanceof IContainer){
-                IPath parentPath = ResourceUtils.getPath(resource);
                 // same can be done via getChildrenFromCache(resource), but we
                 // iterating/removing over keyset directly to reduce memory consumption
                 Set<IPath> entrySet = statusMap.keySet();
@@ -914,6 +958,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                         bitMap.remove(path);
                     }
                 }
+            } else {
+                bitMap.remove(parentPath);
+                statusMap.remove(parentPath);
             }
         }
     }
@@ -965,13 +1012,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * Sets conflict marker on resource status
      */
     private Set<IResource> addConflict(IResource local) {
-        BitSet status = getStatus(local);
+        IPath location = local.getLocation();
+        Integer status = statusMap.get(location);
         if(status == null){
-            status = new BitSet(MAX_BITS_COUNT);
-            status.set(BIT_CONFLICT);
-            setStatus(local.getLocation(), status);
+            setStatus(location, _CONFLICT);
         } else {
-            status.set(BIT_CONFLICT);
+            status = Integer.valueOf(status.intValue() | BIT_CONFLICT);
+            setStatus(location, status);
         }
         Set<IResource> changed = setStatusToAncestors(local, status);
         changed.add(local);
@@ -985,9 +1032,14 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * @return true if there was a conflict and now it is removed
      */
     private boolean removeConflict(IResource local) {
-        BitSet status = getStatus(local);
-        if(status != null && status.get(BIT_CONFLICT)) {
-            status.clear(BIT_CONFLICT);
+        Integer statusInt = getStatus(local);
+        if(statusInt == null){
+            return false;
+        }
+        int status = statusInt.intValue();
+        if(Bits.contains(status, BIT_CONFLICT)) {
+            status = Bits.clear(status, BIT_CONFLICT);
+            setStatus(local.getLocation(), Integer.valueOf(status));
             return true;
         }
         return false;

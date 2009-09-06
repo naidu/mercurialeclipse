@@ -111,7 +111,7 @@ public class LocalChangesetCache extends AbstractCache {
                 if (resource.getType() == IResource.FILE
                         || resource.getType() == IResource.PROJECT
                         && STATUS_CACHE.isSupervised(resource)
-                        && !STATUS_CACHE.isAdded(resource.getProject(), location)) {
+                        && !STATUS_CACHE.isAdded(location)) {
                     refreshAllLocalRevisions(resource, true);
                     revisions = localChangeSets.get(location);
                 }
@@ -305,7 +305,7 @@ public class LocalChangesetCache extends AbstractCache {
                 // if changes for resource not in cache, get at least 1 revision
                 if (changes == null && limit && withFiles
                         && STATUS_CACHE.isSupervised(project, path)
-                        && !STATUS_CACHE.isAdded(project, path)) {
+                        && !STATUS_CACHE.isAdded(path)) {
 
                     IResource myResource = convertRepoRelPath(root, project, root.toRelative(path.toFile()));
                     if (myResource != null) {
@@ -321,7 +321,7 @@ public class LocalChangesetCache extends AbstractCache {
     @Override
     public synchronized void addObserver(Observer o) {
         // TODO current implementation was very inefficient: the only listener was
-        // the decorator, and this one has generated NEW cache updates each time 
+        // the decorator, and this one has generated NEW cache updates each time
         // he was notified about changes, so it is an endless loop.
         // So temporary do not allow to observe this cache, until the code is improved
         // has no effect
