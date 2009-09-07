@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,8 +31,6 @@ import org.eclipse.ui.console.MessageConsole;
 import org.eclipse.ui.console.MessageConsoleStream;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * Console that shows the output of Hg commands. It is shown as a page in the
@@ -70,9 +70,11 @@ public class HgConsole extends MessageConsole {
 
 
     /** Indicates whether the console is visible in the Console view */
-    private boolean visible = false;
+    private boolean visible;
     /** Indicates whether the console's streams have been initialized */
-    private boolean initialized = false;
+    private boolean initialized;
+    private boolean debugTimeEnabled;
+    private boolean debugEnabled;
 
     /**
      * Constant used for indenting error status printing
@@ -88,35 +90,31 @@ public class HgConsole extends MessageConsole {
         document = new ConsoleDocument();
     }
 
+
     @Override
     protected void init() {
         // Called when console is added to the console view
         super.init();
-
-        initLimitOutput();
-        initWrapSetting();
+        IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+        debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
+        debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
+        initLimitOutput(store);
+        initWrapSetting(store);
         initializeStreams();
         dump();
     }
 
-    private void initWrapSetting() {
-        IPreferenceStore store = MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore();
-        if (store.getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_WRAP)) {
-            setConsoleWidth(store
-                    .getInt(MercurialPreferenceConstants.PREF_CONSOLE_WIDTH));
+    private void initWrapSetting(IPreferenceStore store) {
+        if (store.getBoolean(PREF_CONSOLE_WRAP)) {
+            setConsoleWidth(store.getInt(PREF_CONSOLE_WIDTH));
         } else {
             setConsoleWidth(-1);
         }
     }
 
-    private void initLimitOutput() {
-        IPreferenceStore store = MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore();
-        if (store
-                .getBoolean(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT)) {
-            int highWaterMark = store
-                    .getInt(MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK);
+    private void initLimitOutput(IPreferenceStore store) {
+        if (store.getBoolean(PREF_CONSOLE_LIMIT_OUTPUT)) {
+            int highWaterMark = store.getInt(PREF_CONSOLE_HIGH_WATER_MARK);
             if (highWaterMark < 1000) {
                 highWaterMark = 1000;
             }
@@ -132,25 +130,21 @@ public class HgConsole extends MessageConsole {
      */
     private void initializeStreams() {
         synchronized (document) {
-            if (!initialized) {
-                commandStream = newMessageStream();
-                errorStream = newMessageStream();
-                messageStream = newMessageStream();
-                // install colors
-                commandColor = createColor(MercurialEclipsePlugin
-                        .getStandardDisplay(),
-                        MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR);
-                commandStream.setColor(commandColor);
-                messageColor = createColor(MercurialEclipsePlugin
-                        .getStandardDisplay(),
-                        MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR);
-                messageStream.setColor(messageColor);
-                errorColor = createColor(MercurialEclipsePlugin
-                        .getStandardDisplay(),
-                        MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR);
-                errorStream.setColor(errorColor);
-                initialized = true;
+            if (initialized) {
+                return;
             }
+            commandStream = newMessageStream();
+            errorStream = newMessageStream();
+            messageStream = newMessageStream();
+            IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+            // install colors
+            commandColor = createColor(store, PREF_CONSOLE_COMMAND_COLOR);
+            commandStream.setColor(commandColor);
+            messageColor = createColor(store, PREF_CONSOLE_MESSAGE_COLOR);
+            messageStream.setColor(messageColor);
+            errorColor = createColor(store, PREF_CONSOLE_ERROR_COLOR);
+            errorStream.setColor(errorColor);
+            initialized = true;
         }
     }
 
@@ -244,29 +238,21 @@ public class HgConsole extends MessageConsole {
     }
 
     private boolean isDebugTimeEnabled() {
-        return Boolean
-                .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
+        return debugTimeEnabled;
     }
 
     public void commandCompleted(IStatus status, Throwable exception) {
         String time = getTimeString();
-        String statusText;
         if (status != null) {
-            boolean includeRoot;
-            statusText = status.getMessage();
-            if(time.length() > 0){
-                statusText += "(" + time + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            if(status.getSeverity() == IStatus.ERROR) {
+                printStatus(status, time, false);
+            } else if(debugEnabled){
+                printStatus(status, time, true);
+            } else if(isDebugTimeEnabled()){
+                appendLine(ConsoleDocument.MESSAGE, time);
             }
-            if (status.getSeverity() == IStatus.ERROR) {
-                appendLine(ConsoleDocument.ERROR, statusText);
-                includeRoot = false;
-            } else {
-                appendLine(ConsoleDocument.MESSAGE, statusText);
-                includeRoot = true;
-            }
-
-            outputStatus(status, includeRoot, includeRoot ? 0 : 1);
         } else if (exception != null) {
+            String statusText;
             if (exception instanceof OperationCanceledException) {
                 statusText = Messages.getString("HgConsole.aborted1") + time + Messages.getString("HgConsole.aborted2"); //$NON-NLS-1$ //$NON-NLS-2$
             } else {
@@ -277,8 +263,19 @@ public class HgConsole extends MessageConsole {
                 outputStatus(((CoreException) exception).getStatus(), true, 1);
             }
         } else if(isDebugTimeEnabled()){
-            appendLine(ConsoleDocument.COMMAND, time);
+            appendLine(ConsoleDocument.MESSAGE, time);
         }
+    }
+
+
+    private void printStatus(IStatus status, String time, boolean includeRoot) {
+        String statusText = status.getMessage();
+        if(time.length() > 0){
+            statusText += "(" + time + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        int kind = status.getSeverity() == IStatus.ERROR? ConsoleDocument.ERROR : ConsoleDocument.MESSAGE;
+        appendLine(kind, statusText);
+        outputStatus(status, includeRoot, includeRoot ? 0 : 1);
     }
 
     /**
@@ -333,44 +330,40 @@ public class HgConsole extends MessageConsole {
 
     public void propertyChange(PropertyChangeEvent event) {
         String property = event.getProperty();
+        if(property == null || !property.startsWith("hg.console.")){
+            return;
+        }
         // colors
+        IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
         if (visible) {
-            if (property
-                    .equals(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR)) {
-                Color newColor = createColor(MercurialEclipsePlugin
-                        .getStandardDisplay(),
-                        MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR);
+            if (property.equals(PREF_CONSOLE_COMMAND_COLOR)) {
+                Color newColor = createColor(store, PREF_CONSOLE_COMMAND_COLOR);
                 commandStream.setColor(newColor);
                 commandColor.dispose();
                 commandColor = newColor;
-            } else if (property
-                    .equals(MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR)) {
-                Color newColor = createColor(MercurialEclipsePlugin
-                        .getStandardDisplay(),
-                        MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR);
+            } else if (property.equals(PREF_CONSOLE_MESSAGE_COLOR)) {
+                Color newColor = createColor(store, PREF_CONSOLE_MESSAGE_COLOR);
                 messageStream.setColor(newColor);
                 messageColor.dispose();
                 messageColor = newColor;
-            } else if (property
-                    .equals(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR)) {
-                Color newColor = createColor(MercurialEclipsePlugin
-                        .getStandardDisplay(),
-                        MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR);
+            } else if (property.equals(PREF_CONSOLE_ERROR_COLOR)) {
+                Color newColor = createColor(store, PREF_CONSOLE_ERROR_COLOR);
                 errorStream.setColor(newColor);
                 errorColor.dispose();
                 errorColor = newColor;
                 // font
-            } else if (property
-                    .equals(MercurialPreferenceConstants.PREF_CONSOLE_FONT)) {
-                setFont(((FontRegistry) event.getSource())
-                        .get(MercurialPreferenceConstants.PREF_CONSOLE_FONT));
+            } else if (property.equals(PREF_CONSOLE_FONT)) {
+                setFont(((FontRegistry) event.getSource()).get(PREF_CONSOLE_FONT));
             }
-        } else if (property
-                .equals(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT)) {
-            initLimitOutput();
-        } else if (property
-                .equals(MercurialPreferenceConstants.PREF_CONSOLE_WRAP)) {
-            initWrapSetting();
+        }
+        if (property.equals(PREF_CONSOLE_LIMIT_OUTPUT)) {
+            initLimitOutput(store);
+        } else if (property.equals(PREF_CONSOLE_WRAP)) {
+            initWrapSetting(store);
+        } else if (property.equals(PREF_CONSOLE_DEBUG_TIME)) {
+            debugTimeEnabled = store.getBoolean(PREF_CONSOLE_DEBUG_TIME);
+        } else if (property.equals(PREF_CONSOLE_DEBUG)) {
+            debugEnabled = store.getBoolean(PREF_CONSOLE_DEBUG);
         }
     }
 
@@ -396,9 +389,9 @@ public class HgConsole extends MessageConsole {
     /**
      * Returns a color instance based on data from a preference field.
      */
-    private Color createColor(Display display, String preference) {
-        RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin
-                .getDefault().getPreferenceStore(), preference);
+    private Color createColor(IPreferenceStore store, String preference) {
+        Display display = MercurialEclipsePlugin.getStandardDisplay();
+        RGB rgb = PreferenceConverter.getColor(store, preference);
         return new Color(display, rgb);
     }
 }

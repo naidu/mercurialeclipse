@@ -199,7 +199,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
                     final int exitCode = process.waitFor();
                     // everything fine
                     if (exitCode == 0 || !expectPositiveReturnValue) {
-                        if (isDebugMode()) {
+                        if (isDebugExecutionTime() || isDebugMode()) {
                             logConsoleCompleted(msg, exitCode, null);
                         }
                         return true;
@@ -303,6 +303,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
     private boolean isDebugMode() {
         return Boolean
                 .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
+    }
+
+    private boolean isDebugExecutionTime() {
+        return Boolean
+        .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
     }
 
     public String executeToString() throws HgException {
