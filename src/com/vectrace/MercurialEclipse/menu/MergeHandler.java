@@ -75,8 +75,8 @@ public class MergeHandler extends SingleResourceHandler {
             }
         }
 
-        // have to open the dialog
-        if (cs == null) {
+        // have to open the dialog until we get a valid changeset
+        while (cs == null) {
             RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
                     Messages.getString("MergeHandler.mergeWith"), loader); //$NON-NLS-1$
             dialog.setDefaultShowingHeads(true);
