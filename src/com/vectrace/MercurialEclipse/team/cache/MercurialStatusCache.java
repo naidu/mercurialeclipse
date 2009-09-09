@@ -261,7 +261,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         | IResourceDelta.ADDED | IResourceDelta.COPIED_FROM | IResourceDelta.REMOVED;
 
     /** Used to store the last known status of a resource */
-    private final /*ConcurrentHash*/Map<IPath, Integer> statusMap = new /*Concurrent*/HashMap<IPath, Integer>();
+    private final ConcurrentHashMap<IPath, Integer> statusMap = new ConcurrentHashMap<IPath, Integer>();
     private final BitMap bitMap;
     private final Object statusUpdateLock = new byte[0];
 
