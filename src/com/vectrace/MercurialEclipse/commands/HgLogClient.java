@@ -28,6 +28,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
     private static final Pattern GET_REVISIONS_PATTERN = Pattern
             .compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
 
+    public static final String NOLIMIT = "999999999999";
+
     public static ChangeSet[] getHeads(IProject project) throws HgException {
         HgCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
@@ -117,15 +119,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
                     AbstractParseChangesetClient.getStyleFile(withFiles)
                             .getCanonicalPath());
 
-            if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
-                int last = Math.max(startRev - limitNumber, 0);
-                command.addOptions("-r"); //$NON-NLS-1$
-                command.addOptions(startRev + ":" + last); //$NON-NLS-1$
-            }
-
-            if (limitNumber > 0) {
-                command.addOptions("-l", limitNumber + ""); //$NON-NLS-1$ //$NON-NLS-2$
-            }
+            addRange(command, startRev, limitNumber);
 
             if (res.getType() == IResource.FILE) {
                 command.addOptions("-f"); //$NON-NLS-1$
@@ -158,15 +152,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
                     AbstractParseChangesetClient.getStyleFile(withFiles)
                     .getCanonicalPath());
 
-            if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
-                int last = Math.max(startRev - limitNumber, 0);
-                command.addOptions("-r"); //$NON-NLS-1$
-                command.addOptions(startRev + ":" + last); //$NON-NLS-1$
-            }
-
-            if (limitNumber > 0) {
-                command.addOptions("-l", limitNumber + ""); //$NON-NLS-1$ //$NON-NLS-2$
-            }
+            addRange(command, startRev, limitNumber);
 
             if (isFile) {
                 command.addOptions("-f"); //$NON-NLS-1$
@@ -185,6 +171,19 @@ public class HgLogClient extends AbstractParseChangesetClient {
         } catch (IOException e) {
             throw new HgException(e.getLocalizedMessage(), e);
         }
+    }
+
+    public static void addRange(AbstractShellCommand command, int startRev, int limitNumber) {
+        if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
+            int last = Math.max(startRev - limitNumber, 0);
+            command.addOptions("-r"); //$NON-NLS-1$
+            command.addOptions(startRev + ":" + last); //$NON-NLS-1$
+        }
+        setLimit(command, limitNumber);
+    }
+
+    public static void setLimit(AbstractShellCommand command, int limitNumber) {
+        command.addOptions("--limit", (limitNumber > 0) ? limitNumber + "" : NOLIMIT); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
 

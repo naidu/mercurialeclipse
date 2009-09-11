@@ -8,6 +8,7 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
@@ -22,6 +23,7 @@ public class HgGLogClient extends HgCommand {
         super("glog", ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), false);
         addOptions("--config", "extensions.graphlog="); //$NON-NLS-1$ //$NON-NLS-2$
         addOptions("--template", "*{rev}\\n"); // Removes everything //$NON-NLS-1$ //$NON-NLS-2$
+        addOptions("--limit", HgLogClient.NOLIMIT); //$NON-NLS-1$
 
         if (resource.getType() != IResource.PROJECT) {
            addOptions(ResourceUtils.getFileHandle(resource).getAbsolutePath());
