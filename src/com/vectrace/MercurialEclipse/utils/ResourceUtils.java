@@ -73,8 +73,16 @@ public class ResourceUtils {
         IPath path = resource.getLocation();
         if(path == null){
             // file was removed
-            path = resource.getProject().getLocation().append(
-                    resource.getFullPath().removeFirstSegments(1));
+            IProject project = resource.getProject();
+            IPath projectLocation = project.getLocation();
+            if(projectLocation == null){
+                // project removed too
+                projectLocation = project.getWorkspace().getRoot().getLocation().append(project.getName());
+            }
+            if(project == resource){
+                return projectLocation;
+            }
+            path = projectLocation.append(resource.getFullPath().removeFirstSegments(1));
         }
         return path;
     }
