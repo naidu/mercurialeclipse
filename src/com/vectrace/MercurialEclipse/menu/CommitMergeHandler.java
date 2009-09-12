@@ -8,6 +8,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
+import com.vectrace.MercurialEclipse.dialogs.MergeDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
@@ -33,7 +34,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
         Assert.isNotNull(resource);
         String result = ""; //$NON-NLS-1$
         try {
-            CommitDialog commitDialog = new CommitDialog(shell,  resource,
+            CommitDialog commitDialog = new MergeDialog(shell,  resource,
                     Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
                             + resource.getProject().getPersistentProperty(ResourceProperties.MERGING));
 
