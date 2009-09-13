@@ -298,7 +298,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
                     resource.delete(IResource.KEEP_HISTORY, monitor);
                 }
                 deleteEmptyDirs(parent, monitor);
-                cache.clearStatusCache(resource);
+                cache.clearStatusCache(resource, false);
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }

@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceChangeEvent;
@@ -311,7 +312,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             if((mask & BIT_CONFLICT) != 0){
                 CONFLICT_SET.add(path);
             }
-            if((mask & BIT_IGNORE) != 0){
+            if(mask == BIT_IGNORE){
                 IGNORE_SET.add(path);
             }
         }
@@ -460,6 +461,18 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return Bits.contains(status.intValue(), BIT_UNKNOWN);
     }
 
+    public boolean isIgnored(IResource resource) {
+        Assert.isNotNull(resource);
+        Integer status = getStatus(resource);
+        if(status == null && isStatusKnown(resource.getProject())){
+            // it seems that original autors intentionally do not tracked status for
+            // ignored files. I guess the reason was performance: for a java project,
+            // including "ignored" class files would double the cache size...
+            return true;
+        }
+        return false;
+    }
+
     public boolean isClean(IResource resource) {
         Assert.isNotNull(resource);
         Integer status = getStatus(resource);
@@ -534,7 +547,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     /**
      * Refreshes local repository status and notifies the listeners about changes. No refresh of changesets.
      */
-    public void refreshStatus(final IResource res, IProgressMonitor monitor) throws HgException {
+    public void refreshStatus(IResource res, IProgressMonitor monitor) throws HgException {
         if(false && debug){
             new Exception("refreshStatus " + res).printStackTrace();
         }
@@ -547,7 +560,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(res)) {
             return;
         }
-
 
         HgRoot root = AbstractClient.getHgRoot(res);
 
@@ -562,16 +574,24 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             if(res instanceof IProject){
                 clearProjectCache(project);
             } else {
-                clearStatusCache(res);
+                clearStatusCache(res, false);
             }
             monitor.worked(1);
             if(monitor.isCanceled()){
                 return;
             }
+            changed = parseStatus(root, project, output);
+            if(!(res instanceof IProject) && !changed.contains(res)){
+                // fix for issue 10155: No status update after reverting changes on .hgignore
+                changed.add(res);
+                if(res instanceof IFolder){
+                    IFolder folder = (IFolder) res;
+                    ResourceUtils.collectAllResources(folder, changed);
+                }
+            }
             if(res instanceof IProject) {
                 knownStatus.put(project, root);
             }
-            changed = parseStatus(root, project, output);
         }
         if(monitor.isCanceled()){
             return;
@@ -592,6 +612,18 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         notifyChanged(changed, false);
 
         monitor.worked(1);
+    }
+
+    /**
+     * @param res
+     * @return true if a change of given file can trigger a project status update
+     * @throws HgException
+     */
+    public static boolean canTriggerFullCacheUpdate(IResource res) throws HgException {
+        if(!(res instanceof IFile)){
+            return false;
+        }
+        return ".hgignore".equals(res.getName());
     }
 
     /**
@@ -627,8 +659,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             status = HgIMergeClient.getMergeStatus(project);
         }
         Set<IResource> changed = new HashSet<IResource>();
-        Set<IFile> members = getLocalMembers(project);
-        for (IFile res : members) {
+        Set<IResource> members = getLocalMembers(project);
+        for (IResource res : members) {
             if(removeConflict(res)){
                 changed.add(res);
             }
@@ -914,7 +946,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 synchronized (statusUpdateLock) {
                     for (IResource curr : currentBatch) {
                         boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
-                        clearStatusCache(curr);
+                        clearStatusCache(curr, false);
                         if(unknown && !curr.exists()){
                             // remember parents of deleted files: we must update their state
                             IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
@@ -943,7 +975,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         return changed;
     }
 
-    public void clearStatusCache(IResource resource) {
+    public void clearStatusCache(IResource resource, boolean notify) {
+        Set<IResource> members = null;
+        if(notify){
+            members = getLocalMembers(resource);
+            members.add(resource);
+        }
         synchronized (statusUpdateLock) {
             IPath parentPath = ResourceUtils.getPath(resource);
             if(resource instanceof IContainer){
@@ -963,6 +1000,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 statusMap.remove(parentPath);
             }
         }
+        if(notify){
+            notifyChanged(members, false);
+        }
     }
 
     private int getStatusBatchSize() {
@@ -974,8 +1014,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * @return never null. Set will contain all known files under the given directory,
      * or the file itself if given resource is not a directory
      */
-    public Set<IFile> getLocalMembers(IResource resource) {
-        Set<IFile> members = new HashSet<IFile>();
+    public Set<IResource> getLocalMembers(IResource resource) {
+        Set<IResource> members = new HashSet<IResource>();
         if(resource instanceof IContainer){
             IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
             Set<IPath> children = getChildrenFromCache((IContainer) resource);
@@ -989,7 +1029,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 }
             }
         } else {
-            members.add((IFile) resource);
+            members.add(resource);
         }
         return members;
     }
@@ -1002,7 +1042,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     }
 
     public void clear(IProject project, boolean notify) {
-        clearStatusCache(project);
+        clearStatusCache(project, false);
         if(notify) {
             notifyChanged(project, false);
         }

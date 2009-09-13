@@ -103,6 +103,12 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
             case IResourceDelta.CHANGED:
                 if (hasChangedBits(delta)
                         && cache.isSupervised(project, ResourceUtils.getPath(res))) {
+
+                    // fix for issue 10155: No status update after reverting changes on .hgignore
+                    if(MercurialStatusCache.canTriggerFullCacheUpdate(resource)){
+                        addResource(changed, project, project);
+                        return false;
+                    }
                     addResource(changed, project, resource);
                     // System.out.println("\t CHANGED: " + resource);
                     if(isCompleteStatusRequested()){

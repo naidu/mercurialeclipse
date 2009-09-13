@@ -16,13 +16,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.ui.IEditorPart;
@@ -30,6 +33,7 @@ import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.ResourceUtil;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -179,5 +183,23 @@ public class ResourceUtils {
             list.add(resource);
         }
         return result;
+    }
+
+    public static void collectAllResources(IContainer root, Set<IResource> children) {
+        IResource[] members;
+        try {
+            members = root.members();
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+            return;
+        }
+        children.add(root);
+        for (IResource res : members) {
+            if(res instanceof IFolder && !res.equals(root)){
+                collectAllResources((IFolder) res, children);
+            } else {
+                children.add(res);
+            }
+        }
     }
 }

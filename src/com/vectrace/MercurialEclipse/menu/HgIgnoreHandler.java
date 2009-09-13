@@ -66,17 +66,24 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 	}
 
     private void refreshStatus(final IResource resource) {
-        Job job = new Job("Refreshing state for ignored resource: " + resource.getName()){
+        Job job = new Job("Refreshing status for ignored resource: " + resource.getName()){
             @Override
             protected IStatus run(IProgressMonitor monitor) {
                 try {
-                    // refresh status of newly ignored resource
-                    MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
 
                     // if there is a .hgignore at project level, update it via a refresh.
                     IProject project = resource.getProject();
                     IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
+
                     hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
+                    if(!hgIgnoreFile.exists()){
+                        // refresh status of newly ignored resource, but only if .hgignore
+                        // is not in the project, because if .hgignore is inside the project,
+                        // the status would be updated automatically
+                        MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
+                    } else {
+                        MercurialStatusCache.getInstance().clearStatusCache(resource, true);
+                    }
 
                 } catch (CoreException e) {
                     MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
