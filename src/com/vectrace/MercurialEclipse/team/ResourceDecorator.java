@@ -31,6 +31,7 @@ import org.eclipse.jface.viewers.IDecoration;
 import org.eclipse.jface.viewers.ILightweightLabelDecorator;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.LabelProviderChangedEvent;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
@@ -462,6 +463,22 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 notification.toArray());
         fireLabelProviderChanged(event);
         notification.clear();
+    }
+
+    /**
+     * Fire a LabelProviderChangedEvent for this decorator if it is enabled, otherwise do nothing.
+     * <p>
+     * This method can be called from any thread as it will asynchroniously run a job in the user
+     * interface thread as widget updates may result.
+     * </p>
+     */
+    public static void updateClientDecorations() {
+        Runnable decoratorUpdate = new Runnable() {
+            public void run() {
+                PlatformUI.getWorkbench().getDecoratorManager().update(getDecoratorId());
+            }
+        };
+        Display.getDefault().asyncExec(decoratorUpdate);
     }
 
 }
