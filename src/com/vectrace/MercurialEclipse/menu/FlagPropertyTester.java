@@ -53,10 +53,15 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
                     }
                     test |= statusBit.intValue();
                 }
-                Integer status = MercurialStatusCache.getInstance().getStatus(res);
+                MercurialStatusCache cache = MercurialStatusCache.getInstance();
+                Integer status = cache.getStatus(res);
                 if (status != null) {
                     test &= status.intValue();
                     return test != 0;
+                } else if(test == MercurialStatusCache.BIT_IGNORE) {
+                    // ignored files are not tracked by cache, so the state is always null
+                    // we assume it is ignored if the project state is known
+                    return cache.isStatusKnown(res.getProject());
                 }
             } catch (Exception e) {
                 MercurialEclipsePlugin.logWarning("Could not test status " + property + " on " + receiver, e); //$NON-NLS-1$ //$NON-NLS-2$

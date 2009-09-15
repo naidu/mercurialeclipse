@@ -61,7 +61,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -80,12 +80,10 @@ public class CommitDialog extends TitleAreaDialog {
     public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
     public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
 
-    private String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
+    protected String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
     private Combo oldCommitComboBox;
     private ISourceViewer commitTextBox;
-    private CommitFilesChooser commitFilesList;
-    /** set to false if used during merge operation*/
-    private boolean allowFileSelection;
+    protected CommitFilesChooser commitFilesList;
     private List<IResource> resourcesToAdd;
     private List<IResource> resourcesToCommit;
     private List<IResource> resourcesToRemove;
@@ -93,7 +91,6 @@ public class CommitDialog extends TitleAreaDialog {
     private final IDocument commitTextDocument;
     private SourceViewerDecorationSupport decorationSupport;
     private final List<IResource> inResources;
-    private IResource mergeProject;
     private Text userTextField;
     private String user;
     private Button revertCheckBox;
@@ -103,15 +100,7 @@ public class CommitDialog extends TitleAreaDialog {
         setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
         setBlockOnOpen(false);
         inResources = resources;
-        allowFileSelection = true;
         commitTextDocument = new Document();
-    }
-
-    public CommitDialog(Shell shell, IProject mergeProject, String defaultCommitMessage) {
-        this(shell, null);
-        this.mergeProject = mergeProject;
-        this.allowFileSelection = false;
-        this.defaultCommitMessage = defaultCommitMessage;
     }
 
     public String getCommitMessage() {
@@ -159,23 +148,13 @@ public class CommitDialog extends TitleAreaDialog {
         return container;
     }
 
-    private void createRevertCheckBox(Composite container) {
-        if(allowFileSelection) {
-            this.revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
-        }
+    protected void createRevertCheckBox(Composite container) {
+        revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
     }
 
-    private void createFilesList(Composite container) {
+    protected void createFilesList(Composite container) {
         SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-        List<IResource> resources;
-        if (allowFileSelection) {
-            resources = inResources;
-        } else {
-            resources = new ArrayList<IResource>();
-            resources.add(mergeProject);
-        }
-
-        commitFilesList = new CommitFilesChooser(container, allowFileSelection, resources, true, true);
+        commitFilesList = new CommitFilesChooser(container, true, inResources, true, true);
     }
 
     private void createUserCommitCombo(Composite container) {
@@ -183,9 +162,31 @@ public class CommitDialog extends TitleAreaDialog {
         SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
         this.userTextField = SWTWidgetHelper.createTextField(comp);
         if (user == null || user.length() == 0) {
+            user = getInitialCommitUserName();
+        }
+        if (user == null || user.length() == 0) {
             user = HgClients.getDefaultUserName();
         }
         this.userTextField.setText(user);
+    }
+
+    protected String getInitialCommitUserName() {
+        if(inResources.isEmpty()){
+            return null;
+        }
+        IProject project = inResources.get(0).getProject();
+        return getDefaultCommitName(project);
+    }
+
+    protected static String getDefaultCommitName(IProject project) {
+        // TODO see issue 10150: get the name from project properties, not from repo
+        // but for now it will at least work for projects with one repo
+        HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+                .getDefaultProjectRepoLocation(project);
+        if(repoLocation == null){
+            return null;
+        }
+        return repoLocation.getUser();
     }
 
     private void createCommitTextBox(Composite container) {
@@ -276,19 +277,15 @@ public class CommitDialog extends TitleAreaDialog {
             HgRemoveClient.removeResources(resourcesToRemove);
 
             // commit all
-            String messageToCommit = this.getCommitMessage();
+            String messageToCommit = getCommitMessage();
             if (user == null || user.length() == 0) {
-                user = HgClients.getDefaultUserName();
+                user = getInitialCommitUserName();
             }
 
-            if (!allowFileSelection) {
-                // it was a commit after merge
-                CommitMergeHandler.commitMerge(mergeProject.getProject(), messageToCommit);
-            } else {
-                HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
-            }
+            performCommit(messageToCommit);
 
-            if (allowFileSelection && revertCheckBox.getSelection()) {
+            // revertCheckBox can be null if this is a merge dialog
+            if (revertCheckBox != null && revertCheckBox.getSelection()) {
                 revertResources();
             }
             super.okPressed();
@@ -296,7 +293,10 @@ public class CommitDialog extends TitleAreaDialog {
             MercurialEclipsePlugin.logError(e);
             setErrorMessage(e.getLocalizedMessage());
         }
+    }
 
+    protected void performCommit(String messageToCommit) throws CoreException {
+        HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
     }
 
     private void revertResources() {

@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -228,7 +227,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
     @Override
     public boolean isSupervised(IResource resource) {
-        return resource.getType() == IResource.FILE && MercurialUtilities.isPossiblySupervised(resource);
+        boolean result = resource.getType() == IResource.FILE && MercurialUtilities.isPossiblySupervised(resource);
+        if(!result){
+            return false;
+        }
+        // fix for issue 10153: Resources ignored in .hgignore are still shown in Synchronize view
+        if(STATUS_CACHE.isIgnored(resource)){
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -313,7 +320,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(resource.getType() == IResource.FILE) {
                 resourcesToRefresh.add(resource);
             } else {
-                Set<IFile> localMembers = STATUS_CACHE.getLocalMembers(resource);
+                Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
                 resourcesToRefresh.addAll(localMembers);
             }
         }

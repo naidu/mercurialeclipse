@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
@@ -24,8 +25,10 @@ public class SignHandler extends SingleResourceHandler {
         IProject project = resource.getProject();
         SignWizard signWizard = new SignWizard(project);
         WizardDialog dialog = new WizardDialog(getShell(), signWizard);
-        dialog.open();
-        new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
+        int result = dialog.open();
+        if(result == Window.OK) {
+            new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
+        }
     }
 
 }
