@@ -37,6 +37,11 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class SignWizardPage extends HgWizardPage {
 
+    /**
+     * GnuPG key prefix, from the "gpg --list-secret-keys" command output:
+     * "sec   2048R/XXXXXXXX 2009-09-16 [expires: 2010-09-16]"
+     */
+    private static final String KEY_PREFIX = "sec";
     private final IProject project;
     private Text userTextField;
     private Combo keyCombo;
@@ -129,10 +134,14 @@ public class SignWizardPage extends HgWizardPage {
             if (keys.indexOf("\n") == -1) { //$NON-NLS-1$
                 combo.add(keys);
             } else {
-                String[] items = keys.split("\n\n"); //$NON-NLS-1$
+                String[] items = keys.split("\n"); //$NON-NLS-1$
                 for (String string : items) {
-                    if (string.trim().startsWith("sec")) { //$NON-NLS-1$
-                        combo.add(string.substring(6));
+                    string = string.trim();
+                    if (string.startsWith(KEY_PREFIX)) {
+                        string = string.substring(KEY_PREFIX.length()).trim();
+                        if(string.length() > 0) {
+                            combo.add(string);
+                        }
                     }
                 }
             }
