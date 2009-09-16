@@ -74,6 +74,46 @@ public class HgRootClient extends AbstractClient {
     }
 
     /**
+     * @param file
+     * @return hg root as <b>canonical path</b> (see {@link File#getCanonicalPath()}), or null
+     * if no hg root can't be found, or exception happens
+     */
+    public static HgRoot hasHgRoot(File file) {
+        File dir = ResourceUtils.getFirstExistingDirectory(file);
+        // test if we have the path "as is" already
+        HgRoot hgRoot = roots.get(dir);
+        if(hgRoot != null){
+            return hgRoot;
+        }
+        HgRoot testRoot;
+        try {
+            testRoot = new HgRoot(dir);
+        } catch(IOException e) {
+            return null;
+        }
+        // test with canonical version of the same file
+        hgRoot = roots.get(testRoot);
+        if(hgRoot != null){
+            // remember NON canonical version too
+            roots.put(dir, hgRoot);
+            return hgRoot;
+        }
+        // search up the parents recursive if we see .hg directory there
+        File root = findHgDir(testRoot);
+        if (root == null) {
+            return null;
+        }
+        // .hg parent dire found
+        try {
+            hgRoot = new HgRoot(root);
+        } catch (IOException e) {
+            return null;
+        }
+        roots.put(root, hgRoot);
+        return hgRoot;
+    }
+
+    /**
      * Searches the .hg directory up in all parents of the given file
      * @param startDir a directory
      * @return directory named ".hg" (in any case), or null if the given file does not

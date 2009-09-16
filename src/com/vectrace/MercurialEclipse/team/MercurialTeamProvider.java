@@ -218,6 +218,21 @@ public class MercurialTeamProvider extends RepositoryProvider {
     /**
      * Gets the hg root of a resource as {@link java.io.File}.
      *
+     * @param resource
+     *            the resource to get the hg root for
+     * @return the {@link java.io.File} referencing the hg root directory, or null if no
+     * hg root can't be found
+     */
+    public static HgRoot hasHgRoot(IResource resource) {
+        if(resource == null){
+            return null;
+        }
+        return HgRootClient.hasHgRoot(ResourceUtils.getFileHandle(resource));
+    }
+
+    /**
+     * Gets the hg root of a resource as {@link java.io.File}.
+     *
      * @param file
      *            a {@link java.io.File}
      * @return the file object of the root.

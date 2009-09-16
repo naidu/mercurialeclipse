@@ -29,7 +29,6 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgClients;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -163,15 +162,12 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
     }
 
     private void autoshareProject(final IProject project) {
-        final HgRoot hgRoot;
-        try {
-            hgRoot = MercurialTeamProvider.getHgRoot(project);
-            MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
-                    + ". Detected repository location: " + hgRoot.getAbsolutePath(), null);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logInfo("Autosharing failed: " + e.getLocalizedMessage(), e);
+        final HgRoot hgRoot = MercurialTeamProvider.hasHgRoot(project);
+        if(hgRoot == null){
             return;
         }
+        MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
+                + ". Detected repository location: " + hgRoot, null);
         final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 
         new SafeWorkspaceJob(NLS.bind(Messages.mercurialStatusCache_autoshare, project.getName())) {
