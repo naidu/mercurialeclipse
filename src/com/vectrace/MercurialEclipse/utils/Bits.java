@@ -8,7 +8,7 @@
  * Contributors:
  * Andrei	implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.team.cache;
+package com.vectrace.MercurialEclipse.utils;
 
 public class Bits {
     private Bits(){

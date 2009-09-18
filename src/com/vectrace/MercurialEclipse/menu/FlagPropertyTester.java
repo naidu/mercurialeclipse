@@ -20,8 +20,8 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.team.cache.Bits;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.Bits;
 
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
 
