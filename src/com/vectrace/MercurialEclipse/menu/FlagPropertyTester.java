@@ -16,9 +16,11 @@ import static com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache.*;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.team.cache.Bits;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
@@ -58,10 +60,10 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
                 if (status != null) {
                     test &= status.intValue();
                     return test != 0;
-                } else if(test == MercurialStatusCache.BIT_IGNORE) {
-                    // ignored files are not tracked by cache, so the state is always null
-                    // we assume it is ignored if the project state is known
-                    return cache.isStatusKnown(res.getProject());
+                } else if(Bits.contains(test, MercurialStatusCache.BIT_UNKNOWN | MercurialStatusCache.BIT_IGNORE)) {
+                    // ignored or unknown files may be not yet tracked by cache, so the state may be null
+                    // we assume it is ignored or unknown if the project state is known
+                    return !(res instanceof IProject) &&  cache.isStatusKnown(res.getProject());
                 }
             } catch (Exception e) {
                 MercurialEclipsePlugin.logWarning("Could not test status " + property + " on " + receiver, e); //$NON-NLS-1$ //$NON-NLS-2$

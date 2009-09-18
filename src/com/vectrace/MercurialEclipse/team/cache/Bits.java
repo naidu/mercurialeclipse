@@ -15,8 +15,18 @@ public class Bits {
 
     }
 
-    public static boolean contains(int source, int bit) {
-        return (source & bit) != 0;
+    /**
+     * @return true if at least one of given bits is set in the source
+     */
+    public static boolean contains(int source, int bits) {
+        return (source & bits) != 0;
+    }
+
+    /**
+     * @return true if ALL given bits are set in the source
+     */
+    public static boolean matchesAll(int source, int bits) {
+        return (source & bits) == bits;
     }
 
     public static int clear(int source, int bit) {
