@@ -20,6 +20,7 @@ import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -40,6 +41,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
     private final HgRepositoryLocation repo;
 
     public RepositorySynchronizationScope(HgRepositoryLocation repo, IResource[] roots) {
+        Assert.isNotNull(repo);
         this.repo = repo;
         this.roots = roots != null ? roots :
             MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo)

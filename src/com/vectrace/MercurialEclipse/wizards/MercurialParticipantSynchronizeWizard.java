@@ -24,7 +24,6 @@ import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
@@ -42,7 +41,6 @@ import com.vectrace.MercurialEclipse.synchronize.HgSubscriberScopeManager;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
-import com.vectrace.MercurialEclipse.synchronize.SingleRepoSubscriber;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
@@ -271,8 +269,8 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
         }
 
         // Create a new participant for given repo/project pair
-        ISynchronizationScope scope = new RepositorySynchronizationScope(repo, array);
-        MercurialSynchronizeSubscriber subscriber = new SingleRepoSubscriber(scope, repo);
+        RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repo, array);
+        MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
         HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
         MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
         return new MercurialSynchronizeParticipant(ctx, repo);

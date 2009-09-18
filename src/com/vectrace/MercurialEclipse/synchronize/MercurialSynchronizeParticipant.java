@@ -18,7 +18,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
@@ -126,7 +125,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
         } else {
             repoProjects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repositoryLocation);
         }
-        ISynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocation,
+        RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repositoryLocation,
                 repoProjects.toArray(new IProject[0]));
         MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
         HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(), subscriber);

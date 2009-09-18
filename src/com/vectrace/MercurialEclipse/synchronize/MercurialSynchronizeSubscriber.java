@@ -21,11 +21,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
@@ -60,13 +60,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
     private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 
     private final boolean debug;
-    private final ISynchronizationScope scope;
-    private IResource[] myRoots;
+    private final RepositorySynchronizationScope scope;
     private IResourceVariantComparator comparator;
     private final Semaphore sema;
 
-    public MercurialSynchronizeSubscriber(ISynchronizationScope synchronizationScope) {
+    public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
         debug = MercurialEclipsePlugin.getDefault().isDebugging();
+        Assert.isNotNull(synchronizationScope);
         scope = synchronizationScope;
         sema = new Semaphore(1, true);
     }
@@ -89,7 +89,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         if (!isInteresting(resource)) {
             return null;
         }
-        HgRepositoryLocation repositoryLocation = getRepo(resource);
 
         try {
             if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
@@ -101,10 +100,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             return null;
         }
 
+        HgRepositoryLocation repositoryLocation = getRepo();
         ChangeSet csOutgoing;
         try {
             // this can trigger a refresh and a call to the remote server...
-            csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, repositoryLocation);
+            csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, getRepo());
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;
@@ -263,9 +263,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
         Set<IResource> resourcesToRefresh = new HashSet<IResource>();
 
+        HgRepositoryLocation repositoryLocation = getRepo();
+        Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
+                .getAllRepoLocationProjects(repositoryLocation);
+
         for (IProject project : projects) {
-            HgRepositoryLocation repositoryLocation = getRepo(project);
-            if (repositoryLocation == null) {
+            if (!repoLocationProjects.contains(project)) {
                 continue;
             }
             monitor.beginTask(getName(), 5);
@@ -377,24 +380,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         }
     }
 
-    protected HgRepositoryLocation getRepo(IResource resource){
-        if(scope instanceof RepositorySynchronizationScope){
-            RepositorySynchronizationScope repoScope = (RepositorySynchronizationScope) scope;
-            return repoScope.getRepositoryLocation();
-        }
-        return MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(resource.getProject());
+    private HgRepositoryLocation getRepo(){
+        return scope.getRepositoryLocation();
     }
 
     @Override
     public IResource[] roots() {
-        if (myRoots == null) {
-            if (scope != null && scope.getRoots() != null) {
-                myRoots = scope.getRoots();
-            } else {
-                myRoots = MercurialStatusCache.getInstance().getAllManagedProjects();
-            }
-        }
-        return myRoots;
+        return scope.getRoots();
     }
 
     /**
