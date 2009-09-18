@@ -55,7 +55,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  * @author bastian
  * @author Andrei Loskutov
  */
-public class IncomingChangesetCache extends AbstractCache {
+public class IncomingChangesetCache extends AbstractRemoteCache {
 
     private static IncomingChangesetCache instance;
 
@@ -63,11 +63,11 @@ public class IncomingChangesetCache extends AbstractCache {
      * The Map has the following structure: RepositoryLocation -> IResource ->
      * Changeset-Set
      */
-    private final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> incomingChangeSets;
+    private final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> changeSets;
 
     private IncomingChangesetCache() {
         super();
-        incomingChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
+        changeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
     }
 
     public synchronized static IncomingChangesetCache getInstance() {
@@ -78,8 +78,8 @@ public class IncomingChangesetCache extends AbstractCache {
     }
 
     public void clear(HgRepositoryLocation repo) {
-        synchronized (incomingChangeSets) {
-            incomingChangeSets.remove(repo);
+        synchronized (changeSets) {
+            changeSets.remove(repo);
         }
         Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
         for (IProject project : projects) {
@@ -92,8 +92,8 @@ public class IncomingChangesetCache extends AbstractCache {
      * false to supress the event notification
      */
     public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
-        synchronized (incomingChangeSets) {
-            Map<IPath, SortedSet<ChangeSet>> map = incomingChangeSets.get(repo);
+        synchronized (changeSets) {
+            Map<IPath, SortedSet<ChangeSet>> map = changeSets.get(repo);
             if(map != null){
                 map.remove(project.getLocation());
                 clearChangesets(project);
@@ -120,18 +120,19 @@ public class IncomingChangesetCache extends AbstractCache {
      *
      * @return never null
      */
-    public SortedSet<ChangeSet> getIncomingChangeSets(IResource resource,
+    public SortedSet<ChangeSet> getChangeSets(IResource resource,
             HgRepositoryLocation repository) throws HgException {
-        synchronized (incomingChangeSets){
-            Map<IPath, SortedSet<ChangeSet>> incoming = incomingChangeSets.get(repository);
-            if (incoming == null
-                    || ((resource instanceof IProject) && incoming.get(resource.getLocation()) == null)) {
+        Map<IPath, SortedSet<ChangeSet>> repoMap;
+        synchronized (changeSets){
+            repoMap = changeSets.get(repository);
+            if (repoMap == null
+                    || ((resource instanceof IProject) && repoMap.get(resource.getLocation()) == null)) {
                 // lazy loading: refresh cache on demand only.
-                refreshIncomingChangeSets(resource.getProject(), repository);
-                incoming = incomingChangeSets.get(repository);
+                refreshChangeSets(resource.getProject(), repository);
+                repoMap = changeSets.get(repository);
             }
-            if (incoming != null) {
-                SortedSet<ChangeSet> revisions = incoming.get(resource.getLocation());
+            if (repoMap != null) {
+                SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
                 if (revisions != null) {
                     return Collections.unmodifiableSortedSet(revisions);
                 }
@@ -146,50 +147,46 @@ public class IncomingChangesetCache extends AbstractCache {
      *
      * @return never null
      */
-    public Set<IResource> getIncomingMembers(IResource resource,
+    public Set<IResource> getMembers(IResource resource,
             HgRepositoryLocation repository) throws HgException {
-        synchronized (incomingChangeSets){
-            Map<IPath, SortedSet<ChangeSet>> changeSets = getIncomingMap(resource, repository);
-            return getMembers(resource, changeSets);
+        synchronized (changeSets){
+            return getMembers(resource, getMap(resource, repository));
         }
     }
 
-    private Map<IPath, SortedSet<ChangeSet>> getIncomingMap(IResource resource, HgRepositoryLocation repository)
+    private Map<IPath, SortedSet<ChangeSet>> getMap(IResource resource, HgRepositoryLocation repository)
             throws HgException {
         // make sure data is there: will refresh incoming if needed
-        getIncomingChangeSets(resource, repository);
-        return incomingChangeSets.get(repository);
+        getChangeSets(resource, repository);
+        return changeSets.get(repository);
     }
+
 
     /**
-     * Gets the newest incoming changeset of <b>all repositories</b>.
-     *
-     * @param resource
-     *            the resource to get the changeset for
+     * Gets all incoming changesets by querying Mercurial and adds them to the caches.
      */
-    public ChangeSet getNewestIncomingChangeSet(IResource resource) throws HgException {
-        Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
-            .getRepoManager().getAllProjectRepoLocations(resource.getProject());
-        SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>();
-        for (HgRepositoryLocation repository : locs) {
-            ChangeSet candidate = getNewestIncomingChangeSet(resource, repository);
-            if (candidate != null) {
-                changeSets.add(candidate);
+    private void refreshChangeSets(IProject project, HgRepositoryLocation repository) throws HgException {
+        Assert.isNotNull(project);
+
+        // check if mercurial is team provider and if we're working on an open project
+        if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) && project.isOpen()) {
+
+            // lock the cache till update is complete
+            synchronized (changeSets){
+                addResourcesToCache(project, repository, changeSets, Direction.INCOMING);
             }
+            notifyChanged(project, true);
         }
-        if (changeSets.size() > 0) {
-            return changeSets.last();
-        }
-        return null;
     }
-
-    public ChangeSet getNewestIncomingChangeSet(IResource resource,
+    
+    
+    public ChangeSet getNewestChangeSet(IResource resource,
             HgRepositoryLocation repository) throws HgException {
-
+        
         if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
-            synchronized (incomingChangeSets){
-                Map<IPath, SortedSet<ChangeSet>> repoMap = getIncomingMap(resource, repository);
-
+            synchronized (changeSets){
+                Map<IPath, SortedSet<ChangeSet>> repoMap = getMap(resource, repository);
+                
                 if (repoMap != null) {
                     SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
                     if (revisions != null && revisions.size() > 0) {
@@ -200,27 +197,26 @@ public class IncomingChangesetCache extends AbstractCache {
         }
         return null;
     }
-
+    
     /**
-     * Gets all incoming changesets by querying Mercurial and adds them to the
-     * caches.
+     * Gets the newest incoming changeset of <b>all repositories</b>.
      *
-     * @param project
-     * @param repositoryLocation
-     * @throws HgException
+     * @param resource
+     *            the resource to get the changeset for
      */
-    private void refreshIncomingChangeSets(IProject project,
-            HgRepositoryLocation repositoryLocation) throws HgException {
-        Assert.isNotNull(project);
-
-        // check if mercurial is team provider and if we're working on an open project
-        if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) && project.isOpen()) {
-
-            // lock the cache till update is complete
-            synchronized (incomingChangeSets){
-                addResourcesToCache(project, repositoryLocation, incomingChangeSets, Direction.INCOMING);
+    public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
+        Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
+        .getRepoManager().getAllProjectRepoLocations(resource.getProject());
+        SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
+        for (HgRepositoryLocation repository : locs) {
+            ChangeSet candidate = getNewestChangeSet(resource, repository);
+            if (candidate != null) {
+                changeSets1.add(candidate);
             }
-            notifyChanged(project, true);
         }
+        if (changeSets1.size() > 0) {
+            return changeSets1.last();
+        }
+        return null;
     }
 }

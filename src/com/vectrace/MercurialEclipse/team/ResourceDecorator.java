@@ -322,7 +322,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         throws CoreException {
 
         // label info for incoming changesets
-        ChangeSet newestIncomingChangeSet = INCOMING_CACHE.getNewestIncomingChangeSet(resource);
+        ChangeSet newestIncomingChangeSet = INCOMING_CACHE.getNewestChangeSet(resource);
 
         if (newestIncomingChangeSet != null) {
             if (prefix.length() == 0) {

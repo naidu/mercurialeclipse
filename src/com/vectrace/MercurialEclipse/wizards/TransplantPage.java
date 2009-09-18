@@ -78,7 +78,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                             .getRepoLocation(getUrlCombo().getText());
                     setErrorMessage(null);
                     SortedSet<ChangeSet> changes = IncomingChangesetCache
-                            .getInstance().getIncomingChangeSets(project, repoLocation);
+                            .getInstance().getChangeSets(project, repoLocation);
                     changesets.clear();
                     changesets.addAll(changes);
                     populateChangesetTable();

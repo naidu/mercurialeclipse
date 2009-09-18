@@ -104,7 +104,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         ChangeSet csOutgoing;
         try {
             // this can trigger a refresh and a call to the remote server...
-            csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, getRepo());
+            csOutgoing = OUTGOING_CACHE.getNewestChangeSet(resource, getRepo());
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;
@@ -169,7 +169,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         ChangeSet csIncoming;
         try {
             // this can trigger a refresh and a call to the remote server...
-            csIncoming = INCOMING_CACHE.getNewestIncomingChangeSet(resource, repositoryLocation);
+            csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, repositoryLocation);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;
@@ -357,7 +357,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
                 System.out.println("\nget incoming: " + project + ", depth: " + flag);
             }
             // this can trigger a refresh and a call to the remote server...
-            Set<IResource> incomingMembers = INCOMING_CACHE.getIncomingMembers(project, repositoryLocation);
+            Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation);
             resourcesToRefresh.addAll(incomingMembers);
         }
     }
@@ -375,7 +375,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
                 System.out.println("\nget outgoing: " + project + ", depth: " + flag);
             }
             // this can trigger a refresh and a call to the remote server...
-            Set<IResource> outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(project, repositoryLocation);
+            Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation);
             resourcesToRefresh.addAll(outgoingMembers);
         }
     }

@@ -60,7 +60,7 @@ public class OutgoingPage extends IncomingPage {
             HgRepositoryLocation remote = getLocation();
             try {
                 SortedSet<ChangeSet> changesets = OutgoingChangesetCache
-                        .getInstance().getOutgoingChangeSets(getProject(), remote);
+                        .getInstance().getChangeSets(getProject(), remote);
                 SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
                 revertedSet.addAll(changesets);
                 return revertedSet;
