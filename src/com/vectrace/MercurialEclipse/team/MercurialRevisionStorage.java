@@ -151,13 +151,15 @@ public class MercurialRevisionStorage implements IStorage {
         ChangeSet cs = null;
         try {
             cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(res);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
+        if(cs != null){
             this.revision = cs.getChangesetIndex(); // should be fetched
             // from id
             this.global = cs.getChangeset();
-            this.changeSet = cs;
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
         }
+        this.changeSet = cs;
     }
 
     /**

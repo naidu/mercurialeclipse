@@ -60,7 +60,7 @@ public class MercurialResourceVariantComparator implements
             // any other changeset
             if ((cs.getDirection() == Direction.INCOMING || cs
                     .getDirection() == Direction.OUTGOING)
-                    && cs.getBranch().equals(csWorkDir.getBranch())) {
+                    && csWorkDir!= null && cs.getBranch().equals(csWorkDir.getBranch())) {
                 return false;
             }
         } catch (TeamException e) {

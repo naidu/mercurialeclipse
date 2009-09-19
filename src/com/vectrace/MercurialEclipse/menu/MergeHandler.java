@@ -163,6 +163,9 @@ public class MergeHandler extends SingleResourceHandler {
         }
 
         ChangeSet currentRevision = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
+        if(currentRevision == null){
+            return null;
+        }
         String branch = currentRevision.getBranch();
 
         ChangeSet candidate = null;
