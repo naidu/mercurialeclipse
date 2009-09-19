@@ -37,7 +37,6 @@ import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -400,11 +399,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
             suffix += changeSet.getChangesetIndex() + hex;
 
             String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
-            if(branch == null) {
-                branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-                project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
-            }
-            if (branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
+            if (branch != null && branch.length() > 0 && !"default".equals(branch)) { //$NON-NLS-1$
                 suffix += " @ " + branch;
             }
 

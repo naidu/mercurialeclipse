@@ -55,6 +55,7 @@ import org.eclipse.team.core.Team;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
+import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
@@ -623,12 +624,17 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         }
         monitor.worked(1);
 
-        try {
-            String mergeNode = HgStatusClient.getMergeStatus(res);
-            project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
-        } catch (CoreException e) {
-            throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+        if(res instanceof IProject){
+            try {
+                String mergeNode = HgStatusClient.getMergeStatus(project);
+                project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
+                String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+                project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+            } catch (CoreException e) {
+                throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+            }
         }
+        // TODO shouldn't this go in the block above?
         changed.addAll(checkForConflict(project));
         if(monitor.isCanceled()){
             return;
