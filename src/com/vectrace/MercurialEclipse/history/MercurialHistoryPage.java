@@ -107,7 +107,7 @@ public class MercurialHistoryPage extends HistoryPage {
             if (mercurialHistory != null) {
                 try {
                     mercurialHistory.refresh(monitor, from);
-                    currentWorkdirChangeset = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(resource);
+                    currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
                 } catch (CoreException e) {
                     MercurialEclipsePlugin.logError(e);
                 }

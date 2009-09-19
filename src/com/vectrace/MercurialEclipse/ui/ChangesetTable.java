@@ -135,11 +135,11 @@ public class ChangesetTable extends Composite {
     private void updateTable(int startRev) throws HgException {
         if (resource != null && table.isEnabled() && autoFetch) {
             if (startRev - logBatchSize > 0 || bottomNotFetched) {
-                LocalChangesetCache.getInstance().fetchLocalRevisions(
+                LocalChangesetCache.getInstance().fetchRevisions(
                         resource, true, logBatchSize, startRev, false);
             }
             SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
-                    .getChangeSets(resource);
+                    .getOrFetchChangeSets(resource);
 
             // only fetch rev 0:0+logbatchsize once
             if (set.size() == 0 || set.first().getChangesetIndex() == 0) {

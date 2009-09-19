@@ -107,7 +107,7 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
 
-    public SortedSet<ChangeSet> getChangeSets(IResource resource) throws HgException {
+    public SortedSet<ChangeSet> getOrFetchChangeSets(IResource resource) throws HgException {
         IPath location = resource.getLocation();
 
         SortedSet<ChangeSet> revisions;
@@ -137,8 +137,8 @@ public class LocalChangesetCache extends AbstractCache {
      * @return may return null
      * @throws HgException
      */
-    public ChangeSet getNewestLocalChangeSet(IResource resource) throws HgException {
-        SortedSet<ChangeSet> revisions = getChangeSets(resource);
+    public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
+        SortedSet<ChangeSet> revisions = getOrFetchChangeSets(resource);
         if (revisions != null && revisions.size() > 0) {
             return revisions.last();
         }
@@ -187,7 +187,7 @@ public class LocalChangesetCache extends AbstractCache {
         IProject project = res.getProject();
         if (project.isOpen() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
             clear(res, false);
-            fetchLocalRevisions(res, limit, getLogBatchSize(), -1, withFiles);
+            fetchRevisions(res, limit, getLogBatchSize(), -1, withFiles);
         }
     }
 
@@ -219,7 +219,7 @@ public class LocalChangesetCache extends AbstractCache {
      *            string in format rev:nodeshort or rev:node
      * @return may return null, if changeset is not known
      */
-    public ChangeSet getChangeset(IProject project, String changesetId) {
+    public ChangeSet getChangesetById(IProject project, String changesetId) {
         Map<String, ChangeSet> map;
         synchronized (changesets) {
             map = changesets.get(project);
@@ -230,10 +230,10 @@ public class LocalChangesetCache extends AbstractCache {
         return null;
     }
 
-    public ChangeSet getLocalChangeSet(IResource res, String nodeId) throws HgException {
+    public ChangeSet getOrFetchChangeSetById(IResource res, String nodeId) throws HgException {
         Assert.isNotNull(res);
         Assert.isNotNull(nodeId);
-        ChangeSet changeSet = getChangeset(res.getProject(), nodeId);
+        ChangeSet changeSet = getChangesetById(res.getProject(), nodeId);
         if (changeSet != null) {
             return changeSet;
         }
@@ -256,11 +256,11 @@ public class LocalChangesetCache extends AbstractCache {
     /**
      * @return may return null
      */
-    public ChangeSet getCurrentWorkDirChangeset(IResource res) throws HgException {
+    public ChangeSet getChangesetByRootId(IResource res) throws HgException {
         HgRoot root = HgClients.getHgRoot(res);
         String nodeId = HgIdentClient.getCurrentChangesetId(root);
         if (!"0000000000000000000000000000000000000000".equals(nodeId)) { //$NON-NLS-1$
-            return getLocalChangeSet(res, nodeId);
+            return getOrFetchChangeSetById(res, nodeId);
         }
         return null;
     }
@@ -283,7 +283,7 @@ public class LocalChangesetCache extends AbstractCache {
      *            the revision to start with
      * @throws HgException
      */
-    public void fetchLocalRevisions(IResource res, boolean limit,
+    public void fetchRevisions(IResource res, boolean limit,
             int limitNumber, int startRev, boolean withFiles) throws HgException {
         Assert.isNotNull(res);
         IProject project = res.getProject();
@@ -393,10 +393,10 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    public Set<ChangeSet> getChangeSetsByBranch(IProject project,
+    public Set<ChangeSet> getOrFetchChangeSetsByBranch(IProject project,
             String branchName) throws HgException {
 
-        SortedSet<ChangeSet> changes = getChangeSets(project);
+        SortedSet<ChangeSet> changes = getOrFetchChangeSets(project);
         Set<ChangeSet> branchChangeSets = new HashSet<ChangeSet>();
         for (ChangeSet changeSet : changes) {
             String branch = changeSet.getBranch();

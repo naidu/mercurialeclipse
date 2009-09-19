@@ -162,7 +162,7 @@ public class MergeHandler extends SingleResourceHandler {
             return null;
         }
 
-        ChangeSet currentRevision = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
+        ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetByRootId(project);
         if(currentRevision == null){
             return null;
         }

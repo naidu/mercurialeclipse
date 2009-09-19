@@ -47,7 +47,7 @@ public class HistoryPainter {
 					resource.getProject(), false);
 
 			this.roof = new HistoryPainterRevision(resource,
-			        LocalChangesetCache.getInstance().getNewestLocalChangeSet(
+			        LocalChangesetCache.getInstance().getNewestChangeSet(
 							resource));
 
 			// cleanup

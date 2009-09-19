@@ -239,7 +239,7 @@ public class ShowAnnotationOperation extends TeamOperation {
         LocalChangesetCache.getInstance().refreshAllLocalRevisions(
                 res, true);
         Iterable<ChangeSet> revisions = LocalChangesetCache.getInstance()
-                .getChangeSets(res);
+                .getOrFetchChangeSets(res);
         for (ChangeSet changeSet : revisions) {
             logEntriesByRevision.put(Integer.valueOf(changeSet.getRevision()
                     .getRevision()),

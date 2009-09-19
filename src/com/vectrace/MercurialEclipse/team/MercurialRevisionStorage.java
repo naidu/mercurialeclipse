@@ -109,7 +109,7 @@ public class MercurialRevisionStorage implements IStorage {
         super();
         resource = res;
         try {
-            this.changeSet = LocalChangesetCache.getInstance().getLocalChangeSet(res, changeset);
+            this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, changeset);
             if(changeSet != null){
                 this.revision = changeSet.getChangesetIndex();
                 this.global = changeSet.getChangeset();
@@ -150,7 +150,7 @@ public class MercurialRevisionStorage implements IStorage {
         this.resource = res;
         ChangeSet cs = null;
         try {
-            cs = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(res);
+            cs = LocalChangesetCache.getInstance().getChangesetByRootId(res);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }

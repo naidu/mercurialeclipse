@@ -133,11 +133,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
                     String nodeId = HgIdentClient.getCurrentChangesetId(root);
 
                     // try to get from cache (without loading)
-                    csOutgoing = LOCAL_CACHE.getChangeset(resource.getProject(), nodeId);
+                    csOutgoing = LOCAL_CACHE.getChangesetById(resource.getProject(), nodeId);
 
                     // okay, we gotta load the changeset via hg log
                     if (csOutgoing == null) {
-                        csOutgoing = LOCAL_CACHE.getLocalChangeSet(resource, nodeId);
+                        csOutgoing = LOCAL_CACHE.getOrFetchChangeSetById(resource, nodeId);
                     }
                 } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);

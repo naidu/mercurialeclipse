@@ -143,11 +143,11 @@ public class RevisionChooserDialog extends Dialog {
 		    IProject project = dataLoader.getProject();
 		    LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
-			    changeSet = localCache.getChangeset(project, tag.getRevision() + ":" + tag.getGlobalId()); //$NON-NLS-1$
+			    changeSet = localCache.getChangesetById(project, tag.getRevision() + ":" + tag.getGlobalId()); //$NON-NLS-1$
 			} else if(branch != null) {
-                changeSet = localCache.getChangeset(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
+                changeSet = localCache.getChangesetById(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
 			} else if (bookmark != null) {
-                changeSet = localCache.getChangeset(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
+                changeSet = localCache.getChangesetById(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
 			}
 		}
 		if (changeSet != null) {

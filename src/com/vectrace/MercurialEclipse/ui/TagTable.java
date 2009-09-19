@@ -86,7 +86,7 @@ public class TagTable extends Composite {
                 row.setText(2, tag.getName());
                 row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal")  //$NON-NLS-1$
                         : Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$
-                ChangeSet changeSet = cache.getChangeset(project, tag.getRevision() + ":" + tag.getGlobalId());
+                ChangeSet changeSet = cache.getChangesetById(project, tag.getRevision() + ":" + tag.getGlobalId());
                 if(changeSet != null){
                     row.setText(4, changeSet.getSummary());
                 }

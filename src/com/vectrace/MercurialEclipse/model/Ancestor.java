@@ -51,7 +51,7 @@ public class Ancestor {
                     int ancestorIndex = HgParentClient.findCommonAncestor(root,
                             cs1, cs2);
                     ancestor = LocalChangesetCache.getInstance()
-                            .getLocalChangeSet(
+                            .getOrFetchChangeSetById(
                                     ResourceUtils.convert(root),
                                     String.valueOf(ancestorIndex));
                     CACHE.put(getKey(), ancestor);

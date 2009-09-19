@@ -41,7 +41,7 @@ public class HistoryPainterRevision implements Comparable<HistoryPainterRevision
 		this.resource = res;
 		List<String> list = RepositoryGraph.getParentsForResource(res, changeSet);
 		for (String string : list) {
-			ChangeSet parent = LOCAL_CACHE.getChangeset(res.getProject(), string);
+			ChangeSet parent = LOCAL_CACHE.getChangesetById(res.getProject(), string);
 			if (parent != null) {
 				parents.add(new HistoryPainterRevision(res, parent));
 			}

@@ -363,7 +363,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         String suffix = ""; //$NON-NLS-1$
         // suffix for files
         if (!STATUS_CACHE.isAdded(resource.getLocation())) {
-            ChangeSet fileCs = LOCAL_CACHE.getNewestLocalChangeSet(resource);
+            ChangeSet fileCs = LOCAL_CACHE.getNewestChangeSet(resource);
             if (fileCs != null) {
                 suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
                 + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
@@ -383,9 +383,9 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         String suffix = ""; //$NON-NLS-1$
 
         if (showChangeset) {
-            LocalChangesetCache.getInstance().getChangeSets(project);
+            LocalChangesetCache.getInstance().getOrFetchChangeSets(project);
         }
-        changeSet = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
+        changeSet = LocalChangesetCache.getInstance().getChangesetByRootId(project);
 
         if (changeSet == null) {
             suffix = Messages.getString("ResourceDecorator.new");

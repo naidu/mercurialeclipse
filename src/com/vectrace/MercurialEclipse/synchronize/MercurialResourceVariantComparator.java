@@ -36,8 +36,7 @@ public class MercurialResourceVariantComparator implements
     public boolean compare(IResource local, IResourceVariant repoRevision) {
         try {
             if (csWorkDir == null) {
-                csWorkDir = LocalChangesetCache.getInstance()
-                        .getCurrentWorkDirChangeset(local);
+                csWorkDir = LocalChangesetCache.getInstance().getChangesetByRootId(local);
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
