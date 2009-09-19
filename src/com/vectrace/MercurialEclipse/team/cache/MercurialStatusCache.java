@@ -1068,7 +1068,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
     @Override
     protected void clearProjectCache(IProject project) {
-        super.clearProjectCache(project);
         clear(project, false);
         knownStatus.remove(project);
     }
@@ -1128,6 +1127,24 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
             statusBatchSize = STATUS_BATCH_SIZE;
             MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
         }
+    }
+
+    /**
+     * This is a copy of {@link ResourceUtils#convertRepoRelPath(HgRoot, IProject, String)}
+     * and is here for optimization only.
+     *
+     * @param hgRootPath non null
+     * @param projectLocation non null
+     * @param repoRelPath path <b>relative</b> to the hg root
+     * @return may return null, if the path is not found in the project
+     */
+    private static IPath convertRepoRelPath(String hgRootPath, IPath projectLocation, String repoRelPath) {
+        // determine absolute path
+        IPath path = new Path(hgRootPath).append(repoRelPath);
+
+        // determine project relative path
+        int equalSegments = path.matchingFirstSegments(projectLocation);
+        return path.removeFirstSegments(equalSegments);
     }
 
 }

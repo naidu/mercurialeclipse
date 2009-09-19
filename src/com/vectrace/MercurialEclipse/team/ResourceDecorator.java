@@ -178,25 +178,13 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 return;
             }
 
-            if (showChangeset) {
-                // get recent project versions
-                if (!STATUS_CACHE.isStatusKnown(project) && !LOCAL_CACHE.isLocallyKnown(project)) {
-                    // simply wait until the cache sends us an event
-                    d.addOverlay(DecoratorImages.notTrackedDescriptor);
-                    if(resource == project){
-                        d.addSuffix(" [ Hg status pending... ]");
-                    }
-                    return;
+            if (!STATUS_CACHE.isStatusKnown(project)) {
+                // simply wait until the cache sends us an event
+                d.addOverlay(DecoratorImages.notTrackedDescriptor);
+                if(resource == project){
+                    d.addSuffix(" [ Hg status pending... ]");
                 }
-            } else {
-                if (!STATUS_CACHE.isStatusKnown(project)) {
-                    // simply wait until the cache sends us an event
-                    d.addOverlay(DecoratorImages.notTrackedDescriptor);
-                    if(resource == project){
-                        d.addSuffix(" [ Hg status pending... ]");
-                    }
-                    return;
-                }
+                return;
             }
 
             ImageDescriptor overlay = null;

@@ -18,6 +18,7 @@ import java.util.Observer;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -37,6 +38,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * The cache does NOT keeps the state automatically. Clients have explicitely request and manage
@@ -61,6 +63,7 @@ public class LocalChangesetCache extends AbstractCache {
     private static LocalChangesetCache instance;
 
     private final Map<IPath, SortedSet<ChangeSet>> localChangeSets;
+    private final Map<IProject, Map<String, ChangeSet>> changesets;
 
     private int logBatchSize;
 
@@ -69,6 +72,7 @@ public class LocalChangesetCache extends AbstractCache {
     private LocalChangesetCache() {
         super();
         localChangeSets = new HashMap<IPath, SortedSet<ChangeSet>>();
+        changesets = new HashMap<IProject, Map<String, ChangeSet>>();
     }
 
     private boolean isGetFileInformationForChangesets() {
@@ -83,7 +87,7 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
     public void clear(IResource resource, boolean notify) {
-        Set<IResource> members = getMembers(resource);
+        Set<IResource> members = ResourceUtils.getMembers(resource);
         members.add(resource);
         synchronized(localChangeSets){
             for (IResource member : members) {
@@ -91,15 +95,17 @@ public class LocalChangesetCache extends AbstractCache {
             }
         }
         if(resource instanceof IProject){
-            clearChangesets(resource.getProject());
+            synchronized (changesets){
+                changesets.remove(resource.getProject());
+            }
         }
     }
 
     @Override
     protected void clearProjectCache(IProject project) {
-        super.clearProjectCache(project);
         clear(project, false);
     }
+
 
     public SortedSet<ChangeSet> getLocalChangeSets(IResource resource) throws HgException {
         IPath location = resource.getLocation();
@@ -137,20 +143,6 @@ public class LocalChangesetCache extends AbstractCache {
             return revisions.last();
         }
         return null;
-    }
-
-    /**
-     * Checks whether version is known.
-     *
-     * @param resource
-     *            the resource to be checked.
-     * @return true if known, false if not.
-     * @throws HgException
-     */
-    public boolean isLocallyKnown(IResource resource) throws HgException {
-        synchronized(localChangeSets){
-            return localChangeSets.containsKey(resource.getLocation());
-        }
     }
 
     /**
@@ -218,6 +210,24 @@ public class LocalChangesetCache extends AbstractCache {
      */
     public int getLogBatchSize() {
         return logBatchSize;
+    }
+
+    /**
+     * Gets changeset by its identifier
+     *
+     * @param changesetId
+     *            string in format rev:nodeshort or rev:node
+     * @return may return null, if changeset is not known
+     */
+    public ChangeSet getChangeset(IProject project, String changesetId) {
+        Map<String, ChangeSet> map;
+        synchronized (changesets) {
+            map = changesets.get(project);
+        }
+        if(map != null) {
+            return map.get(changesetId);
+        }
+        return null;
     }
 
     public ChangeSet getLocalChangeSet(IResource res, String nodeId) throws HgException {
@@ -307,7 +317,7 @@ public class LocalChangesetCache extends AbstractCache {
                         && STATUS_CACHE.isSupervised(project, path)
                         && !STATUS_CACHE.isAdded(path)) {
 
-                    IResource myResource = convertRepoRelPath(root, project, root.toRelative(path.toFile()));
+                    IResource myResource = ResourceUtils.convertRepoRelPath(root, project, root.toRelative(path.toFile()));
                     if (myResource != null) {
                         changes = HgLogClient.getRecentProjectLog(myResource, 1, withFiles).get(path);
                     }
@@ -351,6 +361,20 @@ public class LocalChangesetCache extends AbstractCache {
     protected void notifyChanged(final Set<IResource> resources, final boolean expandMembers) {
         // has no effect
         MercurialEclipsePlugin.logError(new UnsupportedOperationException("notifyChanged not supported"));
+    }
+
+    private void addChangesets(IProject project, Set<ChangeSet> changes) {
+        synchronized (changesets) {
+            Map<String, ChangeSet> map = changesets.get(project);
+            if(map == null){
+                map = new ConcurrentHashMap<String, ChangeSet>();
+                changesets.put(project, map);
+            }
+            for (ChangeSet changeSet : changes) {
+                map.put(changeSet.toString(), changeSet);
+                map.put(changeSet.getChangeset(), changeSet);
+            }
+        }
     }
 
     /**

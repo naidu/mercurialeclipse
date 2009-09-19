@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,5 +202,44 @@ public class ResourceUtils {
                 children.add(res);
             }
         }
+    }
+
+    /**
+     * @param hgRoot non null
+     * @param project non null
+     * @param repoRelPath path <b>relative</b> to the hg root
+     * @return may return null, if the path is not found in the project
+     */
+    public static IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
+        // determine absolute path
+        IPath path = new Path(hgRoot.getAbsolutePath()).append(repoRelPath);
+    
+        // determine project relative path
+        int equalSegments = path.matchingFirstSegments(project.getLocation());
+        path = path.removeFirstSegments(equalSegments);
+        return project.findMember(path);
+    }
+
+    public static Set<IResource> getMembers(IResource r) {
+        HashSet<IResource> set = new HashSet<IResource>();
+        if (r instanceof IContainer && r.isAccessible()) {
+            IContainer cont = (IContainer) r;
+            try {
+                IResource[] members = cont.members();
+                if (members != null) {
+                    for (IResource member : members) {
+                        if (member instanceof IContainer) {
+                            set.addAll(getMembers(member));
+                        } else {
+                            set.add(member);
+                        }
+                    }
+                }
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+            }
+        }
+        set.add(r);
+        return set;
     }
 }

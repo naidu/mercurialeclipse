@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -103,9 +103,8 @@ public class ShelveOperation extends HgOperation {
                 String[] dirtyFiles = HgStatusClient.getDirtyFiles(root, project
                         .getLocation().toFile());
                 List<IResource> resources = new ArrayList<IResource>();
-                MercurialStatusCache cache = MercurialStatusCache.getInstance();
                 for (String rootRelativePath : dirtyFiles) {
-                    IResource r = cache.convertRepoRelPath(root, project, rootRelativePath);
+                    IResource r = ResourceUtils.convertRepoRelPath(root, project, rootRelativePath);
                     if (r != null && r.exists()) {
                         resources.add(r);
                     }
