@@ -28,15 +28,18 @@ public class MercurialResourceVariantComparator implements
 
     private static MercurialStatusCache statusCache = MercurialStatusCache
             .getInstance();
-    private ChangeSet csWorkDir;
+    private ChangeSet csAtRoot;
 
     public MercurialResourceVariantComparator() {
     }
 
     public boolean compare(IResource local, IResourceVariant repoRevision) {
         try {
-            if (csWorkDir == null) {
-                csWorkDir = LocalChangesetCache.getInstance().getChangesetByRootId(local);
+            // XXX this is either a big mess or I can't figure out how it should work..
+            // why do we fetch changeset for ONE specific resource only, IF the comparator
+            // is used for ALL resources???
+            if (csAtRoot == null) {
+                csAtRoot = LocalChangesetCache.getInstance().getChangesetByRootId(local);
             }
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
@@ -50,20 +53,20 @@ public class MercurialResourceVariantComparator implements
             return true;
         }
 
+        MercurialRevisionStorage remoteIStorage;
         try {
-            MercurialRevisionStorage remoteIStorage = (MercurialRevisionStorage) repoRevision
-            .getStorage(null);
-            ChangeSet cs = remoteIStorage.getChangeSet();
-
-            // if this is outgoing or incoming, it can't be equal to
-            // any other changeset
-            if ((cs.getDirection() == Direction.INCOMING || cs
-                    .getDirection() == Direction.OUTGOING)
-                    && csWorkDir!= null && cs.getBranch().equals(csWorkDir.getBranch())) {
-                return false;
-            }
+            remoteIStorage = (MercurialRevisionStorage) repoRevision.getStorage(null);
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);
+            return false;
+        }
+
+        ChangeSet cs = remoteIStorage.getChangeSet();
+
+        // if this is outgoing or incoming, it can't be equal to any other changeset
+        Direction direction = cs.getDirection();
+        if ((direction == Direction.INCOMING || direction == Direction.OUTGOING)
+                && csAtRoot!= null && cs.getBranch().equals(csAtRoot.getBranch())) {
             return false;
         }
         // resource is clean and we compare against our local repository
@@ -72,8 +75,8 @@ public class MercurialResourceVariantComparator implements
 
     public boolean compare(IResourceVariant base, IResourceVariant remote) {
         MercurialResourceVariant mrv = (MercurialResourceVariant) remote;
-        if (csWorkDir != null && mrv.getRev().getChangeSet().getBranch().equals(
-                csWorkDir.getBranch())) {
+        if (csAtRoot != null && mrv.getRev().getChangeSet().getBranch().equals(
+                csAtRoot.getBranch())) {
             return base.getContentIdentifier().equals(
                     remote.getContentIdentifier());
         }
