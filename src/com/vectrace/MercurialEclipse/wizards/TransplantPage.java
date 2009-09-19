@@ -142,7 +142,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                 try {
                     changesets.clear();
                     changesets.addAll(LocalChangesetCache.getInstance()
-                            .getLocalChangeSetsByBranch(project, branchName));
+                            .getChangeSetsByBranch(project, branchName));
                     populateChangesetTable();
                 } catch (HgException e1) {
                     setErrorMessage(Messages

@@ -139,7 +139,7 @@ public class ChangesetTable extends Composite {
                         resource, true, logBatchSize, startRev, false);
             }
             SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
-                    .getLocalChangeSets(resource);
+                    .getChangeSets(resource);
 
             // only fetch rev 0:0+logbatchsize once
             if (set.size() == 0 || set.first().getChangesetIndex() == 0) {

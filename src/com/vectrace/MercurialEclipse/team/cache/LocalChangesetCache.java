@@ -107,7 +107,7 @@ public class LocalChangesetCache extends AbstractCache {
     }
 
 
-    public SortedSet<ChangeSet> getLocalChangeSets(IResource resource) throws HgException {
+    public SortedSet<ChangeSet> getChangeSets(IResource resource) throws HgException {
         IPath location = resource.getLocation();
 
         SortedSet<ChangeSet> revisions;
@@ -138,7 +138,7 @@ public class LocalChangesetCache extends AbstractCache {
      * @throws HgException
      */
     public ChangeSet getNewestLocalChangeSet(IResource resource) throws HgException {
-        SortedSet<ChangeSet> revisions = getLocalChangeSets(resource);
+        SortedSet<ChangeSet> revisions = getChangeSets(resource);
         if (revisions != null && revisions.size() > 0) {
             return revisions.last();
         }
@@ -393,11 +393,11 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    public SortedSet<ChangeSet> getLocalChangeSetsByBranch(IProject project,
+    public Set<ChangeSet> getChangeSetsByBranch(IProject project,
             String branchName) throws HgException {
 
-        SortedSet<ChangeSet> changes = getLocalChangeSets(project);
-        SortedSet<ChangeSet> branchChangeSets = new TreeSet<ChangeSet>();
+        SortedSet<ChangeSet> changes = getChangeSets(project);
+        Set<ChangeSet> branchChangeSets = new HashSet<ChangeSet>();
         for (ChangeSet changeSet : changes) {
             String branch = changeSet.getBranch();
             if (branch.equals(branchName) || (branchName.equals("default") && branch.equals(""))) { //$NON-NLS-1$

@@ -383,7 +383,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         String suffix = ""; //$NON-NLS-1$
 
         if (showChangeset) {
-            LocalChangesetCache.getInstance().getLocalChangeSets(project);
+            LocalChangesetCache.getInstance().getChangeSets(project);
         }
         changeSet = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(project);
 
