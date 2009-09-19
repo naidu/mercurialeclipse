@@ -35,12 +35,11 @@ public class HgBranchClient extends AbstractClient {
     }
 
     /**
-     * 
+     *
      * @param resource
      * @param name
      * @param user
      *            if null, uses the default user
-     * @param local
      * @throws HgException
      */
     public static String addBranch(IResource resource, String name,
@@ -55,10 +54,10 @@ public class HgBranchClient extends AbstractClient {
 
     /**
      * Get active branch of working directory
-     * 
+     *
      * @param workingDir
      *            a file or a directory within the local repository
-     * @return the branch name
+     * @return the branch name, never null
      * @throws HgException
      *             if a hg error occurred
      */
