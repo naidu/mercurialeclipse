@@ -222,8 +222,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
      * @return true if the given resource was removed in this changeset
      */
    public boolean isRemoved(IResource resource) {
-       Action action = FileStatus.Action.REMOVED;
-       return contains(resource, action);
+       return contains(resource, FileStatus.Action.REMOVED);
    }
 
    /**
@@ -231,8 +230,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     * @return true if the given resource was added in this changeset
     */
    public boolean isAdded(IResource resource) {
-       Action action = FileStatus.Action.ADDED;
-       return contains(resource, action);
+       return contains(resource, FileStatus.Action.ADDED);
    }
 
    /**
@@ -240,8 +238,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
     * @return true if the given resource was modified in this changeset
     */
    public boolean isModified(IResource resource) {
-       Action action = FileStatus.Action.MODIFIED;
-       return contains(resource, action);
+       return contains(resource, FileStatus.Action.MODIFIED);
    }
 
    /**
@@ -254,10 +251,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
            return false;
        }
        boolean match = false;
-       IPath path = new Path(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
+       IPath path = null;
        for (FileStatus fileStatus : changedFiles) {
            if(fileStatus.getAction() == action){
-               if(path.equals(new Path(fileStatus.getPath()))){
+               if(path == null){
+                   path = new Path(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
+               }
+               if(path.equals(fileStatus.getPath())){
                    match = true;
                    break;
                }

@@ -1,5 +1,8 @@
 package com.vectrace.MercurialEclipse.model;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+
 public class FileStatus {
 
 	public static enum Action {
@@ -20,18 +23,18 @@ public class FileStatus {
 	}
 
 	private final Action action;
-	private final String path;
+	private final IPath path;
 
 	public FileStatus(Action action, String path) {
 		this.action = action;
-		this.path = path;
+		this.path = new Path(path);
 	}
 
 	public Action getAction() {
 		return action;
 	}
 
-	public String getPath() {
+	public IPath getPath() {
 		return path;
 	}
 

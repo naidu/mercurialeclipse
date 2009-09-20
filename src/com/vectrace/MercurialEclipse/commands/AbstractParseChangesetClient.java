@@ -158,7 +158,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 csb.repository(repository);
                 csb.patches(patches);
 
-                List<FileStatus> list = new ArrayList<FileStatus>();
+                List<FileStatus> list = new ArrayList<FileStatus>(
+                        filesModified.size() + filesAdded.size() + filesRemoved.size());
                 for (String file : filesModified) {
                     list.add(new FileStatus(FileStatus.Action.MODIFIED, file));
                 }
@@ -237,13 +238,15 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
                 action = FileStatus.Action.REMOVED;
             } else if (name.equals("f")) { //$NON-NLS-1$
                 if (action == Action.ADDED) {
-                    filesAdded.add(atts.getValue(0));
-                    filesModified.remove(atts.getValue(0));
+                    String value = atts.getValue(0);
+                    filesAdded.add(value);
+                    filesModified.remove(value);
                 } else if (action == Action.MODIFIED) {
                     filesModified.add(atts.getValue(0));
                 } else if (action == Action.REMOVED) {
-                    filesRemoved.add(atts.getValue(0));
-                    filesModified.remove(atts.getValue(0));
+                    String value = atts.getValue(0);
+                    filesRemoved.add(value);
+                    filesModified.remove(value);
                 }
             }
         }

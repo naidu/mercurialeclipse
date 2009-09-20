@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.internal.ui.Utils;
@@ -257,12 +258,18 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
         ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(
                 MercurialSynchronizeParticipant.class.getName(), repo.getLocation());
 
-        // try to reuse participants which may already existing
+        // do not reuse participants which may already existing, but dispose them
         // not doing this would lead to the state where many sync. participants would listen
         // to resource changes and update/request same data/cashes many times
+        // we can not reuse participants because their scope can be different (if there are
+        // more then one project under same repository)
         if(participant != null){
             try {
-                return participant.getParticipant();
+                ISynchronizeParticipant participant2 = participant.getParticipant();
+                TeamUI.getSynchronizeManager().removeSynchronizeParticipants(new ISynchronizeParticipant[]{participant2});
+                while(Display.getCurrent().readAndDispatch()){
+                    // give Team UI a chance to dispose the sync page, if any
+                }
             } catch (TeamException e) {
                 MercurialEclipsePlugin.logError(e);
             }

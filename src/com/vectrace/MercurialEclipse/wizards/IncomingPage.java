@@ -227,8 +227,7 @@ public class IncomingPage extends HgWizardPage {
                         .getFirstElement();
                 if (cs != null && clickedFileStatus != null) {
                     IPath hgRoot = new Path(cs.getHgRoot().getPath());
-                    IPath fileRelPath = new Path(clickedFileStatus
-                            .getPath());
+                    IPath fileRelPath = clickedFileStatus.getPath();
                     IPath fileAbsPath = hgRoot.append(fileRelPath);
                     IResource file = project.getWorkspace().getRoot()
                             .getFileForLocation(fileAbsPath);
@@ -254,7 +253,7 @@ public class IncomingPage extends HgWizardPage {
             case 0:
                 return status.getAction().name();
             case 1:
-                return status.getPath();
+                return status.getPath().toOSString();
             }
             return Messages.getString("IncomingPage.notApplicable"); //$NON-NLS-1$
         }

@@ -70,7 +70,7 @@ public class ChangePathsTableProvider extends TableViewer {
                 String[] parents = cs.getParents();
 
                 IPath hgRoot = new Path(cs.getHgRoot().getPath());
-                IPath fileRelPath = new Path(clickedFileStatus.getPath());
+                IPath fileRelPath = clickedFileStatus.getPath();
                 IPath fileAbsPath = hgRoot.append(fileRelPath);
                 IResource file = ResourcesPlugin.getWorkspace().getRoot()
                     .getFileForLocation(fileAbsPath);
@@ -129,7 +129,7 @@ public class ChangePathsTableProvider extends TableViewer {
             case COL_ACTION:
                 return "" + changePath.getAction(); //$NON-NLS-1$
             case COL_PATH:
-                return changePath.getPath();
+                return changePath.getPath().toOSString();
             }
             return ""; //$NON-NLS-1$
         }

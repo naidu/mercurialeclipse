@@ -223,11 +223,15 @@ public class MercurialUtilities {
     }
 
     public static boolean isPossiblySupervised(IResource resource){
-        boolean isInHg = hgIsTeamProviderFor(resource, false);
-        if(!isInHg){
+        if (resource == null) {
             return false;
         }
-        return !(Team.isIgnoredHint(resource) || resource.isTeamPrivateMember() || resource.isDerived());
+        // check, if we're team provider
+        IProject project = resource.getProject();
+        if (!MercurialTeamProvider.isHgTeamProviderFor(project)) {
+            return false;
+        }
+        return !(Team.isIgnoredHint(resource) || resource.isTeamPrivateMember());
     }
 
     /**

@@ -789,13 +789,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     }
 
     private Set<IResource> setStatusToAncestors(IResource resource, Integer resourceBitSet) {
-        // ancestors
-        IProject project = resource.getProject();
         Set<IResource> ancestors = new HashSet<IResource>();
         boolean computeDeep = isComputeDeepStatus();
         boolean complete = isCompleteStatus();
         IContainer parent = resource.getParent();
-        for (; parent != null && parent != project.getParent(); parent = parent.getParent()) {
+        IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+        for (; parent != null && parent != root; parent = parent.getParent()) {
             IPath location = parent.getLocation();
             int parentBitSet = 0;
             {
@@ -821,15 +820,15 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                         parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
                     MemberStatusVisitor visitor = new MemberStatusVisitor(location, cloneBitSet);
                     // we have to traverse all "dirty" resources and change parent state to "dirty"...
-                    boolean visit = checkChildrenFor(location, visitor, BIT_REMOVED);
+                    boolean visit = checkChildrenFor(location, visitor, BIT_MODIFIED);
+                    if(visit){
+                        visit = checkChildrenFor(location, visitor, BIT_UNKNOWN);
+                    }
                     if(visit){
                         visit = checkChildrenFor(location, visitor, BIT_ADDED);
                     }
                     if(visit){
-                        visit = checkChildrenFor(location, visitor, BIT_MODIFIED);
-                    }
-                    if(visit){
-                        visit = checkChildrenFor(location, visitor, BIT_UNKNOWN);
+                        visit = checkChildrenFor(location, visitor, BIT_REMOVED);
                     }
                     if(visit){
                         visit = checkChildrenFor(location, visitor, BIT_MISSING);
@@ -1054,15 +1053,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
     public Set<IResource> getLocalMembers(IResource resource) {
         Set<IResource> members = new HashSet<IResource>();
         if(resource instanceof IContainer){
+            IContainer container = (IContainer) resource;
             IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-            Set<IPath> children = getChildrenFromCache((IContainer) resource);
+            Set<IPath> children = getChildrenFromCache(container);
             for (IPath path : children) {
-                File file = path.toFile();
-                if(!file.isDirectory()){
-                    IFile iFile = root.getFileForLocation(path);
-                    if(iFile != null) {
-                        members.add(iFile);
-                    }
+                IFile iFile = root.getFileForLocation(path);
+                if(iFile != null) {
+                    members.add(iFile);
                 }
             }
         } else {

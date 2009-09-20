@@ -132,14 +132,14 @@ public abstract class AbstractRemoteCache extends AbstractCache {
         Map<IPath, SortedSet<ChangeSet>> repoMap;
         synchronized (repoChangeSets){
             repoMap = repoChangeSets.get(repository);
-            if (repoMap == null
-                    || ((resource instanceof IProject) && repoMap.get(resource.getLocation()) == null)) {
+            IPath location = resource.getLocation();
+            if (repoMap == null || ((resource instanceof IProject) && repoMap.get(location) == null)) {
                 // lazy loading: refresh cache on demand only.
                 refreshChangeSets(resource.getProject(), repository);
                 repoMap = repoChangeSets.get(repository);
             }
             if (repoMap != null) {
-                SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
+                SortedSet<ChangeSet> revisions = repoMap.get(location);
                 if (revisions != null) {
                     return Collections.unmodifiableSortedSet(revisions);
                 }

@@ -113,15 +113,19 @@ public class HgRoot extends File {
      * otherwise the path of a given file
      */
     public String toRelative(File child){
-        String fullPath;
-        try {
-            fullPath = child.getCanonicalPath();
-            if(!fullPath.startsWith(getPath())){
+        // first try with the unresolved path. In most cases it's enough
+        String fullPath = child.getAbsolutePath();
+        if(!fullPath.startsWith(getPath())){
+            try {
+                // ok, now try to resolve all the links etc. this takes A LOT of time...
+                fullPath = child.getCanonicalPath();
+                if(!fullPath.startsWith(getPath())){
+                    return child.getPath();
+                }
+            } catch (IOException e) {
+                MercurialEclipsePlugin.logError(e);
                 return child.getPath();
             }
-        } catch (IOException e) {
-            MercurialEclipsePlugin.logError(e);
-            return child.getPath();
         }
         // +1 is to remove the file separator / at the start of the relative path
         return fullPath.substring(getPath().length() + 1);
