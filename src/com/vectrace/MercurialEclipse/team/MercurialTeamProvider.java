@@ -106,6 +106,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
      */
     public static boolean isHgTeamProviderFor(IProject project){
         Assert.isNotNull(project);
+        if(!project.isOpen()){
+            return false;
+        }
         Boolean result = HG_ROOTS.get(project);
         if(result == null){
             result = Boolean.valueOf(RepositoryProvider.getProvider(project, ID) != null);
@@ -271,13 +274,14 @@ public class MercurialTeamProvider extends RepositoryProvider {
         if(branch == null){
             try {
                 branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
+                branch = branch == null? "" : branch;
                 BRANCH_MAP.put(project, branch);
             } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
                 return "";
             }
         }
-        return branch == null? "" : branch;
+        return branch;
     }
 
     public static void setCurrentBranch(String branch, IProject project){

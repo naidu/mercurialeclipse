@@ -96,7 +96,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
                 continue;
             }
             IProject project = root.getProject(pName);
-            if(project != null && repoProjects.contains(project)){
+            if(project != null && (repoProjects.contains(project) || !project.isOpen())){
                 restoredProjects.add(project);
             }
         }
@@ -117,7 +117,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
                 repositoryLocation);
         StringBuilder sb = new StringBuilder();
         for (IProject project : projects) {
-            if(repoProjects.contains(project)) {
+            if(repoProjects.contains(project) || !project.isOpen()) {
                 sb.append(project.getName()).append(",");
             }
         }
