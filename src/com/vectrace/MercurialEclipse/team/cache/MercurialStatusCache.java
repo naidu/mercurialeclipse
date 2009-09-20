@@ -50,7 +50,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.osgi.util.NLS;
-import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -399,7 +398,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         }
         IProject project = resource.getProject();
         if (path.equals(project.getLocation())) {
-            return project.isAccessible() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID);
+            return project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project);
         }
         int status = statusInt.intValue();
         int highestBit = Bits.highestBit(status);
@@ -629,7 +628,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
                 String mergeNode = HgStatusClient.getMergeStatus(project);
                 project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
                 String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-                project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+                MercurialTeamProvider.setCurrentBranch(branch, project);
             } catch (CoreException e) {
                 throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
             }

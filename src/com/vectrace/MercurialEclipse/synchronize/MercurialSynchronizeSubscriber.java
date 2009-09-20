@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -24,7 +25,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
@@ -36,6 +39,7 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -64,9 +68,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
     private IResourceVariantComparator comparator;
     private final Semaphore sema;
 
+    /** key is hg root, value is the *current* changeset of this root */
+    private final Map<HgRoot, String> currentCsMap;
+
+    private ISubscriberChangeEvent[] lastEvents;
+
     public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
-        debug = MercurialEclipsePlugin.getDefault().isDebugging();
         Assert.isNotNull(synchronizationScope);
+        currentCsMap = new ConcurrentHashMap<HgRoot, String>();
+        debug = MercurialEclipsePlugin.getDefault().isDebugging();
         scope = synchronizationScope;
         sema = new Semaphore(1, true);
     }
@@ -100,7 +110,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             return null;
         }
 
-        HgRepositoryLocation repositoryLocation = getRepo();
         ChangeSet csOutgoing;
         try {
             // this can trigger a refresh and a call to the remote server...
@@ -112,10 +121,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             sema.release();
         }
 
+        String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
+
         MercurialRevisionStorage outgoingIStorage;
         IResourceVariant outgoing;
         // determine outgoing revision
         if (csOutgoing != null) {
+            if(!Branch.same(csOutgoing.getBranch(), currentBranch)){
+                return null;
+            }
             outgoingIStorage = new MercurialRevisionStorage(resource,
                     csOutgoing.getRevision().getRevision(),
                     csOutgoing.getChangeset(), csOutgoing);
@@ -130,7 +144,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
                 try {
                     // Find current working directory changeset (not head)
                     HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-                    String nodeId = HgIdentClient.getCurrentChangesetId(root);
+
+                    String nodeId = currentCsMap.get(root);
+                    if(nodeId == null){
+                        nodeId = HgIdentClient.getCurrentChangesetId(root);
+                        currentCsMap.put(root, nodeId);
+                    }
 
                     // try to get from cache (without loading)
                     csOutgoing = LOCAL_CACHE.getChangesetById(resource.getProject(), nodeId);
@@ -144,6 +163,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
                     return null;
                 }
 
+                if(!Branch.same(csOutgoing.getBranch(), currentBranch)){
+                    return null;
+                }
                 // construct base revision
                 outgoingIStorage = new MercurialRevisionStorage(resource,
                         csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
@@ -169,7 +191,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         ChangeSet csIncoming;
         try {
             // this can trigger a refresh and a call to the remote server...
-            csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, repositoryLocation);
+            csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo());
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;
@@ -179,6 +201,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
         MercurialRevisionStorage incomingIStorage;
         if (csIncoming != null) {
+            if(!Branch.same(csIncoming.getBranch(), currentBranch)){
+                return null;
+            }
             boolean fileRemoved = csIncoming.isRemoved(resource);
             if(fileRemoved){
                 incomingIStorage = null;
@@ -213,7 +238,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
     private boolean isInteresting(IResource resource) {
         return resource != null
-                && RepositoryProvider.getProvider(resource.getProject(), MercurialTeamProvider.ID) != null
+                && MercurialTeamProvider.isHgTeamProviderFor(resource.getProject())
                 && (isSupervised(resource) || (!resource.exists()));
     }
 
@@ -274,12 +299,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             monitor.beginTask(getName(), 5);
             // clear caches in any case, but refresh them only if project exists
             boolean forceRefresh = project.exists();
-
             try {
                 sema.acquire();
                 if(debug) {
                     System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
                 }
+                currentCsMap.remove(MercurialTeamProvider.getHgRoot(project));
+
                 monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
                 refreshLocal(flag, monitor, project, forceRefresh);
                 monitor.worked(1);
@@ -312,7 +338,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         }
 
         monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
-        fireTeamResourceChange(changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]));
+        lastEvents = changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]);
+        fireTeamResourceChange(lastEvents);
         monitor.worked(1);
         monitor.done();
     }
@@ -341,6 +368,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(forceRefresh) {
                 STATUS_CACHE.refreshStatus(project, monitor);
             }
+//            if(!forceRefresh) {
+//                LOCAL_CACHE.clear(project, false);
+//            }
+//            if(forceRefresh) {
+//                LOCAL_CACHE.refreshAllLocalRevisions(project, true);
+//            }
         }
     }
 
@@ -387,6 +420,30 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
     @Override
     public IResource[] roots() {
         return scope.getRoots();
+    }
+
+    public void branchChanged(final IProject project){
+        IResource[] roots = roots();
+        boolean related = false;
+        for (IResource resource : roots) {
+            if(resource.getProject().equals(project)){
+                related = true;
+                break;
+            }
+        }
+        if(!related){
+            return;
+        }
+        Job job = new Job("Updating branch info for " + project.getName()){
+            @Override
+            protected IStatus run(IProgressMonitor monitor) {
+                if(lastEvents != null) {
+                    fireTeamResourceChange(lastEvents);
+                }
+                return Status.OK_STATUS;
+            }
+        };
+        job.schedule(100);
     }
 
     /**

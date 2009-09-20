@@ -27,7 +27,6 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
@@ -38,8 +37,8 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class FlagManager implements IResourceChangeListener {
 
-    private Map<IProject, FlaggedProject> projects;
-    private List<FlagManagerListener> listeners;
+    private final Map<IProject, FlaggedProject> projects;
+    private final List<FlagManagerListener> listeners;
 
     public FlagManager() {
         projects = new HashMap<IProject, FlaggedProject>();
@@ -60,7 +59,7 @@ public class FlagManager implements IResourceChangeListener {
     }
 
     public FlaggedProject getFlaggedProject(IProject project) throws CoreException, HgException {
-        if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
+        if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
             return null;
         }
         if (!projects.containsKey(project)) {
@@ -140,8 +139,8 @@ public class FlagManager implements IResourceChangeListener {
         if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
             IResourceDelta[] children = event.getDelta().getAffectedChildren();
             for (IResourceDelta delta : children) {
-                IProject project = delta.getResource().getProject();                
-                if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
+                IProject project = delta.getResource().getProject();
+                if (MercurialTeamProvider.isHgTeamProviderFor(project)) {
                     changedProjects.add(project);
                 }
             }
@@ -149,7 +148,7 @@ public class FlagManager implements IResourceChangeListener {
         for (IProject project : changedProjects) {
             try {
                 refresh(project);
-            } catch (Exception e) {
+            } catch (CoreException e) {
                 MercurialEclipsePlugin.logError(e);
             }
         }

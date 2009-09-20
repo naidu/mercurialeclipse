@@ -25,13 +25,20 @@ import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
+import org.eclipse.team.ui.synchronize.SubscriberParticipant;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
+/**
+ * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class?
+ * Why not {@link SubscriberParticipant}???
+ * @author Andrei
+ */
 public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant {
 
     private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION"; //$NON-NLS-1$
@@ -179,5 +186,15 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
     protected boolean isViewerContributionsSupported() {
         // allows us to contribute our own actions to the synchronize view via plugin.xml
         return true;
+    }
+
+    @Override
+    public boolean doesSupportSynchronize() {
+        return true;
+    }
+
+    @Override
+    public void run(IWorkbenchPart part) {
+        super.run(part);
     }
 }

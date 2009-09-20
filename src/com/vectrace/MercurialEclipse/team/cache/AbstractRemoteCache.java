@@ -25,7 +25,6 @@ import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
@@ -202,7 +201,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
         Assert.isNotNull(project);
 
         // check if mercurial is team provider and if we're working on an open project
-        if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) && project.isOpen()) {
+        if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
 
             // lock the cache till update is complete
             synchronized (repoChangeSets){

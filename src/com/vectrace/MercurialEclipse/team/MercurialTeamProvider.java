@@ -18,20 +18,25 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.QualifiedName;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
+import org.eclipse.ui.IPropertyListener;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -55,11 +60,13 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
     private static final Map<IProject, Boolean> HG_ROOTS = new HashMap<IProject, Boolean>();
 
+    /** key is project, value is the *current* branch */
+    private static final Map<IProject, String> BRANCH_MAP = new ConcurrentHashMap<IProject, String>();
+
     private MercurialHistoryProvider FileHistoryProvider;
 
-    /**
-	 *
-	 */
+    private static final ListenerList branchListeners = new ListenerList(ListenerList.IDENTITY);
+
     public MercurialTeamProvider() {
         super();
     }
@@ -84,9 +91,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
         assert (project != null);
         // cleanup
         HG_ROOTS.put(project, Boolean.FALSE);
+        BRANCH_MAP.remove(project);
         project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
         project.setPersistentProperty(ResourceProperties.MERGING, null);
         project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+        project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
     }
 
     /**
@@ -95,7 +104,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
      * @return true, if MercurialEclipse provides team functions to this
      *         project, false otherwise.
      */
-    public static boolean hgIsTeamProviderFor(IProject project){
+    public static boolean isHgTeamProviderFor(IProject project){
         Assert.isNotNull(project);
         Boolean result = HG_ROOTS.get(project);
         if(result == null){
@@ -103,6 +112,14 @@ public class MercurialTeamProvider extends RepositoryProvider {
             HG_ROOTS.put(project, result);
         }
         return result.booleanValue();
+    }
+
+    public static void addBranchListener(IPropertyListener listener){
+        branchListeners.add(listener);
+    }
+
+    public static void removeBranchListener(IPropertyListener listener){
+        branchListeners.remove(listener);
     }
 
     /**
@@ -241,6 +258,49 @@ public class MercurialTeamProvider extends RepositoryProvider {
     public static HgRoot getHgRoot(File file) throws CoreException {
         assert (file != null);
         return getAndStoreHgRoot(file);
+    }
+
+    /**
+     * @param res non null
+     * @return current resource branch, never null.
+     */
+    public static String getCurrentBranch(IResource res){
+        Assert.isNotNull(res);
+        IProject project = res.getProject();
+        String branch = BRANCH_MAP.get(project);
+        if(branch == null){
+            try {
+                branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
+                BRANCH_MAP.put(project, branch);
+            } catch (CoreException e) {
+                MercurialEclipsePlugin.logError(e);
+                return "";
+            }
+        }
+        return branch == null? "" : branch;
+    }
+
+    public static void setCurrentBranch(String branch, IProject project){
+        String oldBranch = null;
+        if(branch != null){
+            oldBranch = BRANCH_MAP.put(project, branch);
+        } else {
+            BRANCH_MAP.remove(project);
+        }
+        try {
+            if(project.isAccessible()) {
+                project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+            }
+        } catch (CoreException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
+        if(branch != null && !Branch.same(branch, oldBranch)){
+            Object[] listeners = branchListeners.getListeners();
+            for (int i = 0; i < listeners.length; i++) {
+                IPropertyListener listener = (IPropertyListener) listeners[i];
+                listener.propertyChanged(project, 0);
+            }
+        }
     }
 
     @Override

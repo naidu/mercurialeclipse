@@ -37,7 +37,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
@@ -570,9 +569,7 @@ public class HgRepositoryLocationManager {
             for (Iterator<IProject> iterator = projectRepos.keySet().iterator(); iterator
                     .hasNext();) {
                 IProject project = iterator.next();
-                if (null != RepositoryProvider.getProvider(project,
-                        MercurialTeamProvider.ID)
-                        && project.isAccessible()) {
+                if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
                     String url = getDefaultProjectRepository(project);
                     if (url != null
                             && url.equals(hgRepositoryLocation.getLocation())) {

@@ -22,8 +22,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 /**
  * @author bastian
@@ -58,7 +58,7 @@ public class AddBranchWizard extends HgWizard {
                 if(resource instanceof IProject){
                     IProject project = (IProject) resource;
                     String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-                    project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+                    MercurialTeamProvider.setCurrentBranch(branch, project);
                 }
                 resource.touch(monitor);
             } catch (CoreException e) {

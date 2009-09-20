@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
@@ -33,7 +34,7 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
         try {
             final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
             // update branch name
-            project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+            MercurialTeamProvider.setCurrentBranch(branch, project);
 
             // reset merge properties
             project.setPersistentProperty(ResourceProperties.MERGING, null);

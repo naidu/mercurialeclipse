@@ -16,36 +16,26 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public class MercurialResourceVariantComparator implements
-        IResourceVariantComparator {
+/**
+ * Comparator for the identity with remote content
+ * @author Andrei
+ */
+public class MercurialResourceVariantComparator implements IResourceVariantComparator {
 
-    private static MercurialStatusCache statusCache = MercurialStatusCache
-            .getInstance();
-    private ChangeSet csAtRoot;
+    private final MercurialStatusCache statusCache;
 
     public MercurialResourceVariantComparator() {
+        statusCache = MercurialStatusCache.getInstance();
     }
 
     public boolean compare(IResource local, IResourceVariant repoRevision) {
-        try {
-            // XXX this is either a big mess or I can't figure out how it should work..
-            // why do we fetch changeset for ONE specific resource only, IF the comparator
-            // is used for ALL resources???
-            if (csAtRoot == null) {
-                csAtRoot = LocalChangesetCache.getInstance().getChangesetByRootId(local);
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
-
         if (!statusCache.isClean(local)) {
             return false;
         }
@@ -65,20 +55,28 @@ public class MercurialResourceVariantComparator implements
 
         // if this is outgoing or incoming, it can't be equal to any other changeset
         Direction direction = cs.getDirection();
-        if ((direction == Direction.INCOMING || direction == Direction.OUTGOING)
-                && csAtRoot!= null && cs.getBranch().equals(csAtRoot.getBranch())) {
-            return false;
+        if (direction == Direction.INCOMING || direction == Direction.OUTGOING) {
+            String branch = MercurialTeamProvider.getCurrentBranch(local);
+            if (Branch.same(cs.getBranch(), branch)) {
+                return false;
+            }
         }
         // resource is clean and we compare against our local repository
         return true;
     }
 
     public boolean compare(IResourceVariant base, IResourceVariant remote) {
-        MercurialResourceVariant mrv = (MercurialResourceVariant) remote;
-        if (csAtRoot != null && mrv.getRev().getChangeSet().getBranch().equals(
-                csAtRoot.getBranch())) {
-            return base.getContentIdentifier().equals(
-                    remote.getContentIdentifier());
+        MercurialResourceVariant mbase = (MercurialResourceVariant) base;
+        MercurialResourceVariant mremote = (MercurialResourceVariant) remote;
+        MercurialRevisionStorage remoteRev = mremote.getRev();
+        if(mbase.getRev() == remoteRev){
+            return true;
+        }
+        IResource resource = remoteRev.getResource();
+        String remoteBranch = remoteRev.getChangeSet().getBranch();
+        String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
+        if (Branch.same(currentBranch, remoteBranch)) {
+            return base.getContentIdentifier().equals(remote.getContentIdentifier());
         }
         return true;
     }
@@ -86,5 +84,7 @@ public class MercurialResourceVariantComparator implements
     public boolean isThreeWay() {
         return true;
     }
+
+
 
 }

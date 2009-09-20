@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdapterFactory;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.model.FlaggedResource;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -29,7 +28,7 @@ public class ResourceAdapterFactory implements IAdapterFactory {
                 IProject project = resource.getProject();
 
                 //abort if not in hg
-                if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
+                if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
                     return null;
                 }
                 return resource;

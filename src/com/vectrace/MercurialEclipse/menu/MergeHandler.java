@@ -31,6 +31,7 @@ import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -64,8 +65,8 @@ public class MergeHandler extends SingleResourceHandler {
                 "Summary: " + cs.getSummary();
 
                 String branch = cs.getBranch();
-                if (branch.equals("")) {
-                    branch = "default";
+                if (Branch.isDefault(branch)) {
+                    branch = Branch.DEFAULT;
                 }
                 mb.setMessage(MessageFormat.format(Messages.getString("MergeHandler.mergeWithOtherHead"),
                         branch, csSummary));
@@ -171,7 +172,7 @@ public class MergeHandler extends SingleResourceHandler {
         ChangeSet candidate = null;
         for (ChangeSet cs : heads) {
             // must match branch
-            if (!cs.getBranch().equals(branch)) {
+            if (!Branch.same(branch, cs.getBranch())) {
                 continue;
             }
             // can't be the current

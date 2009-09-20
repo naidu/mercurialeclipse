@@ -31,7 +31,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.Team;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.PlatformUI;
@@ -250,7 +249,7 @@ public class MercurialUtilities {
             return false;
         }
         IProject project = resource.getProject();
-        if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
+        if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
             return false;
         }
 

@@ -135,7 +135,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
             public void widgetSelected(SelectionEvent e) {
                 // TODO filter changeset table
                 branchName = branchNameCombo.getText();
-                if (branchName.equals("default")) { //$NON-NLS-1$
+                if (Branch.DEFAULT.equals(branchName)) {
                     branchName = ""; //$NON-NLS-1$
                 }
 

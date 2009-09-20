@@ -26,7 +26,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
@@ -34,6 +33,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -185,7 +185,7 @@ public class LocalChangesetCache extends AbstractCache {
             boolean withFiles) throws HgException {
         Assert.isNotNull(res);
         IProject project = res.getProject();
-        if (project.isOpen() && null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
+        if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
             clear(res, false);
             fetchRevisions(res, limit, getLogBatchSize(), -1, withFiles);
         }
@@ -393,14 +393,14 @@ public class LocalChangesetCache extends AbstractCache {
         }
     }
 
-    public Set<ChangeSet> getOrFetchChangeSetsByBranch(IProject project,
-            String branchName) throws HgException {
+    public Set<ChangeSet> getOrFetchChangeSetsByBranch(IProject project, String branchName)
+            throws HgException {
 
         SortedSet<ChangeSet> changes = getOrFetchChangeSets(project);
         Set<ChangeSet> branchChangeSets = new HashSet<ChangeSet>();
         for (ChangeSet changeSet : changes) {
-            String branch = changeSet.getBranch();
-            if (branch.equals(branchName) || (branchName.equals("default") && branch.equals(""))) { //$NON-NLS-1$
+            String changesetBranch = changeSet.getBranch();
+            if (Branch.same(branchName, changesetBranch)) {
                 branchChangeSets.add(changeSet);
             }
         }

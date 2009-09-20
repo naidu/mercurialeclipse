@@ -14,7 +14,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.RepositoryProvider;
 
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -23,7 +23,7 @@ public class DisconnectHandler extends SingleResourceHandler {
     @Override
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
-        project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
+        MercurialTeamProvider.setCurrentBranch(null, project);
         RepositoryProvider.unmap(project);
         MercurialStatusCache.getInstance().clear(project, false);
         LocalChangesetCache.getInstance().clear(project, false);

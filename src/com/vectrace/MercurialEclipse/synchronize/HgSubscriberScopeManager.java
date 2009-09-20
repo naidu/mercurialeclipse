@@ -15,6 +15,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -23,11 +24,11 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
-import org.eclipse.team.core.subscribers.Subscriber;
-import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.SubscriberScopeManager;
+import org.eclipse.ui.IPropertyListener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -41,12 +42,21 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
     public static final int INCOMING = -1;
     public static final int OUTGOING = -2;
     public static final int LOCAL = -3;
+    private final IPropertyListener branchListsner;
 
     public HgSubscriberScopeManager(ResourceMapping[] inputMappings, MercurialSynchronizeSubscriber subscriber) {
         super(HgSubscriberScopeManager.class.getSimpleName(), inputMappings, subscriber, false);
+
         MercurialStatusCache.getInstance().addObserver(this);
         IncomingChangesetCache.getInstance().addObserver(this);
         OutgoingChangesetCache.getInstance().addObserver(this);
+        branchListsner = new IPropertyListener() {
+            public void propertyChanged(Object source, int propId) {
+                MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
+                subscriber1.branchChanged((IProject) source);
+            }
+        };
+        MercurialTeamProvider.addBranchListener(branchListsner);
     }
 
     public void update(Observable o, Object arg) {
@@ -110,6 +120,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
         MercurialStatusCache.getInstance().deleteObserver(this);
         IncomingChangesetCache.getInstance().deleteObserver(this);
         OutgoingChangesetCache.getInstance().deleteObserver(this);
+        MercurialTeamProvider.removeBranchListener(branchListsner);
         super.dispose();
     }
 
@@ -139,31 +150,6 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
             }
         }
         updateJob.schedule(200);
-    }
-
-    private static class HgSubscriberChangeEvent extends SubscriberChangeEvent {
-
-        public HgSubscriberChangeEvent(Subscriber subscriber, int flags, IResource resource) {
-            super(subscriber, flags, resource);
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if(this == obj){
-                return true;
-            }
-            if(!(obj instanceof HgSubscriberChangeEvent)){
-                return false;
-            }
-            HgSubscriberChangeEvent event = (HgSubscriberChangeEvent) obj;
-
-            return getResource().equals(event.getResource());
-        }
-
-        @Override
-        public int hashCode() {
-            return getResource().hashCode();
-        }
     }
 
     private static class UpdateUIJob extends Job {
