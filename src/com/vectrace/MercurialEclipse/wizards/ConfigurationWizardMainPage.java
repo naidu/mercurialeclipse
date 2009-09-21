@@ -11,6 +11,7 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -171,7 +172,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                         .getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
                 String dir = dialog.open();
                 if (dir != null) {
-                    //                    urlCombo.setText(new File(dir).toURI().toASCIIString());
+                    dir = dir.trim();
+                    // urlCombo.setText(new File(dir).toURI().toASCIIString());
                     getUrlCombo().setText(dir);
                 }
             }
@@ -386,8 +388,39 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
             setPageComplete(false);
             return;
         }
+        File localDirectory = getLocalDirectory(url);
+        if(localDirectory != null){
+            if(!localDirectory.exists()){
+                setErrorMessage("Please provide a valid url or an existing directory!");
+                setPageComplete(false);
+                return;
+            }
+            File hgRepo = new File(localDirectory, ".hg");
+            if(!hgRepo.isDirectory()){
+                setErrorMessage("Directory " + localDirectory + " does not contain a valid hg repository!");
+                setPageComplete(false);
+                return;
+            }
+        }
+
         setErrorMessage(null);
         setPageComplete(true);
+    }
+
+    /**
+     * @param urlString non null
+     * @return true if the given url can be threated as local directory
+     */
+    private File getLocalDirectory(String urlString) {
+        if(urlString.contains("http:") || urlString.contains("https:")
+                || urlString.contains("ftp:") || urlString.contains("ssh:")){
+            return null;
+        }
+        try {
+           return new File(urlString);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     @Override
