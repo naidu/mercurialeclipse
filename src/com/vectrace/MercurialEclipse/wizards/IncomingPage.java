@@ -92,9 +92,10 @@ public class IncomingPage extends HgWizardPage {
             if (isSvn()) {
                 return new TreeSet<ChangeSet>();
             }
+            IncomingChangesetCache cache = IncomingChangesetCache.getInstance();
             try {
-                SortedSet<ChangeSet> set = IncomingChangesetCache.getInstance().getChangeSets(
-                        project, location);
+                cache.clear(location, project, false);
+                SortedSet<ChangeSet> set = cache.getChangeSets(project, location);
                 SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
                 revertedSet.addAll(set);
                 return revertedSet;
