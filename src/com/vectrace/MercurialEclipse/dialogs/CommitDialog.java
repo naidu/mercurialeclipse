@@ -161,9 +161,11 @@ public class CommitDialog extends TitleAreaDialog {
         Composite comp = SWTWidgetHelper.createComposite(container, 2);
         SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
         this.userTextField = SWTWidgetHelper.createTextField(comp);
-        if (user == null || user.length() == 0) {
-            user = getInitialCommitUserName();
-        }
+        // TODO provide an option to either use default commit name OR project specific one
+        // See issue #10240: Wrong author is used in synchronization commit message
+//        if (user == null || user.length() == 0) {
+//            user = getInitialCommitUserName();
+//        }
         if (user == null || user.length() == 0) {
             user = HgClients.getDefaultUserName();
         }
