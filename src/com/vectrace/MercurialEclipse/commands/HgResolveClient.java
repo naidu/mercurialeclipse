@@ -44,10 +44,17 @@ public class HgResolveClient extends AbstractClient {
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         command.addOptions("-l"); //$NON-NLS-1$
         String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+        String projectAbsolutPath = res.getProject().getLocation().toFile().getAbsolutePath();
+        String hgAbsolutePath = getHgRoot(res).getAbsolutePath();
+        int stripLength = projectAbsolutPath.length() - hgAbsolutePath.length();
         List<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
         if (lines.length != 1 || !"".equals(lines[0])) { //$NON-NLS-1$
             for (String line : lines) {
-                IFile iFile = res.getProject().getFile(line.substring(2));
+                // Status line is always hg root relative. For those projects
+                // which has different project root (always deeper than hg root)
+                // relative path must be stripped!
+                String projectRelativeFile = line.substring(2).substring(stripLength);
+                IFile iFile = res.getProject().getFile(projectRelativeFile);
                 FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line
                         .charAt(0));
                 result.add(fa);
