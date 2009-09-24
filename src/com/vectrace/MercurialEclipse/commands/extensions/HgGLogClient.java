@@ -20,10 +20,22 @@ public class HgGLogClient extends HgCommand {
     private final List<GChangeSet> sets = new ArrayList<GChangeSet>();
 
     public HgGLogClient(IResource resource) throws HgException {
+        this(resource, -1, -1);
+    }
+
+    public HgGLogClient(IResource resource, int batchSize, int startRev) throws HgException {
         super("glog", ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), false);
         addOptions("--config", "extensions.graphlog="); //$NON-NLS-1$ //$NON-NLS-2$
         addOptions("--template", "*{rev}\\n"); // Removes everything //$NON-NLS-1$ //$NON-NLS-2$
-        addOptions("--limit", HgLogClient.NOLIMIT); //$NON-NLS-1$
+        // Do not limit for files: glog limit is counted based on repository revision.
+        if (resource.getType() == IResource.PROJECT) {
+            addOptions("--limit", (batchSize > 0) ? String.valueOf(batchSize) + "" : HgLogClient.NOLIMIT); //$NON-NLS-1$
+        }
+        if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
+            int last = Math.max(startRev - batchSize, 0);
+            addOptions("-r");
+            addOptions(startRev + ":" + last);
+        }
 
         if (resource.getType() != IResource.PROJECT) {
            addOptions(ResourceUtils.getFileHandle(resource).getAbsolutePath());
@@ -41,7 +53,7 @@ public class HgGLogClient extends HgCommand {
         String[] split = s.split("\n"); //$NON-NLS-1$
         // real changeset count as glog inserts a line between two changesets
         int length = split.length / 2;
-        int lengthp1 = length + 1;
+        int lengthp1 = length;
         RowCount rowCount = new RowCount();
         GChangeSet last = null;
         for (int i = 0; i < lengthp1; i++) {

@@ -236,9 +236,11 @@ public class MercurialHistory extends FileHistory {
                 || revisions.size() < changeSets.size()
                 || !(revisions.first().getResource().equals(resource))) {
             revisions = new TreeSet<MercurialRevision>(revComparator);
-
-            updateGraphData(changeSets);
         }
+
+        // Update graph data also in batch
+        updateGraphData(changeSets, logBatchSize, from);
+
         for (ChangeSet cs : changeSets) {
             Signature sig = sigMap.get(cs.getChangeset());
             revisions.add(new MercurialRevision(cs, gChangeSets
@@ -247,11 +249,11 @@ public class MercurialHistory extends FileHistory {
         }
     }
 
-    private void updateGraphData(SortedSet<ChangeSet> changeSets) {
+    private void updateGraphData(SortedSet<ChangeSet> changeSets, int logBatchSize, int from) {
         // put glog changesets in map for later referencing
         gChangeSets = new HashMap<Integer, GChangeSet>();
         try {
-            List<GChangeSet> gLogChangeSets = new HgGLogClient(resource)
+            List<GChangeSet> gLogChangeSets = new HgGLogClient(resource, logBatchSize, from)
                 .update(changeSets).getChangeSets();
             for (GChangeSet gs : gLogChangeSets) {
                 if (gs != null) {
