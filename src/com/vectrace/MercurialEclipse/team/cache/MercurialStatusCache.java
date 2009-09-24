@@ -1088,7 +1088,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         IPath location = local.getLocation();
         Integer status = statusMap.get(location);
         if(status == null){
-            status = Integer.valueOf(_CONFLICT);
+            status = _CONFLICT;
             setStatus(location, _CONFLICT);
         } else {
             status = Integer.valueOf(status.intValue() | BIT_CONFLICT);
@@ -1126,7 +1126,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         // TODO: group batches by repo root
 
         statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE);// STATUS_BATCH_SIZE;
-        if (statusBatchSize < 0) {
+        if (statusBatchSize <= 0) {
             statusBatchSize = STATUS_BATCH_SIZE;
             MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
         }

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
@@ -24,9 +25,11 @@ import org.eclipse.core.runtime.CoreException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgResolveClient extends AbstractClient {
 
@@ -44,17 +47,15 @@ public class HgResolveClient extends AbstractClient {
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
         command.addOptions("-l"); //$NON-NLS-1$
         String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
-        String projectAbsolutPath = res.getProject().getLocation().toFile().getAbsolutePath();
-        String hgAbsolutePath = getHgRoot(res).getAbsolutePath();
-        int stripLength = projectAbsolutPath.length() - hgAbsolutePath.length();
         List<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
         if (lines.length != 1 || !"".equals(lines[0])) { //$NON-NLS-1$
-            for (String line : lines) {
+            HgRoot hgRoot = getHgRoot(res);
+            IProject project = res.getProject();
+            for (String line : lines) {                
                 // Status line is always hg root relative. For those projects
                 // which has different project root (always deeper than hg root)
-                // relative path must be stripped!
-                String projectRelativeFile = line.substring(2).substring(stripLength);
-                IFile iFile = res.getProject().getFile(projectRelativeFile);
+                // hg root relative path must be converted
+                IResource iFile = ResourceUtils.convertRepoRelPath(hgRoot, project, line.substring(2));
                 FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line
                         .charAt(0));
                 result.add(fa);
