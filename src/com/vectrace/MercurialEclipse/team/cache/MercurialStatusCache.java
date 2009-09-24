@@ -1088,6 +1088,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         IPath location = local.getLocation();
         Integer status = statusMap.get(location);
         if(status == null){
+            status = _CONFLICT;
             setStatus(location, _CONFLICT);
         } else {
             status = Integer.valueOf(status.intValue() | BIT_CONFLICT);
