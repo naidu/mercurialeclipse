@@ -1125,7 +1125,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
         // TODO: group batches by repo root
 
         statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE);// STATUS_BATCH_SIZE;
-        if (statusBatchSize < 0) {
+        if (statusBatchSize <= 0) {
             statusBatchSize = STATUS_BATCH_SIZE;
             MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
         }
