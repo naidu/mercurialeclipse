@@ -26,11 +26,11 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class TransplantWizard extends HgWizard {
 
-    private IProject project;
+    private final IProject project;
 
     public TransplantWizard(IResource resource) {
         super(Messages.getString("TransplantWizard.title")); //$NON-NLS-1$
@@ -54,12 +54,12 @@ public class TransplantWizard extends HgWizard {
         initPage(Messages.getString("TransplantWizard.optionsPage.description"), optionsPage); //$NON-NLS-1$
         addPage(optionsPage);
     }
-    
-    
+
+
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.jface.wizard.Wizard#performFinish()
      */
     @Override
@@ -82,10 +82,14 @@ public class TransplantWizard extends HgWizard {
             TransplantPage transplantPage = (TransplantPage) page;
             TransplantOptionsPage optionsPage = (TransplantOptionsPage) page
                     .getNextPage();
-
+            boolean isBranch = transplantPage.isBranch();
+            String branchName = transplantPage.getBranchName();
+            if (isBranch && branchName != null && branchName.isEmpty()) {
+                // branch name, as command parameter is default if empty
+                branchName = "default";
+            }
             String result = HgTransplantClient.transplant(project,
-                    transplantPage.getNodeIds(), repo, transplantPage
-                            .isBranch(), transplantPage.getBranchName(),
+                    transplantPage.getNodeIds(), repo, isBranch, branchName,
                     transplantPage.isAll(), optionsPage.isMerge(), optionsPage
                             .getMergeNodeId(), optionsPage.isPrune(),
                     optionsPage.getPruneNodeId(), optionsPage
