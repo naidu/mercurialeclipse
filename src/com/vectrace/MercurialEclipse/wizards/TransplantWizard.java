@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Display;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
@@ -84,9 +85,9 @@ public class TransplantWizard extends HgWizard {
                     .getNextPage();
             boolean isBranch = transplantPage.isBranch();
             String branchName = transplantPage.getBranchName();
-            if (isBranch && branchName != null && branchName.isEmpty()) {
+            if (isBranch && Branch.isDefault(branchName)) {
                 // branch name, as command parameter is default if empty
-                branchName = "default";
+                branchName = Branch.DEFAULT;
             }
             String result = HgTransplantClient.transplant(project,
                     transplantPage.getNodeIds(), repo, isBranch, branchName,
