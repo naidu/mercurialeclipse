@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
  * A wizard page which will allow the user to choose location to export patch.
  *
  */
-public class ExportPage extends HgWizardPage implements Listener {
+public class ExportPatchPage extends HgWizardPage implements Listener {
 
     protected final List<IResource> resources;
 
@@ -38,7 +38,7 @@ public class ExportPage extends HgWizardPage implements Listener {
 
     private LocationChooser locationChooser;
 
-    public ExportPage(List<IResource> resources) {
+    public ExportPatchPage(List<IResource> resources) {
         super(Messages.getString("ExportWizard.pageName"), Messages //$NON-NLS-1$
                 .getString("ExportWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
         this.resources = resources;

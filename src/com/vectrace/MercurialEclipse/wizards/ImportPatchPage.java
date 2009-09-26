@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
  * 
  */
 
-public class ImportPage extends HgWizardPage implements Listener {
+public class ImportPatchPage extends HgWizardPage implements Listener {
 
     private LocationChooser locationChooser;
 
@@ -36,7 +36,7 @@ public class ImportPage extends HgWizardPage implements Listener {
 
     private final IProject project;
 
-    public ImportPage(IProject project) {
+    public ImportPatchPage(IProject project) {
         super(Messages.getString("ImportWizard.pageName"), Messages //$NON-NLS-1$
                 .getString("ImportWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
         this.project = project;
@@ -45,7 +45,7 @@ public class ImportPage extends HgWizardPage implements Listener {
     protected boolean validatePage() {
         String msg = locationChooser.validate();
         if (msg == null && project == null)
-            msg = Messages.getString("ImportPage.InvalidProject"); // possible? //$NON-NLS-1$
+            msg = Messages.getString("ImportPatchPage.InvalidProject"); // possible? //$NON-NLS-1$
         if (msg == null)
             setMessage(null);
         setErrorMessage(msg);
@@ -65,7 +65,7 @@ public class ImportPage extends HgWizardPage implements Listener {
         locationChooser.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
         SWTWidgetHelper.createLabel(composite, Messages
-                .getString("ImportPage.ProjectName")); //$NON-NLS-1$
+                .getString("ImportPatchPage.ProjectName")); //$NON-NLS-1$
         txtProject = SWTWidgetHelper.createTextField(composite);
         txtProject.setEditable(false);
         if (project != null)

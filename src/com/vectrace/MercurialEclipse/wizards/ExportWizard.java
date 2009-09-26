@@ -31,7 +31,7 @@ import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
 public class ExportWizard extends HgWizard {
 
-    private final ExportPage sourcePage;
+    private final ExportPatchPage sourcePage;
     private List<IResource> resources;
     private Location location;
     private final HgRoot root;
@@ -43,7 +43,7 @@ public class ExportWizard extends HgWizard {
     public ExportWizard(List<IResource> resources, HgRoot root) {
         super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
-        sourcePage = new ExportPage(resources);
+        sourcePage = new ExportPatchPage(resources);
         addPage(sourcePage);
         initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);

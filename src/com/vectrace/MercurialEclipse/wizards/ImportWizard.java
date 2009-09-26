@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
 public class ImportWizard extends HgWizard {
 
-    private final ImportPage sourcePage;
+    private final ImportPatchPage sourcePage;
     private final ImportOptionsPage optionsPage;
     private Location location;
     private final IProject project;
@@ -46,7 +46,7 @@ public class ImportWizard extends HgWizard {
         setNeedsProgressMonitor(true);
         project = selection.getProject();
 
-        sourcePage = new ImportPage(project);
+        sourcePage = new ImportPatchPage(project);
         addPage(sourcePage);
         initPage(Messages.getString("ImportWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
