@@ -29,7 +29,7 @@ import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
 import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
-public class ExportWizard extends HgWizard {
+public class ExportPatchWizard extends HgWizard {
 
     private final ExportPatchPage sourcePage;
     private List<IResource> resources;
@@ -40,16 +40,16 @@ public class ExportWizard extends HgWizard {
     private ArrayList<String> options;
     private final ExportOptionsPage optionsPage;
 
-    public ExportWizard(List<IResource> resources, HgRoot root) {
-        super(Messages.getString("ExportWizard.WindowTitle")); //$NON-NLS-1$
+    public ExportPatchWizard(List<IResource> resources, HgRoot root) {
+        super(Messages.getString("ExportPatchWizard.WindowTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
         sourcePage = new ExportPatchPage(resources);
         addPage(sourcePage);
-        initPage(Messages.getString("ExportWizard.pageDescription"), //$NON-NLS-1$
+        initPage(Messages.getString("ExportPatchWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
         optionsPage = new ExportOptionsPage();
         addPage(optionsPage);
-        initPage(Messages.getString("ExportWizard.optionsPageDescription"), //$NON-NLS-1$
+        initPage(Messages.getString("ExportPatchWizard.optionsPageDescription"), //$NON-NLS-1$
                 optionsPage);
         this.root = root;
     }
@@ -67,9 +67,9 @@ public class ExportWizard extends HgWizard {
                         .openConfirm(
                                 getShell(),
                                 Messages
-                                        .getString("ExportWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
+                                        .getString("ExportPatchWizard.OverwriteConfirmTitle"), //$NON-NLS-1$
                                 Messages
-                                        .getString("ExportWizard.OverwriteConfirmDescription"))) { //$NON-NLS-1$
+                                        .getString("ExportPatchWizard.OverwriteConfirmDescription"))) { //$NON-NLS-1$
                     return false;
                 }
             }
@@ -96,13 +96,13 @@ public class ExportWizard extends HgWizard {
 
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask(Messages.getString("ExportWizard.pageTitle"), 1); //$NON-NLS-1$
+            monitor.beginTask(Messages.getString("ExportPatchWizard.pageTitle"), 1); //$NON-NLS-1$
             try {
                 doExport();
             } catch (Exception e) {
                 result = e.getLocalizedMessage();
                 MercurialEclipsePlugin.logError(Messages
-                        .getString("ExportWizard.pageTitle") //$NON-NLS-1$
+                        .getString("ExportPatchWizard.pageTitle") //$NON-NLS-1$
                         + " failed:", e); //$NON-NLS-1$
             } finally {
                 monitor.done();

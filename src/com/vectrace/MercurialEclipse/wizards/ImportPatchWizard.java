@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.LocationType;
 import com.vectrace.MercurialEclipse.utils.ClipboardUtils;
 
-public class ImportWizard extends HgWizard {
+public class ImportPatchWizard extends HgWizard {
 
     private final ImportPatchPage sourcePage;
     private final ImportOptionsPage optionsPage;
@@ -41,19 +41,19 @@ public class ImportWizard extends HgWizard {
      * @param root
      * @param resource
      */
-    public ImportWizard(IResource selection) {
-        super(Messages.getString("ImportWizard.WizardTitle")); //$NON-NLS-1$
+    public ImportPatchWizard(IResource selection) {
+        super(Messages.getString("ImportPatchWizard.WizardTitle")); //$NON-NLS-1$
         setNeedsProgressMonitor(true);
         project = selection.getProject();
 
         sourcePage = new ImportPatchPage(project);
         addPage(sourcePage);
-        initPage(Messages.getString("ImportWizard.pageDescription"), //$NON-NLS-1$
+        initPage(Messages.getString("ImportPatchWizard.pageDescription"), //$NON-NLS-1$
                 sourcePage);
 
         optionsPage = new ImportOptionsPage();
         addPage(optionsPage);
-        initPage(Messages.getString("ImportWizard.optionsPageDescription"), optionsPage); //$NON-NLS-1$
+        initPage(Messages.getString("ImportPatchWizard.optionsPageDescription"), optionsPage); //$NON-NLS-1$
     }
 
     /*
@@ -90,13 +90,13 @@ public class ImportWizard extends HgWizard {
 
         public void run(IProgressMonitor monitor)
                 throws InvocationTargetException, InterruptedException {
-            monitor.beginTask(Messages.getString("ExportWizard.pageTitle"), 1); //$NON-NLS-1$
+            monitor.beginTask(Messages.getString("ExportPatchWizard.pageTitle"), 1); //$NON-NLS-1$
             try {
                 performOperation();
             } catch (Exception e) {
                 result = e.getLocalizedMessage();
                 MercurialEclipsePlugin.logError(Messages
-                        .getString("ExportWizard.pageTitle") //$NON-NLS-1$
+                        .getString("ExportPatchWizard.pageTitle") //$NON-NLS-1$
                         + " failed:", e); //$NON-NLS-1$
             } finally {
                 monitor.done();

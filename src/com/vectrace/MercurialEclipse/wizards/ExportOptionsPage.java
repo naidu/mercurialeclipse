@@ -42,8 +42,8 @@ public class ExportOptionsPage extends HgWizardPage implements Listener {
     private Button chkIgnoreBlankLines;
 
     public ExportOptionsPage() {
-        super(Messages.getString("ImportWizard.optionsPageName"), Messages //$NON-NLS-1$
-                .getString("ImportWizard.optionsPageTitle"), null); //$NON-NLS-1$
+        super(Messages.getString("ImportPatchWizard.optionsPageName"), Messages //$NON-NLS-1$
+                .getString("ImportPatchWizard.optionsPageTitle"), null); //$NON-NLS-1$
     }
 
     protected boolean validatePage() {

@@ -17,7 +17,7 @@ import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.wizards.ExportWizard;
+import com.vectrace.MercurialEclipse.wizards.ExportPatchWizard;
 
 public class ExportPatchHandler extends MultipleResourcesHandler {
 
@@ -29,7 +29,7 @@ public class ExportPatchHandler extends MultipleResourcesHandler {
     public void openWizard(List<IResource> resources, Shell shell)
             throws Exception {
         HgRoot root = ensureSameRoot(resources);
-        ExportWizard wizard = new ExportWizard(resources, root);
+        ExportPatchWizard wizard = new ExportPatchWizard(resources, root);
         WizardDialog dialog = new WizardDialog(shell, wizard);
         dialog.setBlockOnOpen(true);
         dialog.open();

@@ -1047,13 +1047,13 @@
 
    <extension point="org.eclipse.ui.importWizards">
       <category
-            id="com.vectrace.MercurialEclipse.wizards.sampleCategory"
+            id="com.vectrace.MercurialEclipse.wizards.import"
             name="%mercurial"/>
       <wizard
-            category="com.vectrace.MercurialEclipse.wizards.sampleCategory"
+            category="com.vectrace.MercurialEclipse.wizards.import"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
             icon="icons/mercury_Hg.png"
-            id="com.vectrace.MercurialEclipse.wizards.ImportWizard"
+            id="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
             name="%cloneRepository">
          <description>
             %importFile
@@ -1064,11 +1064,11 @@
 
    <extension point="org.eclipse.ui.newWizards">
       <category
-            id="com.vectrace.MercurialEclipse"
+            id="com.vectrace.MercurialEclipse.wizards.new"
             name="%mercurial"/>
       <wizard
             canFinishEarly="false"
-            category="com.vectrace.MercurialEclipse"
+            category="com.vectrace.MercurialEclipse.wizards.new"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
             icon="icons/mercury_Hg.png"
             id="com.vectrace.MercurialEclipse.wizards.NewHgProjectWizard"

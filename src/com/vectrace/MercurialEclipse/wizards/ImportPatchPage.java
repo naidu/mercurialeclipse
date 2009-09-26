@@ -37,8 +37,8 @@ public class ImportPatchPage extends HgWizardPage implements Listener {
     private final IProject project;
 
     public ImportPatchPage(IProject project) {
-        super(Messages.getString("ImportWizard.pageName"), Messages //$NON-NLS-1$
-                .getString("ImportWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
+        super(Messages.getString("ImportPatchWizard.pageName"), Messages //$NON-NLS-1$
+                .getString("ImportPatchWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
         this.project = project;
     }
 
@@ -58,7 +58,7 @@ public class ImportPatchPage extends HgWizardPage implements Listener {
         // TODO help
 
         Group group = SWTWidgetHelper.createGroup(composite, Messages
-                .getString("ExportWizard.PathLocation"),2,GridData.FILL_HORIZONTAL); //$NON-NLS-1$
+                .getString("ExportPatchWizard.PathLocation"),2,GridData.FILL_HORIZONTAL); //$NON-NLS-1$
 
         locationChooser = new LocationChooser(group, false, getDialogSettings());
         locationChooser.addStateListener(this);

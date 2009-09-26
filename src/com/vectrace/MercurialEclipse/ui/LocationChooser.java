@@ -82,11 +82,11 @@ public class LocationChooser extends Composite implements Listener {
 
     protected void createLocationControl() {
         btnClipboard = SWTWidgetHelper.createRadioButton(this, Messages
-                .getString("ExportWizard.Clipboard"), 3); //$NON-NLS-1$
+                .getString("ExportPatchWizard.Clipboard"), 3); //$NON-NLS-1$
         btnClipboard.addListener(SWT.Selection, this);
 
         btnFilesystem = SWTWidgetHelper.createRadioButton(this, Messages
-                .getString("ExportWizard.FileSystem"), //$NON-NLS-1$
+                .getString("ExportPatchWizard.FileSystem"), //$NON-NLS-1$
                 1);
         btnFilesystem.addListener(SWT.Selection, this);
         txtSystemFile = SWTWidgetHelper.createTextField(this);
@@ -105,7 +105,7 @@ public class LocationChooser extends Composite implements Listener {
         btnBrowseFileSystem.addListener(SWT.Selection, this);
 
         btnWorkspace = SWTWidgetHelper.createRadioButton(this, Messages
-                .getString("ExportWizard.Workspace"), 1); //$NON-NLS-1$
+                .getString("ExportPatchWizard.Workspace"), 1); //$NON-NLS-1$
         btnWorkspace.addListener(SWT.Selection, this);
         txtWorkspaceFile = SWTWidgetHelper.createTextField(this);
         txtWorkspaceFile.setEditable(false);
@@ -177,7 +177,7 @@ public class LocationChooser extends Composite implements Listener {
         }
         if (valid)
             return null;
-        return Messages.getString("ExportWizard.InvalidFileName"); //$NON-NLS-1$
+        return Messages.getString("ExportPatchWizard.InvalidFileName"); //$NON-NLS-1$
     }
 
     private String validateClipboard() {

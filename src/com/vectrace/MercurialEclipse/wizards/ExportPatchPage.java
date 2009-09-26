@@ -39,15 +39,15 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
     private LocationChooser locationChooser;
 
     public ExportPatchPage(List<IResource> resources) {
-        super(Messages.getString("ExportWizard.pageName"), Messages //$NON-NLS-1$
-                .getString("ExportWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
+        super(Messages.getString("ExportPatchWizard.pageName"), Messages //$NON-NLS-1$
+                .getString("ExportPatchWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
         this.resources = resources;
     }
 
     protected boolean validatePage() {
         String msg = locationChooser.validate();
         if (msg == null && getCheckedResources().size() == 0) {
-            msg = Messages.getString("ExportWizard.InvalidPathFile"); //$NON-NLS-1$
+            msg = Messages.getString("ExportPatchWizard.InvalidPathFile"); //$NON-NLS-1$
         }
         if (msg == null) {
             setMessage(null);
@@ -62,7 +62,7 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
         // TODO help
 
         Group group = SWTWidgetHelper.createGroup(composite, Messages
-                .getString("ExportWizard.PathLocation")); //$NON-NLS-1$
+                .getString("ExportPatchWizard.PathLocation")); //$NON-NLS-1$
         locationChooser = new LocationChooser(group, true, getDialogSettings());
         locationChooser.addStateListener(this);
         GridData data = new GridData(GridData.FILL_HORIZONTAL);

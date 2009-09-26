@@ -16,7 +16,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Shell;
 
-import com.vectrace.MercurialEclipse.wizards.ImportWizard;
+import com.vectrace.MercurialEclipse.wizards.ImportPatchWizard;
 
 public class ImportPatchHandler extends SingleResourceHandler {
 
@@ -27,7 +27,7 @@ public class ImportPatchHandler extends SingleResourceHandler {
 
     public void openWizard(IResource resource, Shell shell) throws Exception {
         IProject project = resource.getProject();
-        ImportWizard wizard = new ImportWizard(project);
+        ImportPatchWizard wizard = new ImportPatchWizard(project);
         WizardDialog dialog = new WizardDialog(shell, wizard);
         dialog.setBlockOnOpen(true);
         if (Window.OK == dialog.open())

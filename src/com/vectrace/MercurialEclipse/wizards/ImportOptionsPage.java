@@ -47,8 +47,8 @@ public class ImportOptionsPage extends HgWizardPage implements Listener {
     private Text txtStrip;
 
     public ImportOptionsPage() {
-        super(Messages.getString("ImportWizard.optionsPageName"), Messages //$NON-NLS-1$
-                .getString("ImportWizard.optionsPageTitle"), null); //$NON-NLS-1$
+        super(Messages.getString("ImportPatchWizard.optionsPageName"), Messages //$NON-NLS-1$
+                .getString("ImportPatchWizard.optionsPageTitle"), null); //$NON-NLS-1$
     }
 
     protected boolean validatePage() {
