@@ -220,7 +220,11 @@ public abstract class AbstractShellCommand extends AbstractClient {
         } catch (IOException e) {
             throw new HgException(e.getMessage(), e);
         } catch (InterruptedException e) {
-            throw new HgException(e.getMessage(), e);
+            String message = e.getMessage();
+            if(message == null || message.length() == 0){
+                message = "Operation cancelled";
+            }
+            throw new HgException(message, e);
         } finally {
             if (process != null) {
                 process.destroy();
