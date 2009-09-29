@@ -41,9 +41,59 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- *
+ * @author Andrei Loskutov
  */
 public class ResourceUtils {
+
+    private static final File TMP_ROOT = new File(System.getProperty("java.io.tmpdir"));
+    private static long tmpFileSuffix = 0;
+
+    public static File getSystemTempDirectory(){
+        return TMP_ROOT;
+    }
+
+    /**
+     * @return a newly created temp directory which is located inside the default temp
+     * diectory
+     */
+    public static File createNewTempDirectory(){
+        File tmp = getSystemTempDirectory();
+        File newTemp = null;
+        while(!(newTemp = new File(tmp, "hgTemp_" + tmpFileSuffix)).mkdir()){
+            tmpFileSuffix ++;
+        }
+        return newTemp;
+    }
+
+    /**
+     * If "recursive" is false, then this is a single file/directory delete
+     * operation. Directory should be empty before it can be deleted.
+     * If "recursive" is true, then all children will be deleted too.
+     * @param source
+     * @return true if source was successfully deleted or if it was not existing
+     */
+    public static boolean delete(File source, boolean recursive) {
+        if (source == null || !source.exists()) {
+            return true;
+        }
+        if (recursive) {
+            if (source.isDirectory()) {
+                File[] files = source.listFiles();
+                boolean ok = true;
+                for (int i = 0; i < files.length; i++) {
+                    ok = delete(files[i], true);
+                    if (!ok) {
+                        return false;
+                    }
+                }
+            }
+        }
+        boolean result = source.delete();
+        if (!result && !source.isDirectory()) {
+            MercurialEclipsePlugin.logWarning("Could not delete file '" + source + "'", null);
+        }
+        return result;
+    }
 
     /**
      * Checks which editor is active an determines the IResource that is edited.
@@ -213,7 +263,7 @@ public class ResourceUtils {
     public static IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
         // determine absolute path
         IPath path = new Path(hgRoot.getAbsolutePath()).append(repoRelPath);
-    
+
         // determine project relative path
         int equalSegments = path.matchingFirstSegments(project.getLocation());
         path = path.removeFirstSegments(equalSegments);

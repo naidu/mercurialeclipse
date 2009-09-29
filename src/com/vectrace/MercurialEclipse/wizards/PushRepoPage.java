@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 
-import java.net.URISyntaxException;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
@@ -21,11 +20,12 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class PushRepoPage extends PushPullPage {
 
@@ -34,15 +34,12 @@ public class PushRepoPage extends PushPullPage {
         super(resource, pageName, title, titleImage);
         showRevisionTable = false;
     }
-    
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.wizards.PushPullPage#createControl(org.eclipse.swt.widgets.Composite)
-     */
+
     @Override
-    public void createControl(Composite parent) {     
-        super.createControl(parent);        
+    public void createControl(Composite parent) {
+        super.createControl(parent);
     }
-    
+
 
     @Override
     public boolean finish(IProgressMonitor monitor) {
@@ -50,7 +47,7 @@ public class PushRepoPage extends PushPullPage {
         this.timeout = timeoutCheckBox.getSelection();
         return super.finish(monitor);
     }
-    
+
     @Override
     public boolean canFlipToNextPage() {
         try {
@@ -62,7 +59,7 @@ public class PushRepoPage extends PushPullPage {
                         .getRepoManager().getRepoLocation(urlCombo.getText(),
                                 getUserCombo().getText(),
                                 getPasswordText()
-                                .getText());                
+                                .getText());
                 outgoingPage.setLocation(loc);
                 outgoingPage.setSvn(getSvnCheckBox() != null
                         && getSvnCheckBox().getSelection());
@@ -70,18 +67,12 @@ public class PushRepoPage extends PushPullPage {
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
-        } catch (URISyntaxException e) {
+        } catch (HgException e) {
             setErrorMessage(e.getLocalizedMessage());
         }
         return false;
     }
-    
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.PushPullPage#setDefaultLocation()
-     */
+
     @Override
     protected Set<HgRepositoryLocation> setDefaultLocation() {
         HgRepositoryLocation defaultLocation = null;
@@ -97,7 +88,7 @@ public class PushRepoPage extends PushPullPage {
                 break;
             }
         }
-        
+
         if (defaultLocation == null) {
             defaultLocation = MercurialEclipsePlugin
                 .getRepoManager().getDefaultProjectRepoLocation(
@@ -106,7 +97,7 @@ public class PushRepoPage extends PushPullPage {
 
         if (defaultLocation != null) {
             getUrlCombo().setText(defaultLocation.getLocation());
-            
+
             String user = defaultLocation.getUser();
             if (user != null && user.length() != 0) {
                 getUserCombo().setText(user);

@@ -21,7 +21,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,7 +96,7 @@ public class HgRepositoryLocationManager {
                     addRepoLocation(new HgRepositoryLocation(null, line, null,
                             null));
                 }
-            } catch (URISyntaxException e) {
+            } catch (HgException e) {
                 // we don't want to load it - it will be cleaned when saving
                 MercurialEclipsePlugin.logError(e);
             } finally {
@@ -271,7 +270,7 @@ public class HgRepositoryLocationManager {
                             entry.getKey(),
                             null, null);
                     internalAddRepoLocation(project, loc);
-                } catch (URISyntaxException e) {
+                } catch (HgException e) {
                     MercurialEclipsePlugin.logError(e);
                 }
             }
@@ -397,7 +396,7 @@ public class HgRepositoryLocationManager {
      * @return never returns null
      */
     public HgRepositoryLocation getRepoLocation(String url)
-            throws URISyntaxException {
+            throws HgException {
         return getRepoLocation(url, null, null);
     }
 
@@ -406,7 +405,7 @@ public class HgRepositoryLocationManager {
      * @return never returns null
      */
     public HgRepositoryLocation getRepoLocation(String url, String user,
-            String pass) throws URISyntaxException {
+            String pass) throws HgException {
         HgRepositoryLocation location = matchRepoLocation(url);
         if (location != null) {
             if (user == null || user.length() == 0 || user.equals(location.getUser())) {
@@ -416,6 +415,41 @@ public class HgRepositoryLocationManager {
 
         // make a new location if no matches exist or it's a different user
         return new HgRepositoryLocation(null, url, user, pass);
+    }
+
+    /**
+     * Get a repo specified by properties. If repository for given url is unknown,
+     * returns a new location.
+     * @return never returns null
+     */
+    public HgRepositoryLocation getRepoLocation(Properties props) throws HgException {
+        String user = props.getProperty("user"); //$NON-NLS-1$
+        if ((user == null) || (user.length() == 0)) {
+            user = null;
+        }
+        String password = props.getProperty("password"); //$NON-NLS-1$
+        if (user == null) {
+            password = null;
+        }
+        String rootUrl = props.getProperty("rootUrl"); //$NON-NLS-1$
+        if ((rootUrl == null) || (rootUrl.length() == 0)) {
+            rootUrl = null;
+        }
+        String url = props.getProperty("url"); //$NON-NLS-1$
+        if (url == null) {
+            throw new HgException(Messages
+                    .getString("HgRepositoryLocation.urlMustNotBeNull")); //$NON-NLS-1$
+        }
+
+        HgRepositoryLocation location = matchRepoLocation(url);
+        if (location != null) {
+            if (user == null || user.length() == 0 || user.equals(location.getUser())) {
+                return location;
+            }
+        }
+
+        // make a new location if no matches exist or it's a different user
+        return new HgRepositoryLocation(null, url, user, password);
     }
 
     /**
@@ -438,7 +472,7 @@ public class HgRepositoryLocationManager {
      */
     public HgRepositoryLocation updateRepoLocation(String url,
             String logicalName, String user, String pass)
-            throws URISyntaxException {
+            throws HgException {
         HgRepositoryLocation loc = matchRepoLocation(url);
 
         if (loc == null) {
@@ -496,7 +530,7 @@ public class HgRepositoryLocationManager {
      * where the repository resides rootUrl The repository root url
      */
     public HgRepositoryLocation fromProperties(Properties configuration)
-            throws HgException, URISyntaxException {
+            throws HgException {
 
         String user = configuration.getProperty("user"); //$NON-NLS-1$
         if ((user == null) || (user.length() == 0)) {
@@ -544,14 +578,7 @@ public class HgRepositoryLocationManager {
     public HgRepositoryLocation createRepository(Properties configuration)
             throws HgException {
         // Create a new repository location
-        HgRepositoryLocation location;
-        try {
-            location = fromProperties(configuration);
-        } catch (URISyntaxException e) {
-            throw new HgException(Messages
-                    .getString("HgRepositoryLocationManager.couldntCreate"), e); //$NON-NLS-1$
-        }
-
+        HgRepositoryLocation location = fromProperties(configuration);
         addRepoLocation(location);
         return location;
     }

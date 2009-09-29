@@ -11,8 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.URISyntaxException;
-
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -30,12 +28,10 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
-/*
+/**
  * This file implements a wizard page which will allow the user to create a
  * repository location.
- * 
  */
-
 public class PullPage extends PushPullPage {
 
     public Button getRebaseCheckBox() {
@@ -51,9 +47,6 @@ public class PullPage extends PushPullPage {
         return commitDialogCheckBox;
     }
 
-    /**
-     * @param pageName
-     */
     public PullPage(String pageName, String title, String description,
             IResource resource, ImageDescriptor titleImage) {
         super(resource, pageName, title, titleImage);
@@ -70,12 +63,12 @@ public class PullPage extends PushPullPage {
                     && getUrlCombo().getText() != null) {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
                 incomingPage.setProject(resource.getProject());
-                HgRepositoryLocation loc = 
+                HgRepositoryLocation loc =
                     MercurialEclipsePlugin
                         .getRepoManager().getRepoLocation(
                                 getUrlCombo().getText(),
                                 getUserCombo().getText(),
-                                getPasswordText().getText());                
+                                getPasswordText().getText());
                 incomingPage.setLocation(loc);
                 incomingPage.setSvn(getSvnCheckBox() != null
                         && getSvnCheckBox().getSelection());
@@ -83,7 +76,7 @@ public class PullPage extends PushPullPage {
                 return isPageComplete()
                         && (getWizard().getNextPage(this) != null);
             }
-        } catch (URISyntaxException e) {
+        } catch (HgException e) {
             setErrorMessage(e.getLocalizedMessage());
         }
         return false;
@@ -108,13 +101,6 @@ public class PullPage extends PushPullPage {
         return validLocation;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets
-     * .Composite)
-     */
     @Override
     public void createControl(Composite parent) {
         super.createControl(parent);
@@ -133,24 +119,10 @@ public class PullPage extends PushPullPage {
                 this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
                         Messages.getString("PullPage.option.rebase")); //$NON-NLS-1$
                 SelectionListener rebaseCheckBoxListener = new SelectionListener() {
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @seeorg.eclipse.swt.events.SelectionListener#
-                     * widgetDefaultSelected
-                     * (org.eclipse.swt.events.SelectionEvent)
-                     */
                     public void widgetDefaultSelected(SelectionEvent e) {
                         widgetSelected(e);
                     }
 
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @see
-                     * org.eclipse.swt.events.SelectionListener#widgetSelected
-                     * (org.eclipse.swt.events.SelectionEvent)
-                     */
                     public void widgetSelected(SelectionEvent e) {
                         if (rebaseCheckBox.getSelection()) {
                             updateCheckBox.setSelection(!rebaseCheckBox
@@ -159,24 +131,9 @@ public class PullPage extends PushPullPage {
                     }
                 };
                 SelectionListener updateCheckBoxListener = new SelectionListener() {
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @seeorg.eclipse.swt.events.SelectionListener#
-                     * widgetDefaultSelected
-                     * (org.eclipse.swt.events.SelectionEvent)
-                     */
                     public void widgetDefaultSelected(SelectionEvent e) {
                         widgetSelected(e);
                     }
-
-                    /*
-                     * (non-Javadoc)
-                     * 
-                     * @see
-                     * org.eclipse.swt.events.SelectionListener#widgetSelected
-                     * (org.eclipse.swt.events.SelectionEvent)
-                     */
                     public void widgetSelected(SelectionEvent e) {
                         if (updateCheckBox.getSelection()) {
                             rebaseCheckBox.setSelection(!updateCheckBox
@@ -208,24 +165,10 @@ public class PullPage extends PushPullPage {
         mergeGroup.moveBelow(pullGroup);
 
         SelectionListener mergeCheckBoxListener = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
 
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
-             * .swt.events.SelectionEvent)
-             */
             public void widgetSelected(SelectionEvent e) {
                 commitDialogCheckBox.setEnabled(mergeCheckBox.getSelection());
                 if (mergeCheckBox.getSelection()) {
@@ -260,82 +203,39 @@ public class PullPage extends PushPullPage {
 
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.ConfigurationWizardMainPage#finish
-     * (org.eclipse.core.runtime.IProgressMonitor)
-     */
     @Override
     public boolean finish(IProgressMonitor monitor) {
         return super.finish(monitor);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getForceCheckBoxLabel
-     * ()
-     */
     @Override
     protected String getForceCheckBoxLabel() {
         return Messages.getString("PullPage.forceCheckBox.title"); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevGroupLabel()
-     */
     @Override
     protected String getRevGroupLabel() {
         return Messages.getString("PullPage.revGroup.title"); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getRevCheckBoxLabel()
-     */
     @Override
     protected String getRevCheckBoxLabel() {
         return Messages.getString("PullPage.revCheckBox.title"); //$NON-NLS-1$
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.wizards.PushPullPage#getTimeoutCheckBoxLabel
-     * ()
-     */
     @Override
     protected String getTimeoutCheckBoxLabel() {
         return Messages.getString("PullPage.timeoutCheckBox.title"); //$NON-NLS-1$
     }
 
-    /**
-     * @return the updateCheckBox
-     */
     public Button getUpdateCheckBox() {
         return updateCheckBox;
     }
 
-    /**
-     * @param updateCheckBox
-     *            the updateCheckBox to set
-     */
     public void setUpdateCheckBox(Button updateCheckBox) {
         this.updateCheckBox = updateCheckBox;
     }
 
-    /**
-     * @return the mergeCheckBox
-     */
     public Button getMergeCheckBox() {
         return mergeCheckBox;
     }

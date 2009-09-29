@@ -19,6 +19,7 @@ import java.util.Properties;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 
@@ -124,16 +125,13 @@ public class PushRepoWizard extends HgWizard {
 
             updateAfterPush(result, project, repo, isForest);
 
-        } catch (URISyntaxException e) {
+        } catch (CoreException e) {
+            if(!(e.getCause() instanceof URISyntaxException)){
+                MercurialEclipsePlugin.logError(e);
+            }
             MessageDialog.openError(
                     Display.getCurrent().getActiveShell(),
-                    Messages.getString("PushRepoWizard.malformedUrl"), e.getMessage()); //$NON-NLS-1$
-            return false;
-
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(Display.getCurrent().getActiveShell(), e
-                    .getMessage(), e.getMessage());
+                    "Error during push", e.getMessage()); //$NON-NLS-1$
             return false;
         }
         return true;
@@ -157,14 +155,4 @@ public class PushRepoWizard extends HgWizard {
         MercurialStatusCache.getInstance().refreshStatus(project, null);
     }
 
-    /**
-     * Creates a ConfigurationWizardPage.
-     */
-    protected HgWizardPage createPage(String pageName, String pageTitle,
-            String iconPath, String description) {
-        page = new ConfigurationWizardMainPage(pageName, pageTitle,
-                MercurialEclipsePlugin.getImageDescriptor(iconPath));
-        initPage(description, page);
-        return page;
-    }
 }

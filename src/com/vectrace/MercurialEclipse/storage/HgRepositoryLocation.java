@@ -20,14 +20,15 @@ import java.net.URISyntaxException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 
-/*
+/**
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation extends AllRootsElement implements
-        Comparable<HgRepositoryLocation> {
+public class HgRepositoryLocation extends AllRootsElement implements  Comparable<HgRepositoryLocation> {
+
     private String logicalName;
     private String location;
     private String user;
@@ -36,23 +37,19 @@ public class HgRepositoryLocation extends AllRootsElement implements
     private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
     private static final String ALIAS_TOKEN = "@alias@"; //$NON-NLS-1$
     private static final String PASSWORD_TOKEN = ":"; //$NON-NLS-1$
-    
 
-    HgRepositoryLocation(String logicalName, String uri)
-            throws URISyntaxException {
+    HgRepositoryLocation(String logicalName, String uri) throws HgException {
         this(logicalName, uri, null, null);
     }
 
-    HgRepositoryLocation(String logicalName, String uri, String user,
-            String password)
-            throws URISyntaxException {
+    HgRepositoryLocation(String logicalName, String uri, String user, String password) throws HgException {
         this.logicalName = logicalName;
         this.location = uri;
         String[] repoInfo = uri.split(SPLIT_TOKEN);
-        
+
         this.user = user;
         this.password = password;
-        
+
         if ((this.user == null || this.user.length() == 0)
                 && repoInfo.length > 1) {
             String userInfo = repoInfo[1];
@@ -61,13 +58,14 @@ public class HgRepositoryLocation extends AllRootsElement implements
             }
             String[] splitUserInfo = userInfo.split(PASSWORD_TOKEN);
             this.user = splitUserInfo[0];
-            if (splitUserInfo.length > 1)
+            if (splitUserInfo.length > 1) {
                 this.password = splitUserInfo[1];
-            else
+            } else {
                 this.password = null;
+            }
             location = repoInfo[0];
         }
-        
+
         String[] alias = uri.split(ALIAS_TOKEN);
         if (alias.length == 2
                 && (logicalName == null || logicalName.length() == 0)) {
@@ -76,7 +74,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
                 location = location.substring(0, location.indexOf(ALIAS_TOKEN));
             }
         }
-        
+
         URI myUri = null;
         try {
             myUri = new URI(location);
@@ -92,7 +90,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
             // see http://www.selenic.com/mercurial/bts/issue1153
             // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
             // + myUri.toASCIIString().substring(5));
-        }        
+        }
         if (myUri != null) {
             if (myUri.getScheme() != null
                     && !myUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
@@ -105,7 +103,7 @@ public class HgRepositoryLocation extends AllRootsElement implements
                     } else {
                         userInfo = createUserinfo(this.user, this.password);
                     }
-                    
+
                 } else {
                     // extract user and password from given URI
                     String[] authorization = myUri.getUserInfo().split(":"); //$NON-NLS-1$
@@ -113,8 +111,8 @@ public class HgRepositoryLocation extends AllRootsElement implements
                     if (authorization.length > 1) {
                         this.password = authorization[1];
                     }
-                    
-                    // This is a hack: ssh doesn't allow us to directly enter 
+
+                    // This is a hack: ssh doesn't allow us to directly enter
                     // in passwords in the URI (even though it says it does)
                     if (myUri.getScheme().equalsIgnoreCase("ssh")) {
                         userInfo = this.user;
@@ -122,9 +120,15 @@ public class HgRepositoryLocation extends AllRootsElement implements
                         userInfo = createUserinfo(this.user, this.password);
                     }
                 }
-                this.uri = new URI(myUri.getScheme(), userInfo,
+                try {
+                    this.uri = new URI(myUri.getScheme(), userInfo,
                         myUri.getHost(), myUri.getPort(), myUri.getPath(),
                         myUri.getQuery(), myUri.getFragment());
+                } catch (URISyntaxException e) {
+                    HgException hgex = new HgException("Failed to create hg repository", e);
+                    hgex.initCause(e);
+                    throw hgex;
+                }
             }
             /*
              * Bugfix for issue #208, port number not displayed for push/pull drop-down
@@ -132,23 +136,25 @@ public class HgRepositoryLocation extends AllRootsElement implements
              */
             //this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
             //        .getPath(), myUri.getFragment()).toASCIIString();
-            this.location = new URI(myUri.getScheme(), null, myUri.getHost(), myUri.getPort(),
-                    myUri.getPath(), null, myUri.getFragment()).toASCIIString();
+            try {
+                this.location = new URI(myUri.getScheme(), null, myUri.getHost(), myUri.getPort(),
+                        myUri.getPath(), null, myUri.getFragment()).toASCIIString();
+            } catch (URISyntaxException e) {
+                HgException hgex = new HgException("Failed to create hg repository", e);
+                hgex.initCause(e);
+                throw hgex;
+            }
         }
     }
 
-    /**
-     * @param user
-     * @param password
-     * @return
-     */
-    private String createUserinfo(String user, String password) {
+    private String createUserinfo(String user1, String password1) {
         String userInfo = null;
-        if (user != null && user.length() > 0) {
+        if (user1 != null && user1.length() > 0) {
             // pass gotta be separated by a colon
-            userInfo = user;
-            if (password != null && password.length() != 0) {
-                userInfo = userInfo.concat(":").concat(password); //$NON-NLS-1$
+            if (password1 != null && password1.length() != 0) {
+                userInfo = user1 + PASSWORD_TOKEN + password1;
+            } else {
+                userInfo = user1;
             }
         }
         return userInfo;
@@ -168,11 +174,6 @@ public class HgRepositoryLocation extends AllRootsElement implements
         return this.location.compareTo(loc.location);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#hashCode()
-     */
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -182,18 +183,10 @@ public class HgRepositoryLocation extends AllRootsElement implements
         return result;
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
-        }
-        if (obj == null) {
-            return false;
         }
         if (!(obj instanceof HgRepositoryLocation)) {
             return false;
@@ -209,16 +202,10 @@ public class HgRepositoryLocation extends AllRootsElement implements
         return true;
     }
 
-    /**
-     * @return the user
-     */
     public String getUser() {
         return user;
     }
 
-    /**
-     * @return the password
-     */
     public String getPassword() {
         return password;
     }
@@ -252,20 +239,14 @@ public class HgRepositoryLocation extends AllRootsElement implements
         return super.getImageDescriptor(object);
     }
 
-    /**
-     * @return the uri
-     */
     public URI getUri() {
         return uri;
     }
 
-    /**
-     * @return the location
-     */
     public String getLocation() {
         return location;
     }
-    
+
     /**
      * @return a location with password removed that is safe to display on screen
      */
@@ -273,21 +254,18 @@ public class HgRepositoryLocation extends AllRootsElement implements
         if (uri == null) {
             return this.location;
         }
-        
+
         try {
             return (new URI(uri.getScheme(), user,
                     uri.getHost(), uri.getPort(), uri.getPath(),
                     uri.getQuery(), uri.getFragment())).toString();
-            
+
         } catch (URISyntaxException e) {
             // This shouldn't happen at this point
             throw new RuntimeException(e);
         }
     }
 
-    /**
-     * @return the logicalName
-     */
     public String getLogicalName() {
         return logicalName;
     }

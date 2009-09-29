@@ -17,12 +17,12 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgCloneClient {    
+public class HgCloneClient {
 
-    public static void clone(String parentDirectory, HgRepositoryLocation repo,
+    public static void clone(File parentDirectory, HgRepositoryLocation repo,
             boolean noUpdate, boolean pull, boolean uncompressed,
             boolean timeout, String rev, String cloneName) throws HgException {
-        AbstractShellCommand command = new HgCommand("clone", new File(parentDirectory), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("clone", parentDirectory, //$NON-NLS-1$
                 false);
 
         if (noUpdate) {

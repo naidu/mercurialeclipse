@@ -33,31 +33,21 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 /**
  * This action adds projects to the workspace using their unique Mercurial
  * reference strings from projectsets
- * 
+ *
  * @author Bastian Doetsch
  */
 public class AddToWorkspaceAction extends WorkspaceModifyOperation {
-    private String[] referenceStrings = null;
-    private IProject[] projectsCreated = null;
+    private String[] referenceStrings;
+    private IProject[] projectsCreated;
 
-    /**
-     * 
-     */
     public AddToWorkspaceAction() {
+        super();
     }
 
-    /**
-     * @param rule
-     */
     public AddToWorkspaceAction(ISchedulingRule rule) {
         super(rule);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.actions.WorkspaceModifyOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
-     */
     @Override
     protected void execute(IProgressMonitor monitor) throws CoreException,
             InvocationTargetException, InterruptedException {
@@ -74,12 +64,12 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
             /*
              * iterate over all reference strings and use them to create
              * projects in the current workspace.
-             * 
+             *
              * A reference string uses underscore as delimiter and looks like
              * this:
-             * 
+             *
              * "MercurialEclipseProjectSet_ProjectName_RepositoryURLForClone"
-             * 
+             *
              */
 
             for (String reference : referenceStrings) {
@@ -107,7 +97,7 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
                             referenceParts[2], null, null);
 
                     HgCloneClient.clone(workspace.getRoot().getLocation()
-                            .toOSString(), location, false, false, false,
+                            .toFile(), location, false, false, false,
                             false, null, referenceParts[1]);
 
                     proj.create(monitor);
@@ -129,7 +119,7 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
                     // refresh project to get decorations
                     proj.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
-                } catch (Exception e) {
+                } catch (CoreException e) {
                     CoreException ex = new CoreException(new Status(
                             IStatus.ERROR, MercurialEclipsePlugin.ID, e
                                     .getLocalizedMessage()));

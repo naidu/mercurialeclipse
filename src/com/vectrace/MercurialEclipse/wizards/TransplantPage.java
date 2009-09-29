@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,10 +72,17 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
         ModifyListener urlModifyListener = new ModifyListener() {
             public void modifyText(ModifyEvent e) {
+                HgRepositoryLocation repoLocation;
                 try {
-                    HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+                    repoLocation = MercurialEclipsePlugin.getRepoManager()
                             .getRepoLocation(getUrlCombo().getText());
-                    setErrorMessage(null);
+                } catch (HgException e1) {
+                    // bad URI?
+                    setErrorMessage(e1.getMessage());
+                    return;
+                }
+                setErrorMessage(null);
+                try {
                     SortedSet<ChangeSet> changes = IncomingChangesetCache
                             .getInstance().getChangeSets(project, repoLocation);
                     changesets.clear();
@@ -85,10 +91,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                 } catch (HgException e1) {
                     setErrorMessage(Messages.getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$)
                     MercurialEclipsePlugin.logError(e1);
-                } catch (URISyntaxException e1) {
-                    setErrorMessage(e1.getLocalizedMessage());
                 }
-
             }
         };
         getUrlCombo().addModifyListener(urlModifyListener);

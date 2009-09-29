@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -35,6 +34,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
@@ -210,7 +210,7 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
                     repo = repoManager.updateRepoLocation(url, null, user, pass);
                 }
             }
-        } catch (URISyntaxException e) {
+        } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             page.setErrorMessage(e.getLocalizedMessage());
             return null;

@@ -25,15 +25,15 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  *
  */
 public class HgFcloneClient extends AbstractClient {
-    public static void fclone(String parentDirectory, HgRepositoryLocation repo,
+    public static void fclone(File parentDirectory, HgRepositoryLocation repo,
             boolean noUpdate, boolean pull, boolean uncompressed,
             boolean timeout, String rev, String cloneName)
             throws HgException {
-        AbstractShellCommand command = new HgCommand("fclone", new File(parentDirectory), //$NON-NLS-1$
+        AbstractShellCommand command = new HgCommand("fclone", parentDirectory, //$NON-NLS-1$
                 false);
 
         //        command.addOptions("--config", "extensions.hgext.forest="); //$NON-NLS-1$ //$NON-NLS-2$
-        
+
         if (noUpdate) {
             command.addOptions("--noupdate"); //$NON-NLS-1$
         }
@@ -57,7 +57,7 @@ public class HgFcloneClient extends AbstractClient {
         if (cloneName != null) {
             command.addOptions(cloneName);
         }
-                
+
         if (timeout) {
             command
                     .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
@@ -66,6 +66,6 @@ public class HgFcloneClient extends AbstractClient {
             command.executeToBytes(Integer.MAX_VALUE);
         }
     }
-    
-    
+
+
 }

@@ -12,7 +12,6 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -40,6 +39,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -130,24 +130,27 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         Listener listener = new Listener() {
             public void handleEvent(Event event) {
-                validateFields();
+                urlChanged();
             }
         };
 
         createUrlControl(composite, listener);
 
         if (showCredentials) {
-            createAuthenticationControl(composite, listener);
+            createAuthenticationControl(composite);
         }
-
-        initializeValues();
-        validateFields();
+        setControl(composite);
         urlCombo.setFocus();
 
-        setControl(composite);
+        initializeValues();
+        boolean ok = validateFields();
+        setPageComplete(ok);
+        if(ok) {
+            setErrorMessage(null);
+        }
     }
 
-    private void createUrlControl(Composite composite, Listener listener) {
+    private void createUrlControl(Composite composite, final Listener listener) {
         Composite urlComposite = SWTWidgetHelper.createComposite(composite, 4);
 
         Group g = SWTWidgetHelper.createGroup(urlComposite, Messages
@@ -158,7 +161,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
         urlCombo = createEditableCombo(g);
-        urlCombo.addListener(SWT.Selection, listener);
         urlCombo.addListener(SWT.Modify, listener);
 
         browseButton = SWTWidgetHelper.createPushButton(g, Messages
@@ -200,12 +202,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
         urlCombo.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
-                setPageComplete(true);
-            }
-        });
-
-        urlCombo.addModifyListener(new ModifyListener() {
-            public void modifyText(ModifyEvent e) {
 
                 try {
                     // note that repo will not be null, will be blank
@@ -225,7 +221,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
                     } else {
                         getPasswordText().setText("");
                     }
-                } catch (URISyntaxException e1) {
+                } catch (HgException e1) {
                     // Lookup obviously failed, but verification will
                     // pick this error up later
                     MercurialEclipsePlugin.logError(e1);
@@ -234,8 +230,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         });
     }
 
-    private void createAuthenticationControl(Composite composite,
-            Listener listener) {
+    private void createAuthenticationControl(Composite composite) {
         Group g;
         Composite authComposite = SWTWidgetHelper.createComposite(composite, 2);
         g = SWTWidgetHelper.createGroup(
@@ -247,8 +242,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.userLabel.text")); //$NON-NLS-1$
         userCombo = createEditableCombo(g);
-        userCombo.addListener(SWT.Selection, listener);
-        userCombo.addListener(SWT.Modify, listener);
 
         // Password
         SWTWidgetHelper.createLabel(g, Messages
@@ -277,17 +270,20 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
     @Override
     public boolean finish(IProgressMonitor monitor) {
         // Set the result to be the current values
+        properties = createProperties();
+
+        saveWidgetValues();
+        return true;
+    }
+
+    protected Properties createProperties() {
         Properties result = new Properties();
         if (showCredentials) {
             result.setProperty("user", getUserText()); //$NON-NLS-1$
             result.setProperty("password", passwordText.getText()); //$NON-NLS-1$
         }
         result.setProperty("url", getUrlText()); //$NON-NLS-1$
-        this.properties = result;
-
-        saveWidgetValues();
-
-        return true;
+        return result;
     }
 
     /**
@@ -355,7 +351,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         return userCombo.getText().trim();
     }
 
-    private String getUrlText() {
+    protected String getUrlText() {
         return urlCombo.getText().trim();
     }
 
@@ -379,32 +375,27 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
      * Validates the contents of the editable fields and set page completion and
      * error messages appropriately. Call each time url or username is modified
      */
-    private void validateFields() {
+    protected boolean validateFields() {
         // first check the url of the repository
         String url = getUrlText();
 
         if (url.length() == 0) {
             setErrorMessage(null);
-            setPageComplete(false);
-            return;
+            return false;
         }
         File localDirectory = getLocalDirectory(url);
         if(localDirectory != null){
             if(!localDirectory.exists()){
                 setErrorMessage("Please provide a valid url or an existing directory!");
-                setPageComplete(false);
-                return;
+                return false;
             }
             File hgRepo = new File(localDirectory, ".hg");
             if(!hgRepo.isDirectory()){
                 setErrorMessage("Directory " + localDirectory + " does not contain a valid hg repository!");
-                setPageComplete(false);
-                return;
+                return false;
             }
         }
-
-        setErrorMessage(null);
-        setPageComplete(true);
+        return true;
     }
 
     /**
@@ -438,79 +429,58 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         return super.canFlipToNextPage();
     }
 
-    /**
-     * @return the showCredentials
-     */
     public boolean isShowCredentials() {
         return showCredentials;
     }
 
-    /**
-     * @param showCredentials
-     *            the showCredentials to set
-     */
     public void setShowCredentials(boolean showCredentials) {
         this.showCredentials = showCredentials;
     }
 
-    /**
-     * @return the userCombo
-     */
     public Combo getUserCombo() {
         return userCombo;
     }
 
-    /**
-     * @param userCombo
-     *            the userCombo to set
-     */
     public void setUserCombo(Combo userCombo) {
         this.userCombo = userCombo;
     }
 
-    /**
-     * @return the passwordText
-     */
     public Text getPasswordText() {
         return passwordText;
     }
 
-    /**
-     * @param passwordText
-     *            the passwordText to set
-     */
     public void setPasswordText(Text passwordText) {
         this.passwordText = passwordText;
     }
 
-    /**
-     * @return the urlCombo
-     */
     public Combo getUrlCombo() {
         return urlCombo;
     }
 
-    /**
-     * @param urlCombo
-     *            the urlCombo to set
-     */
     public void setUrlCombo(Combo urlCombo) {
         this.urlCombo = urlCombo;
     }
 
-    /**
-     * @return the showBundleButton
-     */
     public boolean isShowBundleButton() {
         return showBundleButton;
     }
 
-    /**
-     * @param showBundleButton
-     *            the showBundleButton to set
-     */
     public void setShowBundleButton(boolean showBundleButton) {
         this.showBundleButton = showBundleButton;
+    }
+
+    /**
+     * Triggered if the user has changed repository url. Override to implement additional
+     * checks after it.
+     * @return true, if the filed validation was successful
+     */
+    protected boolean urlChanged() {
+        boolean ok = validateFields();
+        setPageComplete(ok);
+        if(ok) {
+            setErrorMessage(null);
+        }
+        return ok;
     }
 
 }

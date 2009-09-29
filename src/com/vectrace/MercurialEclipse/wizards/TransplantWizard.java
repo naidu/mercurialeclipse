@@ -22,6 +22,7 @@ import org.eclipse.swt.widgets.Display;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
@@ -56,13 +57,6 @@ public class TransplantWizard extends HgWizard {
         addPage(optionsPage);
     }
 
-
-
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.jface.wizard.Wizard#performFinish()
-     */
     @Override
     public boolean performFinish() {
         try {
@@ -104,15 +98,10 @@ public class TransplantWizard extends HgWizard {
             // It appears good. Stash the repo location.
             MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
                     repo);
-        } catch (URISyntaxException e) {
-            MessageDialog
-                    .openError(
-                            Display.getCurrent().getActiveShell(),
-                            Messages.getString("PushRepoWizard.malformedUrl"), e.getMessage()); //$NON-NLS-1$
-            return false;
-
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
+        } catch (HgException e) {
+            if(!(e.getCause() instanceof URISyntaxException)) {
+                MercurialEclipsePlugin.logError(e);
+            }
             MessageDialog.openError(Display.getCurrent().getActiveShell(), e
                     .getMessage(), e.getMessage());
             return false;

@@ -10,7 +10,6 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
-import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -31,6 +30,7 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 
@@ -74,7 +74,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
         try {
             repositoryLocation = MercurialEclipsePlugin.getRepoManager().getRepoLocation(uri);
-        } catch (URISyntaxException e) {
+        } catch (HgException e) {
             throw new PartInitException(e.getLocalizedMessage(), e);
         }
         restoreScope(myMemento);
