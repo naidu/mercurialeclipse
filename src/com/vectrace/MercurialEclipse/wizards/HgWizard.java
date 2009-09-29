@@ -20,7 +20,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author bastian
- * 
+ *
  */
 public abstract class HgWizard extends Wizard {
 
@@ -54,12 +54,9 @@ public abstract class HgWizard extends Wizard {
         }
         setDialogSettings(section);
         setWindowTitle(windowTitle);
+        setNeedsProgressMonitor(true);
     }
 
-    /**
-     * @param description
-     * @param page
-     */
     protected void initPage(String description, HgWizardPage wizardPage) {
         if (properties != null) {
             wizardPage.setProperties(properties);
