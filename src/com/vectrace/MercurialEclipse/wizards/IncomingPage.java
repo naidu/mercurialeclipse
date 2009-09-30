@@ -106,6 +106,24 @@ public class IncomingPage extends HgWizardPage {
         }
     }
 
+    protected class IncomingDoubleClickListener implements IDoubleClickListener {
+        public void doubleClick(DoubleClickEvent event) {
+            ChangeSet cs = getSelectedChangeSet();
+            IStructuredSelection sel = (IStructuredSelection) event
+                    .getSelection();
+            FileStatus clickedFileStatus = (FileStatus) sel
+                    .getFirstElement();
+            if (cs != null && clickedFileStatus != null) {
+                IPath hgRoot = new Path(cs.getHgRoot().getPath());
+                IPath fileRelPath = clickedFileStatus.getPath();
+                IPath fileAbsPath = hgRoot.append(fileRelPath);
+                IResource file = getProject().getWorkspace().getRoot()
+                        .getFileForLocation(fileAbsPath);
+                CompareUtils.openEditor(file, cs, true, true);
+            }
+        }
+    }
+
     protected IncomingPage(String pageName) {
         super(pageName);
         setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
@@ -219,23 +237,7 @@ public class IncomingPage extends HgWizardPage {
                     }
                 });
 
-        fileStatusViewer.addDoubleClickListener(new IDoubleClickListener() {
-            public void doubleClick(DoubleClickEvent event) {
-                ChangeSet cs = getSelectedChangeSet();
-                IStructuredSelection sel = (IStructuredSelection) event
-                        .getSelection();
-                FileStatus clickedFileStatus = (FileStatus) sel
-                        .getFirstElement();
-                if (cs != null && clickedFileStatus != null) {
-                    IPath hgRoot = new Path(cs.getHgRoot().getPath());
-                    IPath fileRelPath = clickedFileStatus.getPath();
-                    IPath fileAbsPath = hgRoot.append(fileRelPath);
-                    IResource file = project.getWorkspace().getRoot()
-                            .getFileForLocation(fileAbsPath);
-                    CompareUtils.openEditor(file, cs, true, true);
-                }
-            }
-        });
+        fileStatusViewer.addDoubleClickListener(getDoubleClickListener());
     }
 
     static class FileStatusLabelProvider extends LabelProvider implements
@@ -286,5 +288,9 @@ public class IncomingPage extends HgWizardPage {
 
     public boolean isSvn() {
         return svn;
+    }
+
+    protected IDoubleClickListener getDoubleClickListener() {
+        return new IncomingDoubleClickListener();
     }
 }

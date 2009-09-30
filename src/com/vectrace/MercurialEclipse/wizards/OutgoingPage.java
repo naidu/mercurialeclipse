@@ -15,16 +15,26 @@ import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
+import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * @author bastian
@@ -72,6 +82,32 @@ public class OutgoingPage extends IncomingPage {
 
     }
 
+    protected class OutgoingDoubleClickListener implements IDoubleClickListener {
+        public void doubleClick(DoubleClickEvent event) {
+            ChangeSet cs = getSelectedChangeSet();
+            IStructuredSelection sel = (IStructuredSelection) event
+                    .getSelection();
+            FileStatus clickedFileStatus = (FileStatus) sel
+                    .getFirstElement();
+            if (cs != null && clickedFileStatus != null) {
+                String[] parents = cs.getParents();
+                IPath hgRoot = new Path(cs.getHgRoot().getPath());
+                IPath fileRelPath = clickedFileStatus.getPath();
+                IPath fileAbsPath = hgRoot.append(fileRelPath);
+                IResource file = getProject().getWorkspace().getRoot()
+                        .getFileForLocation(fileAbsPath);
+                MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
+                MercurialRevisionStorage parentRev ;
+                if(cs.getRevision().getRevision() == 0 || parents.length == 0){
+                    parentRev = new NullRevision(file, cs);
+                } else {
+                    parentRev = new MercurialRevisionStorage(file, parents[0]);
+                }
+                CompareUtils.openEditor(thisRev, parentRev, true, false);
+            }
+        }
+    }
+
     protected OutgoingPage(String pageName) {
         super(pageName);
         this.setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
@@ -111,5 +147,10 @@ public class OutgoingPage extends IncomingPage {
     @Override
     public void setSvn(boolean svn) {
         this.svn = svn;
+    }
+
+    @Override
+    protected IDoubleClickListener getDoubleClickListener() {
+        return new OutgoingDoubleClickListener();
     }
 }
