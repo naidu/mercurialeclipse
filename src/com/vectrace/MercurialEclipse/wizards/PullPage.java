@@ -42,6 +42,7 @@ public class PullPage extends PushPullPage {
     private Button mergeCheckBox;
     private Button commitDialogCheckBox;
     private Button rebaseCheckBox;
+    private Button cleanUpdateCheckBox;
 
     public Button getCommitDialogCheckBox() {
         return commitDialogCheckBox;
@@ -112,6 +113,10 @@ public class PullPage extends PushPullPage {
         this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
                 Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
         this.updateCheckBox.setSelection(true);
+
+        this.cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+                Messages.getString("PullPage.toggleCleanUpdate.text")); //$NON-NLS-1$
+        this.cleanUpdateCheckBox.setSelection(false);
 
         try {
             if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
@@ -230,6 +235,10 @@ public class PullPage extends PushPullPage {
 
     public Button getUpdateCheckBox() {
         return updateCheckBox;
+    }
+
+    public Button getCleanUpdateCheckBox() {
+        return cleanUpdateCheckBox;
     }
 
     public void setUpdateCheckBox(Button updateCheckBox) {

@@ -51,14 +51,16 @@ class PullOperation extends HgOperation {
     private final File snapFile;
     private final boolean rebase;
     private final boolean svn;
+    private final boolean doCleanUpdate;
 
     public PullOperation(IRunnableContext context, boolean doUpdate,
-            IProject resource, boolean force, HgRepositoryLocation repo,
+            boolean doCleanUpdate, IProject resource, boolean force, HgRepositoryLocation repo,
             ChangeSet pullRevision, boolean timeout, boolean merge,
             boolean showCommitDialog, File bundleFile, boolean forest,
             File snapFile, boolean rebase, boolean svn) {
         super(context);
         this.doUpdate = doUpdate;
+        this.doCleanUpdate = doCleanUpdate;
         this.resource = resource;
         this.force = force;
         this.repo = repo;
@@ -165,7 +167,9 @@ class PullOperation extends HgOperation {
             @Override
             public IStatus run(IProgressMonitor monitor1) {
                 try {
-                    new UpdateHandler().run(resource);
+                    UpdateHandler updateHandler = new UpdateHandler();
+                    updateHandler.setCleanEnabled(doCleanUpdate);
+                    updateHandler.run(resource);
                     return Status.OK_STATUS;
                 } catch (Exception e) {
                     if (e instanceof HgException) {

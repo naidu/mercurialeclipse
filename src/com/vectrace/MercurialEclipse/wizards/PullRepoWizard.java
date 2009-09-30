@@ -33,6 +33,7 @@ public class PullRepoWizard extends HgWizard {
     private IncomingPage incomingPage;
     private final IProject resource;
     private HgRepositoryLocation repo;
+    private boolean doCleanUpdate;
 
     public PullRepoWizard(IProject resource) {
         super(Messages.getString("PullRepoWizard.title")); //$NON-NLS-1$
@@ -70,6 +71,7 @@ public class PullRepoWizard extends HgWizard {
         repo = getLocation();
 
         doUpdate = pullPage.getUpdateCheckBox().getSelection();
+        doCleanUpdate = pullPage.getCleanUpdateCheckBox().getSelection();
         boolean force = pullPage.getForceCheckBox().getSelection();
 
         ChangeSet cs = null;
@@ -106,7 +108,7 @@ public class PullRepoWizard extends HgWizard {
         }
 
         PullOperation pullOperation = new PullOperation(getContainer(),
-                doUpdate, resource, force, repo, cs, timeout, merge,
+                doUpdate, doCleanUpdate, resource, force, repo, cs, timeout, merge,
                 showCommitDialog, bundleFile, forest, snapFile, rebase, svn);
 
         try {
