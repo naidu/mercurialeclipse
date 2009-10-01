@@ -27,6 +27,7 @@ import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
@@ -85,26 +86,44 @@ public class OutgoingPage extends IncomingPage {
     protected class OutgoingDoubleClickListener implements IDoubleClickListener {
         public void doubleClick(DoubleClickEvent event) {
             ChangeSet cs = getSelectedChangeSet();
-            IStructuredSelection sel = (IStructuredSelection) event
-                    .getSelection();
-            FileStatus clickedFileStatus = (FileStatus) sel
-                    .getFirstElement();
-            if (cs != null && clickedFileStatus != null) {
-                String[] parents = cs.getParents();
-                IPath hgRoot = new Path(cs.getHgRoot().getPath());
-                IPath fileRelPath = clickedFileStatus.getPath();
-                IPath fileAbsPath = hgRoot.append(fileRelPath);
-                IResource file = getProject().getWorkspace().getRoot()
-                        .getFileForLocation(fileAbsPath);
-                MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
-                MercurialRevisionStorage parentRev ;
-                if(cs.getRevision().getRevision() == 0 || parents.length == 0){
-                    parentRev = new NullRevision(file, cs);
-                } else {
-                    parentRev = new MercurialRevisionStorage(file, parents[0]);
-                }
-                CompareUtils.openEditor(thisRev, parentRev, true, false);
+            IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+            FileStatus clickedFileStatus = (FileStatus) sel.getFirstElement();
+
+            if (cs == null || clickedFileStatus == null) {
+                return;
             }
+
+
+            IPath hgRoot = new Path(cs.getHgRoot().getPath());
+            IPath fileRelPath = clickedFileStatus.getPath();
+            IPath fileAbsPath = hgRoot.append(fileRelPath);
+            IResource file = getProject().getWorkspace().getRoot()
+                    .getFileForLocation(fileAbsPath);
+
+            // See issue #10249: Push/Pull diff problem on outgoing/incoming stage
+            // This doesn't work here (seems to work only for incoming? or should be fixed there too?)
+            // CompareUtils.openEditor(file, cs, true, true);
+
+            MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
+            MercurialRevisionStorage parentRev ;
+            String[] parents = cs.getParents();
+            if(parents.length == 0){
+                // TODO for some reason, we do not always have right parent info in the changesets
+                // if we are on the different branch then the changeset. So simply enforce the parents resolving
+                try {
+                    parents = HgParentClient.getParentNodeIds(file, cs);
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logError(e);
+                }
+            }
+
+            if(cs.getRevision().getRevision() == 0 || parents.length == 0){
+                parentRev = new NullRevision(file, cs);
+            } else {
+                parentRev = new MercurialRevisionStorage(file, parents[0]);
+            }
+            CompareUtils.openEditor(thisRev, parentRev, true, false);
+
         }
     }
 
