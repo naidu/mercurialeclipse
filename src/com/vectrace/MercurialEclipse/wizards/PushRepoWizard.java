@@ -16,6 +16,7 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -36,6 +37,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
@@ -144,15 +146,19 @@ public class PushRepoWizard extends HgWizard {
 
         // It appears good. Stash the repo location.
         MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
-
+        Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
         if(isForest){
             IncomingChangesetCache.getInstance().clear(repo);
             OutgoingChangesetCache.getInstance().clear(repo);
         } else {
-            IncomingChangesetCache.getInstance().clear(repo, project, true);
-            OutgoingChangesetCache.getInstance().clear(repo, project, true);
+            for (IProject iProject : projects) {
+                IncomingChangesetCache.getInstance().clear(repo, iProject, true);
+                OutgoingChangesetCache.getInstance().clear(repo, iProject, true);
+            }
         }
-        MercurialStatusCache.getInstance().refreshStatus(project, null);
+        for (IProject iProject : projects) {
+            MercurialStatusCache.getInstance().refreshStatus(iProject, null);
+        }
     }
 
 }
