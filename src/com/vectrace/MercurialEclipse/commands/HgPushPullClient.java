@@ -12,6 +12,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.net.URI;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -22,6 +23,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgPushPullClient extends AbstractClient {
 
@@ -68,8 +70,7 @@ public class HgPushPullClient extends AbstractClient {
             String pullSource, boolean update, boolean rebase,
             boolean force, boolean timeout) throws HgException {
 
-        AbstractShellCommand command = new HgCommand("pull", project.getLocation() //$NON-NLS-1$
-                .toFile(), true);
+        HgCommand command = new HgCommand("pull", project.getLocation().toFile(), true); //$NON-NLS-1$
 
         if (update) {
             command.addOptions("--update"); //$NON-NLS-1$
@@ -98,17 +99,20 @@ public class HgPushPullClient extends AbstractClient {
         // from another repo as the sync clients for given project may use
         // in this case, we also need to update "outgoing" changesets
         final int flags = RefreshJob.ALL;
-        if(update) {
-            RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
-            job.addJobChangeListener(new JobChangeAdapter(){
-               @Override
-                public void done(IJobChangeEvent event) {
-                    new RefreshJob("Refreshing " + project.getName(), project, flags).schedule();
-                }
-            });
-            job.schedule();
-        } else {
-            new RefreshJob("Refreshing " + project.getName(), project, flags).schedule();
+        Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
+        for (final IProject iProject : projects) {
+            if(update) {
+                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
+                job.addJobChangeListener(new JobChangeAdapter(){
+                   @Override
+                    public void done(IJobChangeEvent event) {
+                        new RefreshJob("Refreshing " + iProject.getName(), iProject, flags).schedule();
+                    }
+                });
+                job.schedule();
+            } else {
+                new RefreshJob("Refreshing " + iProject.getName(), iProject, flags).schedule();
+            }
         }
         return result;
     }

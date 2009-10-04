@@ -10,14 +10,19 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
-import org.eclipse.core.resources.IProject;
+import java.util.Set;
 
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
+
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Calls hg strip
@@ -38,7 +43,7 @@ public class HgStripClient {
     public static String strip(IProject proj, boolean saveUnrelated,
             boolean backup, boolean stripHeads, ChangeSet changeset)
             throws HgException {
-        AbstractShellCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
+        HgCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
         command
                 .setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 
@@ -55,7 +60,17 @@ public class HgStripClient {
         }
         command.addOptions(changeset.getChangeset());
         String result = command.executeToString();
-        new RefreshJob("Refreshing hg caches", proj).schedule();
+        Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
+        for (final IProject project : projects) {
+            RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
+            job.addJobChangeListener(new JobChangeAdapter(){
+                @Override
+                public void done(IJobChangeEvent event) {
+                    new RefreshJob("Refreshing " + project.getName(), project).schedule();
+                }
+            });
+            job.schedule();
+        }
         return result;
     }
 }

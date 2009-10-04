@@ -219,6 +219,27 @@ public class ResourceUtils {
     }
 
     /**
+     * @return never null, a list with all projects contained by given hg root directory
+     */
+    public static Set<IProject> getProjects(HgRoot root) {
+        Set<IProject> set = new HashSet<IProject>();
+        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+        for (IProject project : projects) {
+            if(!project.isAccessible()){
+                continue;
+            }
+            HgRoot proot = MercurialTeamProvider.hasHgRoot(project);
+            if(proot == null){
+                continue;
+            }
+            if(root.equals(proot)){
+                set.add(project);
+            }
+        }
+        return set;
+    }
+
+    /**
      * @param resources non null
      * @return never null
      */

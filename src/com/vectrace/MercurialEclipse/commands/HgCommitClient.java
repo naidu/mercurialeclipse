@@ -49,10 +49,11 @@ public class HgCommitClient extends AbstractClient {
             List<IResource> files = mapEntry.getValue();
             commit(root, AbstractClient.toFiles(files), user, message);
         }
-        Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(resources);
-        Set<IProject> keySet = byProject.keySet();
-        for (IProject project : keySet) {
-            new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+        for (HgRoot root : resourcesByRoot.keySet()) {
+            Set<IProject> projects = ResourceUtils.getProjects(root);
+            for (IProject iProject : projects) {
+                new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+            }
         }
     }
 
@@ -91,7 +92,10 @@ public class HgCommitClient extends AbstractClient {
         command.addUserName(quote(user));
         command.addOptions("-m", quote(message)); //$NON-NLS-1$
         String result = command.executeToString();
-        new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+        Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
+        for (IProject iProject : projects) {
+            new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+        }
         return result;
     }
 
