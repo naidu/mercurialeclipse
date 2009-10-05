@@ -118,7 +118,11 @@ public class RevisionChooserDialog extends Dialog {
                 | GridData.FILL_VERTICAL);
         data.heightHint = 200;
         tabFolder.setLayoutData(data);
+        createHeadTabItem(tabFolder);
         createRevisionTabItem(tabFolder);
+        createTagTabItem(tabFolder);
+        // This is a sublist of heads: unnecessary duplication to show.
+        // createBranchTabItem(tabFolder);
         try {
             if (MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
                     ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
@@ -128,9 +132,6 @@ public class RevisionChooserDialog extends Dialog {
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
         }
-        createTagTabItem(tabFolder);
-        createBranchTabItem(tabFolder);
-        createHeadTabItem(tabFolder);
 
         return composite;
     }
