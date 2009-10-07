@@ -10,8 +10,31 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.*;
-import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.ADDED_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.ADDED_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.ADDED_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.CHANGE_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.CHANGE_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.CHANGE_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.CONFLICT_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.CONFLICT_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.CONFLICT_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.DELETED_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.DELETED_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.DELETED_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.IGNORED_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.IGNORED_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.IGNORED_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.REMOVED_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.REMOVED_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.REMOVED_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.UNKNOWN_BACKGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.UNKNOWN_FONT;
+import static com.vectrace.MercurialEclipse.preferences.HgDecoratorConstants.UNKNOWN_FOREGROUND_COLOR;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.LABELDECORATOR_LOGIC;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -182,7 +205,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 // simply wait until the cache sends us an event
                 d.addOverlay(DecoratorImages.notTrackedDescriptor);
                 if(resource == project){
-                    d.addSuffix(" [ Hg status pending... ]");
+                    d.addSuffix(" [Hg status pending...]");
                 }
                 return;
             }
@@ -390,7 +413,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         if (changeSet == null) {
             suffix = Messages.getString("ResourceDecorator.new");
         } else {
-            suffix = " [ "; //$NON-NLS-1$
+            suffix = " ["; //$NON-NLS-1$
             String hex = ":" + changeSet.getNodeShort();
             String tags = changeSet.getTag();
             String merging = project
@@ -413,7 +436,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
             if (merging != null && merging.length() > 0) {
                 suffix += Messages.getString("ResourceDecorator.merging") + merging;
             }
-            suffix += " ]";
+            suffix += "]";
         }
         return suffix;
     }
