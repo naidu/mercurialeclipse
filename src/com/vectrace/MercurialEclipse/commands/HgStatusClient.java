@@ -20,9 +20,11 @@ import java.util.regex.Pattern;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgStatusClient extends AbstractClient {
 
@@ -151,11 +153,20 @@ public class HgStatusClient extends AbstractClient {
         String relativePath = root.toRelative(file);
 
         String[] statusAndFileNames = result.split("\n"); //$NON-NLS-1$
+        String prefixAdded = MercurialStatusCache.CHAR_ADDED + " ";
+        String prefixRemoved = MercurialStatusCache.CHAR_REMOVED + " ";
         for (int i = 0; i < statusAndFileNames.length; i++) {
-            if(i + 1 < statusAndFileNames.length && statusAndFileNames[i].endsWith(relativePath)){
-                // XXX should not just trim whitespace in the path, if it contains whitespaces, it will not work
-                // on the other side it's just idiotic to have filenames with leading or trailing spaces
-                return new File(root, statusAndFileNames[i + 1].trim());
+            // looks like: "A folder\foo" or "R folder\foo" or "folder\foo"
+            String pathWithStatus = statusAndFileNames[i];
+            if(pathWithStatus.startsWith(prefixAdded) || pathWithStatus.startsWith(prefixRemoved)){
+                if(i + 1 < statusAndFileNames.length && pathWithStatus.endsWith(relativePath)){
+                    // XXX should not just trim whitespace in the path, if it contains whitespaces, it will not work
+                    // on the other side it's just idiotic to have filenames with leading or trailing spaces
+                    String nextLine = statusAndFileNames[i + 1].trim();
+                    if(!nextLine.startsWith(prefixAdded) && !nextLine.startsWith(prefixRemoved)) {
+                        return new File(root, nextLine);
+                    }
+                }
             }
         }
         return null;

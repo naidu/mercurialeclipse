@@ -22,6 +22,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgLogClient extends AbstractParseChangesetClient {
 
@@ -190,29 +191,50 @@ public class HgLogClient extends AbstractParseChangesetClient {
     public static ChangeSet getLogWithBranchInfo(MercurialRevision rev,
             int limitNumber, MercurialHistory history) throws HgException {
         ChangeSet changeSet = rev.getChangeSet();
-        Map<IPath, SortedSet<ChangeSet>> map = getProjectLog(rev.getResource(), limitNumber, changeSet
+        IResource resource = rev.getResource();
+        Map<IPath, SortedSet<ChangeSet>> map = getProjectLog(resource, limitNumber, changeSet
                 .getChangesetIndex(), true);
+        IPath location = ResourceUtils.getPath(resource);
         if(map != null) {
-            return map.get(rev.getResource().getLocation()).first();
+            return map.get(location).first();
         }
         File possibleParent = rev.getParent();
         MercurialRevision next = rev;
         if(possibleParent == null){
+            HgRoot hgRoot = changeSet.getHgRoot();
+            File file = location.toFile();
+
             // go up one revision, looking for the fist time "branch" occurence
             while((next = history.getNext(next)) != null){
                 if(next.getParent() == null) {
-                    possibleParent = HgStatusClient.getPossibleSourcePath(
-                            changeSet.getHgRoot(),
-                            next.getResource().getLocation().toFile(),
-                            next.getRevision());
-                    if(possibleParent != null){
-                        break;
-                    }
+                    int revision = next.getRevision();
+                    possibleParent = HgStatusClient.getPossibleSourcePath(hgRoot, file, revision);
                 } else {
                     possibleParent = next.getParent();
-                    break;
+                }
+                if(possibleParent != null){
+                    // validate if the possible parent IS the parent for this version
+                    map = getPathLog(resource.getType() == IResource.FILE,
+                            possibleParent, hgRoot, limitNumber, rev.getRevision(), true);
+                    if(map != null) {
+                        // bingo, log is not null
+                        break;
+                    }
+                    // see issue 10302: file seems to be copied/renamed multiple times
+                    // restart the search from the beginning with the newly obtained path
+                    // if it is different to the original one
+                    if(possibleParent.equals(location.toFile())){
+                        // give up
+                        possibleParent = null;
+                        break;
+                    }
+                    // restart
+                    next = rev;
+                    file = possibleParent;
                 }
             }
+
+            // remember parent for all visited versions
             if(possibleParent != null) {
                 while((next = history.getPrev(next)) != rev){
                     if(next == null) {
@@ -222,15 +244,18 @@ public class HgLogClient extends AbstractParseChangesetClient {
                 }
             }
         }
+
         if(possibleParent != null){
             rev.setParent(possibleParent);
             // TODO now one can check the changesets which may have exist for the *branched*
             // file only.
-            map = getPathLog(rev.getResource().getType() == IResource.FILE,
-                    possibleParent, MercurialTeamProvider.getHgRoot(rev.getResource()),
-                    limitNumber, rev.getRevision(), true);
-            if(map!=null) {
-                return  map.get(new Path(possibleParent.getAbsolutePath())).first();
+            if(map == null) {
+                map = getPathLog(resource.getType() == IResource.FILE,
+                        possibleParent, MercurialTeamProvider.getHgRoot(resource),
+                        limitNumber, rev.getRevision(), true);
+            }
+            if(map != null) {
+                return map.get(new Path(possibleParent.getAbsolutePath())).first();
             }
         }
         return null;
