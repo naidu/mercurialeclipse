@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.synchronize;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
 
@@ -36,5 +37,26 @@ public class HgSubscriberChangeEvent extends SubscriberChangeEvent {
     @Override
     public int hashCode() {
         return getResource().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        switch (getFlags()) {
+        case ISubscriberChangeEvent.ROOT_ADDED:
+            sb.append("+");
+            break;
+        case ISubscriberChangeEvent.ROOT_REMOVED:
+            sb.append("-");
+            break;
+        case ISubscriberChangeEvent.NO_CHANGE:
+            sb.append("");
+            break;
+        case ISubscriberChangeEvent.SYNC_CHANGED:
+            sb.append("~");
+            break;
+        }
+        sb.append(getResource().getName());
+        return sb.toString();
     }
 }
