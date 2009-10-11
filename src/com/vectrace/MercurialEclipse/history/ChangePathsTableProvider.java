@@ -41,6 +41,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -165,8 +166,11 @@ public class ChangePathsTableProvider extends TableViewer {
             }
 
             MercurialRevision rev = ((MercurialRevision) inputElement);
-            FileStatus[] fileStatus = revToFiles.get(rev);
-            if(fileStatus != null && fileStatus != EMPTY_CHANGE_PATHS){
+            FileStatus[] fileStatus;
+            synchronized(revToFiles){
+                fileStatus = revToFiles.get(rev);
+            }
+            if(fileStatus != null){
                 return fileStatus;
             }
             fetchPaths(rev);
@@ -180,9 +184,15 @@ public class ChangePathsTableProvider extends TableViewer {
             Job pathJob = new Job("Retrieving affected paths for " + rev.getChangeSet()){
                 @Override
                 protected IStatus run(IProgressMonitor monitor) {
+                    synchronized(revToFiles){
+                        if(revToFiles.get(rev) != null){
+                            return Status.OK_STATUS;
+                        }
+                    }
                     try {
                         cs[0] = HgLogClient.getLogWithBranchInfo(rev, history, monitor);
                     } catch (HgException e) {
+                        MercurialEclipsePlugin.logError(e);
                         return e.getStatus();
                     }
                     return Status.OK_STATUS;
@@ -192,12 +202,17 @@ public class ChangePathsTableProvider extends TableViewer {
             pathJob.addJobChangeListener(new JobChangeAdapter(){
                 @Override
                 public void done(IJobChangeEvent event) {
+                    FileStatus[] changedFiles = EMPTY_CHANGE_PATHS;
                     if(cs[0] != null) {
-                        FileStatus[] changedFiles = cs[0].getChangedFiles();
+                        changedFiles = cs[0].getChangedFiles();
                         if(changedFiles == null || changedFiles.length == 0){
                             changedFiles = EMPTY_CHANGE_PATHS;
                         }
-                        revToFiles.put(rev, changedFiles);
+                    }
+                    synchronized(revToFiles){
+                        if(!revToFiles.containsKey(rev)) {
+                            revToFiles.put(rev, changedFiles);
+                        }
                     }
                     if(disposed){
                         return;
@@ -219,7 +234,9 @@ public class ChangePathsTableProvider extends TableViewer {
 
         public void dispose() {
             disposed = true;
-            revToFiles.clear();
+            synchronized(revToFiles){
+                revToFiles.clear();
+            }
         }
 
         public void inputChanged(Viewer viewer1, Object oldInput, Object newInput) {
