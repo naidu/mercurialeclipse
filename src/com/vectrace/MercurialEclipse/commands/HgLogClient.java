@@ -213,8 +213,18 @@ public class HgLogClient extends AbstractParseChangesetClient {
             HgRoot hgRoot = changeSet.getHgRoot();
             File file = location.toFile();
 
-            // go up one revision, looking for the fist time "branch" occurence
-            while((next = history.getNext(next)) != null && !monitor.isCanceled()){
+            // try first to guess the parent (and avoid the while loop below), see issue #10302
+            possibleParent = HgStatusClient.guessPossibleSourcePath(hgRoot, file, rev.getRevision());
+            if(possibleParent != null && !possibleParent.equals(location.toFile())){
+                // got different parent, may be it's the right one?
+                // validate if the possible parent IS the parent for this version
+                map = getPathLog(resource.getType() == IResource.FILE,
+                        possibleParent, hgRoot, limitNumber, rev.getRevision(), true);
+            }
+
+            // go up one revision step by step, looking for the fist time "branch" occurence
+            // this may take a long time...
+            while(map == null && (next = history.getNext(next)) != null && !monitor.isCanceled()){
                 if(next.getParent() == null) {
                     int revision = next.getRevision();
                     possibleParent = HgStatusClient.getPossibleSourcePath(hgRoot, file, revision);
@@ -249,7 +259,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
             // remember parent for all visited versions
             if(possibleParent != null) {
-                while((next = history.getPrev(next)) != rev){
+                while(next != rev && (next = history.getPrev(next)) != rev){
                     if(next == null) {
                         break;
                     }
@@ -260,7 +270,6 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
         if(possibleParent != null){
             rev.setParent(possibleParent);
-            // TODO now one can check the changesets which may have exist for the *branched* file only.
             if(map == null && !monitor.isCanceled()) {
                 map = getPathLog(resource.getType() == IResource.FILE,
                         possibleParent, MercurialTeamProvider.getHgRoot(resource),

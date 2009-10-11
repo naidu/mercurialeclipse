@@ -127,23 +127,59 @@ public class HgStatusClient extends AbstractClient {
     /**
      * Returns <b>possible</b> ancestor of the given file, if given file is a result of
      * a copy or rename operation.
+     * <p>
+     * <b>Note</b>: this is a very inefficient algorithm, which may need a lot of time to
+     * complete.
      *
      * @param file
      *            successor path (as full absolute file path)
      * @param root
      *            hg root
-     * @param firstKnownRevision
+     * @param firstKnownRevision the version at which the information about possible
+     *  parent file should be retrieved
+     *
      * @return full absolute file path which was the source of the given file one changeset
      *         before given version, or null if the given file was not copied or renamed
      *         at given version.
      * @throws HgException
      */
     public static File getPossibleSourcePath(HgRoot root, File file, int firstKnownRevision) throws HgException{
+        return getPossibleSourcePath(root, file, (firstKnownRevision - 1), "" + firstKnownRevision);
+    }
+
+    /**
+     * <b>Guesses</b> a <b>possible</b> ancestor of the given file, if given file is a result of
+     * a copy or rename operation.
+     * <p>
+     * <b>Note</b>: this is a fast but inaccurate algorithm, which may not return expected
+     * information
+     *
+     * @param file
+     *            successor path (as full absolute file path)
+     * @param root
+     *            hg root
+     * @param firstKnownRevision the version at which the information about possible
+     *  parent file should be retrieved
+     * @return full absolute file path which was the source of the given file one changeset
+     *         before given version, or null if the given file was not copied or renamed
+     *         at given version.
+     * @throws HgException
+     */
+    public static File guessPossibleSourcePath(HgRoot root, File file, int firstKnownRevision) throws HgException {
+        // See issue #10302: we trying to cheat: "hg status -arC --rev firstKnownRevision:tip file" will return
+        // A file
+        //   source_file
+        // in case the given file was known between "firstKnownRevision" and "tip"
+        // TODO not sure if "tip" works always as expected, but now it's my best guess for the upper limit
+        return getPossibleSourcePath(root, file, firstKnownRevision, "tip");
+    }
+
+    private static File getPossibleSourcePath(HgRoot root, File file, int firstRev, String secondRev) throws HgException{
         AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
         command.addOptions("-arC"); //$NON-NLS-1$
         command.addOptions("--rev"); //$NON-NLS-1$
-        command.addOptions((firstKnownRevision - 1) + ":" + firstKnownRevision); //$NON-NLS-1$
+        command.addOptions(firstRev + ":" + secondRev); //$NON-NLS-1$
         command.addFiles(file.getAbsolutePath());
         String result = command.executeToString();
         if (result == null || result.length() == 0) {
