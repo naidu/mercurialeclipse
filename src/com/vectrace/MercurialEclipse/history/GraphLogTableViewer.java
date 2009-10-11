@@ -6,6 +6,8 @@ package com.vectrace.MercurialEclipse.history;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
@@ -19,7 +21,6 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
@@ -62,19 +63,27 @@ public class GraphLogTableViewer extends TableViewer {
             paint(event, gcs.getMiddle(), 1);
             paint(event, gcs.getAfter(), 2);
         }
-        Table table = tableItem.getParent();
+        final Table table = tableItem.getParent();
         int from = rev.getChangeSet().getChangesetIndex() - 1;
         if (tableItem.equals(table.getItems()[table.getItemCount() - 1])
                 && from != mhp.getMercurialHistory().getBottom() && from >= 0) {
-            MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
-                    from, mhp
-                            .getMercurialHistory());
-            refreshJob.schedule();
-            try {
-                refreshJob.join();
-            } catch (InterruptedException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
+            MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(from);
+            refreshJob.setRule(new ExclusiveHistoryRule());
+            refreshJob.addJobChangeListener(new JobChangeAdapter(){
+                @Override
+                public void done(IJobChangeEvent event1) {
+                    Display.getDefault().asyncExec(new Runnable() {
+                        public void run() {
+                            if(table.isDisposed()){
+                                return;
+                            }
+                            table.redraw();
+                            table.update();
+                        }
+                    });
+                }
+            });
+            mhp.scheduleInPage(refreshJob);
         }
 
         // validate signed changesets
