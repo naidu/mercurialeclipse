@@ -189,6 +189,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     }
 
     /**
+     * This method modifies given revision: it may change the revision's parent file
      *
      * @param rev non null
      * @param history non null
