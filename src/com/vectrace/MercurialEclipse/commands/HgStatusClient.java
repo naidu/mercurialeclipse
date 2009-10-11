@@ -144,7 +144,7 @@ public class HgStatusClient extends AbstractClient {
         command.addOptions("-arC"); //$NON-NLS-1$
         command.addOptions("--rev"); //$NON-NLS-1$
         command.addOptions((firstKnownRevision - 1) + ":" + firstKnownRevision); //$NON-NLS-1$
-//        command.addFiles(file.getPath());
+        command.addFiles(file.getAbsolutePath());
         String result = command.executeToString();
         if (result == null || result.length() == 0) {
             return null;

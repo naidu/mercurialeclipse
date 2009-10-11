@@ -12,6 +12,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -187,11 +188,18 @@ public class HgLogClient extends AbstractParseChangesetClient {
         command.addOptions("--limit", (limitNumber > 0) ? limitNumber + "" : NOLIMIT); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-
+    /**
+     *
+     * @param rev non null
+     * @param history non null
+     * @param monitor non null
+     * @return may return null
+     */
     public static ChangeSet getLogWithBranchInfo(MercurialRevision rev,
-            int limitNumber, MercurialHistory history) throws HgException {
+            MercurialHistory history, IProgressMonitor monitor) throws HgException {
         ChangeSet changeSet = rev.getChangeSet();
         IResource resource = rev.getResource();
+        int limitNumber = 1;
         Map<IPath, SortedSet<ChangeSet>> map = getProjectLog(resource, limitNumber, changeSet
                 .getChangesetIndex(), true);
         IPath location = ResourceUtils.getPath(resource);
@@ -200,12 +208,12 @@ public class HgLogClient extends AbstractParseChangesetClient {
         }
         File possibleParent = rev.getParent();
         MercurialRevision next = rev;
-        if(possibleParent == null){
+        if(possibleParent == null && !monitor.isCanceled()){
             HgRoot hgRoot = changeSet.getHgRoot();
             File file = location.toFile();
 
             // go up one revision, looking for the fist time "branch" occurence
-            while((next = history.getNext(next)) != null){
+            while((next = history.getNext(next)) != null && !monitor.isCanceled()){
                 if(next.getParent() == null) {
                     int revision = next.getRevision();
                     possibleParent = HgStatusClient.getPossibleSourcePath(hgRoot, file, revision);
@@ -234,6 +242,10 @@ public class HgLogClient extends AbstractParseChangesetClient {
                 }
             }
 
+            if(monitor.isCanceled()){
+                return null;
+            }
+
             // remember parent for all visited versions
             if(possibleParent != null) {
                 while((next = history.getPrev(next)) != rev){
@@ -247,9 +259,8 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
         if(possibleParent != null){
             rev.setParent(possibleParent);
-            // TODO now one can check the changesets which may have exist for the *branched*
-            // file only.
-            if(map == null) {
+            // TODO now one can check the changesets which may have exist for the *branched* file only.
+            if(map == null && !monitor.isCanceled()) {
                 map = getPathLog(resource.getType() == IResource.FILE,
                         possibleParent, MercurialTeamProvider.getHgRoot(resource),
                         limitNumber, rev.getRevision(), true);
