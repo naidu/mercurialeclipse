@@ -334,7 +334,11 @@ public class ChangedPathsPage {
 
 	}
 
-	private IHistoryPageSite getHistoryPageSite() {
+    public MercurialHistoryPage getHistoryPage() {
+        return page;
+    }
+
+	public IHistoryPageSite getHistoryPageSite() {
 		return page.getHistoryPageSite();
 	}
 

@@ -10,10 +10,18 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.util.WeakHashMap;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IContentProvider;
@@ -29,9 +37,11 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -140,10 +150,14 @@ public class ChangePathsTableProvider extends TableViewer {
     private static class ChangePathsTableContentProvider implements
             IStructuredContentProvider {
 
+        private final WeakHashMap<MercurialRevision, FileStatus[]> revToFiles;
         private final ChangedPathsPage page;
+        private Viewer viewer;
+        private boolean disposed;
 
         public ChangePathsTableContentProvider(ChangedPathsPage page) {
             this.page = page;
+            revToFiles = new WeakHashMap<MercurialRevision, FileStatus[]>();
         }
 
         public Object[] getElements(Object inputElement) {
@@ -152,24 +166,81 @@ public class ChangePathsTableProvider extends TableViewer {
             }
 
             MercurialRevision rev = ((MercurialRevision) inputElement);
-            MercurialHistory history = page.getMercurialHistory();
-            ChangeSet cs;
-            try {
-                cs = HgLogClient.getLogWithBranchInfo(rev, 1, history);
-            } catch (HgException e) {
-                return EMPTY_CHANGE_PATHS;
+            FileStatus[] fileStatus;
+            synchronized(revToFiles){
+                fileStatus = revToFiles.get(rev);
             }
-            if(cs != null) {
-                return cs.getChangedFiles();
+            if(fileStatus != null){
+                return fileStatus;
             }
+            fetchPaths(rev);
             // but sometimes hg returns a null version map...
             return EMPTY_CHANGE_PATHS;
         }
 
-        public void dispose() {
+        private void fetchPaths(final MercurialRevision rev) {
+            final MercurialHistory history = page.getMercurialHistory();
+            final ChangeSet [] cs = new ChangeSet[1];
+            Job pathJob = new Job("Retrieving affected paths for " + rev.getChangeSet()){
+                @Override
+                protected IStatus run(IProgressMonitor monitor) {
+                    synchronized(revToFiles){
+                        if(revToFiles.get(rev) != null){
+                            return Status.OK_STATUS;
+                        }
+                    }
+                    try {
+                        cs[0] = HgLogClient.getLogWithBranchInfo(rev, history, monitor);
+                    } catch (HgException e) {
+                        MercurialEclipsePlugin.logError(e);
+                        return e.getStatus();
+                    }
+                    return Status.OK_STATUS;
+                }
+            };
+            pathJob.setRule(new ExclusiveHistoryRule());
+            pathJob.addJobChangeListener(new JobChangeAdapter(){
+                @Override
+                public void done(IJobChangeEvent event) {
+                    FileStatus[] changedFiles = EMPTY_CHANGE_PATHS;
+                    if(cs[0] != null) {
+                        changedFiles = cs[0].getChangedFiles();
+                        if(changedFiles == null || changedFiles.length == 0){
+                            changedFiles = EMPTY_CHANGE_PATHS;
+                        }
+                    }
+                    synchronized(revToFiles){
+                        if(!revToFiles.containsKey(rev)) {
+                            revToFiles.put(rev, changedFiles);
+                        }
+                    }
+                    if(disposed){
+                        return;
+                    }
+                    Runnable refresh = new Runnable() {
+                        public void run() {
+                            if(!disposed && viewer != null) {
+                                viewer.refresh();
+                            }
+                        }
+                    };
+                    Display.getDefault().asyncExec(refresh);
+                }
+            });
+            if(!disposed) {
+                page.getHistoryPage().scheduleInPage(pathJob);
+            }
         }
 
-        public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+        public void dispose() {
+            disposed = true;
+            synchronized(revToFiles){
+                revToFiles.clear();
+            }
+        }
+
+        public void inputChanged(Viewer viewer1, Object oldInput, Object newInput) {
+            this.viewer = viewer1;
         }
     }
 }

@@ -230,7 +230,8 @@ public class MercurialRevisionStorage implements IStorage {
             return new ContentHolder(PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true));
         } else {
             // local: get the contents via cat
-            if(MercurialStatusCache.getInstance().isUnknown(file)){
+            if(file.exists() && MercurialStatusCache.getInstance().isUnknown(file)){
+                // for existing but unknown files, simply return dummy content
                 return new ContentHolder((byte[])null);
             }
             result = HgCatClient.getContent(file, Integer.valueOf(changeSet.getChangesetIndex()).toString());
