@@ -61,7 +61,7 @@ public class PullPage extends PushPullPage {
     public boolean canFlipToNextPage() {
         try {
             if (getUrlCombo().getText() != null
-                    && getUrlCombo().getText() != null) {
+                    && !getUrlCombo().getText().isEmpty()) {
                 IncomingPage incomingPage = (IncomingPage) getNextPage();
                 incomingPage.setProject(resource.getProject());
                 HgRepositoryLocation loc =

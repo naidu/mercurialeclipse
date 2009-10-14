@@ -247,6 +247,18 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         SWTWidgetHelper.createLabel(g, Messages
                 .getString("ConfigurationWizardMainPage.passwordLabel.text")); //$NON-NLS-1$
         passwordText = SWTWidgetHelper.createPasswordField(g);
+
+        userCombo.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent arg0) {
+                canFlipToNextPage();
+            }
+        });
+
+        passwordText.addModifyListener(new ModifyListener() {
+            public void modifyText(ModifyEvent arg0) {
+                canFlipToNextPage();
+            }
+        });
     }
 
     /**
