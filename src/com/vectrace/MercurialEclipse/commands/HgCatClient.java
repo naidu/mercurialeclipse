@@ -38,7 +38,7 @@ public class HgCatClient extends AbstractClient {
         command.add("cat"); //$NON-NLS-1$
         if (revision != null && revision.length() != 0) {
             command.add("-r"); //$NON-NLS-1$
-            command.add("tip"); //$NON-NLS-1$
+            command.add(revision);
         }
         command.add("--decode"); //$NON-NLS-1$
 
