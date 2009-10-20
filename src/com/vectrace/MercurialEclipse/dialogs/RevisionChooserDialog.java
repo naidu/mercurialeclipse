@@ -184,7 +184,7 @@ public class RevisionChooserDialog extends Dialog {
 
 
         final ChangesetTable table = new ChangesetTable(folder, dataLoader
-                .getProject());
+                .getProject(), true);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
         table.highlightParents(parents);
         table.setEnabled(true);
@@ -324,9 +324,25 @@ public class RevisionChooserDialog extends Dialog {
         item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
 
         final ChangesetTable table = new ChangesetTable(folder, dataLoader
-                .getProject(), false);
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
-        table.highlightParents(parents);
+                .getProject());
+        new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
+            @Override
+            protected IStatus runSafe(IProgressMonitor monitor) {
+                try {
+                    table.setLayoutData(new GridData(GridData.FILL_BOTH));
+                    table.highlightParents(parents);
+                    table.setAutoFetch(false);
+
+                    ChangeSet[] revisions = dataLoader.getHeads();
+                    table.setChangesets(revisions);
+                    table.setEnabled(true);
+                    return Status.OK_STATUS;
+                } catch (HgException e) {
+                    MercurialEclipsePlugin.logError(e);
+                    return Status.CANCEL_STATUS;
+                }
+            }
+        }.schedule();
 
         table.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -336,27 +352,6 @@ public class RevisionChooserDialog extends Dialog {
             	bookmark = null;
             	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
                 changeSet = table.getSelection();
-            }
-        });
-
-        table.addListener(SWT.Show, new Listener() {
-            public void handleEvent(Event event) {
-                table.removeListener(SWT.Show, this);
-                new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        try {
-                            table.setAutoFetch(false);
-
-                            ChangeSet[] revisions = dataLoader.getHeads();
-                            table.setChangesets(revisions);
-                            return Status.OK_STATUS;
-                        } catch (HgException e) {
-                            MercurialEclipsePlugin.logError(e);
-                            return Status.CANCEL_STATUS;
-                        }
-                    }
-                }.schedule();
             }
         });
 
