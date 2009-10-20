@@ -250,7 +250,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 && (Bits.cardinality(statusBits) > 2 || (Bits.cardinality(statusBits) == 2 && !Bits.contains(statusBits,
                         MercurialStatusCache.BIT_IGNORE)))) {
             overlay = DecoratorImages.modifiedDescriptor;
-            prefix.append('>');
+            //prefix.append('>');
             if (coloriseLabels) {
                 setBackground(d, CHANGE_BACKGROUND_COLOR);
                 setForeground(d, CHANGE_FOREGROUND_COLOR);
@@ -267,7 +267,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 break;
             case MercurialStatusCache.BIT_MODIFIED:
                 overlay = DecoratorImages.modifiedDescriptor;
-                prefix.append('>');
+                //prefix.append('>');
                 if (coloriseLabels) {
                     setBackground(d, CHANGE_BACKGROUND_COLOR);
                     setForeground(d, CHANGE_FOREGROUND_COLOR);
@@ -276,7 +276,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 break;
             case MercurialStatusCache.BIT_ADDED:
                 overlay = DecoratorImages.addedDescriptor;
-                prefix.append('>');
+                //prefix.append('>');
                 if (coloriseLabels) {
                     setBackground(d, ADDED_BACKGROUND_COLOR);
                     setForeground(d, ADDED_FOREGROUND_COLOR);
@@ -285,7 +285,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 break;
             case MercurialStatusCache.BIT_UNKNOWN:
                 overlay = DecoratorImages.notTrackedDescriptor;
-                prefix.append('>');
+                //prefix.append('>');
                 if (coloriseLabels) {
                     setBackground(d, UNKNOWN_BACKGROUND_COLOR);
                     setForeground(d, UNKNOWN_FOREGROUND_COLOR);
@@ -299,7 +299,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 // do nothing
             case MercurialStatusCache.BIT_REMOVED:
                 overlay = DecoratorImages.removedDescriptor;
-                prefix.append('>');
+                //prefix.append('>');
                 if (coloriseLabels) {
                     setBackground(d, REMOVED_BACKGROUND_COLOR);
                     setForeground(d, REMOVED_FOREGROUND_COLOR);
@@ -308,7 +308,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 break;
             case MercurialStatusCache.BIT_MISSING:
                 overlay = DecoratorImages.deletedStillTrackedDescriptor;
-                prefix.append('>');
+                //prefix.append('>');
                 if (coloriseLabels) {
                     setBackground(d, DELETED_BACKGROUND_COLOR);
                     setForeground(d, DELETED_FOREGROUND_COLOR);
@@ -317,7 +317,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
                 break;
             case MercurialStatusCache.BIT_CONFLICT:
                 overlay = DecoratorImages.conflictDescriptor;
-                prefix.append('>');
+                //prefix.append('>');
                 if (coloriseLabels) {
                     setBackground(d, CONFLICT_BACKGROUND_COLOR);
                     setForeground(d, CONFLICT_FOREGROUND_COLOR);
@@ -424,12 +424,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
             String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
             if (branch != null && !Branch.isDefault(branch)) {
-                suffix += " @ " + branch;
+                suffix += " @" + branch;
             }
 
             // tags
             if (tags != null && tags.length() > 0) {
-                suffix += " (" + tags + ")";
+                suffix += "(" + tags + ")";
             }
 
             // merge info
