@@ -184,10 +184,9 @@ public class RevisionChooserDialog extends Dialog {
 
 
         final ChangesetTable table = new ChangesetTable(folder, dataLoader
-                .getProject(), true);
+                .getProject(), false);
         table.setLayoutData(new GridData(GridData.FILL_BOTH));
         table.highlightParents(parents);
-        table.setEnabled(true);
 
         table.addSelectionListener(new SelectionAdapter() {
             @Override
@@ -202,6 +201,21 @@ public class RevisionChooserDialog extends Dialog {
             @Override
             public void widgetDefaultSelected(SelectionEvent e) {
                 okPressed();
+            }
+        });
+
+        table.addListener(SWT.Show, new Listener() {
+            public void handleEvent(Event event) {
+                table.removeListener(SWT.Show, this);
+                new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
+                    @Override
+                    protected IStatus runSafe(IProgressMonitor monitor) {
+                        table.setAutoFetch(true);
+                        table.setEnabled(true);
+                        table.setAutoFetch(false);
+                        return Status.OK_STATUS;
+                    }
+                }.schedule();
             }
         });
 
