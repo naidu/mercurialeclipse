@@ -175,6 +175,11 @@ public class ChangesetTable extends Composite {
 
     }
 
+    public void clearTable() {
+        table.removeAll();
+        this.changesets = null;
+    }
+
     public ChangeSet[] getSelections() {
         TableItem[] selection = table.getSelection();
         if (selection.length == 0) {
