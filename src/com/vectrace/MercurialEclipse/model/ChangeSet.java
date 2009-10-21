@@ -29,6 +29,7 @@ import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class ChangeSet implements Comparable<ChangeSet> {
 
@@ -369,19 +370,12 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
     private void setDescription(String description) {
         if (description != null) {
-            int i = description.indexOf('\n');
-            if (i > 0) {
-                this.summary = description.substring(0, i >= 0 ? i
-                        : description.length());
-            } else {
-                this.summary = description;
-            }
             this.description = description;
         }
     }
 
     public String getSummary() {
-        return summary;
+        return StringUtils.removeLineBreaks(getDescription());
     }
 
     /**
