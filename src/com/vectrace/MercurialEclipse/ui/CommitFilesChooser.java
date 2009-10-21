@@ -31,23 +31,17 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Sash;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
@@ -82,12 +76,6 @@ public class CommitFilesChooser extends Composite {
     protected Control trayButton;
     protected boolean trayClosed = true;
     protected IFile selectedFile;
-
-    private Label rightSeparator;
-    private Label leftSeparator;
-    private Control trayControl;
-    private Sash sash;
-    private DiffTray tray;
 
     public CheckboxTableViewer getViewer() {
         return viewer;
@@ -143,10 +131,6 @@ public class CommitFilesChooser extends Composite {
                         selectedFile = (IFile) commitResource.getResource();
                         if (oldSelectedFile == null || !oldSelectedFile.equals(selectedFile)) {
                             trayButton.setEnabled(true);
-                            if (!trayClosed) {
-                                closeSash();
-                                openSash();
-                            }
                         }
                     }
 
@@ -167,41 +151,6 @@ public class CommitFilesChooser extends Composite {
                 showDiffForSelection();
             }
         });
-    }
-
-    private void openSash() {
-        DiffTray t = new DiffTray(getCompareEditorInput());
-        final Shell shell = getShell();
-        leftSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
-        leftSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-        sash = new Sash(shell, SWT.VERTICAL);
-        sash.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-        rightSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
-        rightSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
-        trayControl = t.createContents(shell);
-        Rectangle clientArea = shell.getClientArea();
-        final GridData data = new GridData(GridData.FILL_VERTICAL);
-        data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
-        trayControl.setLayoutData(data);
-        int trayWidth = leftSeparator.computeSize(SWT.DEFAULT, clientArea.height).x
-        + sash.computeSize(SWT.DEFAULT, clientArea.height).x
-        + rightSeparator.computeSize(SWT.DEFAULT, clientArea.height).x + data.widthHint;
-        Rectangle bounds = shell.getBounds();
-        shell.setBounds(bounds.x - ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y,
-                bounds.width + trayWidth, bounds.height);
-        sash.addListener(SWT.Selection, new Listener() {
-            public void handleEvent(Event event) {
-                if (event.detail != SWT.DRAG) {
-                    Rectangle rect = shell.getClientArea();
-                    int newWidth = rect.width - event.x - (sash.getSize().x + rightSeparator.getSize().x);
-                    if (newWidth != data.widthHint) {
-                        data.widthHint = newWidth;
-                        shell.layout();
-                    }
-                }
-            }
-        });
-        this.tray = t;
     }
 
     private Table createTable() {
@@ -387,36 +336,12 @@ public class CommitFilesChooser extends Composite {
         }
     }
 
-    private void closeSash() {
-        if (tray == null) {
-            throw new IllegalStateException("Tray was not open"); //$NON-NLS-1$
-        }
-        int trayWidth = trayControl.getSize().x + leftSeparator.getSize().x + sash.getSize().x + rightSeparator.getSize().x;
-        trayControl.dispose();
-        trayControl = null;
-        tray = null;
-        leftSeparator.dispose();
-        leftSeparator = null;
-        rightSeparator.dispose();
-        rightSeparator = null;
-        sash.dispose();
-        sash = null;
-        Shell shell = getShell();
-        Rectangle bounds = shell.getBounds();
-        shell.setBounds(bounds.x + ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0), bounds.y, bounds.width - trayWidth, bounds.height);
-    }
-
     private void showDiffForSelection() {
-        if (trayClosed && selectedFile != null) {
-            try {
-                openSash();
-                trayClosed = false;
-            } catch (Exception e1) {
-                MercurialEclipsePlugin.logError(e1);
-            }
-        } else {
-            closeSash();
-            trayClosed = true;
+        if (selectedFile != null) {
+            MercurialRevisionStorage iStorage = new MercurialRevisionStorage(selectedFile);
+            ResourceNode right = new RevisionNode(iStorage);
+            ResourceNode left = new ResourceNode(selectedFile);
+            CompareUtils.openEditor(left, right, true, false);
         }
     }
 }
