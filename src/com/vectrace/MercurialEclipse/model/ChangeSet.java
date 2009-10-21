@@ -55,7 +55,6 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private File bundleFile;
     private HgRepositoryLocation repository;
     private Direction direction;
-    private String summary;
     private final HgRoot hgRoot;
     private IFilePatch[] patches;
 
@@ -187,7 +186,20 @@ public class ChangeSet implements Comparable<ChangeSet> {
     }
 
     public String getDate() {
-        return date;
+//      return date;
+        String dt = date;
+        if (dt != null) {
+            int off = dt.lastIndexOf(' ');
+            if (off != -1 && off < dt.length() - 1) {
+                switch (dt.charAt(off + 1)) {
+                case '+':
+                case '-':
+                    dt = dt.substring(0, off);
+                    break;
+                }
+            }
+        }
+        return dt;
     }
 
     public String getDescription() {
