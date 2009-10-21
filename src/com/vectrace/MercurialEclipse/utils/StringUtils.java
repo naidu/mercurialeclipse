@@ -16,13 +16,20 @@ package com.vectrace.MercurialEclipse.utils;
  * @author adam.berkes <adam.berkes@intland.com>
  */
 public class StringUtils {
-
     public static final String NEW_LINE = System.getProperty("line.separator");
 
+    private static final String OPTIONAL_BLANK_AND_TAB = "[ \t]*";
+
+    /**
+     * Removes all \r \n characters and optional leading and/or trailing blanks and TAB characters.
+     *
+     * @param text trimmed result
+     * @return
+     */
     public static String removeLineBreaks(String text) {
         if (text != null && !text.isEmpty()) {
-            text = text.replace("\r", " ");
-            return text.replace("\n", " ");
+            text = text.replaceAll(OPTIONAL_BLANK_AND_TAB + "(\r|\n)+" + OPTIONAL_BLANK_AND_TAB, " ");
+            text = text.trim();
         }
         return text;
     }
