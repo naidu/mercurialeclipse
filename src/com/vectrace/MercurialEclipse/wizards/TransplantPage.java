@@ -138,7 +138,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
             public void widgetSelected(SelectionEvent e) {
                 // TODO filter changeset table
                 branchName = branchNameCombo.getText();
-                if (Branch.DEFAULT.equals(branchName)) {
+                if (Branch.isDefault(branchName)) {
                     branchName = ""; //$NON-NLS-1$
                 }
 
@@ -279,6 +279,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
     }
 
     private void populateChangesetTable() {
+        changesetTable.clearTable();
         changesetTable.setChangesets(changesets
                 .toArray(new ChangeSet[changesets.size()]));
     }
