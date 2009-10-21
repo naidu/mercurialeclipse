@@ -343,10 +343,10 @@ public class MercurialHistoryPage extends HistoryPage {
         layout.addColumnData(new ColumnWeightData(10, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
         column.setText(Messages.getString("MercurialHistoryPage.columnHeader.user")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(7, true));
+        layout.addColumnData(new ColumnWeightData(14, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
         column.setText(Messages.getString("MercurialHistoryPage.columnHeader.date")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(13, true));
+        layout.addColumnData(new ColumnWeightData(12, true));
         column = new TableColumn(changeLogTable, SWT.LEFT);
         column.setText(Messages.getString("MercurialHistoryPage.columnHeader.summary")); //$NON-NLS-1$
         layout.addColumnData(new ColumnWeightData(25, true));

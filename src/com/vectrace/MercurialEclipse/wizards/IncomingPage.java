@@ -177,7 +177,8 @@ public class IncomingPage extends HgWizardPage {
                 Messages.getString("IncomingPage.columnHeader.author"), //$NON-NLS-1$
                 Messages.getString("IncomingPage.columnHeader.branch"), //$NON-NLS-1$
                 Messages.getString("IncomingPage.columnHeader.summary") };  //$NON-NLS-1$
-        int[] widths = { 42, 100, 122, 80, 80, 150 };
+        final int WIDTH = 11;
+        int[] widths = {6 * WIDTH, 7 * WIDTH, 15 * WIDTH, 14 * WIDTH, 10 * WIDTH, 30 * WIDTH};
         for (int i = 0; i < titles.length; i++) {
             TableColumn column = new TableColumn(table, SWT.NONE);
             column.setText(titles[i]);
