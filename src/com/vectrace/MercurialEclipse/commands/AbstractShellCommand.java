@@ -168,6 +168,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
                     // no hg root found
                 }
             }
+            // Request non-interactivity
+            cmd.add(1, "-y");
 
             ProcessBuilder builder = new ProcessBuilder(cmd);
 
