@@ -46,6 +46,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
         appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+                new PushPullSynchronizeAction("Push",
+                        configuration, getVisibleRootsSelectionProvider(), false, false));
+
+        appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+                ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
                 new CommitSynchronizeAction("Commit",
                         configuration, getVisibleRootsSelectionProvider()));
 
@@ -56,13 +61,13 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
         appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-                new PullSynchronizeAction("Pull",
-                        configuration, getVisibleRootsSelectionProvider(), false));
+                new PushPullSynchronizeAction("Pull",
+                        configuration, getVisibleRootsSelectionProvider(), true, false));
 
         appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-                new PullSynchronizeAction("Pull and Update",
-                        configuration, getVisibleRootsSelectionProvider(), true));
+                new PushPullSynchronizeAction("Pull and Update",
+                        configuration, getVisibleRootsSelectionProvider(), true, true));
 
         appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
                 ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
