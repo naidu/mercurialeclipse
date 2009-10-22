@@ -10,29 +10,36 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRunnable;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.team.core.diff.IDiff;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.subscribers.Subscriber;
+import org.eclipse.team.core.subscribers.SubscriberMergeContext;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.ui.PlatformUI;
+
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
  * @author bastian
  *
  */
-public class HgSubscriberMergeContext extends
-        org.eclipse.team.core.subscribers.SubscriberMergeContext {
+public class HgSubscriberMergeContext extends SubscriberMergeContext {
 
+    private final MercurialSynchronizeSubscriber subscriber;
 
     public HgSubscriberMergeContext(Subscriber subscriber,
             ISynchronizationScopeManager manager) {
         super(subscriber, manager);
         initialize();
+        this.subscriber = (MercurialSynchronizeSubscriber)subscriber;
     }
 
     /**
@@ -43,6 +50,17 @@ public class HgSubscriberMergeContext extends
     @Override
     protected void makeInSync(IDiff diff, IProgressMonitor monitor)
             throws CoreException {
+    }
+
+    @Override
+    public void run(IWorkspaceRunnable runnable, ISchedulingRule rule, int flags,
+            IProgressMonitor monitor) throws CoreException {
+        doPullAndMerge(subscriber.getRepo(), subscriber.getProjects(), runnable, rule, flags, monitor);
+    }
+
+    @Override
+    protected void runInBackground(IWorkspaceRunnable runnable) {
+        doPullAndMerge(subscriber.getRepo(), subscriber.getProjects(), runnable);
     }
 
     public void markAsMerged(IDiff node, boolean inSyncHint,
@@ -88,4 +106,19 @@ public class HgSubscriberMergeContext extends
         }
     }
 
+    private void doPullAndMerge(HgRepositoryLocation location,
+            IProject[] projects,
+            IWorkspaceRunnable runnable) {
+        doPullAndMerge(location, projects, runnable, null, 0, null);
+    }
+
+    private void doPullAndMerge(HgRepositoryLocation location,
+            IProject[] projects,
+            IWorkspaceRunnable runnable,
+            ISchedulingRule rule,
+            int flags,
+            IProgressMonitor monitor) {
+        //TODO This is a null solution to avoid wrong usage until it is properly implemented!
+        // I was originally planned to show a dialog here but that seems "impossible" :(
+    }
 }

@@ -413,8 +413,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         }
     }
 
-    private HgRepositoryLocation getRepo(){
+    protected HgRepositoryLocation getRepo(){
         return scope.getRepositoryLocation();
+    }
+
+    protected IProject[] getProjects() {
+        return scope.getProjects();
     }
 
     @Override

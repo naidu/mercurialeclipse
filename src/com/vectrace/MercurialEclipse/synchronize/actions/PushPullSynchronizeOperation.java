@@ -25,48 +25,81 @@ import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.Messages;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
-public class PullRepositorySynchronizeOperation extends SynchronizeModelOperation {
+public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
     private final org.eclipse.core.resources.IProject project;
     private final ISynchronizePageConfiguration configuration;
     private final MercurialSynchronizeParticipant participant;
     private final boolean update;
+    private final boolean isPull;
+    private final String revision;
 
-    public PullRepositorySynchronizeOperation(
+    public PushPullSynchronizeOperation(
             ISynchronizePageConfiguration configuration,
-            IDiffElement[] elements, IResource[] resources, boolean update) {
+            IDiffElement[] elements, IResource[] resources, String revision, boolean isPull, boolean update) {
         super(configuration, elements);
         this.project = resources[0].getProject();
         this.configuration = configuration;
         this.participant = (MercurialSynchronizeParticipant) this.configuration
                 .getParticipant();
+        this.revision = revision;
+        this.isPull = isPull;
         this.update = update;
+    }
+
+    public PushPullSynchronizeOperation(
+            ISynchronizePageConfiguration configuration,
+            IDiffElement[] elements, IResource[] resources, boolean isPull, boolean update) {
+        this(configuration, elements, resources, null, isPull, update);
     }
 
     public void run(IProgressMonitor monitor) throws InvocationTargetException,
             InterruptedException {
-        monitor.beginTask("Starting pull from "+project+". Update: "+update, 1);
-        new SafeUiJob("Pulling...") {
+        monitor.beginTask(isPull ? Messages.getString("PushPullSynchronizeOperation.PullTask")
+                : Messages.getString("PushPullSynchronizeOperation.PushTask")
+                + project, 1);
+        new SafeUiJob(isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
+                : Messages.getString("PushPullSynchronizeOperation.PushJob")) {
 
             @Override
             protected IStatus runSafe(IProgressMonitor moni) {
                 try {
-                    HgRepositoryLocation loc = participant
+                    HgRepositoryLocation location = participant
                             .getRepositoryLocation();
 
-                    if (loc != null) {
-                        HgPushPullClient.pull(project, loc, update);
+                    if (location != null) {
+                        if (isPull) {
+                            HgPushPullClient.pull(project, location, update);
+                        } else {
+                            HgPushPullClient.push(project, location, false, revision, Integer.MAX_VALUE);
+                            new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.OUTGOING).schedule();
+                        }
                     }
-
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return e.getStatus();
+                } catch (HgException ex) {
+                    MercurialEclipsePlugin.logError(ex);
+                    return ex.getStatus();
                 }
                 return super.runSafe(moni);
             }
 
         }.schedule();
         monitor.done();
+    }
+
+    /**
+     * @return the isPull
+     */
+    public boolean isPull() {
+        return isPull;
+    }
+
+    /**
+     * @return the revision
+     */
+    public String getRevision() {
+        return revision;
     }
 
 }

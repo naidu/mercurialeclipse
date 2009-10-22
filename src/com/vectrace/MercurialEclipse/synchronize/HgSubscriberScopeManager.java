@@ -42,7 +42,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
     public static final int INCOMING = -1;
     public static final int OUTGOING = -2;
     public static final int LOCAL = -3;
-    private final IPropertyListener branchListsner;
+    private final IPropertyListener branchListener;
 
     public HgSubscriberScopeManager(ResourceMapping[] inputMappings, MercurialSynchronizeSubscriber subscriber) {
         super(HgSubscriberScopeManager.class.getSimpleName(), inputMappings, subscriber, false);
@@ -50,13 +50,13 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
         MercurialStatusCache.getInstance().addObserver(this);
         IncomingChangesetCache.getInstance().addObserver(this);
         OutgoingChangesetCache.getInstance().addObserver(this);
-        branchListsner = new IPropertyListener() {
+        branchListener = new IPropertyListener() {
             public void propertyChanged(Object source, int propId) {
                 MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
                 subscriber1.branchChanged((IProject) source);
             }
         };
-        MercurialTeamProvider.addBranchListener(branchListsner);
+        MercurialTeamProvider.addBranchListener(branchListener);
     }
 
     public void update(Observable o, Object arg) {
@@ -120,7 +120,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
         MercurialStatusCache.getInstance().deleteObserver(this);
         IncomingChangesetCache.getInstance().deleteObserver(this);
         OutgoingChangesetCache.getInstance().deleteObserver(this);
-        MercurialTeamProvider.removeBranchListener(branchListsner);
+        MercurialTeamProvider.removeBranchListener(branchListener);
         super.dispose();
     }
 
