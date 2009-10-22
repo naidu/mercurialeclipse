@@ -68,17 +68,17 @@ public class HgCommitClient extends AbstractClient {
 
         HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        command.addUserName(quote(user));
-        command.addOptions("-m", quote(message)); //$NON-NLS-1$
+        command.addUserName(user);
+        addMessage(command, message);
         command.addFiles(AbstractClient.toPaths(files));
         return command.executeToString();
     }
 
-    static String quote(String str) {
-        if (str == null || str.length() == 0) {
-            return str;
+    private static void addMessage(HgCommand command, String message) {
+        message = message.trim();
+        if (!message.isEmpty()) {
+            command.addOptions("-m", message.trim());
         }
-        return str.replaceAll("\"", "\\\\\""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     /**
@@ -89,8 +89,8 @@ public class HgCommitClient extends AbstractClient {
             String message) throws HgException {
         HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        command.addUserName(quote(user));
-        command.addOptions("-m", quote(message)); //$NON-NLS-1$
+        command.addUserName(user);
+        addMessage(command, message);
         String result = command.executeToString();
         Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
         for (IProject iProject : projects) {
