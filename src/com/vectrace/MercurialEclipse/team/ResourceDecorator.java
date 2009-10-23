@@ -1,3 +1,14 @@
+/*
+ * Copyright by Intland Software
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information
+ * of Intland Software. ("Confidential Information"). You
+ * shall not disclose such Confidential Information and shall use
+ * it only in accordance with the terms of the license agreement
+ * you entered into with Intland.
+ */
 /*******************************************************************************
  * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
@@ -61,6 +72,7 @@ import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -69,14 +81,13 @@ import com.vectrace.MercurialEclipse.utils.Bits;
 
 /**
  * @author zingo
- *
+ * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
+ * @version $Id$
  */
 public class ResourceDecorator extends LabelProvider implements ILightweightLabelDecorator, Observer {
-
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 	private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
 	private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
-
 
 	private static String[] fonts = new String[] {
 		ADDED_FONT,
@@ -133,13 +144,11 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 		});
 
-		MercurialEclipsePlugin.getDefault()
-			.getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
+		MercurialEclipsePlugin.getDefault().getPreferenceStore().addPropertyChangeListener(new IPropertyChangeListener() {
 			public void propertyChange(PropertyChangeEvent event) {
 				if(interestingPrefs.contains(event.getProperty())){
 					configureFromPreferences();
-					fireLabelProviderChanged(new LabelProviderChangedEvent(
-							ResourceDecorator.this));
+					fireLabelProviderChanged(new LabelProviderChangedEvent(ResourceDecorator.this));
 				}
 			}
 		});
@@ -328,9 +337,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		return overlay;
 	}
 
-	private void addChangesetInfo(IDecoration d, IResource resource, IProject project, StringBuilder prefix)
-		throws CoreException {
-
+	private void addChangesetInfo(IDecoration d, IResource resource, IProject project, StringBuilder prefix) throws CoreException {
 		// label info for incoming changesets
 		ChangeSet newestIncomingChangeSet = INCOMING_CACHE.getNewestChangeSet(resource);
 
@@ -352,8 +359,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 			// overwrite suffix for files
 			if (resource.getType() == IResource.FILE) {
-				suffix = getSuffixForFiles(resource,
-						newestIncomingChangeSet);
+				suffix = getSuffixForFiles(resource, newestIncomingChangeSet);
 			}
 
 			// only decorate files and project with suffix
@@ -362,10 +368,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			}
 
 		} catch (HgException e) {
-			MercurialEclipsePlugin
-			.logWarning(
-					Messages
-					.getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e);
+			MercurialEclipsePlugin.logWarning(Messages.getString("ResourceDecorator.couldntGetVersionOfResource") + resource, e);
 		}
 	}
 
@@ -388,12 +391,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			ChangeSet fileCs = LOCAL_CACHE.getNewestChangeSet(resource);
 			if (fileCs != null) {
 				suffix = " [" + fileCs.getChangesetIndex() + " - " //$NON-NLS-1$ //$NON-NLS-2$
-				+ fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
+				    + fileCs.getAgeDate() + " - " + fileCs.getUser() + "]";
 
 				if (cs != null) {
 					suffix += "< [" + cs.getChangesetIndex() + ":" //$NON-NLS-1$
-					+ cs.getNodeShort() + " - " + cs.getAgeDate()
-					+ " - " + cs.getUser() + "]";
+    					+ cs.getNodeShort() + " - " + cs.getAgeDate()
+    					+ " - " + cs.getUser() + "]";
 				}
 			}
 		}
@@ -424,7 +427,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			// branch
 			String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
 			if (branch == null || branch.length() == 0) {
-				branch = "default"; //$NON-NLS-1$
+				branch = Branch.DEFAULT;
 			}
 			suffix.append('@').append(branch);
 
@@ -467,8 +470,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	}
 
 	private void fireNotification(List<IResource> notification) {
-		LabelProviderChangedEvent event = new LabelProviderChangedEvent(this,
-				notification.toArray());
+		LabelProviderChangedEvent event = new LabelProviderChangedEvent(this, notification.toArray());
 		fireLabelProviderChanged(event);
 		notification.clear();
 	}
@@ -488,5 +490,4 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		};
 		Display.getDefault().asyncExec(decoratorUpdate);
 	}
-
 }

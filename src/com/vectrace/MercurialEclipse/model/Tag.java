@@ -1,13 +1,32 @@
+/*
+ * Copyright by Intland Software
+ *
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information
+ * of Intland Software. ("Confidential Information"). You
+ * shall not disclose such Confidential Information and shall use
+ * it only in accordance with the terms of the license agreement
+ * you entered into with Intland.
+ */
+
 package com.vectrace.MercurialEclipse.model;
 
-public class Tag {
+import com.vectrace.MercurialEclipse.HgRevision;
+
+/**
+ * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
+ * @version $Id$
+ */
+public class Tag implements Comparable<Tag> {
+	private final static String TIP = HgRevision.TIP.getChangeset();
 
 	/** name of the tag, unique in the repository */
 	private final String name;
 	private final int revision;
 	private final String globalId;
 	private final boolean local;
-	
+
 	public Tag(String name, int revision, String globalId, boolean local) {
 		super();
 		this.name = name;
@@ -42,19 +61,41 @@ public class Tag {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final Tag other = (Tag) obj;
 		if (name == null) {
-			if (other.name != null)
+			if (other.name != null) {
 				return false;
-		} else if (!name.equals(other.name))
+			}
+		} else if (!name.equals(other.name)) {
 			return false;
+		}
 		return true;
 	}
-	
+
+	@Override
+	public String toString() {
+		return name + " [" + revision +  ':' + globalId + ']';
+	}
+
+	public int compareTo(Tag tag) {
+	    /* "tip" must be always the first in the collection */
+		if (tag == null || name == null || TIP.equals(name)) {
+			return -1;
+		}
+
+		if (TIP.equals(tag.getName())) {
+			return 1;
+		}
+
+		return name.compareToIgnoreCase(tag.getName());
+	}
 }
