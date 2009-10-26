@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ * @author <a href="mailto:adam.berkes@intland.com">Adam Berkes</a>
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -109,10 +110,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             return null;
         }
 
+        String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
+
         ChangeSet csOutgoing;
         try {
             // this can trigger a refresh and a call to the remote server...
-            csOutgoing = OUTGOING_CACHE.getNewestChangeSet(resource, getRepo());
+            csOutgoing = OUTGOING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;
@@ -120,15 +123,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             sema.release();
         }
 
-        String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
-
         MercurialRevisionStorage outgoingIStorage;
         IResourceVariant outgoing;
         // determine outgoing revision
         if (csOutgoing != null) {
-            if(!Branch.same(csOutgoing.getBranch(), currentBranch)){
-                return null;
-            }
             outgoingIStorage = new MercurialRevisionStorage(resource,
                     csOutgoing.getRevision().getRevision(),
                     csOutgoing.getChangeset(), csOutgoing);
@@ -190,7 +188,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
         ChangeSet csIncoming;
         try {
             // this can trigger a refresh and a call to the remote server...
-            csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo());
+            csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
         } catch (HgException e) {
             MercurialEclipsePlugin.logError(e);
             return null;
@@ -200,9 +198,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
         MercurialRevisionStorage incomingIStorage;
         if (csIncoming != null) {
-            if(!Branch.same(csIncoming.getBranch(), currentBranch)){
-                return null;
-            }
             boolean fileRemoved = csIncoming.isRemoved(resource);
             if(fileRemoved){
                 incomingIStorage = null;

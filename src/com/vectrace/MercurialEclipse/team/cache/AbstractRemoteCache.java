@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -63,6 +64,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  *
  * @author bastian
  * @author Andrei Loskutov
+ * @author <a href="mailto:adam.berkes@intland.com">Adam Berkes</a>
  */
 public abstract class AbstractRemoteCache extends AbstractCache {
 
@@ -249,8 +251,21 @@ public abstract class AbstractRemoteCache extends AbstractCache {
         }
     }
 
+    /**
+     * Get newest revision of resource regardless of branch
+     */
     public ChangeSet getNewestChangeSet(IResource resource,
             HgRepositoryLocation repository) throws HgException {
+        return getNewestChangeSet(resource, repository, null);
+    }
+
+    /**
+     * Get newest revision of resource on given branch
+     * @param resource Eclipse resource (e.g. a file) to find latest changeset for
+     * @param branch name of branch (default or "" for unnamed) or null if branch unaware
+     */
+    public ChangeSet getNewestChangeSet(IResource resource,
+            HgRepositoryLocation repository, String branch) throws HgException {
 
         if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
             synchronized (repoChangeSets){
@@ -259,6 +274,18 @@ public abstract class AbstractRemoteCache extends AbstractCache {
                 if (repoMap != null) {
                     SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
                     if (revisions != null && revisions.size() > 0) {
+                        if (branch != null) {
+                            if (Branch.DEFAULT.equals(branch)) {
+                                branch = "";
+                            }
+                            ChangeSet last = null;
+                            for (ChangeSet cs: revisions) {
+                                if (branch.equals(cs.getBranch())) {
+                                    last = cs;
+                                }
+                            }
+                            return last;
+                        }
                         return revisions.last();
                     }
                 }
