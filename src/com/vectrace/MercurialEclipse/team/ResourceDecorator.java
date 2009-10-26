@@ -89,7 +89,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 	private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
 	private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
 
-	private static String[] fonts = new String[] {
+	private final static String[] fonts = new String[] {
 		ADDED_FONT,
 		CONFLICT_FONT,
 		DELETED_FONT,
@@ -97,7 +97,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		UNKNOWN_FONT,
 		IGNORED_FONT, CHANGE_FONT };
 
-	private static String[] colors = new String[] {
+	private final static String[] colors = new String[] {
 		ADDED_BACKGROUND_COLOR,
 		ADDED_FOREGROUND_COLOR,
 		CHANGE_BACKGROUND_COLOR,
@@ -113,7 +113,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		UNKNOWN_BACKGROUND_COLOR,
 		UNKNOWN_FOREGROUND_COLOR };
 
-	private static final Set<String> interestingPrefs = new HashSet<String>();
+	private final static Set<String> interestingPrefs = new HashSet<String>();
 	static {
 		interestingPrefs.add(LABELDECORATOR_LOGIC_2MM);
 		interestingPrefs.add(LABELDECORATOR_LOGIC);
@@ -258,11 +258,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				&& (Bits.cardinality(statusBits) > 2 || (Bits.cardinality(statusBits) == 2 && !Bits.contains(statusBits,
 						MercurialStatusCache.BIT_IGNORE)))) {
 			overlay = DecoratorImages.modifiedDescriptor;
-			//prefix.append('>');
 			if (coloriseLabels) {
 				setBackground(d, CHANGE_BACKGROUND_COLOR);
 				setForeground(d, CHANGE_FOREGROUND_COLOR);
 				setFont(d, CHANGE_FONT);
+            } else {
+                prefix.append('>');
 			}
 		} else {
 			switch (Bits.highestBit(statusBits)) {
@@ -271,33 +272,38 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 					setBackground(d, IGNORED_BACKGROUND_COLOR);
 					setForeground(d, IGNORED_FOREGROUND_COLOR);
 					setFont(d, IGNORED_FONT);
+                } else {
+                    prefix.append('>');
 				}
 				break;
 			case MercurialStatusCache.BIT_MODIFIED:
 				overlay = DecoratorImages.modifiedDescriptor;
-				//prefix.append('>');
 				if (coloriseLabels) {
 					setBackground(d, CHANGE_BACKGROUND_COLOR);
 					setForeground(d, CHANGE_FOREGROUND_COLOR);
 					setFont(d, CHANGE_FONT);
+	            } else {
+	                prefix.append('>');
 				}
 				break;
 			case MercurialStatusCache.BIT_ADDED:
 				overlay = DecoratorImages.addedDescriptor;
-				//prefix.append('>');
 				if (coloriseLabels) {
 					setBackground(d, ADDED_BACKGROUND_COLOR);
 					setForeground(d, ADDED_FOREGROUND_COLOR);
 					setFont(d, ADDED_FONT);
+	            } else {
+	                prefix.append('>');
 				}
 				break;
 			case MercurialStatusCache.BIT_UNKNOWN:
 				overlay = DecoratorImages.notTrackedDescriptor;
-				//prefix.append('>');
 				if (coloriseLabels) {
 					setBackground(d, UNKNOWN_BACKGROUND_COLOR);
 					setForeground(d, UNKNOWN_FOREGROUND_COLOR);
 					setFont(d, UNKNOWN_FONT);
+	            } else {
+	                prefix.append('>');
 				}
 				break;
 			case MercurialStatusCache.BIT_CLEAN:
@@ -307,29 +313,32 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				// do nothing
 			case MercurialStatusCache.BIT_REMOVED:
 				overlay = DecoratorImages.removedDescriptor;
-				//prefix.append('>');
 				if (coloriseLabels) {
 					setBackground(d, REMOVED_BACKGROUND_COLOR);
 					setForeground(d, REMOVED_FOREGROUND_COLOR);
 					setFont(d, REMOVED_FONT);
+	            } else {
+	                prefix.append('>');
 				}
 				break;
 			case MercurialStatusCache.BIT_MISSING:
 				overlay = DecoratorImages.deletedStillTrackedDescriptor;
-				//prefix.append('>');
 				if (coloriseLabels) {
 					setBackground(d, DELETED_BACKGROUND_COLOR);
 					setForeground(d, DELETED_FOREGROUND_COLOR);
 					setFont(d, DELETED_FONT);
+	            } else {
+	                prefix.append('>');
 				}
 				break;
 			case MercurialStatusCache.BIT_CONFLICT:
 				overlay = DecoratorImages.conflictDescriptor;
-				//prefix.append('>');
 				if (coloriseLabels) {
 					setBackground(d, CONFLICT_BACKGROUND_COLOR);
 					setForeground(d, CONFLICT_FOREGROUND_COLOR);
 					setFont(d, CONFLICT_FONT);
+	            } else {
+	                prefix.append('>');
 				}
 				break;
 			}
