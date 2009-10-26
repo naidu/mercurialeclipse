@@ -384,8 +384,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(debug) {
                 System.out.println("\nget incoming: " + project + ", depth: " + flag);
             }
+            String currentBranch = MercurialTeamProvider.getCurrentBranch(project);
             // this can trigger a refresh and a call to the remote server...
-            Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation);
+            Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, currentBranch);
             resourcesToRefresh.addAll(incomingMembers);
         }
     }
@@ -402,8 +403,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(debug) {
                 System.out.println("\nget outgoing: " + project + ", depth: " + flag);
             }
+            String currentBranch = MercurialTeamProvider.getCurrentBranch(project);
             // this can trigger a refresh and a call to the remote server...
-            Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation);
+            Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, currentBranch);
             resourcesToRefresh.addAll(outgoingMembers);
         }
     }

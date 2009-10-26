@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -39,9 +40,20 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      */
     public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
             HgRepositoryLocation repository) throws HgException {
+        return getHgIncoming(res, repository, null);
+    }
+
+    public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
+            HgRepositoryLocation repository, String branch) throws HgException {
         AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        if (branch != null) {
+            if (Branch.isDefault(branch)) {
+                branch = Branch.DEFAULT;
+            }
+            command.addOptions("-r", branch);
+        }
         final File bundleFile;
         try {
             bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$

@@ -95,7 +95,7 @@ public class IncomingPage extends HgWizardPage {
             IncomingChangesetCache cache = IncomingChangesetCache.getInstance();
             try {
                 cache.clear(location, project, false);
-                SortedSet<ChangeSet> set = cache.getChangeSets(project, location);
+                SortedSet<ChangeSet> set = cache.getChangeSets(project, location, null);
                 SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
                 revertedSet.addAll(set);
                 return revertedSet;

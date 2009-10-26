@@ -21,6 +21,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -34,7 +35,18 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
      */
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
+        return getOutgoing(res, repository, null);
+    }
+
+    public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
+            HgRepositoryLocation repository, String branch) throws HgException {
         AbstractShellCommand command = getCommand(res);
+        if (branch != null) {
+            if (Branch.isDefault(branch)) {
+                branch = Branch.DEFAULT;
+            }
+            command.addOptions("-r", branch);
+        }
         try {
             command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
                     .getStyleFile(true).getCanonicalPath());
