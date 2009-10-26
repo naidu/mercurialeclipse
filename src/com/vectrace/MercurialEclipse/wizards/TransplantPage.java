@@ -247,14 +247,19 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                 setErrorMessage(null);
                 nodeIds.clear();
                 for (ChangeSet changeSet : changeSets) {
-                    if (Math.abs(changeSet.getChangesetIndex()
-                            - last.getChangesetIndex()) > 1) {
-                        setErrorMessage(Messages
-                                .getString("TransplantPage.errorNotSequential")); //$NON-NLS-1$
-                        setPageComplete(false);
-                        break;
+                    if (last.getParents() != null) {
+                        if (last.equals(changeSet)
+                                || last.getParents()[0].endsWith(changeSet.getRevision().getChangeset())
+                                || (last.getParents().length > 1 &&
+                                        last.getParents()[1].endsWith(changeSet.getRevision().getChangeset()))) {
+                            nodeIds.add(0, changeSet.getChangeset());
+                        } else {
+                            setErrorMessage(Messages
+                                    .getString("TransplantPage.errorNotSequential")); //$NON-NLS-1$
+                            setPageComplete(false);
+                            break;
+                        }
                     }
-                    nodeIds.add(changeSet.getChangeset());
                     last = changeSet;
                 }
 
