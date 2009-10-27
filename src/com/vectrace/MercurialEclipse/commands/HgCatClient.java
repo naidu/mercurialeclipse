@@ -19,7 +19,7 @@ public class HgCatClient extends AbstractClient {
         File file = ResourceUtils.getFileHandle(resource);
         AbstractShellCommand command = new HgCommand("cat", hgRoot, true);
         if (revision != null && revision.length() != 0) {
-            command.addOptions("--rev", revision); //$NON-NLS-1$
+            command.addOptions("-r", revision); //$NON-NLS-1$
 
         }
         command.addOptions("--decode"); //$NON-NLS-1$

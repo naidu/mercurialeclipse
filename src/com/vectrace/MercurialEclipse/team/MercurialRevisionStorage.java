@@ -221,7 +221,7 @@ public class MercurialRevisionStorage implements IStorage {
             // incoming: overlay repository with bundle and extract then via cat
             try {
                 result = HgCatClient.getContentFromBundle(file,
-                        Integer.valueOf(changeSet.getChangesetIndex()).toString(),
+                        changeSet.getRevision().getChangeset(),
                         changeSet.getBundleFile().getCanonicalPath());
             } catch (IOException e) {
                 throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
