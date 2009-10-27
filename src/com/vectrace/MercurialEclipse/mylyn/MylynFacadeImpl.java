@@ -40,9 +40,8 @@ class MylynFacadeImpl implements IMylynFacade {
     /**
      * Get comment for the current mylyn task.
      * @param resources
-     * @return
+     * @return The comment created by mylyn from the task-template
      */
-    @SuppressWarnings("restriction")
     public String getCurrentTaskComment(IResource[] resources) {
         ITask task = getCurrentTask();
         if (task == null) {
@@ -57,7 +56,6 @@ class MylynFacadeImpl implements IMylynFacade {
      * Get the resources for the current task, which is the mylyn context
      * @return The resources, or null if no current task present
      */
-    @SuppressWarnings("restriction")
     public IResource[] getCurrentTaskResources() {
         ITask task = getCurrentTask();
         if (task == null) {

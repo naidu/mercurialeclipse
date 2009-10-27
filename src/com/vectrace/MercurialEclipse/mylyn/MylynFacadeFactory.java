@@ -26,10 +26,10 @@ public class MylynFacadeFactory {
 
     /**
      * Get the IMylynFacade instance.
-     * @return
+     * @return The mylyn facade
      */
     public static IMylynFacade getMylynFacade() {
-        Object proxy = Proxy.newProxyInstance(MylynFacadeFactory.class.getClassLoader(), new Class[] {IMylynFacade.class}, new InvocationHandler() {
+        Object facade = Proxy.newProxyInstance(MylynFacadeFactory.class.getClassLoader(), new Class[] {IMylynFacade.class}, new InvocationHandler() {
 
             public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
                 try {
@@ -41,7 +41,7 @@ public class MylynFacadeFactory {
                 return null;
             }
         });
-        return (IMylynFacade) proxy;
+        return (IMylynFacade) facade;
     }
 
 }
