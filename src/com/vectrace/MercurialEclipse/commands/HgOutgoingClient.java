@@ -40,13 +40,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 
     public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository, String branch) throws HgException {
-        AbstractShellCommand command = getCommand(res);
-        if (branch != null) {
-            if (Branch.isDefault(branch)) {
-                branch = Branch.DEFAULT;
-            }
-            command.addOptions("-r", branch);
-        }
+        AbstractShellCommand command = getCommand(res, branch);
         try {
             command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
                     .getStyleFile(true).getCanonicalPath());
@@ -62,13 +56,13 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 
         Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
                 res, result, true, Direction.OUTGOING, repository, null,
-                getOutgoingPatches(res, repository));
+                getOutgoingPatches(res, repository, branch));
         return revisions;
     }
 
     private static IFilePatch[] getOutgoingPatches(IResource res,
-            HgRepositoryLocation repository) throws HgException {
-        String outgoingPatch = getOutgoingPatch(res, repository);
+            HgRepositoryLocation repository, String branch) throws HgException {
+        String outgoingPatch = getOutgoingPatch(res, repository, branch);
         return PatchUtils.getFilePatches(outgoingPatch);
     }
 
@@ -87,10 +81,16 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         }
     }
 
-    private static AbstractShellCommand getCommand(IResource res) {
+    private static AbstractShellCommand getCommand(IResource res, String branch) {
         AbstractShellCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
                 false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+        if (branch != null) {
+            if (Branch.isDefault(branch)) {
+                branch = Branch.DEFAULT;
+            }
+            command.addOptions("-r", branch);
+        }
         return command;
     }
 
@@ -104,8 +104,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
         }
     }
 
-    private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository) throws HgException {
-        AbstractShellCommand command = getCommand(res);
+    private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository, String branch) throws HgException {
+        AbstractShellCommand command = getCommand(res, branch);
         command.addOptions("-p");
         setRepository(repository, command);
         return getResult(command);

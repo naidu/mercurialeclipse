@@ -294,6 +294,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             monitor.beginTask(getName(), 5);
             // clear caches in any case, but refresh them only if project exists
             boolean forceRefresh = project.exists();
+            String currentBranch = MercurialTeamProvider.getCurrentBranch(project);
             try {
                 sema.acquire();
                 if(debug) {
@@ -308,13 +309,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
                     return;
                 }
                 monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-                refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh);
+                refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
                 monitor.worked(1);
                 if (monitor.isCanceled()) {
                     return;
                 }
                 monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
-                refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh);
+                refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
                 monitor.worked(1);
                 if (monitor.isCanceled()) {
                     return;
@@ -373,7 +374,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
     }
 
     private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,
-            HgRepositoryLocation repositoryLocation, boolean forceRefresh) throws HgException {
+            HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
         if(flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
             if(debug) {
                 System.out.println("\nclear incoming: " + project + ", depth: " + flag);
@@ -384,15 +385,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(debug) {
                 System.out.println("\nget incoming: " + project + ", depth: " + flag);
             }
-            String currentBranch = MercurialTeamProvider.getCurrentBranch(project);
+
             // this can trigger a refresh and a call to the remote server...
-            Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, currentBranch);
+            Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, branch);
             resourcesToRefresh.addAll(incomingMembers);
         }
     }
 
     private void refreshOutgoing(int flag, Set<IResource> resourcesToRefresh, IProject project,
-            HgRepositoryLocation repositoryLocation, boolean forceRefresh) throws HgException {
+            HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
         if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
             if(debug) {
                 System.out.println("\nclear outgoing: " + project + ", depth: " + flag);
@@ -403,9 +404,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
             if(debug) {
                 System.out.println("\nget outgoing: " + project + ", depth: " + flag);
             }
-            String currentBranch = MercurialTeamProvider.getCurrentBranch(project);
             // this can trigger a refresh and a call to the remote server...
-            Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, currentBranch);
+            Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, branch);
             resourcesToRefresh.addAll(outgoingMembers);
         }
     }
