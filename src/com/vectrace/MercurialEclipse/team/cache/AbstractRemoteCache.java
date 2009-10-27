@@ -275,7 +275,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
                     SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
                     if (revisions != null && revisions.size() > 0) {
                         if (branch != null) {
-                            if (Branch.DEFAULT.equals(branch)) {
+                            if (Branch.isDefault(branch)) {
                                 branch = "";
                             }
                             ChangeSet last = null;
