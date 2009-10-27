@@ -49,7 +49,6 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IInputValidator;
 import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.layout.PixelConverter;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.CheckboxTreeViewer;
@@ -315,8 +314,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
         projectsList = new CheckboxTreeViewer(listComposite, SWT.BORDER);
         GridData gridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-        gridData.widthHint = new PixelConverter(projectsList.getControl()).convertWidthInCharsToPixels(25);
-        gridData.heightHint = new PixelConverter(projectsList.getControl()).convertHeightInCharsToPixels(10);
+        gridData.widthHint = convertWidthInCharsToPixels(25);
+        gridData.heightHint = convertHeightInCharsToPixels(10);
         projectsList.getControl().setLayoutData(gridData);
         projectsList.setContentProvider(new ITreeContentProvider() {
             public Object[] getChildren(Object parentElement) {
