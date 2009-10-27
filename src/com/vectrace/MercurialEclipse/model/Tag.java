@@ -87,7 +87,7 @@ public class Tag implements Comparable<Tag> {
 	}
 
 	public int compareTo(Tag tag) {
-	    /* "tip" must be always the first in the collection */
+		/* "tip" must be always the first in the collection */
 		if (tag == null || name == null || TIP.equals(name)) {
 			return -1;
 		}
@@ -96,6 +96,11 @@ public class Tag implements Comparable<Tag> {
 			return 1;
 		}
 
-		return name.compareToIgnoreCase(tag.getName());
+		int cmp = name.compareToIgnoreCase(tag.getName());
+		if (cmp == 0) {
+		    // Check it case sensitive
+			cmp = name.compareTo(tag.getName());
+		}
+		return cmp;
 	}
 }

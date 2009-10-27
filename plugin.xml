@@ -1338,5 +1338,4 @@
             objectClass="org.eclipse.core.resources.IProject">
       </page>
    </extension>
-
 </plugin>

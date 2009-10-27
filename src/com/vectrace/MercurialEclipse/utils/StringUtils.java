@@ -27,7 +27,7 @@ public class StringUtils {
      * @return
      */
     public static String removeLineBreaks(String text) {
-        if (text != null && !text.isEmpty()) {
+        if (text != null && text.length() != 0) {
             text = text.replaceAll(OPTIONAL_BLANK_AND_TAB + "(\r|\n)+" + OPTIONAL_BLANK_AND_TAB, " ");
             text = text.trim();
         }

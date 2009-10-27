@@ -76,7 +76,7 @@ public class HgCommitClient extends AbstractClient {
 
     private static void addMessage(HgCommand command, String message) {
         message = message.trim();
-        if (!message.isEmpty()) {
+        if (message.length() != 0) {
             command.addOptions("-m", message.trim());
         } else {
             command.addOptions("-m", Messages.getString("CommitDialog.defaultCommitMessage"));

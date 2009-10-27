@@ -1,5 +1,6 @@
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.SortedSet;
@@ -119,7 +120,13 @@ public class IncomingPage extends HgWizardPage {
                 IPath fileAbsPath = hgRoot.append(fileRelPath);
                 IResource file = getProject().getWorkspace().getRoot()
                         .getFileForLocation(fileAbsPath);
-                CompareUtils.openEditor(file, cs, true, true);
+                if (file != null) {
+                    CompareUtils.openEditor(file, cs, true, true);
+                } else {
+                    // It is possible that file has been removed or part of the
+                    // repository but not the project (and has incoming changes)
+                    MercurialEclipsePlugin.showError(new FileNotFoundException(Messages.getString("IncomingPage.compare.file.missing")));
+                }
             }
         }
     }
