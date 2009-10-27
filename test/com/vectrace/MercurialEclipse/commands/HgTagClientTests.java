@@ -26,12 +26,13 @@ import com.vectrace.MercurialEclipse.model.Tag;
 public class HgTagClientTests extends TestCase {
 	public void testGetTags1() throws Exception {
 		String[] lines = {
-				"cb-3-6-RC1  7144:3e28ba45c18e",
-				"end_of_metrics_branch  7117:db9d060ed00f",
-				"cb-3-5-RC   6472:37e681b9c47b",
-				"original   5999:fc532a302004",
-				"tip    23323:e374027944fb",
-				"Root_eclipse-2-1   5601:8de90d654b96",
+			"cb-3-6-RC1  7144:3e28ba45c18e",
+			"end_of_metrics_branch  7117:db9d060ed00f",
+			"cb-3-5-RC   6472:37e681b9c47b",
+			"CB-3-5-RC   6472:37e681b9c47b",
+			"original   5999:fc532a302004",
+			"tip    23323:e374027944fb",
+			"Root_eclipse-2-1   5601:8de90d654b96",
 		};
 
 		Collection<Tag> tags = HgTagClient.getTags(lines);
@@ -39,6 +40,9 @@ public class HgTagClientTests extends TestCase {
 
 		Tag tag = it.next();
 		assertEquals(HgRevision.TIP.getChangeset(), tag.getName());
+
+		tag = it.next();
+		assertEquals("CB-3-5-RC", tag.getName());
 
 		tag = it.next();
 		assertEquals("cb-3-5-RC", tag.getName());
@@ -61,6 +65,7 @@ public class HgTagClientTests extends TestCase {
 	public void testGetTags2() throws Exception {
 		String[] lines = {
 			"tip                             1377:288718b86ade",
+			"release_1.2                      941:c3db62d68609",
 			"RELEASE_1.2                      941:c3db62d68609",
 			"RELEASE_1.4                     1280:0fedfb9cf182",
 			"RELEASE_1.3                     1019:758c1089d4f0",
@@ -78,5 +83,23 @@ public class HgTagClientTests extends TestCase {
 
 		tag = it.next();
 		assertEquals("RELEASE_0.1", tag.getName());
+
+		tag = it.next();
+		assertEquals("RELEASE_0.2", tag.getName());
+
+		tag = it.next();
+		assertEquals("RELEASE_1.0", tag.getName());
+
+		tag = it.next();
+		assertEquals("RELEASE_1.1", tag.getName());
+
+		tag = it.next();
+		assertEquals("RELEASE_1.2", tag.getName());
+
+        tag = it.next();
+        assertEquals("release_1.2", tag.getName());
+
+        tag = it.next();
+        assertEquals("RELEASE_1.3", tag.getName());
 	}
 }

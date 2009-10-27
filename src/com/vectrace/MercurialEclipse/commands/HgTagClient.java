@@ -12,8 +12,10 @@
 
 package com.vectrace.MercurialEclipse.commands;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.TreeSet;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,7 +43,7 @@ public class HgTagClient {
 	}
 
 	protected static Collection<Tag> getTags(String[] lines) throws HgException {
-		TreeSet<Tag> tags = new TreeSet<Tag>();
+		List<Tag> tags = new ArrayList<Tag>();
 
 		for (String line : lines) {
 			Matcher m = GET_TAGS_PATTERN.matcher(line);
@@ -53,6 +55,7 @@ public class HgTagClient {
 			}
 		}
 
+		Collections.sort(tags);
 		return tags;
 	}
 
