@@ -573,9 +573,11 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
      * Refreshes local repository status and notifies the listeners about changes. No refresh of changesets.
      */
     public void refreshStatus(IResource res, IProgressMonitor monitor) throws HgException {
-        if(false && debug){
+        /*
+        if(debug){
             new Exception("refreshStatus " + res).printStackTrace();
         }
+        */
         Assert.isNotNull(res);
         monitor = checkMonitor(monitor);
         monitor.subTask(Messages.mercurialStatusCache_Refreshing + res.getName());
