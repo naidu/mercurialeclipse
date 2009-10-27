@@ -62,6 +62,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.mylyn.IMylynFacade;
 import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
@@ -143,7 +144,8 @@ public class CommitDialog extends TitleAreaDialog {
         createFilesList(container);
         createRevertCheckBox(container);
 
-        final String initialCommitMessage = MylynFacadeFactory.getMylynFacade().getCurrentTaskComment(inResources.toArray(new IResource[0]));
+        final IMylynFacade facade = MylynFacadeFactory.getMylynFacade();
+        final String initialCommitMessage = facade != null ? facade.getCurrentTaskComment(inResources.toArray(new IResource[0])) : defaultCommitMessage;
         setCommitMessage(initialCommitMessage);
 
         commitTextBox.getTextWidget().setFocus();
