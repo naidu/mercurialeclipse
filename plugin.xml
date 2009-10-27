@@ -1338,5 +1338,13 @@
             objectClass="org.eclipse.core.resources.IProject">
       </page>
    </extension>
+   <!--
+   <extension
+         point="org.eclipse.mylyn.team.ui.changeSets">
+      <contextChangeSetManager
+            class="com.vectrace.MercurialEclipse.mylyn.MercurialContextActiveChangeSetManager">
+      </contextChangeSetManager>
+   </extension>
+   -->
 
 </plugin>

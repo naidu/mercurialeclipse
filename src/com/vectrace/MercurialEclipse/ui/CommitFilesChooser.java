@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.ui;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.compare.CompareEditorInput;
@@ -54,7 +55,6 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -70,7 +70,7 @@ public class CommitFilesChooser extends Composite {
     private Button showUntrackedFilesButton;
     private Button selectAllButton;
     private final CheckboxTableViewer viewer;
-    private final boolean untracked;
+    private final boolean showUntracked;
     private final boolean missing;
     private final ListenerList stateListeners = new ListenerList();
     protected Control trayButton;
@@ -85,7 +85,7 @@ public class CommitFilesChooser extends Composite {
             List<IResource> resources, boolean showUntracked, boolean showMissing) {
         super(container, container.getStyle());
         this.selectable = selectable;
-        this.untracked = showUntracked;
+        this.showUntracked = showUntracked;
         this.missing = showMissing;
         this.untrackedFilesFilter = new UntrackedFilesFilter(missing);
         this.committableFilesFilter = new CommittableFilesFilter();
@@ -192,7 +192,7 @@ public class CommitFilesChooser extends Composite {
         selectAllButton.setText(Messages.getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
         selectAllButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        if (!untracked) {
+        if (!showUntracked) {
             return;
         }
         showUntrackedFilesButton = new Button(this, SWT.CHECK);
@@ -239,7 +239,7 @@ public class CommitFilesChooser extends Composite {
             });
         }
 
-        if (selectable && untracked) {
+        if (selectable && showUntracked) {
             showUntrackedFilesButton.setSelection(true); // Start selected.
             showUntrackedFilesButton.addSelectionListener(new SelectionAdapter() {
                 @Override
@@ -273,27 +273,47 @@ public class CommitFilesChooser extends Composite {
         }
     }
 
+    /**
+     * Set the resources, and from those select resources, which are tracked by Mercurial
+     * @param resources
+     */
     public void setResources(List<IResource> resources) {
-        IResource[] res = resources.toArray(new IResource[0]);
-        CommitResource[] commitResources;
-        try {
-            commitResources = new CommitResourceUtil().getCommitResources(res);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            commitResources = new CommitResource[0];
-        }
-        getViewer().setInput(commitResources);
-        // auto-check all tracked elements
-        List<CommitResource> tracked = new ArrayList<CommitResource>();
-        for (CommitResource commitResource : commitResources) {
-            if (MercurialStatusCache.CHAR_UNKNOWN != commitResource.getStatus()) {
-                tracked.add(commitResource);
-            }
-        }
+        List<CommitResource> commitResources = createCommitResources(resources);
+        getViewer().setInput(commitResources.toArray());
+
+        List<CommitResource> tracked = new CommitResourceUtil().filterForTracked(commitResources);
         getViewer().setCheckedElements(tracked.toArray());
-        if (!untracked) {
+        if (!showUntracked) {
             selectAllButton.setSelection(true);
         }
+    }
+
+    /**
+     * Create the Commit-resources' for a set of resources
+     * @param res
+     * @return
+     */
+    private List<CommitResource> createCommitResources(List<IResource> res) {
+        try {
+            CommitResource[] result = new CommitResourceUtil().getCommitResources(res.toArray(new IResource[0]));
+            return Arrays.asList(result);
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+        }
+        return new ArrayList<CommitResource>(0);
+    }
+
+    /**
+     * Set the selected resources. Obviously this will only select those resources, which are displayed...
+     * @param resources
+     */
+    public void setSelectedResources(List<IResource> resources) {
+        CommitResource[] allCommitResources = (CommitResource[]) getViewer().getInput();
+        if (allCommitResources == null) {
+            return;
+        }
+        List<CommitResource> selected = new CommitResourceUtil().filterForResources(Arrays.asList(allCommitResources), resources);
+        getViewer().setCheckedElements(selected.toArray());
     }
 
     public List<IResource> getCheckedResources(String... status) {

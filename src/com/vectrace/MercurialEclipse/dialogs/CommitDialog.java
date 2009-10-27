@@ -17,6 +17,7 @@ package com.vectrace.MercurialEclipse.dialogs;
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IProject;
@@ -61,6 +62,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -140,7 +142,9 @@ public class CommitDialog extends TitleAreaDialog {
         createUserCommitCombo(container);
         createFilesList(container);
         createRevertCheckBox(container);
-        setupDefaultCommitMessage();
+
+        final String initialCommitMessage = MylynFacadeFactory.getMylynFacade().getCurrentTaskComment(inResources.toArray(new IResource[0]));
+        setCommitMessage(initialCommitMessage);
 
         commitTextBox.getTextWidget().setFocus();
         setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$");
@@ -155,6 +159,11 @@ public class CommitDialog extends TitleAreaDialog {
     protected void createFilesList(Composite container) {
         SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
         commitFilesList = new CommitFilesChooser(container, true, inResources, true, true);
+
+        IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade().getCurrentTaskResources();
+        if (mylynTaskResources != null) {
+            commitFilesList.setSelectedResources(Arrays.asList(mylynTaskResources));
+        }
     }
 
     private void createUserCommitCombo(Composite container) {
@@ -323,9 +332,12 @@ public class CommitDialog extends TitleAreaDialog {
         return resourcesToRemove;
     }
 
-    private void setupDefaultCommitMessage() {
-        commitTextDocument.set(defaultCommitMessage);
-        commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
+    private void setCommitMessage(String msg) {
+        if (msg == null) {
+            msg = defaultCommitMessage;
+        }
+        commitTextDocument.set(msg);
+        commitTextBox.setSelectedRange(0, msg.length());
     }
 
     public String getUser() {
