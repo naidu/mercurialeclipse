@@ -43,6 +43,9 @@ class MylynFacadeImpl implements IMylynFacade {
      * @return The comment created by mylyn from the task-template
      */
     public String getCurrentTaskComment(IResource[] resources) {
+        if (resources == null) {
+            return null;
+        }
         ITask task = getCurrentTask();
         if (task == null) {
             return null;
