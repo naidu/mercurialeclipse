@@ -736,6 +736,11 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
         try {
             registerWithTeamProvider(project, monitor);
         } catch (CoreException e) {
+            try {
+                project.delete(true, new SubProgressMonitor(monitor, 30));
+            } catch (CoreException ex) {
+                throw new InvocationTargetException(ex);
+            }
             throw new InvocationTargetException(e);
         }
 
