@@ -94,6 +94,8 @@ public class PushPullSynchronizeAction extends SynchronizeModelAction {
                 return isPull;
             } else if (ISynchronizePageConfiguration.OUTGOING_MODE == getConfiguration().getMode()) {
                 return !isPull;
+            } else if (ISynchronizePageConfiguration.BOTH_MODE == getConfiguration().getMode()) {
+                return true;
             }
         }
         return updateSelection;
