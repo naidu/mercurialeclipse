@@ -239,6 +239,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
     private List<IProject> createdProjects;
     private String destinationDirectory;
 
+    private File repositoryRoot;
+
     /**
      * Creates a new project creation wizard page.
      */
@@ -370,6 +372,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
                         if(isProjectInWorkspace(newText)){
                             return "A project with same name already exists";
                         }
+                        if (newText.length() == 0) {
+                            return "Project name cannot be empty";
+                        }
                         return null;
                     }
                 };
@@ -378,6 +383,13 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
                         record.projectName, validator);
                 int ok = input.open();
                 if(ok == Window.OK){
+                    // In case of .project file is directly under project directory, and
+                    // this is the same as hg repository root, rename directory to the new
+                    // name.
+                    if (!input.getValue().equals(record.projectName) && repositoryRoot.getName().equals(record.projectName)) {
+                        File newRoot = new File(repositoryRoot.getParentFile(), input.getValue());
+                        repositoryRoot.renameTo(newRoot);
+                    }
                     record.projectName = input.getValue();
                     record.hasConflicts = isProjectInWorkspace(record.projectName);
                 }
@@ -477,8 +489,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
             return;
         }
 
-        final File directory = new File(path);
-        long modified = directory.lastModified();
+        repositoryRoot = new File(path);
+        long modified = repositoryRoot.lastModified();
         if (path.equals(lastPath) && lastModified == modified) {
             // since the file/folder was not modified and the path did not
             // change, no refreshing is required
@@ -497,9 +509,9 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
                     selectedProjects = new ProjectRecord[0];
                     Collection<File> files = new ArrayList<File>();
                     monitor.worked(10);
-                    if (directory.isDirectory()) {
+                    if (repositoryRoot.isDirectory()) {
 
-                        if (!collectProjectFilesFromDirectory(files, directory,
+                        if (!collectProjectFilesFromDirectory(files, repositoryRoot,
                                 null, monitor)) {
                             return;
                         }
