@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
+import java.util.regex.Pattern;
+
 /**
  * General string manipulation functions set.
  *
@@ -20,6 +22,9 @@ public class StringUtils {
 
     private static final String OPTIONAL_BLANK_AND_TAB = "[ \t]*";
 
+    private static final String REGEX = OPTIONAL_BLANK_AND_TAB + "(\r|\n)+" + OPTIONAL_BLANK_AND_TAB;
+    private static final Pattern NEWLINE_PATTERN = Pattern.compile(REGEX);
+
     /**
      * Removes all \r \n characters and optional leading and/or trailing blanks and TAB characters.
      *
@@ -28,7 +33,7 @@ public class StringUtils {
      */
     public static String removeLineBreaks(String text) {
         if (text != null && text.length() != 0) {
-            text = text.replaceAll(OPTIONAL_BLANK_AND_TAB + "(\r|\n)+" + OPTIONAL_BLANK_AND_TAB, " ");
+            text = NEWLINE_PATTERN.matcher(text).replaceAll(" ");
             text = text.trim();
         }
         return text;
