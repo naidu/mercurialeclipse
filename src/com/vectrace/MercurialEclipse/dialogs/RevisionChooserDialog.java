@@ -212,7 +212,6 @@ public class RevisionChooserDialog extends Dialog {
                     protected IStatus runSafe(IProgressMonitor monitor) {
                         table.setAutoFetch(true);
                         table.setEnabled(true);
-                        table.setAutoFetch(false);
                         return Status.OK_STATUS;
                     }
                 }.schedule();
