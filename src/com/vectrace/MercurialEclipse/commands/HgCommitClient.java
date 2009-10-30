@@ -68,16 +68,16 @@ public class HgCommitClient extends AbstractClient {
 
         HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        command.addUserName(user);
+        command.addUserName(quote(user));
         addMessage(command, message);
         command.addFiles(AbstractClient.toPaths(files));
         return command.executeToString();
     }
 
     private static void addMessage(HgCommand command, String message) {
-        message = message.trim();
+        message = quote(message.trim());
         if (message.length() != 0) {
-            command.addOptions("-m", message.trim());
+            command.addOptions("-m", message);
         } else {
             command.addOptions("-m", Messages.getString("CommitDialog.defaultCommitMessage"));
         }
@@ -91,7 +91,7 @@ public class HgCommitClient extends AbstractClient {
             String message) throws HgException {
         HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        command.addUserName(user);
+        command.addUserName(quote(user));
         addMessage(command, message);
         String result = command.executeToString();
         Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
@@ -101,4 +101,11 @@ public class HgCommitClient extends AbstractClient {
         return result;
     }
 
+    static String quote(String str) {
+        if (str == null || str.length() == 0) {
+            return str;
+        }
+        // escape quotes, otherwise commit will fail at least on windows
+        return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
+    }
 }
