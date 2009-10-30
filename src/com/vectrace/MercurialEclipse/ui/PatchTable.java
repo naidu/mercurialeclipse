@@ -30,16 +30,16 @@ import org.eclipse.swt.widgets.TableItem;
 import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class PatchTable extends Composite {
     private static Color APPLIED_COLOR;
 
     private final static Font APPLIED_FONT = JFaceResources.getFontRegistry()
-            .getItalic(JFaceResources.DIALOG_FONT);
+            .getBold(JFaceResources.DIALOG_FONT);
 
-    private Table table;
+    private final Table table;
 
     public PatchTable(Composite parent) {
         super(parent, SWT.NONE);
@@ -87,14 +87,14 @@ public class PatchTable extends Composite {
         }
     }
 
-    public Patch getSelection() {        
+    public Patch getSelection() {
         List<Patch>list = getSelections();
         if (list.size()==0) {
             return null;
         }
         return list.get(0);
     }
-    
+
     public List<Patch> getSelections() {
         TableItem[] selection = table.getSelection();
         if (selection.length == 0) {
@@ -114,7 +114,7 @@ public class PatchTable extends Composite {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.swt.widgets.Widget#dispose()
      */
     @Override

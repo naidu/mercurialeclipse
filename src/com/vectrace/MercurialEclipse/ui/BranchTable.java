@@ -43,7 +43,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
  * @version $Id$
  */
 public class BranchTable extends Composite {
-    private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getItalic(JFaceResources.DIALOG_FONT);
+    private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 
     private final Table table;
     private int[] parents;

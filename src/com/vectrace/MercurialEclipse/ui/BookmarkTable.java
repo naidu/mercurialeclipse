@@ -32,16 +32,16 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class BookmarkTable extends Composite {
 
     private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
-            .getItalic(JFaceResources.DIALOG_FONT);
+            .getBold(JFaceResources.DIALOG_FONT);
 
-    private Table table;
-    private IResource res;
+    private final Table table;
+    private final IResource res;
 
     public BookmarkTable(Composite parent, IResource res) {
         super(parent, SWT.NONE);
@@ -69,7 +69,7 @@ public class BookmarkTable extends Composite {
     }
 
     /**
-     * 
+     *
      */
     private void updateTable() {
         try {
