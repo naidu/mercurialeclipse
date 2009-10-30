@@ -96,7 +96,14 @@ public class Tag implements Comparable<Tag> {
             return 1;
         }
 
-        int cmp = name.compareToIgnoreCase(tag.getName());
+        int cmp = tag.getRevision() - revision;
+        if(cmp != 0){
+            // sort by revision first
+            return cmp;
+        }
+
+        // sort by name
+        cmp = name.compareToIgnoreCase(tag.getName());
         if (cmp == 0) {
             // Check it case sensitive
             cmp = name.compareTo(tag.getName());
