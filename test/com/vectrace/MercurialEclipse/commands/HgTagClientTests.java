@@ -42,16 +42,16 @@ public class HgTagClientTests extends TestCase {
         assertEquals(HgRevision.TIP.getChangeset(), tag.getName());
 
         tag = it.next();
-        assertEquals("CB-3-5-RC", tag.getName());
-
-        tag = it.next();
-        assertEquals("cb-3-5-RC", tag.getName());
-
-        tag = it.next();
         assertEquals("cb-3-6-RC1", tag.getName());
 
         tag = it.next();
         assertEquals("end_of_metrics_branch", tag.getName());
+
+        tag = it.next();
+        assertEquals("CB-3-5-RC", tag.getName());
+
+        tag = it.next();
+        assertEquals("cb-3-5-RC", tag.getName());
 
         tag = it.next();
         assertEquals("original", tag.getName());
@@ -82,16 +82,10 @@ public class HgTagClientTests extends TestCase {
         assertEquals(HgRevision.TIP.getChangeset(), tag.getName());
 
         tag = it.next();
-        assertEquals("RELEASE_0.1", tag.getName());
+        assertEquals("RELEASE_1.4", tag.getName());
 
         tag = it.next();
-        assertEquals("RELEASE_0.2", tag.getName());
-
-        tag = it.next();
-        assertEquals("RELEASE_1.0", tag.getName());
-
-        tag = it.next();
-        assertEquals("RELEASE_1.1", tag.getName());
+        assertEquals("RELEASE_1.3", tag.getName());
 
         tag = it.next();
         assertEquals("RELEASE_1.2", tag.getName());
@@ -100,6 +94,15 @@ public class HgTagClientTests extends TestCase {
         assertEquals("release_1.2", tag.getName());
 
         tag = it.next();
-        assertEquals("RELEASE_1.3", tag.getName());
+        assertEquals("RELEASE_1.1", tag.getName());
+
+        tag = it.next();
+        assertEquals("RELEASE_1.0", tag.getName());
+
+        tag = it.next();
+        assertEquals("RELEASE_0.2", tag.getName());
+
+        tag = it.next();
+        assertEquals("RELEASE_0.1", tag.getName());
     }
 }
