@@ -124,13 +124,13 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
     }
 
     private static class ProjectRecord {
+
         private final File projectSystemFile;
+        final IProjectDescription description;
 
         String projectName;
 
         boolean hasConflicts;
-
-        IProjectDescription description;
 
         /**
          * Create a record for a project based on the info in the file.
@@ -139,41 +139,45 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
          */
         ProjectRecord(File file) {
             projectSystemFile = file;
-            setProjectName();
+            description = createDescription();
+            projectName = description.getName();
         }
 
         /**
-         * Set the name of the project based on the projectFile.
+         * Creates project description based on the projectFile.
+         * @return never null
          */
-        private void setProjectName() {
-            try {
-
-                // If we don't have the project name try again
-                if (projectName == null) {
-                    if(projectSystemFile.isDirectory()){
-                        projectName = projectSystemFile.getName();
-                        description = ResourcesPlugin.getWorkspace()
-                        .newProjectDescription(projectName);
-                        description.setLocation(new Path(projectSystemFile.getAbsolutePath()));
-                    } else {
-
-                        IPath path = new Path(projectSystemFile.getPath());
-                        // if the file is in the default location, use the directory
-                        // name as the project name
-                        if (isDefaultLocation(path)) {
-                            projectName = path.segment(path.segmentCount() - 2);
-                            description = ResourcesPlugin.getWorkspace()
-                            .newProjectDescription(projectName);
-                        } else {
-                            description = ResourcesPlugin.getWorkspace()
-                            .loadProjectDescription(path);
-                            projectName = description.getName();
-                        }
-                    }
+        private IProjectDescription createDescription() {
+            IProjectDescription tmpDescription;
+            String tmpProjectName;
+            // If we don't have the project name try again
+            IWorkspace workspace = ResourcesPlugin.getWorkspace();
+            if (projectSystemFile.isDirectory()) {
+                tmpProjectName = projectSystemFile.getName();
+                tmpDescription = workspace.newProjectDescription(tmpProjectName);
+                // check if the directory matches the default location?
+                // if yes, should NOT set location, as in the "else" branch below
+                File wsRoot = workspace.getRoot().getLocation().toFile();
+                if(!wsRoot.equals(projectSystemFile) && !wsRoot.equals(projectSystemFile.getParentFile())) {
+                    tmpDescription.setLocation(new Path(projectSystemFile.getAbsolutePath()));
                 }
-            } catch (CoreException e) {
-                // no good couldn't get the name
+            } else {
+                IPath path = new Path(projectSystemFile.getPath());
+                tmpProjectName = path.segment(path.segmentCount() - 2);
+                try {
+                    tmpDescription = workspace.loadProjectDescription(path);
+                    if (isDefaultLocation(path)){
+                        // for some strange reasons (bug?) Eclipse disallows to create
+                        // projects inside the workspace IF the project description has
+                        // a location attribute set...
+                        tmpDescription.setLocation(null);
+                    }
+                } catch (CoreException e) {
+                    // no good, couldn't load
+                    tmpDescription = workspace.newProjectDescription(tmpProjectName);
+                }
             }
+            return tmpDescription;
         }
 
         /**
@@ -203,6 +207,11 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
             return projectName;
         }
 
+        public File getDataDir(){
+            return projectSystemFile.isDirectory() ? projectSystemFile
+                    : projectSystemFile.getParentFile();
+        }
+
         /**
          * Gets the label to be used when rendering this project record in the
          * UI.
@@ -210,10 +219,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
          * @return String the label
          */
         public String getProjectLabel() {
-            if (description == null) {
-                return projectName;
-            }
-
             String path = projectSystemFile.isDirectory() ? projectSystemFile.getAbsolutePath()
                     : projectSystemFile.getParent();
 
@@ -383,13 +388,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
                         record.projectName, validator);
                 int ok = input.open();
                 if(ok == Window.OK){
-                    // In case of .project file is directly under project directory, and
-                    // this is the same as hg repository root, rename directory to the new
-                    // name.
-                    if (!input.getValue().equals(record.projectName) && repositoryRoot.getName().equals(record.projectName)) {
-                        File newRoot = new File(repositoryRoot.getParentFile(), input.getValue());
-                        repositoryRoot.renameTo(newRoot);
-                    }
                     record.projectName = input.getValue();
                     record.hasConflicts = isProjectInWorkspace(record.projectName);
                 }
@@ -682,6 +680,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
             } else {
                 status = MercurialEclipsePlugin.createStatus(message, ERROR, IStatus.ERROR, t);
             }
+            MercurialEclipsePlugin.logError(t);
             ErrorDialog.openError(getShell(), message, null, status);
             return false;
         }
@@ -719,21 +718,27 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
         final IWorkspace workspace = ResourcesPlugin.getWorkspace();
         final IProject project = workspace.getRoot().getProject(projectName);
         createdProjects.add(project);
-        if (record.description == null) {
-            // error case
-            record.description = workspace.newProjectDescription(projectName);
-            IPath locationPath = new Path(record.projectSystemFile
-                    .getAbsolutePath());
 
-            // If it is under the root use the default location
-            if (Platform.getLocation().isPrefixOf(locationPath)) {
-                record.description.setLocation(null);
+        // See issue 10412: in case the clone is inside the workspace AND the clone directory name doesn't match
+        // the selected project name, we have to rename cloned directory, otherwise
+        // Eclipse will create a new EMPTY project
+        if (record.description.getLocationURI() == null && !projectName.equals(record.getDataDir().getName())) {
+            File newRoot = new File(record.getDataDir().getParentFile(), projectName);
+            if(!newRoot.exists()) {
+                // we CAN use renameTo here because src and dest folders are on same file system
+                // renameTo does NOT work on different file systems
+                boolean renamed = record.getDataDir().renameTo(newRoot);
+                if(!renamed){
+                    // XXX report issue
+                    return false;
+                }
             } else {
-                record.description.setLocation(locationPath);
+                // XXX report issue
+                return false;
             }
-        } else {
-            record.description.setName(projectName);
         }
+        record.description.setName(projectName);
+
 
         try {
             monitor.beginTask("Creating Projects", 100);
