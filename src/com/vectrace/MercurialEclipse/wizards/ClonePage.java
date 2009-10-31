@@ -104,8 +104,12 @@ public class ClonePage extends PushPullPage {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 boolean ok = validateFields();
-                if(!ok && hasDataLocally(getRepository())) {
-                    return;
+                if(!ok) {
+                    HgRepositoryLocation repository = getRepository();
+                    if (hasDataLocally(repository)
+                            && getDestinationDirectory().equals(destDirectories.get(repository))) {
+                        return;
+                    }
                 }
                 setErrorMessage(null);
                 boolean dataFetched = finish(null);
@@ -127,14 +131,16 @@ public class ClonePage extends PushPullPage {
         GridData layoutData = new GridData();
         layoutData.horizontalSpan = 3;
         useWorkspace.setLayoutData(layoutData);
+        final String wsRootLocation = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString();
         useWorkspace.addSelectionListener(new SelectionAdapter() {
             @Override
             public void widgetSelected(SelectionEvent e) {
                 if(useWorkspace.getSelection()){
-                    directoryTextField.setText(ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString());
+                    directoryTextField.setText(wsRootLocation);
                     directoryTextField.setEnabled(false);
                     directoryButton.setEnabled(false);
                 } else {
+                    directoryTextField.setText("");
                     directoryTextField.setEnabled(true);
                     directoryButton.setEnabled(true);
                 }
@@ -169,11 +175,34 @@ public class ClonePage extends PushPullPage {
                 validateFields();
             }
         });
+
+        if(lastUsedDir != null && wsRootLocation.equals(lastUsedDir.getAbsolutePath())){
+            useWorkspace.setSelection(true);
+            directoryTextField.setEnabled(false);
+            directoryButton.setEnabled(false);
+        }
+
         SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.cloneDirectoryLabel.title")); //$NON-NLS-1$
         cloneNameTextField = SWTWidgetHelper.createTextField(g);
         cloneNameTextField.addModifyListener(new ModifyListener() {
             public void modifyText(ModifyEvent e) {
                 validateFields();
+                HgRepositoryLocation repo = getRepository();
+                if(repo != null && hasDataLocally(repo)){                
+                    // if only the target directory name is changed, simply rename it on
+                    // the disk to avoid another remote clone operation
+                    File file = destDirectories.get(repo);
+                    String cloneName = getCloneName();
+                    if(cloneName.length() > 0 && !file.getName().equals(cloneName)){
+                        File destinationDirectory = getDestinationDirectory();
+                        if(!destinationDirectory.exists()){
+                            if(file.renameTo(destinationDirectory)) {
+                                destDirectories.put(repo, destinationDirectory);
+                            }
+                        }
+                        validateFields();
+                    }
+                }
             }
         });
 
