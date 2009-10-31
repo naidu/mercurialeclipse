@@ -35,7 +35,10 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -121,7 +124,32 @@ public class IncomingPage extends HgWizardPage {
                 IResource file = getProject().getWorkspace().getRoot()
                         .getFileForLocation(fileAbsPath);
                 if (file != null) {
-                    CompareUtils.openEditor(file, cs, true, true);
+                    MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
+                            file, cs.getChangesetIndex(), cs.getChangeset(), cs);
+                    MercurialRevisionStorage parentRev ;
+                    String[] parents = cs.getParents();
+                    if(cs.getRevision().getRevision() == 0 || parents.length == 0){
+                        parentRev = new NullRevision(file, cs);
+                    } else {
+                        String parentId = parents[0];
+                        ChangeSet parentCs = null;
+                        for (ChangeSet cset : changesets) {
+                            if(parentId.endsWith(cset.getChangeset())
+                                    && parentId.startsWith("" + cset.getChangesetIndex())){
+                                parentCs = cset;
+                                break;
+                            }
+                        }
+                        if(parentCs == null) {
+                            parentCs = new ParentChangeSet(parentId, cs);
+                        }
+                        parentRev = new MercurialRevisionStorage(
+                                file, parentCs.getChangesetIndex(), parentCs.getChangeset(), parentCs);
+                    }
+                    CompareUtils.openEditor(remoteRev, parentRev, true, false);
+                    // the line below compares the remote changeset with the local copy.
+                    // it was replaced with the code above to fix the issue 10364
+                    // CompareUtils.openEditor(file, cs, true, true);
                 } else {
                     // It is possible that file has been removed or part of the
                     // repository but not the project (and has incoming changes)

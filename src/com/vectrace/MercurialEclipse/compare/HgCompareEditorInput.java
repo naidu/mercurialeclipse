@@ -56,14 +56,30 @@ public class HgCompareEditorInput extends CompareEditorInput
         if (!(l instanceof RevisionNode && r instanceof RevisionNode)) {
             return null;
         }
-
-        int lId = ((RevisionNode)l).getRevision();
-        int rId = ((RevisionNode)r).getRevision();
+        RevisionNode lNode = (RevisionNode) l;
+        RevisionNode rNode = (RevisionNode) r;
 
         try {
-            int commonAncestor = HgParentClient.findCommonAncestor(
-                    resource.getProject().getLocation().toFile(),
-                    Integer.toString(lId), Integer.toString(rId));
+            int commonAncestor = -1;
+            if(lNode.getChangeSet() != null && rNode.getChangeSet() != null){
+                try {
+                    commonAncestor = HgParentClient.findCommonAncestor(
+                            resource.getProject().getLocation().toFile(),
+                            lNode.getChangeSet(), rNode.getChangeSet());
+                } catch (HgException e) {
+                    // continue
+                }
+            }
+
+            int lId = lNode.getRevision();
+            int rId = rNode.getRevision();
+
+            if(commonAncestor == -1){
+                commonAncestor = HgParentClient.findCommonAncestor(
+                        resource.getProject().getLocation().toFile(),
+                        Integer.toString(lId), Integer.toString(rId));
+            }
+
             if (commonAncestor == lId) {
                 return null;
             }

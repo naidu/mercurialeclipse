@@ -68,11 +68,58 @@ public class ChangeSet implements Comparable<ChangeSet> {
     private String nodeShort;
     private String[] parents;
     private Date realDate;
-    private File bundleFile;
+    File bundleFile;
     private HgRepositoryLocation repository;
-    private Direction direction;
+    Direction direction;
     private final HgRoot hgRoot;
     private IFilePatch[] patches;
+
+    /**
+     *  A more or less dummy changeset containing only index and global id. Such
+     *  changeset is useful and can be constructed from the other changesets "parent" ids
+     */
+    public static class ParentChangeSet extends ChangeSet {
+
+        /**
+         * @param indexAndId a semicolon separated index:id pair
+         * @param child this changeset's child from which we are constructing the parent
+         */
+        public ParentChangeSet(String indexAndId, ChangeSet child) {
+            super(getIndex(indexAndId), getChangeset(indexAndId), null, null, null, null, "", null, child.getHgRoot()); //$NON-NLS-1$
+            this.bundleFile = child.getBundleFile();
+            this.direction = child.direction;
+        }
+
+        static int getIndex(String parentId){
+            if(parentId == null || parentId.length() < 3){
+                return 0;
+            }
+            String[] parts = parentId.split(":");
+            if(parts.length != 2){
+                return 0;
+            }
+            try {
+                return Integer.valueOf(parts[0]).intValue();
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+
+        static String getChangeset(String parentId){
+            if(parentId == null || parentId.length() < 3){
+                return null;
+            }
+            String[] parts = parentId.split(":");
+            if(parts.length != 2){
+                return null;
+            }
+            try {
+                return parts[1];
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+    }
 
     /**
      * This class is getting too tangled up with everything else, has a a large
@@ -168,6 +215,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
         setDescription(description);
         setParents(parents);
     }
+
 
     private ChangeSet(int changesetIndex, String changeSet, String user, String date, String branch, HgRoot root) {
         this(changesetIndex, changeSet, null, branch, user, date, "", null, root); //$NON-NLS-1$

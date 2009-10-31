@@ -39,7 +39,7 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class PushPullPage extends ConfigurationWizardMainPage {
 
@@ -99,9 +99,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         setDefaultLocation();
     }
 
-    /**
-     * 
-     */
     private void createExtensionControls() {
         if (showForest) {
             this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
@@ -152,9 +149,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         }
     }
 
-    /**
-     * @param composite
-     */
     private void createRevisionTable(Composite composite) {
         this.revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
                 getRevCheckBoxLabel());
@@ -179,25 +173,10 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         this.changesetTable.setEnabled(false);
 
         SelectionListener listener = new SelectionListener() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetSelected(org.eclipse
-             * .swt.events.SelectionEvent)
-             */
             public void widgetSelected(SelectionEvent e) {
                 setPageComplete(true);
                 revision = changesetTable.getSelection().toString();
             }
-
-            /*
-             * (non-Javadoc)
-             * 
-             * @see
-             * org.eclipse.swt.events.SelectionListener#widgetDefaultSelected
-             * (org.eclipse.swt.events.SelectionEvent)
-             */
             public void widgetDefaultSelected(SelectionEvent e) {
                 widgetSelected(e);
             }
@@ -211,11 +190,11 @@ public class PushPullPage extends ConfigurationWizardMainPage {
             return null;
         }
         HgRepositoryLocation defaultLocation = null;
-        
+
         Set<HgRepositoryLocation> repos = MercurialEclipsePlugin
             .getRepoManager().getAllProjectRepoLocations(
                     resource.getProject());
-        
+
         for (HgRepositoryLocation repo : repos)
         {
             if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName()) ||
@@ -224,7 +203,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
                 break;
             }
         }
-        
+
         if (defaultLocation == null) {
             defaultLocation = MercurialEclipsePlugin
                 .getRepoManager().getDefaultProjectRepoLocation(
@@ -233,7 +212,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
         if (defaultLocation != null) {
             getUrlCombo().setText(defaultLocation.getLocation());
-            
+
             String user = defaultLocation.getUser();
             if (user != null && user.length() != 0) {
                 getUserCombo().setText(user);
@@ -246,124 +225,70 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         return repos;
     }
 
-    /**
-     * @return
-     */
     protected String getRevGroupLabel() {
         return Messages.getString("PushRepoPage.revGroup.title"); //$NON-NLS-1$
     }
 
-    /**
-     * @return
-     */
     protected String getRevCheckBoxLabel() {
         return Messages.getString("PushRepoPage.revCheckBox.text");//$NON-NLS-1$
     }
 
-    /**
-     * @return
-     */
     protected String getForceCheckBoxLabel() {
         return Messages.getString("PushRepoPage.forceCheckBox.text");//$NON-NLS-1$
     }
 
-    /**
-     * @return
-     */
     protected String getTimeoutCheckBoxLabel() {
         return Messages.getString("PushRepoPage.timeoutCheckBox.text");//$NON-NLS-1$
     }
 
-    /**
-     * @return the force
-     */
     public boolean isForce() {
         return force;
     }
 
-    /**
-     * @return the revision
-     */
     public String getRevision() {
         return revision;
     }
 
-    /**
-     * @return the timeout
-     */
     public boolean isTimeout() {
         return timeout;
     }
 
-    /**
-     * @return the resource
-     */
     public IResource getResource() {
         return resource;
     }
 
-    /**
-     * @param resource
-     *            the resource to set
-     */
     public void setResource(IResource resource) {
         this.resource = resource;
     }
 
-    /**
-     * @return the forceCheckBox
-     */
     public Button getForceCheckBox() {
         return forceCheckBox;
     }
 
-    /**
-     * @return the changesetTable
-     */
     public ChangesetTable getChangesetTable() {
         return changesetTable;
     }
 
-    /**
-     * @return the revCheckBox
-     */
     public Button getRevCheckBox() {
         return revCheckBox;
     }
 
-    /**
-     * @return the timeoutCheckBox
-     */
     public Button getTimeoutCheckBox() {
         return timeoutCheckBox;
     }
 
-    /**
-     * @return the showRevisionTable
-     */
     public boolean isShowRevisionTable() {
         return showRevisionTable;
     }
 
-    /**
-     * @param showRevisionTable
-     *            the showRevisionTable to set
-     */
     public void setShowRevisionTable(boolean showRevisionTable) {
         this.showRevisionTable = showRevisionTable;
     }
 
-    /**
-     * @return the showForce
-     */
     public boolean isShowForce() {
         return showForce;
     }
 
-    /**
-     * @param showForce
-     *            the showForce to set
-     */
     public void setShowForce(boolean showForce) {
         this.showForce = showForce;
     }

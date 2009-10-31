@@ -14,6 +14,7 @@ import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.runtime.CoreException;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class RevisionNode extends ResourceNode implements IStreamContentAccessor, ITypedElement {
@@ -40,6 +41,10 @@ public class RevisionNode extends ResourceNode implements IStreamContentAccessor
         return rev.getRevision();
     }
 
+    public ChangeSet getChangeSet(){
+        return rev.getChangeSet();
+    }
+
     @Override
     protected InputStream createStream() throws CoreException {
         // System.out.println("Creating stream...");
@@ -51,7 +56,7 @@ public class RevisionNode extends ResourceNode implements IStreamContentAccessor
     public boolean equals(Object other) {
         return super.equals(other);
     }
-    
+
     // to avoid FindBugs warnings
     @Override
     public int hashCode() {
