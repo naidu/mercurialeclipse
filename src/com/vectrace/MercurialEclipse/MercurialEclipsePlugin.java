@@ -148,7 +148,6 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             repoManager.stop();
             // save commit messages to disk
             commitMessageManager.stop();
-            plugin = null;
         } finally {
             super.stop(context);
         }
