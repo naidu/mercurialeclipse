@@ -54,7 +54,7 @@ public class HgRepositoryLocationManager {
     private static final RepositoryResourcesManager REPOSITORY_RESOURCES_MANAGER = RepositoryResourcesManager
             .getInstance();
 
-    final static private String REPO_LOCACTION_FILE = "repositories.txt"; //$NON-NLS-1$
+    final static private String REPO_LOCATION_FILE = "repositories.txt"; //$NON-NLS-1$
 
     private final SortedSet<HgRepositoryLocation> repos;
     private final Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos;
@@ -71,7 +71,7 @@ public class HgRepositoryLocationManager {
      */
     private File getLocationFile() {
         return MercurialEclipsePlugin.getDefault().getStateLocation().append(
-                REPO_LOCACTION_FILE).toFile();
+                REPO_LOCATION_FILE).toFile();
     }
 
     public boolean cleanup(IProject project) {
@@ -93,7 +93,7 @@ public class HgRepositoryLocationManager {
 
             try {
                 while ((line = reader.readLine()) != null) {
-                    addRepoLocation(new HgRepositoryLocation(null, line, null,
+                    addRepoLocation(new HgRepositoryLocation(null, false, line, null,
                             null));
                 }
             } catch (HgException e) {
@@ -363,7 +363,7 @@ public class HgRepositoryLocationManager {
 
     private File getProjectLocationFile(IProject project) {
         File file = MercurialEclipsePlugin.getDefault().getStateLocation()
-                .append(REPO_LOCACTION_FILE + "_" + project.getName()).toFile(); //$NON-NLS-1$
+                .append(REPO_LOCATION_FILE + "_" + project.getName()).toFile(); //$NON-NLS-1$
         return file;
     }
 
@@ -414,7 +414,7 @@ public class HgRepositoryLocationManager {
         }
 
         // make a new location if no matches exist or it's a different user
-        return new HgRepositoryLocation(null, url, user, pass);
+        return new HgRepositoryLocation(null, false, url, user, pass);
     }
 
     /**
@@ -449,7 +449,7 @@ public class HgRepositoryLocationManager {
         }
 
         // make a new location if no matches exist or it's a different user
-        return new HgRepositoryLocation(null, url, user, password);
+        return new HgRepositoryLocation(null, false, url, user, password);
     }
 
     /**
@@ -477,7 +477,7 @@ public class HgRepositoryLocationManager {
 
         if (loc == null) {
             // in some cases url may be a repository database line
-            loc = new HgRepositoryLocation(logicalName, url, user, pass);
+            loc = new HgRepositoryLocation(logicalName, false, url, user, pass);
             addRepoLocation(loc);
             return loc;
         }
@@ -506,7 +506,7 @@ public class HgRepositoryLocationManager {
 
         if (update) {
             HgRepositoryLocation updated = new HgRepositoryLocation(
-                    myLogicalName, loc.getLocation(), myUser, myPass);
+                    myLogicalName, false, loc.getLocation(), myUser, myPass);
             repos.remove(updated);
             repos.add(updated);
 

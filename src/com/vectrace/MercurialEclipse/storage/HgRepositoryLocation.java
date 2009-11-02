@@ -16,6 +16,7 @@ package com.vectrace.MercurialEclipse.storage;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -30,21 +31,25 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 public class HgRepositoryLocation extends AllRootsElement implements  Comparable<HgRepositoryLocation> {
 
     private String logicalName;
+    private String projectName = null;
     private String location;
     private String user;
     private String password;
     private URI uri;
+    private boolean isPush = false;
+    private Date lastUsage;
     private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
     private static final String ALIAS_TOKEN = "@alias@"; //$NON-NLS-1$
     private static final String PASSWORD_TOKEN = ":"; //$NON-NLS-1$
 
-    HgRepositoryLocation(String logicalName, String uri) throws HgException {
-        this(logicalName, uri, null, null);
+    HgRepositoryLocation(String logicalName, boolean isPush, String uri) throws HgException {
+        this(logicalName, isPush, uri, null, null);
     }
 
-    HgRepositoryLocation(String logicalName, String uri, String user, String password) throws HgException {
+    HgRepositoryLocation(String logicalName, boolean isPush, String uri, String user, String password) throws HgException {
         this.logicalName = logicalName;
         this.location = uri;
+        this.isPush = isPush;
         String[] repoInfo = uri.split(SPLIT_TOKEN);
 
         this.user = user;
@@ -268,5 +273,40 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
 
     public String getLogicalName() {
         return logicalName;
+    }
+
+    /**
+     * @return the lastUsage
+     */
+    public Date getLastUsage() {
+        return lastUsage;
+    }
+
+    /**
+     * @param lastUsage the lastUsage to set
+     */
+    public void setLastUsage(Date lastUsage) {
+        this.lastUsage = lastUsage;
+    }
+
+    /**
+     * @return the projectName
+     */
+    public String getProjectName() {
+        return projectName;
+    }
+
+    /**
+     * @param projectName the projectName to set
+     */
+    public void setProjectName(String projectName) {
+        this.projectName = projectName;
+    }
+
+    /**
+     * @return the isPush
+     */
+    public boolean isPush() {
+        return isPush;
     }
 }
