@@ -24,11 +24,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer#initializeDefaultPreferences()
-     */
     @Override
     public void initializeDefaultPreferences() {
         IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
@@ -43,6 +38,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, false);
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
         store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET, false);
+        store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET, false);
 
         store.setDefault(MercurialPreferenceConstants.LOG_BATCH_SIZE, 200);
         store.setDefault(MercurialPreferenceConstants.STATUS_BATCH_SIZE, 10);

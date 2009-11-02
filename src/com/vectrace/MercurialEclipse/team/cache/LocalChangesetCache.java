@@ -187,7 +187,11 @@ public class LocalChangesetCache extends AbstractCache {
         IProject project = res.getProject();
         if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
             clear(res, false);
-            fetchRevisions(res, limit, getLogBatchSize(), -1, withFiles);
+            int versionLimit = getLogBatchSize();
+            if(withFiles && versionLimit > 1) {
+                versionLimit = 1;
+            }
+            fetchRevisions(res, limit, versionLimit, -1, withFiles);
         }
     }
 

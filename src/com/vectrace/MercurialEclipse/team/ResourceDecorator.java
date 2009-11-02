@@ -96,6 +96,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         interestingPrefs.add(LABELDECORATOR_LOGIC);
         interestingPrefs.add(PREF_DECORATE_WITH_COLORS);
         interestingPrefs.add(RESOURCE_DECORATOR_SHOW_CHANGESET);
+        interestingPrefs.add(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
     }
 
     /** set to true when having 2 different statuses in a folder flags it has modified */
@@ -103,6 +104,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
     private ITheme theme;
     private boolean colorise;
     private boolean showChangeset;
+    private boolean showIncomingChangeset;
 
     public ResourceDecorator() {
         configureFromPreferences();
@@ -170,6 +172,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
         folder_logic_2MM = LABELDECORATOR_LOGIC_2MM.equals(store.getString(LABELDECORATOR_LOGIC));
         colorise = store.getBoolean(PREF_DECORATE_WITH_COLORS);
         showChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_CHANGESET);
+        showIncomingChangeset = store.getBoolean(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET);
     }
 
     public void decorate(Object element, IDecoration d) {
@@ -325,7 +328,12 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
     private void addChangesetInfo(IDecoration d, IResource resource, IProject project, StringBuilder prefix) throws CoreException {
         // label info for incoming changesets
-        ChangeSet newestIncomingChangeSet = INCOMING_CACHE.getNewestChangeSet(resource);
+        ChangeSet newestIncomingChangeSet;
+        if(showIncomingChangeset) {
+            newestIncomingChangeSet = INCOMING_CACHE.getNewestChangeSet(resource);
+        } else {
+            newestIncomingChangeSet = null;
+        }
 
         if (newestIncomingChangeSet != null) {
             if (prefix.length() == 0) {
@@ -394,9 +402,6 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
         StringBuilder suffix = new StringBuilder();
 
-        if (showChangeset) {
-            LocalChangesetCache.getInstance().getOrFetchChangeSets(project);
-        }
         changeSet = LocalChangesetCache.getInstance().getChangesetByRootId(project);
 
         if (changeSet == null) {

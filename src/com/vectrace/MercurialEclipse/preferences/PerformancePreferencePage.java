@@ -37,6 +37,8 @@ public class PerformancePreferencePage extends FieldEditorPreferencePage
 implements IWorkbenchPreferencePage {
 
 
+    private BooleanFieldEditor showIncomingInfo;
+
     public PerformancePreferencePage() {
         super(GRID);
         setPreferenceStore(MercurialEclipsePlugin.getDefault()
@@ -76,18 +78,30 @@ implements IWorkbenchPreferencePage {
                 Messages.getString("PerformancePreferencePage.field.computeDeep"), //$NON-NLS-1$
                 getFieldEditorParent()));
 
-        addField(new BooleanFieldEditor(
+
+        final BooleanFieldEditor showChangesetsInfo = new BooleanFieldEditor(
                 MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
                 Messages.getString("PerformancePreferencePage.field.showChangesetOnFiles"), //$NON-NLS-1$
-                getFieldEditorParent()));
+                getFieldEditorParent()){
 
+            @Override
+            protected void fireStateChanged(String property, boolean oldValue,
+                    boolean newValue) {
+                super.fireStateChanged(property, oldValue, newValue);
+                if(oldValue != newValue){
+                    showIncomingInfo.setEnabled(getBooleanValue(), getFieldEditorParent());
+                }
+            }
+        };
+        addField(showChangesetsInfo);
+
+        showIncomingInfo = new BooleanFieldEditor(
+                MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET,
+                Messages.getString("PerformancePreferencePage.field.showIncomingChangesetOnFiles"), //$NON-NLS-1$
+                getFieldEditorParent());
+        addField(showIncomingInfo);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.IWorkbenchPreferencePage#init(org.eclipse.ui.IWorkbench)
-     */
     public void init(IWorkbench workbench) {
     }
 
