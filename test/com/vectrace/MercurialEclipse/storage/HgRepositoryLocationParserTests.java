@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
+import java.net.URI;
 import java.util.Date;
 
 import junit.framework.TestCase;
@@ -56,7 +57,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
     }
 
     public void testCreateLine() throws Exception {
-        final String uri = "http://javaforge.com/hg/hgeclipse";
+        final URI uri = new URI("http://javaforge.com/hg/hgeclipse");
         final String user = "test";
         final String password = "test";
         final String alias = "default";
@@ -71,7 +72,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
     }
 
     public void testCreateLineWithProject() throws Exception {
-        final String uri = "http://javaforge.com/hg/hgeclipse";
+        final URI uri = new URI("http://javaforge.com/hg/hgeclipse");
         final String user = "test";
         final String password = "test";
         final String alias = "default";

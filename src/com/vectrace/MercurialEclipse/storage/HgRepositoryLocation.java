@@ -21,6 +21,7 @@ import java.util.Date;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 
@@ -30,139 +31,49 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
  */
 public class HgRepositoryLocation extends AllRootsElement implements  Comparable<HgRepositoryLocation> {
 
-    private String logicalName;
+    private final String logicalName;
     private String projectName = null;
     private String location;
-    private String user;
-    private String password;
-    private URI uri;
+    private final String user;
+    private final String password;
+    private final URI uri;
     private boolean isPush = false;
     private Date lastUsage;
-    private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
-    private static final String ALIAS_TOKEN = "@alias@"; //$NON-NLS-1$
-    private static final String PASSWORD_TOKEN = ":"; //$NON-NLS-1$
 
-    HgRepositoryLocation(String logicalName, boolean isPush, String uri) throws HgException {
-        this(logicalName, isPush, uri, null, null);
+    @Deprecated
+    HgRepositoryLocation(String logicalName, boolean isPush, String location) throws HgException {
+        this(logicalName, isPush, location, null, null);
     }
 
-    HgRepositoryLocation(String logicalName, boolean isPush, String uri, String user, String password) throws HgException {
-        this.logicalName = logicalName;
-        this.location = uri;
-        this.isPush = isPush;
-        String[] repoInfo = uri.split(SPLIT_TOKEN);
+    @Deprecated
+    HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
+        HgRepositoryLocation parsed = HgRepositoryLocationParser.parseLine(logicalName, isPush, location, user, password);
+        this.logicalName = parsed.getLogicalName();
+        this.location = parsed.getLocation();
+        this.isPush = parsed.isPush();
+        this.uri = parsed.getUri();
+        this.user = parsed.getUser();
+        this.password = parsed.getPassword();
+    }
 
+    HgRepositoryLocation(String logicalName, boolean isPush, URI uri, String user, String password) {
+        this.logicalName = logicalName;
+        this.isPush = isPush;
+        this.uri = uri;
         this.user = user;
         this.password = password;
-
-        if ((this.user == null || this.user.length() == 0)
-                && repoInfo.length > 1) {
-            String userInfo = repoInfo[1];
-            if (userInfo.contains(ALIAS_TOKEN)) {
-                userInfo = userInfo.substring(0, userInfo.indexOf(ALIAS_TOKEN));
-            }
-            String[] splitUserInfo = userInfo.split(PASSWORD_TOKEN);
-            this.user = splitUserInfo[0];
-            if (splitUserInfo.length > 1) {
-                this.password = splitUserInfo[1];
-            } else {
-                this.password = null;
-            }
-            location = repoInfo[0];
-        }
-
-        String[] alias = uri.split(ALIAS_TOKEN);
-        if (alias.length == 2
-                && (logicalName == null || logicalName.length() == 0)) {
-            this.logicalName = alias[1];
-            if (location.contains(ALIAS_TOKEN)) {
-                location = location.substring(0, location.indexOf(ALIAS_TOKEN));
-            }
-        }
-
-        URI myUri = null;
         try {
-            myUri = new URI(location);
-        } catch (URISyntaxException e) {
-
-            // do nothing. workaround below doesn't work :-(
-
-            // this creates an URI like file:/c:/hurz
-            // myUri = new File(uri).toURI();
-            // normalize
-            // myUri = myUri.normalize();
-            // adding two slashes for Mercurial => file:///c:/hurz
-            // see http://www.selenic.com/mercurial/bts/issue1153
-            // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
-            // + myUri.toASCIIString().substring(5));
+            this.location = new URI(uri.getScheme(),
+                    null,
+                    uri.getHost(),
+                    uri.getPort(),
+                    uri.getPath(),
+                    null,
+                    uri.getFragment()).toASCIIString();
+        } catch (URISyntaxException ex) {
+            MercurialEclipsePlugin.logError(ex);
+            this.location = uri.toASCIIString();
         }
-        if (myUri != null) {
-            if (myUri.getScheme() != null
-                    && !myUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
-                String userInfo = null;
-                if (myUri.getUserInfo() == null) {
-                    // This is a hack: ssh doesn't allow us to directly enter
-                    // in passwords in the URI (even though it says it does)
-                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
-                        userInfo = this.user;
-                    } else {
-                        userInfo = createUserinfo(this.user, this.password);
-                    }
-
-                } else {
-                    // extract user and password from given URI
-                    String[] authorization = myUri.getUserInfo().split(":"); //$NON-NLS-1$
-                    this.user = authorization[0];
-                    if (authorization.length > 1) {
-                        this.password = authorization[1];
-                    }
-
-                    // This is a hack: ssh doesn't allow us to directly enter
-                    // in passwords in the URI (even though it says it does)
-                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
-                        userInfo = this.user;
-                    } else {
-                        userInfo = createUserinfo(this.user, this.password);
-                    }
-                }
-                try {
-                    this.uri = new URI(myUri.getScheme(), userInfo,
-                        myUri.getHost(), myUri.getPort(), myUri.getPath(),
-                        myUri.getQuery(), myUri.getFragment());
-                } catch (URISyntaxException e) {
-                    HgException hgex = new HgException("Failed to create hg repository", e);
-                    hgex.initCause(e);
-                    throw hgex;
-                }
-            }
-            /*
-             * Bugfix for issue #208, port number not displayed for push/pull drop-down
-             * June 03 2009 - slyons
-             */
-            //this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
-            //        .getPath(), myUri.getFragment()).toASCIIString();
-            try {
-                this.location = new URI(myUri.getScheme(), null, myUri.getHost(), myUri.getPort(),
-                        myUri.getPath(), null, myUri.getFragment()).toASCIIString();
-            } catch (URISyntaxException e) {
-                HgException hgex = new HgException("Failed to create hg repository", e);
-                hgex.initCause(e);
-                throw hgex;
-            }
-        }
-    }
-
-    private String createUserinfo(String user1, String password1) {
-        String userInfo = null;
-        if (user1 != null && user1.length() > 0) {
-            // pass gotta be separated by a colon
-            if (password1 != null && password1.length() != 0) {
-                userInfo = user1 + PASSWORD_TOKEN + password1;
-            } else {
-                userInfo = user1;
-            }
-        }
-        return userInfo;
     }
 
     static public boolean validateLocation(String validate) {
@@ -223,15 +134,9 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
         return location;
     }
 
+    @Deprecated
     public String getSaveString() {
-        String r = location;
-        if (uri != null && uri.getUserInfo() != null) {
-            r += SPLIT_TOKEN + uri.getUserInfo();
-        }
-        if (logicalName != null && logicalName.length() > 0) {
-            r += ALIAS_TOKEN + logicalName;
-        }
-        return r;
+        return HgRepositoryLocationParser.createSaveString(this);
     }
 
     @Override

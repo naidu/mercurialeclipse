@@ -93,8 +93,7 @@ public class HgRepositoryLocationManager {
 
             try {
                 while ((line = reader.readLine()) != null) {
-                    addRepoLocation(new HgRepositoryLocation(null, false, line, null,
-                            null));
+                    addRepoLocation(new HgRepositoryLocation(null, false, line, null, null));
                 }
             } catch (HgException e) {
                 // we don't want to load it - it will be cleaned when saving
