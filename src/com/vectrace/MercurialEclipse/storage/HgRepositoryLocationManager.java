@@ -121,8 +121,11 @@ public class HgRepositoryLocationManager {
 
         try {
             for (HgRepositoryLocation repo : repos) {
-                writer.write(repo.getSaveString());
-                writer.write('\n');
+                String line = repo.getSaveString();
+                if(line != null){
+                    writer.write(line);
+                    writer.write('\n');
+                }
             }
         } finally {
             writer.close();
@@ -380,8 +383,11 @@ public class HgRepositoryLocationManager {
                         .get(project);
                 if (repoSet != null) {
                     for (HgRepositoryLocation repo : repoSet) {
-                        writer.write(repo.getSaveString());
-                        writer.write('\n');
+                        String line = repo.getSaveString();
+                        if(line != null){
+                            writer.write(line);
+                            writer.write('\n');
+                        }
                     }
                 }
             } finally {
@@ -457,7 +463,7 @@ public class HgRepositoryLocationManager {
      */
     private HgRepositoryLocation matchRepoLocation(String url) {
         for (HgRepositoryLocation loc : repos) {
-            if (loc.getLocation().equals(url)) {
+            if (url.equals(loc.getLocation())) {
                 return loc;
             }
         }

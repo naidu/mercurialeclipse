@@ -33,12 +33,12 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 public class HgRepositoryLocation extends AllRootsElement implements  Comparable<HgRepositoryLocation> {
 
     private final String logicalName;
-    private String projectName = null;
+    private String projectName;
     private String location;
     private final String user;
     private final String password;
     private final URI uri;
-    private boolean isPush = false;
+    private final boolean isPush;
     private Date lastUsage;
 
     @Deprecated
@@ -50,7 +50,7 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
     HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
         HgRepositoryLocation parsed = HgRepositoryLocationParser.parseLine(logicalName, isPush, location, user, password);
         this.logicalName = parsed.getLogicalName();
-        this.location = parsed.getLocation();
+        this.location = parsed.getLocation() != null? parsed.getLocation() : location;
         this.isPush = parsed.isPush();
         this.uri = parsed.getUri();
         this.user = parsed.getUser();
@@ -63,17 +63,19 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
         this.uri = uri;
         this.user = user;
         this.password = password;
-        try {
-            this.location = new URI(uri.getScheme(),
-                    null,
-                    uri.getHost(),
-                    uri.getPort(),
-                    uri.getPath(),
-                    null,
-                    uri.getFragment()).toASCIIString();
-        } catch (URISyntaxException ex) {
-            MercurialEclipsePlugin.logError(ex);
-            this.location = uri.toASCIIString();
+        if(uri != null) {
+            try {
+                this.location = new URI(uri.getScheme(),
+                        null,
+                        uri.getHost(),
+                        uri.getPort(),
+                        uri.getPath(),
+                        null,
+                        uri.getFragment()).toASCIIString();
+            } catch (URISyntaxException ex) {
+                MercurialEclipsePlugin.logError(ex);
+                this.location = uri.toASCIIString();
+            }
         }
     }
 
@@ -88,6 +90,12 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
     }
 
     public int compareTo(HgRepositoryLocation loc) {
+        if(location == null){
+            return -1;
+        }
+        if(loc.location == null){
+            return 1;
+        }
         return this.location.compareTo(loc.location);
     }
 
