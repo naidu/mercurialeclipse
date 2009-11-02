@@ -9,10 +9,15 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch
  *     StefanC
+ *     @author adam.berkes <adam.berkes@intland.com>
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +26,7 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.dialogs.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -69,12 +75,20 @@ public class HgCommitClient extends AbstractClient {
         HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         command.addUserName(quote(user));
-        addMessage(command, message);
+        File messageFile = saveMessage(message);
+        addMessage(command, messageFile, message);
         command.addFiles(AbstractClient.toPaths(files));
-        return command.executeToString();
+        String result = command.executeToString();
+        deleteMessage(messageFile);
+        return result;
     }
 
-    private static void addMessage(HgCommand command, String message) {
+    private static void addMessage(HgCommand command, File messageFile, String message) {
+        if (messageFile != null && messageFile.isFile()) {
+            command.addOptions("-l", messageFile.getAbsolutePath());
+            return;
+        }
+        // fallback in case of unavailable message file
         message = quote(message.trim());
         if (message.length() != 0) {
             command.addOptions("-m", message);
@@ -92,12 +106,14 @@ public class HgCommitClient extends AbstractClient {
         HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
         command.addUserName(quote(user));
-        addMessage(command, message);
+        File messageFile = saveMessage(message);
+        addMessage(command, messageFile, message);
         String result = command.executeToString();
         Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
         for (IProject iProject : projects) {
             new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
         }
+        deleteMessage(messageFile);
         return result;
     }
 
@@ -107,5 +123,35 @@ public class HgCommitClient extends AbstractClient {
         }
         // escape quotes, otherwise commit will fail at least on windows
         return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    private static File saveMessage(String message) {
+        BufferedWriter writer = null;
+        try {
+            File messageFile = File.createTempFile("commitMessage", ".txt");
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(messageFile),"UTF8"));
+            writer.write(message);
+            return messageFile;
+        } catch (IOException ex) {
+            MercurialEclipsePlugin.logError(ex);
+            return null;
+        } finally {
+            if (writer != null) {
+                try {
+                    writer.close();
+                } catch (IOException ex) {
+                    MercurialEclipsePlugin.logError(ex);
+                }
+            }
+        }
+    }
+
+    private static void deleteMessage(File messageFile) {
+        // Try to delete normally, and if not successfull
+        // leave it for the JVM exit - I use it in case
+        // mercurial accidentally locks the file.
+        if (!messageFile.delete()) {
+            messageFile.deleteOnExit();
+        }
     }
 }
