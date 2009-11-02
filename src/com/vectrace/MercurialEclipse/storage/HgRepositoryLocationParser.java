@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  * Repository location line format:
  * [u|d]<dateAsLong> <len> uri <len> username <len> password <len> alias/id[ <len> project]
  *
- * @author adam.berkes
+ * @author adam.berkes <adam.berkes@intland.com>
  */
 public class HgRepositoryLocationParser {
 
@@ -152,9 +152,8 @@ public class HgRepositoryLocationParser {
             }
         }
 
-        URI myUri = null;
         try {
-            myUri = new URI(location);
+            locationUri = new URI(location);
         } catch (URISyntaxException e) {
 
             // do nothing. workaround below doesn't work :-(
@@ -168,14 +167,14 @@ public class HgRepositoryLocationParser {
             // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
             // + myUri.toASCIIString().substring(5));
         }
-        if (myUri != null) {
-            if (myUri.getScheme() != null
-                    && !myUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
+        if (locationUri != null) {
+            if (locationUri.getScheme() != null
+                    && !locationUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
                 String userInfo = null;
-                if (myUri.getUserInfo() == null) {
+                if (locationUri.getUserInfo() == null) {
                     // This is a hack: ssh doesn't allow us to directly enter
                     // in passwords in the URI (even though it says it does)
-                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
+                    if (locationUri.getScheme().equalsIgnoreCase("ssh")) {
                         userInfo = user;
                     } else {
                         userInfo = createUserinfo(user, password);
@@ -183,7 +182,7 @@ public class HgRepositoryLocationParser {
 
                 } else {
                     // extract user and password from given URI
-                    String[] authorization = myUri.getUserInfo().split(":"); //$NON-NLS-1$
+                    String[] authorization = locationUri.getUserInfo().split(":"); //$NON-NLS-1$
                     user = authorization[0];
                     if (authorization.length > 1) {
                         password = authorization[1];
@@ -191,16 +190,16 @@ public class HgRepositoryLocationParser {
 
                     // This is a hack: ssh doesn't allow us to directly enter
                     // in passwords in the URI (even though it says it does)
-                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
+                    if (locationUri.getScheme().equalsIgnoreCase("ssh")) {
                         userInfo = user;
                     } else {
                         userInfo = createUserinfo(user, password);
                     }
                 }
                 try {
-                    locationUri = new URI(myUri.getScheme(), userInfo,
-                        myUri.getHost(), myUri.getPort(), myUri.getPath(),
-                        myUri.getQuery(), myUri.getFragment());
+                    locationUri = new URI(locationUri.getScheme(), userInfo,
+                            locationUri.getHost(), locationUri.getPort(), locationUri.getPath(),
+                            locationUri.getQuery(), locationUri.getFragment());
                 } catch (URISyntaxException e) {
                     HgException hgex = new HgException("Failed to create hg repository", e);
                     hgex.initCause(e);

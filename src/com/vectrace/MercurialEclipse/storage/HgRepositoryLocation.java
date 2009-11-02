@@ -10,6 +10,7 @@
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - additions for repository view
  *     Subclipse contributors    - fromProperties() initial source
+ *     @author adam.berkes <adam.berkes@intland.com>
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.storage;
