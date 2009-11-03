@@ -23,7 +23,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 
 /**
@@ -35,34 +34,19 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
     private final String logicalName;
     private String projectName;
     private String location;
+    private final URI uri;
     private final String user;
     private final String password;
-    private final URI uri;
     private final boolean isPush;
     private Date lastUsage;
 
-    @Deprecated
-    HgRepositoryLocation(String logicalName, boolean isPush, String location) throws HgException {
-        this(logicalName, isPush, location, null, null);
-    }
-
-    @Deprecated
-    HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
-        HgRepositoryLocation parsed = HgRepositoryLocationParser.parseLine(logicalName, isPush, location, user, password);
-        this.logicalName = parsed.getLogicalName();
-        this.location = parsed.getLocation() != null? parsed.getLocation() : location;
-        this.isPush = parsed.isPush();
-        this.uri = parsed.getUri();
-        this.user = parsed.getUser();
-        this.password = parsed.getPassword();
-    }
-
-    HgRepositoryLocation(String logicalName, boolean isPush, URI uri, String user, String password) {
+    HgRepositoryLocation(String logicalName, boolean isPush, URI uri, String location, String user, String password) {
         this.logicalName = logicalName;
         this.isPush = isPush;
         this.uri = uri;
         this.user = user;
         this.password = password;
+        this.location = location;
         if(uri != null) {
             try {
                 this.location = new URI(uri.getScheme(),
@@ -74,7 +58,6 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
                         uri.getFragment()).toASCIIString();
             } catch (URISyntaxException ex) {
                 MercurialEclipsePlugin.logError(ex);
-                this.location = uri.toASCIIString();
             }
         }
     }

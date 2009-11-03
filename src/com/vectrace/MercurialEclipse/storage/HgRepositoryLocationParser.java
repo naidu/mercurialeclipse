@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * lali	implementation
+ * @author adam.berkes <adam.berkes@intland.com>
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -22,15 +22,15 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 /**
  * Repository location line format:
  * [u|d]<dateAsLong> <len> uri <len> username <len> password <len> alias/id[ <len> project]
- *
- * @author adam.berkes <adam.berkes@intland.com>
  */
 public class HgRepositoryLocationParser {
 
     protected static final String PART_SEPARATOR = " ";
-    private static final String SPLIT_TOKEN = "@@@";
-    private static final String ALIAS_TOKEN = "@alias@";
-    private static final String PASSWORD_TOKEN = ":";
+    protected static final String SPLIT_TOKEN = "@@@";
+    protected static final String ALIAS_TOKEN = "@alias@";
+    protected static final String PASSWORD_TOKEN = ":";
+    protected static final String PUSH_PREFIX = "u";
+    protected static final String PULL_PREFIX = "d";
 
     protected static HgRepositoryLocation parseLine(final String line) {
         if (line == null || line.length() < 1) {
@@ -58,7 +58,12 @@ public class HgRepositoryLocationParser {
             } catch (URISyntaxException e) {
                 // uri stays null
             }
-            HgRepositoryLocation location = new HgRepositoryLocation(parts.get(3), direction.equals("u"), uri, parts.get(1), parts.get(2));
+            HgRepositoryLocation location = new HgRepositoryLocation(parts.get(3),
+                    direction.equals(PUSH_PREFIX),
+                    uri,
+                    parts.get(0),
+                    parts.get(1),
+                    parts.get(2));
             location.setLastUsage(lastUsage);
             if (parts.size() > 4) {
                 location.setProjectName(parts.get(4));
@@ -71,8 +76,8 @@ public class HgRepositoryLocationParser {
     }
 
     protected static String createLine(final HgRepositoryLocation location) {
-        StringBuilder line = new StringBuilder(location.isPush() ? "u" : "d");
-        line.append(location.getLastUsage().getTime());
+        StringBuilder line = new StringBuilder(location.isPush() ? PUSH_PREFIX : PULL_PREFIX);
+        line.append(location.getLastUsage() != null ? location.getLastUsage().getTime() : new Date().getTime());
         line.append(PART_SEPARATOR);
         // remove authentication from location
         if (location.getUri() != null) {
@@ -101,17 +106,20 @@ public class HgRepositoryLocationParser {
             line.append(location.getLocation());
             line.append(PART_SEPARATOR);
         }
-        line.append(String.valueOf(location.getUser().length()));
+        String user = location.getUser() != null ? location.getUser() : "";
+        line.append(String.valueOf(user.length()));
         line.append(PART_SEPARATOR);
-        line.append(location.getUser());
+        line.append(user);
         line.append(PART_SEPARATOR);
-        line.append(String.valueOf(location.getPassword().length()));
+        String password = location.getPassword() != null ? location.getPassword() : "";
+        line.append(String.valueOf(password.length()));
         line.append(PART_SEPARATOR);
-        line.append(location.getPassword());
+        line.append(password);
         line.append(PART_SEPARATOR);
-        line.append(String.valueOf(location.getLogicalName().length()));
+        String logicalName = location.getLogicalName() != null ? location.getLogicalName() : "";
+        line.append(String.valueOf(logicalName.length()));
         line.append(PART_SEPARATOR);
-        line.append(location.getLogicalName());
+        line.append(logicalName);
         if (location.getProjectName() != null) {
             line.append(PART_SEPARATOR);
             line.append(String.valueOf(location.getProjectName().length()));
@@ -121,11 +129,17 @@ public class HgRepositoryLocationParser {
         return line.toString();
     }
 
-    @Deprecated
-    protected static HgRepositoryLocation parseLine(String logicalName, boolean isPush, String uri, String user, String password) throws HgException {
-        String location = uri;
+    protected static HgRepositoryLocation parseLocation(boolean isPush, String location, String user, String password) throws HgException {
+        return parseLine(null, isPush, location, user, password);
+    }
+
+    protected static HgRepositoryLocation parseLocation(boolean isPush, String location) throws HgException {
+        return parseLocation(isPush, location, null, null);
+    }
+
+    protected static HgRepositoryLocation parseLine(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
         URI locationUri = null;
-        String[] repoInfo = uri.split(SPLIT_TOKEN);
+        String[] repoInfo = location.split(SPLIT_TOKEN);
 
         if ((user == null || user.length() == 0)
                 && repoInfo.length > 1) {
@@ -143,7 +157,7 @@ public class HgRepositoryLocationParser {
             location = repoInfo[0];
         }
 
-        String[] alias = uri.split(ALIAS_TOKEN);
+        String[] alias = location.split(ALIAS_TOKEN);
         if (alias.length == 2
                 && (logicalName == null || logicalName.length() == 0)) {
             logicalName = alias[1];
@@ -156,16 +170,6 @@ public class HgRepositoryLocationParser {
             locationUri = new URI(location);
         } catch (URISyntaxException e) {
 
-            // do nothing. workaround below doesn't work :-(
-
-            // this creates an URI like file:/c:/hurz
-            // myUri = new File(uri).toURI();
-            // normalize
-            // myUri = myUri.normalize();
-            // adding two slashes for Mercurial => file:///c:/hurz
-            // see http://www.selenic.com/mercurial/bts/issue1153
-            // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
-            // + myUri.toASCIIString().substring(5));
         }
         if (locationUri != null) {
             if (locationUri.getScheme() != null
@@ -207,7 +211,7 @@ public class HgRepositoryLocationParser {
                 }
             }
         }
-        HgRepositoryLocation repo = new HgRepositoryLocation(logicalName, isPush, locationUri, user, password);
+        HgRepositoryLocation repo = new HgRepositoryLocation(logicalName, isPush, locationUri, location, user, password);
         return repo;
     }
 
@@ -226,13 +230,22 @@ public class HgRepositoryLocationParser {
 
     @Deprecated
     public static String createSaveString(HgRepositoryLocation location) {
-        String r = location.getLocation();
+        StringBuilder line = new StringBuilder(location.getLocation());
         if (location.getUri() != null && location.getUri().getUserInfo() != null) {
-            r += SPLIT_TOKEN + location.getUri().getUserInfo();
+            line.append(SPLIT_TOKEN);
+            line.append(location.getUri().getUserInfo());
+        } else if (location.getUser() != null ) {
+            line.append(SPLIT_TOKEN);
+            line.append(location.getUser());
+            if (location.getPassword() != null) {
+                line.append(PASSWORD_TOKEN);
+                line.append(location.getPassword());
+            }
         }
         if (location.getLogicalName() != null && location.getLogicalName().length() > 0) {
-            r += ALIAS_TOKEN + location.getLogicalName();
+            line.append(ALIAS_TOKEN);
+            line.append(location.getLogicalName());
         }
-        return r;
+        return line.toString();
     }
 }

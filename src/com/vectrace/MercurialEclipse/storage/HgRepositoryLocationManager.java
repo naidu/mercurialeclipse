@@ -10,6 +10,7 @@
  *     Stefan Groschupf          - logError
  *     Jerome Negre              - storing in plain text instead of serializing Java Objects
  *     Bastian Doetsch           - support for project specific repository locations
+ *     adam.berkes <adam.berkes@intland.com>
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -58,11 +59,13 @@ public class HgRepositoryLocationManager {
 
     private final SortedSet<HgRepositoryLocation> repos;
     private final Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos;
+    private final HgRepositoryLocationParserDelegator delegator;
     private boolean initDone;
 
     public HgRepositoryLocationManager() {
         repos = new TreeSet<HgRepositoryLocation>();
         projectRepos = new HashMap<IProject, SortedSet<HgRepositoryLocation>>();
+        delegator = new HgRepositoryLocationParserDelegator();
     }
 
     /**
@@ -93,11 +96,8 @@ public class HgRepositoryLocationManager {
 
             try {
                 while ((line = reader.readLine()) != null) {
-                    addRepoLocation(new HgRepositoryLocation(null, false, line, null, null));
+                    addRepoLocation(delegator.delegateParse(line));
                 }
-            } catch (HgException e) {
-                // we don't want to load it - it will be cleaned when saving
-                MercurialEclipsePlugin.logError(e);
             } finally {
                 reader.close();
             }
@@ -121,7 +121,7 @@ public class HgRepositoryLocationManager {
 
         try {
             for (HgRepositoryLocation repo : repos) {
-                String line = repo.getSaveString();
+                String line = delegator.delegateCreate(repo);
                 if(line != null){
                     writer.write(line);
                     writer.write('\n');
@@ -265,16 +265,12 @@ public class HgRepositoryLocationManager {
             // Load .hg/hgrc paths first; plugin settings will override these
             Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
             for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
-                try {
-                    // if not existent, add to repository browser
-                    HgRepositoryLocation loc = updateRepoLocation(
-                            entry.getValue(),
-                            entry.getKey(),
-                            null, null);
-                    internalAddRepoLocation(project, loc);
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
+                // if not existent, add to repository browser
+                HgRepositoryLocation loc = updateRepoLocation(
+                        entry.getValue(),
+                        entry.getKey(),
+                        null, null);
+                internalAddRepoLocation(project, loc);
             }
 
             boolean createSrcRepository = false;
@@ -302,8 +298,7 @@ public class HgRepositoryLocationManager {
                 try {
                     while ((line = reader.readLine()) != null) {
                         try {
-                            HgRepositoryLocation loc = updateRepoLocation(
-                                    line, null, null, null);
+                            HgRepositoryLocation loc = delegator.delegateParse(line);
                             internalAddRepoLocation(project, loc);
 
                             if (createSrcRepository) {
@@ -383,7 +378,7 @@ public class HgRepositoryLocationManager {
                         .get(project);
                 if (repoSet != null) {
                     for (HgRepositoryLocation repo : repoSet) {
-                        String line = repo.getSaveString();
+                        String line = delegator.delegateCreate(repo);
                         if(line != null){
                             writer.write(line);
                             writer.write('\n');
@@ -400,8 +395,7 @@ public class HgRepositoryLocationManager {
      * Get a repo by its URL. If URL is unknown, returns a new location.
      * @return never returns null
      */
-    public HgRepositoryLocation getRepoLocation(String url)
-            throws HgException {
+    public HgRepositoryLocation getRepoLocation(String url) throws HgException {
         return getRepoLocation(url, null, null);
     }
 
@@ -419,7 +413,7 @@ public class HgRepositoryLocationManager {
         }
 
         // make a new location if no matches exist or it's a different user
-        return new HgRepositoryLocation(null, false, url, user, pass);
+        return HgRepositoryLocationParser.parseLocation(false, url, user, pass);
     }
 
     /**
@@ -454,7 +448,7 @@ public class HgRepositoryLocationManager {
         }
 
         // make a new location if no matches exist or it's a different user
-        return new HgRepositoryLocation(null, false, url, user, password);
+        return new HgRepositoryLocation(null, false, null, url, user, password);
     }
 
     /**
@@ -475,14 +469,12 @@ public class HgRepositoryLocationManager {
      * adding it to the global repositories cache. Will update stored
      * last user and password with the provided values.
      */
-    public HgRepositoryLocation updateRepoLocation(String url,
-            String logicalName, String user, String pass)
-            throws HgException {
+    public HgRepositoryLocation updateRepoLocation(String url, String logicalName, String user, String pass) {
         HgRepositoryLocation loc = matchRepoLocation(url);
 
         if (loc == null) {
             // in some cases url may be a repository database line
-            loc = new HgRepositoryLocation(logicalName, false, url, user, pass);
+            loc = new HgRepositoryLocation(logicalName, false, null, url, user, pass);
             addRepoLocation(loc);
             return loc;
         }
@@ -510,8 +502,7 @@ public class HgRepositoryLocationManager {
         }
 
         if (update) {
-            HgRepositoryLocation updated = new HgRepositoryLocation(
-                    myLogicalName, false, loc.getLocation(), myUser, myPass);
+            HgRepositoryLocation updated = new HgRepositoryLocation(myLogicalName, false, loc.getUri(), loc.getLocation(), myUser, myPass);
             repos.remove(updated);
             repos.add(updated);
 

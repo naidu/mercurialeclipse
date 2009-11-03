@@ -57,12 +57,13 @@ public class HgRepositoryLocationParserTests extends TestCase {
     }
 
     public void testCreateLine() throws Exception {
-        final URI uri = new URI("http://javaforge.com/hg/hgeclipse");
+        final String repo = "http://javaforge.com/hg/hgeclipse";
+        final URI uri = new URI(repo);
         final String user = "test";
         final String password = "test";
         final String alias = "default";
         final Date date = new Date();
-        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, uri, user, password);
+        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, uri, repo, user, password);
         location.setLastUsage(date);
         String repoLine = HgRepositoryLocationParser.createLine(location);
         assertNotNull(repoLine);
@@ -72,20 +73,60 @@ public class HgRepositoryLocationParserTests extends TestCase {
     }
 
     public void testCreateLineWithProject() throws Exception {
-        final URI uri = new URI("http://javaforge.com/hg/hgeclipse");
+        final String repo = "http://javaforge.com/hg/hgeclipse";
+        final URI uri = new URI(repo);
         final String user = "test";
         final String password = "test";
         final String alias = "default";
         final String project = "hgeclipse";
         final Date date = new Date();
-        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, uri, user, password);
+        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, uri, repo, user, password);
         location.setLastUsage(date);
         location.setProjectName(project);
         String repoLine = HgRepositoryLocationParser.createLine(location);
         assertNotNull(repoLine);
         assertTrue(repoLine.length() > 0);
-        assertEquals(repoLine, createTestLine(location.isPush(), location.getLastUsage(), location.getLocation(), location.getUser(),
-                location.getPassword(), location.getLogicalName(), location.getProjectName()));
+        assertEquals(createTestLine(location.isPush(), location.getLastUsage(), location.getLocation(), location.getUser(),
+                location.getPassword(), location.getLogicalName(), location.getProjectName()), repoLine);
+    }
+
+    public void testParseCreateLineLocalWinOld() throws Exception {
+        final String uri = "C:\\Documents and settings\\workspace\\hgeclipse";
+        final String alias = "default";
+        final String user = "test";
+        final String password = "test";
+        HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(alias, true, uri, user, password);
+        assertNotNull(location);
+        assertTrue(location.isPush());
+        assertEquals(null, location.getLastUsage());
+        assertEquals(uri, location.getLocation());
+        assertEquals(user, location.getUser());
+        assertEquals(password, location.getPassword());
+        assertEquals(alias, location.getLogicalName());
+        assertEquals(null, location.getProjectName());
+        String saveString = HgRepositoryLocationParser.createSaveString(location);
+        assertNotNull(saveString);
+        assertTrue(saveString.length() > 0);
+        assertEquals(uri + HgRepositoryLocationParser.SPLIT_TOKEN + user +
+                HgRepositoryLocationParser.PASSWORD_TOKEN + password + HgRepositoryLocationParser.ALIAS_TOKEN + alias, saveString);
+    }
+
+    public void testParseCreateLineLocalLinOld() throws Exception {
+        final String uri = "/home/adam.berkes/workspace/hgeclipse";
+        final String alias = "default";
+        HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(alias, true, uri, null, null);
+        assertNotNull(location);
+        assertTrue(location.isPush());
+        assertEquals(null, location.getLastUsage());
+        assertEquals(uri, location.getLocation());
+        assertEquals(null, location.getUser());
+        assertEquals(null, location.getPassword());
+        assertEquals(alias, location.getLogicalName());
+        assertEquals(null, location.getProjectName());
+        String saveString = HgRepositoryLocationParser.createSaveString(location);
+        assertNotNull(saveString);
+        assertTrue(saveString.length() > 0);
+        assertEquals(uri + HgRepositoryLocationParser.ALIAS_TOKEN + alias, saveString);
     }
 
     private String createTestLine(boolean isPush, Date date, String uri, String user, String password, String alias, String project) {
