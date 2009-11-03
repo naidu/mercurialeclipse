@@ -648,38 +648,53 @@
                         </and>
                     </visibleWhen>
                 </command>
-
+                <separator
+                      name="group4"
+                      visible="true">
+                </separator>
                 <command
-                  commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
-                  icon="icons/actions/switch.gif">
-                    <visibleWhen>
-                        <and>
-                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
-                        </and>
-                    </visibleWhen>
+                      commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
+                      icon="icons/actions/synch.gif">
+                   <visibleWhen>
+                      <and>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.mercurial">
+                         </reference>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.project">
+                         </reference>
+                      </and>
+                   </visibleWhen>
+                </command>
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
+                      icon="icons/clcl16/refresh.gif">
+                   <visibleWhen>
+                      <reference
+                            definitionId="com.vectrace.MercurialEclipse.def.mercurial">
+                      </reference>
+                   </visibleWhen>
                 </command>
 
-                <separator name="group2" visible="true"/>
 
-                <command commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
-                    icon="icons/import.gif">
-                    <visibleWhen>
-                        <and>
-                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
-                        </and>
-                    </visibleWhen>
-                </command>
 
-                <command commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
-                    icon="icons/export.gif">
-                    <visibleWhen>
-                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                    </visibleWhen>
-                </command>
+
 
                 <separator name="group3" visible="true"/>
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
+                      icon="icons/actions/switch.gif">
+                   <visibleWhen>
+                      <and>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.mercurial">
+                         </reference>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.project">
+                         </reference>
+                      </and>
+                   </visibleWhen>
+                </command>
 
                 <command
                   commandId="com.vectrace.MercurialEclipse.menu.TagHandler"
@@ -737,26 +752,8 @@
                    </visibleWhen>
                 </command>
 
-                <separator name="group4" visible="true"/>
 
-                <command
-                  commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
-                  icon="icons/clcl16/refresh.gif">
-                    <visibleWhen>
-                       <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                    </visibleWhen>
-                </command>
 
-                <command
-                  commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
-                  icon="icons/actions/synch.gif">
-                    <visibleWhen>
-                        <and>
-                           <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                           <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
-                        </and>
-                    </visibleWhen>
-                </command>
 
                 <separator name="group5" visible="true"/>
 
@@ -849,6 +846,33 @@
                         </visibleWhen>
                     </command>
                 </menu>
+                <separator
+                      name="group2"
+                      visible="true">
+                </separator>
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.ImportPatchHandler"
+                      icon="icons/import.gif">
+                   <visibleWhen>
+                      <and>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.mercurial">
+                         </reference>
+                         <reference
+                               definitionId="com.vectrace.MercurialEclipse.def.project">
+                         </reference>
+                      </and>
+                   </visibleWhen>
+                </command>
+                <command
+                      commandId="com.vectrace.MercurialEclipse.menu.ExportPatchHandler"
+                      icon="icons/export.gif">
+                   <visibleWhen>
+                      <reference
+                            definitionId="com.vectrace.MercurialEclipse.def.mercurial">
+                      </reference>
+                   </visibleWhen>
+                </command>
 
                 <separator name="group6" visible="true"/>
                 <separator name="group7" visible="true"/>
