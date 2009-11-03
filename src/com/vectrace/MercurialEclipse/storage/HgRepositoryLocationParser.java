@@ -54,7 +54,16 @@ public class HgRepositoryLocationParser {
             }
             URI uri = null;
             try {
+                // first parse url/uri and then
+                // regenerate it with correct user info
                 uri = new URI(parts.get(0));
+                uri = new URI(uri.getScheme(),
+                        createUserinfo(parts.get(1), parts.get(2)),
+                        uri.getHost(),
+                        uri.getPort(),
+                        uri.getPath(),
+                        uri.getQuery(),
+                        uri.getFragment());
             } catch (URISyntaxException e) {
                 // uri stays null
             }
@@ -129,12 +138,16 @@ public class HgRepositoryLocationParser {
         return line.toString();
     }
 
+    protected static HgRepositoryLocation parseLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
+        return parseLine(logicalName, isPush, location, user, password);
+    }
+
     protected static HgRepositoryLocation parseLocation(boolean isPush, String location, String user, String password) throws HgException {
-        return parseLine(null, isPush, location, user, password);
+        return parseLocation(null, isPush, location, user, password);
     }
 
     protected static HgRepositoryLocation parseLocation(boolean isPush, String location) throws HgException {
-        return parseLocation(isPush, location, null, null);
+        return parseLocation(null, isPush, location, null, null);
     }
 
     protected static HgRepositoryLocation parseLine(String logicalName, boolean isPush, String location, String user, String password) throws HgException {

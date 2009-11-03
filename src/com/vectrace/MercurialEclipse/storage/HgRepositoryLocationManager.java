@@ -448,7 +448,7 @@ public class HgRepositoryLocationManager {
         }
 
         // make a new location if no matches exist or it's a different user
-        return new HgRepositoryLocation(null, false, null, url, user, password);
+        return HgRepositoryLocationParser.parseLocation(false, url, user, password);
     }
 
     /**
@@ -469,12 +469,12 @@ public class HgRepositoryLocationManager {
      * adding it to the global repositories cache. Will update stored
      * last user and password with the provided values.
      */
-    public HgRepositoryLocation updateRepoLocation(String url, String logicalName, String user, String pass) {
+    public HgRepositoryLocation updateRepoLocation(String url, String logicalName, String user, String pass) throws HgException {
         HgRepositoryLocation loc = matchRepoLocation(url);
 
         if (loc == null) {
             // in some cases url may be a repository database line
-            loc = new HgRepositoryLocation(logicalName, false, null, url, user, pass);
+            loc = HgRepositoryLocationParser.parseLocation(logicalName, false, url, user, pass);
             addRepoLocation(loc);
             return loc;
         }
@@ -502,7 +502,7 @@ public class HgRepositoryLocationManager {
         }
 
         if (update) {
-            HgRepositoryLocation updated = new HgRepositoryLocation(myLogicalName, false, loc.getUri(), loc.getLocation(), myUser, myPass);
+            HgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName, false, loc.getLocation(), myUser, myPass);
             repos.remove(updated);
             repos.add(updated);
 
