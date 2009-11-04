@@ -456,9 +456,11 @@ public class HgRepositoryLocationManager {
      * @return may return null
      */
     private HgRepositoryLocation matchRepoLocation(String url) {
-        for (HgRepositoryLocation loc : repos) {
-            if (url.equals(loc.getLocation())) {
-                return loc;
+        if (url != null) {
+            for (HgRepositoryLocation loc : repos) {
+                if (url.equals(loc.getLocation())) {
+                    return loc;
+                }
             }
         }
         return null;
