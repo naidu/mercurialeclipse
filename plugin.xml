@@ -648,10 +648,6 @@
                         </and>
                     </visibleWhen>
                 </command>
-                <separator
-                      name="group4"
-                      visible="true">
-                </separator>
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.SyncHandler"
                       icon="icons/actions/synch.gif">
@@ -666,6 +662,10 @@
                       </and>
                    </visibleWhen>
                 </command>
+                <separator
+                      name="group4"
+                      visible="true">
+                </separator>
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                       icon="icons/clcl16/refresh.gif">
