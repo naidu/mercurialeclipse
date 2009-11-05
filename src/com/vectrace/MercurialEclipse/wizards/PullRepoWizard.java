@@ -133,7 +133,7 @@ public class PullRepoWizard extends HgWizard {
     private HgRepositoryLocation getLocation() {
         try {
             return MercurialEclipsePlugin.getRepoManager()
-                    .fromProperties(pullPage.getProperties());
+                    .fromProperties(resource.getProject(), pullPage.getProperties());
         } catch (Exception e) {
             MessageDialog.openInformation(getShell(), Messages
                     .getString("PullRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$

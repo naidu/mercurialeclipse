@@ -10,10 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
-import java.net.URI;
+import java.io.File;
 import java.util.Date;
 
 import junit.framework.TestCase;
+
+import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author adam.berkes
@@ -58,12 +60,11 @@ public class HgRepositoryLocationParserTests extends TestCase {
 
     public void testCreateLine() throws Exception {
         final String repo = "http://javaforge.com/hg/hgeclipse";
-        final URI uri = new URI(repo);
         final String user = "test";
         final String password = "test";
         final String alias = "default";
         final Date date = new Date();
-        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, uri, repo, user, password);
+        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, repo, user, password);
         location.setLastUsage(date);
         String repoLine = HgRepositoryLocationParser.createLine(location);
         assertNotNull(repoLine);
@@ -74,13 +75,12 @@ public class HgRepositoryLocationParserTests extends TestCase {
 
     public void testCreateLineWithProject() throws Exception {
         final String repo = "http://javaforge.com/hg/hgeclipse";
-        final URI uri = new URI(repo);
         final String user = "test";
         final String password = "test";
         final String alias = "default";
         final String project = "hgeclipse";
         final Date date = new Date();
-        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, uri, repo, user, password);
+        HgRepositoryLocation location = new HgRepositoryLocation(alias, false, repo, user, password);
         location.setLastUsage(date);
         location.setProjectName(project);
         String repoLine = HgRepositoryLocationParser.createLine(location);
@@ -95,16 +95,24 @@ public class HgRepositoryLocationParserTests extends TestCase {
         final String alias = "default";
         final String user = "test";
         final String password = "test";
-        HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(alias, true, uri, user, password);
-        assertNotNull(location);
-        assertTrue(location.isPush());
-        assertEquals(null, location.getLastUsage());
-        assertEquals(uri, location.getLocation());
-        assertEquals(user, location.getUser());
-        assertEquals(password, location.getPassword());
-        assertEquals(alias, location.getLogicalName());
-        assertEquals(null, location.getProjectName());
-        String saveString = HgRepositoryLocationParser.createSaveString(location);
+        String saveString = null;
+        try {
+            HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(alias, true, uri, user, password);
+            assertNotNull(location);
+            assertTrue(location.isPush());
+            assertEquals(null, location.getLastUsage());
+            assertEquals(uri, location.getLocation());
+            assertEquals(user, location.getUser());
+            assertEquals(password, location.getPassword());
+            assertEquals(alias, location.getLogicalName());
+            assertEquals(null, location.getProjectName());
+            saveString = HgRepositoryLocationParser.createSaveString(location);
+        } catch(HgException ex) {
+            if (File.pathSeparator.equals("\\")) {
+                assertTrue(ex.getMessage(), false);
+            }
+            return;
+        }
         assertNotNull(saveString);
         assertTrue(saveString.length() > 0);
         assertEquals(uri + HgRepositoryLocationParser.SPLIT_TOKEN + user +

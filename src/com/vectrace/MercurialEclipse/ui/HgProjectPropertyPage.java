@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.ui;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.MouseListener;
@@ -32,21 +31,21 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgProjectPropertyPage extends PropertyPage {
     private IProject project;
     private Group reposGroup;
 
     /**
-     * 
+     *
      */
     public HgProjectPropertyPage() {
     }
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see
      * org.eclipse.jface.preference.PreferencePage#createContents(org.eclipse
      * .swt.widgets.Composite)
@@ -54,7 +53,7 @@ public class HgProjectPropertyPage extends PropertyPage {
     @Override
     protected Control createContents(Composite parent) {
         this.project = (IProject) super.getElement();
-        
+
         // create gui elements
         Composite comp = SWTWidgetHelper.createComposite(parent, 1);
 
@@ -62,12 +61,12 @@ public class HgProjectPropertyPage extends PropertyPage {
             setMessage("This project doesn't use MercurialEclipse as Team provider.");
             return comp;
         }
-        
-        
+
+
         reposGroup = SWTWidgetHelper.createGroup(comp,
                 "Repository paths:", 1,
                         GridData.FILL_HORIZONTAL);
-        
+
         // each repository gets a label with its logical name and a combo for
         // setting it within MercurialEclipse
 
@@ -88,12 +87,7 @@ public class HgProjectPropertyPage extends PropertyPage {
             defaultButton.addMouseListener(new MouseListener() {
 
                 public void mouseUp(MouseEvent e) {
-                    try {
-                        mgr.setDefaultProjectRepository(project, repo);
-                    } catch (CoreException e1) {
-                        MercurialEclipsePlugin.logError(e1);
-                        setErrorMessage(e1.getLocalizedMessage());
-                    }
+                    mgr.setDefaultProjectRepository(project, repo);
                 }
 
                 public void mouseDown(MouseEvent e) {
@@ -110,10 +104,10 @@ public class HgProjectPropertyPage extends PropertyPage {
         }
         return comp;
     }
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.jface.preference.PreferencePage#performOk()
      */
     @Override
@@ -122,9 +116,9 @@ public class HgProjectPropertyPage extends PropertyPage {
             return super.performOk();
         }
         IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-        
+
         Control[] composites = reposGroup.getChildren();
-        
+
         for (Control control : composites) {
             Composite comp = (Composite) control;
             Control[] controls = comp.getChildren();
@@ -133,10 +127,10 @@ public class HgProjectPropertyPage extends PropertyPage {
         }
         return super.performOk();
     }
-    
+
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.eclipse.jface.preference.PreferencePage#performApply()
      */
     @Override

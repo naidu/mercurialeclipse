@@ -13,11 +13,8 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.util.Properties;
 
 import org.eclipse.jface.wizard.IWizard;
-import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * Wizard to add a new location. Uses ConfigurationWizardMainPage for entering
@@ -36,7 +33,8 @@ public class NewLocationWizard extends HgWizard {
 
     @Override
     public void addPages() {
-        page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"), Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$ //$NON-NLS-2$
+        page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"),
+                Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$
                 Messages.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
                 Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
         addPage(page);
@@ -48,16 +46,20 @@ public class NewLocationWizard extends HgWizard {
     @Override
     public boolean performFinish() {
         super.performFinish();
+        // TODO: Temporarily commented. A project selector must added to
+        // this wizard
+        /*
         Properties props = page.getProperties();
         final HgRepositoryLocation[] root = new HgRepositoryLocation[1];
         HgRepositoryLocationManager provider = MercurialEclipsePlugin
                 .getRepoManager();
         try {
-            root[0] = provider.createRepository(props);            
+            root[0] = provider.createRepository(props);
             return true;
         } catch (TeamException e) {
             MercurialEclipsePlugin.logError(e);
         }
+        */
         return false;
     }
 
@@ -68,7 +70,7 @@ public class NewLocationWizard extends HgWizard {
             String iconPath, String description) {
         ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
                 MercurialEclipsePlugin.getImageDescriptor(iconPath));
-        
+
         mainPage.setShowBundleButton(false);
         page = mainPage;
         initPage(description, page);
