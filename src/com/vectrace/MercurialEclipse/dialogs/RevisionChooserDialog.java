@@ -9,6 +9,7 @@
  *     Jerome Negre              - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - small changes
+ *     adam.berkes@intland.com
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -54,336 +55,337 @@ import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- *
  */
 public class RevisionChooserDialog extends Dialog {
-
-
-    private final DataLoader dataLoader;
+	private final DataLoader dataLoader;
 	private final String title;
 	private Text text;
 	private String revision;
 	private Tag tag;
-    private Branch branch;
-    private Bookmark bookmark;
-    private boolean defaultShowingHeads;
-    private boolean disallowSelectingParents;
+	private Branch branch;
+	private Bookmark bookmark;
+	private boolean defaultShowingHeads;
+	private boolean disallowSelectingParents;
 
 	private final int[] parents;
 
 	private ChangeSet changeSet;
 
-    public RevisionChooserDialog(Shell parentShell, String title, IFile file) {
-        this(parentShell, title, new FileDataLoader(file));
-    }
+	public RevisionChooserDialog(Shell parentShell, String title, IFile file) {
+		this(parentShell, title, new FileDataLoader(file));
+	}
 
-    public RevisionChooserDialog(Shell parentShell, String title, IProject project) {
-        this(parentShell, title, new ProjectDataLoader(project));
-    }
+	public RevisionChooserDialog(Shell parentShell, String title, IProject project) {
+		this(parentShell, title, new ProjectDataLoader(project));
+	}
 
-    public RevisionChooserDialog(Shell parentShell, String title, DataLoader loader) {
-        super(parentShell);
-        setShellStyle(getShellStyle() | SWT.RESIZE);
-        this.title = title;
-        dataLoader = loader;
-        int[] p = {};
-        try {
-            p = loader.getParents();
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-        parents = p;
-    }
+	public RevisionChooserDialog(Shell parentShell, String title, DataLoader loader) {
+		super(parentShell);
+		setShellStyle(getShellStyle() | SWT.RESIZE);
+		this.title = title;
+		dataLoader = loader;
+		int[] p = {};
+		try {
+			p = loader.getParents();
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		parents = p;
+	}
 
-    @Override
-    protected void configureShell(Shell newShell) {
-        super.configureShell(newShell);
-        newShell.setText(title);
-    }
+	@Override
+	protected void configureShell(Shell newShell) {
+		super.configureShell(newShell);
+		newShell.setText(title);
+	}
 
-    @Override
-    protected Control createDialogArea(Composite parent) {
-        Composite composite = (Composite) super.createDialogArea(parent);
-        GridLayout gridLayout = new GridLayout(1, true);
-        composite.setLayout(gridLayout);
+	@Override
+	protected Control createDialogArea(Composite parent) {
+		Composite composite = (Composite) super.createDialogArea(parent);
+		GridLayout gridLayout = new GridLayout(1, true);
+		composite.setLayout(gridLayout);
 
-        Label label = new Label(composite, SWT.NONE);
-        label.setText(Messages.getString("RevisionChooserDialog.rev.label")); //$NON-NLS-1$
+		Label label = new Label(composite, SWT.NONE);
+		label.setText(Messages.getString("RevisionChooserDialog.rev.label")); //$NON-NLS-1$
 
-        text = new Text(composite, SWT.BORDER | SWT.DROP_DOWN);
-        text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		text = new Text(composite, SWT.BORDER | SWT.DROP_DOWN);
+		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
-        GridData data = new GridData(GridData.FILL_HORIZONTAL
-                | GridData.FILL_VERTICAL);
-        data.heightHint = 200;
-        tabFolder.setLayoutData(data);
-        createHeadTabItem(tabFolder);
-        createRevisionTabItem(tabFolder);
-        createTagTabItem(tabFolder);
-        // This is a sublist of heads: unnecessary duplication to show.
-        // createBranchTabItem(tabFolder);
-        try {
-            if (MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
-                    ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
-                    "hgext.bookmarks=")) { //$NON-NLS-1$
-                createBookmarkTabItem(tabFolder);
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
+		TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
+		GridData data = new GridData(GridData.FILL_HORIZONTAL
+				| GridData.FILL_VERTICAL);
+		data.heightHint = 200;
+		tabFolder.setLayoutData(data);
+		createHeadTabItem(tabFolder);
+		createRevisionTabItem(tabFolder);
+		createTagTabItem(tabFolder);
+		// This is a sublist of heads: unnecessary duplication to show.
+		// createBranchTabItem(tabFolder);
+		try {
+			if (MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
+					ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
+					"hgext.bookmarks=")) { //$NON-NLS-1$
+				createBookmarkTabItem(tabFolder);
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 
-        return composite;
-    }
+		return composite;
+	}
 
 	@Override
 	protected void okPressed() {
 		String[] split = text.getText().split(":"); //$NON-NLS-1$
 		revision = split[0].trim();
 		if (changeSet == null) {
-		    IProject project = dataLoader.getProject();
-		    LocalChangesetCache localCache = LocalChangesetCache.getInstance();
-			if (tag != null){
-			    changeSet = localCache.getChangesetById(project, tag.getRevision() + ":" + tag.getGlobalId()); //$NON-NLS-1$
-			} else if(branch != null) {
-                changeSet = localCache.getChangesetById(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
-			} else if (bookmark != null) {
-                changeSet = localCache.getChangesetById(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
+			IProject project = dataLoader.getProject();
+			LocalChangesetCache localCache = LocalChangesetCache.getInstance();
+			try {
+				if (tag != null){
+					changeSet = localCache.getOrFetchChangeSetById(project, tag.getRevision() + ":" + tag.getGlobalId());
+				} else if(branch != null) {
+					changeSet = localCache.getOrFetchChangeSetById(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
+				} else if (bookmark != null) {
+					changeSet = localCache.getOrFetchChangeSetById(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
+				}
+			} catch (HgException ex) {
+				MercurialEclipsePlugin.logError("Unable to get or fetch revision: <" + tag.getRevision() + ":" + tag.getGlobalId() + ">", ex);
 			}
 		}
 		if (changeSet != null) {
-            revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
-        }
+			revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
+		}
 
 		if (revision.length() == 0) {
 			revision = null;
 		}
 
 		if (disallowSelectingParents) {
-		    for (int p : parents) {
-		        if (String.valueOf(p).equals(revision)) {
-		            MessageBox mb = new MessageBox(getShell(), SWT.ICON_WARNING);
-		            mb.setText("Merge");
-		            mb.setMessage(Messages.getString("RevisionChooserDialog.cannotMergeWithParent"));
-		            mb.open();
-		            return;
-		        }
-		    }
+			for (int p : parents) {
+				if (String.valueOf(p).equals(revision)) {
+					MessageBox mb = new MessageBox(getShell(), SWT.ICON_WARNING);
+					mb.setText("Merge");
+					mb.setMessage(Messages.getString("RevisionChooserDialog.cannotMergeWithParent"));
+					mb.open();
+					return;
+				}
+			}
 		}
 
 		super.okPressed();
 	}
 
-    public String getRevision() {
-        return revision;
-    }
+	public String getRevision() {
+		return revision;
+	}
 
-    protected TabItem createRevisionTabItem(TabFolder folder) {
-        TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText(Messages.getString("RevisionChooserDialog.revTab.name")); //$NON-NLS-1$
+	protected TabItem createRevisionTabItem(TabFolder folder) {
+		TabItem item = new TabItem(folder, SWT.NONE);
+		item.setText(Messages.getString("RevisionChooserDialog.revTab.name")); //$NON-NLS-1$
 
 
-        final ChangesetTable table = new ChangesetTable(folder, dataLoader
-                .getProject(), false);
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
-        table.highlightParents(parents);
+		final ChangesetTable table = new ChangesetTable(folder, dataLoader
+				.getProject(), false);
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
+		table.highlightParents(parents);
 
-        table.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-            	tag = null;
-            	branch = null;
-            	bookmark = null;
-                text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
-                changeSet = table.getSelection();
-            }
-
-            @Override
-            public void widgetDefaultSelected(SelectionEvent e) {
-                okPressed();
-            }
-        });
-
-        table.addListener(SWT.Show, new Listener() {
-            public void handleEvent(Event event) {
-                table.removeListener(SWT.Show, this);
-                new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        table.setAutoFetch(true);
-                        table.setEnabled(true);
-                        return Status.OK_STATUS;
-                    }
-                }.schedule();
-            }
-        });
-
-        item.setControl(table);
-        return item;
-    }
-
-    protected TabItem createTagTabItem(TabFolder folder) {
-        TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
-
-        final TagTable table = new TagTable(folder, dataLoader.getProject());
-        table.highlightParents(parents);
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
-
-        table.addSelectionListener(new SelectionAdapter() {
+		table.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				tag = null;
+				branch = null;
+				bookmark = null;
+				text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
+				changeSet = table.getSelection();
+			}
 
 			@Override
-            public void widgetSelected(SelectionEvent e) {
-                text.setText(table.getSelection().getName());
-                tag = table.getSelection();
-                branch = null;
-                bookmark = null;
-                changeSet = null;
-            }
-        });
+			public void widgetDefaultSelected(SelectionEvent e) {
+				okPressed();
+			}
+		});
 
-        table.addListener(SWT.Show, new Listener() {
-            public void handleEvent(Event event) {
-                table.removeListener(SWT.Show, this);
-                new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        try {
-                            Tag[] tags = dataLoader.getTags();
-                            table.setTags(tags);
-                            return Status.OK_STATUS;
-                        } catch (HgException e) {
-                            MercurialEclipsePlugin.logError(e);
-                            return Status.CANCEL_STATUS;
-                        }
-                    }
-                }.schedule();
-            }
-        });
+		table.addListener(SWT.Show, new Listener() {
+			public void handleEvent(Event event) {
+				table.removeListener(SWT.Show, this);
+				new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						table.setAutoFetch(true);
+						table.setEnabled(true);
+						return Status.OK_STATUS;
+					}
+				}.schedule();
+			}
+		});
 
-        item.setControl(table);
-        return item;
-    }
+		item.setControl(table);
+		return item;
+	}
 
-    protected TabItem createBranchTabItem(TabFolder folder) {
-        TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText(Messages.getString("RevisionChooserDialog.branchTab.name")); //$NON-NLS-1$
+	protected TabItem createTagTabItem(TabFolder folder) {
+		TabItem item = new TabItem(folder, SWT.NONE);
+		item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
-        final BranchTable table = new BranchTable(folder);
-        table.highlightParents(parents);
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+		final TagTable table = new TagTable(folder, dataLoader.getProject());
+		table.highlightParents(parents);
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        table.addSelectionListener(new SelectionAdapter() {
+		table.addSelectionListener(new SelectionAdapter() {
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                text.setText(table.getSelection().getName());
-                branch = table.getSelection();
-                tag = null;
-                bookmark = null;
-                changeSet = null;
-            }
-        });
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				text.setText(table.getSelection().getName());
+				tag = table.getSelection();
+				branch = null;
+				bookmark = null;
+				changeSet = null;
+			}
+		});
 
-        table.addListener(SWT.Show, new Listener() {
-            public void handleEvent(Event event) {
-                table.removeListener(SWT.Show, this);
-                new SafeUiJob(Messages.getString("RevisionChooserDialog.branchJob.description")) { //$NON-NLS-1$
-                    @Override
-                    protected IStatus runSafe(IProgressMonitor monitor) {
-                        try {
-                            Branch[] branches = dataLoader.getBranches();
-                            table.setBranches(branches);
-                            return Status.OK_STATUS;
-                        } catch (HgException e) {
-                            MercurialEclipsePlugin.logError(e);
-                            return Status.CANCEL_STATUS;
-                        }
-                    }
-                }.schedule();
-            }
-        });
+		table.addListener(SWT.Show, new Listener() {
+			public void handleEvent(Event event) {
+				table.removeListener(SWT.Show, this);
+				new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						try {
+							Tag[] tags = dataLoader.getTags();
+							table.setTags(tags);
+							return Status.OK_STATUS;
+						} catch (HgException e) {
+							MercurialEclipsePlugin.logError(e);
+							return Status.CANCEL_STATUS;
+						}
+					}
+				}.schedule();
+			}
+		});
 
-        item.setControl(table);
-        return item;
-    }
+		item.setControl(table);
+		return item;
+	}
 
-    protected TabItem createBookmarkTabItem(TabFolder folder) {
-        TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText(Messages.getString("RevisionChooserDialog.bookmarkTab.name")); //$NON-NLS-1$
+	protected TabItem createBranchTabItem(TabFolder folder) {
+		TabItem item = new TabItem(folder, SWT.NONE);
+		item.setText(Messages.getString("RevisionChooserDialog.branchTab.name")); //$NON-NLS-1$
 
-        final BookmarkTable table = new BookmarkTable(folder, dataLoader
-                .getProject());
-        table.setLayoutData(new GridData(GridData.FILL_BOTH));
+		final BranchTable table = new BranchTable(folder);
+		table.highlightParents(parents);
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        table.addSelectionListener(new SelectionAdapter() {
+		table.addSelectionListener(new SelectionAdapter() {
 
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                text.setText(table.getSelection().getName());
-                bookmark = table.getSelection();
-                tag = null;
-                branch = null;
-                changeSet = null;
-            }
-        });
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				text.setText(table.getSelection().getName());
+				branch = table.getSelection();
+				tag = null;
+				bookmark = null;
+				changeSet = null;
+			}
+		});
 
-        item.setControl(table);
-        return item;
-    }
+		table.addListener(SWT.Show, new Listener() {
+			public void handleEvent(Event event) {
+				table.removeListener(SWT.Show, this);
+				new SafeUiJob(Messages.getString("RevisionChooserDialog.branchJob.description")) { //$NON-NLS-1$
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						try {
+							Branch[] branches = dataLoader.getBranches();
+							table.setBranches(branches);
+							return Status.OK_STATUS;
+						} catch (HgException e) {
+							MercurialEclipsePlugin.logError(e);
+							return Status.CANCEL_STATUS;
+						}
+					}
+				}.schedule();
+			}
+		});
 
-    protected TabItem createHeadTabItem(TabFolder folder) {
-        TabItem item = new TabItem(folder, SWT.NONE);
-        item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
+		item.setControl(table);
+		return item;
+	}
 
-        final ChangesetTable table = new ChangesetTable(folder, dataLoader
-                .getProject());
-        new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                try {
-                    table.setLayoutData(new GridData(GridData.FILL_BOTH));
-                    table.highlightParents(parents);
-                    table.setAutoFetch(false);
+	protected TabItem createBookmarkTabItem(TabFolder folder) {
+		TabItem item = new TabItem(folder, SWT.NONE);
+		item.setText(Messages.getString("RevisionChooserDialog.bookmarkTab.name")); //$NON-NLS-1$
 
-                    ChangeSet[] revisions = dataLoader.getHeads();
-                    table.setChangesets(revisions);
-                    table.setEnabled(true);
-                    return Status.OK_STATUS;
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return Status.CANCEL_STATUS;
-                }
-            }
-        }.schedule();
+		final BookmarkTable table = new BookmarkTable(folder, dataLoader
+				.getProject());
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
-        table.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-            	tag = null;
-            	branch = null;
-            	bookmark = null;
-            	text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
-                changeSet = table.getSelection();
-            }
-        });
+		table.addSelectionListener(new SelectionAdapter() {
 
-        item.setControl(table);
-        if (defaultShowingHeads) {
-            folder.setSelection(item);
-        }
-        return item;
-    }
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				text.setText(table.getSelection().getName());
+				bookmark = table.getSelection();
+				tag = null;
+				branch = null;
+				changeSet = null;
+			}
+		});
+
+		item.setControl(table);
+		return item;
+	}
+
+	protected TabItem createHeadTabItem(TabFolder folder) {
+		TabItem item = new TabItem(folder, SWT.NONE);
+		item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
+
+		final ChangesetTable table = new ChangesetTable(folder, dataLoader
+				.getProject());
+		new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
+			@Override
+			protected IStatus runSafe(IProgressMonitor monitor) {
+				try {
+					table.setLayoutData(new GridData(GridData.FILL_BOTH));
+					table.highlightParents(parents);
+					table.setAutoFetch(false);
+
+					ChangeSet[] revisions = dataLoader.getHeads();
+					table.setChangesets(revisions);
+					table.setEnabled(true);
+					return Status.OK_STATUS;
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+					return Status.CANCEL_STATUS;
+				}
+			}
+		}.schedule();
+
+		table.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				tag = null;
+				branch = null;
+				bookmark = null;
+				text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
+				changeSet = table.getSelection();
+			}
+		});
+
+		item.setControl(table);
+		if (defaultShowingHeads) {
+			folder.setSelection(item);
+		}
+		return item;
+	}
 
 	public ChangeSet getChangeSet() {
 		return changeSet;
 	}
 
-    public void setDefaultShowingHeads(boolean defaultShowingHeads) {
-        this.defaultShowingHeads = defaultShowingHeads;
-    }
+	public void setDefaultShowingHeads(boolean defaultShowingHeads) {
+		this.defaultShowingHeads = defaultShowingHeads;
+	}
 
-    public void setDisallowSelectingParents(boolean b) {
-        this.disallowSelectingParents = b;
-    }
+	public void setDisallowSelectingParents(boolean b) {
+		this.disallowSelectingParents = b;
+	}
 }
