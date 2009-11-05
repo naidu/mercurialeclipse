@@ -138,19 +138,23 @@ public class RevisionChooserDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		String[] split = text.getText().split(":"); //$NON-NLS-1$
-		revision = split[0].trim();
-		if (changeSet == null) {
-		    IProject project = dataLoader.getProject();
-		    LocalChangesetCache localCache = LocalChangesetCache.getInstance();
-			if (tag != null){
-			    changeSet = localCache.getChangesetById(project, tag.getRevision() + ":" + tag.getGlobalId()); //$NON-NLS-1$
-			} else if(branch != null) {
-                changeSet = localCache.getChangesetById(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
-			} else if (bookmark != null) {
-                changeSet = localCache.getChangesetById(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
-			}
-		}
+	    String[] split = text.getText().split(":"); //$NON-NLS-1$
+	    revision = split[0].trim();
+	    if (changeSet == null) {
+	        IProject project = dataLoader.getProject();
+	        LocalChangesetCache localCache = LocalChangesetCache.getInstance();
+	        try {
+	            if (tag != null){
+	                changeSet = localCache.getOrFetchChangeSetById(project, tag.getRevision() + ":" + tag.getGlobalId());
+	            } else if(branch != null) {
+	                changeSet = localCache.getOrFetchChangeSetById(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
+	            } else if (bookmark != null) {
+	                changeSet = localCache.getOrFetchChangeSetById(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
+	            }
+	        } catch (HgException ex) {
+	            MercurialEclipsePlugin.logError("Unable to get or fetch revision: <" + tag.getRevision() + ":" + tag.getGlobalId() + ">", ex);
+	        }
+	    }
 		if (changeSet != null) {
             revision = changeSet.getChangesetIndex() + ""; //$NON-NLS-1$
         }
