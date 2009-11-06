@@ -415,6 +415,11 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 			return null;
 		}
 
+		File dir = new File(urlString);
+		if (dir.isDirectory()) {
+			return dir;
+		}
+
 		try {
 			// Supporting file:// URLs
 			URL url = new URL(urlString);

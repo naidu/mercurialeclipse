@@ -24,7 +24,9 @@ public class ConfigurationWizardMainPageTests extends TestCase {
 
 		assertNull(cp.getLocalDirectory(null));
 		assertNull(cp.getLocalDirectory("http://intland.com"));
-		assertNull(cp.getLocalDirectory("https://codebeamer.com/cb/issue/29229?orgDitchnetTabPaneId=task-details-comments"));
+        assertNull(cp.getLocalDirectory("https://codebeamer.com/cb/issue/29229?orgDitchnetTabPaneId=task-details-comments"));
+        assertNull(cp.getLocalDirectory("ftp://ftp.codebeamer.com"));
+        assertNull(cp.getLocalDirectory("ssh://www.intland.com"));
 		assertNull(cp.getLocalDirectory(""));
 		assertNull(cp.getLocalDirectory("  "));
 		assertNull(cp.getLocalDirectory(null));
@@ -33,11 +35,15 @@ public class ConfigurationWizardMainPageTests extends TestCase {
 		tempDir.delete();
 		tempDir.mkdir();
 
-		assertTrue(tempDir.isDirectory());
-
 		try {
+			assertTrue(tempDir.isDirectory());
+
+			File dir = cp.getLocalDirectory(tempDir.getAbsolutePath());
+
+			assertTrue(dir.isDirectory());
+
 			URL url = new URL("file", "", tempDir.getAbsolutePath());
-			File dir = cp.getLocalDirectory(url.toString());
+			dir = cp.getLocalDirectory(url.toString());
 
 			assertTrue(dir.isDirectory());
 
