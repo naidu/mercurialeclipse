@@ -83,9 +83,15 @@ public class HgRepositoryAuthCrypterFactory {
             os.write(content, 0, content.length);
         } finally {
             os.close();
-            // Ensure file availability
-            file.setReadable(true, true);
-            file.setWritable(false, true);
+            secureKeyFile(file);
         }
+    }
+
+    private static void secureKeyFile(File file) {
+        // Ensure file availability only for user
+        file.setReadable(false, false);
+        file.setReadable(true, true);
+        file.setWritable(false, false);
+        file.setWritable(true, true);
     }
 }
