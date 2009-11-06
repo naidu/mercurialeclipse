@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptions&additions
+ *     Adam Berkes (Intland)        - repository location handling
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -18,6 +19,7 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -39,6 +41,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -305,7 +308,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         // Set remembered values
         IDialogSettings setts = getDialogSettings();
         if (setts != null) {
-            String[] hostNames = updateHostNames();
+            String[] hostNames = updateHostNames(getProject());
             if (hostNames != null) {
                 for (int i = 0; i < hostNames.length; i++) {
                     urlCombo.add(hostNames[i]);
@@ -367,10 +370,14 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         return urlCombo.getText().trim();
     }
 
-    private String[] updateHostNames() {
+    private String[] updateHostNames(IProject project) {
         String[] newHostNames = new String[0];
-        Set<HgRepositoryLocation> repositories = MercurialEclipsePlugin
-        .getRepoManager().getAllRepoLocations();
+        Set<HgRepositoryLocation> repositories = null;
+        if (project != null) {
+            repositories = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
+        } else {
+            repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
+        }
         if (repositories != null) {
             int i = 0;
             for (Iterator<HgRepositoryLocation> iterator = repositories
@@ -497,4 +504,45 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
         return ok;
     }
 
+    protected IProject getProject() {
+        return null;
+    }
+
+    protected Set<HgRepositoryLocation> setDefaultLocation() {
+        if (getProject() == null) {
+            return null;
+        }
+        HgRepositoryLocation defaultLocation = null;
+
+        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin
+            .getRepoManager().getAllProjectRepoLocations(getProject());
+
+        for (HgRepositoryLocation repo : repos)
+        {
+            if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName()) ||
+                    HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+                defaultLocation = repo;
+                break;
+            }
+        }
+
+        if (defaultLocation == null) {
+            defaultLocation = MercurialEclipsePlugin
+                .getRepoManager().getDefaultProjectRepoLocation(getProject());
+        }
+
+        if (defaultLocation != null) {
+            getUrlCombo().setText(defaultLocation.getLocation());
+
+            String user = defaultLocation.getUser();
+            if (user != null && user.length() != 0) {
+                getUserCombo().setText(user);
+            }
+            String password = defaultLocation.getPassword();
+            if (password != null && password.length() != 0) {
+                getPasswordText().setText(password);
+            }
+        }
+        return repos;
+    }
 }

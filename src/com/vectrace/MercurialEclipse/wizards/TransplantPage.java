@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ * Adam Berkes (Intland) - various fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -294,6 +295,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
         return super.finish(monitor);
     }
 
+    @Override
     public IProject getProject() {
         return project;
     }
