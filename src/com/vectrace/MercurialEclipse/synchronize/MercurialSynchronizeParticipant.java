@@ -21,6 +21,7 @@ import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
 import org.eclipse.team.ui.TeamUI;
+import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipant;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
@@ -183,6 +184,21 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
     }
 
     @Override
+    protected void initializeConfiguration(ISynchronizePageConfiguration configuration) {
+        super.initializeConfiguration(configuration);
+        if(!isMergingEnabled()) {
+            // add our action group in any case
+            configuration.addActionContribution(createMergeActionGroup());
+        }
+    }
+
+    @Override
+    public boolean isMergingEnabled() {
+        // do not sow Eclipse default "merge" action, which only breaks "native" hg merge
+        return false;
+    }
+
+    @Override
     protected boolean isViewerContributionsSupported() {
         // allows us to contribute our own actions to the synchronize view via plugin.xml
         return true;
@@ -197,4 +213,5 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
     public void run(IWorkbenchPart part) {
         super.run(part);
     }
+
 }
