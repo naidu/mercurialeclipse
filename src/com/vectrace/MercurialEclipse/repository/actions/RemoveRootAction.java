@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.repository.actions;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.actions.SelectionListenerAction;
@@ -65,16 +64,12 @@ public class RemoveRootAction extends SelectionListenerAction {
     @Override
     public void run() {
         HgRepositoryLocation[] roots = getSelectedRemoteRoots();
-        if (roots.length == 0)
+        if (roots.length == 0) {
             return;
+        }
         for (int i = 0; i < roots.length; i++) {
-            try {
-                MercurialEclipsePlugin.getRepoManager().disposeRepository(
+            MercurialEclipsePlugin.getRepoManager().disposeRepository(
                         roots[i]);
-
-            } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
         }
     }
 

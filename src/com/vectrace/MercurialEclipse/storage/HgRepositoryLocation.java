@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation extends AllRootsElement implements  Comparable<HgRepositoryLocation> {
+public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
 
     private static final String PASSWORD_MASK = "***";
 
@@ -87,13 +87,12 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
     }
 
     static public boolean validateLocation(String validate) {
-        return validate.trim().length() > 0;
-        /*
-         * TODO: Something like this would be nice, but it doesn't understand
-         * ssh and allows several other protocols. try { URL url = new
-         * URL(validate); } catch(MalformedURLException e) { return false; }
-         * return true;
-         */
+        try {
+            return HgRepositoryLocationParser.parseLocationToURI(validate, null, null) != null;
+        } catch (HgException ex) {
+            MercurialEclipsePlugin.logError(ex);
+            return false;
+        }
     }
 
     public int compareTo(HgRepositoryLocation loc) {

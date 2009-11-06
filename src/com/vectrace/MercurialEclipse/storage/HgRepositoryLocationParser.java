@@ -1,12 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2005-2009 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2009 Intland.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * @author adam.berkes <adam.berkes@intland.com>
+ *     Adam Berkes (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * Repository location line format:
- * [u|d]<dateAsLong> <len> uri <len> username <len> password <len> alias/id[ <len> project]
+ * [u|d]<dateAsLong> <len> uri <len> [e] username <len> [e] password <len> alias/id[ <len> project]
  */
 public class HgRepositoryLocationParser {
 
@@ -32,6 +32,7 @@ public class HgRepositoryLocationParser {
     protected static final String PASSWORD_TOKEN = ":";
     protected static final String PUSH_PREFIX = "u";
     protected static final String PULL_PREFIX = "d";
+    protected static final String ENCRYPTED_PREFIX = "e";
 
     protected static HgRepositoryLocation parseLine(final String line) {
         if (line == null || line.length() < 1) {
@@ -53,7 +54,16 @@ public class HgRepositoryLocationParser {
                 repositoryLine = repositoryLine.substring(repositoryLine.length() > len ? len + 1 : repositoryLine.length());
                 parts.add(partValue);
             }
-            URI uri = parseLocationToURI(parts.get(0), parts.get(1), parts.get(2));
+            HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create();
+            String username = parts.get(1);
+            if (username.startsWith(ENCRYPTED_PREFIX + PART_SEPARATOR)) {
+                username = crypter.decrypt(username.substring(2));
+            }
+            String password = parts.get(2);
+            if (password.startsWith(ENCRYPTED_PREFIX + PART_SEPARATOR)) {
+                password = crypter.decrypt(password.substring(2));
+            }
+            URI uri = parseLocationToURI(parts.get(0), username, password);
             HgRepositoryLocation location = new HgRepositoryLocation(parts.get(3),
                     PUSH_PREFIX.equals(direction),
                     uri);
@@ -77,12 +87,19 @@ public class HgRepositoryLocationParser {
         line.append(PART_SEPARATOR);
         line.append(location.getLocation());
         line.append(PART_SEPARATOR);
+        HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create();
         String user = location.getUser() != null ? location.getUser() : "";
+        if (user.length() > 0) {
+            user = ENCRYPTED_PREFIX + PART_SEPARATOR + crypter.encrypt(user);
+        }
         line.append(String.valueOf(user.length()));
         line.append(PART_SEPARATOR);
         line.append(user);
         line.append(PART_SEPARATOR);
         String password = location.getPassword() != null ? location.getPassword() : "";
+        if (password.length() > 0) {
+            password = ENCRYPTED_PREFIX + PART_SEPARATOR + crypter.encrypt(password);
+        }
         line.append(String.valueOf(password.length()));
         line.append(PART_SEPARATOR);
         line.append(password);

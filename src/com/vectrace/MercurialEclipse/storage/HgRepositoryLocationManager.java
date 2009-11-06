@@ -36,7 +36,6 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -60,7 +59,6 @@ public class HgRepositoryLocationManager {
 
     private final Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos;
     private final HgRepositoryLocationParserDelegator delegator;
-    private boolean initDone;
 
     public HgRepositoryLocationManager() {
         projectRepos = new HashMap<IProject, SortedSet<HgRepositoryLocation>>();
@@ -521,8 +519,7 @@ public class HgRepositoryLocationManager {
 
     }
 
-    public void disposeRepository(HgRepositoryLocation hgRepositoryLocation)
-            throws CoreException {
+    public void disposeRepository(HgRepositoryLocation hgRepositoryLocation) {
         Assert.isNotNull(hgRepositoryLocation);
         synchronized (projectRepos) {
             for (Iterator<IProject> iterator = projectRepos.keySet().iterator(); iterator
