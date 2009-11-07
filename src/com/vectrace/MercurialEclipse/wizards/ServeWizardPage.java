@@ -6,11 +6,11 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
+ *     Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.SelectionEvent;
@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgServeClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -31,7 +32,7 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class ServeWizardPage extends HgWizardPage {
 
-    private final IResource hgroot;
+    private final HgRoot hgroot;
     private Text nameTextField;
     private Text prefixTextField;
     private Button defaultCheckBox;
@@ -41,7 +42,7 @@ public class ServeWizardPage extends HgWizardPage {
     private Text webdirConfTextField;
 
     public ServeWizardPage(String pageName, String title,
-            ImageDescriptor image, IResource hgRoot) {
+            ImageDescriptor image, HgRoot hgRoot) {
         super(pageName, title, image);
         this.hgroot = hgRoot;
     }
