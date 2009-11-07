@@ -7,11 +7,13 @@
  *
  * Contributors:
  * bastian	implementation
+ * Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -70,7 +72,7 @@ public class OutgoingPage extends IncomingPage {
             }
             HgRepositoryLocation remote = getLocation();
             try {
-                SortedSet<ChangeSet> changesets = OutgoingChangesetCache
+                Set<ChangeSet> changesets = OutgoingChangesetCache
                         .getInstance().getChangeSets(getProject(), remote, null);
                 SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
                 revertedSet.addAll(changesets);

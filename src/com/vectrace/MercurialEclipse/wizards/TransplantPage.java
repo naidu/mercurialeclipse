@@ -7,12 +7,14 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ * Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -83,7 +85,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
                 }
                 setErrorMessage(null);
                 try {
-                    SortedSet<ChangeSet> changes = IncomingChangesetCache
+                    Set<ChangeSet> changes = IncomingChangesetCache
                             .getInstance().getChangeSets(project, repoLocation, null);
                     changesets.clear();
                     changesets.addAll(changes);

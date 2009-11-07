@@ -1,9 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others. All rights
+ * reserved. This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors: Bastian Doetsch - implementation
+ * Andrei Loskutov (Intland) - bugfixes
+ ******************************************************************************/
+
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -85,7 +96,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     /**
      * @return map where the key is an absolute file path
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getCompleteProjectLog(
+    public static Map<IPath, Set<ChangeSet>> getCompleteProjectLog(
             IResource res, boolean withFiles) throws HgException {
         return getProjectLog(res, -1, -1, withFiles);
     }
@@ -93,7 +104,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     /**
      * @return map where the key is an absolute file path
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getProjectLogBatch(
+    public static Map<IPath, Set<ChangeSet>> getProjectLogBatch(
             IResource res, int batchSize, int startRev, boolean withFiles)
             throws HgException {
         return getProjectLog(res, batchSize, startRev, withFiles);
@@ -102,7 +113,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     /**
      * @return map where the key is an absolute file path
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getRecentProjectLog(
+    public static Map<IPath, Set<ChangeSet>> getRecentProjectLog(
             IResource res, int limitNumber, boolean withFiles) throws HgException {
         return getProjectLogBatch(res, limitNumber, -1, withFiles);
     }
@@ -110,7 +121,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
     /**
      * @return map where the key is an absolute file path
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getProjectLog(IResource res,
+    public static Map<IPath, Set<ChangeSet>> getProjectLog(IResource res,
             int limitNumber, int startRev, boolean withFiles)
             throws HgException {
         try {
@@ -135,7 +146,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             if (result.length() == 0) {
                 return null;
             }
-            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+            Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
                     res, result, withFiles, Direction.LOCAL, null, null, new IFilePatch[0]);
             return revisions;
         } catch (IOException e) {
@@ -143,7 +154,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
         }
     }
 
-    public static Map<IPath, SortedSet<ChangeSet>> getPathLog(boolean isFile, File path,
+    public static Map<IPath, Set<ChangeSet>> getPathLog(boolean isFile, File path,
             HgRoot root, int limitNumber, int startRev, boolean withFiles)
             throws HgException {
         try {
@@ -166,7 +177,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
             if (result.length() == 0) {
                 return null;
             }
-            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+            Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
                     new Path(path.getAbsolutePath()),
                     result, Direction.LOCAL, null, null, new IFilePatch[0], root);
             return revisions;
@@ -201,11 +212,11 @@ public class HgLogClient extends AbstractParseChangesetClient {
         ChangeSet changeSet = rev.getChangeSet();
         IResource resource = rev.getResource();
         int limitNumber = 1;
-        Map<IPath, SortedSet<ChangeSet>> map = getProjectLog(resource, limitNumber, changeSet
+        Map<IPath, Set<ChangeSet>> map = getProjectLog(resource, limitNumber, changeSet
                 .getChangesetIndex(), true);
         IPath location = ResourceUtils.getPath(resource);
         if(map != null) {
-            return map.get(location).first();
+            return Collections.min(map.get(location));
         }
         File possibleParent = rev.getParent();
         MercurialRevision next = rev;
@@ -276,7 +287,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
                         limitNumber, rev.getRevision(), true);
             }
             if(map != null) {
-                return map.get(new Path(possibleParent.getAbsolutePath())).first();
+                return Collections.min(map.get(new Path(possibleParent.getAbsolutePath())));
             }
         }
         return null;
@@ -297,11 +308,11 @@ public class HgLogClient extends AbstractParseChangesetClient {
             command.addOptions("--rev", nodeId); //$NON-NLS-1$
             String result = command.executeToString();
 
-            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+            Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
                     res, result, withFiles, Direction.LOCAL, null, null, new IFilePatch[0]);
-            SortedSet<ChangeSet> set = revisions.get(res.getLocation());
+            Set<ChangeSet> set = revisions.get(res.getLocation());
             if (set != null) {
-                return set.first();
+                return Collections.min(set);
             }
             return null;
         } catch (IOException e) {

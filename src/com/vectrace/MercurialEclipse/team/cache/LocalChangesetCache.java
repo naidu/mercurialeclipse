@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ * Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -296,7 +297,7 @@ public class LocalChangesetCache extends AbstractCache {
         }
         HgRoot root = AbstractClient.getHgRoot(res);
 
-        Map<IPath, SortedSet<ChangeSet>> revisions;
+        Map<IPath, Set<ChangeSet>> revisions;
         // now we may change cache state, so lock
         synchronized(localChangeSets){
             if (limit) {
@@ -311,11 +312,11 @@ public class LocalChangesetCache extends AbstractCache {
             // every changeset is at least stored for the repository root
             if (res.getType() != IResource.PROJECT) {
                 IPath rootPath = new Path(root.getAbsolutePath());
-                localChangeSets.put(res.getLocation(), revisions.get(rootPath));
+                localChangeSets.put(res.getLocation(), new TreeSet<ChangeSet>(revisions.get(rootPath)));
             }
-            for (Map.Entry<IPath, SortedSet<ChangeSet>> mapEntry : revisions.entrySet()) {
+            for (Map.Entry<IPath, Set<ChangeSet>> mapEntry : revisions.entrySet()) {
                 IPath path = mapEntry.getKey();
-                SortedSet<ChangeSet> changes = mapEntry.getValue();
+                Set<ChangeSet> changes = mapEntry.getValue();
                 // if changes for resource not in cache, get at least 1 revision
                 if (changes == null && limit && withFiles
                         && STATUS_CACHE.isSupervised(project, path)
@@ -385,7 +386,7 @@ public class LocalChangesetCache extends AbstractCache {
      * @param path absolute file path
      * @param changes may be null
      */
-    private void addChangesToLocalCache(IProject project, IPath path, SortedSet<ChangeSet> changes) {
+    private void addChangesToLocalCache(IProject project, IPath path, Set<ChangeSet> changes) {
         if (changes != null && changes.size() > 0) {
             SortedSet<ChangeSet> existing = localChangeSets.get(path);
             if (existing == null) {

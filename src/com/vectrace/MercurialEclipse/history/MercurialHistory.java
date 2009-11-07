@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -19,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -203,7 +205,7 @@ public class MercurialHistory extends FileHistory {
         if (from == this.bottom || from < 0) {
             return;
         }
-        Map<IPath, SortedSet<ChangeSet>> map = HgLogClient.getProjectLog(
+        Map<IPath, Set<ChangeSet>> map = HgLogClient.getProjectLog(
                 resource, logBatchSize, from, false);
 
         // no result -> bottom reached
@@ -213,7 +215,7 @@ public class MercurialHistory extends FileHistory {
         }
 
         // still changesets there -> process
-        SortedSet<ChangeSet> localChangeSets = map.get(resource
+        Set<ChangeSet> localChangeSets = map.get(resource
                 .getLocation());
         if (localChangeSets == null) {
             return;

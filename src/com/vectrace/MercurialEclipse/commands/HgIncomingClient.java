@@ -5,6 +5,7 @@
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors: Bastian Doetsch - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 
 package com.vectrace.MercurialEclipse.commands;
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
@@ -38,12 +39,12 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
      *         Changesets. The sorting is ascending by date.
      * @throws HgException
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
+    public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
             HgRepositoryLocation repository) throws HgException {
         return getHgIncoming(res, repository, null);
     }
 
-    public static Map<IPath, SortedSet<ChangeSet>> getHgIncoming(IResource res,
+    public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
             HgRepositoryLocation repository, String branch) throws HgException {
         AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
                 false);
@@ -76,15 +77,15 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
         try {
             String result = command.executeToString();
             if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
-                return new HashMap<IPath, SortedSet<ChangeSet>>();
+                return new HashMap<IPath, Set<ChangeSet>>();
             }
-            Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+            Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
                     res, result, true,
                     Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
             return revisions;
         } catch (HgException hg) {
             if (hg.getStatus().getCode() == 1) {
-                return new HashMap<IPath, SortedSet<ChangeSet>>();
+                return new HashMap<IPath, Set<ChangeSet>>();
             }
             throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
         }

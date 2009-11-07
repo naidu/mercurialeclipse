@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch  -  implementation
+ * Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.SortedSet;
+import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
@@ -33,12 +34,12 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     /**
      * @return never return null
      */
-    public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
+    public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository) throws HgException {
         return getOutgoing(res, repository, null);
     }
 
-    public static Map<IPath, SortedSet<ChangeSet>> getOutgoing(IResource res,
+    public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
             HgRepositoryLocation repository, String branch) throws HgException {
         AbstractShellCommand command = getCommand(res, branch);
         try {
@@ -51,10 +52,10 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 
         String result = getResult(command);
         if (result == null) {
-            return new HashMap<IPath, SortedSet<ChangeSet>>();
+            return new HashMap<IPath, Set<ChangeSet>>();
         }
 
-        Map<IPath, SortedSet<ChangeSet>> revisions = createMercurialRevisions(
+        Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
                 res, result, true, Direction.OUTGOING, repository, null,
                 getOutgoingPatches(res, repository, branch));
         return revisions;

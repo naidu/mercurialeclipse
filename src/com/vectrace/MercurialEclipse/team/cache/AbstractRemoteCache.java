@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei   implementation
+ * Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -66,6 +66,8 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author <a href="mailto:adam.berkes@intland.com">Adam Berkes</a>
  */
 public abstract class AbstractRemoteCache extends AbstractCache {
+
+    private static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 
     /**
      * The Map has the following structure: RepositoryLocation -> IResource ->
@@ -129,7 +131,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
      * @param branch name of branch (default or "" for unnamed) or null if branch unaware
      * @return never null
      */
-    public SortedSet<ChangeSet> getChangeSets(IResource resource,
+    public Set<ChangeSet> getChangeSets(IResource resource,
             HgRepositoryLocation repository, String branch) throws HgException {
         Map<IPath, SortedSet<ChangeSet>> repoMap;
         synchronized (repoChangeSets){
@@ -143,11 +145,11 @@ public abstract class AbstractRemoteCache extends AbstractCache {
             if (repoMap != null) {
                 SortedSet<ChangeSet> revisions = repoMap.get(location);
                 if (revisions != null) {
-                    return Collections.unmodifiableSortedSet(revisions);
+                    return revisions;
                 }
             }
         }
-        return new TreeSet<ChangeSet>();
+        return EMPTY_SET;
     }
 
     /**
@@ -229,7 +231,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
         }
 
         // get changesets from hg
-        Map<IPath, SortedSet<ChangeSet>> resources;
+        Map<IPath, Set<ChangeSet>> resources;
         if (direction == Direction.OUTGOING) {
             resources = HgOutgoingClient.getOutgoing(project, repository, branch);
         } else {
@@ -239,14 +241,14 @@ public abstract class AbstractRemoteCache extends AbstractCache {
         HashMap<IPath, SortedSet<ChangeSet>> map = new HashMap<IPath, SortedSet<ChangeSet>>();
         repoChangeSets.put(repository, map);
         IPath projectPath = project.getLocation();
-        map.put(projectPath, new TreeSet<ChangeSet>());
+        map.put(projectPath, EMPTY_SET);
 
         // add them to cache(s)
-        for (Map.Entry<IPath, SortedSet<ChangeSet>> mapEntry : resources.entrySet()) {
+        for (Map.Entry<IPath, Set<ChangeSet>> mapEntry : resources.entrySet()) {
             IPath path = mapEntry.getKey();
-            SortedSet<ChangeSet> changes = mapEntry.getValue();
+            Set<ChangeSet> changes = mapEntry.getValue();
             if (changes != null && changes.size() > 0) {
-                map.put(path, changes);
+                map.put(path, Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>(changes)));
             }
         }
     }
