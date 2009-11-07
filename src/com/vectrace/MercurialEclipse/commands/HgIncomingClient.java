@@ -22,6 +22,7 @@ import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -93,7 +94,10 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             }
 		} finally {
 			if (bundleFile != null) {
-				bundleFile.delete();
+				boolean deleted = bundleFile.delete();
+				if(!deleted){
+				    MercurialEclipsePlugin.logWarning("Failed to delete bundle file " + bundleFile, null);
+				}
 			}
 		}
     }
