@@ -9,7 +9,8 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch
  *     StefanC
- *     @author adam.berkes <adam.berkes@intland.com>
+ *     Zsolt Koppany zsolt.koppany@intland.com
+ *     Adam Berkes adam.berkes@intland.com
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -35,123 +36,123 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgCommitClient extends AbstractClient {
+	/**
+	 * Commit given resources and refresh the caches for the assotiated projects
+	 */
+	public static void commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor) throws HgException {
+		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
-    /**
-     * Commit given resources and refresh the caches for the assotiated projects
-     */
-    public static void commitResources(List<IResource> resources, String user,
-            String message, IProgressMonitor monitor) throws HgException {
+		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+			HgRoot root = mapEntry.getKey();
+			if (monitor != null) {
+				if (monitor.isCanceled()) {
+					break;
+				}
+				monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
+			}
+			List<IResource> files = mapEntry.getValue();
+			commit(root, AbstractClient.toFiles(files), user, message);
+		}
+		for (HgRoot root : resourcesByRoot.keySet()) {
+			Set<IProject> projects = ResourceUtils.getProjects(root);
+			for (IProject iProject : projects) {
+				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+			}
+		}
+	}
 
-        Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
+	/**
+	 * Preforms commit. No refresh of any cashes is done afterwards.
+	 *
+	 * <b>Note</b> clients should not use this method directly, it is NOT private
+	 *  for tests only
+	 */
+	protected static String commit(HgRoot root, List<File> files, String user, String message) throws HgException {
+		HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+		command.addUserName(quote(user));
+		File messageFile = saveMessage(message);
+		try {
+			addMessage(command, messageFile, message);
+			command.addFiles(AbstractClient.toPaths(files));
+			String result = command.executeToString();
+			return result;
+		} finally {
+			deleteMessage(messageFile);
+		}
+	}
 
-        for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
-            HgRoot root = mapEntry.getKey();
-            if (monitor != null) {
-                if (monitor.isCanceled()) {
-                    break;
-                }
-                monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
-            }
-            List<IResource> files = mapEntry.getValue();
-            commit(root, AbstractClient.toFiles(files), user, message);
-        }
-        for (HgRoot root : resourcesByRoot.keySet()) {
-            Set<IProject> projects = ResourceUtils.getProjects(root);
-            for (IProject iProject : projects) {
-                new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-            }
-        }
-    }
+	private static void addMessage(HgCommand command, File messageFile, String message) {
+		if (messageFile != null && messageFile.isFile()) {
+			command.addOptions("-l", messageFile.getAbsolutePath());
+			return;
+		}
+		// fallback in case of unavailable message file
+		message = quote(message.trim());
+		if (message.length() != 0) {
+			command.addOptions("-m", message);
+		} else {
+			command.addOptions("-m", Messages.getString("CommitDialog.defaultCommitMessage"));
+		}
+	}
 
-    /**
-     * Preforms commit. No refresh of any cashes is done afterwards.
-     *
-     * <b>Note</b> clients should not use this method directly, it is NOT private
-     *  for tests only
-     */
-    protected static String commit(HgRoot root, List<File> files, String user,
-            String message) throws HgException {
+	/**
+	 * Commit given project after the merge and refresh the caches.
+	 * Implementation note: after merge, no files should be specified.
+	 */
+	public static String commitProject(IProject project, String user, String message) throws HgException {
+		HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+		command.addUserName(quote(user));
+		File messageFile = saveMessage(message);
+		try {
+			addMessage(command, messageFile, message);
+			String result = command.executeToString();
+			Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
+			for (IProject iProject : projects) {
+				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+			}
+			return result;
+		} finally {
+			deleteMessage(messageFile);
+		}
+	}
 
-        HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        command.addUserName(quote(user));
-        File messageFile = saveMessage(message);
-        addMessage(command, messageFile, message);
-        command.addFiles(AbstractClient.toPaths(files));
-        String result = command.executeToString();
-        deleteMessage(messageFile);
-        return result;
-    }
+	private static String quote(String str) {
+		if (str == null || str.length() == 0) {
+			return str;
+		}
+		// escape quotes, otherwise commit will fail at least on windows
+		return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
+	}
 
-    private static void addMessage(HgCommand command, File messageFile, String message) {
-        if (messageFile != null && messageFile.isFile()) {
-            command.addOptions("-l", messageFile.getAbsolutePath());
-            return;
-        }
-        // fallback in case of unavailable message file
-        message = quote(message.trim());
-        if (message.length() != 0) {
-            command.addOptions("-m", message);
-        } else {
-            command.addOptions("-m", Messages.getString("CommitDialog.defaultCommitMessage"));
-        }
-    }
+	private static File saveMessage(String message) {
+		BufferedWriter writer = null;
+		try {
+			File messageFile = File.createTempFile("hgcommitmsg", ".txt");
+			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(messageFile),"UTF8"));
+			writer.write(message);
+			return messageFile;
+		} catch (IOException ex) {
+			MercurialEclipsePlugin.logError(ex);
+			return null;
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException ex) {
+					MercurialEclipsePlugin.logError(ex);
+				}
+			}
+		}
+	}
 
-    /**
-     * Commit given project after the merge and refresh the caches.
-     * Implementation note: after merge, no files should be specified.
-     */
-    public static String commitProject(IProject project, String user,
-            String message) throws HgException {
-        HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-        command.addUserName(quote(user));
-        File messageFile = saveMessage(message);
-        addMessage(command, messageFile, message);
-        String result = command.executeToString();
-        Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
-        for (IProject iProject : projects) {
-            new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-        }
-        deleteMessage(messageFile);
-        return result;
-    }
-
-    static String quote(String str) {
-        if (str == null || str.length() == 0) {
-            return str;
-        }
-        // escape quotes, otherwise commit will fail at least on windows
-        return str.replace("\"", "\\\""); //$NON-NLS-1$ //$NON-NLS-2$
-    }
-
-    private static File saveMessage(String message) {
-        BufferedWriter writer = null;
-        try {
-            File messageFile = File.createTempFile("commitMessage", ".txt");
-            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(messageFile),"UTF8"));
-            writer.write(message);
-            return messageFile;
-        } catch (IOException ex) {
-            MercurialEclipsePlugin.logError(ex);
-            return null;
-        } finally {
-            if (writer != null) {
-                try {
-                    writer.close();
-                } catch (IOException ex) {
-                    MercurialEclipsePlugin.logError(ex);
-                }
-            }
-        }
-    }
-
-    private static void deleteMessage(File messageFile) {
-        // Try to delete normally, and if not successfull
-        // leave it for the JVM exit - I use it in case
-        // mercurial accidentally locks the file.
-        if (!messageFile.delete()) {
-            messageFile.deleteOnExit();
-        }
-    }
+	private static void deleteMessage(File messageFile) {
+		// Try to delete normally, and if not successfull
+		// leave it for the JVM exit - I use it in case
+		// mercurial accidentally locks the file.
+		if (!messageFile.delete()) {
+			messageFile.deleteOnExit();
+		}
+	}
 }
