@@ -1,14 +1,15 @@
-/*
- * Copyright by Intland Software
+/*******************************************************************************
+ * Copyright (c) 2008 Bastian Doetsch and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
  *
- * All rights reserved.
- *
- * This software is the confidential and proprietary information
- * of Intland Software. ("Confidential Information"). You
- * shall not disclose such Confidential Information and shall use
- * it only in accordance with the terms of the license agreement
- * you entered into with Intland.
- */
+ * Contributors:
+ *     Bastian Doetsch - implementation
+ *     Zsolt Koppany (Intland) - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
+ *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.commands;
 
@@ -23,23 +24,21 @@ import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
-/**
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
- */
-public class HgPathsClient {
+public class HgPathsClient extends AbstractClient {
     public static final String DEFAULT = Branch.DEFAULT;
     public static final String DEFAULT_PULL = "default-pull"; //$NON-NLS-1$
     public static final String DEFAULT_PUSH = "default-push"; //$NON-NLS-1$
-    public static final String PATHS_LOCATION = "/.hg/hgrc"; //$NON-NLS-1$
+    public static final String PATHS_LOCATION = ".hg/hgrc"; //$NON-NLS-1$
     public static final String PATHS_SECTION = "paths"; //$NON-NLS-1$
 
     public static Map<String, String> getPaths(IProject project) throws HgException {
-        File hgrc = new File (project.getLocation() + PATHS_LOCATION);
+        HgRoot root = getHgRoot(project);
+        File hgrc = new File (root, PATHS_LOCATION);
 
-        if (!hgrc.exists()) {
+        if (!hgrc.isFile()) {
             return new HashMap<String, String>();
         }
 
@@ -59,8 +58,7 @@ public class HgPathsClient {
                 input.close();
             }
         } catch (IOException e) {
-            // TODO: Fix log message
-            throw new HgException("Unable to read paths", e);
+            throw new HgException("Unable to read paths from: " + hgrc, e);
         }
 
         return paths;

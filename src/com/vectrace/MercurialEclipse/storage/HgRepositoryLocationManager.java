@@ -10,7 +10,8 @@
  *     Stefan Groschupf          - logError
  *     Jerome Negre              - storing in plain text instead of serializing Java Objects
  *     Bastian Doetsch           - support for project specific repository locations
- *     adam.berkes <adam.berkes@intland.com>
+ *     Adam Berkes (Intland)     - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -84,10 +85,7 @@ public class HgRepositoryLocationManager {
      * @throws HgException
      */
     public void start() throws IOException, HgException {
-        Set<IProject> managedProjects = getProjectRepos(true).keySet();
-        for (IProject project : managedProjects) {
-            new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule(50);
-        }
+        getProjectRepos(true);
     }
 
     /**
@@ -209,21 +207,30 @@ public class HgRepositoryLocationManager {
     private Map<IProject, SortedSet<HgRepositoryLocation>> getProjectRepos(boolean initialize)
             throws IOException, HgException {
         if (initialize) {
-            loadProjectRepos();
+            Set<IProject> hgProjects = loadProjectRepos();
+            for (IProject project : hgProjects) {
+                new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule();
+            }
         }
         return projectRepos;
     }
 
+    /**
+     * @return set with ALL projects managed by hg, <b>not only</b> projects for which we know remote repo locations
+     * @throws IOException
+     * @throws HgException
+     */
     private Set<IProject> loadProjectRepos() throws IOException, HgException {
         projectRepos.clear();
-        Set<IProject> managedProjects = new HashSet<IProject>();
         IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+        Set<IProject> hgProjects = new HashSet<IProject>();
 
         for (IProject project : projects) {
             if (!project.isAccessible()
                     || !MercurialUtilities.hgIsTeamProviderFor(project, false)) {
                 continue;
             }
+            hgProjects.add(project);
 
             // Load .hg/hgrc paths first; plugin settings will override these
             Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
@@ -256,9 +263,8 @@ public class HgRepositoryLocationManager {
                     reader.close();
                 }
             }
-            managedProjects.add(project);
         }
-        return managedProjects;
+        return hgProjects;
     }
 
     /**
@@ -302,14 +308,12 @@ public class HgRepositoryLocationManager {
                 .getProjects();
         for (IProject project : projects) {
             File file = getProjectLocationFile(project);
-
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
-
-            try {
-                SortedSet<HgRepositoryLocation> repoSet = projectRepos
-                        .get(project);
-                if (repoSet != null) {
+            SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
+            if (repoSet != null && !repoSet.isEmpty()) {
+                BufferedWriter writer = null;
+                try {
+                    writer = new BufferedWriter(new OutputStreamWriter(
+                            new FileOutputStream(file), "UTF-8"));
                     for (HgRepositoryLocation repo : repoSet) {
                         String line = delegator.delegateCreate(repo);
                         if(line != null){
@@ -317,9 +321,11 @@ public class HgRepositoryLocationManager {
                             writer.write('\n');
                         }
                     }
+                } finally {
+                    if(writer != null) {
+                        writer.close();
+                    }
                 }
-            } finally {
-                writer.close();
             }
         }
     }

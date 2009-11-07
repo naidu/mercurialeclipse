@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Adam Berkes (Intland) - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -64,9 +65,15 @@ public class HgRepositoryLocationParser {
                 password = crypter.decrypt(password.substring(2));
             }
             URI uri = parseLocationToURI(parts.get(0), username, password);
-            HgRepositoryLocation location = new HgRepositoryLocation(parts.get(3),
-                    PUSH_PREFIX.equals(direction),
-                    uri);
+            HgRepositoryLocation location;
+            if(uri != null) {
+                location = new HgRepositoryLocation(parts.get(3),
+                        PUSH_PREFIX.equals(direction),
+                        uri);
+            } else {
+                location = new HgRepositoryLocation(parts.get(3),
+                        PUSH_PREFIX.equals(direction), parts.get(0), "", "");
+            }
             location.setLastUsage(lastUsage);
             if (parts.size() > 4) {
                 location.setProjectName(parts.get(4));
