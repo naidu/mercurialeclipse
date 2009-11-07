@@ -11,12 +11,20 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import java.util.Set;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.TransplantWizard;
 
 public class TransplantHandler extends SingleResourceHandler {
@@ -25,10 +33,21 @@ public class TransplantHandler extends SingleResourceHandler {
     protected void run(IResource resource) throws Exception {
         IProject project = resource.getProject();
         TransplantWizard transplantWizard = new TransplantWizard(project);
-        WizardDialog transplantWizardDialog = new WizardDialog(getShell(),transplantWizard);
+        WizardDialog transplantWizardDialog = new WizardDialog(getShell(), transplantWizard);
         int result = transplantWizardDialog.open();
         if (result == Window.OK) {
-            new RefreshJob("Refresh after transplant", project, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+            HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+            Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+            for (final IProject iProject : projects) {
+                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
+                job.addJobChangeListener(new JobChangeAdapter(){
+                   @Override
+                    public void done(IJobChangeEvent event) {
+                        new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+                    }
+                });
+                job.schedule();
+            }
         }
     }
 
