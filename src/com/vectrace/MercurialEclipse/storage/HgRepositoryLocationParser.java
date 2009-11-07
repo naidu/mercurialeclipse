@@ -39,7 +39,7 @@ public class HgRepositoryLocationParser {
         if (line == null || line.length() < 1) {
             return null;
         }
-        String repositoryLine = new String(line);
+        String repositoryLine = line;
         //get direction indicator
         String direction = repositoryLine.substring(0,1);
         repositoryLine = repositoryLine.substring(1);
