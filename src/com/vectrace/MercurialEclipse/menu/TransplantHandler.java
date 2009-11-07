@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
