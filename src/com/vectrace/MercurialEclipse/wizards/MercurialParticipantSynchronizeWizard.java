@@ -202,19 +202,6 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
         String user = pageProperties.getProperty(PROP_USER);
         String pass = pageProperties.getProperty(PROP_PASSWORD);
         HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-        HgRepositoryLocation repo;
-        try {
-            repo = repoManager.getRepoLocation(url, user, pass);
-            if(pass != null && user != null){
-                if(!pass.equals(repo.getPassword())){
-                    repo = repoManager.updateRepoLocation(url, null, user, pass);
-                }
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            page.setErrorMessage(e.getLocalizedMessage());
-            return null;
-        }
 
         // TODO implementation is incomplete
         Set<IProject> selectedProjects = new HashSet<IProject>();
@@ -225,6 +212,21 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
             }
         }
         if (selectedProjects.isEmpty()) {
+            return null;
+        }
+
+        HgRepositoryLocation repo;
+        try {
+            repo = repoManager.getRepoLocation(url, user, pass);
+            if(pass != null && user != null){
+                if(!pass.equals(repo.getPassword())){
+                    // At least 1 project exists, update location for that project
+                    repo = repoManager.updateRepoLocation(selectedProjects.iterator().next(), url, null, user, pass);
+                }
+            }
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            page.setErrorMessage(e.getLocalizedMessage());
             return null;
         }
 

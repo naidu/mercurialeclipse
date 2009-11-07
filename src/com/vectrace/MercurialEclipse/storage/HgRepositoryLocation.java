@@ -23,30 +23,31 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 
 /**
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation extends AllRootsElement implements  Comparable<HgRepositoryLocation> {
+public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
+
+    private static final String PASSWORD_MASK = "***";
 
     private final String logicalName;
     private String projectName;
     private String location;
-    private final URI uri;
     private final String user;
     private final String password;
     private final boolean isPush;
     private Date lastUsage;
 
-    HgRepositoryLocation(String logicalName, boolean isPush, URI uri, String location, String user, String password) {
+    HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
         this.logicalName = logicalName;
         this.isPush = isPush;
-        this.uri = uri;
         this.user = user;
         this.password = password;
-        this.location = location;
+        URI uri = HgRepositoryLocationParser.parseLocationToURI(location, user, password);
         if(uri != null) {
             try {
                 this.location = new URI(uri.getScheme(),
@@ -59,27 +60,64 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
             } catch (URISyntaxException ex) {
                 MercurialEclipsePlugin.logError(ex);
             }
+        } else {
+            this.location = location;
+        }
+    }
+
+    HgRepositoryLocation(String logicalName, boolean isPush, URI uri) throws HgException {
+        if (uri == null) {
+            throw new HgException("Given URI cannot be null");
+        }
+        this.logicalName = logicalName;
+        this.isPush = isPush;
+        this.user = HgRepositoryLocationParser.getUserNameFromURI(uri);
+        this.password = HgRepositoryLocationParser.getPasswordFromURI(uri);
+        try {
+            this.location = new URI(uri.getScheme(),
+                    null,
+                    uri.getHost(),
+                    uri.getPort(),
+                    uri.getPath(),
+                    null,
+                    uri.getFragment()).toASCIIString();
+        } catch (URISyntaxException ex) {
+            MercurialEclipsePlugin.logError(ex);
         }
     }
 
     static public boolean validateLocation(String validate) {
-        return validate.trim().length() > 0;
-        /*
-         * TODO: Something like this would be nice, but it doesn't understand
-         * ssh and allows several other protocols. try { URL url = new
-         * URL(validate); } catch(MalformedURLException e) { return false; }
-         * return true;
-         */
+        try {
+            return HgRepositoryLocationParser.parseLocationToURI(validate, null, null) != null;
+        } catch (HgException ex) {
+            MercurialEclipsePlugin.logError(ex);
+            return false;
+        }
     }
 
     public int compareTo(HgRepositoryLocation loc) {
-        if(location == null){
+        if(getLastUsage() == null){
+            return compareToLocation(loc);
+        }
+        if(loc.getLastUsage() == null){
+            return compareToLocation(loc);
+        }
+        int compareTo = getLastUsage().compareTo(loc.getLastUsage());
+        if (compareTo == 0) {
+            return compareToLocation(loc);
+        }
+        return compareTo;
+    }
+
+    private int compareToLocation(HgRepositoryLocation loc) {
+        if(getLocation() == null) {
             return -1;
         }
-        if(loc.location == null){
+        if(loc.getLocation() == null){
             return 1;
         }
-        return this.location.compareTo(loc.location);
+        int compareTo = getLocation().compareTo(loc.getLocation());
+        return compareTo;
     }
 
     @Override
@@ -118,6 +156,25 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
         return password;
     }
 
+    /**
+     * Return unsafe (with password) URI for repository location if possible
+     * @return a valid URI of the repository or null
+     * @throws HgException unable to parse to URI or location is invalid.
+     */
+    public URI getUri() throws HgException {
+        return getUri(false);
+    }
+
+    /**
+     * Return URI for repository location if possible
+     * @param isSafe add password to userinfo if false or add a mask instead
+     * @return a valid URI of the repository or null
+     * @throws HgException unable to parse to URI or location is invalid.
+     */
+    public URI getUri(boolean isSafe) throws HgException {
+        return HgRepositoryLocationParser.parseLocationToURI(getLocation(), getUser(), isSafe ? PASSWORD_MASK : getPassword());
+    }
+
     @Override
     public String toString() {
         if (logicalName!= null && logicalName.length()>0) {
@@ -141,10 +198,6 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
         return super.getImageDescriptor(object);
     }
 
-    public URI getUri() {
-        return uri;
-    }
-
     public String getLocation() {
         return location;
     }
@@ -153,19 +206,16 @@ public class HgRepositoryLocation extends AllRootsElement implements  Comparable
      * @return a location with password removed that is safe to display on screen
      */
     public String getDisplayLocation() {
-        if (uri == null) {
-            return this.location;
-        }
-
         try {
-            return (new URI(uri.getScheme(), user,
-                    uri.getHost(), uri.getPort(), uri.getPath(),
-                    uri.getQuery(), uri.getFragment())).toString();
-
-        } catch (URISyntaxException e) {
+            URI uri = getUri(true);
+            if (uri != null) {
+                return uri.toString();
+            }
+        } catch (HgException ex) {
             // This shouldn't happen at this point
-            throw new RuntimeException(e);
+            throw new RuntimeException(ex);
         }
+        return getLocation();
     }
 
     public String getLogicalName() {

@@ -96,7 +96,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
     }
 
     private static void setRepository(HgRepositoryLocation repository,
-            AbstractShellCommand command) {
+            AbstractShellCommand command) throws HgException {
         URI uri = repository.getUri();
         if (uri != null) {
             command.addOptions(uri.toASCIIString());

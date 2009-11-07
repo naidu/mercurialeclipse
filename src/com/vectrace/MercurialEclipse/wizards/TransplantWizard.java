@@ -63,7 +63,7 @@ public class TransplantWizard extends HgWizard {
             page.finish(new NullProgressMonitor());
             Properties props = page.getProperties();
             HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
-                    .fromProperties(props);
+                    .fromProperties(project, props);
 
             // Check that this project exist.
             if (project.getLocation() == null) {

@@ -5,6 +5,7 @@
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors: Bastian Doetsch - implementation
+ *     Zsolt Koppany zsolt.koppany@intland.com
  *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 
@@ -55,39 +56,45 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             }
             command.addOptions("-r", branch);
         }
-        final File bundleFile;
+        File bundleFile = null;
         try {
-            bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
-                    res.getProject().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
-            bundleFile.deleteOnExit();
-            command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-                    AbstractParseChangesetClient.getStyleFile(true)
-                    .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
-                    .getCanonicalPath());
-        } catch (IOException e) {
-            throw new HgException(e.getMessage(), e);
-        }
+            try {
+                bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
+                        res.getProject().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
+                bundleFile.deleteOnExit();
+                command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+                        AbstractParseChangesetClient.getStyleFile(true)
+                        .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
+                        .getCanonicalPath());
+            } catch (IOException e) {
+                throw new HgException(e.getMessage(), e);
+            }
 
-        URI uri = repository.getUri();
-        if (uri != null) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repository.getLocation());
-        }
-        try {
-            String result = command.executeToString();
-            if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
-                return new HashMap<IPath, Set<ChangeSet>>();
+            URI uri = repository.getUri();
+            if (uri != null) {
+                command.addOptions(uri.toASCIIString());
+            } else {
+                command.addOptions(repository.getLocation());
             }
-            Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-                    res, result, true,
-                    Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
-            return revisions;
-        } catch (HgException hg) {
-            if (hg.getStatus().getCode() == 1) {
-                return new HashMap<IPath, Set<ChangeSet>>();
+            try {
+                String result = command.executeToString();
+                if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
+                    return new HashMap<IPath, Set<ChangeSet>>();
+                }
+                Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+                        res, result, true,
+                        Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
+                return revisions;
+            } catch (HgException hg) {
+                if (hg.getStatus().getCode() == 1) {
+                    return new HashMap<IPath, Set<ChangeSet>>();
+                }
+                throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
             }
-            throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
-        }
+		} finally {
+			if (bundleFile != null) {
+				bundleFile.delete();
+			}
+		}
     }
 }

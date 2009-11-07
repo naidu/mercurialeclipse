@@ -120,7 +120,7 @@ public abstract class AbstractClient {
         return returnValue;
     }
 
-    protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) {
+    protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) throws HgException {
         URI uri = repo.getUri();
         if (uri != null ) {
             cmd.addOptions(uri.toASCIIString());

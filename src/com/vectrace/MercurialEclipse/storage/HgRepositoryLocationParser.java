@@ -1,15 +1,16 @@
 /*******************************************************************************
- * Copyright (c) 2005-2009 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2009 Intland.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * @author adam.berkes <adam.berkes@intland.com>
+ *     Adam Berkes (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -21,7 +22,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * Repository location line format:
- * [u|d]<dateAsLong> <len> uri <len> username <len> password <len> alias/id[ <len> project]
+ * [u|d]<dateAsLong> <len> uri <len> [e] username <len> [e] password <len> alias/id[ <len> project]
  */
 public class HgRepositoryLocationParser {
 
@@ -31,6 +32,7 @@ public class HgRepositoryLocationParser {
     protected static final String PASSWORD_TOKEN = ":";
     protected static final String PUSH_PREFIX = "u";
     protected static final String PULL_PREFIX = "d";
+    protected static final String ENCRYPTED_PREFIX = "e";
 
     protected static HgRepositoryLocation parseLine(final String line) {
         if (line == null || line.length() < 1) {
@@ -52,27 +54,19 @@ public class HgRepositoryLocationParser {
                 repositoryLine = repositoryLine.substring(repositoryLine.length() > len ? len + 1 : repositoryLine.length());
                 parts.add(partValue);
             }
-            URI uri = null;
-            try {
-                // first parse url/uri and then
-                // regenerate it with correct user info
-                uri = new URI(parts.get(0));
-                uri = new URI(uri.getScheme(),
-                        createUserinfo(parts.get(1), parts.get(2)),
-                        uri.getHost(),
-                        uri.getPort(),
-                        uri.getPath(),
-                        uri.getQuery(),
-                        uri.getFragment());
-            } catch (URISyntaxException e) {
-                // uri stays null
+            HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create();
+            String username = parts.get(1);
+            if (username.startsWith(ENCRYPTED_PREFIX + PART_SEPARATOR)) {
+                username = crypter.decrypt(username.substring(2));
             }
+            String password = parts.get(2);
+            if (password.startsWith(ENCRYPTED_PREFIX + PART_SEPARATOR)) {
+                password = crypter.decrypt(password.substring(2));
+            }
+            URI uri = parseLocationToURI(parts.get(0), username, password);
             HgRepositoryLocation location = new HgRepositoryLocation(parts.get(3),
-                    direction.equals(PUSH_PREFIX),
-                    uri,
-                    parts.get(0),
-                    parts.get(1),
-                    parts.get(2));
+                    PUSH_PREFIX.equals(direction),
+                    uri);
             location.setLastUsage(lastUsage);
             if (parts.size() > 4) {
                 location.setProjectName(parts.get(4));
@@ -89,38 +83,23 @@ public class HgRepositoryLocationParser {
         line.append(location.getLastUsage() != null ? location.getLastUsage().getTime() : new Date().getTime());
         line.append(PART_SEPARATOR);
         // remove authentication from location
-        if (location.getUri() != null) {
-            try {
-                String locationUriString = new URI(location.getUri().getScheme(),
-                        null,
-                        location.getUri().getHost(),
-                        location.getUri().getPort(),
-                        location.getUri().getPath(),
-                        null,
-                        location.getUri().getFragment()).toASCIIString();
-                line.append(String.valueOf(locationUriString.length()));
-                line.append(PART_SEPARATOR);
-                line.append(locationUriString);
-                line.append(PART_SEPARATOR);
-            } catch (URISyntaxException ex) {
-                MercurialEclipsePlugin.logError(ex);
-                line.append(String.valueOf(location.getLocation().length()));
-                line.append(PART_SEPARATOR);
-                line.append(location.getLocation());
-                line.append(PART_SEPARATOR);
-            }
-        } else {
-            line.append(String.valueOf(location.getLocation().length()));
-            line.append(PART_SEPARATOR);
-            line.append(location.getLocation());
-            line.append(PART_SEPARATOR);
-        }
+        line.append(String.valueOf(location.getLocation().length()));
+        line.append(PART_SEPARATOR);
+        line.append(location.getLocation());
+        line.append(PART_SEPARATOR);
+        HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create();
         String user = location.getUser() != null ? location.getUser() : "";
+        if (user.length() > 0) {
+            user = ENCRYPTED_PREFIX + PART_SEPARATOR + crypter.encrypt(user);
+        }
         line.append(String.valueOf(user.length()));
         line.append(PART_SEPARATOR);
         line.append(user);
         line.append(PART_SEPARATOR);
         String password = location.getPassword() != null ? location.getPassword() : "";
+        if (password.length() > 0) {
+            password = ENCRYPTED_PREFIX + PART_SEPARATOR + crypter.encrypt(password);
+        }
         line.append(String.valueOf(password.length()));
         line.append(PART_SEPARATOR);
         line.append(password);
@@ -151,7 +130,6 @@ public class HgRepositoryLocationParser {
     }
 
     protected static HgRepositoryLocation parseLine(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
-        URI locationUri = null;
         String[] repoInfo = location.split(SPLIT_TOKEN);
 
         if ((user == null || user.length() == 0)
@@ -179,53 +157,86 @@ public class HgRepositoryLocationParser {
             }
         }
 
-        try {
-            locationUri = new URI(location);
-        } catch (URISyntaxException e) {
-
+        URI uri = parseLocationToURI(location, user, password);
+        if (uri != null) {
+            return new HgRepositoryLocation(logicalName, isPush, uri);
         }
-        if (locationUri != null) {
-            if (locationUri.getScheme() != null
-                    && !locationUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
-                String userInfo = null;
-                if (locationUri.getUserInfo() == null) {
-                    // This is a hack: ssh doesn't allow us to directly enter
-                    // in passwords in the URI (even though it says it does)
-                    if (locationUri.getScheme().equalsIgnoreCase("ssh")) {
-                        userInfo = user;
-                    } else {
-                        userInfo = createUserinfo(user, password);
-                    }
+        return new HgRepositoryLocation(logicalName, isPush, location, user, password);
+    }
 
+    protected static URI parseLocationToURI(String location, String user, String password) throws HgException {
+        URI uri = null;
+        try {
+            uri = new URI(location);
+        } catch (URISyntaxException e) {
+            // Most possibly windows path, return null
+            File localPath = new File(location);
+            if (localPath.isDirectory()) {
+                return null;
+            }
+            HgException hgex = new HgException("Hg repository location invalid: <" + location + ">");
+            throw hgex;
+        }
+        if (uri.getScheme() != null
+                && !uri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
+            String userInfo = null;
+            if (uri.getUserInfo() == null) {
+                // This is a hack: ssh doesn't allow us to directly enter
+                // in passwords in the URI (even though it says it does)
+                if (uri.getScheme().equalsIgnoreCase("ssh")) {
+                    userInfo = user;
                 } else {
-                    // extract user and password from given URI
-                    String[] authorization = locationUri.getUserInfo().split(":"); //$NON-NLS-1$
-                    user = authorization[0];
-                    if (authorization.length > 1) {
-                        password = authorization[1];
-                    }
-
-                    // This is a hack: ssh doesn't allow us to directly enter
-                    // in passwords in the URI (even though it says it does)
-                    if (locationUri.getScheme().equalsIgnoreCase("ssh")) {
-                        userInfo = user;
-                    } else {
-                        userInfo = createUserinfo(user, password);
-                    }
+                    userInfo = createUserinfo(user, password);
                 }
-                try {
-                    locationUri = new URI(locationUri.getScheme(), userInfo,
-                            locationUri.getHost(), locationUri.getPort(), locationUri.getPath(),
-                            locationUri.getQuery(), locationUri.getFragment());
-                } catch (URISyntaxException e) {
-                    HgException hgex = new HgException("Failed to create hg repository", e);
-                    hgex.initCause(e);
-                    throw hgex;
+            } else {
+                // extract user and password from given URI
+                String[] authorization = uri.getUserInfo().split(":"); //$NON-NLS-1$
+                user = authorization[0];
+                if (authorization.length > 1) {
+                    password = authorization[1];
+                }
+
+                // This is a hack: ssh doesn't allow us to directly enter
+                // in passwords in the URI (even though it says it does)
+                if (uri.getScheme().equalsIgnoreCase("ssh")) {
+                    userInfo = user;
+                } else {
+                    userInfo = createUserinfo(user, password);
                 }
             }
+            try {
+                return new URI(uri.getScheme(), userInfo,
+                        uri.getHost(), uri.getPort(), uri.getPath(),
+                        uri.getQuery(), uri.getFragment());
+            } catch (URISyntaxException ex) {
+                HgException hgex = new HgException("Failed to parse hg repository: <" + location + ">", ex);
+                hgex.initCause(ex);
+                throw hgex;
+            }
         }
-        HgRepositoryLocation repo = new HgRepositoryLocation(logicalName, isPush, locationUri, location, user, password);
-        return repo;
+        return uri;
+    }
+
+    protected static String getUserNameFromURI(URI uri) {
+        String userInfo = uri != null ? uri.getUserInfo() : null;
+        if (userInfo != null) {
+            if (userInfo.indexOf(PASSWORD_TOKEN) > 0) {
+                return userInfo.substring(0, userInfo.indexOf(PASSWORD_TOKEN));
+            }
+            return userInfo;
+        }
+        return null;
+    }
+
+    protected static String getPasswordFromURI(URI uri) {
+        String userInfo = uri != null ? uri.getUserInfo() : null;
+        if (userInfo != null) {
+            if (userInfo.indexOf(PASSWORD_TOKEN) > 0) {
+                return userInfo.substring(userInfo.indexOf(PASSWORD_TOKEN) + 1);
+            }
+            return userInfo;
+        }
+        return null;
     }
 
     private static String createUserinfo(String user1, String password1) {
@@ -244,10 +255,7 @@ public class HgRepositoryLocationParser {
     @Deprecated
     public static String createSaveString(HgRepositoryLocation location) {
         StringBuilder line = new StringBuilder(location.getLocation());
-        if (location.getUri() != null && location.getUri().getUserInfo() != null) {
-            line.append(SPLIT_TOKEN);
-            line.append(location.getUri().getUserInfo());
-        } else if (location.getUser() != null ) {
+        if (location.getUser() != null ) {
             line.append(SPLIT_TOKEN);
             line.append(location.getUser());
             if (location.getPassword() != null) {

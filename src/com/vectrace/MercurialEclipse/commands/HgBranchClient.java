@@ -18,6 +18,7 @@ import java.util.regex.Pattern;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -100,7 +101,14 @@ public class HgBranchClient extends AbstractClient {
         // try to access the the branch
         command.addOptions("-r", branch);
 
-        URI uri = repository.getUri();
+        URI uri;
+        try {
+            uri = repository.getUri();
+        } catch (HgException e) {
+            MercurialEclipsePlugin.logError(e);
+            return false;
+        }
+
         if (uri != null) {
             command.addOptions(uri.toASCIIString());
         } else {

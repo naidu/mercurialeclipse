@@ -7,11 +7,11 @@
  *
  * Contributors:
  * bastian	implementation
+ * Adam Berkes (Intland) - repository location handling
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.Set;
-
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -29,9 +29,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -185,46 +183,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
         this.changesetTable.addSelectionListener(listener);
     }
 
-    protected Set<HgRepositoryLocation> setDefaultLocation() {
-        if (resource == null) {
-            return null;
-        }
-        HgRepositoryLocation defaultLocation = null;
-
-        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin
-            .getRepoManager().getAllProjectRepoLocations(
-                    resource.getProject());
-
-        for (HgRepositoryLocation repo : repos)
-        {
-            if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName()) ||
-                    HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
-                defaultLocation = repo;
-                break;
-            }
-        }
-
-        if (defaultLocation == null) {
-            defaultLocation = MercurialEclipsePlugin
-                .getRepoManager().getDefaultProjectRepoLocation(
-                        resource.getProject());
-        }
-
-        if (defaultLocation != null) {
-            getUrlCombo().setText(defaultLocation.getLocation());
-
-            String user = defaultLocation.getUser();
-            if (user != null && user.length() != 0) {
-                getUserCombo().setText(user);
-            }
-            String password = defaultLocation.getPassword();
-            if (password != null && password.length() != 0) {
-                getPasswordText().setText(password);
-            }
-        }
-        return repos;
-    }
-
     protected String getRevGroupLabel() {
         return Messages.getString("PushRepoPage.revGroup.title"); //$NON-NLS-1$
     }
@@ -343,6 +301,11 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
     public void setSvnCheckBox(Button svnCheckBox) {
         this.svnCheckBox = svnCheckBox;
+    }
+
+    @Override
+    protected IProject getProject() {
+        return resource.getProject();
     }
 
 }

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,7 +36,6 @@ import java.util.TreeSet;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -57,13 +57,10 @@ public class HgRepositoryLocationManager {
 
     final static private String REPO_LOCATION_FILE = "repositories.txt"; //$NON-NLS-1$
 
-    private final SortedSet<HgRepositoryLocation> repos;
     private final Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos;
     private final HgRepositoryLocationParserDelegator delegator;
-    private boolean initDone;
 
     public HgRepositoryLocationManager() {
-        repos = new TreeSet<HgRepositoryLocation>();
         projectRepos = new HashMap<IProject, SortedSet<HgRepositoryLocation>>();
         delegator = new HgRepositoryLocationParserDelegator();
     }
@@ -87,23 +84,7 @@ public class HgRepositoryLocationManager {
      * @throws HgException
      */
     public void start() throws IOException, HgException {
-        File file = getLocationFile();
-
-        if (file.exists()) {
-            String line;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(
-                    new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
-
-            try {
-                while ((line = reader.readLine()) != null) {
-                    addRepoLocation(delegator.delegateParse(line));
-                }
-            } finally {
-                reader.close();
-            }
-
-        }
-        Set<IProject> managedProjects = loadProjectRepos();
+        Set<IProject> managedProjects = getProjectRepos(true).keySet();
         for (IProject project : managedProjects) {
             new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule(50);
         }
@@ -120,7 +101,7 @@ public class HgRepositoryLocationManager {
                 new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
 
         try {
-            for (HgRepositoryLocation repo : repos) {
+            for (HgRepositoryLocation repo : getAllRepoLocations()) {
                 String line = delegator.delegateCreate(repo);
                 if(line != null){
                     writer.write(line);
@@ -138,7 +119,11 @@ public class HgRepositoryLocationManager {
      * known.
      */
     public Set<HgRepositoryLocation> getAllRepoLocations() {
-        return Collections.unmodifiableSet(repos);
+        SortedSet<HgRepositoryLocation> allRepos = new TreeSet<HgRepositoryLocation>();
+        for (SortedSet<HgRepositoryLocation> locations : projectRepos.values()) {
+            allRepos.addAll(locations);
+        }
+        return allRepos;
     }
 
     public Set<HgRepositoryLocation> getAllProjectRepoLocations(IProject project) {
@@ -156,7 +141,7 @@ public class HgRepositoryLocationManager {
     public Set<IProject> getAllRepoLocationProjects(HgRepositoryLocation repo) {
         synchronized (projectRepos) {
             try {
-                getProjectRepos();
+                getProjectRepos(false);
             } catch (Exception e) {
                 MercurialEclipsePlugin.logError(e);
             }
@@ -177,12 +162,13 @@ public class HgRepositoryLocationManager {
      * Add a repository location to the database.
      */
     private boolean addRepoLocation(HgRepositoryLocation loc) {
-        synchronized (repos) {
-            repos.remove(loc);
-            repos.add(loc);
-            REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
-            return true;
+        if (loc.getProjectName() != null) {
+            IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(loc.getProjectName());
+            if (project != null) {
+                return internalAddRepoLocation(project, loc);
+            }
         }
+        return false;
     }
 
     /**
@@ -193,21 +179,21 @@ public class HgRepositoryLocationManager {
             return false;
         }
 
-        addRepoLocation(loc);
-
         synchronized (projectRepos) {
-
             SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
             if (repoSet == null) {
                 repoSet = new TreeSet<HgRepositoryLocation>();
             }
+            if (project.getName().equals(loc.getProjectName())) {
+                loc.setProjectName(project.getName());
+            }
             repoSet.add(loc);
+            REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
             projectRepos.put(project, repoSet);
         }
 
         return true;
     }
-
 
     /**
      * Add a repository location to the database. Associate a repository
@@ -217,34 +203,12 @@ public class HgRepositoryLocationManager {
      */
     public boolean addRepoLocation(IProject project, HgRepositoryLocation loc)
             throws HgException {
-        if (loc == null) {
-            return false;
-        }
-
-        addRepoLocation(loc);
-
-        synchronized (projectRepos) {
-            try {
-                getProjectRepos();
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-
-            SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
-            if (repoSet == null) {
-                repoSet = new TreeSet<HgRepositoryLocation>();
-            }
-            repoSet.add(loc);
-            projectRepos.put(project, repoSet);
-        }
-
-        return true;
+        return internalAddRepoLocation(project, loc);
     }
 
-    private Map<IProject, SortedSet<HgRepositoryLocation>> getProjectRepos()
+    private Map<IProject, SortedSet<HgRepositoryLocation>> getProjectRepos(boolean initialize)
             throws IOException, HgException {
-        if (!initDone) {
-            initDone = true;
+        if (initialize) {
             loadProjectRepos();
         }
         return projectRepos;
@@ -253,8 +217,7 @@ public class HgRepositoryLocationManager {
     private Set<IProject> loadProjectRepos() throws IOException, HgException {
         projectRepos.clear();
         Set<IProject> managedProjects = new HashSet<IProject>();
-        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot()
-                .getProjects();
+        IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 
         for (IProject project : projects) {
             if (!project.isAccessible()
@@ -266,51 +229,28 @@ public class HgRepositoryLocationManager {
             Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
             for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
                 // if not existent, add to repository browser
-                HgRepositoryLocation loc = updateRepoLocation(
+                HgRepositoryLocation loc = updateRepoLocation(project,
                         entry.getValue(),
                         entry.getKey(),
                         null, null);
                 internalAddRepoLocation(project, loc);
             }
 
-            boolean createSrcRepository = false;
-            try {
-                String url = getDefaultProjectRepository(project);
-                if (url != null) {
-                    HgRepositoryLocation srcRepository = updateRepoLocation(
-                            url, null, null, null);
-                    internalAddRepoLocation(project, srcRepository);
-                } else {
-                    createSrcRepository = true;
-                }
-            } catch (Exception e) {
-                // log the exception - but don't bother the user
-                MercurialEclipsePlugin.logError(e);
-            }
             File file = getProjectLocationFile(project);
 
             if (file.exists()) {
                 String line;
                 BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(new FileInputStream(file),
-                                "UTF-8")); //$NON-NLS-1$
-
+                        new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
                 try {
                     while ((line = reader.readLine()) != null) {
                         try {
                             HgRepositoryLocation loc = delegator.delegateParse(line);
                             internalAddRepoLocation(project, loc);
-
-                            if (createSrcRepository) {
-
-                                setDefaultProjectRepository(project, loc);
-                                createSrcRepository = false;
-                            }
                         } catch (Exception e) {
                             // log exception, but don't bother the user with it.
                             MercurialEclipsePlugin.logError(e);
                         }
-
                     }
                 } finally {
                     reader.close();
@@ -321,20 +261,22 @@ public class HgRepositoryLocationManager {
         return managedProjects;
     }
 
+    /**
+     * Set given location as default (topmost in project repositories)
+     * @param project a valid project (not null)
+     * @param loc a valid repoository location (not null)
+     */
     public void setDefaultProjectRepository(IProject project,
-            HgRepositoryLocation loc) throws CoreException {
-        if (loc != null) {
-            project
-                    .setPersistentProperty(
-                            MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY,
-                            loc.getLocation());
+            HgRepositoryLocation loc) {
+        Assert.isNotNull(project);
+        Assert.isNotNull(loc);
+        SortedSet<HgRepositoryLocation> locations = projectRepos.get(project);
+        loc.setLastUsage(new Date());
+        if (locations != null && !locations.contains(loc)) {
+            locations.add(loc);
         } else {
-            project
-                    .setPersistentProperty(
-                            MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY,
-                            null);
+            internalAddRepoLocation(project, loc);
         }
-
     }
 
     /**
@@ -342,20 +284,11 @@ public class HgRepositoryLocationManager {
      * @return may return null
      */
     public HgRepositoryLocation getDefaultProjectRepoLocation(IProject project) {
-        try {
-            return matchRepoLocation(getDefaultProjectRepository(project));
-        } catch (CoreException e) {
-            // log the exception - but don't bother the user
-            MercurialEclipsePlugin.logError(e);
-            return null;
+        SortedSet<HgRepositoryLocation> locations = projectRepos.get(project);
+        if (locations != null && !locations.isEmpty()) {
+            return locations.first();
         }
-    }
-
-    private String getDefaultProjectRepository(IProject project)
-            throws CoreException {
-        String url = project
-                .getPersistentProperty(MercurialTeamProvider.QUALIFIED_NAME_PROJECT_SOURCE_REPOSITORY);
-        return url;
+        return null;
     }
 
     private File getProjectLocationFile(IProject project) {
@@ -457,7 +390,7 @@ public class HgRepositoryLocationManager {
      */
     private HgRepositoryLocation matchRepoLocation(String url) {
         if (url != null) {
-            for (HgRepositoryLocation loc : repos) {
+            for (HgRepositoryLocation loc : getAllRepoLocations()) {
                 if (url.equals(loc.getLocation())) {
                     return loc;
                 }
@@ -471,7 +404,7 @@ public class HgRepositoryLocationManager {
      * adding it to the global repositories cache. Will update stored
      * last user and password with the provided values.
      */
-    public HgRepositoryLocation updateRepoLocation(String url, String logicalName, String user, String pass) throws HgException {
+    public HgRepositoryLocation updateRepoLocation(IProject project, String url, String logicalName, String user, String pass) throws HgException {
         HgRepositoryLocation loc = matchRepoLocation(url);
 
         if (loc == null) {
@@ -505,8 +438,8 @@ public class HgRepositoryLocationManager {
 
         if (update) {
             HgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName, false, loc.getLocation(), myUser, myPass);
-            repos.remove(updated);
-            repos.add(updated);
+            updated.setLastUsage(new Date());
+            updated.setProjectName(project.getName());
 
             for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
                 if (locs.remove(updated)) {
@@ -527,7 +460,7 @@ public class HgRepositoryLocationManager {
      * password The password used for the connection (optional) url The url
      * where the repository resides rootUrl The repository root url
      */
-    public HgRepositoryLocation fromProperties(Properties configuration)
+    public HgRepositoryLocation fromProperties(IProject project, Properties configuration)
             throws HgException {
 
         String user = configuration.getProperty("user"); //$NON-NLS-1$
@@ -544,10 +477,9 @@ public class HgRepositoryLocationManager {
         }
         String url = configuration.getProperty("url"); //$NON-NLS-1$
         if (url == null) {
-            throw new HgException(Messages
-                    .getString("HgRepositoryLocation.urlMustNotBeNull")); //$NON-NLS-1$
+            throw new HgException(Messages.getString("HgRepositoryLocation.urlMustNotBeNull")); //$NON-NLS-1$
         }
-        return updateRepoLocation(url, null, user, password);
+        return updateRepoLocation(project, url, null, user, password);
     }
 
     public void addRepositoryListener(IRepositoryListener repListener) {
@@ -573,10 +505,10 @@ public class HgRepositoryLocationManager {
      * allow connection validation before adding the location to the provider.
      *
      */
-    public HgRepositoryLocation createRepository(Properties configuration)
+    public HgRepositoryLocation createRepository(IProject project, Properties configuration)
             throws HgException {
         // Create a new repository location
-        HgRepositoryLocation location = fromProperties(configuration);
+        HgRepositoryLocation location = fromProperties(project, configuration);
         addRepoLocation(location);
         return location;
     }
@@ -587,25 +519,20 @@ public class HgRepositoryLocationManager {
 
     }
 
-    public void disposeRepository(HgRepositoryLocation hgRepositoryLocation)
-            throws CoreException {
+    public void disposeRepository(HgRepositoryLocation hgRepositoryLocation) {
         Assert.isNotNull(hgRepositoryLocation);
         synchronized (projectRepos) {
             for (Iterator<IProject> iterator = projectRepos.keySet().iterator(); iterator
                     .hasNext();) {
                 IProject project = iterator.next();
                 if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
-                    String url = getDefaultProjectRepository(project);
-                    if (url != null
-                            && url.equals(hgRepositoryLocation.getLocation())) {
-                        setDefaultProjectRepository(project, null);
-                    }
                     SortedSet<HgRepositoryLocation> pRepos = projectRepos
                             .get(project);
                     if (pRepos != null) {
                         for (HgRepositoryLocation repo : pRepos) {
                             if (repo.equals(hgRepositoryLocation)) {
                                 pRepos.remove(repo);
+                                REPOSITORY_RESOURCES_MANAGER.repositoryRemoved(hgRepositoryLocation);
                                 break;
                             }
                         }
@@ -613,18 +540,6 @@ public class HgRepositoryLocationManager {
                 }
             }
         }
-
-        synchronized (repos) {
-            for (HgRepositoryLocation loc : repos) {
-                if (loc.equals(hgRepositoryLocation)) {
-                    repos.remove(loc);
-                    break;
-                }
-            }
-            REPOSITORY_RESOURCES_MANAGER
-                    .repositoryRemoved(hgRepositoryLocation);
-        }
-
     }
 
 }
