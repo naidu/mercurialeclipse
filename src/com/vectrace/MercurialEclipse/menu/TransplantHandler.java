@@ -39,7 +39,7 @@ public class TransplantHandler extends SingleResourceHandler {
             HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
             Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
             for (final IProject iProject : projects) {
-                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
+                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
                 job.addJobChangeListener(new JobChangeAdapter(){
                    @Override
                     public void done(IJobChangeEvent event) {
