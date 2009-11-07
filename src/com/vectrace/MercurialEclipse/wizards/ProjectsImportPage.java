@@ -580,7 +580,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
     private boolean collectProjectFilesFromDirectory(Collection<File> files,
             File directory, Set<String> directoriesVisited, IProgressMonitor monitor) {
 
-        if (monitor.isCanceled()) {
+        if (monitor.isCanceled() || directory.getName().equals(".hg")) {
             return false;
         }
         monitor.subTask("Checking: " + directory.getPath());
