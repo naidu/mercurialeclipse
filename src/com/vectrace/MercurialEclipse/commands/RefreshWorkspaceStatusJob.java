@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -23,22 +23,30 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
     private final IProject project;
+    private final boolean refreshOnly;
 
     public RefreshWorkspaceStatusJob(IProject project) {
+        this(project, false);
+    }
+
+    public RefreshWorkspaceStatusJob(IProject project, boolean refreshOnly) {
         super("Refreshing status for project " + project.getName() + "...");
         this.project = project;
+        this.refreshOnly = refreshOnly;
     }
 
     @Override
     protected IStatus runSafe(IProgressMonitor monitor) {
         try {
-            final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-            // update branch name
-            MercurialTeamProvider.setCurrentBranch(branch, project);
+            if(!refreshOnly){
+                final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+                // update branch name
+                MercurialTeamProvider.setCurrentBranch(branch, project);
 
-            // reset merge properties
-            project.setPersistentProperty(ResourceProperties.MERGING, null);
-            project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+                // reset merge properties
+                project.setPersistentProperty(ResourceProperties.MERGING, null);
+                project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+            }
 
             // refresh resources
             project.refreshLocal(IResource.DEPTH_INFINITE, monitor);

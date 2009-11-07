@@ -28,6 +28,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
+import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -111,9 +112,10 @@ public class MergeHandler extends SingleResourceHandler {
             MercurialEclipsePlugin.showError(e);
         }
 
+
         // trigger refresh of project decoration
         project.touch(new NullProgressMonitor());
-        project.refreshLocal(IResource.DEPTH_INFINITE, null);
+        new RefreshWorkspaceStatusJob(project, true).schedule();
         return result;
     }
 
