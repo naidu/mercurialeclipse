@@ -17,7 +17,7 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -44,134 +44,134 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  *
  */
 public class OutgoingPage extends IncomingPage {
-    private boolean svn;
-    private class GetOutgoingOperation extends HgOperation {
+	private boolean svn;
+	private class GetOutgoingOperation extends HgOperation {
 
-        public GetOutgoingOperation(IRunnableContext context) {
-            super(context);
-        }
+		public GetOutgoingOperation(IRunnableContext context) {
+			super(context);
+		}
 
-        @Override
-        protected String getActionDescription() {
-            return Messages.getString("OutgoingPage.getOutgoingOperation.description"); //$NON-NLS-1$
-        }
+		@Override
+		protected String getActionDescription() {
+			return Messages.getString("OutgoingPage.getOutgoingOperation.description"); //$NON-NLS-1$
+		}
 
-        @Override
-        public void run(IProgressMonitor monitor)
-                throws InvocationTargetException, InterruptedException {
-            monitor.beginTask(Messages.getString("OutgoingPage.getOutgoingOperation.beginTask"), 1); //$NON-NLS-1$
-            monitor.subTask(Messages.getString("OutgoingPage.getOutgoingOperation.call")); //$NON-NLS-1$
-            setChangesets(getOutgoingInternal());
-            monitor.worked(1);
-            monitor.done();
-        }
+		@Override
+		public void run(IProgressMonitor monitor)
+				throws InvocationTargetException, InterruptedException {
+			monitor.beginTask(Messages.getString("OutgoingPage.getOutgoingOperation.beginTask"), 1); //$NON-NLS-1$
+			monitor.subTask(Messages.getString("OutgoingPage.getOutgoingOperation.call")); //$NON-NLS-1$
+			setChangesets(getOutgoingInternal());
+			monitor.worked(1);
+			monitor.done();
+		}
 
-        private SortedSet<ChangeSet> getOutgoingInternal() {
-            if (isSvn()) {
-                return new TreeSet<ChangeSet>();
-            }
-            HgRepositoryLocation remote = getLocation();
-            try {
-                Set<ChangeSet> changesets = OutgoingChangesetCache
-                        .getInstance().getChangeSets(getProject(), remote, null);
-                SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
-                revertedSet.addAll(changesets);
-                return revertedSet;
-            } catch (HgException e) {
-                MercurialEclipsePlugin.showError(e);
-                return new TreeSet<ChangeSet>();
-            }
-        }
+		private SortedSet<ChangeSet> getOutgoingInternal() {
+			if (isSvn()) {
+				return new TreeSet<ChangeSet>();
+			}
+			HgRepositoryLocation remote = getLocation();
+			try {
+				Set<ChangeSet> changesets = OutgoingChangesetCache
+						.getInstance().getChangeSets(getProject(), remote, null);
+				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
+				revertedSet.addAll(changesets);
+				return revertedSet;
+			} catch (HgException e) {
+				MercurialEclipsePlugin.showError(e);
+				return new TreeSet<ChangeSet>();
+			}
+		}
 
-    }
+	}
 
-    protected class OutgoingDoubleClickListener implements IDoubleClickListener {
-        public void doubleClick(DoubleClickEvent event) {
-            ChangeSet cs = getSelectedChangeSet();
-            IStructuredSelection sel = (IStructuredSelection) event.getSelection();
-            FileStatus clickedFileStatus = (FileStatus) sel.getFirstElement();
+	protected class OutgoingDoubleClickListener implements IDoubleClickListener {
+		public void doubleClick(DoubleClickEvent event) {
+			ChangeSet cs = getSelectedChangeSet();
+			IStructuredSelection sel = (IStructuredSelection) event.getSelection();
+			FileStatus clickedFileStatus = (FileStatus) sel.getFirstElement();
 
-            if (cs == null || clickedFileStatus == null) {
-                return;
-            }
+			if (cs == null || clickedFileStatus == null) {
+				return;
+			}
 
 
-            IPath hgRoot = new Path(cs.getHgRoot().getPath());
-            IPath fileRelPath = clickedFileStatus.getPath();
-            IPath fileAbsPath = hgRoot.append(fileRelPath);
-            IResource file = getProject().getWorkspace().getRoot()
-                    .getFileForLocation(fileAbsPath);
+			IPath hgRoot = new Path(cs.getHgRoot().getPath());
+			IPath fileRelPath = clickedFileStatus.getPath();
+			IPath fileAbsPath = hgRoot.append(fileRelPath);
+			IFile file = getProject().getWorkspace().getRoot()
+					.getFileForLocation(fileAbsPath);
 
-            // See issue #10249: Push/Pull diff problem on outgoing/incoming stage
-            // This doesn't work here (seems to work only for incoming? or should be fixed there too?)
-            // CompareUtils.openEditor(file, cs, true, true);
+			// See issue #10249: Push/Pull diff problem on outgoing/incoming stage
+			// This doesn't work here (seems to work only for incoming? or should be fixed there too?)
+			// CompareUtils.openEditor(file, cs, true, true);
 
-            MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
-            MercurialRevisionStorage parentRev ;
-            String[] parents = cs.getParents();
-            if(parents.length == 0){
-                // TODO for some reason, we do not always have right parent info in the changesets
-                // if we are on the different branch then the changeset. So simply enforce the parents resolving
-                try {
-                    parents = HgParentClient.getParentNodeIds(file, cs);
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
+			MercurialRevisionStorage thisRev = new MercurialRevisionStorage(file, cs.getChangeset());
+			MercurialRevisionStorage parentRev ;
+			String[] parents = cs.getParents();
+			if(parents.length == 0){
+				// TODO for some reason, we do not always have right parent info in the changesets
+				// if we are on the different branch then the changeset. So simply enforce the parents resolving
+				try {
+					parents = HgParentClient.getParentNodeIds(file, cs);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
 
-            if(cs.getRevision().getRevision() == 0 || parents.length == 0){
-                parentRev = new NullRevision(file, cs);
-            } else {
-                parentRev = new MercurialRevisionStorage(file, parents[0]);
-            }
-            CompareUtils.openEditor(thisRev, parentRev, true, false);
+			if(cs.getRevision().getRevision() == 0 || parents.length == 0){
+				parentRev = new NullRevision(file, cs);
+			} else {
+				parentRev = new MercurialRevisionStorage(file, parents[0]);
+			}
+			CompareUtils.openEditor(thisRev, parentRev, true, false);
 
-        }
-    }
+		}
+	}
 
-    protected OutgoingPage(String pageName) {
-        super(pageName);
-        this.setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
-        this
-                .setDescription(Messages.getString("OutgoingPage.description1") //$NON-NLS-1$
-                        + Messages.getString("OutgoingPage.description2")); //$NON-NLS-1$
-    }
+	protected OutgoingPage(String pageName) {
+		super(pageName);
+		this.setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
+		this
+				.setDescription(Messages.getString("OutgoingPage.description1") //$NON-NLS-1$
+						+ Messages.getString("OutgoingPage.description2")); //$NON-NLS-1$
+	}
 
-    @Override
-    public void setChangesets(SortedSet<ChangeSet> outgoingInternal) {
-        super.setChangesets(outgoingInternal);
-    }
+	@Override
+	public void setChangesets(SortedSet<ChangeSet> outgoingInternal) {
+		super.setChangesets(outgoingInternal);
+	}
 
-    @Override
-    public SortedSet<ChangeSet> getChangesets() {
-        return super.getChangesets();
-    }
+	@Override
+	public SortedSet<ChangeSet> getChangesets() {
+		return super.getChangesets();
+	}
 
-    @Override
-    protected void getInputForPage() throws InvocationTargetException,
-            InterruptedException {
-        getContainer().run(true, false,
-                new GetOutgoingOperation(getContainer()));
-    }
+	@Override
+	protected void getInputForPage() throws InvocationTargetException,
+			InterruptedException {
+		getContainer().run(true, false,
+				new GetOutgoingOperation(getContainer()));
+	}
 
-    @Override
-    public void createControl(Composite parent) {
-        super.createControl(parent);
-        getRevisionCheckBox().setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
-    }
+	@Override
+	public void createControl(Composite parent) {
+		super.createControl(parent);
+		getRevisionCheckBox().setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
+	}
 
-    @Override
-    public boolean isSvn() {
-        return svn;
-    }
+	@Override
+	public boolean isSvn() {
+		return svn;
+	}
 
-    @Override
-    public void setSvn(boolean svn) {
-        this.svn = svn;
-    }
+	@Override
+	public void setSvn(boolean svn) {
+		this.svn = svn;
+	}
 
-    @Override
-    protected IDoubleClickListener getDoubleClickListener() {
-        return new OutgoingDoubleClickListener();
-    }
+	@Override
+	protected IDoubleClickListener getDoubleClickListener() {
+		return new OutgoingDoubleClickListener();
+	}
 }
