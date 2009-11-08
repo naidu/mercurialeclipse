@@ -1,7 +1,7 @@
-#Fri Oct 30 22:42:32 CET 2009
+#Sun Nov 08 17:09:01 CET 2009
 eclipse.preferences.version=1
 editor_save_participant_org.eclipse.jdt.ui.postsavelistener.cleanup=true
-formatter_profile=_MercurialEclipse
+formatter_profile=org.eclipse.jdt.ui.default.eclipse_profile
 formatter_settings_version=11
 internal.default.compliance=default
 org.eclipse.jdt.ui.exception.name=e
