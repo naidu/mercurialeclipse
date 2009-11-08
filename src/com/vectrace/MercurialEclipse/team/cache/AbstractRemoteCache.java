@@ -131,7 +131,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
      * @param branch name of branch (default or "" for unnamed) or null if branch unaware
      * @return never null
      */
-    public Set<ChangeSet> getChangeSets(IResource resource,
+    public SortedSet<ChangeSet> getChangeSets(IResource resource,
             HgRepositoryLocation repository, String branch) throws HgException {
         Map<IPath, SortedSet<ChangeSet>> repoMap;
         synchronized (repoChangeSets){

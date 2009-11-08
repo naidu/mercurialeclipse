@@ -11,6 +11,7 @@
  *     Stefan Groschupf          - logError
  *     Subclipse project committers - reference
  *     Charles O'Farrell         - comparison diff
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -31,6 +32,7 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ColumnWeightData;
@@ -68,6 +70,7 @@ import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -92,6 +95,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
         private CompareRevisionAction(String text) {
             super(text);
+            setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
         }
 
         @Override
@@ -399,6 +403,14 @@ public class MercurialHistoryPage extends HistoryPage {
                 try {
                     IProject project = resource.getProject();
                     Assert.isNotNull(project);
+                    if (HgStatusClient.isDirty(project)) {
+                        if (!MessageDialog
+                                .openQuestion(getControl().getShell(),
+                                        "Uncommited Changes",
+                                        "Your project has uncommited changes.\nDo you really want to continue?")){
+                            return;
+                        }
+                    }
                     HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
                     refresh();
                 } catch (HgException e) {
@@ -418,6 +430,7 @@ public class MercurialHistoryPage extends HistoryPage {
                 return false;
             }
         };
+        updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 
         // Contribute actions to popup menu
         final MenuManager menuMgr = new MenuManager();
