@@ -7,10 +7,12 @@
  *
  * Contributors:
  * zluspai	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.mylyn;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
@@ -35,8 +37,11 @@ public class MylynFacadeFactory {
 				try {
 					MylynFacadeImpl impl = new MylynFacadeImpl();
 					return method.invoke(impl, args);
-				} catch (Throwable th) {
-					MercurialEclipsePlugin.logError(th);
+				} catch (InvocationTargetException th) {
+					// expected if Mylin is not installed => so NO logs here.
+				} catch (Throwable t){
+					// unexpected => log
+					MercurialEclipsePlugin.logError(t);
 				}
 				return null;
 			}
