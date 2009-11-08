@@ -16,12 +16,12 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 /**
  * Represents a changeset in a graph
- * 
+ *
  * @author Bastian Doetsch
- * 
+ *
  */
 public class ChangeSetNode implements Comparable<ChangeSetNode> {
-	
+
 
 	private ChangeSet changeset = null;
 	private List<ChangeSetNode> outgoingEdges = null;
@@ -41,7 +41,7 @@ public class ChangeSetNode implements Comparable<ChangeSetNode> {
 		this.outgoingEdges = outgoingEdges;
 	}
 
-		
+
 
 	public List<ChangeSetNode> getOutgoingEdges() {
 		return outgoingEdges;

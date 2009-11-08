@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Bastian Doetsch				- implementation
+ *     Bastian Doetsch			 - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -29,77 +30,77 @@ import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
-    private final org.eclipse.core.resources.IProject project;
-    private final ISynchronizePageConfiguration configuration;
-    private final MercurialSynchronizeParticipant participant;
-    private final boolean update;
-    private final boolean isPull;
-    private final String revision;
+	private final org.eclipse.core.resources.IProject project;
+	private final ISynchronizePageConfiguration configuration;
+	private final MercurialSynchronizeParticipant participant;
+	private final boolean update;
+	private final boolean isPull;
+	private final String revision;
 
-    public PushPullSynchronizeOperation(
-            ISynchronizePageConfiguration configuration,
-            IDiffElement[] elements, IResource[] resources, String revision, boolean isPull, boolean update) {
-        super(configuration, elements);
-        this.project = resources[0].getProject();
-        this.configuration = configuration;
-        this.participant = (MercurialSynchronizeParticipant) this.configuration
-                .getParticipant();
-        this.revision = revision;
-        this.isPull = isPull;
-        this.update = update;
-    }
+	public PushPullSynchronizeOperation(
+			ISynchronizePageConfiguration configuration,
+			IDiffElement[] elements, IResource[] resources, String revision, boolean isPull, boolean update) {
+		super(configuration, elements);
+		this.project = resources[0].getProject();
+		this.configuration = configuration;
+		this.participant = (MercurialSynchronizeParticipant) this.configuration
+				.getParticipant();
+		this.revision = revision;
+		this.isPull = isPull;
+		this.update = update;
+	}
 
-    public PushPullSynchronizeOperation(
-            ISynchronizePageConfiguration configuration,
-            IDiffElement[] elements, IResource[] resources, boolean isPull, boolean update) {
-        this(configuration, elements, resources, null, isPull, update);
-    }
+	public PushPullSynchronizeOperation(
+			ISynchronizePageConfiguration configuration,
+			IDiffElement[] elements, IResource[] resources, boolean isPull, boolean update) {
+		this(configuration, elements, resources, null, isPull, update);
+	}
 
-    public void run(IProgressMonitor monitor) throws InvocationTargetException,
-            InterruptedException {
-        monitor.beginTask(isPull ? Messages.getString("PushPullSynchronizeOperation.PullTask")
-                : Messages.getString("PushPullSynchronizeOperation.PushTask")
-                + project, 1);
-        new SafeUiJob(isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
-                : Messages.getString("PushPullSynchronizeOperation.PushJob")) {
+	public void run(IProgressMonitor monitor) throws InvocationTargetException,
+			InterruptedException {
+		monitor.beginTask(isPull ? Messages.getString("PushPullSynchronizeOperation.PullTask")
+				: Messages.getString("PushPullSynchronizeOperation.PushTask")
+				+ project, 1);
+		new SafeUiJob(isPull ? Messages.getString("PushPullSynchronizeOperation.PullJob")
+				: Messages.getString("PushPullSynchronizeOperation.PushJob")) {
 
-            @Override
-            protected IStatus runSafe(IProgressMonitor moni) {
-                try {
-                    HgRepositoryLocation location = participant
-                            .getRepositoryLocation();
+			@Override
+			protected IStatus runSafe(IProgressMonitor moni) {
+				try {
+					HgRepositoryLocation location = participant
+							.getRepositoryLocation();
 
-                    if (location != null) {
-                        if (isPull) {
-                            HgPushPullClient.pull(project, location, update);
-                        } else {
-                            HgPushPullClient.push(project, location, false, revision, Integer.MAX_VALUE);
-                            new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.OUTGOING).schedule();
-                        }
-                    }
-                } catch (HgException ex) {
-                    MercurialEclipsePlugin.logError(ex);
-                    return ex.getStatus();
-                }
-                return super.runSafe(moni);
-            }
+					if (location != null) {
+						if (isPull) {
+							HgPushPullClient.pull(project, location, update);
+						} else {
+							HgPushPullClient.push(project, location, false, revision, Integer.MAX_VALUE);
+							new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.OUTGOING).schedule();
+						}
+					}
+				} catch (HgException ex) {
+					MercurialEclipsePlugin.logError(ex);
+					return ex.getStatus();
+				}
+				return super.runSafe(moni);
+			}
 
-        }.schedule();
-        monitor.done();
-    }
+		}.schedule();
+		monitor.done();
+	}
 
-    /**
-     * @return the isPull
-     */
-    public boolean isPull() {
-        return isPull;
-    }
+	/**
+	 * @return the isPull
+	 */
+	public boolean isPull() {
+		return isPull;
+	}
 
-    /**
-     * @return the revision
-     */
-    public String getRevision() {
-        return revision;
-    }
+	/**
+	 * @return the revision
+	 */
+	public String getRevision() {
+		return revision;
+	}
 
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -20,44 +21,44 @@ import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 
 public class UpdateHandler extends SingleResourceHandler {
 
-    private String revision;
-    private boolean cleanEnabled;
+	private String revision;
+	private boolean cleanEnabled;
 
-    @Override
-    public void run(IResource resource) throws Exception {
-        final IProject project = resource.getProject();
-        boolean dirty = HgStatusClient.isDirty(project);
-        if (dirty) {
-            final boolean[] result = new boolean[1];
-            if(Display.getCurrent() == null){
-                Display.getDefault().syncExec(new Runnable() {
-                    public void run() {
-                        result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
-                        "Your project has uncommited changes.\nDo you really want to continue?");
-                    }
-                });
-            } else {
-                result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
-                "Your project has uncommited changes.\nDo you really want to continue?");
-            }
-            if (!result[0]) {
-                return;
-            }
-        }
-        HgUpdateClient.update(project, revision, cleanEnabled);
-    }
+	@Override
+	public void run(IResource resource) throws Exception {
+		final IProject project = resource.getProject();
+		boolean dirty = HgStatusClient.isDirty(project);
+		if (dirty) {
+			final boolean[] result = new boolean[1];
+			if(Display.getCurrent() == null){
+				Display.getDefault().syncExec(new Runnable() {
+					public void run() {
+						result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
+						"Your project has uncommited changes.\nDo you really want to continue?");
+					}
+				});
+			} else {
+				result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
+				"Your project has uncommited changes.\nDo you really want to continue?");
+			}
+			if (!result[0]) {
+				return;
+			}
+		}
+		HgUpdateClient.update(project, revision, cleanEnabled);
+	}
 
-    /**
-     * @param revision the revision to use for the '-r' option, can be null
-     */
-    public void setRevision(String revision) {
-        this.revision = revision;
-    }
+	/**
+	 * @param revision the revision to use for the '-r' option, can be null
+	 */
+	public void setRevision(String revision) {
+		this.revision = revision;
+	}
 
-    /**
-     * @param cleanEnabled true to add '-C' option
-     */
-    public void setCleanEnabled(boolean cleanEnabled) {
-        this.cleanEnabled = cleanEnabled;
-    }
+	/**
+	 * @param cleanEnabled true to add '-C' option
+	 */
+	public void setCleanEnabled(boolean cleanEnabled) {
+		this.cleanEnabled = cleanEnabled;
+	}
 }

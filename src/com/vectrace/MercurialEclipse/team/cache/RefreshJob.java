@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - init
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -36,78 +37,78 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  *
  */
 public final class RefreshJob extends SafeWorkspaceJob {
-    public static final int LOCAL = 1;
-    public static final int INCOMING = 2;
-    public static final int OUTGOING = 4;
-    public static final int LOCAL_AND_INCOMING = LOCAL | INCOMING;
-    public static final int LOCAL_AND_OUTGOING = LOCAL | OUTGOING;
-    public static final int ALL = LOCAL | INCOMING | OUTGOING;
+	public static final int LOCAL = 1;
+	public static final int INCOMING = 2;
+	public static final int OUTGOING = 4;
+	public static final int LOCAL_AND_INCOMING = LOCAL | INCOMING;
+	public static final int LOCAL_AND_OUTGOING = LOCAL | OUTGOING;
+	public static final int ALL = LOCAL | INCOMING | OUTGOING;
 
-    private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
-            .getInstance();
+	private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
+			.getInstance();
 
-    private final IProject project;
-    private final boolean withFiles;
-    private final int type;
+	private final IProject project;
+	private final boolean withFiles;
+	private final int type;
 
-    public RefreshJob(String name, IProject project, int type) {
-        super(name);
-        this.project = project;
-        this.withFiles = getWithFilesProperty();
-        this.type = type;
-    }
+	public RefreshJob(String name, IProject project, int type) {
+		super(name);
+		this.project = project;
+		this.withFiles = getWithFilesProperty();
+		this.type = type;
+	}
 
-    public RefreshJob(String name, IProject project) {
-        this(name, project, ALL);
-    }
+	public RefreshJob(String name, IProject project) {
+		this(name, project, ALL);
+	}
 
-    private static boolean getWithFilesProperty() {
-        return Boolean.valueOf(
-                HgClients.getPreference(
-                        MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-                        "false")).booleanValue();
-    }
+	private static boolean getWithFilesProperty() {
+		return Boolean.valueOf(
+				HgClients.getPreference(
+						MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+						"false")).booleanValue();
+	}
 
-    @Override
-    protected IStatus runSafe(IProgressMonitor monitor) {
-        if(monitor == null){
-            monitor = new NullProgressMonitor();
-        }
+	@Override
+	protected IStatus runSafe(IProgressMonitor monitor) {
+		if(monitor == null){
+			monitor = new NullProgressMonitor();
+		}
 
-        if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-            System.out.println("Refresh Job for: " + project);
-        }
+		if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+			System.out.println("Refresh Job for: " + project);
+		}
 
-        try {
-            if((type & LOCAL) != 0){
-                monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-                LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
-                monitor.worked(1);
+		try {
+			if((type & LOCAL) != 0){
+				monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
+				LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
+				monitor.worked(1);
 
-                monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
-                mercurialStatusCache.clear(project, false);
-                mercurialStatusCache.refreshStatus(project, monitor);
-                monitor.worked(1);
-            }
-            if((type & OUTGOING) == 0 && (type & INCOMING) == 0){
-                return super.runSafe(monitor);
-            }
-            Set<HgRepositoryLocation> repoLocations = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
-            for (HgRepositoryLocation repositoryLocation : repoLocations) {
-                if((type & INCOMING) != 0){
-                    monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + repositoryLocation);
-                    IncomingChangesetCache.getInstance().clear(repositoryLocation, project, true);
-                    monitor.worked(1);
-                }
-                if((type & OUTGOING) != 0){
-                    monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + repositoryLocation);
-                    OutgoingChangesetCache.getInstance().clear(repositoryLocation, project, true);
-                    monitor.worked(1);
-                }
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-        return super.runSafe(monitor);
-    }
+				monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
+				mercurialStatusCache.clear(project, false);
+				mercurialStatusCache.refreshStatus(project, monitor);
+				monitor.worked(1);
+			}
+			if((type & OUTGOING) == 0 && (type & INCOMING) == 0){
+				return super.runSafe(monitor);
+			}
+			Set<HgRepositoryLocation> repoLocations = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
+			for (HgRepositoryLocation repositoryLocation : repoLocations) {
+				if((type & INCOMING) != 0){
+					monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + repositoryLocation);
+					IncomingChangesetCache.getInstance().clear(repositoryLocation, project, true);
+					monitor.worked(1);
+				}
+				if((type & OUTGOING) != 0){
+					monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + repositoryLocation);
+					OutgoingChangesetCache.getInstance().clear(repositoryLocation, project, true);
+					monitor.worked(1);
+				}
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		return super.runSafe(monitor);
+	}
 }

@@ -17,48 +17,48 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class BackoutWizard extends HgWizard {
-    private IProject project;    
+	private IProject project;
 
-    private BackoutWizard() {
-        super(Messages.getString("BackoutWizard.title")); //$NON-NLS-1$
-        setNeedsProgressMonitor(true);       
-    }
+	private BackoutWizard() {
+		super(Messages.getString("BackoutWizard.title")); //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+	}
 
-    public BackoutWizard(IResource resource) {
-        this();
-        this.project = resource.getProject();
-    }
+	public BackoutWizard(IResource resource) {
+		this();
+		this.project = resource.getProject();
+	}
 
-    @Override
-    public void addPages() {
-        super.addPages();
-        page = createPage(Messages.getString("BackoutWizard.pageName"), Messages.getString("BackoutWizard.pageTitle"),null, //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("BackoutWizard.pageDescription") ); //$NON-NLS-1$
-        addPage(page);
-    }
+	@Override
+	public void addPages() {
+		super.addPages();
+		page = createPage(Messages.getString("BackoutWizard.pageName"), Messages.getString("BackoutWizard.pageTitle"),null, //$NON-NLS-1$ //$NON-NLS-2$
+				Messages.getString("BackoutWizard.pageDescription") ); //$NON-NLS-1$
+		addPage(page);
+	}
 
-    /**
-     * Creates a ConfigurationWizardPage.
-     */
-    protected HgWizardPage createPage(String pageName, String pageTitle,
-            String iconPath, String description) {
-        this.page = new BackoutWizardPage(pageName, pageTitle,
-                MercurialEclipsePlugin.getImageDescriptor(iconPath), project);
-        initPage(description, page);
-        return page;
-    }
+	/**
+	 * Creates a ConfigurationWizardPage.
+	 */
+	protected HgWizardPage createPage(String pageName, String pageTitle,
+			String iconPath, String description) {
+		this.page = new BackoutWizardPage(pageName, pageTitle,
+				MercurialEclipsePlugin.getImageDescriptor(iconPath), project);
+		initPage(description, page);
+		return page;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-     */
-    @Override
-    public boolean performFinish() {
-        return super.performFinish();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 */
+	@Override
+	public boolean performFinish() {
+		return super.performFinish();
+	}
 
 }

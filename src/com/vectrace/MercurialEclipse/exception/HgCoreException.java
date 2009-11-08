@@ -16,25 +16,25 @@ package com.vectrace.MercurialEclipse.exception;
  */
 public class HgCoreException extends RuntimeException {
 
-    public HgCoreException() {
-        super();
-    }
+	public HgCoreException() {
+		super();
+	}
 
-    public HgCoreException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	public HgCoreException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    public HgCoreException(String message) {
-        super(message);
-    }
+	public HgCoreException(String message) {
+		super(message);
+	}
 
-    public HgCoreException(Throwable cause) {
-        super(cause);
-    }
+	public HgCoreException(Throwable cause) {
+		super(cause);
+	}
 
-    /**
-     * 
-     */
-    private static final long serialVersionUID = -582465463467902805L;
+	/**
+	 *
+	 */
+	private static final long serialVersionUID = -582465463467902805L;
 
 }

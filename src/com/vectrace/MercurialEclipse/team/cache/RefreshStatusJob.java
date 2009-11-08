@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - init
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -24,28 +25,28 @@ import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
  */
 public class RefreshStatusJob extends SafeWorkspaceJob {
 
-    private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
-            .getInstance();
-    private final IProject project;
+	private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
+			.getInstance();
+	private final IProject project;
 
-    public RefreshStatusJob(String name, IProject project) {
-        super(name);
-        this.project = project;
-        /*
-        if(MercurialEclipsePlugin.getDefault().isDebugging()){
-            new Exception("refreshStatus " + project).printStackTrace();
-        }
-        */
-    }
+	public RefreshStatusJob(String name, IProject project) {
+		super(name);
+		this.project = project;
+		/*
+		if(MercurialEclipsePlugin.getDefault().isDebugging()){
+			new Exception("refreshStatus " + project).printStackTrace();
+		}
+		*/
+	}
 
-    @Override
-    protected IStatus runSafe(IProgressMonitor monitor) {
-        try {
-            monitor.beginTask(Messages.refreshStatusJob_OptainingMercurialStatusInformation, 5);
-            mercurialStatusCache.refreshStatus(project, monitor);
-        } catch (TeamException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-        return super.runSafe(monitor);
-    }
+	@Override
+	protected IStatus runSafe(IProgressMonitor monitor) {
+		try {
+			monitor.beginTask(Messages.refreshStatusJob_OptainingMercurialStatusInformation, 5);
+			mercurialStatusCache.refreshStatus(project, monitor);
+		} catch (TeamException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		return super.runSafe(monitor);
+	}
 }

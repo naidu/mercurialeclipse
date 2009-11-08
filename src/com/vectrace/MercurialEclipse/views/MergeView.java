@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
@@ -60,310 +61,310 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener, Observer {
 
-    public final static String ID = MergeView.class.getName();
+	public final static String ID = MergeView.class.getName();
 
-    private Label statusLabel;
-    private Table table;
+	private Label statusLabel;
+	private Table table;
 
-    private Action abortAction;
+	private Action abortAction;
 
-    private IProject currentProject;
+	private IProject currentProject;
 
-    private Action markResolvedAction;
+	private Action markResolvedAction;
 
-    private Action markUnresolvedAction;
+	private Action markUnresolvedAction;
 
-    @Override
-    public void createPartControl(final Composite parent) {
-        parent.setLayout(new GridLayout(1, false));
+	@Override
+	public void createPartControl(final Composite parent) {
+		parent.setLayout(new GridLayout(1, false));
 
-        statusLabel = new Label(parent, SWT.NONE);
-        statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		statusLabel = new Label(parent, SWT.NONE);
+		statusLabel.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
-        table = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
-                | SWT.V_SCROLL | SWT.H_SCROLL);
-        table.setLinesVisible(true);
-        table.setHeaderVisible(true);
-        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-        data.heightHint = 200;
-        table.setLayoutData(data);
+		table = new Table(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+				| SWT.V_SCROLL | SWT.H_SCROLL);
+		table.setLinesVisible(true);
+		table.setHeaderVisible(true);
+		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+		data.heightHint = 200;
+		table.setLayoutData(data);
 
-        table.addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetDefaultSelected(SelectionEvent event) {
-                try {
-                    TableItem item = (TableItem) event.item;
-                    FlaggedAdaptable flagged = (FlaggedAdaptable) item
-                            .getData();
-                    IFile file = (IFile) flagged.getAdapter(IFile.class);
+		table.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetDefaultSelected(SelectionEvent event) {
+				try {
+					TableItem item = (TableItem) event.item;
+					FlaggedAdaptable flagged = (FlaggedAdaptable) item
+							.getData();
+					IFile file = (IFile) flagged.getAdapter(IFile.class);
 
-                    String mergeNodeId = currentProject
-                            .getPersistentProperty(ResourceProperties.MERGING);
+					String mergeNodeId = currentProject
+							.getPersistentProperty(ResourceProperties.MERGING);
 
-                    String[] parents = HgParentClient
-                            .getParentNodeIds(currentProject);
-                    int ancestor = HgParentClient.findCommonAncestor(
-                            currentProject.getLocation().toFile(), parents[0],
-                            parents[1]);
+					String[] parents = HgParentClient
+							.getParentNodeIds(currentProject);
+					int ancestor = HgParentClient.findCommonAncestor(
+							currentProject.getLocation().toFile(), parents[0],
+							parents[1]);
 
-                    RevisionNode mergeNode = new RevisionNode(
-                            new MercurialRevisionStorage(file, mergeNodeId));
-                    RevisionNode ancestorNode = new RevisionNode(
-                            new MercurialRevisionStorage(file, ancestor));
+					RevisionNode mergeNode = new RevisionNode(
+							new MercurialRevisionStorage(file, mergeNodeId));
+					RevisionNode ancestorNode = new RevisionNode(
+							new MercurialRevisionStorage(file, ancestor));
 
-                    HgCompareEditorInput compareInput = new HgCompareEditorInput(
-                            new CompareConfiguration(), file, ancestorNode,
-                            mergeNode, true);
+					HgCompareEditorInput compareInput = new HgCompareEditorInput(
+							new CompareConfiguration(), file, ancestorNode,
+							mergeNode, true);
 
-                    int returnValue = CompareUtils
-                            .openCompareDialog(compareInput);
-                    if (returnValue == Window.OK
-                            && markResolvedAction.isEnabled()) {
-                        markResolvedAction.run();
-                    }
-                } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
-                    MercurialEclipsePlugin.showError(e);
-                }
-            }
-        });
+					int returnValue = CompareUtils
+							.openCompareDialog(compareInput);
+					if (returnValue == Window.OK
+							&& markResolvedAction.isEnabled()) {
+						markResolvedAction.run();
+					}
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+					MercurialEclipsePlugin.showError(e);
+				}
+			}
+		});
 
-        String[] titles = { Messages.getString("MergeView.column.status"), Messages.getString("MergeView.column.file") }; //$NON-NLS-1$ //$NON-NLS-2$
-        int[] widths = { 100, 400 };
-        for (int i = 0; i < titles.length; i++) {
-            TableColumn column = new TableColumn(table, SWT.NONE);
-            column.setText(titles[i]);
-            column.setWidth(widths[i]);
-        }
+		String[] titles = { Messages.getString("MergeView.column.status"), Messages.getString("MergeView.column.file") }; //$NON-NLS-1$ //$NON-NLS-2$
+		int[] widths = { 100, 400 };
+		for (int i = 0; i < titles.length; i++) {
+			TableColumn column = new TableColumn(table, SWT.NONE);
+			column.setText(titles[i]);
+			column.setWidth(widths[i]);
+		}
 
-        createToolBar();
-        getSite().getPage().addSelectionListener(this);
-        MercurialStatusCache.getInstance().addObserver(this);
-    }
+		createToolBar();
+		getSite().getPage().addSelectionListener(this);
+		MercurialStatusCache.getInstance().addObserver(this);
+	}
 
-    private void createToolBar() {
-        IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
+	private void createToolBar() {
+		IToolBarManager mgr = getViewSite().getActionBars().getToolBarManager();
 
-        abortAction = new Action(Messages.getString("MergeView.abort")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                try {
-                    UpdateHandler update = new UpdateHandler();
-                    update.setCleanEnabled(true);
-                    update.setRevision(".");
-                    update.setShell(table.getShell());
-                    update.run(currentProject);
-                } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
-                    statusLabel.setText(e.getLocalizedMessage());
-                }
-            }
-        };
-        abortAction.setEnabled(false);
-        mgr.add(abortAction);
-        markResolvedAction = new Action(Messages.getString("MergeView.markResolved")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                try {
-                    IFile file = getSelection();
-                    if (file != null) {
-                        if (HgResolveClient.checkAvailable()) {
-                            HgResolveClient.markResolved(file);
-                        } else {
-                            HgIMergeClient.markResolved(file);
-                        }
-                        populateView(true);
-                    }
-                } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
-                    statusLabel.setText(e.getLocalizedMessage());
-                }
-            }
-        };
-        markResolvedAction.setEnabled(false);
-        mgr.add(markResolvedAction);
-        markUnresolvedAction = new Action(Messages.getString("MergeView.markUnresolved")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                try {
-                    IFile file = getSelection();
-                    if (file != null) {
-                        if (HgResolveClient.checkAvailable()) {
-                            HgResolveClient.markUnresolved(file);
-                        } else {
-                            HgIMergeClient.markUnresolved(file);
-                        }
-                        populateView(true);
-                    }
-                } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
-                    statusLabel.setText(e.getLocalizedMessage());
-                }
-            }
-        };
-        markUnresolvedAction.setEnabled(false);
-        mgr.add(markUnresolvedAction);
-    }
+		abortAction = new Action(Messages.getString("MergeView.abort")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				try {
+					UpdateHandler update = new UpdateHandler();
+					update.setCleanEnabled(true);
+					update.setRevision(".");
+					update.setShell(table.getShell());
+					update.run(currentProject);
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+					statusLabel.setText(e.getLocalizedMessage());
+				}
+			}
+		};
+		abortAction.setEnabled(false);
+		mgr.add(abortAction);
+		markResolvedAction = new Action(Messages.getString("MergeView.markResolved")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				try {
+					IFile file = getSelection();
+					if (file != null) {
+						if (HgResolveClient.checkAvailable()) {
+							HgResolveClient.markResolved(file);
+						} else {
+							HgIMergeClient.markResolved(file);
+						}
+						populateView(true);
+					}
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+					statusLabel.setText(e.getLocalizedMessage());
+				}
+			}
+		};
+		markResolvedAction.setEnabled(false);
+		mgr.add(markResolvedAction);
+		markUnresolvedAction = new Action(Messages.getString("MergeView.markUnresolved")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				try {
+					IFile file = getSelection();
+					if (file != null) {
+						if (HgResolveClient.checkAvailable()) {
+							HgResolveClient.markUnresolved(file);
+						} else {
+							HgIMergeClient.markUnresolved(file);
+						}
+						populateView(true);
+					}
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+					statusLabel.setText(e.getLocalizedMessage());
+				}
+			}
+		};
+		markUnresolvedAction.setEnabled(false);
+		mgr.add(markUnresolvedAction);
+	}
 
-    private void populateView(boolean attemptToCommit) throws HgException {
-        statusLabel.setText(currentProject.getName());
-        List<FlaggedAdaptable> status = null;
-        if (HgResolveClient.checkAvailable()) {
-            //HgResolveClient.resolveAll(currentProject.getLocation().toFile());
-            status = HgResolveClient.list(currentProject);
-        } else {
-            status = HgIMergeClient.getMergeStatus(currentProject);
-        }
-        table.removeAll();
-        for (FlaggedAdaptable flagged : status) {
-            TableItem row = new TableItem(table, SWT.NONE);
-            row.setText(0, flagged.getStatus());
-            IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
-            row.setText(1, iFile.getProjectRelativePath().toString());
-            row.setData(flagged);
-            if (flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
-                row.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
-            }
-        }
-        abortAction.setEnabled(true);
-        markResolvedAction.setEnabled(true);
-        markUnresolvedAction.setEnabled(true);
+	private void populateView(boolean attemptToCommit) throws HgException {
+		statusLabel.setText(currentProject.getName());
+		List<FlaggedAdaptable> status = null;
+		if (HgResolveClient.checkAvailable()) {
+			//HgResolveClient.resolveAll(currentProject.getLocation().toFile());
+			status = HgResolveClient.list(currentProject);
+		} else {
+			status = HgIMergeClient.getMergeStatus(currentProject);
+		}
+		table.removeAll();
+		for (FlaggedAdaptable flagged : status) {
+			TableItem row = new TableItem(table, SWT.NONE);
+			row.setText(0, flagged.getStatus());
+			IFile iFile = ((IFile) flagged.getAdapter(IFile.class));
+			row.setText(1, iFile.getProjectRelativePath().toString());
+			row.setData(flagged);
+			if (flagged.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
+				row.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
+			}
+		}
+		abortAction.setEnabled(true);
+		markResolvedAction.setEnabled(true);
+		markUnresolvedAction.setEnabled(true);
 
-        if(attemptToCommit) {
-            attemptToCommitMerge();
-        }
-    }
+		if(attemptToCommit) {
+			attemptToCommitMerge();
+		}
+	}
 
-    private void attemptToCommitMerge() {
-        try {
-            String mergeNode = currentProject.getPersistentProperty(ResourceProperties.MERGING);
+	private void attemptToCommitMerge() {
+		try {
+			String mergeNode = currentProject.getPersistentProperty(ResourceProperties.MERGING);
 
-            // offer commit of merge exactly once if no conflicts
-            // are found
-            boolean allResolved = areAllResolved();
-            if (allResolved) {
-                this.statusLabel.setText(currentProject.getName()
-                                + Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
-                                + mergeNode);
-                if (currentProject
-                        .getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
-                    new CommitMergeHandler()
-                            .commitMergeWithCommitDialog(
-                                    this.currentProject, getSite()
-                                            .getShell());
-                    currentProject
-                            .setSessionProperty(
-                                    ResourceProperties.MERGE_COMMIT_OFFERED,
-                                    "true"); //$NON-NLS-1$
-                }
-            }
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-    }
+			// offer commit of merge exactly once if no conflicts
+			// are found
+			boolean allResolved = areAllResolved();
+			if (allResolved) {
+				this.statusLabel.setText(currentProject.getName()
+								+ Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
+								+ mergeNode);
+				if (currentProject
+						.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
+					new CommitMergeHandler()
+							.commitMergeWithCommitDialog(
+									this.currentProject, getSite()
+											.getShell());
+					currentProject
+							.setSessionProperty(
+									ResourceProperties.MERGE_COMMIT_OFFERED,
+									"true"); //$NON-NLS-1$
+				}
+			}
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
 
-    public void clearView() {
-        statusLabel.setText(""); //$NON-NLS-1$
-        table.removeAll();
-        currentProject = null;
-        abortAction.setEnabled(false);
-        markResolvedAction.setEnabled(false);
-        markUnresolvedAction.setEnabled(false);
-    }
+	public void clearView() {
+		statusLabel.setText(""); //$NON-NLS-1$
+		table.removeAll();
+		currentProject = null;
+		abortAction.setEnabled(false);
+		markResolvedAction.setEnabled(false);
+		markUnresolvedAction.setEnabled(false);
+	}
 
-    public void setCurrentProject(IProject project) {
-        if (currentProject != project && project != null && project.isAccessible()) {
-            try {
-                if (project
-                        .getPersistentProperty(ResourceProperties.MERGING) != null) {
-                    currentProject = project;
-                    populateView(false);
-                } else {
-                    clearView();
-                }
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-    }
+	public void setCurrentProject(IProject project) {
+		if (currentProject != project && project != null && project.isAccessible()) {
+			try {
+				if (project
+						.getPersistentProperty(ResourceProperties.MERGING) != null) {
+					currentProject = project;
+					populateView(false);
+				} else {
+					clearView();
+				}
+			} catch (Exception e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+	}
 
-    private boolean areAllResolved() {
-        boolean allResolved = true;
-        if (table.getItems() != null
-                && table.getItems().length > 0) {
-            for (TableItem item : table.getItems()) {
-                FlaggedAdaptable fa = (FlaggedAdaptable) item
-                        .getData();
-                allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
-            }
-        }
-        return allResolved;
-    }
+	private boolean areAllResolved() {
+		boolean allResolved = true;
+		if (table.getItems() != null
+				&& table.getItems().length > 0) {
+			for (TableItem item : table.getItems()) {
+				FlaggedAdaptable fa = (FlaggedAdaptable) item
+						.getData();
+				allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
+			}
+		}
+		return allResolved;
+	}
 
-    public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-        if (selection instanceof IStructuredSelection) {
-            IStructuredSelection structured = (IStructuredSelection) selection;
-            if (structured.getFirstElement() instanceof IAdaptable) {
-                IResource resource = (IResource) ((IAdaptable) structured
-                        .getFirstElement()).getAdapter(IResource.class);
-                if (resource != null) {
-                    setCurrentProject(resource.getProject());
-                    return;
-                }
-            }
-        }
-        if (part instanceof IEditorPart) {
-            IEditorInput input = ((IEditorPart) part).getEditorInput();
-            IFile file = (IFile) input.getAdapter(IFile.class);
-            if (file != null) {
-                setCurrentProject(file.getProject());
-                return;
-            }
-        }
-    }
+	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+		if (selection instanceof IStructuredSelection) {
+			IStructuredSelection structured = (IStructuredSelection) selection;
+			if (structured.getFirstElement() instanceof IAdaptable) {
+				IResource resource = (IResource) ((IAdaptable) structured
+						.getFirstElement()).getAdapter(IResource.class);
+				if (resource != null) {
+					setCurrentProject(resource.getProject());
+					return;
+				}
+			}
+		}
+		if (part instanceof IEditorPart) {
+			IEditorInput input = ((IEditorPart) part).getEditorInput();
+			IFile file = (IFile) input.getAdapter(IFile.class);
+			if (file != null) {
+				setCurrentProject(file.getProject());
+				return;
+			}
+		}
+	}
 
-    @Override
-    public void setFocus() {
-        table.setFocus();
-    }
+	@Override
+	public void setFocus() {
+		table.setFocus();
+	}
 
-    @Override
-    public void dispose() {
-        getSite().getPage().removeSelectionListener(this);
-        MercurialStatusCache.getInstance().deleteObserver(this);
-        super.dispose();
-    }
+	@Override
+	public void dispose() {
+		getSite().getPage().removeSelectionListener(this);
+		MercurialStatusCache.getInstance().deleteObserver(this);
+		super.dispose();
+	}
 
-    /**
-     * @return
-     */
-    private IFile getSelection() {
-        TableItem[] selection = table.getSelection();
-        if (selection != null && selection.length > 0) {
-            FlaggedAdaptable fa = (FlaggedAdaptable) table.getSelection()[0]
-                    .getData();
-            IFile iFile = ((IFile) fa.getAdapter(IFile.class));
-            return iFile;
-        }
-        return null;
-    }
+	/**
+	 * @return
+	 */
+	private IFile getSelection() {
+		TableItem[] selection = table.getSelection();
+		if (selection != null && selection.length > 0) {
+			FlaggedAdaptable fa = (FlaggedAdaptable) table.getSelection()[0]
+					.getData();
+			IFile iFile = ((IFile) fa.getAdapter(IFile.class));
+			return iFile;
+		}
+		return null;
+	}
 
-    public void update(Observable o, Object arg) {
-        if(currentProject == null || !(arg instanceof Set<?>)){
-            return;
-        }
-        Set<?> set = (Set<?>) arg;
+	public void update(Observable o, Object arg) {
+		if(currentProject == null || !(arg instanceof Set<?>)){
+			return;
+		}
+		Set<?> set = (Set<?>) arg;
 
-        if(set.contains(currentProject)){
-            Display.getDefault().asyncExec(new Runnable() {
+		if(set.contains(currentProject)){
+			Display.getDefault().asyncExec(new Runnable() {
 
-                public void run() {
-                    IProject backup = currentProject;
-                    clearView();
-                    setCurrentProject(backup);
-                }
-            });
-        }
-    }
+				public void run() {
+					IProject backup = currentProject;
+					clearView();
+					setCurrentProject(backup);
+				}
+			});
+		}
+	}
 
 }

@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Stefan	implementation
+ *     Stefan	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
@@ -32,207 +33,207 @@ import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
  * @author Stefan
  */
 public class DefaultConfiguration implements IConsole, IErrorHandler,
-        IConfiguration {
+		IConfiguration {
 
-    private interface WithConsole {
-        public void run(HgConsole console);
-    }
-    
-    /**
-     * 
-     */
-    public DefaultConfiguration() {
-    }
+	private interface WithConsole {
+		public void run(HgConsole console);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConfiguration#getDefaultUserName
-     * ()
-     */
-    public String getDefaultUserName() {
-        return MercurialUtilities.getHGUsername(false);
-    }
+	/**
+	 *
+	 */
+	public DefaultConfiguration() {
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConfiguration#getExecutable()
-     */
-    public String getExecutable() {
-        if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
-            MercurialUtilities.configureHgExecutable();
-            MercurialEclipsePlugin.getDefault().checkHgInstallation();
-        }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConfiguration#getDefaultUserName
+	 * ()
+	 */
+	public String getDefaultUserName() {
+		return MercurialUtilities.getHGUsername(false);
+	}
 
-        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConfiguration#getExecutable()
+	 */
+	public String getExecutable() {
+		if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
+			MercurialUtilities.configureHgExecutable();
+			MercurialEclipsePlugin.getDefault().checkHgInstallation();
+		}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConfiguration#getPreference(java
-     * .lang.String, java.lang.String)
-     */
-    public String getPreference(String preferenceConstant,
-            String defaultIfNotSet) {
-        return MercurialUtilities.getPreference(preferenceConstant,
-                defaultIfNotSet);
-    }
+		return MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IErrorHandler#logError(java.lang
-     * .Throwable)
-     */
-    public void logError(Throwable e) {
-        MercurialEclipsePlugin.logError(e);
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConfiguration#getPreference(java
+	 * .lang.String, java.lang.String)
+	 */
+	public String getPreference(String preferenceConstant,
+			String defaultIfNotSet) {
+		return MercurialUtilities.getPreference(preferenceConstant,
+				defaultIfNotSet);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IErrorHandler#logWarning(java.
-     * lang.String, java.lang.Throwable)
-     */
-    public void logWarning(String message, Throwable e) {
-        MercurialEclipsePlugin.logWarning(message, e);
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IErrorHandler#logError(java.lang
+	 * .Throwable)
+	 */
+	public void logError(Throwable e) {
+		MercurialEclipsePlugin.logError(e);
+	}
 
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IErrorHandler#logWarning(java.
+	 * lang.String, java.lang.Throwable)
+	 */
+	public void logWarning(String message, Throwable e) {
+		MercurialEclipsePlugin.logWarning(message, e);
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConfiguration#getTimeOut(java
-     * .lang.String)
-     */
-    public int getTimeOut(String commandId) {
-        int timeout = AbstractShellCommand.DEFAULT_TIMEOUT;
-        String pref = getPreference(commandId, String.valueOf(timeout));
-        try {
-            timeout = Integer.parseInt(pref);
-            if (timeout < 0) {
-                throw new NumberFormatException(Messages.getString("DefaultConfiguration.timoutLessThanEqual")); //$NON-NLS-1$
-            }
-        } catch (NumberFormatException e) {
-            logWarning(Messages.getString("DefaultConfiguration.timeoutForCommand") + commandId //$NON-NLS-1$
-                    + Messages.getString("DefaultConfiguration.notCorrectlyConfigured"), e); //$NON-NLS-1$
-        }
-        return timeout;
-    }
+	}
 
-    /*
-     * ======================================================
-     * 
-     * IConsole methods below
-     * 
-     * ======================================================
-     */
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConfiguration#getTimeOut(java
+	 * .lang.String)
+	 */
+	public int getTimeOut(String commandId) {
+		int timeout = AbstractShellCommand.DEFAULT_TIMEOUT;
+		String pref = getPreference(commandId, String.valueOf(timeout));
+		try {
+			timeout = Integer.parseInt(pref);
+			if (timeout < 0) {
+				throw new NumberFormatException(Messages.getString("DefaultConfiguration.timoutLessThanEqual")); //$NON-NLS-1$
+			}
+		} catch (NumberFormatException e) {
+			logWarning(Messages.getString("DefaultConfiguration.timeoutForCommand") + commandId //$NON-NLS-1$
+					+ Messages.getString("DefaultConfiguration.notCorrectlyConfigured"), e); //$NON-NLS-1$
+		}
+		return timeout;
+	}
 
-    /*
-     * (non-Javadoc) exitcodes 0 == ok, 1 == warning, all other are errors
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConsole#commandCompleted(int,
-     * java.lang.String, java.lang.Throwable)
-     */
-    public void commandCompleted(final int exitCode, final String message, final Throwable error) {
-        run(new WithConsole() {
-            public void run(HgConsole console) {
-                int severity = IStatus.OK;
-                switch (exitCode) {
-                case 0:
-                    severity = IStatus.OK;
-                    break;
-                case 1:
-                    severity = IStatus.OK;
-                    break;
-                default:
-                    severity = IStatus.ERROR;
-                }
-                console.commandCompleted(new Status(severity, MercurialEclipsePlugin.ID,
-                        message), error);
-            }
-        });
-    }
-    
-    private void run(final WithConsole r) {
-        MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
-            public void run() {
-                r.run(HgConsoleHolder.getInstance().getConsole());
-            }
-        });
-    }
+	/*
+	 * ======================================================
+	 *
+	 * IConsole methods below
+	 *
+	 * ======================================================
+	 */
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConsole#commandInvoked(java.lang
-     * .String)
-     */
-    public void commandInvoked(final String command) {
-        run(new WithConsole() {
-            public void run(HgConsole console) {
-                console.commandInvoked(command);
-            }
-        });
-    }
+	/*
+	 * (non-Javadoc) exitcodes 0 == ok, 1 == warning, all other are errors
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConsole#commandCompleted(int,
+	 * java.lang.String, java.lang.Throwable)
+	 */
+	public void commandCompleted(final int exitCode, final String message, final Throwable error) {
+		run(new WithConsole() {
+			public void run(HgConsole console) {
+				int severity = IStatus.OK;
+				switch (exitCode) {
+				case 0:
+					severity = IStatus.OK;
+					break;
+				case 1:
+					severity = IStatus.OK;
+					break;
+				default:
+					severity = IStatus.ERROR;
+				}
+				console.commandCompleted(new Status(severity, MercurialEclipsePlugin.ID,
+						message), error);
+			}
+		});
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConsole#printError(java.lang.
-     * String, java.lang.Throwable)
-     */
-    public void printError(final String message, final Throwable root) {
-        run(new WithConsole() {
-            public void run(HgConsole console) {
-                console.errorLineReceived(root.getMessage(),
-                        new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                                message, root));
-            }
-        });
-    }
+	private void run(final WithConsole r) {
+		MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
+			public void run() {
+				r.run(HgConsoleHolder.getInstance().getConsole());
+			}
+		});
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang
-     * .String, java.lang.Throwable)
-     */
-    public void printMessage(final String message, final Throwable root) {
-        run(new WithConsole() {
-            public void run(HgConsole console) {
-                console.messageLineReceived(message, new Status(IStatus.INFO,
-                        MercurialEclipsePlugin.ID, message, root));
-            }
-        });
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConsole#commandInvoked(java.lang
+	 * .String)
+	 */
+	public void commandInvoked(final String command) {
+		run(new WithConsole() {
+			public void run(HgConsole console) {
+				console.commandInvoked(command);
+			}
+		});
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.commands.IConfiguration#getHgRoot(java.
-     * io.File)
-     */
-    public HgRoot getHgRoot(File file) {
-        try {
-            return MercurialTeamProvider.getHgRoot(file);
-        } catch (CoreException e) {
-            throw new HgCoreException(e);
-        }
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConsole#printError(java.lang.
+	 * String, java.lang.Throwable)
+	 */
+	public void printError(final String message, final Throwable root) {
+		run(new WithConsole() {
+			public void run(HgConsole console) {
+				console.errorLineReceived(root.getMessage(),
+						new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+								message, root));
+			}
+		});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConsole#printMessage(java.lang
+	 * .String, java.lang.Throwable)
+	 */
+	public void printMessage(final String message, final Throwable root) {
+		run(new WithConsole() {
+			public void run(HgConsole console) {
+				console.messageLineReceived(message, new Status(IStatus.INFO,
+						MercurialEclipsePlugin.ID, message, root));
+			}
+		});
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.commands.IConfiguration#getHgRoot(java.
+	 * io.File)
+	 */
+	public HgRoot getHgRoot(File file) {
+		try {
+			return MercurialTeamProvider.getHgRoot(file);
+		} catch (CoreException e) {
+			throw new HgCoreException(e);
+		}
+	}
 
 }

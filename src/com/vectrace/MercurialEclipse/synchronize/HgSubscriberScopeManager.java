@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei	implementation
+ *     Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -39,217 +39,217 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
  */
 public class HgSubscriberScopeManager extends SubscriberScopeManager implements Observer {
 
-    public static final int INCOMING = -1;
-    public static final int OUTGOING = -2;
-    public static final int LOCAL = -3;
-    private final IPropertyListener branchListener;
+	public static final int INCOMING = -1;
+	public static final int OUTGOING = -2;
+	public static final int LOCAL = -3;
+	private final IPropertyListener branchListener;
 
-    public HgSubscriberScopeManager(ResourceMapping[] inputMappings, MercurialSynchronizeSubscriber subscriber) {
-        super(HgSubscriberScopeManager.class.getSimpleName(), inputMappings, subscriber, false);
+	public HgSubscriberScopeManager(ResourceMapping[] inputMappings, MercurialSynchronizeSubscriber subscriber) {
+		super(HgSubscriberScopeManager.class.getSimpleName(), inputMappings, subscriber, false);
 
-        MercurialStatusCache.getInstance().addObserver(this);
-        IncomingChangesetCache.getInstance().addObserver(this);
-        OutgoingChangesetCache.getInstance().addObserver(this);
-        branchListener = new IPropertyListener() {
-            public void propertyChanged(Object source, int propId) {
-                MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
-                subscriber1.branchChanged((IProject) source);
-            }
-        };
-        MercurialTeamProvider.addBranchListener(branchListener);
-    }
+		MercurialStatusCache.getInstance().addObserver(this);
+		IncomingChangesetCache.getInstance().addObserver(this);
+		OutgoingChangesetCache.getInstance().addObserver(this);
+		branchListener = new IPropertyListener() {
+			public void propertyChanged(Object source, int propId) {
+				MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
+				subscriber1.branchChanged((IProject) source);
+			}
+		};
+		MercurialTeamProvider.addBranchListener(branchListener);
+	}
 
-    public void update(Observable o, Object arg) {
-        if(!(arg instanceof Set<?>)){
-            return;
-        }
-        Set<ISubscriberChangeEvent> changeEvents = new HashSet<ISubscriberChangeEvent>();
-        Set<?> resources = (Set<?>) arg;
-        IResource[] roots = getSubscriber().roots();
-        boolean projectRefresh = false;
-        int flags = ISubscriberChangeEvent.SYNC_CHANGED;
-        for (Object res : resources) {
-            if(!(res instanceof IResource)) {
-                continue;
-            }
-            IResource resource = (IResource)res;
-            for (IResource root : roots) {
-                if(root.contains(resource)) {
-                    if(!projectRefresh && resource.contains(root)){
-                        projectRefresh = true;
-                    }
-                    changeEvents.add(new HgSubscriberChangeEvent(getSubscriber(), flags, resource));
-                    break;
-                }
-            }
-        }
+	public void update(Observable o, Object arg) {
+		if(!(arg instanceof Set<?>)){
+			return;
+		}
+		Set<ISubscriberChangeEvent> changeEvents = new HashSet<ISubscriberChangeEvent>();
+		Set<?> resources = (Set<?>) arg;
+		IResource[] roots = getSubscriber().roots();
+		boolean projectRefresh = false;
+		int flags = ISubscriberChangeEvent.SYNC_CHANGED;
+		for (Object res : resources) {
+			if(!(res instanceof IResource)) {
+				continue;
+			}
+			IResource resource = (IResource)res;
+			for (IResource root : roots) {
+				if(root.contains(resource)) {
+					if(!projectRefresh && resource.contains(root)){
+						projectRefresh = true;
+					}
+					changeEvents.add(new HgSubscriberChangeEvent(getSubscriber(), flags, resource));
+					break;
+				}
+			}
+		}
 
-        if (changeEvents.size() == 0) {
-            return;
-        }
+		if (changeEvents.size() == 0) {
+			return;
+		}
 
-        if(resources.size() == 1 && projectRefresh){
-            // we must sync the data for the project
+		if(resources.size() == 1 && projectRefresh){
+			// we must sync the data for the project
 
-            if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-                System.out.println("! Update data from: " + o + " : " + resources.size());
-            }
+			if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+				System.out.println("! Update data from: " + o + " : " + resources.size());
+			}
 
-            int flag = 0;
-            if (o instanceof IncomingChangesetCache) {
-                flag = INCOMING;
-            } else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache ) {
-                flag = OUTGOING;
-            } else if (o instanceof MercurialStatusCache) {
-                flag = LOCAL;
-            }
-            updateData(roots, flag);
-        } else {
-            // we must update our sync UI with new data we already got
+			int flag = 0;
+			if (o instanceof IncomingChangesetCache) {
+				flag = INCOMING;
+			} else if (o instanceof OutgoingChangesetCache || o instanceof LocalChangesetCache ) {
+				flag = OUTGOING;
+			} else if (o instanceof MercurialStatusCache) {
+				flag = LOCAL;
+			}
+			updateData(roots, flag);
+		} else {
+			// we must update our sync UI with new data we already got
 
-            if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-                System.out.println("Update UI from: " + o + " : " + resources.size());
-            }
+			if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+				System.out.println("Update UI from: " + o + " : " + resources.size());
+			}
 
-            updateUI(changeEvents);
-        }
-    }
+			updateUI(changeEvents);
+		}
+	}
 
-    @Override
-    public void dispose() {
-        MercurialStatusCache.getInstance().deleteObserver(this);
-        IncomingChangesetCache.getInstance().deleteObserver(this);
-        OutgoingChangesetCache.getInstance().deleteObserver(this);
-        MercurialTeamProvider.removeBranchListener(branchListener);
-        super.dispose();
-    }
+	@Override
+	public void dispose() {
+		MercurialStatusCache.getInstance().deleteObserver(this);
+		IncomingChangesetCache.getInstance().deleteObserver(this);
+		OutgoingChangesetCache.getInstance().deleteObserver(this);
+		MercurialTeamProvider.removeBranchListener(branchListener);
+		super.dispose();
+	}
 
-    private void updateUI(Set<ISubscriberChangeEvent> events) {
-        UpdateUIJob updateJob = new UpdateUIJob(events, (MercurialSynchronizeSubscriber) getSubscriber());
-        Job[] jobs = Job.getJobManager().find(UpdateUIJob.class);
-        for (Job job : jobs) {
-            if(updateJob.equals(job)){
-                job.cancel();
-                if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-                    System.out.println("Cancelled refresh UI: " + ((UpdateUIJob)job).events.size());
-                }
-            }
-        }
-        updateJob.schedule(500);
-    }
+	private void updateUI(Set<ISubscriberChangeEvent> events) {
+		UpdateUIJob updateJob = new UpdateUIJob(events, (MercurialSynchronizeSubscriber) getSubscriber());
+		Job[] jobs = Job.getJobManager().find(UpdateUIJob.class);
+		for (Job job : jobs) {
+			if(updateJob.equals(job)){
+				job.cancel();
+				if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+					System.out.println("Cancelled refresh UI: " + ((UpdateUIJob)job).events.size());
+				}
+			}
+		}
+		updateJob.schedule(500);
+	}
 
-    private void updateData(IResource[] roots, int flag) {
-        UpdateDataJob updateJob = new UpdateDataJob(flag, roots, (MercurialSynchronizeSubscriber) getSubscriber());
-        Job[] jobs = Job.getJobManager().find(UpdateDataJob.class);
-        for (Job job : jobs) {
-            if(updateJob.equals(job)){
-                job.cancel();
-                if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-                    System.out.println("Cancelled refresh data: " + flag);
-                }
-            }
-        }
-        updateJob.schedule(200);
-    }
+	private void updateData(IResource[] roots, int flag) {
+		UpdateDataJob updateJob = new UpdateDataJob(flag, roots, (MercurialSynchronizeSubscriber) getSubscriber());
+		Job[] jobs = Job.getJobManager().find(UpdateDataJob.class);
+		for (Job job : jobs) {
+			if(updateJob.equals(job)){
+				job.cancel();
+				if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+					System.out.println("Cancelled refresh data: " + flag);
+				}
+			}
+		}
+		updateJob.schedule(200);
+	}
 
-    private static class UpdateUIJob extends Job {
+	private static class UpdateUIJob extends Job {
 
-        private final MercurialSynchronizeSubscriber subscriber;
-        private final Set<ISubscriberChangeEvent> events;
+		private final MercurialSynchronizeSubscriber subscriber;
+		private final Set<ISubscriberChangeEvent> events;
 
-        public UpdateUIJob(Set<ISubscriberChangeEvent> events, MercurialSynchronizeSubscriber subscriber) {
-            super("Hg subscriber UI update");
-            this.events = events;
-            this.subscriber = subscriber;
-        }
+		public UpdateUIJob(Set<ISubscriberChangeEvent> events, MercurialSynchronizeSubscriber subscriber) {
+			super("Hg subscriber UI update");
+			this.events = events;
+			this.subscriber = subscriber;
+		}
 
-        @Override
-        protected IStatus run(IProgressMonitor monitor) {
-            monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingResources"), 1);
-            try {
-                ISubscriberChangeEvent[] deltas = events.toArray(new ISubscriberChangeEvent[events.size()]);
-                subscriber.fireTeamResourceChange(deltas);
-                monitor.worked(1);
-            } finally {
-                monitor.done();
-            }
-            return Status.OK_STATUS;
-        }
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingResources"), 1);
+			try {
+				ISubscriberChangeEvent[] deltas = events.toArray(new ISubscriberChangeEvent[events.size()]);
+				subscriber.fireTeamResourceChange(deltas);
+				monitor.worked(1);
+			} finally {
+				monitor.done();
+			}
+			return Status.OK_STATUS;
+		}
 
-        @Override
-        public boolean belongsTo(Object family) {
-            return UpdateUIJob.class.equals(family);
-        }
+		@Override
+		public boolean belongsTo(Object family) {
+			return UpdateUIJob.class.equals(family);
+		}
 
-        @Override
-        public boolean equals(Object obj) {
-            if(!(obj instanceof UpdateUIJob)){
-                return false;
-            }
-            UpdateUIJob job = (UpdateUIJob) obj;
-            if(events.size() != job.events.size()){
-                return false;
-            }
+		@Override
+		public boolean equals(Object obj) {
+			if(!(obj instanceof UpdateUIJob)){
+				return false;
+			}
+			UpdateUIJob job = (UpdateUIJob) obj;
+			if(events.size() != job.events.size()){
+				return false;
+			}
 
-            if(!subscriber.equals(job.subscriber)){
-                return false;
-            }
-            return events.containsAll(job.events);
-        }
+			if(!subscriber.equals(job.subscriber)){
+				return false;
+			}
+			return events.containsAll(job.events);
+		}
 
-        @Override
-        public int hashCode() {
-            return events.size() + subscriber.hashCode();
-        }
-    }
+		@Override
+		public int hashCode() {
+			return events.size() + subscriber.hashCode();
+		}
+	}
 
-    private static class UpdateDataJob extends Job {
+	private static class UpdateDataJob extends Job {
 
-        private final int flag;
-        private final IResource[] roots;
-        private final MercurialSynchronizeSubscriber subscriber;
+		private final int flag;
+		private final IResource[] roots;
+		private final MercurialSynchronizeSubscriber subscriber;
 
-        public UpdateDataJob(int flag, IResource[] roots, MercurialSynchronizeSubscriber subscriber) {
-            super("Hg subscriber data update");
-            this.flag = flag;
-            this.roots = roots;
-            this.subscriber = subscriber;
-        }
+		public UpdateDataJob(int flag, IResource[] roots, MercurialSynchronizeSubscriber subscriber) {
+			super("Hg subscriber data update");
+			this.flag = flag;
+			this.roots = roots;
+			this.subscriber = subscriber;
+		}
 
-        @Override
-        protected IStatus run(IProgressMonitor monitor) {
-            monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingResources"), 5);
-            try {
-                subscriber.refresh(roots, flag, monitor);
-            } catch (TeamException e) {
-                MercurialEclipsePlugin.logError(e);
-                return Status.CANCEL_STATUS;
-            } finally {
-                monitor.done();
-            }
-            return Status.OK_STATUS;
-        }
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			monitor.beginTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingResources"), 5);
+			try {
+				subscriber.refresh(roots, flag, monitor);
+			} catch (TeamException e) {
+				MercurialEclipsePlugin.logError(e);
+				return Status.CANCEL_STATUS;
+			} finally {
+				monitor.done();
+			}
+			return Status.OK_STATUS;
+		}
 
-        @Override
-        public boolean belongsTo(Object family) {
-            return UpdateDataJob.class.equals(family);
-        }
+		@Override
+		public boolean belongsTo(Object family) {
+			return UpdateDataJob.class.equals(family);
+		}
 
-        @Override
-        public boolean equals(Object obj) {
-            if(!(obj instanceof UpdateDataJob)){
-                return false;
-            }
-            UpdateDataJob job = (UpdateDataJob) obj;
-            if(flag != job.flag){
-                return false;
-            }
-            return subscriber.equals(job.subscriber);
-        }
+		@Override
+		public boolean equals(Object obj) {
+			if(!(obj instanceof UpdateDataJob)){
+				return false;
+			}
+			UpdateDataJob job = (UpdateDataJob) obj;
+			if(flag != job.flag){
+				return false;
+			}
+			return subscriber.equals(job.subscriber);
+		}
 
-        @Override
-        public int hashCode() {
-            return flag + subscriber.hashCode();
-        }
-    }
+		@Override
+		public int hashCode() {
+			return flag + subscriber.hashCode();
+		}
+	}
 }

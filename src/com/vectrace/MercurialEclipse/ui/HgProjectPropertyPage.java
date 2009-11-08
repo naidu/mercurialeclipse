@@ -34,107 +34,107 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  *
  */
 public class HgProjectPropertyPage extends PropertyPage {
-    private IProject project;
-    private Group reposGroup;
+	private IProject project;
+	private Group reposGroup;
 
-    /**
-     *
-     */
-    public HgProjectPropertyPage() {
-    }
+	/**
+	 *
+	 */
+	public HgProjectPropertyPage() {
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see
-     * org.eclipse.jface.preference.PreferencePage#createContents(org.eclipse
-     * .swt.widgets.Composite)
-     */
-    @Override
-    protected Control createContents(Composite parent) {
-        this.project = (IProject) super.getElement();
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.eclipse.jface.preference.PreferencePage#createContents(org.eclipse
+	 * .swt.widgets.Composite)
+	 */
+	@Override
+	protected Control createContents(Composite parent) {
+		this.project = (IProject) super.getElement();
 
-        // create gui elements
-        Composite comp = SWTWidgetHelper.createComposite(parent, 1);
+		// create gui elements
+		Composite comp = SWTWidgetHelper.createComposite(parent, 1);
 
-        if (!MercurialUtilities.hgIsTeamProviderFor(project, false)) {
-            setMessage("This project doesn't use MercurialEclipse as Team provider.");
-            return comp;
-        }
+		if (!MercurialUtilities.hgIsTeamProviderFor(project, false)) {
+			setMessage("This project doesn't use MercurialEclipse as Team provider.");
+			return comp;
+		}
 
 
-        reposGroup = SWTWidgetHelper.createGroup(comp,
-                "Repository paths:", 1,
-                        GridData.FILL_HORIZONTAL);
+		reposGroup = SWTWidgetHelper.createGroup(comp,
+				"Repository paths:", 1,
+						GridData.FILL_HORIZONTAL);
 
-        // each repository gets a label with its logical name and a combo for
-        // setting it within MercurialEclipse
+		// each repository gets a label with its logical name and a combo for
+		// setting it within MercurialEclipse
 
-        final HgRepositoryLocationManager mgr = MercurialEclipsePlugin
-                .getRepoManager();
-        Set<HgRepositoryLocation> repos = mgr
-                .getAllProjectRepoLocations(project);
-        for (final HgRepositoryLocation repo : repos) {
-            Composite repoComposite = SWTWidgetHelper.createComposite(
-                    reposGroup, 3);
-            SWTWidgetHelper.createLabel(repoComposite,
-                    repo.getLogicalName() == null ? "Unnamed" : repo
-                            .getLogicalName());
-            Combo combo = SWTWidgetHelper.createEditableCombo(repoComposite);
-            Button defaultButton = SWTWidgetHelper.createPushButton(
-                    repoComposite,
-                    "Set as default", 1);
-            defaultButton.addMouseListener(new MouseListener() {
+		final HgRepositoryLocationManager mgr = MercurialEclipsePlugin
+				.getRepoManager();
+		Set<HgRepositoryLocation> repos = mgr
+				.getAllProjectRepoLocations(project);
+		for (final HgRepositoryLocation repo : repos) {
+			Composite repoComposite = SWTWidgetHelper.createComposite(
+					reposGroup, 3);
+			SWTWidgetHelper.createLabel(repoComposite,
+					repo.getLogicalName() == null ? "Unnamed" : repo
+							.getLogicalName());
+			Combo combo = SWTWidgetHelper.createEditableCombo(repoComposite);
+			Button defaultButton = SWTWidgetHelper.createPushButton(
+					repoComposite,
+					"Set as default", 1);
+			defaultButton.addMouseListener(new MouseListener() {
 
-                public void mouseUp(MouseEvent e) {
-                    mgr.setDefaultProjectRepository(project, repo);
-                }
+				public void mouseUp(MouseEvent e) {
+					mgr.setDefaultProjectRepository(project, repo);
+				}
 
-                public void mouseDown(MouseEvent e) {
-                    // TODO Auto-generated method stub
+				public void mouseDown(MouseEvent e) {
+					// TODO Auto-generated method stub
 
-                }
+				}
 
-                public void mouseDoubleClick(MouseEvent e) {
+				public void mouseDoubleClick(MouseEvent e) {
 
-                }
-            });
-            combo.add(repo.getLocation());
-            combo.select(0);
-        }
-        return comp;
-    }
+				}
+			});
+			combo.add(repo.getLocation());
+			combo.select(0);
+		}
+		return comp;
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.jface.preference.PreferencePage#performOk()
-     */
-    @Override
-    public boolean performOk() {
-        if (!MercurialUtilities.hgIsTeamProviderFor(project, false)) {
-            return super.performOk();
-        }
-        IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jface.preference.PreferencePage#performOk()
+	 */
+	@Override
+	public boolean performOk() {
+		if (!MercurialUtilities.hgIsTeamProviderFor(project, false)) {
+			return super.performOk();
+		}
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 
-        Control[] composites = reposGroup.getChildren();
+		Control[] composites = reposGroup.getChildren();
 
-        for (Control control : composites) {
-            Composite comp = (Composite) control;
-            Control[] controls = comp.getChildren();
-            store.putValue("repository." + controls[0].getData(),
-                    ((Combo) controls[1]).getText());
-        }
-        return super.performOk();
-    }
+		for (Control control : composites) {
+			Composite comp = (Composite) control;
+			Control[] controls = comp.getChildren();
+			store.putValue("repository." + controls[0].getData(),
+					((Combo) controls[1]).getText());
+		}
+		return super.performOk();
+	}
 
-    /*
-     * (non-Javadoc)
-     *
-     * @see org.eclipse.jface.preference.PreferencePage#performApply()
-     */
-    @Override
-    protected void performApply() {
-        this.performOk();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jface.preference.PreferencePage#performApply()
+	 */
+	@Override
+	protected void performApply() {
+		this.performOk();
+	}
 }

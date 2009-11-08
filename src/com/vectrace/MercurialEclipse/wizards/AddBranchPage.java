@@ -24,51 +24,51 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class AddBranchPage extends HgWizardPage {
 
-    private Button forceCheckBox;
-    private Text branchNameTextField;
+	private Button forceCheckBox;
+	private Text branchNameTextField;
 
-    /**
-     * @param pageName
-     * @param title
-     * @param titleImage
-     * @param description
-     */
-    public AddBranchPage(String pageName, String title,
-            ImageDescriptor titleImage, String description) {
-        super(pageName, title, titleImage, description);        
-    }
+	/**
+	 * @param pageName
+	 * @param title
+	 * @param titleImage
+	 * @param description
+	 */
+	public AddBranchPage(String pageName, String title,
+			ImageDescriptor titleImage, String description) {
+		super(pageName, title, titleImage, description);
+	}
 
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-     */
-    public void createControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
-        SWTWidgetHelper.createLabel(composite, Messages.getString("AddBranchPage.branchNameTextField.title")); //$NON-NLS-1$
-        this.branchNameTextField = SWTWidgetHelper.createTextField(composite);                
-        this.forceCheckBox = SWTWidgetHelper.createCheckBox(composite, Messages.getString("AddBranchPage.forceCheckBox.title"));         //$NON-NLS-1$
-        setControl(composite);
-    }
-    
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse.core.runtime.IProgressMonitor)
-     */
-    @Override
-    public boolean finish(IProgressMonitor monitor) {
-        return super.finish(monitor);
-    }
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
+	 */
+	public void createControl(Composite parent) {
+		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
+		SWTWidgetHelper.createLabel(composite, Messages.getString("AddBranchPage.branchNameTextField.title")); //$NON-NLS-1$
+		this.branchNameTextField = SWTWidgetHelper.createTextField(composite);
+		this.forceCheckBox = SWTWidgetHelper.createCheckBox(composite, Messages.getString("AddBranchPage.forceCheckBox.title"));         //$NON-NLS-1$
+		setControl(composite);
+	}
 
-    /**
-     * @return the forceCheckBox
-     */
-    public Button getForceCheckBox() {
-        return forceCheckBox;
-    }
+	/* (non-Javadoc)
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		return super.finish(monitor);
+	}
 
-    /**
-     * @return the branchNameTextField
-     */
-    public Text getBranchNameTextField() {
-        return branchNameTextField;
-    }
+	/**
+	 * @return the forceCheckBox
+	 */
+	public Button getForceCheckBox() {
+		return forceCheckBox;
+	}
+
+	/**
+	 * @return the branchNameTextField
+	 */
+	public Text getBranchNameTextField() {
+		return branchNameTextField;
+	}
 
 }

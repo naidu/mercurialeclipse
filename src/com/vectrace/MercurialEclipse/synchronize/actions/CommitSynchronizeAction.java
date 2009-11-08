@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch				- Adaption to Mercurial
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -55,19 +56,19 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 		}
 		// XXX currently I have no idea why IDiffElement[] elements is empty...
 		if(selectedResources.size() == 0){
-		    IStructuredSelection sel = getStructuredSelection();
-		    Object[] objects = sel.toArray();
-		    for (Object object : objects) {
-		        if (object instanceof IResource) {
-	                selectedResources.add(((IResource) object));
-	            } else if (object instanceof IAdaptable){
-                    IAdaptable adaptable = (IAdaptable) object;
-                    IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-                    if(resource != null){
-                        selectedResources.add(resource);
-                    }
-	            }
-            }
+			IStructuredSelection sel = getStructuredSelection();
+			Object[] objects = sel.toArray();
+			for (Object object : objects) {
+				if (object instanceof IResource) {
+					selectedResources.add(((IResource) object));
+				} else if (object instanceof IAdaptable){
+					IAdaptable adaptable = (IAdaptable) object;
+					IResource resource = (IResource) adaptable.getAdapter(IResource.class);
+					if(resource != null){
+						selectedResources.add(resource);
+					}
+				}
+			}
 		}
 		IResource[] resources = new IResource[selectedResources.size()];
 		selectedResources.toArray(resources);
@@ -77,35 +78,35 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 
 	@Override
 	protected void initialize(ISynchronizePageConfiguration configuration, ISelectionProvider selectionProvider) {
-	    // TODO Auto-generated method stub
-	    super.initialize(configuration, selectionProvider);
+		// TODO Auto-generated method stub
+		super.initialize(configuration, selectionProvider);
 	}
 
 	@Override
 	public boolean isEnabled() {
-	    // TODO Auto-generated method stub
-	    return super.isEnabled();
+		// TODO Auto-generated method stub
+		return super.isEnabled();
 	}
 
 	@Override
 	public boolean isHandled() {
-	    // TODO Auto-generated method stub
-	    return super.isHandled();
+		// TODO Auto-generated method stub
+		return super.isHandled();
 	}
 
 	@Override
 	public void selectionChanged(ISelection selection) {
-	    // TODO Auto-generated method stub
-	    super.selectionChanged(selection);
+		// TODO Auto-generated method stub
+		super.selectionChanged(selection);
 	}
 
 	@Override
 	protected boolean updateSelection(IStructuredSelection selection) {
-	    boolean updateSelection = super.updateSelection(selection);
-	    if(!updateSelection){
-	        // TODO implement constraints check here
-	        return true;
-	    }
-        return updateSelection;
+		boolean updateSelection = super.updateSelection(selection);
+		if(!updateSelection){
+			// TODO implement constraints check here
+			return true;
+		}
+		return updateSelection;
 	}
 }

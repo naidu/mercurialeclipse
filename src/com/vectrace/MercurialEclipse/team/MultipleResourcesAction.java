@@ -15,7 +15,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  *
  */
@@ -35,7 +35,7 @@ public abstract class MultipleResourcesAction implements IActionDelegate {
 			}
 		}
 	}
-	
+
 	protected Shell getShell() {
 		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
 	}
@@ -49,9 +49,9 @@ public abstract class MultipleResourcesAction implements IActionDelegate {
 			run(getSelectedResources());
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(getShell(), Messages.getString("MultipleResourcesAction.hgSays"), e.getMessage()+Messages.getString("MultipleResourcesAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+			MessageDialog.openError(getShell(), Messages.getString("MultipleResourcesAction.hgSays"), e.getMessage()+Messages.getString("MultipleResourcesAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
-		
+
 	protected abstract void run(List<IResource> resources) throws Exception ;
 }

@@ -13,7 +13,7 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 
 	private final Map<IProject, Set<IPath>> untrackedFiles;
 	private final Map<IProject, Set<IPath>> untrackedFolders;
-	
+
 	public UntrackedResourcesFilter(Map<IProject, Set<IPath>> untrackedFiles,
 			Map<IProject, Set<IPath>> untrackedFolders) {
 		super();
@@ -24,35 +24,35 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 	@Override
 	public boolean select(Viewer viewer, Object parentElement,
 			Object element) {
-		
+
 		IResource resource = (IResource) element;
-		IProject project = resource.getProject();		
+		IProject project = resource.getProject();
 		String path = resource.getProjectRelativePath().toOSString();
-		
+
 		if(resource.getType() == IResource.FILE) {
 			Set<IPath> set = untrackedFiles.get(project);
 			return isSubPath(path, set);
 		} else if(resource.getType() == IResource.FOLDER){
-		    Set<IPath> set = untrackedFolders.get(project);
+			Set<IPath> set = untrackedFolders.get(project);
 			return isSubPath(path, set);
 		} else {
 			return true;
 		}
 	}
 
-    /**
-     * @param path
-     * @param set
-     * @return
-     */
-    private boolean isSubPath(String path, Set<IPath> set) {
-        for (IPath setPath : set) {
-            String setPathString = setPath.toOSString();
-            if (setPathString.endsWith(path)) {
-                return true;
-            }
-        }
-        return false;
-    }
+	/**
+	 * @param path
+	 * @param set
+	 * @return
+	 */
+	private boolean isSubPath(String path, Set<IPath> set) {
+		for (IPath setPath : set) {
+			String setPathString = setPath.toOSString();
+			if (setPathString.endsWith(path)) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 }

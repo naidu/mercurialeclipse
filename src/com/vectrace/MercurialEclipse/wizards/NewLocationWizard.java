@@ -22,58 +22,58 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public class NewLocationWizard extends HgWizard {
 
-    public NewLocationWizard() {
-        super(Messages.getString("NewLocationWizard.name")); //$NON-NLS-1$
-    }
+	public NewLocationWizard() {
+		super(Messages.getString("NewLocationWizard.name")); //$NON-NLS-1$
+	}
 
-    public NewLocationWizard(Properties initialProperties) {
-        this();
-        this.properties = initialProperties;
-    }
+	public NewLocationWizard(Properties initialProperties) {
+		this();
+		this.properties = initialProperties;
+	}
 
-    @Override
-    public void addPages() {
-        page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"),
-                Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$
-                Messages.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
-                Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
-        addPage(page);
-    }
+	@Override
+	public void addPages() {
+		page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"),
+				Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$
+				Messages.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
+				Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
+		addPage(page);
+	}
 
-    /**
-     * @see IWizard#performFinish
-     */
-    @Override
-    public boolean performFinish() {
-        super.performFinish();
-        // TODO: Temporarily commented. A project selector must added to
-        // this wizard
-        /*
-        Properties props = page.getProperties();
-        final HgRepositoryLocation[] root = new HgRepositoryLocation[1];
-        HgRepositoryLocationManager provider = MercurialEclipsePlugin
-                .getRepoManager();
-        try {
-            root[0] = provider.createRepository(props);
-            return true;
-        } catch (TeamException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-        */
-        return false;
-    }
+	/**
+	 * @see IWizard#performFinish
+	 */
+	@Override
+	public boolean performFinish() {
+		super.performFinish();
+		// TODO: Temporarily commented. A project selector must added to
+		// this wizard
+		/*
+		Properties props = page.getProperties();
+		final HgRepositoryLocation[] root = new HgRepositoryLocation[1];
+		HgRepositoryLocationManager provider = MercurialEclipsePlugin
+				.getRepoManager();
+		try {
+			root[0] = provider.createRepository(props);
+			return true;
+		} catch (TeamException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		*/
+		return false;
+	}
 
-    /**
-     * Creates a ConfigurationWizardPage.
-     */
-    protected HgWizardPage createPage(String pageName, String pageTitle,
-            String iconPath, String description) {
-        ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
-                MercurialEclipsePlugin.getImageDescriptor(iconPath));
+	/**
+	 * Creates a ConfigurationWizardPage.
+	 */
+	protected HgWizardPage createPage(String pageName, String pageTitle,
+			String iconPath, String description) {
+		ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
+				MercurialEclipsePlugin.getImageDescriptor(iconPath));
 
-        mainPage.setShowBundleButton(false);
-        page = mainPage;
-        initPage(description, page);
-        return page;
-    }
+		mainPage.setShowBundleButton(false);
+		page = mainPage;
+		initPage(description, page);
+		return page;
+	}
 }

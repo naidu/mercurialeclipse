@@ -24,33 +24,33 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
-    private IResource[] resources;
+	private IResource[] resources;
 
-    public ShowHistorySynchronizeOperation(
-            ISynchronizePageConfiguration configuration,
-            IDiffElement[] elements, IResource[] resources) {
-        super(configuration, elements);
-        this.resources = resources;
-    }
+	public ShowHistorySynchronizeOperation(
+			ISynchronizePageConfiguration configuration,
+			IDiffElement[] elements, IResource[] resources) {
+		super(configuration, elements);
+		this.resources = resources;
+	}
 
-    public void run(IProgressMonitor monitor) throws InvocationTargetException,
-            InterruptedException {
-        monitor.beginTask("Loading History View...", 1);
-        getShell().getDisplay().syncExec(new Runnable() {
-            public void run() {
-                IHistoryView view;
-                try {
-                    view = (IHistoryView) getPart().getSite().getPage()
-                            .showView("org.eclipse.team.ui.GenericHistoryView");
+	public void run(IProgressMonitor monitor) throws InvocationTargetException,
+			InterruptedException {
+		monitor.beginTask("Loading History View...", 1);
+		getShell().getDisplay().syncExec(new Runnable() {
+			public void run() {
+				IHistoryView view;
+				try {
+					view = (IHistoryView) getPart().getSite().getPage()
+							.showView("org.eclipse.team.ui.GenericHistoryView");
 
-                    if (view != null) {
-                        view.showHistoryFor(resources[0]);
-                    }
-                } catch (PartInitException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
-        });
-        monitor.done();
-    }
+					if (view != null) {
+						view.showHistoryFor(resources[0]);
+					}
+				} catch (PartInitException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		});
+		monitor.done();
+	}
 }

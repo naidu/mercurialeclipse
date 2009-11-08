@@ -32,75 +32,75 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgIncomingClient extends AbstractParseChangesetClient {
 
-    /**
-     * Gets all File Revisions that are incoming and saves them in a bundle
-     * file. There can be more than one revision per file as this method obtains
-     * all new changesets.
-     *
-     * @return Never return null. Map containing all revisions of the IResources contained in the
-     *         Changesets. The sorting is ascending by date.
-     * @throws HgException
-     */
-    public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
-            HgRepositoryLocation repository) throws HgException {
-        return getHgIncoming(res, repository, null);
-    }
+	/**
+	 * Gets all File Revisions that are incoming and saves them in a bundle
+	 * file. There can be more than one revision per file as this method obtains
+	 * all new changesets.
+	 *
+	 * @return Never return null. Map containing all revisions of the IResources contained in the
+	 *         Changesets. The sorting is ascending by date.
+	 * @throws HgException
+	 */
+	public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
+			HgRepositoryLocation repository) throws HgException {
+		return getHgIncoming(res, repository, null);
+	}
 
-    public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
-            HgRepositoryLocation repository, String branch) throws HgException {
-        AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
-                false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-        if (branch != null) {
-            if (!Branch.isDefault(branch)) {
-                command.addOptions("-r", branch);
-            } else {
-                // see issue 10495: there can be many "default" heads, so show all of them
-                // otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
-            }
-        }
-        File bundleFile = null;
-        try {
-            try {
-                bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
-                        res.getProject().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
-                bundleFile.deleteOnExit();
-                command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-                        AbstractParseChangesetClient.getStyleFile(true)
-                        .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
-                        .getCanonicalPath());
-            } catch (IOException e) {
-                ResourceUtils.delete(bundleFile, false);
-                throw new HgException(e.getMessage(), e);
-            }
-
-            URI uri = repository.getUri();
-            if (uri != null) {
-                command.addOptions(uri.toASCIIString());
-            } else {
-                command.addOptions(repository.getLocation());
-            }
-            try {
-                String result = command.executeToString();
-                if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
-                    return new HashMap<IPath, Set<ChangeSet>>();
-                }
-                Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-                        res, result, true,
-                        Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
-                return revisions;
-            } catch (HgException hg) {
-                if (hg.getStatus().getCode() == 1) {
-                    return new HashMap<IPath, Set<ChangeSet>>();
-                }
-                ResourceUtils.delete(bundleFile, false);
-                throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
-            }
-		} finally {
-		    // NEVER delete bundle files, because they are used to access not yet pulled content
-		    // during diffs from the synchronize view
+	public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
+			HgRepositoryLocation repository, String branch) throws HgException {
+		AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
+				false);
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+		if (branch != null) {
+			if (!Branch.isDefault(branch)) {
+				command.addOptions("-r", branch);
+			} else {
+				// see issue 10495: there can be many "default" heads, so show all of them
+				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
+			}
 		}
-    }
+		File bundleFile = null;
+		try {
+			try {
+				bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
+						res.getProject().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
+				bundleFile.deleteOnExit();
+				command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+						AbstractParseChangesetClient.getStyleFile(true)
+						.getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
+						.getCanonicalPath());
+			} catch (IOException e) {
+				ResourceUtils.delete(bundleFile, false);
+				throw new HgException(e.getMessage(), e);
+			}
+
+			URI uri = repository.getUri();
+			if (uri != null) {
+				command.addOptions(uri.toASCIIString());
+			} else {
+				command.addOptions(repository.getLocation());
+			}
+			try {
+				String result = command.executeToString();
+				if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
+					return new HashMap<IPath, Set<ChangeSet>>();
+				}
+				Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+						res, result, true,
+						Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
+				return revisions;
+			} catch (HgException hg) {
+				if (hg.getStatus().getCode() == 1) {
+					return new HashMap<IPath, Set<ChangeSet>>();
+				}
+				ResourceUtils.delete(bundleFile, false);
+				throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
+			}
+		} finally {
+			// NEVER delete bundle files, because they are used to access not yet pulled content
+			// during diffs from the synchronize view
+		}
+	}
 
 
 }

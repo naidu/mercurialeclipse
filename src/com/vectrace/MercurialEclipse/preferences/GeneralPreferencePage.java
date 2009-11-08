@@ -10,6 +10,7 @@
  *     VecTrace (Zingo Andersen) - updateing it
  *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
@@ -41,121 +42,121 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 public class GeneralPreferencePage extends FieldEditorPreferencePage implements
 IWorkbenchPreferencePage {
 
-    private static final class LabelDecoratorRadioGroupFieldEditor extends
-    RadioGroupFieldEditor {
-        private LabelDecoratorRadioGroupFieldEditor(String name,
-                String labelText, int numColumns, String[][] labelAndValues,
-                Composite parent, boolean useGroup) {
-            super(name, labelText, numColumns, labelAndValues, parent, useGroup);
-        }
+	private static final class LabelDecoratorRadioGroupFieldEditor extends
+	RadioGroupFieldEditor {
+		private LabelDecoratorRadioGroupFieldEditor(String name,
+				String labelText, int numColumns, String[][] labelAndValues,
+				Composite parent, boolean useGroup) {
+			super(name, labelText, numColumns, labelAndValues, parent, useGroup);
+		}
 
-        @Override
-        protected void doStore() {
-            super.doStore();
-            MercurialEclipsePlugin.getDefault().checkHgInstallation();
-            // ResourceDecorator.onConfigurationChanged();
-        }
-    }
+		@Override
+		protected void doStore() {
+			super.doStore();
+			MercurialEclipsePlugin.getDefault().checkHgInstallation();
+			// ResourceDecorator.onConfigurationChanged();
+		}
+	}
 
-    private static final class MercurialExecutableFileFieldEditor extends
-    FileFieldEditor {
-        private MercurialExecutableFileFieldEditor(String name,
-                String labelText, Composite parent) {
-            super(name, labelText, parent);
-        }
+	private static final class MercurialExecutableFileFieldEditor extends
+	FileFieldEditor {
+		private MercurialExecutableFileFieldEditor(String name,
+				String labelText, Composite parent) {
+			super(name, labelText, parent);
+		}
 
-        @Override
-        protected boolean checkState() {
-            // There are other ways of doing this properly but this is
-            // better than the default behavior
-            return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
-            .equals(getTextControl().getText())
-            || super.checkState();
-        }
-    }
+		@Override
+		protected boolean checkState() {
+			// There are other ways of doing this properly but this is
+			// better than the default behavior
+			return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
+			.equals(getTextControl().getText())
+			|| super.checkState();
+		}
+	}
 
-    private static final class GpgExecutableFileFieldEditor extends FileFieldEditor {
-        private GpgExecutableFileFieldEditor(String name, String labelText,
-                Composite parent) {
-            super(name, labelText, parent);
-        }
+	private static final class GpgExecutableFileFieldEditor extends FileFieldEditor {
+		private GpgExecutableFileFieldEditor(String name, String labelText,
+				Composite parent) {
+			super(name, labelText, parent);
+		}
 
-        @Override
-        protected boolean checkState() {
-            // There are other ways of doing this properly but this is
-            // better than the default behaviour
-            return MercurialPreferenceConstants.GPG_EXECUTABLE
-            .equals(getTextControl().getText())
-            || super.checkState();
-        }
-    }
+		@Override
+		protected boolean checkState() {
+			// There are other ways of doing this properly but this is
+			// better than the default behaviour
+			return MercurialPreferenceConstants.GPG_EXECUTABLE
+			.equals(getTextControl().getText())
+			|| super.checkState();
+		}
+	}
 
-    public GeneralPreferencePage() {
-        super(GRID);
-        setPreferenceStore(MercurialEclipsePlugin.getDefault()
-                .getPreferenceStore());
-        setDescription(Messages.getString("GeneralPreferencePage.description")); //$NON-NLS-1$
-    }
+	public GeneralPreferencePage() {
+		super(GRID);
+		setPreferenceStore(MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore());
+		setDescription(Messages.getString("GeneralPreferencePage.description")); //$NON-NLS-1$
+	}
 
-    /**
-     * Creates the field editors. Field editors are abstractions of the common
-     * GUI blocks needed to manipulate various types of preferences. Each field
-     * editor knows how to save and restore itself.
-     */
-    @Override
-    public void createFieldEditors() {
-        FileFieldEditor execField = new MercurialExecutableFileFieldEditor(
-                MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
-                Messages.getString("GeneralPreferencePage.field.hgExecutable"), getFieldEditorParent()); //$NON-NLS-1$
+	/**
+	 * Creates the field editors. Field editors are abstractions of the common
+	 * GUI blocks needed to manipulate various types of preferences. Each field
+	 * editor knows how to save and restore itself.
+	 */
+	@Override
+	public void createFieldEditors() {
+		FileFieldEditor execField = new MercurialExecutableFileFieldEditor(
+				MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
+				Messages.getString("GeneralPreferencePage.field.hgExecutable"), getFieldEditorParent()); //$NON-NLS-1$
 
-        addField(execField);
-        if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
-            execField.setErrorMessage(Messages.getString("GeneralPreferencePage.error.HgNotInstalled")); //$NON-NLS-1$
-        }
+		addField(execField);
+		if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
+			execField.setErrorMessage(Messages.getString("GeneralPreferencePage.error.HgNotInstalled")); //$NON-NLS-1$
+		}
 
-        addField(new GpgExecutableFileFieldEditor(
-                MercurialPreferenceConstants.GPG_EXECUTABLE,
-                Messages.getString("GeneralPreferencePage.field.gpgExecutable"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new GpgExecutableFileFieldEditor(
+				MercurialPreferenceConstants.GPG_EXECUTABLE,
+				Messages.getString("GeneralPreferencePage.field.gpgExecutable"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new StringFieldEditor(
-                MercurialPreferenceConstants.MERCURIAL_USERNAME,
-                Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new StringFieldEditor(
+				MercurialPreferenceConstants.MERCURIAL_USERNAME,
+				Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new BooleanFieldEditor(
-                MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
-                Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new LabelDecoratorRadioGroupFieldEditor(
-                MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
-                Messages.getString("GeneralPreferencePage.field.decorationGroup.description"), //$NON-NLS-1$
-                1,
-                new String[][] {
-                    {
-                        Messages.getString("GeneralPreferencePage.field.decorationGroup.asModified"), //$NON-NLS-1$
-                        MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
-                        {
-                            Messages.getString("GeneralPreferencePage.field.decorationGroup.mostImportant"), //$NON-NLS-1$
-                            MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
-                            getFieldEditorParent(), true));
+		addField(new LabelDecoratorRadioGroupFieldEditor(
+				MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
+				Messages.getString("GeneralPreferencePage.field.decorationGroup.description"), //$NON-NLS-1$
+				1,
+				new String[][] {
+					{
+						Messages.getString("GeneralPreferencePage.field.decorationGroup.asModified"), //$NON-NLS-1$
+						MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
+						{
+							Messages.getString("GeneralPreferencePage.field.decorationGroup.mostImportant"), //$NON-NLS-1$
+							MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
+							getFieldEditorParent(), true));
 
-        addField(new BooleanFieldEditor(
-                MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
-                Messages.getString("GeneralPreferencePage.enableFontAndColorDecorations"), getFieldEditorParent())); //$NON-NLS-1$
+		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
+				Messages.getString("GeneralPreferencePage.enableFontAndColorDecorations"), getFieldEditorParent())); //$NON-NLS-1$
 
-        addField(new BooleanFieldEditor(
-                MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS,
-                Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
-                getFieldEditorParent()));
+		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS,
+				Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
+				getFieldEditorParent()));
 
-        IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
-                MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
-                Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$
-                getFieldEditorParent());
-        commitSizeEditor.setValidRange(1, Integer.MAX_VALUE);
-        addField(commitSizeEditor);
-    }
+		IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
+				MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+				Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$
+				getFieldEditorParent());
+		commitSizeEditor.setValidRange(1, Integer.MAX_VALUE);
+		addField(commitSizeEditor);
+	}
 
-    public void init(IWorkbench workbench) {
-    }
+	public void init(IWorkbench workbench) {
+	}
 
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch  implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -27,38 +28,38 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public class IncomingChangesetCache extends AbstractRemoteCache {
 
-    private static IncomingChangesetCache instance;
+	private static IncomingChangesetCache instance;
 
-    private IncomingChangesetCache() {
-        super(Direction.INCOMING);
-    }
+	private IncomingChangesetCache() {
+		super(Direction.INCOMING);
+	}
 
-    public synchronized static IncomingChangesetCache getInstance() {
-        if (instance == null) {
-            instance = new IncomingChangesetCache();
-        }
-        return instance;
-    }
+	public synchronized static IncomingChangesetCache getInstance() {
+		if (instance == null) {
+			instance = new IncomingChangesetCache();
+		}
+		return instance;
+	}
 
-    /**
-     * Gets the newest incoming changeset of <b>all repositories</b>.
-     *
-     * @param resource
-     *            the resource to get the changeset for
-     */
-    public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
-        Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
-        .getRepoManager().getAllProjectRepoLocations(resource.getProject());
-        SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
-        for (HgRepositoryLocation repository : locs) {
-            ChangeSet candidate = getNewestChangeSet(resource, repository);
-            if (candidate != null) {
-                changeSets1.add(candidate);
-            }
-        }
-        if (changeSets1.size() > 0) {
-            return changeSets1.last();
-        }
-        return null;
-    }
+	/**
+	 * Gets the newest incoming changeset of <b>all repositories</b>.
+	 *
+	 * @param resource
+	 *            the resource to get the changeset for
+	 */
+	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
+		Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
+		.getRepoManager().getAllProjectRepoLocations(resource.getProject());
+		SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
+		for (HgRepositoryLocation repository : locs) {
+			ChangeSet candidate = getNewestChangeSet(resource, repository);
+			if (candidate != null) {
+				changeSets1.add(candidate);
+			}
+		}
+		if (changeSets1.size() > 0) {
+			return changeSets1.last();
+		}
+		return null;
+	}
 }

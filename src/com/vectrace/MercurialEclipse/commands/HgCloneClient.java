@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -19,41 +20,41 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgCloneClient {
 
-    public static void clone(File parentDirectory, HgRepositoryLocation repo,
-            boolean noUpdate, boolean pull, boolean uncompressed,
-            boolean timeout, String rev, String cloneName) throws HgException {
-        AbstractShellCommand command = new HgCommand("clone", parentDirectory, //$NON-NLS-1$
-                false);
+	public static void clone(File parentDirectory, HgRepositoryLocation repo,
+			boolean noUpdate, boolean pull, boolean uncompressed,
+			boolean timeout, String rev, String cloneName) throws HgException {
+		AbstractShellCommand command = new HgCommand("clone", parentDirectory, //$NON-NLS-1$
+				false);
 
-        if (noUpdate) {
-            command.addOptions("--noupdate"); //$NON-NLS-1$
-        }
-        if (pull) {
-            command.addOptions("--pull"); //$NON-NLS-1$
-        }
-        if (uncompressed) {
-            command.addOptions("--uncompressed"); //$NON-NLS-1$
-        }
-        if (rev != null && rev.length() > 0) {
-            command.addOptions("--rev", rev); //$NON-NLS-1$
-        }
+		if (noUpdate) {
+			command.addOptions("--noupdate"); //$NON-NLS-1$
+		}
+		if (pull) {
+			command.addOptions("--pull"); //$NON-NLS-1$
+		}
+		if (uncompressed) {
+			command.addOptions("--uncompressed"); //$NON-NLS-1$
+		}
+		if (rev != null && rev.length() > 0) {
+			command.addOptions("--rev", rev); //$NON-NLS-1$
+		}
 
-        URI uri = repo.getUri();
-        if (uri != null) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repo.getLocation());
-        }
+		URI uri = repo.getUri();
+		if (uri != null) {
+			command.addOptions(uri.toASCIIString());
+		} else {
+			command.addOptions(repo.getLocation());
+		}
 
-        if (cloneName != null) {
-            command.addOptions(cloneName);
-        }
-        if (timeout) {
-            command
-                    .setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
-            command.executeToBytes();
-        } else {
-            command.executeToBytes(Integer.MAX_VALUE);
-        }
-    }
+		if (cloneName != null) {
+			command.addOptions(cloneName);
+		}
+		if (timeout) {
+			command
+					.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
+			command.executeToBytes();
+		} else {
+			command.executeToBytes(Integer.MAX_VALUE);
+		}
+	}
 }

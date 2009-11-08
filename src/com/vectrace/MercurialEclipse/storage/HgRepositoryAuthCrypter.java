@@ -26,76 +26,76 @@ import com.vectrace.MercurialEclipse.utils.Base64Coder;
  * @author adam.berkes <adam.berkes@intland.com>
  */
 public class HgRepositoryAuthCrypter {
-        protected static final String DEFAULT_ALGORITHM = "DESede";
+		protected static final String DEFAULT_ALGORITHM = "DESede";
 
-        private Cipher ecipher;
-        private Cipher dcipher;
-        private String algorithm;
+		private Cipher ecipher;
+		private Cipher dcipher;
+		private String algorithm;
 
-        HgRepositoryAuthCrypter(SecretKey key) {
-            this(key, DEFAULT_ALGORITHM);
-        }
+		HgRepositoryAuthCrypter(SecretKey key) {
+			this(key, DEFAULT_ALGORITHM);
+		}
 
-        HgRepositoryAuthCrypter(SecretKey key, String algorithm) {
-            try {
-                ecipher = Cipher.getInstance(DEFAULT_ALGORITHM);
-                dcipher = Cipher.getInstance(DEFAULT_ALGORITHM);
-                ecipher.init(Cipher.ENCRYPT_MODE, key);
-                dcipher.init(Cipher.DECRYPT_MODE, key);
-                this.algorithm = algorithm;
+		HgRepositoryAuthCrypter(SecretKey key, String algorithm) {
+			try {
+				ecipher = Cipher.getInstance(DEFAULT_ALGORITHM);
+				dcipher = Cipher.getInstance(DEFAULT_ALGORITHM);
+				ecipher.init(Cipher.ENCRYPT_MODE, key);
+				dcipher.init(Cipher.DECRYPT_MODE, key);
+				this.algorithm = algorithm;
 
-            } catch (javax.crypto.NoSuchPaddingException e) {
-            } catch (java.security.NoSuchAlgorithmException e) {
-            } catch (java.security.InvalidKeyException e) {
-            }
-        }
+			} catch (javax.crypto.NoSuchPaddingException e) {
+			} catch (java.security.NoSuchAlgorithmException e) {
+			} catch (java.security.InvalidKeyException e) {
+			}
+		}
 
-        public static SecretKey generateKey() {
-            return generateKey(DEFAULT_ALGORITHM);
-        }
+		public static SecretKey generateKey() {
+			return generateKey(DEFAULT_ALGORITHM);
+		}
 
-        public static SecretKey generateKey(String algorithm) {
-            try {
-                return KeyGenerator.getInstance(algorithm).generateKey();
-            } catch (NoSuchAlgorithmException ex) {
-                MercurialEclipsePlugin.logError(ex);
-            }
-            return null;
-        }
+		public static SecretKey generateKey(String algorithm) {
+			try {
+				return KeyGenerator.getInstance(algorithm).generateKey();
+			} catch (NoSuchAlgorithmException ex) {
+				MercurialEclipsePlugin.logError(ex);
+			}
+			return null;
+		}
 
-        public String encrypt(String str) {
-            try {
-                // Encode the string into bytes using utf-8
-                byte[] utf8 = str.getBytes("UTF8");
-                // Encrypt
-                byte[] enc = ecipher.doFinal(utf8);
-                return new String(Base64Coder.encode(enc));
-            } catch (javax.crypto.BadPaddingException e) {
-            } catch (IllegalBlockSizeException e) {
-            } catch (UnsupportedEncodingException e) {
-            }
-            return null;
-        }
+		public String encrypt(String str) {
+			try {
+				// Encode the string into bytes using utf-8
+				byte[] utf8 = str.getBytes("UTF8");
+				// Encrypt
+				byte[] enc = ecipher.doFinal(utf8);
+				return new String(Base64Coder.encode(enc));
+			} catch (javax.crypto.BadPaddingException e) {
+			} catch (IllegalBlockSizeException e) {
+			} catch (UnsupportedEncodingException e) {
+			}
+			return null;
+		}
 
-        public String decrypt(String str) {
-            try {
-                // Decode base64 to get bytes
-                byte[] dec = Base64Coder.decode(str);
-                // Decrypt
-                byte[] utf8 = dcipher.doFinal(dec);
-                // Decode using utf-8
-                return new String(utf8, "UTF8");
-            } catch (javax.crypto.BadPaddingException e) {
-            } catch (IllegalBlockSizeException e) {
-            } catch (UnsupportedEncodingException e) {
-            }
-            return null;
-        }
+		public String decrypt(String str) {
+			try {
+				// Decode base64 to get bytes
+				byte[] dec = Base64Coder.decode(str);
+				// Decrypt
+				byte[] utf8 = dcipher.doFinal(dec);
+				// Decode using utf-8
+				return new String(utf8, "UTF8");
+			} catch (javax.crypto.BadPaddingException e) {
+			} catch (IllegalBlockSizeException e) {
+			} catch (UnsupportedEncodingException e) {
+			}
+			return null;
+		}
 
-        /**
-         * @return the algorithm
-         */
-        public String getAlgorithm() {
-            return algorithm;
-        }
+		/**
+		 * @return the algorithm
+		 */
+		public String getAlgorithm() {
+			return algorithm;
+		}
 }

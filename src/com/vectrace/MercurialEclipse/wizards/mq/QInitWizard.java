@@ -28,75 +28,75 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
  *
  */
 public class QInitWizard extends HgWizard {
-    private QInitWizardPage page = null;
-    
-    private class InitOperation extends HgOperation {
+	private QInitWizardPage page = null;
 
-        /**
-         * @param context
-         */
-        public InitOperation(IRunnableContext context) {
-            super(context);
-        }
+	private class InitOperation extends HgOperation {
 
-        /* (non-Javadoc)
-         * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
-         */
-        @Override
-        protected String getActionDescription() {
-            return Messages.getString("QInitWizard.InitAction.description"); //$NON-NLS-1$
-        }
-        
-        /* (non-Javadoc)
-         * @see com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core.runtime.IProgressMonitor)
-         */
-        @Override
-        public void run(IProgressMonitor monitor)
-                throws InvocationTargetException, InterruptedException {
-            monitor.beginTask(Messages.getString("QInitWizard.beginTask"), 2); //$NON-NLS-1$
-            monitor.worked(1);
-            monitor.subTask(Messages.getString("QInitWizard.subTask.callMercurial")); //$NON-NLS-1$
-            
-            try {
-                HgQInitClient.init(resource, page.getCheckBox().getSelection());
-                monitor.worked(1);
-                monitor.done();                
-            } catch (HgException e) {                
-                throw new InvocationTargetException(e,e.getLocalizedMessage());
-            }            
-        }
-        
-    }
-    
-    private IResource resource;
+		/**
+		 * @param context
+		 */
+		public InitOperation(IRunnableContext context) {
+			super(context);
+		}
 
-    /**
-     * @param windowTitle
-     */
-    public QInitWizard(IResource resource) {
-        super(Messages.getString("QInitWizard.title")); //$NON-NLS-1$
-        this.resource = resource;
-        setNeedsProgressMonitor(true);        
-        page = new QInitWizardPage(Messages.getString("QInitWizard.pageName"),Messages.getString("QInitWizard.pageTitle"),null,null,resource);  //$NON-NLS-1$ //$NON-NLS-2$
-        initPage(Messages.getString("QInitWizard.pageDescription"), page); //$NON-NLS-1$
-        addPage(page);
-    }
-    
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-     */
-    @Override
-    public boolean performFinish() {
-        InitOperation initOperation = new InitOperation(getContainer());
-        try {
-            getContainer().run(false, false, initOperation);
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-            page.setErrorMessage(e.getLocalizedMessage());
-            return false;
-        }
-        PatchQueueView.getView().populateTable();
-        return true;
-    }
+		/* (non-Javadoc)
+		 * @see com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription()
+		 */
+		@Override
+		protected String getActionDescription() {
+			return Messages.getString("QInitWizard.InitAction.description"); //$NON-NLS-1$
+		}
+
+		/* (non-Javadoc)
+		 * @see com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse.core.runtime.IProgressMonitor)
+		 */
+		@Override
+		public void run(IProgressMonitor monitor)
+				throws InvocationTargetException, InterruptedException {
+			monitor.beginTask(Messages.getString("QInitWizard.beginTask"), 2); //$NON-NLS-1$
+			monitor.worked(1);
+			monitor.subTask(Messages.getString("QInitWizard.subTask.callMercurial")); //$NON-NLS-1$
+
+			try {
+				HgQInitClient.init(resource, page.getCheckBox().getSelection());
+				monitor.worked(1);
+				monitor.done();
+			} catch (HgException e) {
+				throw new InvocationTargetException(e,e.getLocalizedMessage());
+			}
+		}
+
+	}
+
+	private IResource resource;
+
+	/**
+	 * @param windowTitle
+	 */
+	public QInitWizard(IResource resource) {
+		super(Messages.getString("QInitWizard.title")); //$NON-NLS-1$
+		this.resource = resource;
+		setNeedsProgressMonitor(true);
+		page = new QInitWizardPage(Messages.getString("QInitWizard.pageName"),Messages.getString("QInitWizard.pageTitle"),null,null,resource);  //$NON-NLS-1$ //$NON-NLS-2$
+		initPage(Messages.getString("QInitWizard.pageDescription"), page); //$NON-NLS-1$
+		addPage(page);
+	}
+
+	/* (non-Javadoc)
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 */
+	@Override
+	public boolean performFinish() {
+		InitOperation initOperation = new InitOperation(getContainer());
+		try {
+			getContainer().run(false, false, initOperation);
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+			page.setErrorMessage(e.getLocalizedMessage());
+			return false;
+		}
+		PatchQueueView.getView().populateTable();
+		return true;
+	}
 
 }

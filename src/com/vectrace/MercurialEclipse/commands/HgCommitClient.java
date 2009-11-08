@@ -11,6 +11,7 @@
  *     StefanC
  *     Zsolt Koppany zsolt.koppany@intland.com
  *     Adam Berkes adam.berkes@intland.com
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 

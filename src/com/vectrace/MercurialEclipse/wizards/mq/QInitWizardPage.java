@@ -25,49 +25,49 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QInitWizardPage extends HgWizardPage {
 
-    private IResource resource;
-    private Button checkBox;
+	private IResource resource;
+	private Button checkBox;
 
-    /**
-     * @param pageName
-     * @param title
-     * @param titleImage
-     * @param description
-     */
-    public QInitWizardPage(String pageName, String title,
-            ImageDescriptor titleImage, String description, IResource resource) {
-        super(pageName, title, titleImage, description);
-        this.resource = resource;        
-    }
-
-    
-
-    /* (non-Javadoc)
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-     */
-    public void createControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 1);
-        Group g = SWTWidgetHelper.createGroup(composite, Messages.getString("QInitWizardPage.group.title")); //$NON-NLS-1$
-        this.checkBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QInitWizardPage.checkBox.nestedRepo")); //$NON-NLS-1$
-        setControl(composite);
-    }
+	/**
+	 * @param pageName
+	 * @param title
+	 * @param titleImage
+	 * @param description
+	 */
+	public QInitWizardPage(String pageName, String title,
+			ImageDescriptor titleImage, String description, IResource resource) {
+		super(pageName, title, titleImage, description);
+		this.resource = resource;
+	}
 
 
 
-    /**
-     * @return the resource
-     */
-    public IResource getResource() {
-        return resource;
-    }
+	/* (non-Javadoc)
+	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
+	 */
+	public void createControl(Composite parent) {
+		Composite composite = SWTWidgetHelper.createComposite(parent, 1);
+		Group g = SWTWidgetHelper.createGroup(composite, Messages.getString("QInitWizardPage.group.title")); //$NON-NLS-1$
+		this.checkBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QInitWizardPage.checkBox.nestedRepo")); //$NON-NLS-1$
+		setControl(composite);
+	}
 
 
 
-    /**
-     * @return the checkBox
-     */
-    public Button getCheckBox() {
-        return checkBox;
-    }
+	/**
+	 * @return the resource
+	 */
+	public IResource getResource() {
+		return resource;
+	}
+
+
+
+	/**
+	 * @return the checkBox
+	 */
+	public Button getCheckBox() {
+		return checkBox;
+	}
 
 }

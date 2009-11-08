@@ -27,46 +27,46 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public class RemoteContentProvider extends WorkbenchContentProvider {
 
-    private DeferredTreeContentManager manager;
+	private DeferredTreeContentManager manager;
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer,
-     *      java.lang.Object, java.lang.Object)
-     */
-    @Override
-    public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-        if (viewer instanceof AbstractTreeViewer) {
-            manager = new DeferredTreeContentManager(this,
-                    (AbstractTreeViewer) viewer);
-        }
-        super.inputChanged(viewer, oldInput, newInput);
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jface.viewers.IContentProvider#inputChanged(org.eclipse.jface.viewers.Viewer,
+	 *      java.lang.Object, java.lang.Object)
+	 */
+	@Override
+	public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+		if (viewer instanceof AbstractTreeViewer) {
+			manager = new DeferredTreeContentManager(this,
+					(AbstractTreeViewer) viewer);
+		}
+		super.inputChanged(viewer, oldInput, newInput);
+	}
 
-    /*
-     * (non-Javadoc) Method declared on WorkbenchContentProvider.
-     */
-    @Override
-    public boolean hasChildren(Object element) {
-        if (element == null) {
-            return false;
-        }
+	/*
+	 * (non-Javadoc) Method declared on WorkbenchContentProvider.
+	 */
+	@Override
+	public boolean hasChildren(Object element) {
+		if (element == null) {
+			return false;
+		}
 
-        if (manager != null) {
-            if (manager.isDeferredAdapter(element))
-                return manager.mayHaveChildren(element);
-        }
+		if (manager != null) {
+			if (manager.isDeferredAdapter(element))
+				return manager.mayHaveChildren(element);
+		}
 
-        return super.hasChildren(element);
-    }
+		return super.hasChildren(element);
+	}
 
-    /**
-     * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
-     */
-    @SuppressWarnings("unchecked")
-    @Override
-    public Object[] getChildren(Object parentElement) {
+	/**
+	 * @see org.eclipse.jface.viewers.ITreeContentProvider#getChildren(java.lang.Object)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Object[] getChildren(Object parentElement) {
 		if (manager != null) {
 			Object[] children = manager.getChildren(parentElement);
 			if (children != null) {
@@ -83,24 +83,24 @@ public class RemoteContentProvider extends WorkbenchContentProvider {
 		}
 		return super.getChildren(parentElement);
 	}
-        
-    public void cancelJobs(HgRepositoryLocation[] roots) {
-        if (manager != null) {
-            for (int i = 0; i < roots.length; i++) {
-                HgRepositoryLocation root = roots[i];
-                cancelJobs(root);
-            }
-        }
-    }
 
-    /**
-     * Cancel any jobs that are fetching content from the given location.
-     * 
-     * @param location
-     */
-    public void cancelJobs(HgRepositoryLocation location) {
-        if (manager != null) {
-            manager.cancel(location);
-        }
-    }
+	public void cancelJobs(HgRepositoryLocation[] roots) {
+		if (manager != null) {
+			for (int i = 0; i < roots.length; i++) {
+				HgRepositoryLocation root = roots[i];
+				cancelJobs(root);
+			}
+		}
+	}
+
+	/**
+	 * Cancel any jobs that are fetching content from the given location.
+	 *
+	 * @param location
+	 */
+	public void cancelJobs(HgRepositoryLocation location) {
+		if (manager != null) {
+			manager.cancel(location);
+		}
+	}
 }

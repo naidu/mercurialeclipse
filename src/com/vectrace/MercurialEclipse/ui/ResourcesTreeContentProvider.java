@@ -17,14 +17,14 @@ public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider i
 	public final static Object ROOT = new Object();
 	//the real roots
 	private final Set<? extends IResource> roots;
-	
+
 	public ResourcesTreeContentProvider(Set<? extends IResource> roots) {
 		super();
 		this.roots = roots;
 	}
 
 	@Override
-    public Object[] getChildren(Object parentElement) {
+	public Object[] getChildren(Object parentElement) {
 		if(parentElement == ROOT) {
 			return roots.toArray(new IResource[0]);
 		} else if(parentElement instanceof IContainer){
@@ -40,26 +40,26 @@ public class ResourcesTreeContentProvider extends BaseWorkbenchContentProvider i
 	}
 
 	@Override
-    public Object getParent(Object element) {
+	public Object getParent(Object element) {
 		return ((IResource)element).getParent();
 	}
 
 	@Override
-    public boolean hasChildren(Object element) {
+	public boolean hasChildren(Object element) {
 		return element == ROOT || element instanceof IContainer;
 	}
 
 	@Override
-    public Object[] getElements(Object inputElement) {
+	public Object[] getElements(Object inputElement) {
 		return getChildren(inputElement);
 	}
 
 	@Override
-    public void dispose() {
+	public void dispose() {
 	}
 
 	@Override
-    public void inputChanged(Viewer viewer, Object oldInput,
+	public void inputChanged(Viewer viewer, Object oldInput,
 			Object newInput) {
 	}
 

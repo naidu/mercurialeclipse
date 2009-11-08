@@ -8,6 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - removeResources()
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -25,35 +26,35 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgRemoveClient extends AbstractClient {
 
-    public static void removeResource(IResource resource,
-            IProgressMonitor monitor) throws HgException {
-        if (monitor != null) {
-            monitor.subTask(Messages.getString("HgRemoveClient.removeResource.1") + resource.getName() //$NON-NLS-1$
-                    + Messages.getString("HgRemoveClient.removeResource.2")); //$NON-NLS-1$
-        }
-        AbstractShellCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
-        command.addOptions("--force"); //$NON-NLS-1$
-        command.addFiles(resource);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-        command.executeToBytes();
-        MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
-    }
+	public static void removeResource(IResource resource,
+			IProgressMonitor monitor) throws HgException {
+		if (monitor != null) {
+			monitor.subTask(Messages.getString("HgRemoveClient.removeResource.1") + resource.getName() //$NON-NLS-1$
+					+ Messages.getString("HgRemoveClient.removeResource.2")); //$NON-NLS-1$
+		}
+		AbstractShellCommand command = new HgCommand("remove", resource.getProject(), true); //$NON-NLS-1$
+		command.addOptions("--force"); //$NON-NLS-1$
+		command.addFiles(resource);
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+		command.executeToBytes();
+		MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
+	}
 
-    public static void removeResources(List<IResource> resources) throws HgException {
-        Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
+	public static void removeResources(List<IResource> resources) throws HgException {
+		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
-        for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
-            HgRoot root = mapEntry.getKey();
-            // if there are too many resources, do several calls
-            int size = resources.size();
-            int delta = AbstractShellCommand.MAX_PARAMS - 1;
-            for (int i = 0; i < size; i += delta) {
-                AbstractShellCommand command = new HgCommand("remove", root, true); //$NON-NLS-1$
-                command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
-                command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
-                command.executeToBytes();
-            }
-        }
+		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
+			HgRoot root = mapEntry.getKey();
+			// if there are too many resources, do several calls
+			int size = resources.size();
+			int delta = AbstractShellCommand.MAX_PARAMS - 1;
+			for (int i = 0; i < size; i += delta) {
+				AbstractShellCommand command = new HgCommand("remove", root, true); //$NON-NLS-1$
+				command.setUsePreferenceTimeout(MercurialPreferenceConstants.REMOVE_TIMEOUT);
+				command.addFiles(mapEntry.getValue().subList(i, Math.min(i + delta, size)));
+				command.executeToBytes();
+			}
+		}
 
-    }
+	}
 }

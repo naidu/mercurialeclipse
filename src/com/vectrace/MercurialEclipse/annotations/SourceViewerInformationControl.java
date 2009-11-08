@@ -8,7 +8,8 @@
  * Contributors:
  *     IBM Corporation   - initial API and implementation
  *     Charles O'Farrell - copy from subclipse
- *     StefanC           - code cleenup
+ *     StefanC           - code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
@@ -61,17 +62,17 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		}
 
 
-		    @Override
+			@Override
 			protected Map<String,? extends Object> getHyperlinkDetectorTargets(ISourceViewer sourceViewer) {
-		        return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor",  //$NON-NLS-1$
-		            null);
+				return Collections.singletonMap("org.eclipse.ui.DefaultTextEditor",  //$NON-NLS-1$
+					null);
 		//            new IAdaptable() {
 		//              public Object getAdapter(Class adapter) {
 		//                // return Platform.getAdapterManager().getAdapter(CVSHistoryPage.this, adapter);
 		//                return null;
 		//              }
 		//            });
-		      }
+			  }
 	}
 
 	/** Border thickness in pixels. */
@@ -169,8 +170,8 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 			public void keyPressed(KeyEvent e)  {
 				if (e.character == 0x1B) {
-                    fShell.dispose();
-                }
+					fShell.dispose();
+				}
 			}
 
 			public void keyReleased(KeyEvent e) {}
@@ -189,8 +190,8 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 			Font font= fStatusField.getFont();
 			FontData[] fontDatas= font.getFontData();
 			for (int i= 0; i < fontDatas.length; i++) {
-                fontDatas[i].setHeight(fontDatas[i].getHeight() * 9 / 10);
-            }
+				fontDatas[i].setHeight(fontDatas[i].getHeight() * 9 / 10);
+			}
 			fStatusTextFont= new Font(fStatusField.getDisplay(), fontDatas);
 			fStatusField.setFont(fStatusTextFont);
 			GridData gd2= new GridData(GridData.FILL_VERTICAL | GridData.FILL_HORIZONTAL | GridData.HORIZONTAL_ALIGN_BEGINNING | GridData.VERTICAL_ALIGN_BEGINNING);
@@ -207,10 +208,10 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 	public void setInput(Object input) {
 		if (input instanceof String) {
-            setInformation((String)input);
-        } else {
-            setInformation(null);
-        }
+			setInformation((String)input);
+		} else {
+			setInformation(null);
+		}
 	}
 
 	public void setInformation(String content) {
@@ -227,7 +228,7 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		styleRange.start = 0;
 		styleRange.length = content.indexOf('\n');
 		styleRange.fontStyle = SWT.BOLD;
-    fViewer.getTextWidget().setStyleRange(styleRange);
+	fViewer.getTextWidget().setStyleRange(styleRange);
 	}
 
 	public void setVisible(boolean visible) {
@@ -236,8 +237,8 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 	public void widgetDisposed(DisposeEvent event) {
 		if (fStatusTextFont != null && !fStatusTextFont.isDisposed()) {
-            fStatusTextFont.dispose();
-        }
+			fStatusTextFont.dispose();
+		}
 
 		fStatusTextFont= null;
 		fShell= null;
@@ -246,10 +247,10 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 
 	public final void dispose() {
 		if (fShell != null && !fShell.isDisposed()) {
-            fShell.dispose();
-        } else {
-            widgetDisposed(null);
-        }
+			fShell.dispose();
+		} else {
+			widgetDisposed(null);
+		}
 	}
 
 	public void setSize(int width, int height) {
@@ -263,8 +264,8 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		fShell.setSize(width, height);
 
 		if (fStatusField != null) {
-            fShell.pack(true);
-        }
+			fShell.pack(true);
+		}
 	}
 
 	public void setLocation(Point location) {
@@ -282,16 +283,16 @@ class SourceViewerInformationControl implements IInformationControl, IInformatio
 		int y= SWT.DEFAULT;
 		Point size= fShell.computeSize(x, y);
 		if (size.x > fMaxWidth) {
-            x= fMaxWidth;
-        }
+			x= fMaxWidth;
+		}
 		if (size.y > fMaxHeight) {
-            y= fMaxHeight;
-        }
+			y= fMaxHeight;
+		}
 
 		// recompute using the constraints if the preferred size is larger than the constraints
 		if (x != SWT.DEFAULT || y != SWT.DEFAULT) {
-            size= fShell.computeSize(x, y, false);
-        }
+			size= fShell.computeSize(x, y, false);
+		}
 
 		return size;
 	}

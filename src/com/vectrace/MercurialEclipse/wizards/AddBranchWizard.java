@@ -7,6 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -30,63 +31,63 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  *
  */
 public class AddBranchWizard extends HgWizard {
-    private final AddBranchPage branchPage;
-    private final IResource resource;
+	private final AddBranchPage branchPage;
+	private final IResource resource;
 
-    private class AddBranchOperation extends HgOperation {
+	private class AddBranchOperation extends HgOperation {
 
-        public AddBranchOperation(IRunnableContext context) {
-            super(context);
-        }
+		public AddBranchOperation(IRunnableContext context) {
+			super(context);
+		}
 
-        @Override
-        protected String getActionDescription() {
-            return Messages.getString("AddBranchWizard.AddBranchOperation.actionDescription"); //$NON-NLS-1$
-        }
+		@Override
+		protected String getActionDescription() {
+			return Messages.getString("AddBranchWizard.AddBranchOperation.actionDescription"); //$NON-NLS-1$
+		}
 
-        @Override
-        public void run(IProgressMonitor monitor)
-                throws InvocationTargetException, InterruptedException {
-            try {
-                monitor.beginTask(Messages.getString("AddBranchWizard.AddBranchOperation.taskName"), 1); //$NON-NLS-1$
-                HgBranchClient.addBranch(resource, branchPage
-                        .getBranchNameTextField().getText(), MercurialUtilities
-                        .getHGUsername(), branchPage.getForceCheckBox()
-                        .getSelection());
-                monitor.worked(1);
-                HgClients.getConsole().printMessage(result, null);
-                if(resource instanceof IProject){
-                    IProject project = (IProject) resource;
-                    String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-                    MercurialTeamProvider.setCurrentBranch(branch, project);
-                }
-                resource.touch(monitor);
-            } catch (CoreException e) {
-                throw new InvocationTargetException(e, e.getLocalizedMessage());
-            }
-            monitor.done();
-        }
-    }
+		@Override
+		public void run(IProgressMonitor monitor)
+				throws InvocationTargetException, InterruptedException {
+			try {
+				monitor.beginTask(Messages.getString("AddBranchWizard.AddBranchOperation.taskName"), 1); //$NON-NLS-1$
+				HgBranchClient.addBranch(resource, branchPage
+						.getBranchNameTextField().getText(), MercurialUtilities
+						.getHGUsername(), branchPage.getForceCheckBox()
+						.getSelection());
+				monitor.worked(1);
+				HgClients.getConsole().printMessage(result, null);
+				if(resource instanceof IProject){
+					IProject project = (IProject) resource;
+					String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+					MercurialTeamProvider.setCurrentBranch(branch, project);
+				}
+				resource.touch(monitor);
+			} catch (CoreException e) {
+				throw new InvocationTargetException(e, e.getLocalizedMessage());
+			}
+			monitor.done();
+		}
+	}
 
-    public AddBranchWizard(IResource resource) {
-        super(Messages.getString("AddBranchWizard.windowTitle")); //$NON-NLS-1$
-        this.resource = resource;
-        setNeedsProgressMonitor(true);
-        branchPage = new AddBranchPage(Messages.getString("AddBranchWizard.branchPage.name"), //$NON-NLS-1$
-                Messages.getString("AddBranchWizard.branchPage.title"), MercurialEclipsePlugin.getImageDescriptor("wizards/newstream_wizban.gif"), //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("AddBranchWizard.branchPage.description")); //$NON-NLS-1$
-        addPage(branchPage);
-    }
+	public AddBranchWizard(IResource resource) {
+		super(Messages.getString("AddBranchWizard.windowTitle")); //$NON-NLS-1$
+		this.resource = resource;
+		setNeedsProgressMonitor(true);
+		branchPage = new AddBranchPage(Messages.getString("AddBranchWizard.branchPage.name"), //$NON-NLS-1$
+				Messages.getString("AddBranchWizard.branchPage.title"), MercurialEclipsePlugin.getImageDescriptor("wizards/newstream_wizban.gif"), //$NON-NLS-1$ //$NON-NLS-2$
+				Messages.getString("AddBranchWizard.branchPage.description")); //$NON-NLS-1$
+		addPage(branchPage);
+	}
 
-    @Override
-    public boolean performFinish() {
-        AddBranchOperation op = new AddBranchOperation(getContainer());
-        try {
-            getContainer().run(false, false, op);
-        } catch (Exception e) {
-            branchPage.setErrorMessage(e.getLocalizedMessage());
-            return false;
-        }
-        return super.performFinish();
-    }
+	@Override
+	public boolean performFinish() {
+		AddBranchOperation op = new AddBranchOperation(getContainer());
+		try {
+			getContainer().run(false, false, op);
+		} catch (Exception e) {
+			branchPage.setErrorMessage(e.getLocalizedMessage());
+			return false;
+		}
+		return super.performFinish();
+	}
 }

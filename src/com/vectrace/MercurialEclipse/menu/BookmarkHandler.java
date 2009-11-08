@@ -23,32 +23,32 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class BookmarkHandler extends SingleResourceHandler {
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        
-        try {
-            if (!MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
-                    ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
-                    "hgext.bookmarks=")) { //$NON-NLS-1$
-                Shell shell = getShell();
-                MessageDialog
-                        .openInformation(
-                                shell,
-                                Messages.getString("BookmarkHandler.extNotAvailable"), //$NON-NLS-1$
-                                Messages.getString("BookmarkHandler.extNotAvailableLong.1") //$NON-NLS-1$
-                                        + Messages.getString("BookmarkHandler.extNotAvailableLong.2") //$NON-NLS-1$
-                                        + Messages.getString("BookmarkHandler.extNotAvailableLong.3")); //$NON-NLS-1$
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-        
-        BookmarkDialog dialog = new BookmarkDialog(getShell(), project);
+	@Override
+	protected void run(IResource resource) throws Exception {
+		IProject project = resource.getProject();
 
-        if (dialog.open() == IDialogConstants.OK_ID) {
-            // do nothing
-        }
-    }
+		try {
+			if (!MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
+					ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
+					"hgext.bookmarks=")) { //$NON-NLS-1$
+				Shell shell = getShell();
+				MessageDialog
+						.openInformation(
+								shell,
+								Messages.getString("BookmarkHandler.extNotAvailable"), //$NON-NLS-1$
+								Messages.getString("BookmarkHandler.extNotAvailableLong.1") //$NON-NLS-1$
+										+ Messages.getString("BookmarkHandler.extNotAvailableLong.2") //$NON-NLS-1$
+										+ Messages.getString("BookmarkHandler.extNotAvailableLong.3")); //$NON-NLS-1$
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+
+		BookmarkDialog dialog = new BookmarkDialog(getShell(), project);
+
+		if (dialog.open() == IDialogConstants.OK_ID) {
+			// do nothing
+		}
+	}
 
 }

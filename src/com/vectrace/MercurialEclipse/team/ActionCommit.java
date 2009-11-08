@@ -25,73 +25,73 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
 
 public class ActionCommit implements IWorkbenchWindowActionDelegate {
-    private IStructuredSelection selection;
+	private IStructuredSelection selection;
 
-    public ActionCommit() {
-        super();
-    }
+	public ActionCommit() {
+		super();
+	}
 
-    /**
-     * We can use this method to dispose of any system resources we previously
-     * allocated.
-     * 
-     * @see IWorkbenchWindowActionDelegate#dispose
-     */
-    public void dispose() {
+	/**
+	 * We can use this method to dispose of any system resources we previously
+	 * allocated.
+	 *
+	 * @see IWorkbenchWindowActionDelegate#dispose
+	 */
+	public void dispose() {
 
-    }
+	}
 
-    /**
-     * We will cache window object in order to be able to provide parent shell
-     * for the message dialog.
-     * 
-     * @see IWorkbenchWindowActionDelegate#init
-     */
-    public void init(IWorkbenchWindow w) {
-    }
+	/**
+	 * We will cache window object in order to be able to provide parent shell
+	 * for the message dialog.
+	 *
+	 * @see IWorkbenchWindowActionDelegate#init
+	 */
+	public void init(IWorkbenchWindow w) {
+	}
 
-    /**
-     * @return
-     */
-    private List<IResource> getSelectedResources() {
-        List<IResource> l = new ArrayList<IResource>();
-        for (Object o : selection.toList()) {
-            l.add((IResource)o);
-        }
-        return l;
-    }
+	/**
+	 * @return
+	 */
+	private List<IResource> getSelectedResources() {
+		List<IResource> l = new ArrayList<IResource>();
+		for (Object o : selection.toList()) {
+			l.add((IResource)o);
+		}
+		return l;
+	}
 
-    /**
-     * The action has been activated. The argument of the method represents the
-     * 'real' action sitting in the workbench UI.
-     * @throws HgException 
-     * 
-     * @see IWorkbenchWindowActionDelegate#run
-     */
+	/**
+	 * The action has been activated. The argument of the method represents the
+	 * 'real' action sitting in the workbench UI.
+	 * @throws HgException
+	 *
+	 * @see IWorkbenchWindowActionDelegate#run
+	 */
 
-    @SuppressWarnings("unchecked")
-    public void run(IAction action) {
-        try {
-            new CommitHandler().run(getSelectedResources());
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            MercurialEclipsePlugin.showError(e);
-        }
-    }
+	@SuppressWarnings("unchecked")
+	public void run(IAction action) {
+		try {
+			new CommitHandler().run(getSelectedResources());
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+		}
+	}
 
 
-    /**
-     * Selection in the workbench has been changed. We can change the state of
-     * the 'real' action here if we want, but this can only happen after the
-     * delegate has been created.
-     * 
-     * @see IWorkbenchWindowActionDelegate#selectionChanged
-     */
-    public void selectionChanged(IAction action, ISelection in_selection) {
-        if (in_selection != null
-                && in_selection instanceof IStructuredSelection) {
-            selection = (IStructuredSelection) in_selection;
-        }
-    }
+	/**
+	 * Selection in the workbench has been changed. We can change the state of
+	 * the 'real' action here if we want, but this can only happen after the
+	 * delegate has been created.
+	 *
+	 * @see IWorkbenchWindowActionDelegate#selectionChanged
+	 */
+	public void selectionChanged(IAction action, ISelection in_selection) {
+		if (in_selection != null
+				&& in_selection instanceof IStructuredSelection) {
+			selection = (IStructuredSelection) in_selection;
+		}
+	}
 
 }

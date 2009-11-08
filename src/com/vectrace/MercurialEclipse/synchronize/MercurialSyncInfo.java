@@ -7,6 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -22,14 +23,14 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
  */
 public class MercurialSyncInfo extends SyncInfo {
 
-    public MercurialSyncInfo(IResource local, IResourceVariant base,
-            IResourceVariant remote, IResourceVariantComparator comparator) {
-        super(local, base, remote, comparator);
-    }
+	public MercurialSyncInfo(IResource local, IResourceVariant base,
+			IResourceVariant remote, IResourceVariantComparator comparator) {
+		super(local, base, remote, comparator);
+	}
 
-    @Override
-    protected int calculateKind() throws TeamException {
-        int description = super.calculateKind();
-        return description;
-    }
+	@Override
+	protected int calculateKind() throws TeamException {
+		int description = super.calculateKind();
+		return description;
+	}
 }

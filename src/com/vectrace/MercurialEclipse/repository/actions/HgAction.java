@@ -34,14 +34,14 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * retrieval and prompting.
  */
 abstract public class HgAction extends ReplaceableIconAction {
-	
+
 	private List<IStatus> accumulatedStatus = new ArrayList<IStatus>();
-	
+
 	/**
 	 * Common run method for all Hg actions.
 	 */
 	@Override
-    final public void run(IAction action) {
+	final public void run(IAction action) {
 		try {
 			if (!beginExecution(action)) return;
 			execute(action);
@@ -57,7 +57,7 @@ abstract public class HgAction extends ReplaceableIconAction {
 
 	/**
 	 * This method gets invoked before the <code>HgAction#execute(IAction)</code>
-	 * method. It can preform any prechecking and initialization required before 
+	 * method. It can preform any prechecking and initialization required before
 	 * the action is executed. Sunclasses may override but must invoke this
 	 * inherited method to ensure proper initialization of this superclass is performed.
 	 * These included prepartion to accumulate IStatus and checking for dirty editors.
@@ -82,16 +82,16 @@ abstract public class HgAction extends ReplaceableIconAction {
 			handle(null);
 		}
 	}
-	
+
 	/**
-	 * Add a status to the list of accumulated status. 
+	 * Add a status to the list of accumulated status.
 	 * These will be provided to method handle(Exception, IStatus[])
 	 * when the action completes.
 	 */
 	protected void addStatus(IStatus status) {
 		accumulatedStatus.add(status);
 	}
-	
+
 	/**
 	 * Return the list of status accumulated so far by the action. This
 	 * will include any OK status that were added using addStatus(IStatus)
@@ -99,7 +99,7 @@ abstract public class HgAction extends ReplaceableIconAction {
 	protected IStatus[] getAccumulatedStatus() {
 		return accumulatedStatus.toArray(new IStatus[accumulatedStatus.size()]);
 	}
-	
+
 	/**
 	 * Return the title to be displayed on error dialogs.
 	 * Sunclasses should override to present a custon message.
@@ -107,7 +107,7 @@ abstract public class HgAction extends ReplaceableIconAction {
 	protected String getErrorTitle() {
 		return "Error";
 	}
-	
+
 	/**
 	 * Return the title to be displayed on error dialogs when warnigns occur.
 	 * Sunclasses should override to present a custon message.
@@ -117,19 +117,19 @@ abstract public class HgAction extends ReplaceableIconAction {
 	}
 
 	/**
-	 * Return the message to be used for the parent MultiStatus when 
+	 * Return the message to be used for the parent MultiStatus when
 	 * mulitple errors occur during an action.
 	 * Sunclasses should override to present a custon message.
 	 */
 	protected String getMultiStatusMessage() {
-		return "Multiple Problems occurred"; 
+		return "Multiple Problems occurred";
 	}
-	
+
 	/**
 	 * Return the status to be displayed in an error dialog for the given list
 	 * of non-OK status.
-	 * 
-	 * This method can be overridden bu subclasses. Returning an OK status will 
+	 *
+	 * This method can be overridden bu subclasses. Returning an OK status will
 	 * prevent the error dialog from being shown.
 	 */
 	protected IStatus getStatusToDisplay(IStatus[] problems) {
@@ -142,15 +142,15 @@ abstract public class HgAction extends ReplaceableIconAction {
 		}
 		return combinedStatus;
 	}
-	
+
 	/**
-	 * Method that implements generic handling of an exception. 
-	 * 
+	 * Method that implements generic handling of an exception.
+	 *
 	 * Thsi method will also use any accumulated status when determining what
 	 * information (if any) to show the user.
-	 * 
+	 *
 	 * @param exception the exception that occured (or null if none occured)
-	 * @param status any status accumulated by the action before the end of 
+	 * @param status any status accumulated by the action before the end of
 	 * the action or the exception occured.
 	 */
 	protected void handle(Exception exception) {
@@ -177,7 +177,7 @@ abstract public class HgAction extends ReplaceableIconAction {
 		if (exception != null) {
 			handle(exception, getErrorTitle(), null);
 		}
-		
+
 		String message = null;
 		IStatus statusToDisplay = getStatusToDisplay(problems.toArray(new IStatus[problems.size()]));
 		if (statusToDisplay.isOK()) return;
@@ -198,21 +198,21 @@ abstract public class HgAction extends ReplaceableIconAction {
 	 * Convenience method for running an operation with the appropriate progress.
 	 * Any exceptions are propogated so they can be handled by the
 	 * <code>HgAction#run(IAction)</code> error handling code.
-	 * 
+	 *
 	 * @param runnable  the runnable which executes the operation
 	 * @param cancelable  indicate if a progress monitor should be cancelable
 	 * @param progressKind  one of PROGRESS_BUSYCURSOR or PROGRESS_DIALOG
 	 */
 	final protected void run(final IRunnableWithProgress runnable, boolean cancelable, int progressKind) throws InvocationTargetException, InterruptedException {
 		final Exception[] exceptions = new Exception[] {null};
-		
+
 		// Ensure that no repository view refresh happens until after the action
 		final IRunnableWithProgress innerRunnable = new IRunnableWithProgress() {
 			public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-                runnable.run(monitor);
+				runnable.run(monitor);
 			}
 		};
-		
+
 		switch (progressKind) {
 			case PROGRESS_BUSYCURSOR :
 				BusyIndicator.showWhile(Display.getCurrent(), new Runnable() {
@@ -229,16 +229,16 @@ abstract public class HgAction extends ReplaceableIconAction {
 				break;
 			case PROGRESS_DIALOG :
 			default :
-				new ProgressMonitorDialog(getShell()).run(true, cancelable,/*cancelable, true, */innerRunnable);	
+				new ProgressMonitorDialog(getShell()).run(true, cancelable,/*cancelable, true, */innerRunnable);
 				break;
 		}
 		if (exceptions[0] != null) {
 			if (exceptions[0] instanceof InvocationTargetException)
 				throw (InvocationTargetException)exceptions[0];
-            throw (InterruptedException)exceptions[0];
+			throw (InterruptedException)exceptions[0];
 		}
 	}
-	
+
 	/**
 	 * Answers if the action would like dirty editors to saved
 	 * based on the Hg preference before running the action. By
@@ -251,13 +251,13 @@ abstract public class HgAction extends ReplaceableIconAction {
 	/**
 	 * Find the object associated with the selected object that is adapted to
 	 * the provided class.
-	 * 
+	 *
 	 * @param selection
 	 * @param c
 	 * @return Object
 	 */
 	@SuppressWarnings("unchecked")
-    public static Object getAdapter(Object selection, Class c) {
+	public static Object getAdapter(Object selection, Class c) {
 		if (c.isInstance(selection)) {
 			return selection;
 		}
@@ -270,13 +270,13 @@ abstract public class HgAction extends ReplaceableIconAction {
 		}
 		return null;
 	}
-	
-			
+
+
 	/**
 	 * @see org.tigris.subversion.subclipse.ui.actions.TeamAction#handle(java.lang.Exception, java.lang.String, java.lang.String)
 	 */
 	@Override
-    protected void handle(Exception exception, String title, String message) {
+	protected void handle(Exception exception, String title, String message) {
 		MercurialEclipsePlugin.logError(title+","+message,exception);
-	}	
+	}
 }

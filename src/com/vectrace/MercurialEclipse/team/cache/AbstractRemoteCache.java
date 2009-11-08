@@ -67,220 +67,220 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class AbstractRemoteCache extends AbstractCache {
 
-    private static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
+	private static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 
-    /**
-     * The Map has the following structure: RepositoryLocation -> IResource ->
-     * Changeset-Set
-     */
-    protected final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> repoChangeSets;
+	/**
+	 * The Map has the following structure: RepositoryLocation -> IResource ->
+	 * Changeset-Set
+	 */
+	protected final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> repoChangeSets;
 
-    protected final Direction direction;
+	protected final Direction direction;
 
-    /**
-     * @param direction non null
-     */
-    public AbstractRemoteCache(Direction direction) {
-        this.direction = direction;
-        repoChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
-    }
+	/**
+	 * @param direction non null
+	 */
+	public AbstractRemoteCache(Direction direction) {
+		this.direction = direction;
+		repoChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
+	}
 
-    /**
-     * does nothing, clients has to override and update preferences
-     */
-    @Override
-    protected void configureFromPreferences(IPreferenceStore store) {
-        // does nothing
-    }
+	/**
+	 * does nothing, clients has to override and update preferences
+	 */
+	@Override
+	protected void configureFromPreferences(IPreferenceStore store) {
+		// does nothing
+	}
 
-    public void clear(HgRepositoryLocation repo) {
-        synchronized (repoChangeSets) {
-            repoChangeSets.remove(repo);
-        }
-    }
+	public void clear(HgRepositoryLocation repo) {
+		synchronized (repoChangeSets) {
+			repoChangeSets.remove(repo);
+		}
+	}
 
-    /**
-     * @param notify true to send a notification if the cache state changes after this operation,
-     * false to supress the event notification
-     */
-    public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
-        synchronized (repoChangeSets) {
-            Map<IPath, SortedSet<ChangeSet>> map = repoChangeSets.get(repo);
-            if(map != null){
-                map.remove(project.getLocation());
-            }
-        }
-        if(notify) {
-            notifyChanged(project, false);
-        }
-    }
+	/**
+	 * @param notify true to send a notification if the cache state changes after this operation,
+	 * false to supress the event notification
+	 */
+	public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
+		synchronized (repoChangeSets) {
+			Map<IPath, SortedSet<ChangeSet>> map = repoChangeSets.get(repo);
+			if(map != null){
+				map.remove(project.getLocation());
+			}
+		}
+		if(notify) {
+			notifyChanged(project, false);
+		}
+	}
 
-    @Override
-    protected void clearProjectCache(IProject project) {
-        Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager()
-                .getAllProjectRepoLocations(project);
-        for (HgRepositoryLocation repo : repos) {
-            clear(repo, project, false);
-        }
-    }
+	@Override
+	protected void clearProjectCache(IProject project) {
+		Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager()
+				.getAllProjectRepoLocations(project);
+		for (HgRepositoryLocation repo : repos) {
+			clear(repo, project, false);
+		}
+	}
 
-    /**
-     * Gets all (in or out) changesets of the given location for the given
-     * IResource.
-     *
-     * @param branch name of branch (default or "" for unnamed) or null if branch unaware
-     * @return never null
-     */
-    public SortedSet<ChangeSet> getChangeSets(IResource resource,
-            HgRepositoryLocation repository, String branch) throws HgException {
-        Map<IPath, SortedSet<ChangeSet>> repoMap;
-        synchronized (repoChangeSets){
-            repoMap = repoChangeSets.get(repository);
-            IPath location = resource.getLocation();
-            if (repoMap == null || ((resource instanceof IProject) && repoMap.get(location) == null)) {
-                // lazy loading: refresh cache on demand only.
-                refreshChangeSets(resource.getProject(), repository, branch);
-                repoMap = repoChangeSets.get(repository);
-            }
-            if (repoMap != null) {
-                SortedSet<ChangeSet> revisions = repoMap.get(location);
-                if (revisions != null) {
-                    return revisions;
-                }
-            }
-        }
-        return EMPTY_SET;
-    }
+	/**
+	 * Gets all (in or out) changesets of the given location for the given
+	 * IResource.
+	 *
+	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
+	 * @return never null
+	 */
+	public SortedSet<ChangeSet> getChangeSets(IResource resource,
+			HgRepositoryLocation repository, String branch) throws HgException {
+		Map<IPath, SortedSet<ChangeSet>> repoMap;
+		synchronized (repoChangeSets){
+			repoMap = repoChangeSets.get(repository);
+			IPath location = resource.getLocation();
+			if (repoMap == null || ((resource instanceof IProject) && repoMap.get(location) == null)) {
+				// lazy loading: refresh cache on demand only.
+				refreshChangeSets(resource.getProject(), repository, branch);
+				repoMap = repoChangeSets.get(repository);
+			}
+			if (repoMap != null) {
+				SortedSet<ChangeSet> revisions = repoMap.get(location);
+				if (revisions != null) {
+					return revisions;
+				}
+			}
+		}
+		return EMPTY_SET;
+	}
 
-    /**
-     * Gets all resources that are changed in (in or out) changesets of given
-     * repository, even resources not known in local workspace.
-     *
-     * @return never null
-     */
-    public Set<IResource> getMembers(IResource resource,
-            HgRepositoryLocation repository, String branch) throws HgException {
-        Map<IPath, SortedSet<ChangeSet>> changeSets;
-        synchronized (repoChangeSets){
-            changeSets = getMap(resource, repository, branch);
-        }
-        return getMembers(resource, changeSets);
-    }
+	/**
+	 * Gets all resources that are changed in (in or out) changesets of given
+	 * repository, even resources not known in local workspace.
+	 *
+	 * @return never null
+	 */
+	public Set<IResource> getMembers(IResource resource,
+			HgRepositoryLocation repository, String branch) throws HgException {
+		Map<IPath, SortedSet<ChangeSet>> changeSets;
+		synchronized (repoChangeSets){
+			changeSets = getMap(resource, repository, branch);
+		}
+		return getMembers(resource, changeSets);
+	}
 
-    /**
-     * @return never null
-     */
-    private static Set<IResource> getMembers(IResource resource,
-            Map<IPath, SortedSet<ChangeSet>> changeSets) {
-        Set<IResource> members = new HashSet<IResource>();
-        if (changeSets == null) {
-            return members;
-        }
-        IWorkspaceRoot root = resource.getWorkspace().getRoot();
-        IPath location = ResourceUtils.getPath(resource);
-        for (IPath path : changeSets.keySet()) {
-            IFile member = root.getFileForLocation(path);
-            if (member != null) {
-                IPath memberLocation = ResourceUtils.getPath(member);
-                if (location.isPrefixOf(memberLocation)) {
-                    members.add(member);
-                }
-            }
-        }
-        return members;
-    }
+	/**
+	 * @return never null
+	 */
+	private static Set<IResource> getMembers(IResource resource,
+			Map<IPath, SortedSet<ChangeSet>> changeSets) {
+		Set<IResource> members = new HashSet<IResource>();
+		if (changeSets == null) {
+			return members;
+		}
+		IWorkspaceRoot root = resource.getWorkspace().getRoot();
+		IPath location = ResourceUtils.getPath(resource);
+		for (IPath path : changeSets.keySet()) {
+			IFile member = root.getFileForLocation(path);
+			if (member != null) {
+				IPath memberLocation = ResourceUtils.getPath(member);
+				if (location.isPrefixOf(memberLocation)) {
+					members.add(member);
+				}
+			}
+		}
+		return members;
+	}
 
-    private Map<IPath, SortedSet<ChangeSet>> getMap(IResource resource, HgRepositoryLocation repository, String branch)
-            throws HgException {
-        // make sure data is there: will refresh (in or out) changesets if needed
-        getChangeSets(resource, repository, branch);
-        return repoChangeSets.get(repository);
-    }
+	private Map<IPath, SortedSet<ChangeSet>> getMap(IResource resource, HgRepositoryLocation repository, String branch)
+			throws HgException {
+		// make sure data is there: will refresh (in or out) changesets if needed
+		getChangeSets(resource, repository, branch);
+		return repoChangeSets.get(repository);
+	}
 
 
-    /**
-     * Gets all (in or out) changesets by querying Mercurial and adds them to the caches.
-     */
-    private void refreshChangeSets(IProject project, HgRepositoryLocation repository, String branch) throws HgException {
-        Assert.isNotNull(project);
+	/**
+	 * Gets all (in or out) changesets by querying Mercurial and adds them to the caches.
+	 */
+	private void refreshChangeSets(IProject project, HgRepositoryLocation repository, String branch) throws HgException {
+		Assert.isNotNull(project);
 
-        // check if mercurial is team provider and if we're working on an open project
-        if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
+		// check if mercurial is team provider and if we're working on an open project
+		if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
 
-            // lock the cache till update is complete
-            synchronized (repoChangeSets){
-                addResourcesToCache(project, repository, branch);
-            }
-            notifyChanged(project, true);
-        }
-    }
+			// lock the cache till update is complete
+			synchronized (repoChangeSets){
+				addResourcesToCache(project, repository, branch);
+			}
+			notifyChanged(project, true);
+		}
+	}
 
-    private void addResourcesToCache(IProject project, HgRepositoryLocation repository, String branch)
-            throws HgException {
+	private void addResourcesToCache(IProject project, HgRepositoryLocation repository, String branch)
+			throws HgException {
 
-        if(debug) {
-            System.out.println("\n!fetch " + direction + " for " + project);
-        }
+		if(debug) {
+			System.out.println("\n!fetch " + direction + " for " + project);
+		}
 
-        // clear cache of old members
-        final Map<IPath, SortedSet<ChangeSet>> removeMap = repoChangeSets.get(repository);
+		// clear cache of old members
+		final Map<IPath, SortedSet<ChangeSet>> removeMap = repoChangeSets.get(repository);
 
-        if (removeMap != null) {
-            removeMap.clear();
-            repoChangeSets.remove(repository);
-        }
+		if (removeMap != null) {
+			removeMap.clear();
+			repoChangeSets.remove(repository);
+		}
 
-        // get changesets from hg
-        Map<IPath, Set<ChangeSet>> resources;
-        if (direction == Direction.OUTGOING) {
-            resources = HgOutgoingClient.getOutgoing(project, repository, branch);
-        } else {
-            resources = HgIncomingClient.getHgIncoming(project, repository, branch);
-        }
+		// get changesets from hg
+		Map<IPath, Set<ChangeSet>> resources;
+		if (direction == Direction.OUTGOING) {
+			resources = HgOutgoingClient.getOutgoing(project, repository, branch);
+		} else {
+			resources = HgIncomingClient.getHgIncoming(project, repository, branch);
+		}
 
-        HashMap<IPath, SortedSet<ChangeSet>> map = new HashMap<IPath, SortedSet<ChangeSet>>();
-        repoChangeSets.put(repository, map);
-        IPath projectPath = project.getLocation();
-        map.put(projectPath, EMPTY_SET);
+		HashMap<IPath, SortedSet<ChangeSet>> map = new HashMap<IPath, SortedSet<ChangeSet>>();
+		repoChangeSets.put(repository, map);
+		IPath projectPath = project.getLocation();
+		map.put(projectPath, EMPTY_SET);
 
-        // add them to cache(s)
-        for (Map.Entry<IPath, Set<ChangeSet>> mapEntry : resources.entrySet()) {
-            IPath path = mapEntry.getKey();
-            Set<ChangeSet> changes = mapEntry.getValue();
-            if (changes != null && changes.size() > 0) {
-                map.put(path, Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>(changes)));
-            }
-        }
-    }
+		// add them to cache(s)
+		for (Map.Entry<IPath, Set<ChangeSet>> mapEntry : resources.entrySet()) {
+			IPath path = mapEntry.getKey();
+			Set<ChangeSet> changes = mapEntry.getValue();
+			if (changes != null && changes.size() > 0) {
+				map.put(path, Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>(changes)));
+			}
+		}
+	}
 
-    /**
-     * Get newest revision of resource regardless of branch
-     */
-    public ChangeSet getNewestChangeSet(IResource resource,
-            HgRepositoryLocation repository) throws HgException {
-        return getNewestChangeSet(resource, repository, null);
-    }
+	/**
+	 * Get newest revision of resource regardless of branch
+	 */
+	public ChangeSet getNewestChangeSet(IResource resource,
+			HgRepositoryLocation repository) throws HgException {
+		return getNewestChangeSet(resource, repository, null);
+	}
 
-    /**
-     * Get newest revision of resource on given branch
-     * @param resource Eclipse resource (e.g. a file) to find latest changeset for
-     * @param branch name of branch (default or "" for unnamed) or null if branch unaware
-     */
-    public ChangeSet getNewestChangeSet(IResource resource,
-            HgRepositoryLocation repository, String branch) throws HgException {
+	/**
+	 * Get newest revision of resource on given branch
+	 * @param resource Eclipse resource (e.g. a file) to find latest changeset for
+	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
+	 */
+	public ChangeSet getNewestChangeSet(IResource resource,
+			HgRepositoryLocation repository, String branch) throws HgException {
 
-        if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
-            synchronized (repoChangeSets){
-                Map<IPath, SortedSet<ChangeSet>> repoMap = getMap(resource, repository, branch);
+		if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
+			synchronized (repoChangeSets){
+				Map<IPath, SortedSet<ChangeSet>> repoMap = getMap(resource, repository, branch);
 
-                if (repoMap != null) {
-                    SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
-                    if (revisions != null && revisions.size() > 0) {
-                        return revisions.last();
-                    }
-                }
-            }
-        }
-        return null;
-    }
+				if (repoMap != null) {
+					SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
+					if (revisions != null && revisions.size() > 0) {
+						return revisions.last();
+					}
+				}
+			}
+		}
+		return null;
+	}
 }

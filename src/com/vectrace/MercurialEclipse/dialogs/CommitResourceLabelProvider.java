@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     StefanC - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -17,34 +18,34 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public final class CommitResourceLabelProvider extends LabelProvider implements
-        ITableLabelProvider {
-    
-    private WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
+		ITableLabelProvider {
 
-    public Image getColumnImage(Object element, int columnIndex) {
-        // No images.
-        if (columnIndex == 0) {
-            IResource res = ((CommitResource) element).getResource();
-            return workbenchLabelProvider.getImage(res);
-        }
-        return null;
-    }
+	private final WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
 
-    public String getColumnText(Object element, int columnIndex) {
-        if ((element instanceof CommitResource) != true) {
-            return "Type Error"; //$NON-NLS-1$
-        }
-        CommitResource resource = (CommitResource) element;
+	public Image getColumnImage(Object element, int columnIndex) {
+		// No images.
+		if (columnIndex == 0) {
+			IResource res = ((CommitResource) element).getResource();
+			return workbenchLabelProvider.getImage(res);
+		}
+		return null;
+	}
 
-        switch (columnIndex) {
-        case 0:
-            return resource.getPath().toString();
-        case 1:
-            return resource.getStatusMessage();
-        case 2:
-            return resource.getStatusMessage();
-        default:
-            return "Col Error: " + columnIndex; //$NON-NLS-1$
-        }
-    }
+	public String getColumnText(Object element, int columnIndex) {
+		if ((element instanceof CommitResource) != true) {
+			return "Type Error"; //$NON-NLS-1$
+		}
+		CommitResource resource = (CommitResource) element;
+
+		switch (columnIndex) {
+		case 0:
+			return resource.getPath().toString();
+		case 1:
+			return resource.getStatusMessage();
+		case 2:
+			return resource.getStatusMessage();
+		default:
+			return "Col Error: " + columnIndex; //$NON-NLS-1$
+		}
+	}
 }

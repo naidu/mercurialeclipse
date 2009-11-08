@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -29,61 +30,61 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  */
 public class MercurialResourceVariantComparator implements IResourceVariantComparator {
 
-    private final MercurialStatusCache statusCache;
+	private final MercurialStatusCache statusCache;
 
-    public MercurialResourceVariantComparator() {
-        statusCache = MercurialStatusCache.getInstance();
-    }
+	public MercurialResourceVariantComparator() {
+		statusCache = MercurialStatusCache.getInstance();
+	}
 
-    public boolean compare(IResource local, IResourceVariant repoRevision) {
-        if (!statusCache.isClean(local)) {
-            return false;
-        }
-        if(repoRevision == null){
-            return true;
-        }
+	public boolean compare(IResource local, IResourceVariant repoRevision) {
+		if (!statusCache.isClean(local)) {
+			return false;
+		}
+		if(repoRevision == null){
+			return true;
+		}
 
-        MercurialRevisionStorage remoteIStorage;
-        try {
-            remoteIStorage = (MercurialRevisionStorage) repoRevision.getStorage(null);
-        } catch (TeamException e) {
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
+		MercurialRevisionStorage remoteIStorage;
+		try {
+			remoteIStorage = (MercurialRevisionStorage) repoRevision.getStorage(null);
+		} catch (TeamException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
 
-        ChangeSet cs = remoteIStorage.getChangeSet();
+		ChangeSet cs = remoteIStorage.getChangeSet();
 
-        // if this is outgoing or incoming, it can't be equal to any other changeset
-        Direction direction = cs.getDirection();
-        if (direction == Direction.INCOMING || direction == Direction.OUTGOING) {
-            String branch = MercurialTeamProvider.getCurrentBranch(local);
-            if (Branch.same(cs.getBranch(), branch)) {
-                return false;
-            }
-        }
-        // resource is clean and we compare against our local repository
-        return true;
-    }
+		// if this is outgoing or incoming, it can't be equal to any other changeset
+		Direction direction = cs.getDirection();
+		if (direction == Direction.INCOMING || direction == Direction.OUTGOING) {
+			String branch = MercurialTeamProvider.getCurrentBranch(local);
+			if (Branch.same(cs.getBranch(), branch)) {
+				return false;
+			}
+		}
+		// resource is clean and we compare against our local repository
+		return true;
+	}
 
-    public boolean compare(IResourceVariant base, IResourceVariant remote) {
-        MercurialResourceVariant mbase = (MercurialResourceVariant) base;
-        MercurialResourceVariant mremote = (MercurialResourceVariant) remote;
-        MercurialRevisionStorage remoteRev = mremote.getRev();
-        if(mbase.getRev() == remoteRev){
-            return true;
-        }
-        IResource resource = remoteRev.getResource();
-        String remoteBranch = remoteRev.getChangeSet().getBranch();
-        String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
-        if (Branch.same(currentBranch, remoteBranch)) {
-            return base.getContentIdentifier().equals(remote.getContentIdentifier());
-        }
-        return true;
-    }
+	public boolean compare(IResourceVariant base, IResourceVariant remote) {
+		MercurialResourceVariant mbase = (MercurialResourceVariant) base;
+		MercurialResourceVariant mremote = (MercurialResourceVariant) remote;
+		MercurialRevisionStorage remoteRev = mremote.getRev();
+		if(mbase.getRev() == remoteRev){
+			return true;
+		}
+		IResource resource = remoteRev.getResource();
+		String remoteBranch = remoteRev.getChangeSet().getBranch();
+		String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
+		if (Branch.same(currentBranch, remoteBranch)) {
+			return base.getContentIdentifier().equals(remote.getContentIdentifier());
+		}
+		return true;
+	}
 
-    public boolean isThreeWay() {
-        return true;
-    }
+	public boolean isThreeWay() {
+		return true;
+	}
 
 
 

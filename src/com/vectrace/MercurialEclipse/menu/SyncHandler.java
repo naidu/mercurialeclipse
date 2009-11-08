@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -19,16 +20,16 @@ import com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWiza
 
 public class SyncHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        MercurialParticipantSynchronizeWizard wizard = new MercurialParticipantSynchronizeWizard();
-        wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(resource));
-        if(wizard.isComplete()){
-            wizard.performFinish();
-        } else {
-            WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
-            wizardDialog.open();
-        }
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		MercurialParticipantSynchronizeWizard wizard = new MercurialParticipantSynchronizeWizard();
+		wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(resource));
+		if(wizard.isComplete()){
+			wizard.performFinish();
+		} else {
+			WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
+			wizardDialog.open();
+		}
+	}
 
 }

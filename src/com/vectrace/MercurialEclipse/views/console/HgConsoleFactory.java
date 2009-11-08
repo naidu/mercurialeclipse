@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     IBM Corporation - initial API and implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views.console;
 
@@ -25,10 +26,10 @@ import org.eclipse.ui.console.IConsoleFactory;
  */
 public class HgConsoleFactory implements IConsoleFactory {
 
-    public HgConsoleFactory() {
-    }
+	public HgConsoleFactory() {
+	}
 
-    public void openConsole() {
-        HgConsoleHolder.getInstance().showConsole(true);
-    }
+	public void openConsole() {
+		HgConsoleHolder.getInstance().showConsole(true);
+	}
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -18,11 +19,11 @@ import com.vectrace.MercurialEclipse.commands.HgRollbackClient;
 
 public class RollbackHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        String result = HgRollbackClient.rollback(project);
-        MessageDialog.openInformation(getShell(),Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		IProject project = resource.getProject();
+		String result = HgRollbackClient.rollback(project);
+		MessageDialog.openInformation(getShell(),Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
+	}
 
 }

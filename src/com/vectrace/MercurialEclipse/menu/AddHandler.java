@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -40,89 +41,89 @@ import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
 
 public class AddHandler extends MultipleResourcesHandler {
 
-    @Override
-    protected void run(final List<IResource> resources) throws HgException {
+	@Override
+	protected void run(final List<IResource> resources) throws HgException {
 
-        Set<IProject> roots = getRoots(resources);
+		Set<IProject> roots = getRoots(resources);
 
-        Map<IProject, Set<IPath>> untrackedFiles = new HashMap<IProject, Set<IPath>>();
-        Map<IProject, Set<IPath>> untrackedFolders = new HashMap<IProject, Set<IPath>>();
+		Map<IProject, Set<IPath>> untrackedFiles = new HashMap<IProject, Set<IPath>>();
+		Map<IProject, Set<IPath>> untrackedFolders = new HashMap<IProject, Set<IPath>>();
 
-        for (IProject project : roots) {
-            String[] rawFiles = HgStatusClient.getUntrackedFiles(project);
-            Set<IPath> files = new HashSet<IPath>();
-            Set<IPath> folders = new HashSet<IPath>();
+		for (IProject project : roots) {
+			String[] rawFiles = HgStatusClient.getUntrackedFiles(project);
+			Set<IPath> files = new HashSet<IPath>();
+			Set<IPath> folders = new HashSet<IPath>();
 
-            for (String raw : rawFiles) {
-                IPath path = new Path(raw);
-                files.add(path);
-                int count = path.segmentCount();
-                for (int i = 1; i < count; i++) {
-                    folders.add(path.removeLastSegments(i));
-                }
-            }
+			for (String raw : rawFiles) {
+				IPath path = new Path(raw);
+				files.add(path);
+				int count = path.segmentCount();
+				for (int i = 1; i < count; i++) {
+					folders.add(path.removeLastSegments(i));
+				}
+			}
 
-            untrackedFiles.put(project, files);
-            untrackedFolders.put(project, folders);
-        }
+			untrackedFiles.put(project, files);
+			untrackedFolders.put(project, folders);
+		}
 
-        ViewerFilter untrackedFilter = new UntrackedResourcesFilter(untrackedFiles,
-                untrackedFolders);
+		ViewerFilter untrackedFilter = new UntrackedResourcesFilter(untrackedFiles,
+				untrackedFolders);
 
-        CheckedTreeSelectionDialog dialog = new CheckedTreeSelectionDialog(getShell(),
-                new WorkbenchLabelProvider(),
-                new ResourcesTreeContentProvider(roots));
+		CheckedTreeSelectionDialog dialog = new CheckedTreeSelectionDialog(getShell(),
+				new WorkbenchLabelProvider(),
+				new ResourcesTreeContentProvider(roots));
 
-        dialog.setInput(ResourcesTreeContentProvider.ROOT);
-        dialog.setTitle(Messages.getString("AddHandler.addToVersionControl")); //$NON-NLS-1$
-        dialog.setMessage(Messages.getString("AddHandler.selectFiles")); //$NON-NLS-1$
-        dialog.setContainerMode(true);
-        dialog.setInitialElementSelections(resources);
-        dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
-        dialog.addFilter(untrackedFilter);
-        Set<IContainer> expanded = new HashSet<IContainer>();
-        for (IResource resource : resources) {
-            IContainer parent = resource.getParent();
-            while(parent != null && !expanded.contains(parent)){
-                if(parent.getType() == IResource.ROOT){
-                    break;
-                }
-                expanded.add(parent);
-                parent = parent.getParent();
-            }
-        }
-        dialog.setExpandedElements(expanded.toArray(new IContainer[0]));
-        if (dialog.open() == IDialogConstants.OK_ID) {
-        	HgAddClient.addResources(keepFiles(dialog.getResult()), null);
-        	for (IProject proj : roots) {
-        	    new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), proj).schedule();     //$NON-NLS-1$
-            }
-        }
-    }
+		dialog.setInput(ResourcesTreeContentProvider.ROOT);
+		dialog.setTitle(Messages.getString("AddHandler.addToVersionControl")); //$NON-NLS-1$
+		dialog.setMessage(Messages.getString("AddHandler.selectFiles")); //$NON-NLS-1$
+		dialog.setContainerMode(true);
+		dialog.setInitialElementSelections(resources);
+		dialog.setComparator(new ResourceComparator(ResourceComparator.NAME));
+		dialog.addFilter(untrackedFilter);
+		Set<IContainer> expanded = new HashSet<IContainer>();
+		for (IResource resource : resources) {
+			IContainer parent = resource.getParent();
+			while(parent != null && !expanded.contains(parent)){
+				if(parent.getType() == IResource.ROOT){
+					break;
+				}
+				expanded.add(parent);
+				parent = parent.getParent();
+			}
+		}
+		dialog.setExpandedElements(expanded.toArray(new IContainer[0]));
+		if (dialog.open() == IDialogConstants.OK_ID) {
+			HgAddClient.addResources(keepFiles(dialog.getResult()), null);
+			for (IProject proj : roots) {
+				new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), proj).schedule();     //$NON-NLS-1$
+			}
+		}
+	}
 
-    /**
-     * Only keep IFiles
-     */
-    private List<IResource> keepFiles(Object[] objects) {
-        List<IResource> files = new ArrayList<IResource>();
-        for (Object object : objects) {
-            if (object instanceof IFile) {
-                files.add((IFile) object);
-            }
-        }
-        return files;
-    }
+	/**
+	 * Only keep IFiles
+	 */
+	private List<IResource> keepFiles(Object[] objects) {
+		List<IResource> files = new ArrayList<IResource>();
+		for (Object object : objects) {
+			if (object instanceof IFile) {
+				files.add((IFile) object);
+			}
+		}
+		return files;
+	}
 
-    private Set<IProject> getRoots(List<IResource> resources) {
-        Set<IProject> roots = new TreeSet<IProject>(new Comparator<IProject>() {
-            public int compare(IProject p1, IProject p2) {
-                return p1.getName().compareTo(p2.getName());
-            }
-        });
-        for (IResource resource : resources) {
-            roots.add(resource.getProject());
-        }
-        return roots;
-    }
+	private Set<IProject> getRoots(List<IResource> resources) {
+		Set<IProject> roots = new TreeSet<IProject>(new Comparator<IProject>() {
+			public int compare(IProject p1, IProject p2) {
+				return p1.getName().compareTo(p2.getName());
+			}
+		});
+		for (IResource resource : resources) {
+			roots.add(resource.getProject());
+		}
+		return roots;
+	}
 
 }

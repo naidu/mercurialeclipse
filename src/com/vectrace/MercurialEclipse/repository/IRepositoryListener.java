@@ -15,11 +15,11 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 
 /**
- * Listener for repositories. events fired when repository added, removed or changed 
+ * Listener for repositories. events fired when repository added, removed or changed
  */
 public interface IRepositoryListener {
 	public void repositoryAdded(HgRepositoryLocation root);
-    public void repositoryModified(HgRepositoryLocation root);
+	public void repositoryModified(HgRepositoryLocation root);
 	public void repositoryRemoved(HgRepositoryLocation root);
 	public void repositoriesChanged(HgRepositoryLocation[] roots);
 }

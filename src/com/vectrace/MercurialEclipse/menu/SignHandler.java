@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -20,15 +21,15 @@ import com.vectrace.MercurialEclipse.wizards.SignWizard;
 
 public class SignHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        SignWizard signWizard = new SignWizard(project);
-        WizardDialog dialog = new WizardDialog(getShell(), signWizard);
-        int result = dialog.open();
-        if(result == Window.OK) {
-            new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
-        }
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		IProject project = resource.getProject();
+		SignWizard signWizard = new SignWizard(project);
+		WizardDialog dialog = new WizardDialog(getShell(), signWizard);
+		int result = dialog.open();
+		if(result == Window.OK) {
+			new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$
+		}
+	}
 
 }

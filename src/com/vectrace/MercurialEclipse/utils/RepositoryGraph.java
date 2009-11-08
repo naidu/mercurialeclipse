@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch	- implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
@@ -24,11 +25,11 @@ public class RepositoryGraph {
 		List<String> parents = new ArrayList<String>(2);
 		if (cs.getParents() != null) {
 			for (String string : parents) {
-			    // a non filled parent slot is reported by log --debug as "-1:0000000000"
-                if (string.charAt(0)!='-') {
-                    parents.add(string);
-                }
-            }
+				// a non filled parent slot is reported by log --debug as "-1:0000000000"
+				if (string.charAt(0)!='-') {
+					parents.add(string);
+				}
+			}
 		}
 		return parents;
 	}

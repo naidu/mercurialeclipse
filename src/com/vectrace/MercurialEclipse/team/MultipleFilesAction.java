@@ -19,7 +19,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  *
  */
@@ -39,7 +39,7 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 					Arrays.asList(((IStructuredSelection)sel).toArray()).toArray(new IResource[0]));
 		}
 	}
-	
+
 	private void extractFiles(List<IFile> list, IResource[] resources) {
 		for(IResource resource : resources) {
 			if(resource instanceof IFile) {
@@ -69,9 +69,9 @@ public abstract class MultipleFilesAction implements IActionDelegate {
 			run(getSelectedFiles());
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(getShell(), Messages.getString("MultipleFilesAction.hgSays"), e.getMessage()+Messages.getString("MultipleFilesAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+			MessageDialog.openError(getShell(), Messages.getString("MultipleFilesAction.hgSays"), e.getMessage()+Messages.getString("MultipleFilesAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
-		
+
 	protected abstract void run(List<IFile> files) throws Exception ;
 }

@@ -16,7 +16,7 @@ import org.eclipse.team.internal.ui.Utils;
 /**
  * Action that removed the CVS console from the console view. The console
  * can be re-added via the console view "Open Console" drop-down.
- * 
+ *
  * @since 3.1
  */
 public class ConsoleRemoveAction extends Action {
@@ -24,9 +24,9 @@ public class ConsoleRemoveAction extends Action {
 	ConsoleRemoveAction() {
 		Utils.initAction(this, "ConsoleRemoveAction."); //$NON-NLS-1$
 	}
-	
+
 	@Override
-    public void run() {
+	public void run() {
 		HgConsoleHolder.getInstance().closeConsole();
 	}
 }

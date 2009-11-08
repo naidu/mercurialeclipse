@@ -8,6 +8,7 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - some updates
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -34,219 +35,219 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class PullPage extends PushPullPage {
 
-    public Button getRebaseCheckBox() {
-        return rebaseCheckBox;
-    }
+	public Button getRebaseCheckBox() {
+		return rebaseCheckBox;
+	}
 
-    private Button updateCheckBox;
-    private Button mergeCheckBox;
-    private Button commitDialogCheckBox;
-    private Button rebaseCheckBox;
-    private Button cleanUpdateCheckBox;
+	private Button updateCheckBox;
+	private Button mergeCheckBox;
+	private Button commitDialogCheckBox;
+	private Button rebaseCheckBox;
+	private Button cleanUpdateCheckBox;
 
-    public Button getCommitDialogCheckBox() {
-        return commitDialogCheckBox;
-    }
+	public Button getCommitDialogCheckBox() {
+		return commitDialogCheckBox;
+	}
 
-    public PullPage(String pageName, String title, String description,
-            IResource resource, ImageDescriptor titleImage) {
-        super(resource, pageName, title, titleImage);
-        setDescription(description);
-        setShowCredentials(true);
-        setShowBundleButton(true);
-        setShowRevisionTable(false);
-    }
+	public PullPage(String pageName, String title, String description,
+			IResource resource, ImageDescriptor titleImage) {
+		super(resource, pageName, title, titleImage);
+		setDescription(description);
+		setShowCredentials(true);
+		setShowBundleButton(true);
+		setShowRevisionTable(false);
+	}
 
-    @Override
-    public boolean canFlipToNextPage() {
-        try {
-            if (getUrlCombo().getText() != null
-                    && getUrlCombo().getText().length() != 0) {
-                IncomingPage incomingPage = (IncomingPage) getNextPage();
-                incomingPage.setProject(resource.getProject());
-                HgRepositoryLocation loc =
-                    MercurialEclipsePlugin
-                        .getRepoManager().getRepoLocation(
-                                getUrlCombo().getText(),
-                                getUserCombo().getText(),
-                                getPasswordText().getText());
-                incomingPage.setLocation(loc);
-                incomingPage.setSvn(getSvnCheckBox() != null
-                        && getSvnCheckBox().getSelection());
-                setErrorMessage(null);
-                return isPageComplete()
-                        && (getWizard().getNextPage(this) != null);
-            }
-        } catch (HgException e) {
-            setErrorMessage(e.getLocalizedMessage());
-        }
-        return false;
-    }
+	@Override
+	public boolean canFlipToNextPage() {
+		try {
+			if (getUrlCombo().getText() != null
+					&& getUrlCombo().getText().length() != 0) {
+				IncomingPage incomingPage = (IncomingPage) getNextPage();
+				incomingPage.setProject(resource.getProject());
+				HgRepositoryLocation loc =
+					MercurialEclipsePlugin
+						.getRepoManager().getRepoLocation(
+								getUrlCombo().getText(),
+								getUserCombo().getText(),
+								getPasswordText().getText());
+				incomingPage.setLocation(loc);
+				incomingPage.setSvn(getSvnCheckBox() != null
+						&& getSvnCheckBox().getSelection());
+				setErrorMessage(null);
+				return isPageComplete()
+						&& (getWizard().getNextPage(this) != null);
+			}
+		} catch (HgException e) {
+			setErrorMessage(e.getLocalizedMessage());
+		}
+		return false;
+	}
 
-    @Override
-    public boolean isPageComplete() {
-        return super.isPageComplete()
-                && HgRepositoryLocation.validateLocation(getUrlCombo()
-                        .getText());
-    }
+	@Override
+	public boolean isPageComplete() {
+		return super.isPageComplete()
+				&& HgRepositoryLocation.validateLocation(getUrlCombo()
+						.getText());
+	}
 
-    protected boolean isPageComplete(String url) {
-        return HgRepositoryLocation.validateLocation(url);
-    }
+	protected boolean isPageComplete(String url) {
+		return HgRepositoryLocation.validateLocation(url);
+	}
 
-    protected boolean validateAndSetComplete(String url) {
-        boolean validLocation = isPageComplete(url);
+	protected boolean validateAndSetComplete(String url) {
+		boolean validLocation = isPageComplete(url);
 
-        setPageComplete(validLocation);
+		setPageComplete(validLocation);
 
-        return validLocation;
-    }
+		return validLocation;
+	}
 
-    @Override
-    public void createControl(Composite parent) {
-        super.createControl(parent);
-        Composite composite = (Composite) getControl();
+	@Override
+	public void createControl(Composite parent) {
+		super.createControl(parent);
+		Composite composite = (Composite) getControl();
 
-        // now the options
-        Group pullGroup = SWTWidgetHelper
-                .createGroup(composite, Messages.getString("PullPage.pullGroup.label")); //$NON-NLS-1$
-        this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
-                Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-        this.updateCheckBox.setSelection(true);
+		// now the options
+		Group pullGroup = SWTWidgetHelper
+				.createGroup(composite, Messages.getString("PullPage.pullGroup.label")); //$NON-NLS-1$
+		this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+				Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
+		this.updateCheckBox.setSelection(true);
 
-        this.cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
-                Messages.getString("PullPage.toggleCleanUpdate.text")); //$NON-NLS-1$
-        this.cleanUpdateCheckBox.setSelection(false);
+		this.cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+				Messages.getString("PullPage.toggleCleanUpdate.text")); //$NON-NLS-1$
+		this.cleanUpdateCheckBox.setSelection(false);
 
-        try {
-            if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
-                    ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) { //$NON-NLS-1$
-                this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
-                        Messages.getString("PullPage.option.rebase")); //$NON-NLS-1$
-                SelectionListener rebaseCheckBoxListener = new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent e) {
-                        widgetSelected(e);
-                    }
+		try {
+			if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
+					ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) { //$NON-NLS-1$
+				this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+						Messages.getString("PullPage.option.rebase")); //$NON-NLS-1$
+				SelectionListener rebaseCheckBoxListener = new SelectionListener() {
+					public void widgetDefaultSelected(SelectionEvent e) {
+						widgetSelected(e);
+					}
 
-                    public void widgetSelected(SelectionEvent e) {
-                        if (rebaseCheckBox.getSelection()) {
-                            updateCheckBox.setSelection(!rebaseCheckBox
-                                    .getSelection());
-                        }
-                    }
-                };
-                SelectionListener updateCheckBoxListener = new SelectionListener() {
-                    public void widgetDefaultSelected(SelectionEvent e) {
-                        widgetSelected(e);
-                    }
-                    public void widgetSelected(SelectionEvent e) {
-                        if (updateCheckBox.getSelection()) {
-                            rebaseCheckBox.setSelection(!updateCheckBox
-                                    .getSelection());
-                        }
-                    }
-                };
-                rebaseCheckBox.addSelectionListener(rebaseCheckBoxListener);
-                updateCheckBox.addSelectionListener(updateCheckBoxListener);
-            }
-        } catch (HgException e2) {
-            MercurialEclipsePlugin.logError(e2);
-        }
+					public void widgetSelected(SelectionEvent e) {
+						if (rebaseCheckBox.getSelection()) {
+							updateCheckBox.setSelection(!rebaseCheckBox
+									.getSelection());
+						}
+					}
+				};
+				SelectionListener updateCheckBoxListener = new SelectionListener() {
+					public void widgetDefaultSelected(SelectionEvent e) {
+						widgetSelected(e);
+					}
+					public void widgetSelected(SelectionEvent e) {
+						if (updateCheckBox.getSelection()) {
+							rebaseCheckBox.setSelection(!updateCheckBox
+									.getSelection());
+						}
+					}
+				};
+				rebaseCheckBox.addSelectionListener(rebaseCheckBoxListener);
+				updateCheckBox.addSelectionListener(updateCheckBoxListener);
+			}
+		} catch (HgException e2) {
+			MercurialEclipsePlugin.logError(e2);
+		}
 
-        this.forceCheckBox.setParent(pullGroup);
-        pullGroup.moveAbove(optionGroup);
+		this.forceCheckBox.setParent(pullGroup);
+		pullGroup.moveAbove(optionGroup);
 
-        Group mergeGroup = SWTWidgetHelper.createGroup(composite,
-                Messages.getString("PullPage.option.merge")); //$NON-NLS-1$
-        this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
-                Messages.getString("PullPage.option.commitAfterMerge")); //$NON-NLS-1$
+		Group mergeGroup = SWTWidgetHelper.createGroup(composite,
+				Messages.getString("PullPage.option.merge")); //$NON-NLS-1$
+		this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
+				Messages.getString("PullPage.option.commitAfterMerge")); //$NON-NLS-1$
 
-        this.commitDialogCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
-                Messages.getString("PullPage.option.editCommitMessage")); //$NON-NLS-1$
+		this.commitDialogCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup,
+				Messages.getString("PullPage.option.editCommitMessage")); //$NON-NLS-1$
 
-        this.commitDialogCheckBox.setSelection(true);
-        this.commitDialogCheckBox.setEnabled(false);
+		this.commitDialogCheckBox.setSelection(true);
+		this.commitDialogCheckBox.setEnabled(false);
 
-        mergeGroup.moveBelow(pullGroup);
+		mergeGroup.moveBelow(pullGroup);
 
-        SelectionListener mergeCheckBoxListener = new SelectionListener() {
-            public void widgetDefaultSelected(SelectionEvent e) {
-                widgetSelected(e);
-            }
+		SelectionListener mergeCheckBoxListener = new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
 
-            public void widgetSelected(SelectionEvent e) {
-                commitDialogCheckBox.setEnabled(mergeCheckBox.getSelection());
-                if (mergeCheckBox.getSelection()) {
-                    String status;
-                    try {
-                        status = HgStatusClient
-                                .getStatus(resource.getProject());
-                        if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
-                            setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
-                            setPageComplete(false);
-                        } else {
-                            setErrorMessage(null);
-                            setPageComplete(true);
-                        }
-                    } catch (HgException e1) {
-                        setErrorMessage(Messages.getString("PullPage.error.noStatus")); //$NON-NLS-1$
-                        mergeCheckBox.setSelection(false);
-                        mergeCheckBox.setEnabled(false);
-                        setPageComplete(true);
-                    }
-                } else {
-                    setErrorMessage(null);
-                    setPageComplete(true);
-                }
-            }
-        };
+			public void widgetSelected(SelectionEvent e) {
+				commitDialogCheckBox.setEnabled(mergeCheckBox.getSelection());
+				if (mergeCheckBox.getSelection()) {
+					String status;
+					try {
+						status = HgStatusClient
+								.getStatus(resource.getProject());
+						if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
+							setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
+							setPageComplete(false);
+						} else {
+							setErrorMessage(null);
+							setPageComplete(true);
+						}
+					} catch (HgException e1) {
+						setErrorMessage(Messages.getString("PullPage.error.noStatus")); //$NON-NLS-1$
+						mergeCheckBox.setSelection(false);
+						mergeCheckBox.setEnabled(false);
+						setPageComplete(true);
+					}
+				} else {
+					setErrorMessage(null);
+					setPageComplete(true);
+				}
+			}
+		};
 
-        mergeCheckBox.addSelectionListener(mergeCheckBoxListener);
+		mergeCheckBox.addSelectionListener(mergeCheckBoxListener);
 
-        setPageComplete(true);
-        setControl(composite);
+		setPageComplete(true);
+		setControl(composite);
 
-    }
+	}
 
-    @Override
-    public boolean finish(IProgressMonitor monitor) {
-        return super.finish(monitor);
-    }
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		return super.finish(monitor);
+	}
 
-    @Override
-    protected String getForceCheckBoxLabel() {
-        return Messages.getString("PullPage.forceCheckBox.title"); //$NON-NLS-1$
-    }
+	@Override
+	protected String getForceCheckBoxLabel() {
+		return Messages.getString("PullPage.forceCheckBox.title"); //$NON-NLS-1$
+	}
 
-    @Override
-    protected String getRevGroupLabel() {
-        return Messages.getString("PullPage.revGroup.title"); //$NON-NLS-1$
-    }
+	@Override
+	protected String getRevGroupLabel() {
+		return Messages.getString("PullPage.revGroup.title"); //$NON-NLS-1$
+	}
 
-    @Override
-    protected String getRevCheckBoxLabel() {
-        return Messages.getString("PullPage.revCheckBox.title"); //$NON-NLS-1$
-    }
+	@Override
+	protected String getRevCheckBoxLabel() {
+		return Messages.getString("PullPage.revCheckBox.title"); //$NON-NLS-1$
+	}
 
-    @Override
-    protected String getTimeoutCheckBoxLabel() {
-        return Messages.getString("PullPage.timeoutCheckBox.title"); //$NON-NLS-1$
-    }
+	@Override
+	protected String getTimeoutCheckBoxLabel() {
+		return Messages.getString("PullPage.timeoutCheckBox.title"); //$NON-NLS-1$
+	}
 
-    public Button getUpdateCheckBox() {
-        return updateCheckBox;
-    }
+	public Button getUpdateCheckBox() {
+		return updateCheckBox;
+	}
 
-    public Button getCleanUpdateCheckBox() {
-        return cleanUpdateCheckBox;
-    }
+	public Button getCleanUpdateCheckBox() {
+		return cleanUpdateCheckBox;
+	}
 
-    public void setUpdateCheckBox(Button updateCheckBox) {
-        this.updateCheckBox = updateCheckBox;
-    }
+	public void setUpdateCheckBox(Button updateCheckBox) {
+		this.updateCheckBox = updateCheckBox;
+	}
 
-    public Button getMergeCheckBox() {
-        return mergeCheckBox;
-    }
+	public Button getMergeCheckBox() {
+		return mergeCheckBox;
+	}
 
 }

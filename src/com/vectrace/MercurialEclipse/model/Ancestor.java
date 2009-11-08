@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -23,53 +24,53 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  *
  */
 public class Ancestor {
-    private final HgRoot root;
-    private ChangeSet cs1;
-    private ChangeSet cs2;
-    private ChangeSet ancestor;
-    private final static Map<String, ChangeSet> CACHE = new HashMap<String, ChangeSet>();
+	private final HgRoot root;
+	private ChangeSet cs1;
+	private ChangeSet cs2;
+	private ChangeSet ancestor;
+	private final static Map<String, ChangeSet> CACHE = new HashMap<String, ChangeSet>();
 
-    public Ancestor(HgRoot root, ChangeSet cs1, ChangeSet cs2) {
-        assert (cs1 != null || cs2 != null);
-        this.root = root;
-        if (cs1 != null && cs2 != null
-                && cs1.getChangesetIndex() < cs2.getChangesetIndex()) {
-            this.cs1 = cs1;
-            this.cs2 = cs2;
-        } else {
-            this.cs1 = cs2;
-            this.cs2 = cs1;
-        }
-    }
+	public Ancestor(HgRoot root, ChangeSet cs1, ChangeSet cs2) {
+		assert (cs1 != null || cs2 != null);
+		this.root = root;
+		if (cs1 != null && cs2 != null
+				&& cs1.getChangesetIndex() < cs2.getChangesetIndex()) {
+			this.cs1 = cs1;
+			this.cs2 = cs2;
+		} else {
+			this.cs1 = cs2;
+			this.cs2 = cs1;
+		}
+	}
 
-    public ChangeSet get() throws HgException {
-        if (ancestor == null) {
-            // determine ancestor if both changesets are set.
-            if (cs1 != null && cs2 != null) {
-                ancestor = CACHE.get(getKey());
-                if (ancestor == null) {
-                    int ancestorIndex = HgParentClient.findCommonAncestor(root,
-                            cs1, cs2);
-                    ancestor = LocalChangesetCache.getInstance()
-                            .getOrFetchChangeSetById(
-                                    ResourceUtils.convert(root),
-                                    String.valueOf(ancestorIndex));
-                    CACHE.put(getKey(), ancestor);
-                }
-            } else {
-                // determine changeset that isn't null
-                if (cs1 != null) {
-                    ancestor = cs1;
-                } else {
-                    ancestor = cs2;
-                }
-            }
-        }
-        return ancestor;
-    }
+	public ChangeSet get() throws HgException {
+		if (ancestor == null) {
+			// determine ancestor if both changesets are set.
+			if (cs1 != null && cs2 != null) {
+				ancestor = CACHE.get(getKey());
+				if (ancestor == null) {
+					int ancestorIndex = HgParentClient.findCommonAncestor(root,
+							cs1, cs2);
+					ancestor = LocalChangesetCache.getInstance()
+							.getOrFetchChangeSetById(
+									ResourceUtils.convert(root),
+									String.valueOf(ancestorIndex));
+					CACHE.put(getKey(), ancestor);
+				}
+			} else {
+				// determine changeset that isn't null
+				if (cs1 != null) {
+					ancestor = cs1;
+				} else {
+					ancestor = cs2;
+				}
+			}
+		}
+		return ancestor;
+	}
 
-    private String getKey() {
-        return cs1.getChangeset() + "|" + cs2.getChangeset(); //$NON-NLS-1$
-    }
+	private String getKey() {
+		return cs1.getChangeset() + "|" + cs2.getChangeset(); //$NON-NLS-1$
+	}
 
 }

@@ -9,6 +9,7 @@
  *     Jérôme Nègre              - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - extracted class since I need it for sync
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -31,9 +32,9 @@ public abstract class DataLoader {
 		return HgTagClient.getTags(getProject());
 	}
 
-    public Branch[] getBranches() throws HgException {
-        return HgBranchClient.getBranches(getProject());
-    }
+	public Branch[] getBranches() throws HgException {
+		return HgBranchClient.getBranches(getProject());
+	}
 
 	public ChangeSet[] getHeads() throws HgException {
 		return HgLogClient.getHeads(getProject());

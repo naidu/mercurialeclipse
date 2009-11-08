@@ -17,11 +17,11 @@ import com.vectrace.MercurialEclipse.wizards.RebaseWizard;
 
 public class RebaseHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {        
-        RebaseWizard wizard = new RebaseWizard(resource);
-        WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
-        wizardDialog.open();        
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		RebaseWizard wizard = new RebaseWizard(resource);
+		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
+		wizardDialog.open();
+	}
 
 }

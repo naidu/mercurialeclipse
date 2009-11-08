@@ -8,6 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - changes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
@@ -20,30 +21,30 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class ResourceAdapterFactory implements IAdapterFactory {
 
-    @SuppressWarnings("unchecked")
-    public Object getAdapter(Object adaptableObject, Class adapterType) {
-        if (adapterType == IResource.class) {
-            try {
-                IResource resource = (IResource) adaptableObject;
-                IProject project = resource.getProject();
+	@SuppressWarnings("unchecked")
+	public Object getAdapter(Object adaptableObject, Class adapterType) {
+		if (adapterType == IResource.class) {
+			try {
+				IResource resource = (IResource) adaptableObject;
+				IProject project = resource.getProject();
 
-                //abort if not in hg
-                if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
-                    return null;
-                }
-                return resource;
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-                return null;
-            }
+				//abort if not in hg
+				if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
+					return null;
+				}
+				return resource;
+			} catch (Exception e) {
+				MercurialEclipsePlugin.logError(e);
+				return null;
+			}
 
-        }
-        return null;
-    }
+		}
+		return null;
+	}
 
-    @SuppressWarnings("unchecked")
-    public Class[] getAdapterList() {
-        return new Class[] { FlaggedResource.class };
-    }
+	@SuppressWarnings("unchecked")
+	public Class[] getAdapterList() {
+		return new Class[] { FlaggedResource.class };
+	}
 
 }

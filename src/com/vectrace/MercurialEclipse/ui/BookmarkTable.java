@@ -9,6 +9,7 @@
  *     Jerome Negre              - implementation
  *     Brian Wallis              - adaptation to branches
  *     Bastian Doetsch           - adaptation to bookmarks
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -37,75 +38,75 @@ import com.vectrace.MercurialEclipse.model.Bookmark;
  */
 public class BookmarkTable extends Composite {
 
-    private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
-            .getBold(JFaceResources.DIALOG_FONT);
+	private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
+			.getBold(JFaceResources.DIALOG_FONT);
 
-    private final Table table;
-    private final IResource res;
+	private final Table table;
+	private final IResource res;
 
-    public BookmarkTable(Composite parent, IResource res) {
-        super(parent, SWT.NONE);
-        this.res = res;
-        this.setLayout(new GridLayout());
-        this.setLayoutData(new GridData());
+	public BookmarkTable(Composite parent, IResource res) {
+		super(parent, SWT.NONE);
+		this.res = res;
+		this.setLayout(new GridLayout());
+		this.setLayoutData(new GridData());
 
-        table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
-                | SWT.V_SCROLL | SWT.H_SCROLL);
-        table.setLinesVisible(true);
-        table.setHeaderVisible(true);
-        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-        data.heightHint = 150;
-        data.minimumHeight = 50;
-        table.setLayoutData(data);
+		table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+				| SWT.V_SCROLL | SWT.H_SCROLL);
+		table.setLinesVisible(true);
+		table.setHeaderVisible(true);
+		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+		data.heightHint = 150;
+		data.minimumHeight = 50;
+		table.setLayoutData(data);
 
-        String[] titles = { Messages.getString("BookmarkTable.column.rev"), Messages.getString("BookmarkTable.column.global"), Messages.getString("BookmarkTable.column.name"), Messages.getString("BookmarkTable.column.state") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        int[] widths = { 50, 150, 300, 70 };
-        for (int i = 0; i < titles.length; i++) {
-            TableColumn column = new TableColumn(table, SWT.NONE);
-            column.setText(titles[i]);
-            column.setWidth(widths[i]);
-        }
-        updateTable();
-    }
+		String[] titles = { Messages.getString("BookmarkTable.column.rev"), Messages.getString("BookmarkTable.column.global"), Messages.getString("BookmarkTable.column.name"), Messages.getString("BookmarkTable.column.state") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		int[] widths = { 50, 150, 300, 70 };
+		for (int i = 0; i < titles.length; i++) {
+			TableColumn column = new TableColumn(table, SWT.NONE);
+			column.setText(titles[i]);
+			column.setWidth(widths[i]);
+		}
+		updateTable();
+	}
 
-    /**
-     *
-     */
-    private void updateTable() {
-        try {
-            List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(res
-                    .getLocation().toFile());
-            setBookmarks(bookmarks.toArray(new Bookmark[bookmarks.size()]));
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-    }
+	/**
+	 *
+	 */
+	private void updateTable() {
+		try {
+			List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(res
+					.getLocation().toFile());
+			setBookmarks(bookmarks.toArray(new Bookmark[bookmarks.size()]));
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
 
-    public void setBookmarks(Bookmark[] bookmarks) {
-        table.removeAll();
-        for (Bookmark bm : bookmarks) {
-            TableItem row = new TableItem(table, SWT.NONE);
-            row.setText(0, Integer.toString(bm.getRevision()));
-            row.setText(1, bm.getShortNodeId());
-            row.setText(2, bm.getName());
-            row.setText(3, bm.isActive() ? Messages.getString("BookmarkTable.stateActive") : Messages.getString("BookmarkTable.stateInactive")); //$NON-NLS-1$ //$NON-NLS-2$
-            row.setData(bm);
-            if (bm.isActive()) {
-                row.setFont(PARENT_FONT);
-            }
-        }
-    }
+	public void setBookmarks(Bookmark[] bookmarks) {
+		table.removeAll();
+		for (Bookmark bm : bookmarks) {
+			TableItem row = new TableItem(table, SWT.NONE);
+			row.setText(0, Integer.toString(bm.getRevision()));
+			row.setText(1, bm.getShortNodeId());
+			row.setText(2, bm.getName());
+			row.setText(3, bm.isActive() ? Messages.getString("BookmarkTable.stateActive") : Messages.getString("BookmarkTable.stateInactive")); //$NON-NLS-1$ //$NON-NLS-2$
+			row.setData(bm);
+			if (bm.isActive()) {
+				row.setFont(PARENT_FONT);
+			}
+		}
+	}
 
-    public Bookmark getSelection() {
-        TableItem[] selection = table.getSelection();
-        if (selection.length == 0) {
-            return null;
-        }
-        return (Bookmark) selection[0].getData();
-    }
+	public Bookmark getSelection() {
+		TableItem[] selection = table.getSelection();
+		if (selection.length == 0) {
+			return null;
+		}
+		return (Bookmark) selection[0].getData();
+	}
 
-    public void addSelectionListener(SelectionListener listener) {
-        table.addSelectionListener(listener);
-    }
+	public void addSelectionListener(SelectionListener listener) {
+		table.addSelectionListener(listener);
+	}
 
 }

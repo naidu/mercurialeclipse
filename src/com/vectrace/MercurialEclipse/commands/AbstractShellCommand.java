@@ -7,6 +7,8 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation (with lots of stuff pulled up from HgCommand)
+ *     Andrei Loskutov (Intland) - bug fixes
+ *     Adam Berkes (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -42,419 +44,419 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  */
 public abstract class AbstractShellCommand extends AbstractClient {
 
-    public static final int DEFAULT_TIMEOUT = 360000;
-    // private static final Object executionLock = new Object();
+	public static final int DEFAULT_TIMEOUT = 360000;
+	// private static final Object executionLock = new Object();
 
-    private static class InputStreamConsumer extends Thread {
-        private final InputStream stream;
-        private final OutputStream output;
+	private static class InputStreamConsumer extends Thread {
+		private final InputStream stream;
+		private final OutputStream output;
 
-        public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
-            super(name);
-            this.output = output;
-            this.stream = new BufferedInputStream(stream);
-        }
+		public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
+			super(name);
+			this.output = output;
+			this.stream = new BufferedInputStream(stream);
+		}
 
-        @Override
-        public void run() {
-            try {
-                int length;
-                byte[] buffer = new byte[8192];
-                while ((length = stream.read(buffer)) != -1) {
-                    output.write(buffer, 0, length);
-                }
-            } catch (IOException e) {
-                if (!interrupted()) {
-                    HgClients.logError(e);
-                }
-            } finally {
-                try {
-                    stream.close();
-                } catch (IOException e) {
-                    HgClients.logError(e);
-                }
-                try {
-                    output.close();
-                } catch (IOException e) {
-                    HgClients.logError(e);
-                }
-            }
-        }
-    }
+		@Override
+		public void run() {
+			try {
+				int length;
+				byte[] buffer = new byte[8192];
+				while ((length = stream.read(buffer)) != -1) {
+					output.write(buffer, 0, length);
+				}
+			} catch (IOException e) {
+				if (!interrupted()) {
+					HgClients.logError(e);
+				}
+			} finally {
+				try {
+					stream.close();
+				} catch (IOException e) {
+					HgClients.logError(e);
+				}
+				try {
+					output.close();
+				} catch (IOException e) {
+					HgClients.logError(e);
+				}
+			}
+		}
+	}
 
-    public static final int MAX_PARAMS = 120;
-    protected String command;
-    protected List<String> commands;
-    protected boolean escapeFiles;
-    protected List<String> options;
-    protected File workingDir;
-    protected final List<String> files;
+	public static final int MAX_PARAMS = 120;
+	protected String command;
+	protected List<String> commands;
+	protected boolean escapeFiles;
+	protected List<String> options;
+	protected File workingDir;
+	protected final List<String> files;
 
-    private String timeoutConstant;
-    private InputStreamConsumer consumer;
-    private Process process;
-    private boolean showOnConsole = true;
+	private String timeoutConstant;
+	private InputStreamConsumer consumer;
+	private Process process;
+	private boolean showOnConsole = true;
 
-    protected AbstractShellCommand() {
-        super();
-        options = new ArrayList<String>();
-        files = new ArrayList<String>();
-    }
+	protected AbstractShellCommand() {
+		super();
+		options = new ArrayList<String>();
+		files = new ArrayList<String>();
+	}
 
-    public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
-        this();
-        this.escapeFiles = escapeFiles;
-        this.workingDir = workingDir;
-        this.commands = commands;
-    }
+	public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
+		this();
+		this.escapeFiles = escapeFiles;
+		this.workingDir = workingDir;
+		this.commands = commands;
+	}
 
-    public void addOptions(String... optionsToAdd) {
-        for (String option : optionsToAdd) {
-            options.add(option);
-        }
-    }
+	public void addOptions(String... optionsToAdd) {
+		for (String option : optionsToAdd) {
+			options.add(option);
+		}
+	}
 
-    public byte[] executeToBytes() throws HgException {
-        int timeout = DEFAULT_TIMEOUT;
-        if (timeoutConstant != null) {
-            timeout = HgClients.getTimeOut(timeoutConstant);
-        }
-        return executeToBytes(timeout);
-    }
+	public byte[] executeToBytes() throws HgException {
+		int timeout = DEFAULT_TIMEOUT;
+		if (timeoutConstant != null) {
+			timeout = HgClients.getTimeOut(timeoutConstant);
+		}
+		return executeToBytes(timeout);
+	}
 
-    public byte[] executeToBytes(int timeout) throws HgException {
-        return executeToBytes(timeout, true);
-    }
+	public byte[] executeToBytes(int timeout) throws HgException {
+		return executeToBytes(timeout, true);
+	}
 
-    /**
-     * Execute a command.
-     *
-     * @param timeout
-     *            -1 if no timeout, else the timeout in ms.
-     * @return
-     * @throws HgException
-     */
-    public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
-            return bos.toByteArray();
-        }
-        return null;
-    }
+	/**
+	 * Execute a command.
+	 *
+	 * @param timeout
+	 *            -1 if no timeout, else the timeout in ms.
+	 * @return
+	 * @throws HgException
+	 */
+	public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
+			return bos.toByteArray();
+		}
+		return null;
+	}
 
-    public boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
-            throws HgException {
-        try {
-            List<String> cmd = getCommands();
-            // don't output fallbackencoding
-            String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-            final String commandInvoked;
-            if(workingDir == null) {
-                commandInvoked = cmdString.substring(0, cmdString.length() - 1);
-            } else {
-                commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
-            }
+	public boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+			throws HgException {
+		try {
+			List<String> cmd = getCommands();
+			// don't output fallbackencoding
+			String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
+			final String commandInvoked;
+			if(workingDir == null) {
+				commandInvoked = cmdString.substring(0, cmdString.length() - 1);
+			} else {
+				commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
+			}
 
 
-            Charset charset = null;
-            if (workingDir != null) {
-                HgRoot hgRoot;
-                try {
-                    hgRoot = HgClients.getHgRoot(workingDir);
-                    charset = hgRoot.getEncoding();
-                    cmd.add(2, "--config"); //$NON-NLS-1$
-                    cmd.add(3, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
-                } catch (HgCoreException e) {
-                    // no hg root found
-                }
-            }
-            // Request non-interactivity
-            cmd.add(1, "-y");
+			Charset charset = null;
+			if (workingDir != null) {
+				HgRoot hgRoot;
+				try {
+					hgRoot = HgClients.getHgRoot(workingDir);
+					charset = hgRoot.getEncoding();
+					cmd.add(2, "--config"); //$NON-NLS-1$
+					cmd.add(3, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+				} catch (HgCoreException e) {
+					// no hg root found
+				}
+			}
+			// Request non-interactivity
+			cmd.add(1, "-y");
 
-            ProcessBuilder builder = new ProcessBuilder(cmd);
+			ProcessBuilder builder = new ProcessBuilder(cmd);
 
-            // set locale to english have deterministic output
-            Map<String, String> env = builder.environment();
-            env.put("LANG", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-            env.put("LANGUAGE", "en"); //$NON-NLS-1$ //$NON-NLS-2$
-            if (charset != null) {
-                env.put("HGENCODING", charset.name()); //$NON-NLS-1$
-            }
+			// set locale to english have deterministic output
+			Map<String, String> env = builder.environment();
+			env.put("LANG", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+			env.put("LANGUAGE", "en"); //$NON-NLS-1$ //$NON-NLS-2$
+			if (charset != null) {
+				env.put("HGENCODING", charset.name()); //$NON-NLS-1$
+			}
 
-            builder.redirectErrorStream(true); // makes my life easier
-            if (workingDir != null) {
-                builder.directory(workingDir);
-            }
-            final String msg;
-            // TODO Andrei: I see sometimes that hg has errors if it runs in parallel
-            // locking here would serialize all hg access from plugin.
-            // not sure if it is worth...
-            //synchronized (executionLock) {
-                process = builder.start();
-                consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
-                consumer.start();
+			builder.redirectErrorStream(true); // makes my life easier
+			if (workingDir != null) {
+				builder.directory(workingDir);
+			}
+			final String msg;
+			// TODO Andrei: I see sometimes that hg has errors if it runs in parallel
+			// locking here would serialize all hg access from plugin.
+			// not sure if it is worth...
+			//synchronized (executionLock) {
+				process = builder.start();
+				consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
+				consumer.start();
 
-                logConsoleCommandInvoked(commandInvoked);
-                consumer.join(timeout); // 30 seconds timeout
-                msg = getMessage(output);
-                if (!consumer.isAlive()) {
-                    final int exitCode = process.waitFor();
-                    // everything fine
-                    if (exitCode == 0 || !expectPositiveReturnValue) {
-                        if (isDebugExecutionTime() || isDebugMode()) {
-                            logConsoleCompleted(msg, exitCode, null);
-                        }
-                        return true;
-                    }
+				logConsoleCommandInvoked(commandInvoked);
+				consumer.join(timeout); // 30 seconds timeout
+				msg = getMessage(output);
+				if (!consumer.isAlive()) {
+					final int exitCode = process.waitFor();
+					// everything fine
+					if (exitCode == 0 || !expectPositiveReturnValue) {
+						if (isDebugExecutionTime() || isDebugMode()) {
+							logConsoleCompleted(msg, exitCode, null);
+						}
+						return true;
+					}
 
-                    // exit code > 0
-                    final HgException hgex = new HgException(exitCode, getMessage(output));
+					// exit code > 0
+					final HgException hgex = new HgException(exitCode, getMessage(output));
 
-                    // exit code == 1 usually isn't fatal.
-                    logConsoleCompleted(msg, exitCode, hgex);
-                    throw hgex;
-                }
-            //}
-            // command timeout
-            final HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
-            logConsoleError(msg, hgEx);
-            throw hgEx;
-        } catch (IOException e) {
-            throw new HgException(e.getMessage(), e);
-        } catch (InterruptedException e) {
-            String message = e.getMessage();
-            if(message == null || message.length() == 0){
-                message = "Operation cancelled";
-            }
-            throw new HgException(message, e);
-        } finally {
-            if (process != null) {
-                process.destroy();
-            }
-        }
-    }
+					// exit code == 1 usually isn't fatal.
+					logConsoleCompleted(msg, exitCode, hgex);
+					throw hgex;
+				}
+			//}
+			// command timeout
+			final HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
+			logConsoleError(msg, hgEx);
+			throw hgEx;
+		} catch (IOException e) {
+			throw new HgException(e.getMessage(), e);
+		} catch (InterruptedException e) {
+			String message = e.getMessage();
+			if(message == null || message.length() == 0){
+				message = "Operation cancelled";
+			}
+			throw new HgException(message, e);
+		} finally {
+			if (process != null) {
+				process.destroy();
+			}
+		}
+	}
 
-    protected void logConsoleCommandInvoked(final String commandInvoked) {
-        if (showOnConsole) {
-            new SafeWorkspaceJob("Writing to console") {
-                @Override
-                public IStatus runSafe(IProgressMonitor monitor) {
-                    getConsole().commandInvoked(commandInvoked);
-                    monitor.done();
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
-        }
-    }
+	protected void logConsoleCommandInvoked(final String commandInvoked) {
+		if (showOnConsole) {
+			new SafeWorkspaceJob("Writing to console") {
+				@Override
+				public IStatus runSafe(IProgressMonitor monitor) {
+					getConsole().commandInvoked(commandInvoked);
+					monitor.done();
+					return super.runSafe(monitor);
+				}
+			}.schedule();
+		}
+	}
 
-    protected void logConsoleMessage(final String msg, final Throwable t) {
-        if (showOnConsole) {
-            new SafeWorkspaceJob("Writing to console") {
-                @Override
-                public IStatus runSafe(IProgressMonitor monitor) {
-                    getConsole().printMessage(msg, t);
-                    monitor.done();
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
-        }
-    }
+	protected void logConsoleMessage(final String msg, final Throwable t) {
+		if (showOnConsole) {
+			new SafeWorkspaceJob("Writing to console") {
+				@Override
+				public IStatus runSafe(IProgressMonitor monitor) {
+					getConsole().printMessage(msg, t);
+					monitor.done();
+					return super.runSafe(monitor);
+				}
+			}.schedule();
+		}
+	}
 
-    protected void logConsoleError(final String msg, final HgException hgEx) {
-        if (showOnConsole) {
-            new SafeWorkspaceJob("Writing to console...") {
-                @Override
-                public IStatus runSafe(IProgressMonitor monitor) {
-                    if (msg != null) {
-                        getConsole().printError(msg, hgEx);
-                    } else {
-                        getConsole().printError(hgEx.getMessage(), hgEx);
-                    }
-                    monitor.done();
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
-        }
-    }
+	protected void logConsoleError(final String msg, final HgException hgEx) {
+		if (showOnConsole) {
+			new SafeWorkspaceJob("Writing to console...") {
+				@Override
+				public IStatus runSafe(IProgressMonitor monitor) {
+					if (msg != null) {
+						getConsole().printError(msg, hgEx);
+					} else {
+						getConsole().printError(hgEx.getMessage(), hgEx);
+					}
+					monitor.done();
+					return super.runSafe(monitor);
+				}
+			}.schedule();
+		}
+	}
 
-    private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
-        if (showOnConsole) {
-            new SafeWorkspaceJob("Writing to console...") {
-                @Override
-                public IStatus runSafe(IProgressMonitor monitor) {
-                    getConsole().commandCompleted(exitCode, msg, hgex);
-                    monitor.done();
-                    return super.runSafe(monitor);
-                }
-            }.schedule();
-        }
-    }
+	private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
+		if (showOnConsole) {
+			new SafeWorkspaceJob("Writing to console...") {
+				@Override
+				public IStatus runSafe(IProgressMonitor monitor) {
+					getConsole().commandCompleted(exitCode, msg, hgex);
+					monitor.done();
+					return super.runSafe(monitor);
+				}
+			}.schedule();
+		}
+	}
 
-    private static String getMessage(OutputStream output) {
-        String msg = null;
-        if (output instanceof FileOutputStream) {
-            return null;
-        } else if (output instanceof ByteArrayOutputStream) {
-            ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
-            try {
-                msg = baos.toString("UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                MercurialEclipsePlugin.logError(e);
-                msg = baos.toString();
-            }
-        }
-        return msg;
-    }
+	private static String getMessage(OutputStream output) {
+		String msg = null;
+		if (output instanceof FileOutputStream) {
+			return null;
+		} else if (output instanceof ByteArrayOutputStream) {
+			ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
+			try {
+				msg = baos.toString("UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				MercurialEclipsePlugin.logError(e);
+				msg = baos.toString();
+			}
+		}
+		return msg;
+	}
 
-    private boolean isDebugMode() {
-        return Boolean
-                .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
-    }
+	private boolean isDebugMode() {
+		return Boolean
+				.valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
+	}
 
-    private boolean isDebugExecutionTime() {
-        return Boolean
-        .valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
-    }
+	private boolean isDebugExecutionTime() {
+		return Boolean
+		.valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
+	}
 
-    public String executeToString() throws HgException {
-        byte[] bytes = executeToBytes();
-        if (bytes != null && bytes.length > 0) {
-            try {
-                return new String(bytes, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new HgException(e.getLocalizedMessage(), e);
-            }
-        }
-        return ""; //$NON-NLS-1$
-    }
+	public String executeToString() throws HgException {
+		byte[] bytes = executeToBytes();
+		if (bytes != null && bytes.length > 0) {
+			try {
+				return new String(bytes, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				throw new HgException(e.getLocalizedMessage(), e);
+			}
+		}
+		return ""; //$NON-NLS-1$
+	}
 
-    public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(file, false);
-            return executeToStream(fos, timeout, expectPositiveReturnValue);
-        } catch (FileNotFoundException e) {
-            throw new HgException(e.getMessage(), e);
-        } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    throw new HgException(e.getMessage(), e);
-                }
-            }
-        }
-    }
+	public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
+		FileOutputStream fos = null;
+		try {
+			fos = new FileOutputStream(file, false);
+			return executeToStream(fos, timeout, expectPositiveReturnValue);
+		} catch (FileNotFoundException e) {
+			throw new HgException(e.getMessage(), e);
+		} finally {
+			if (fos != null) {
+				try {
+					fos.close();
+				} catch (IOException e) {
+					throw new HgException(e.getMessage(), e);
+				}
+			}
+		}
+	}
 
-    protected List<String> getCommands() {
-        if (commands != null) {
-            return commands;
-        }
-        ArrayList<String> result = new ArrayList<String>();
-        result.add(getExecutable());
-        result.add(command);
-        result.addAll(options);
-        if (escapeFiles && !files.isEmpty()) {
-            result.add("--"); //$NON-NLS-1$
-        }
-        result.addAll(files);
-        // TODO check that length <= MAX_PARAMS
-        return result;
-    }
+	protected List<String> getCommands() {
+		if (commands != null) {
+			return commands;
+		}
+		ArrayList<String> result = new ArrayList<String>();
+		result.add(getExecutable());
+		result.add(command);
+		result.addAll(options);
+		if (escapeFiles && !files.isEmpty()) {
+			result.add("--"); //$NON-NLS-1$
+		}
+		result.addAll(files);
+		// TODO check that length <= MAX_PARAMS
+		return result;
+	}
 
-    protected abstract String getExecutable();
+	protected abstract String getExecutable();
 
-    public void addFiles(String... myFiles) {
-        for (String file : myFiles) {
-            files.add(file);
-        }
-    }
+	public void addFiles(String... myFiles) {
+		for (String file : myFiles) {
+			files.add(file);
+		}
+	}
 
-    public void addFiles(Collection<String> myFiles) {
-        files.addAll(myFiles);
-    }
+	public void addFiles(Collection<String> myFiles) {
+		files.addAll(myFiles);
+	}
 
-    public void addFiles(IResource... resources) {
-        for (IResource resource : resources) {
-            files.add(resource.getLocation().toOSString());
-        }
-    }
+	public void addFiles(IResource... resources) {
+		for (IResource resource : resources) {
+			files.add(resource.getLocation().toOSString());
+		}
+	}
 
-    public void addFiles(List<? extends IResource> resources) {
-        for (IResource resource : resources) {
-            files.add(resource.getLocation().toOSString());
-        }
-    }
+	public void addFiles(List<? extends IResource> resources) {
+		for (IResource resource : resources) {
+			files.add(resource.getLocation().toOSString());
+		}
+	}
 
-    public void setUsePreferenceTimeout(String cloneTimeout) {
-        this.timeoutConstant = cloneTimeout;
-    }
+	public void setUsePreferenceTimeout(String cloneTimeout) {
+		this.timeoutConstant = cloneTimeout;
+	}
 
-    public void terminate() {
-        if (consumer != null) {
-            consumer.interrupt();
-        }
-        process.destroy();
-    }
+	public void terminate() {
+		if (consumer != null) {
+			consumer.interrupt();
+		}
+		process.destroy();
+	}
 
-    private IConsole getConsole() {
-        return HgClients.getConsole();
-    }
+	private IConsole getConsole() {
+		return HgClients.getConsole();
+	}
 
-    public void setShowOnConsole(boolean b) {
-        showOnConsole = b;
-    }
+	public void setShowOnConsole(boolean b) {
+		showOnConsole = b;
+	}
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder(getClass().getSimpleName());
-        builder.append(" [");
-        if (command != null) {
-            builder.append("command=");
-            builder.append(command);
-            builder.append(", ");
-        }
-        if (commands != null) {
-            builder.append("commands=");
-            builder.append(commands);
-            builder.append(", ");
-        }
-        if (options != null) {
-            builder.append("options=");
-            builder.append(options);
-            builder.append(", ");
-        }
-        if (workingDir != null) {
-            builder.append("workingDir=");
-            builder.append(workingDir);
-            builder.append(", ");
-        }
-        if (files != null) {
-            builder.append("files=");
-            builder.append(files);
-            builder.append(", ");
-        }
-        builder.append("escapeFiles=");
-        builder.append(escapeFiles);
-        builder.append(", ");
-        if (consumer != null) {
-            builder.append("consumer=");
-            builder.append(consumer);
-            builder.append(", ");
-        }
-        if (process != null) {
-            builder.append("process=");
-            builder.append(process);
-            builder.append(", ");
-        }
-        builder.append("showOnConsole=");
-        builder.append(showOnConsole);
-        builder.append(", ");
-        if (timeoutConstant != null) {
-            builder.append("timeoutConstant=");
-            builder.append(timeoutConstant);
-        }
-        builder.append("]");
-        return builder.toString();
-    }
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder(getClass().getSimpleName());
+		builder.append(" [");
+		if (command != null) {
+			builder.append("command=");
+			builder.append(command);
+			builder.append(", ");
+		}
+		if (commands != null) {
+			builder.append("commands=");
+			builder.append(commands);
+			builder.append(", ");
+		}
+		if (options != null) {
+			builder.append("options=");
+			builder.append(options);
+			builder.append(", ");
+		}
+		if (workingDir != null) {
+			builder.append("workingDir=");
+			builder.append(workingDir);
+			builder.append(", ");
+		}
+		if (files != null) {
+			builder.append("files=");
+			builder.append(files);
+			builder.append(", ");
+		}
+		builder.append("escapeFiles=");
+		builder.append(escapeFiles);
+		builder.append(", ");
+		if (consumer != null) {
+			builder.append("consumer=");
+			builder.append(consumer);
+			builder.append(", ");
+		}
+		if (process != null) {
+			builder.append("process=");
+			builder.append(process);
+			builder.append(", ");
+		}
+		builder.append("showOnConsole=");
+		builder.append(showOnConsole);
+		builder.append(", ");
+		if (timeoutConstant != null) {
+			builder.append("timeoutConstant=");
+			builder.append(timeoutConstant);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
 }

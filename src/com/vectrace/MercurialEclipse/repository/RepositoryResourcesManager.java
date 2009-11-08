@@ -18,71 +18,71 @@ import java.util.List;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
- * provides some static methods to handle repository management 
+ * provides some static methods to handle repository management
  * (deletion of remote resources etc ...)
  */
 public class RepositoryResourcesManager {
-    private static RepositoryResourcesManager instance;
-    
-    private RepositoryResourcesManager() {     
-    }
-    
-    public static RepositoryResourcesManager getInstance(){
-        if (instance == null){
-            instance = new RepositoryResourcesManager();
-        }
-        return instance;
-    }
-    
-    private List<IRepositoryListener> repositoryListeners = new ArrayList<IRepositoryListener>();
+	private static RepositoryResourcesManager instance;
+
+	private RepositoryResourcesManager() {
+	}
+
+	public static RepositoryResourcesManager getInstance(){
+		if (instance == null){
+			instance = new RepositoryResourcesManager();
+		}
+		return instance;
+	}
+
+	private List<IRepositoryListener> repositoryListeners = new ArrayList<IRepositoryListener>();
 
 
-    /**
-     * Register to receive notification of repository creation and disposal
-     */
-    public void addRepositoryListener(IRepositoryListener listener) {
-        repositoryListeners.add(listener);
-    }
+	/**
+	 * Register to receive notification of repository creation and disposal
+	 */
+	public void addRepositoryListener(IRepositoryListener listener) {
+		repositoryListeners.add(listener);
+	}
 
-    /**
-     * De-register a listener
-     */
-    public void removeRepositoryListener(IRepositoryListener listener) {
-        repositoryListeners.remove(listener);
-    }
+	/**
+	 * De-register a listener
+	 */
+	public void removeRepositoryListener(IRepositoryListener listener) {
+		repositoryListeners.remove(listener);
+	}
 
-    /**
-     * signals all listener that we have removed a repository 
-     */
-    public void repositoryRemoved(HgRepositoryLocation repository) {
-        Iterator<IRepositoryListener> it = repositoryListeners.iterator();
-        while (it.hasNext()) {
-            IRepositoryListener listener = it.next();
-            listener.repositoryRemoved(repository);
-        }    
-    }
+	/**
+	 * signals all listener that we have removed a repository
+	 */
+	public void repositoryRemoved(HgRepositoryLocation repository) {
+		Iterator<IRepositoryListener> it = repositoryListeners.iterator();
+		while (it.hasNext()) {
+			IRepositoryListener listener = it.next();
+			listener.repositoryRemoved(repository);
+		}
+	}
 
-    /**
-     * signals all listener that we have removed a repository 
-     */
-    public void repositoryAdded(HgRepositoryLocation repository) {
-        Iterator<IRepositoryListener> it = repositoryListeners.iterator();
-        while (it.hasNext()) {
-            IRepositoryListener listener = it.next();
-            listener.repositoryAdded(repository);
-        }    
-    }
+	/**
+	 * signals all listener that we have removed a repository
+	 */
+	public void repositoryAdded(HgRepositoryLocation repository) {
+		Iterator<IRepositoryListener> it = repositoryListeners.iterator();
+		while (it.hasNext()) {
+			IRepositoryListener listener = it.next();
+			listener.repositoryAdded(repository);
+		}
+	}
 
-    /**
-     * signals all listener that we have removed a repository 
-     */
-    public void repositoryModified(HgRepositoryLocation repository) {
-        Iterator<IRepositoryListener> it = repositoryListeners.iterator();
-        while (it.hasNext()) {
-            IRepositoryListener listener = it.next();
-            listener.repositoryModified(repository);
-        }    
-    }
+	/**
+	 * signals all listener that we have removed a repository
+	 */
+	public void repositoryModified(HgRepositoryLocation repository) {
+		Iterator<IRepositoryListener> it = repositoryListeners.iterator();
+		while (it.hasNext()) {
+			IRepositoryListener listener = it.next();
+			listener.repositoryModified(repository);
+		}
+	}
 
 
 }

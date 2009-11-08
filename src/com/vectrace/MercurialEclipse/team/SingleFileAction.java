@@ -12,7 +12,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  *
  */
@@ -44,9 +44,9 @@ public abstract class SingleFileAction implements IActionDelegate {
 			run(getSelectedFile());
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
-            MessageDialog.openError(getShell(), Messages.getString("SingleFileAction.hgSays"), e.getMessage()+Messages.getString("SingleFileAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+			MessageDialog.openError(getShell(), Messages.getString("SingleFileAction.hgSays"), e.getMessage()+Messages.getString("SingleFileAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
-	
+
 	protected abstract void run(IFile file) throws Exception ;
 }

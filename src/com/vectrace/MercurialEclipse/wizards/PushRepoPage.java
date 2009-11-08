@@ -7,6 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -29,85 +30,85 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public class PushRepoPage extends PushPullPage {
 
-    public PushRepoPage(String pageName, String title,
-            ImageDescriptor titleImage, IResource resource) {
-        super(resource, pageName, title, titleImage);
-        showRevisionTable = false;
-    }
+	public PushRepoPage(String pageName, String title,
+			ImageDescriptor titleImage, IResource resource) {
+		super(resource, pageName, title, titleImage);
+		showRevisionTable = false;
+	}
 
-    @Override
-    public void createControl(Composite parent) {
-        super.createControl(parent);
-    }
+	@Override
+	public void createControl(Composite parent) {
+		super.createControl(parent);
+	}
 
 
-    @Override
-    public boolean finish(IProgressMonitor monitor) {
-        this.force = forceCheckBox.getSelection();
-        this.timeout = timeoutCheckBox.getSelection();
-        return super.finish(monitor);
-    }
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		this.force = forceCheckBox.getSelection();
+		this.timeout = timeoutCheckBox.getSelection();
+		return super.finish(monitor);
+	}
 
-    @Override
-    public boolean canFlipToNextPage() {
-        try {
-            if (getUrlCombo().getText() != null
-                    && getUrlCombo().getText() != null) {
-                OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
-                outgoingPage.setProject(resource.getProject());
-                HgRepositoryLocation loc = MercurialEclipsePlugin
-                        .getRepoManager().getRepoLocation(urlCombo.getText(),
-                                getUserCombo().getText(),
-                                getPasswordText()
-                                .getText());
-                outgoingPage.setLocation(loc);
-                outgoingPage.setSvn(getSvnCheckBox() != null
-                        && getSvnCheckBox().getSelection());
-                setErrorMessage(null);
-                return isPageComplete()
-                        && (getWizard().getNextPage(this) != null);
-            }
-        } catch (HgException e) {
-            setErrorMessage(e.getLocalizedMessage());
-        }
-        return false;
-    }
+	@Override
+	public boolean canFlipToNextPage() {
+		try {
+			if (getUrlCombo().getText() != null
+					&& getUrlCombo().getText() != null) {
+				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
+				outgoingPage.setProject(resource.getProject());
+				HgRepositoryLocation loc = MercurialEclipsePlugin
+						.getRepoManager().getRepoLocation(urlCombo.getText(),
+								getUserCombo().getText(),
+								getPasswordText()
+								.getText());
+				outgoingPage.setLocation(loc);
+				outgoingPage.setSvn(getSvnCheckBox() != null
+						&& getSvnCheckBox().getSelection());
+				setErrorMessage(null);
+				return isPageComplete()
+						&& (getWizard().getNextPage(this) != null);
+			}
+		} catch (HgException e) {
+			setErrorMessage(e.getLocalizedMessage());
+		}
+		return false;
+	}
 
-    @Override
-    protected Set<HgRepositoryLocation> setDefaultLocation() {
-        HgRepositoryLocation defaultLocation = null;
-        Set<HgRepositoryLocation> repos = super.setDefaultLocation();
-        if (repos == null) {
-            return null;
-        }
-        for (HgRepositoryLocation repo : repos)
-        {
-            if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName()) ||
-                    HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
-                defaultLocation = repo;
-                break;
-            }
-        }
+	@Override
+	protected Set<HgRepositoryLocation> setDefaultLocation() {
+		HgRepositoryLocation defaultLocation = null;
+		Set<HgRepositoryLocation> repos = super.setDefaultLocation();
+		if (repos == null) {
+			return null;
+		}
+		for (HgRepositoryLocation repo : repos)
+		{
+			if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName()) ||
+					HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+				defaultLocation = repo;
+				break;
+			}
+		}
 
-        if (defaultLocation == null) {
-            defaultLocation = MercurialEclipsePlugin
-                .getRepoManager().getDefaultProjectRepoLocation(
-                        resource.getProject());
-        }
+		if (defaultLocation == null) {
+			defaultLocation = MercurialEclipsePlugin
+				.getRepoManager().getDefaultProjectRepoLocation(
+						resource.getProject());
+		}
 
-        if (defaultLocation != null) {
-            getUrlCombo().setText(defaultLocation.getLocation());
+		if (defaultLocation != null) {
+			getUrlCombo().setText(defaultLocation.getLocation());
 
-            String user = defaultLocation.getUser();
-            if (user != null && user.length() != 0) {
-                getUserCombo().setText(user);
-            }
-            String password = defaultLocation.getPassword();
-            if (password != null && password.length() != 0) {
-                getPasswordText().setText(password);
-            }
-        }
-        return repos;
-    }
+			String user = defaultLocation.getUser();
+			if (user != null && user.length() != 0) {
+				getUserCombo().setText(user);
+			}
+			String password = defaultLocation.getPassword();
+			if (password != null && password.length() != 0) {
+				getPasswordText().setText(password);
+			}
+		}
+		return repos;
+	}
 
 }

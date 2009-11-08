@@ -22,76 +22,76 @@ import com.vectrace.MercurialEclipse.operations.RebaseOperation;
  */
 public class RebaseWizard extends HgWizard {
 
-    private IResource resource;
-    private RebasePage rebasePage;
+	private IResource resource;
+	private RebasePage rebasePage;
 
-    /**
-     * @param windowTitle
-     */
-    public RebaseWizard(IResource res) {
-        super(Messages.getString("RebaseWizard.title")); //$NON-NLS-1$
-        this.resource = res;
-        setNeedsProgressMonitor(true);
-    }
-    
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-     */
-    @Override
-    public boolean performFinish() {        
-        int srcRev = -1;
-        int baseRev = -1;
-        int destRev = -1;
-        if (rebasePage.getSourceRevCheckBox().getSelection()) {
-            srcRev = rebasePage.getSrcTable().getSelection()
-                    .getChangesetIndex();
-        }
-        if (rebasePage.getBaseRevCheckBox().getSelection()) {
-            baseRev = rebasePage.getSrcTable().getSelection()
-                    .getChangesetIndex();
-        }
-        if (rebasePage.getDestRevCheckBox().getSelection()) {
-            destRev = rebasePage.getDestTable().getSelection()
-                    .getChangesetIndex();
-        }
-        boolean collapse = rebasePage.getCollapseRevCheckBox().getSelection();
-        boolean abort = rebasePage.getAbortRevCheckBox().getSelection();
-        boolean cont = rebasePage.getContinueRevCheckBox().getSelection();
+	/**
+	 * @param windowTitle
+	 */
+	public RebaseWizard(IResource res) {
+		super(Messages.getString("RebaseWizard.title")); //$NON-NLS-1$
+		this.resource = res;
+		setNeedsProgressMonitor(true);
+	}
 
-        RebaseOperation op = new RebaseOperation(getContainer(), resource,
-                srcRev, destRev, baseRev, collapse,
-                abort, cont);
-        try {
-            getContainer().run(true, false, op);            
-            if (op.getResult().length() != 0) {
-                HgClients.getConsole().printMessage(op.getResult(), null);
-            }            
-            return true;
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e.getCause());
-            rebasePage.setErrorMessage(e.getLocalizedMessage());
-            return false;
-        }        
-        
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 */
+	@Override
+	public boolean performFinish() {
+		int srcRev = -1;
+		int baseRev = -1;
+		int destRev = -1;
+		if (rebasePage.getSourceRevCheckBox().getSelection()) {
+			srcRev = rebasePage.getSrcTable().getSelection()
+					.getChangesetIndex();
+		}
+		if (rebasePage.getBaseRevCheckBox().getSelection()) {
+			baseRev = rebasePage.getSrcTable().getSelection()
+					.getChangesetIndex();
+		}
+		if (rebasePage.getDestRevCheckBox().getSelection()) {
+			destRev = rebasePage.getDestTable().getSelection()
+					.getChangesetIndex();
+		}
+		boolean collapse = rebasePage.getCollapseRevCheckBox().getSelection();
+		boolean abort = rebasePage.getAbortRevCheckBox().getSelection();
+		boolean cont = rebasePage.getContinueRevCheckBox().getSelection();
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.wizard.Wizard#addPages()
-     */
-    @Override
-    public void addPages() {
-        rebasePage = new RebasePage("RebasePage", Messages.getString("RebaseWizard.rebasePage.title"), //$NON-NLS-1$ //$NON-NLS-2$
-                MercurialEclipsePlugin
-                        .getImageDescriptor("wizards/droplets-50.png"), //$NON-NLS-1$
-                Messages.getString("RebaseWizard.rebasePage.description"), //$NON-NLS-1$
-                resource);
+		RebaseOperation op = new RebaseOperation(getContainer(), resource,
+				srcRev, destRev, baseRev, collapse,
+				abort, cont);
+		try {
+			getContainer().run(true, false, op);
+			if (op.getResult().length() != 0) {
+				HgClients.getConsole().printMessage(op.getResult(), null);
+			}
+			return true;
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e.getCause());
+			rebasePage.setErrorMessage(e.getLocalizedMessage());
+			return false;
+		}
 
-        initPage(rebasePage.getDescription(), rebasePage);
-        addPage(rebasePage);        
-    }
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jface.wizard.Wizard#addPages()
+	 */
+	@Override
+	public void addPages() {
+		rebasePage = new RebasePage("RebasePage", Messages.getString("RebaseWizard.rebasePage.title"), //$NON-NLS-1$ //$NON-NLS-2$
+				MercurialEclipsePlugin
+						.getImageDescriptor("wizards/droplets-50.png"), //$NON-NLS-1$
+				Messages.getString("RebaseWizard.rebasePage.description"), //$NON-NLS-1$
+				resource);
+
+		initPage(rebasePage.getDescription(), rebasePage);
+		addPage(rebasePage);
+	}
 
 }

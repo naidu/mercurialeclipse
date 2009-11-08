@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - reference
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -334,9 +335,9 @@ public class ChangedPathsPage {
 
 	}
 
-    public MercurialHistoryPage getHistoryPage() {
-        return page;
-    }
+	public MercurialHistoryPage getHistoryPage() {
+		return page;
+	}
 
 	public IHistoryPageSite getHistoryPageSite() {
 		return page.getHistoryPageSite();
@@ -350,7 +351,7 @@ public class ChangedPathsPage {
 		return showAffectedPaths;
 	}
 
-    public MercurialHistory getMercurialHistory() {
-        return page.getMercurialHistory();
-    }
+	public MercurialHistory getMercurialHistory() {
+		return page.getMercurialHistory();
+	}
 }

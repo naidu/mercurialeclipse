@@ -28,28 +28,28 @@ import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 
 public class BackoutHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        BackoutWizard backoutWizard = new BackoutWizard(
-                project);
-        WizardDialog dialog = new WizardDialog(getShell(), backoutWizard);
-        dialog.setBlockOnOpen(true);
-        int result = dialog.open();
+	@Override
+	protected void run(IResource resource) throws Exception {
+		IProject project = resource.getProject();
+		BackoutWizard backoutWizard = new BackoutWizard(
+				project);
+		WizardDialog dialog = new WizardDialog(getShell(), backoutWizard);
+		dialog.setBlockOnOpen(true);
+		int result = dialog.open();
 
-        if(result == Window.OK){
-            Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
-            for (final IProject iProject : projects) {
-                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-                job.addJobChangeListener(new JobChangeAdapter(){
-                    @Override
-                    public void done(IJobChangeEvent event) {
-                        new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL).schedule();
-                    }
-                });
-                job.schedule();
-            }
-        }
-    }
+		if(result == Window.OK){
+			Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
+			for (final IProject iProject : projects) {
+				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
+				job.addJobChangeListener(new JobChangeAdapter(){
+					@Override
+					public void done(IJobChangeEvent event) {
+						new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL).schedule();
+					}
+				});
+				job.schedule();
+			}
+		}
+	}
 
 }

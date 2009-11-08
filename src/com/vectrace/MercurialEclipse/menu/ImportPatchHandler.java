@@ -29,28 +29,28 @@ import com.vectrace.MercurialEclipse.wizards.ImportPatchWizard;
 
 public class ImportPatchHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        openWizard(resource, getShell());
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		openWizard(resource, getShell());
+	}
 
-    public void openWizard(IResource resource, Shell shell) throws Exception {
-        IProject project = resource.getProject();
-        ImportPatchWizard wizard = new ImportPatchWizard(project);
-        WizardDialog dialog = new WizardDialog(shell, wizard);
-        dialog.setBlockOnOpen(true);
-        if (Window.OK == dialog.open()) {
-            Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
-            for (final IProject iProject : projects) {
-                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-                job.addJobChangeListener(new JobChangeAdapter(){
-                    @Override
-                    public void done(IJobChangeEvent event) {
-                        new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL).schedule();
-                    }
-                });
-                job.schedule();
-            }
-        }
-    }
+	public void openWizard(IResource resource, Shell shell) throws Exception {
+		IProject project = resource.getProject();
+		ImportPatchWizard wizard = new ImportPatchWizard(project);
+		WizardDialog dialog = new WizardDialog(shell, wizard);
+		dialog.setBlockOnOpen(true);
+		if (Window.OK == dialog.open()) {
+			Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
+			for (final IProject iProject : projects) {
+				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
+				job.addJobChangeListener(new JobChangeAdapter(){
+					@Override
+					public void done(IJobChangeEvent event) {
+						new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL).schedule();
+					}
+				});
+				job.schedule();
+			}
+		}
+	}
 }

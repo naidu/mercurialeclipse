@@ -22,64 +22,64 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public abstract class ReplaceableIconAction extends TeamAction {
 
-    private IAction action = null;
-    private boolean isInitialized = false;
+	private IAction action = null;
+	private boolean isInitialized = false;
 
-    /**
-     * Returns the id of the image for this menu entry
-     * 
-     * @return the id of the image for this menu entry
-     */
-    protected String getImageId() {
-        return null;
-    }
+	/**
+	 * Returns the id of the image for this menu entry
+	 *
+	 * @return the id of the image for this menu entry
+	 */
+	protected String getImageId() {
+		return null;
+	}
 
-    /*
-     * @see org.eclipse.ui.actions.ActionDelegate#init(org.eclipse.jface.action.IAction)
-     */
-    @Override
-    public void init(IAction act) {
-        super.init(action);
+	/*
+	 * @see org.eclipse.ui.actions.ActionDelegate#init(org.eclipse.jface.action.IAction)
+	 */
+	@Override
+	public void init(IAction act) {
+		super.init(action);
 
-        this.action = act;
+		this.action = act;
 
-        setIcon();
-    }
+		setIcon();
+	}
 
-    /*
-     * @see org.tigris.subversion.subclipse.ui.internal.TeamAction#setActivePart(org.eclipse.jface.action.IAction,
-     *      org.eclipse.ui.IWorkbenchPart)
-     */
-    @Override
-    public void setActivePart(IAction action, IWorkbenchPart targetPart) {
-        super.setActivePart(action, targetPart);
+	/*
+	 * @see org.tigris.subversion.subclipse.ui.internal.TeamAction#setActivePart(org.eclipse.jface.action.IAction,
+	 *      org.eclipse.ui.IWorkbenchPart)
+	 */
+	@Override
+	public void setActivePart(IAction action, IWorkbenchPart targetPart) {
+		super.setActivePart(action, targetPart);
 
-        if (!isInitialized) {
-            setIcon();
-            isInitialized = true;
-        }
-    }
+		if (!isInitialized) {
+			setIcon();
+			isInitialized = true;
+		}
+	}
 
-    protected void setIcon() {
-        String iconName = getImageId();
+	protected void setIcon() {
+		String iconName = getImageId();
 
-        if (iconName != null) {
-            ImageDescriptor descriptor = MercurialEclipsePlugin
-                    .getImageDescriptor(iconName);
-            action.setImageDescriptor(descriptor);
-        }
-    }
+		if (iconName != null) {
+			ImageDescriptor descriptor = MercurialEclipsePlugin
+					.getImageDescriptor(iconName);
+			action.setImageDescriptor(descriptor);
+		}
+	}
 
-    /*
-     * @see org.eclipse.ui.IWorkbenchWindowActionDelegate#dispose()
-     */
-    @Override
-    public void dispose() {
-        super.dispose();
-        action = null;
-    }
+	/*
+	 * @see org.eclipse.ui.IWorkbenchWindowActionDelegate#dispose()
+	 */
+	@Override
+	public void dispose() {
+		super.dispose();
+		action = null;
+	}
 
-    protected IAction getAction() {
-        return action;
-    }
+	protected IAction getAction() {
+		return action;
+	}
 }

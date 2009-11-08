@@ -14,6 +14,6 @@ import org.eclipse.core.resources.IProject;
 
 public interface FlagManagerListener {
 
-    public void onRefresh(IProject project);
-    
+	public void onRefresh(IProject project);
+
 }

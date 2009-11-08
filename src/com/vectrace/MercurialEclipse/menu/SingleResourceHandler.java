@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -31,52 +32,52 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class SingleResourceHandler extends AbstractHandler {
 
-    private IResource selection;
-    private Shell shell;
+	private IResource selection;
+	private Shell shell;
 
-    protected Shell getShell() {
-        return shell != null? shell : PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-    }
+	protected Shell getShell() {
+		return shell != null? shell : PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+	}
 
-    protected IResource getSelectedResource() {
-        return selection;
-    }
+	protected IResource getSelectedResource() {
+		return selection;
+	}
 
-    @SuppressWarnings("unchecked")
-    public Object execute(ExecutionEvent event) throws ExecutionException {
-        Object selectionObject = ((EvaluationContext) event
-                .getApplicationContext()).getDefaultVariable();
-        try {
-            if (selectionObject != null && selectionObject instanceof List) {
-                List list = (List) selectionObject;
-                Object listEntry = list.get(0);
-                if (listEntry != null && listEntry instanceof IAdaptable) {
-                    IAdaptable selectionAdaptable = (IAdaptable) listEntry;
-                    selection = (IResource) selectionAdaptable
-                            .getAdapter(IResource.class);
-                }
-            }
-            if (selection == null) {
-                selection = ResourceUtils.getActiveResourceFromEditor();
-            }
+	@SuppressWarnings("unchecked")
+	public Object execute(ExecutionEvent event) throws ExecutionException {
+		Object selectionObject = ((EvaluationContext) event
+				.getApplicationContext()).getDefaultVariable();
+		try {
+			if (selectionObject != null && selectionObject instanceof List) {
+				List list = (List) selectionObject;
+				Object listEntry = list.get(0);
+				if (listEntry != null && listEntry instanceof IAdaptable) {
+					IAdaptable selectionAdaptable = (IAdaptable) listEntry;
+					selection = (IResource) selectionAdaptable
+							.getAdapter(IResource.class);
+				}
+			}
+			if (selection == null) {
+				selection = ResourceUtils.getActiveResourceFromEditor();
+			}
 
-            run(getSelectedResource());
-        } catch (Exception e) {
-            MessageDialog
-                    .openError(
-                            getShell(),
-                            Messages.getString("SingleResourceHandler.hgSays"), e.getMessage() + Messages.getString("SingleResourceHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
-            throw new ExecutionException(e.getMessage(), e);
-        }
-        return null;
-    }
+			run(getSelectedResource());
+		} catch (Exception e) {
+			MessageDialog
+					.openError(
+							getShell(),
+							Messages.getString("SingleResourceHandler.hgSays"), e.getMessage() + Messages.getString("SingleResourceHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+			throw new ExecutionException(e.getMessage(), e);
+		}
+		return null;
+	}
 
-    /**
-     * @param shell the shell to set, may be null
-     */
-    public void setShell(Shell shell) {
-        this.shell = shell;
-    }
+	/**
+	 * @param shell the shell to set, may be null
+	 */
+	public void setShell(Shell shell) {
+		this.shell = shell;
+	}
 
-    protected abstract void run(IResource resource) throws Exception;
+	protected abstract void run(IResource resource) throws Exception;
 }

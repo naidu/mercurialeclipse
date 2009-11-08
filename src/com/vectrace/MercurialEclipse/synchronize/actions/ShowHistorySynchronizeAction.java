@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch				- Adaption to Mercurial
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -52,35 +53,35 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 						.getResource());
 			}
 		}
-        // XXX currently I have no idea why IDiffElement[] elements is empty...
-        if(selectedResources.size() == 0){
-            IStructuredSelection sel = getStructuredSelection();
-            Object[] objects = sel.toArray();
-            for (Object object : objects) {
-                if (object instanceof IResource) {
-                    selectedResources.add(((IResource) object));
-                } else if (object instanceof IAdaptable){
-                    IAdaptable adaptable = (IAdaptable) object;
-                    IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-                    if(resource != null){
-                        selectedResources.add(resource);
-                    }
-                }
-            }
-        }
+		// XXX currently I have no idea why IDiffElement[] elements is empty...
+		if(selectedResources.size() == 0){
+			IStructuredSelection sel = getStructuredSelection();
+			Object[] objects = sel.toArray();
+			for (Object object : objects) {
+				if (object instanceof IResource) {
+					selectedResources.add(((IResource) object));
+				} else if (object instanceof IAdaptable){
+					IAdaptable adaptable = (IAdaptable) object;
+					IResource resource = (IResource) adaptable.getAdapter(IResource.class);
+					if(resource != null){
+						selectedResources.add(resource);
+					}
+				}
+			}
+		}
 		IResource[] resources = new IResource[selectedResources.size()];
 		selectedResources.toArray(resources);
 		return new ShowHistorySynchronizeOperation(configuration, elements,
 				resources);
 	}
 
-    @Override
-    protected boolean updateSelection(IStructuredSelection selection) {
-        boolean updateSelection = super.updateSelection(selection);
-        if(!updateSelection){
-            // TODO implement constraints check here
-            return true;
-        }
-        return updateSelection;
-    }
+	@Override
+	protected boolean updateSelection(IStructuredSelection selection) {
+		boolean updateSelection = super.updateSelection(selection);
+		if(!updateSelection){
+			// TODO implement constraints check here
+			return true;
+		}
+		return updateSelection;
+	}
 }

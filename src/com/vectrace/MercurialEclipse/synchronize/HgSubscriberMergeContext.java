@@ -7,6 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -30,22 +31,22 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 
 //    private final MercurialSynchronizeSubscriber subscriber;
 
-    public HgSubscriberMergeContext(Subscriber subscriber,
-            ISynchronizationScopeManager manager) {
-        super(subscriber, manager);
-        initialize();
+	public HgSubscriberMergeContext(Subscriber subscriber,
+			ISynchronizationScopeManager manager) {
+		super(subscriber, manager);
+		initialize();
 //        this.subscriber = (MercurialSynchronizeSubscriber)subscriber;
-    }
+	}
 
-    /**
-     * Called after "Overwrite" action is executed
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    protected void makeInSync(IDiff diff, IProgressMonitor monitor)
-            throws CoreException {
-    }
+	/**
+	 * Called after "Overwrite" action is executed
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	protected void makeInSync(IDiff diff, IProgressMonitor monitor)
+			throws CoreException {
+	}
 
 //    @Override
 //    public void run(IWorkspaceRunnable runnable, ISchedulingRule rule, int flags,
@@ -58,48 +59,48 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 //        doPullAndMerge(subscriber.getRepo(), subscriber.getProjects(), runnable);
 //    }
 
-    public void markAsMerged(IDiff node, boolean inSyncHint,
-            IProgressMonitor monitor) throws CoreException {
-    }
+	public void markAsMerged(IDiff node, boolean inSyncHint,
+			IProgressMonitor monitor) throws CoreException {
+	}
 
-    public void reject(IDiff diff, IProgressMonitor monitor)
-            throws CoreException {
-    }
+	public void reject(IDiff diff, IProgressMonitor monitor)
+			throws CoreException {
+	}
 
-    /**
-     * "Synchronize", part 2
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
-        super.refresh(traversals, flags, monitor);
-        monitor.done();
-    }
+	/**
+	 * "Synchronize", part 2
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void refresh(ResourceTraversal[] traversals, int flags, IProgressMonitor monitor) throws CoreException {
+		super.refresh(traversals, flags, monitor);
+		monitor.done();
+	}
 
-    /**
-     * "Synchronize", part 1
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
-        super.refresh(mappings, monitor);
-    }
+	/**
+	 * "Synchronize", part 1
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
+		super.refresh(mappings, monitor);
+	}
 
-    @Override
-    protected SyncInfo getSyncInfo(IResource resource) throws CoreException {
-        return super.getSyncInfo(resource);
-    }
+	@Override
+	protected SyncInfo getSyncInfo(IResource resource) throws CoreException {
+		return super.getSyncInfo(resource);
+	}
 
-    @Override
-    public void dispose() {
-        // avoid silly NPE's in the team API code if they try to dispose compare
-        // editors on shutdown, we don't care
-        if(!PlatformUI.getWorkbench().isClosing()) {
-            super.dispose();
-        }
-    }
+	@Override
+	public void dispose() {
+		// avoid silly NPE's in the team API code if they try to dispose compare
+		// editors on shutdown, we don't care
+		if(!PlatformUI.getWorkbench().isClosing()) {
+			super.dispose();
+		}
+	}
 
 //    private void doPullAndMerge(HgRepositoryLocation location,
 //            IProject[] projects,

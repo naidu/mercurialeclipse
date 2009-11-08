@@ -17,18 +17,18 @@ package com.vectrace.MercurialEclipse.commands;
  */
 public interface IErrorHandler {
 
-    
 
-    /**
-     * @param e
-     */
-    void logError(Throwable e);
 
-    /**
-     * @param message
-     * @param e
-     * @return
-     */
-    void logWarning(String message, Throwable e);
+	/**
+	 * @param e
+	 */
+	void logError(Throwable e);
+
+	/**
+	 * @param message
+	 * @param e
+	 * @return
+	 */
+	void logWarning(String message, Throwable e);
 
 }

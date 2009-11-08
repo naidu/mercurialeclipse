@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -19,19 +20,19 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
- * 
+ *
  */
 public class CompareAction extends SingleFileAction {
 
-    @Override
-    protected void run(IFile file) throws TeamException {
-        // workspace version
-        ResourceNode leftNode = new ResourceNode(file);
+	@Override
+	protected void run(IFile file) throws TeamException {
+		// workspace version
+		ResourceNode leftNode = new ResourceNode(file);
 
-        // mercurial version
-        RevisionNode rightNode = new RevisionNode(
-                new MercurialRevisionStorage(file));
-        CompareUtils.openEditor(leftNode, rightNode, false, true);
-    }
+		// mercurial version
+		RevisionNode rightNode = new RevisionNode(
+				new MercurialRevisionStorage(file));
+		CompareUtils.openEditor(leftNode, rightNode, false, true);
+	}
 
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - initial API and implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.mapping;
 
@@ -20,7 +21,7 @@ public class HgActiveChangeSetCollector extends SubscriberChangeSetManager {
 	}
 
 	@Override
-    protected HgActiveChangeSet doCreateSet(String name) {
+	protected HgActiveChangeSet doCreateSet(String name) {
 		return new HgActiveChangeSet(this, name);
 	}
 }

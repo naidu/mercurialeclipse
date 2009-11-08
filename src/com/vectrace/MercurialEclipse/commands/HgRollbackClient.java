@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch	- implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -22,22 +23,22 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgRollbackClient {
 
-    public static String rollback(final IProject project) throws CoreException {
-        HgCommand command = new HgCommand("rollback", project, true);
-        String result = command.executeToString();
+	public static String rollback(final IProject project) throws CoreException {
+		HgCommand command = new HgCommand("rollback", project, true);
+		String result = command.executeToString();
 
-        Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
-        for (final IProject iProject : projects) {
-            RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-            job.addJobChangeListener(new JobChangeAdapter(){
-               @Override
-                public void done(IJobChangeEvent event) {
-                    new RefreshJob("Refreshing " + iProject.getName(), iProject).schedule();
-                }
-            });
-            job.schedule();
-        }
-        return result;
-    }
+		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
+		for (final IProject iProject : projects) {
+			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
+			job.addJobChangeListener(new JobChangeAdapter(){
+			@Override
+				public void done(IJobChangeEvent event) {
+					new RefreshJob("Refreshing " + iProject.getName(), iProject).schedule();
+				}
+			});
+			job.schedule();
+		}
+		return result;
+	}
 
 }

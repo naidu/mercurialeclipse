@@ -8,6 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -25,45 +26,45 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class HgCommand extends AbstractShellCommand {
 
-    public HgCommand(List<String> commands, File workingDir, boolean escapeFiles) {
-        super(commands, workingDir, escapeFiles);
-    }
+	public HgCommand(List<String> commands, File workingDir, boolean escapeFiles) {
+		super(commands, workingDir, escapeFiles);
+	}
 
-    public HgCommand(String command, File workingDir, boolean escapeFiles) {
-        super();
-        this.command = command;
-        this.workingDir = workingDir;
-        this.escapeFiles = escapeFiles;
-    }
+	public HgCommand(String command, File workingDir, boolean escapeFiles) {
+		super();
+		this.command = command;
+		this.workingDir = workingDir;
+		this.escapeFiles = escapeFiles;
+	}
 
-    public HgCommand(String command, IContainer container,
-            boolean escapeFiles) {
-        this(command, container.getLocation().toFile(), escapeFiles);
-    }
+	public HgCommand(String command, IContainer container,
+			boolean escapeFiles) {
+		this(command, container.getLocation().toFile(), escapeFiles);
+	}
 
-    public HgCommand(String command, boolean escapeFiles) {
-        this(command, (File) null, escapeFiles);
-    }
+	public HgCommand(String command, boolean escapeFiles) {
+		this(command, (File) null, escapeFiles);
+	}
 
-    protected String getHgExecutable() {
-        return HgClients.getExecutable();
-    }
+	protected String getHgExecutable() {
+		return HgClients.getExecutable();
+	}
 
-    public HgRoot getHgRoot() throws HgException{
-        return getHgRoot(workingDir);
-    }
+	public HgRoot getHgRoot() throws HgException{
+		return getHgRoot(workingDir);
+	}
 
-    protected String getDefaultUserName() {
-        return HgClients.getDefaultUserName();
-    }
+	protected String getDefaultUserName() {
+		return HgClients.getDefaultUserName();
+	}
 
-    protected void addUserName(String user) {
-        this.options.add("-u"); //$NON-NLS-1$
-        this.options.add(user != null ? user : getDefaultUserName());
-    }
+	protected void addUserName(String user) {
+		this.options.add("-u"); //$NON-NLS-1$
+		this.options.add(user != null ? user : getDefaultUserName());
+	}
 
-    @Override
-    protected String getExecutable() {
-        return getHgExecutable();
-    }
+	@Override
+	protected String getExecutable() {
+		return getHgExecutable();
+	}
 }

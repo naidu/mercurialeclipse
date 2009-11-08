@@ -29,26 +29,26 @@ import com.vectrace.MercurialEclipse.wizards.TransplantWizard;
 
 public class TransplantHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        TransplantWizard transplantWizard = new TransplantWizard(project);
-        WizardDialog transplantWizardDialog = new WizardDialog(getShell(), transplantWizard);
-        int result = transplantWizardDialog.open();
-        if (result == Window.OK) {
-            HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-            Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-            for (final IProject iProject : projects) {
-                RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-                job.addJobChangeListener(new JobChangeAdapter(){
-                   @Override
-                    public void done(IJobChangeEvent event) {
-                        new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-                    }
-                });
-                job.schedule();
-            }
-        }
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		IProject project = resource.getProject();
+		TransplantWizard transplantWizard = new TransplantWizard(project);
+		WizardDialog transplantWizardDialog = new WizardDialog(getShell(), transplantWizard);
+		int result = transplantWizardDialog.open();
+		if (result == Window.OK) {
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+			for (final IProject iProject : projects) {
+				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
+				job.addJobChangeListener(new JobChangeAdapter(){
+				   @Override
+					public void done(IJobChangeEvent event) {
+						new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+					}
+				});
+				job.schedule();
+			}
+		}
+	}
 
 }

@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -24,45 +25,45 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public abstract class HgWizard extends Wizard {
 
-    protected HgWizardPage page;
-    protected Properties properties = null;
+	protected HgWizardPage page;
+	protected Properties properties = null;
 
-    public HgWizard(String windowTitle) {
-        super();
-        init(windowTitle);
-    }
+	public HgWizard(String windowTitle) {
+		super();
+		init(windowTitle);
+	}
 
-    @Override
-    public boolean performFinish() {
-        if (page != null) {
-            return page.finish(new NullProgressMonitor());
-        }
-        return true;
-    }
+	@Override
+	public boolean performFinish() {
+		if (page != null) {
+			return page.finish(new NullProgressMonitor());
+		}
+		return true;
+	}
 
-    /**
-     * Initializes the wizard with data.
-     */
-    private void init(String windowTitle) {
-        IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
-                .getDialogSettings();
-        IDialogSettings section = workbenchSettings.getSection(getClass()
-                .getCanonicalName());
-        if (section == null) {
-            section = workbenchSettings.addNewSection(getClass()
-                    .getCanonicalName());
-        }
-        setDialogSettings(section);
-        setWindowTitle(windowTitle);
-        setNeedsProgressMonitor(true);
-    }
+	/**
+	 * Initializes the wizard with data.
+	 */
+	private void init(String windowTitle) {
+		IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
+				.getDialogSettings();
+		IDialogSettings section = workbenchSettings.getSection(getClass()
+				.getCanonicalName());
+		if (section == null) {
+			section = workbenchSettings.addNewSection(getClass()
+					.getCanonicalName());
+		}
+		setDialogSettings(section);
+		setWindowTitle(windowTitle);
+		setNeedsProgressMonitor(true);
+	}
 
-    protected void initPage(String description, HgWizardPage wizardPage) {
-        if (properties != null) {
-            wizardPage.setProperties(properties);
-        }
-        wizardPage.setDescription(description);
-        wizardPage.setDialogSettings(getDialogSettings());
-    }
+	protected void initPage(String description, HgWizardPage wizardPage) {
+		if (properties != null) {
+			wizardPage.setProperties(properties);
+		}
+		wizardPage.setDescription(description);
+		wizardPage.setDialogSettings(getDialogSettings());
+	}
 
 }

@@ -33,65 +33,65 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public class HgRepositoryAuthCrypterFactory {
 
-    public final static String DEFAULT_KEY_FILENAME = ".key";
+	public final static String DEFAULT_KEY_FILENAME = ".key";
 
-    public static HgRepositoryAuthCrypter create(File keyFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
-        KeySpec keySpec = new DESedeKeySpec(getBytesFromFile(keyFile));
-        SecretKey key = SecretKeyFactory.getInstance(HgRepositoryAuthCrypter.DEFAULT_ALGORITHM).generateSecret(keySpec);
-        return new HgRepositoryAuthCrypter(key);
-    }
+	public static HgRepositoryAuthCrypter create(File keyFile) throws IOException, InvalidKeySpecException, NoSuchAlgorithmException, InvalidKeyException {
+		KeySpec keySpec = new DESedeKeySpec(getBytesFromFile(keyFile));
+		SecretKey key = SecretKeyFactory.getInstance(HgRepositoryAuthCrypter.DEFAULT_ALGORITHM).generateSecret(keySpec);
+		return new HgRepositoryAuthCrypter(key);
+	}
 
-    public static HgRepositoryAuthCrypter create() {
-        try {
-            File keyFile = MercurialEclipsePlugin.getDefault().getStateLocation().append(DEFAULT_KEY_FILENAME).toFile();
-            if (keyFile != null && keyFile.isFile()) {
-                return create(keyFile);
-            }
-            SecretKey key = HgRepositoryAuthCrypter.generateKey();
-            writeBytesToFile(key.getEncoded(), keyFile);
-            return new HgRepositoryAuthCrypter(key);
-        } catch (Exception ex) {
-            MercurialEclipsePlugin.logError(ex);
-        }
-        return null;
-    }
+	public static HgRepositoryAuthCrypter create() {
+		try {
+			File keyFile = MercurialEclipsePlugin.getDefault().getStateLocation().append(DEFAULT_KEY_FILENAME).toFile();
+			if (keyFile != null && keyFile.isFile()) {
+				return create(keyFile);
+			}
+			SecretKey key = HgRepositoryAuthCrypter.generateKey();
+			writeBytesToFile(key.getEncoded(), keyFile);
+			return new HgRepositoryAuthCrypter(key);
+		} catch (Exception ex) {
+			MercurialEclipsePlugin.logError(ex);
+		}
+		return null;
+	}
 
-    private static byte[] getBytesFromFile(File file) throws IOException {
-        BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
-        try {
-            long length = file.length();
-            byte[] bytes = new byte[(int)length];
-            int offset = 0;
-            int numRead = 0;
-            while (offset < bytes.length
-                   && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-                offset += numRead;
-            }
-            if (offset < bytes.length) {
-                throw new IOException("Could not completely read file " + file.getName());
-            }
-            return bytes;
-        }
-        finally {
-            is.close();
-        }
-    }
+	private static byte[] getBytesFromFile(File file) throws IOException {
+		BufferedInputStream is = new BufferedInputStream(new FileInputStream(file));
+		try {
+			long length = file.length();
+			byte[] bytes = new byte[(int)length];
+			int offset = 0;
+			int numRead = 0;
+			while (offset < bytes.length
+				   && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+				offset += numRead;
+			}
+			if (offset < bytes.length) {
+				throw new IOException("Could not completely read file " + file.getName());
+			}
+			return bytes;
+		}
+		finally {
+			is.close();
+		}
+	}
 
-    protected static void writeBytesToFile(byte[] content, File file) throws IOException {
-        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
-        try {
-            os.write(content, 0, content.length);
-        } finally {
-            os.close();
-            secureKeyFile(file);
-        }
-    }
+	protected static void writeBytesToFile(byte[] content, File file) throws IOException {
+		BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(file));
+		try {
+			os.write(content, 0, content.length);
+		} finally {
+			os.close();
+			secureKeyFile(file);
+		}
+	}
 
-    private static void secureKeyFile(File file) {
-        // Ensure file availability only for user
-        file.setReadable(false, false);
-        file.setReadable(true, true);
-        file.setWritable(false, false);
-        file.setWritable(true, true);
-    }
+	private static void secureKeyFile(File file) {
+		// Ensure file availability only for user
+		file.setReadable(false, false);
+		file.setReadable(true, true);
+		file.setWritable(false, false);
+		file.setWritable(true, true);
+	}
 }

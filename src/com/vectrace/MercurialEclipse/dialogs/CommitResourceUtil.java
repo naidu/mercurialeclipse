@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -33,94 +34,92 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public final class CommitResourceUtil {
 
-    private HgRoot root;
+	private HgRoot root;
 
-    public CommitResourceUtil() {
-    }
+	public CommitResourceUtil() {
+	}
 
-    public CommitResource[] getCommitResources(IResource[] inResources) throws HgException {
-        StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
-        root = statusAction.getHgWorkingDir();
-        try {
-            statusAction.run();
-            String result = statusAction.getResult();
-            return spliceStatusResult(result);
-        } catch (Exception e) {
-            String msg = "HgRoot: " + root.getAbsolutePath() //$NON-NLS-1$
-                    + Messages.getString("CommitResourceUtil.error.unableToGetStatus") + e.getMessage(); //$NON-NLS-1$
-            MercurialEclipsePlugin.logError(msg, e);
-            return null;
-        }
-    }
+	public CommitResource[] getCommitResources(IResource[] inResources) throws HgException {
+		StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
+		root = statusAction.getHgWorkingDir();
+		try {
+			statusAction.run();
+			String result = statusAction.getResult();
+			return spliceStatusResult(result);
+		} catch (Exception e) {
+			String msg = "HgRoot: " + root.getAbsolutePath() //$NON-NLS-1$
+					+ Messages.getString("CommitResourceUtil.error.unableToGetStatus") + e.getMessage(); //$NON-NLS-1$
+			MercurialEclipsePlugin.logError(msg, e);
+			return null;
+		}
+	}
 
-    /**
-     * Splice the output of the status result and build the CommitResources from that
-     * @param statusOutput The output string of the Mercurial status action
-     * @return The Commit-resources
-     */
-    private CommitResource[] spliceStatusResult(String statusOutput) {
+	/**
+	 * Splice the output of the status result and build the CommitResources from that
+	 * @param statusOutput The output string of the Mercurial status action
+	 * @return The Commit-resources
+	 */
+	private CommitResource[] spliceStatusResult(String statusOutput) {
 
-        ArrayList<CommitResource> list = new ArrayList<CommitResource>();
-        StringTokenizer st = new StringTokenizer(statusOutput);
-        IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
+		ArrayList<CommitResource> list = new ArrayList<CommitResource>();
+		StringTokenizer st = new StringTokenizer(statusOutput);
+		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 
-        // Tokens are always in pairs as lines are in the form "A
-        // TEST_FOLDER\test_file2.c"
-        // where the first token is the status and the 2nd is the path relative
-        // to the root.
-        while (st.hasMoreTokens()) {
-            String status = st.nextToken(" ").trim();
-            String fileName = st.nextToken("\n").trim();
+		// Tokens are always in pairs as lines are in the form "A
+		// TEST_FOLDER\test_file2.c"
+		// where the first token is the status and the 2nd is the path relative
+		// to the root.
+		while (st.hasMoreTokens()) {
+			String status = st.nextToken(" ").trim();
+			String fileName = st.nextToken("\n").trim();
 //            if(status.startsWith("?")){
 //                continue;
 //            }
-            Path path = new Path(new File(root, fileName).getAbsolutePath());
-            IResource statusResource = workspaceRoot.getFileForLocation(path);
-            if (!Team.isIgnoredHint(statusResource)) {
-                // file is allready managed or file is not in "ignore list"
-                list.add(new CommitResource(status, statusResource, new File(fileName)));
-            }
-        }
+			Path path = new Path(new File(root, fileName).getAbsolutePath());
+			IResource statusResource = workspaceRoot.getFileForLocation(path);
+			if (!Team.isIgnoredHint(statusResource)) {
+				// file is allready managed or file is not in "ignore list"
+				list.add(new CommitResource(status, statusResource, new File(fileName)));
+			}
+		}
 
-        return list.toArray(new CommitResource[0]);
-    }
+		return list.toArray(new CommitResource[0]);
+	}
 
-    /**
-     * Filter a list of commit-resources to contain only tracked ones (which are already tracked by Mercurial).
-     * @param commit
-     * @return
-     */
-    public List<CommitResource> filterForTracked(List<CommitResource> commitResources) {
-        List<CommitResource> tracked = new ArrayList<CommitResource>();
-        for (CommitResource commitResource : commitResources) {
-            if (MercurialStatusCache.CHAR_UNKNOWN != commitResource.getStatus()) {
-                tracked.add(commitResource);
-            }
-        }
-        return tracked;
-    }
+	/**
+	 * Filter a list of commit-resources to contain only tracked ones (which are already tracked by Mercurial).
+	 */
+	public List<CommitResource> filterForTracked(List<CommitResource> commitResources) {
+		List<CommitResource> tracked = new ArrayList<CommitResource>();
+		for (CommitResource commitResource : commitResources) {
+			if (MercurialStatusCache.CHAR_UNKNOWN != commitResource.getStatus()) {
+				tracked.add(commitResource);
+			}
+		}
+		return tracked;
+	}
 
-    /**
-     * Filter a list of commit-resources to contain only those which are equal with a set of IResources
-     * @param commitResources
-     * @param resources
-     * @return The commit resources
-     */
-    public List<CommitResource> filterForResources(List<CommitResource> commitResources, List<IResource> resources) {
-        List<CommitResource> result = new ArrayList<CommitResource>();
-        if (resources == null || resources.isEmpty()) {
-            return result;
-        }
-        Set<IResource> resourceSet = new HashSet<IResource>();
-        resourceSet.addAll(resources);
+	/**
+	 * Filter a list of commit-resources to contain only those which are equal with a set of IResources
+	 * @param commitResources
+	 * @param resources
+	 * @return The commit resources
+	 */
+	public List<CommitResource> filterForResources(List<CommitResource> commitResources, List<IResource> resources) {
+		List<CommitResource> result = new ArrayList<CommitResource>();
+		if (resources == null || resources.isEmpty()) {
+			return result;
+		}
+		Set<IResource> resourceSet = new HashSet<IResource>();
+		resourceSet.addAll(resources);
 
-        for (CommitResource commitResource : commitResources) {
-            IResource res = commitResource.getResource();
-            if (res != null && resourceSet.contains(res)) {
-                result.add(commitResource);
-            }
-        }
-        return result;
-    }
+		for (CommitResource commitResource : commitResources) {
+			IResource res = commitResource.getResource();
+			if (res != null && resourceSet.contains(res)) {
+				result.add(commitResource);
+			}
+		}
+		return result;
+	}
 
 }

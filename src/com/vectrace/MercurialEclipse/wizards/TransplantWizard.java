@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -32,81 +33,81 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  */
 public class TransplantWizard extends HgWizard {
 
-    private final IProject project;
+	private final IProject project;
 
-    public TransplantWizard(IResource resource) {
-        super(Messages.getString("TransplantWizard.title")); //$NON-NLS-1$
-        setNeedsProgressMonitor(true);
-        this.project = resource.getProject();
-    }
+	public TransplantWizard(IResource resource) {
+		super(Messages.getString("TransplantWizard.title")); //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+		this.project = resource.getProject();
+	}
 
-    @Override
-    public void addPages() {
-        super.addPages();
-        TransplantPage transplantPage = new TransplantPage(Messages.getString("TransplantWizard.transplantPage.name"), //$NON-NLS-1$
-                Messages.getString("TransplantWizard.transplantPage.title"), null, project); //$NON-NLS-1$
-        initPage(Messages.getString("TransplantWizard.transplantPage.description"), //$NON-NLS-1$
-                transplantPage);
-        transplantPage.setShowCredentials(true);
-        page = transplantPage;
-        addPage(page);
+	@Override
+	public void addPages() {
+		super.addPages();
+		TransplantPage transplantPage = new TransplantPage(Messages.getString("TransplantWizard.transplantPage.name"), //$NON-NLS-1$
+				Messages.getString("TransplantWizard.transplantPage.title"), null, project); //$NON-NLS-1$
+		initPage(Messages.getString("TransplantWizard.transplantPage.description"), //$NON-NLS-1$
+				transplantPage);
+		transplantPage.setShowCredentials(true);
+		page = transplantPage;
+		addPage(page);
 
-        TransplantOptionsPage optionsPage = new TransplantOptionsPage(
-                Messages.getString("TransplantWizard.optionsPage.name"), Messages.getString("TransplantWizard.optionsPage.title"), null, project); //$NON-NLS-1$ //$NON-NLS-2$
-        initPage(Messages.getString("TransplantWizard.optionsPage.description"), optionsPage); //$NON-NLS-1$
-        addPage(optionsPage);
-    }
+		TransplantOptionsPage optionsPage = new TransplantOptionsPage(
+				Messages.getString("TransplantWizard.optionsPage.name"), Messages.getString("TransplantWizard.optionsPage.title"), null, project); //$NON-NLS-1$ //$NON-NLS-2$
+		initPage(Messages.getString("TransplantWizard.optionsPage.description"), optionsPage); //$NON-NLS-1$
+		addPage(optionsPage);
+	}
 
-    @Override
-    public boolean performFinish() {
-        try {
-            page.finish(new NullProgressMonitor());
-            Properties props = page.getProperties();
-            HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
-                    .fromProperties(project, props);
+	@Override
+	public boolean performFinish() {
+		try {
+			page.finish(new NullProgressMonitor());
+			Properties props = page.getProperties();
+			HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
+					.fromProperties(project, props);
 
-            // Check that this project exist.
-            if (project.getLocation() == null) {
-                String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
-                        + Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
-                MercurialEclipsePlugin.logError(msg, null);
-                // System.out.println( string);
-                return false;
-            }
+			// Check that this project exist.
+			if (project.getLocation() == null) {
+				String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
+						+ Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
+				MercurialEclipsePlugin.logError(msg, null);
+				// System.out.println( string);
+				return false;
+			}
 
-            TransplantPage transplantPage = (TransplantPage) page;
-            TransplantOptionsPage optionsPage = (TransplantOptionsPage) page
-                    .getNextPage();
-            boolean isBranch = transplantPage.isBranch();
-            String branchName = transplantPage.getBranchName();
-            if (isBranch && Branch.isDefault(branchName)) {
-                // branch name, as command parameter is default if empty
-                branchName = Branch.DEFAULT;
-            }
-            String result = HgTransplantClient.transplant(project,
-                    transplantPage.getNodeIds(), repo, isBranch, branchName,
-                    transplantPage.isAll(), optionsPage.isMerge(), optionsPage
-                            .getMergeNodeId(), optionsPage.isPrune(),
-                    optionsPage.getPruneNodeId(), optionsPage
-                            .isContinueLastTransplant(), optionsPage
-                            .isFilterChangesets(), optionsPage.getFilter());
+			TransplantPage transplantPage = (TransplantPage) page;
+			TransplantOptionsPage optionsPage = (TransplantOptionsPage) page
+					.getNextPage();
+			boolean isBranch = transplantPage.isBranch();
+			String branchName = transplantPage.getBranchName();
+			if (isBranch && Branch.isDefault(branchName)) {
+				// branch name, as command parameter is default if empty
+				branchName = Branch.DEFAULT;
+			}
+			String result = HgTransplantClient.transplant(project,
+					transplantPage.getNodeIds(), repo, isBranch, branchName,
+					transplantPage.isAll(), optionsPage.isMerge(), optionsPage
+							.getMergeNodeId(), optionsPage.isPrune(),
+					optionsPage.getPruneNodeId(), optionsPage
+							.isContinueLastTransplant(), optionsPage
+							.isFilterChangesets(), optionsPage.getFilter());
 
-            if (result.length() != 0) {
-                HgClients.getConsole().printMessage(result, null);
-            }
+			if (result.length() != 0) {
+				HgClients.getConsole().printMessage(result, null);
+			}
 
-            // It appears good. Stash the repo location.
-            MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
-                    repo);
-        } catch (HgException e) {
-            if(!(e.getCause() instanceof URISyntaxException)) {
-                MercurialEclipsePlugin.logError(e);
-            }
-            MessageDialog.openError(Display.getCurrent().getActiveShell(), e
-                    .getMessage(), e.getMessage());
-            return false;
-        }
-        return true;
-    }
+			// It appears good. Stash the repo location.
+			MercurialEclipsePlugin.getRepoManager().addRepoLocation(project,
+					repo);
+		} catch (HgException e) {
+			if(!(e.getCause() instanceof URISyntaxException)) {
+				MercurialEclipsePlugin.logError(e);
+			}
+			MessageDialog.openError(Display.getCurrent().getActiveShell(), e
+					.getMessage(), e.getMessage());
+			return false;
+		}
+		return true;
+	}
 
 }

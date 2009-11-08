@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -25,26 +26,26 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  */
 public class MercurialHistoryPageSource extends HistoryPageSource {
 
-    public MercurialHistoryPageSource(MercurialHistoryProvider fileHistoryProvider) {
-        super();
-    }
+	public MercurialHistoryPageSource(MercurialHistoryProvider fileHistoryProvider) {
+		super();
+	}
 
-    public boolean canShowHistoryFor(Object object) {
-        if (!(object instanceof IResource)) {
-            return false;
-        }
-        IResource resource = (IResource) object;
-        MercurialStatusCache cache = MercurialStatusCache.getInstance();
-        if(resource.exists()) {
-            return cache.isSupervised(resource) && !cache.isAdded(resource.getLocation());
-        }
-        // allow to show history for files which are already deleted and committed
-        // (neither in the cache nor on disk)
-        return MercurialUtilities.isPossiblySupervised(resource);
-    }
+	public boolean canShowHistoryFor(Object object) {
+		if (!(object instanceof IResource)) {
+			return false;
+		}
+		IResource resource = (IResource) object;
+		MercurialStatusCache cache = MercurialStatusCache.getInstance();
+		if(resource.exists()) {
+			return cache.isSupervised(resource) && !cache.isAdded(resource.getLocation());
+		}
+		// allow to show history for files which are already deleted and committed
+		// (neither in the cache nor on disk)
+		return MercurialUtilities.isPossiblySupervised(resource);
+	}
 
-    public Page createPage(Object object) {
-        return new MercurialHistoryPage((IResource) object);
-    }
+	public Page createPage(Object object) {
+		return new MercurialHistoryPage((IResource) object);
+	}
 
 }

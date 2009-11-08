@@ -1,15 +1,3 @@
-/*
- * Copyright by Intland Software
- *
- * All rights reserved.
- *
- * This software is the confidential and proprietary information
- * of Intland Software. ("Confidential Information"). You
- * shall not disclose such Confidential Information and shall use
- * it only in accordance with the terms of the license agreement
- * you entered into with Intland.
- */
-
 /*******************************************************************************
  * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
@@ -20,6 +8,8 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Brian Wallis              - adaptation to branches
+ *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Kopany (Intland)    - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -43,84 +33,84 @@ import com.vectrace.MercurialEclipse.model.Branch;
  * @version $Id$
  */
 public class BranchTable extends Composite {
-    private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
+	private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 
-    private final Table table;
-    private int[] parents;
-    private boolean showTip = true;
+	private final Table table;
+	private int[] parents;
+	private boolean showTip = true;
 
-    public BranchTable(Composite parent) {
-        super(parent, SWT.NONE);
+	public BranchTable(Composite parent) {
+		super(parent, SWT.NONE);
 
-        this.setLayout(new GridLayout());
-        this.setLayoutData(new GridData());
+		this.setLayout(new GridLayout());
+		this.setLayoutData(new GridData());
 
-        table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
-        table.setLinesVisible(true);
-        table.setHeaderVisible(true);
-        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-        table.setLayoutData(data);
+		table = new Table(this, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL | SWT.H_SCROLL);
+		table.setLinesVisible(true);
+		table.setHeaderVisible(true);
+		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+		table.setLayoutData(data);
 
-        String[] titles = { Messages.getString("BranchTable.column.rev"), Messages.getString("BranchTable.column.global"), Messages.getString("BranchTable.column.branch"), Messages.getString("BranchTable.column.active") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        int[] widths = { 50, 150, 300, 70 };
-        for (int i = 0; i < titles.length; i++) {
-            TableColumn column = new TableColumn(table, SWT.NONE);
-            column.setText(titles[i]);
-            column.setWidth(widths[i]);
-        }
-    }
+		String[] titles = { Messages.getString("BranchTable.column.rev"), Messages.getString("BranchTable.column.global"), Messages.getString("BranchTable.column.branch"), Messages.getString("BranchTable.column.active") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+		int[] widths = { 50, 150, 300, 70 };
+		for (int i = 0; i < titles.length; i++) {
+			TableColumn column = new TableColumn(table, SWT.NONE);
+			column.setText(titles[i]);
+			column.setWidth(widths[i]);
+		}
+	}
 
-    public void hideTip() {
-        this.showTip = false;
-    }
+	public void hideTip() {
+		this.showTip = false;
+	}
 
-    public void highlightParents(int[] newParents) {
-        this.parents = newParents;
-    }
+	public void highlightParents(int[] newParents) {
+		this.parents = newParents;
+	}
 
-    public void setBranches(Branch[] branches) {
-        table.removeAll();
-        for (Branch branch : branches) {
-            if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
-                TableItem row = new TableItem(table, SWT.NONE);
-                if (parents != null && isParent(branch.getRevision())) {
-                    row.setFont(PARENT_FONT);
-                }
-                row.setText(0, Integer.toString(branch.getRevision()));
-                row.setText(1, branch.getGlobalId());
-                row.setText(2, branch.getName());
-                row.setText(3, (branch.isActive()?Messages.getString("BranchTable.stateActive"):Messages.getString("BranchTable.stateInactive"))); //$NON-NLS-1$ //$NON-NLS-2$
-                row.setData(branch);
-            }
-        }
-    }
+	public void setBranches(Branch[] branches) {
+		table.removeAll();
+		for (Branch branch : branches) {
+			if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
+				TableItem row = new TableItem(table, SWT.NONE);
+				if (parents != null && isParent(branch.getRevision())) {
+					row.setFont(PARENT_FONT);
+				}
+				row.setText(0, Integer.toString(branch.getRevision()));
+				row.setText(1, branch.getGlobalId());
+				row.setText(2, branch.getName());
+				row.setText(3, (branch.isActive()?Messages.getString("BranchTable.stateActive"):Messages.getString("BranchTable.stateInactive"))); //$NON-NLS-1$ //$NON-NLS-2$
+				row.setData(branch);
+			}
+		}
+	}
 
-    public Branch getSelection() {
-        TableItem[] selection = table.getSelection();
-        if (selection.length == 0) {
-            return null;
-        }
-        return (Branch) selection[0].getData();
-    }
+	public Branch getSelection() {
+		TableItem[] selection = table.getSelection();
+		if (selection.length == 0) {
+			return null;
+		}
+		return (Branch) selection[0].getData();
+	}
 
-    public void addSelectionListener(SelectionListener listener) {
-        table.addSelectionListener(listener);
-    }
+	public void addSelectionListener(SelectionListener listener) {
+		table.addSelectionListener(listener);
+	}
 
-    private boolean isParent(int r) {
-        switch (parents.length) {
-            case 2:
-                if (r == parents[1]) {
-                    return true;
-                }
-                //$FALL-THROUGH$
-            case 1:
-                if (r == parents[0]) {
-                    return true;
-                }
-                //$FALL-THROUGH$
-            default:
-                return false;
-        }
-    }
+	private boolean isParent(int r) {
+		switch (parents.length) {
+			case 2:
+				if (r == parents[1]) {
+					return true;
+				}
+				//$FALL-THROUGH$
+			case 1:
+				if (r == parents[0]) {
+					return true;
+				}
+				//$FALL-THROUGH$
+			default:
+				return false;
+		}
+	}
 }

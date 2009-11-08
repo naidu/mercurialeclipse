@@ -22,39 +22,39 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
-    private final IProject project;
-    private final boolean refreshOnly;
+	private final IProject project;
+	private final boolean refreshOnly;
 
-    public RefreshWorkspaceStatusJob(IProject project) {
-        this(project, false);
-    }
+	public RefreshWorkspaceStatusJob(IProject project) {
+		this(project, false);
+	}
 
-    public RefreshWorkspaceStatusJob(IProject project, boolean refreshOnly) {
-        super("Refreshing status for project " + project.getName() + "...");
-        this.project = project;
-        this.refreshOnly = refreshOnly;
-    }
+	public RefreshWorkspaceStatusJob(IProject project, boolean refreshOnly) {
+		super("Refreshing status for project " + project.getName() + "...");
+		this.project = project;
+		this.refreshOnly = refreshOnly;
+	}
 
-    @Override
-    protected IStatus runSafe(IProgressMonitor monitor) {
-        try {
-            if(!refreshOnly){
-                final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-                // update branch name
-                MercurialTeamProvider.setCurrentBranch(branch, project);
+	@Override
+	protected IStatus runSafe(IProgressMonitor monitor) {
+		try {
+			if(!refreshOnly){
+				final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+				// update branch name
+				MercurialTeamProvider.setCurrentBranch(branch, project);
 
-                // reset merge properties
-                project.setPersistentProperty(ResourceProperties.MERGING, null);
-                project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-            }
+				// reset merge properties
+				project.setPersistentProperty(ResourceProperties.MERGING, null);
+				project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+			}
 
-            // refresh resources
-            project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+			// refresh resources
+			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
-            return super.runSafe(monitor);
-        } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
-            return e.getStatus();
-        }
-    }
+			return super.runSafe(monitor);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return e.getStatus();
+		}
+	}
 }

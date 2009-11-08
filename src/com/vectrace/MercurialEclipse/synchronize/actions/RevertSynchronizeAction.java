@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei	implementation
+ *     Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -29,58 +29,58 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
  */
 public class RevertSynchronizeAction  extends SynchronizeModelAction {
 
-    public RevertSynchronizeAction(String text,
-            ISynchronizePageConfiguration configuration) {
-        super(text, configuration);
-    }
+	public RevertSynchronizeAction(String text,
+			ISynchronizePageConfiguration configuration) {
+		super(text, configuration);
+	}
 
-    public RevertSynchronizeAction(String text,
-            ISynchronizePageConfiguration configuration,
-            ISelectionProvider selectionProvider) {
-        super(text, configuration, selectionProvider);
-    }
+	public RevertSynchronizeAction(String text,
+			ISynchronizePageConfiguration configuration,
+			ISelectionProvider selectionProvider) {
+		super(text, configuration, selectionProvider);
+	}
 
-    @Override
-    protected SynchronizeModelOperation getSubscriberOperation(
-            ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
-        List<IResource> selectedResources = new ArrayList<IResource>(
-                elements.length);
-        for (int i = 0; i < elements.length; i++) {
-            if (elements[i] instanceof ISynchronizeModelElement) {
-                selectedResources.add(((ISynchronizeModelElement) elements[i])
-                        .getResource());
-            }
-        }
-        // XXX currently I have no idea why IDiffElement[] elements is empty...
-        if(selectedResources.size() == 0){
-            IStructuredSelection sel = getStructuredSelection();
-            Object[] objects = sel.toArray();
-            for (Object object : objects) {
-                if (object instanceof IResource) {
-                    selectedResources.add(((IResource) object));
-                } else if (object instanceof IAdaptable){
-                    IAdaptable adaptable = (IAdaptable) object;
-                    IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-                    if(resource != null){
-                        selectedResources.add(resource);
-                    }
-                }
-            }
-        }
-        IResource[] resources = new IResource[selectedResources.size()];
-        selectedResources.toArray(resources);
-        return new RevertSynchronizeOperation(configuration, elements,
-                resources);
-    }
+	@Override
+	protected SynchronizeModelOperation getSubscriberOperation(
+			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
+		List<IResource> selectedResources = new ArrayList<IResource>(
+				elements.length);
+		for (int i = 0; i < elements.length; i++) {
+			if (elements[i] instanceof ISynchronizeModelElement) {
+				selectedResources.add(((ISynchronizeModelElement) elements[i])
+						.getResource());
+			}
+		}
+		// XXX currently I have no idea why IDiffElement[] elements is empty...
+		if(selectedResources.size() == 0){
+			IStructuredSelection sel = getStructuredSelection();
+			Object[] objects = sel.toArray();
+			for (Object object : objects) {
+				if (object instanceof IResource) {
+					selectedResources.add(((IResource) object));
+				} else if (object instanceof IAdaptable){
+					IAdaptable adaptable = (IAdaptable) object;
+					IResource resource = (IResource) adaptable.getAdapter(IResource.class);
+					if(resource != null){
+						selectedResources.add(resource);
+					}
+				}
+			}
+		}
+		IResource[] resources = new IResource[selectedResources.size()];
+		selectedResources.toArray(resources);
+		return new RevertSynchronizeOperation(configuration, elements,
+				resources);
+	}
 
 
-    @Override
-    protected boolean updateSelection(IStructuredSelection selection) {
-        boolean updateSelection = super.updateSelection(selection);
-        if(!updateSelection){
-            // TODO implement constraints check here
-            return true;
-        }
-        return updateSelection;
-    }
+	@Override
+	protected boolean updateSelection(IStructuredSelection selection) {
+		boolean updateSelection = super.updateSelection(selection);
+		if(!updateSelection){
+			// TODO implement constraints check here
+			return true;
+		}
+		return updateSelection;
+	}
 }

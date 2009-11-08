@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     steeven
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -21,18 +22,18 @@ import com.vectrace.MercurialEclipse.wizards.ExportPatchWizard;
 
 public class ExportPatchHandler extends MultipleResourcesHandler {
 
-    @Override
-    protected void run(List<IResource> resources) throws Exception {
-        openWizard(resources, getShell());
-    }
+	@Override
+	protected void run(List<IResource> resources) throws Exception {
+		openWizard(resources, getShell());
+	}
 
-    public void openWizard(List<IResource> resources, Shell shell)
-            throws Exception {
-        HgRoot root = ensureSameRoot(resources);
-        ExportPatchWizard wizard = new ExportPatchWizard(resources, root);
-        WizardDialog dialog = new WizardDialog(shell, wizard);
-        dialog.setBlockOnOpen(true);
-        dialog.open();
-    }
+	public void openWizard(List<IResource> resources, Shell shell)
+			throws Exception {
+		HgRoot root = ensureSameRoot(resources);
+		ExportPatchWizard wizard = new ExportPatchWizard(resources, root);
+		WizardDialog dialog = new WizardDialog(shell, wizard);
+		dialog.setBlockOnOpen(true);
+		dialog.open();
+	}
 
 }

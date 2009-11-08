@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei	implementation
+ *     Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -28,35 +28,35 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * @author Andrei
  */
 public class MergeDialog extends CommitDialog {
-    private final IProject mergeProject;
+	private final IProject mergeProject;
 
-    public MergeDialog(Shell shell, IProject mergeProject, String defaultCommitMessage) {
-        super(shell, null);
-        Assert.isNotNull(mergeProject);
-        this.mergeProject = mergeProject;
-        this.defaultCommitMessage = defaultCommitMessage;
-    }
+	public MergeDialog(Shell shell, IProject mergeProject, String defaultCommitMessage) {
+		super(shell, null);
+		Assert.isNotNull(mergeProject);
+		this.mergeProject = mergeProject;
+		this.defaultCommitMessage = defaultCommitMessage;
+	}
 
-    @Override
-    protected void createFilesList(Composite container) {
-        SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-        List<IResource> resources = new ArrayList<IResource>();
-        resources.add(mergeProject);
-        commitFilesList = new CommitFilesChooser(container, false, resources, true, true);
-    }
+	@Override
+	protected void createFilesList(Composite container) {
+		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
+		List<IResource> resources = new ArrayList<IResource>();
+		resources.add(mergeProject);
+		commitFilesList = new CommitFilesChooser(container, false, resources, true, true);
+	}
 
-    @Override
-    protected void createRevertCheckBox(Composite container) {
-        // does nothing
-    }
+	@Override
+	protected void createRevertCheckBox(Composite container) {
+		// does nothing
+	}
 
-    @Override
-    protected void performCommit(String messageToCommit) throws CoreException {
-        CommitMergeHandler.commitMerge(mergeProject.getProject(), messageToCommit);
-    }
+	@Override
+	protected void performCommit(String messageToCommit) throws CoreException {
+		CommitMergeHandler.commitMerge(mergeProject.getProject(), messageToCommit);
+	}
 
-    @Override
-    protected String getInitialCommitUserName() {
-        return getDefaultCommitName(mergeProject);
-    }
+	@Override
+	protected String getInitialCommitUserName() {
+		return getDefaultCommitName(mergeProject);
+	}
 }

@@ -20,12 +20,12 @@ import com.vectrace.MercurialEclipse.wizards.ServeWizard;
 
 public class ServeHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-        ServeWizard wizard = new ServeWizard(hgRoot);
-        WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
-        wizardDialog.open();
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		ServeWizard wizard = new ServeWizard(hgRoot);
+		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
+		wizardDialog.open();
+	}
 
 }

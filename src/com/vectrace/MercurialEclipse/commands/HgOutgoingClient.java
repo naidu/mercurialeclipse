@@ -31,87 +31,87 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
 
-    /**
-     * @return never return null
-     */
-    public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
-            HgRepositoryLocation repository) throws HgException {
-        return getOutgoing(res, repository, null);
-    }
+	/**
+	 * @return never return null
+	 */
+	public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
+			HgRepositoryLocation repository) throws HgException {
+		return getOutgoing(res, repository, null);
+	}
 
-    public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
-            HgRepositoryLocation repository, String branch) throws HgException {
-        AbstractShellCommand command = getCommand(res, branch);
-        try {
-            command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
-                    .getStyleFile(true).getCanonicalPath());
-        } catch (IOException e) {
-            throw new HgException(e.getLocalizedMessage(), e);
-        }
-        setRepository(repository, command);
+	public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
+			HgRepositoryLocation repository, String branch) throws HgException {
+		AbstractShellCommand command = getCommand(res, branch);
+		try {
+			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
+					.getStyleFile(true).getCanonicalPath());
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
+		setRepository(repository, command);
 
-        String result = getResult(command);
-        if (result == null) {
-            return new HashMap<IPath, Set<ChangeSet>>();
-        }
+		String result = getResult(command);
+		if (result == null) {
+			return new HashMap<IPath, Set<ChangeSet>>();
+		}
 
-        Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-                res, result, true, Direction.OUTGOING, repository, null,
-                getOutgoingPatches(res, repository, branch));
-        return revisions;
-    }
+		Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+				res, result, true, Direction.OUTGOING, repository, null,
+				getOutgoingPatches(res, repository, branch));
+		return revisions;
+	}
 
-    private static IFilePatch[] getOutgoingPatches(IResource res,
-            HgRepositoryLocation repository, String branch) throws HgException {
-        String outgoingPatch = getOutgoingPatch(res, repository, branch);
-        return PatchUtils.getFilePatches(outgoingPatch);
-    }
+	private static IFilePatch[] getOutgoingPatches(IResource res,
+			HgRepositoryLocation repository, String branch) throws HgException {
+		String outgoingPatch = getOutgoingPatch(res, repository, branch);
+		return PatchUtils.getFilePatches(outgoingPatch);
+	}
 
-    private static String getResult(AbstractShellCommand command) throws HgException {
-        try {
-            String result = command.executeToString();
-            if (result.endsWith("no changes found")) { //$NON-NLS-1$
-                return null;
-            }
-            return result;
-        } catch (HgException hg) {
-            if (hg.getStatus().getCode() == 1) {
-                return null;
-            }
-            throw hg;
-        }
-    }
+	private static String getResult(AbstractShellCommand command) throws HgException {
+		try {
+			String result = command.executeToString();
+			if (result.endsWith("no changes found")) { //$NON-NLS-1$
+				return null;
+			}
+			return result;
+		} catch (HgException hg) {
+			if (hg.getStatus().getCode() == 1) {
+				return null;
+			}
+			throw hg;
+		}
+	}
 
-    private static AbstractShellCommand getCommand(IResource res, String branch) {
-        AbstractShellCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
-                false);
-        command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-        if (branch != null) {
-            if (!Branch.isDefault(branch)) {
-                command.addOptions("-r", branch);
-            } else {
-                // see issue 10495: there can be many "default" heads, so show all of them
-                // otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
-            }
-        }
-        return command;
-    }
+	private static AbstractShellCommand getCommand(IResource res, String branch) {
+		AbstractShellCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
+				false);
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+		if (branch != null) {
+			if (!Branch.isDefault(branch)) {
+				command.addOptions("-r", branch);
+			} else {
+				// see issue 10495: there can be many "default" heads, so show all of them
+				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
+			}
+		}
+		return command;
+	}
 
-    private static void setRepository(HgRepositoryLocation repository,
-            AbstractShellCommand command) throws HgException {
-        URI uri = repository.getUri();
-        if (uri != null) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repository.getLocation());
-        }
-    }
+	private static void setRepository(HgRepositoryLocation repository,
+			AbstractShellCommand command) throws HgException {
+		URI uri = repository.getUri();
+		if (uri != null) {
+			command.addOptions(uri.toASCIIString());
+		} else {
+			command.addOptions(repository.getLocation());
+		}
+	}
 
-    private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository, String branch) throws HgException {
-        AbstractShellCommand command = getCommand(res, branch);
-        command.addOptions("-p");
-        setRepository(repository, command);
-        return getResult(command);
-    }
+	private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository, String branch) throws HgException {
+		AbstractShellCommand command = getCommand(res, branch);
+		command.addOptions("-p");
+		setRepository(repository, command);
+		return getResult(command);
+	}
 
 }

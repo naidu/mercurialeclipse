@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -17,11 +18,11 @@ import com.vectrace.MercurialEclipse.wizards.PullRepoWizard;
 
 public class PullHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(final IResource resource) throws Exception {
-        PullRepoWizard pullRepoWizard = new PullRepoWizard(resource.getProject());
-        WizardDialog pullWizardDialog = new WizardDialog(getShell(),pullRepoWizard);
-        pullWizardDialog.open();
-    }
+	@Override
+	protected void run(final IResource resource) throws Exception {
+		PullRepoWizard pullRepoWizard = new PullRepoWizard(resource.getProject());
+		WizardDialog pullWizardDialog = new WizardDialog(getShell(),pullRepoWizard);
+		pullWizardDialog.open();
+	}
 
 }

@@ -13,7 +13,7 @@ package com.vectrace.MercurialEclipse.utils;
 public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	private HistoryPainterRevision start;
 	private HistoryPainterRevision stop;
-	
+
 	/**
 	 * @param start
 	 * @param stop
@@ -54,7 +54,7 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	public void setStop(HistoryPainterRevision stop) {
 		this.stop = stop;
 	}
-	
+
 
 	public int compareTo(HistoryPainterEdge o) {
 		// reverse order of revisions
@@ -68,13 +68,13 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 		return result;
 
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Start:"+start+",Stop:"+stop; //$NON-NLS-1$ //$NON-NLS-2$
 	}
-	
-	
+
+
 
 	/* (non-Javadoc)
 	 * @see java.lang.Object#hashCode()
@@ -94,29 +94,29 @@ public class HistoryPainterEdge implements Comparable<HistoryPainterEdge> {
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
-            return true;
-        }
+			return true;
+		}
 		if (obj == null) {
-            return false;
-        }
+			return false;
+		}
 		if (!(obj instanceof HistoryPainterEdge)) {
-            return false;
-        }
+			return false;
+		}
 		final HistoryPainterEdge other = (HistoryPainterEdge) obj;
 		if (start == null) {
 			if (other.start != null) {
-                return false;
-            }
+				return false;
+			}
 		} else if (!start.equals(other.start)) {
-            return false;
-        }
+			return false;
+		}
 		if (stop == null) {
 			if (other.stop != null) {
-                return false;
-            }
+				return false;
+			}
 		} else if (!stop.equals(other.stop)) {
-            return false;
-        }
+			return false;
+		}
 		return true;
 	}
 }

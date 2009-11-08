@@ -17,13 +17,13 @@ import java.io.IOException;
 import org.eclipse.core.runtime.CoreException;
 
 public class HgFile extends HgFilesystemObject {
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    public HgFile(File file) throws IOException, CoreException {
-        super(file);
-    }
+	public HgFile(File file) throws IOException, CoreException {
+		super(file);
+	}
 
-    public File getFile() {
-        return this;
-    }    
+	public File getFile() {
+		return this;
+	}
 }

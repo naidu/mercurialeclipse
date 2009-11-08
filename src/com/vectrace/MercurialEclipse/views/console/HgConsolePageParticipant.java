@@ -20,13 +20,13 @@ import org.eclipse.ui.part.IPageBookViewPage;
  * Console helper that allows contributing actions to the console view when
  * the CVS console is visible. Added to the console via an extension point
  * from org.eclipse.ui.console.
- * 
+ *
  * @since 3.1
  */
 public class HgConsolePageParticipant implements IConsolePageParticipant {
 
 	private ConsoleRemoveAction consoleRemoveAction;
-	
+
 	public void init(IPageBookViewPage page, IConsole console) {
 		this.consoleRemoveAction = new ConsoleRemoveAction();
 		IActionBars bars = page.getSite().getActionBars();

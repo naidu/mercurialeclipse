@@ -24,27 +24,27 @@ import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgQDeleteClient extends AbstractClient {
-    public static String delete(IResource resource, boolean keep,
-            ChangeSet changeset, List<Patch> patches) throws HgException {
-        Assert.isNotNull(patches);
-        Assert.isNotNull(resource);
-        AbstractShellCommand command = new HgCommand("qdelete", //$NON-NLS-1$
-                getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        if (keep) {
-            command.addOptions("--keep"); //$NON-NLS-1$
-        }
-        if (changeset != null) {
-            command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
-        } else {
-            for (Patch patch : patches) {
-                command.addOptions(patch.getName());
-            }
-        }
-        return command.executeToString();
-    }
+	public static String delete(IResource resource, boolean keep,
+			ChangeSet changeset, List<Patch> patches) throws HgException {
+		Assert.isNotNull(patches);
+		Assert.isNotNull(resource);
+		AbstractShellCommand command = new HgCommand("qdelete", //$NON-NLS-1$
+				getWorkingDirectory(resource), true);
+		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
+
+		if (keep) {
+			command.addOptions("--keep"); //$NON-NLS-1$
+		}
+		if (changeset != null) {
+			command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
+		} else {
+			for (Patch patch : patches) {
+				command.addOptions(patch.getName());
+			}
+		}
+		return command.executeToString();
+	}
 }

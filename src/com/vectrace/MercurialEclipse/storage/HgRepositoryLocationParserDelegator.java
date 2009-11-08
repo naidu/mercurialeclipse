@@ -21,21 +21,21 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class HgRepositoryLocationParserDelegator {
 
-    public HgRepositoryLocation delegateParse(String line) {
-        if (line != null) {
-            if(line.startsWith(HgRepositoryLocationParser.PUSH_PREFIX) || line.startsWith(HgRepositoryLocationParser.PULL_PREFIX)) {
-                return HgRepositoryLocationParser.parseLine(line);
-            }
-            try {
-                return HgRepositoryLocationParser.parseLine(null, false, line, null, null);
-            } catch (HgException ex) {
-                MercurialEclipsePlugin.logError("Unable to parse repository line <" + line + ">", ex);
-            }
-        }
-        return null;
-    }
+	public HgRepositoryLocation delegateParse(String line) {
+		if (line != null) {
+			if(line.startsWith(HgRepositoryLocationParser.PUSH_PREFIX) || line.startsWith(HgRepositoryLocationParser.PULL_PREFIX)) {
+				return HgRepositoryLocationParser.parseLine(line);
+			}
+			try {
+				return HgRepositoryLocationParser.parseLine(null, false, line, null, null);
+			} catch (HgException ex) {
+				MercurialEclipsePlugin.logError("Unable to parse repository line <" + line + ">", ex);
+			}
+		}
+		return null;
+	}
 
-    public String delegateCreate(HgRepositoryLocation location) {
-        return HgRepositoryLocationParser.createLine(location);
-    }
+	public String delegateCreate(HgRepositoryLocation location) {
+		return HgRepositoryLocationParser.createLine(location);
+	}
 }

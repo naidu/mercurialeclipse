@@ -11,6 +11,7 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch	         - saving repository to project-specific repos
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.wizards;
@@ -27,49 +28,49 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * extension.
  */
 public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWizard {
-    private ClonePage clonePage;
-    private ProjectsImportPage importPage;
+	private ClonePage clonePage;
+	private ProjectsImportPage importPage;
 
 
-    public CloneRepoWizard() {
-        super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
-    }
+	public CloneRepoWizard() {
+		super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
+	}
 
-    @Override
-    public boolean performFinish() {
-        return importPage.createProjects();
-    }
+	@Override
+	public boolean performFinish() {
+		return importPage.createProjects();
+	}
 
-    @Override
-    public boolean performCancel() {
-        clonePage.performCleanup();
-        return super.performCancel();
-    }
+	@Override
+	public boolean performCancel() {
+		clonePage.performCleanup();
+		return super.performCancel();
+	}
 
-    public HgRepositoryLocation getRepository() {
-        return clonePage.getLastUsedRepository();
-    }
+	public HgRepositoryLocation getRepository() {
+		return clonePage.getLastUsedRepository();
+	}
 
-    public void init(IWorkbench workbench, IStructuredSelection selection) {
-        setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
-        setNeedsProgressMonitor(true);
-        clonePage = new ClonePage(null, Messages
-                .getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
-                Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
+	public void init(IWorkbench workbench, IStructuredSelection selection) {
+		setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+		clonePage = new ClonePage(null, Messages
+				.getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
 
-        clonePage.setDescription(Messages
-                .getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
-        initPage(clonePage.getDescription(), clonePage);
+		clonePage.setDescription(Messages
+				.getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
+		initPage(clonePage.getDescription(), clonePage);
 
-        importPage = new ProjectsImportPage("ProjectsImportPage");
+		importPage = new ProjectsImportPage("ProjectsImportPage");
 
-        addPage(clonePage);
-        // TODO Add here "select branch/revision" page
-        addPage(importPage);
-    }
+		addPage(clonePage);
+		// TODO Add here "select branch/revision" page
+		addPage(importPage);
+	}
 
-    @Override
-    public boolean canFinish() {
-        return getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
-    }
+	@Override
+	public boolean canFinish() {
+		return getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
+	}
 }
