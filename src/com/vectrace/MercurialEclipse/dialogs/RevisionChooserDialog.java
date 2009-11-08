@@ -186,7 +186,7 @@ public class RevisionChooserDialog extends Dialog {
 
 
 		final ChangesetTable table = new ChangesetTable(folder, dataLoader
-				.getProject(), false);
+				.getResource(), false);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.highlightParents(parents);
 

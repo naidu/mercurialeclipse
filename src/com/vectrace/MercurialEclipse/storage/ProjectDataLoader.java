@@ -9,10 +9,12 @@
  *     Jérôme Nègre              - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - extracted from RevisionChooserDialog for Sync.
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 public class ProjectDataLoader extends DataLoader {
 
@@ -24,6 +26,11 @@ public class ProjectDataLoader extends DataLoader {
 
 	@Override
 	public IProject getProject() {
+		return project;
+	}
+
+	@Override
+	public IResource getResource() {
 		return project;
 	}
 

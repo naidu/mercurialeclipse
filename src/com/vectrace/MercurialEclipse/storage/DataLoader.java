@@ -14,6 +14,7 @@
 package com.vectrace.MercurialEclipse.storage;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
@@ -27,6 +28,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
 public abstract class DataLoader {
 
 	public abstract IProject getProject();
+	public abstract IResource getResource();
 
 	public Tag[] getTags() throws HgException {
 		return HgTagClient.getTags(getProject());
