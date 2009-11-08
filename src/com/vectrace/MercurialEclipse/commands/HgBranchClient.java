@@ -89,6 +89,10 @@ public class HgBranchClient extends AbstractClient {
      */
     public static boolean isKnownRemote(HgRoot root,
             HgRepositoryLocation repository, String branch) {
+        if(branch == null || Branch.isDefault(branch)){
+            return true;
+        }
+
         // we are using "hg incoming" to check if remote repository knows the given branch
         // unfortunately I didn't found more elegant way to get this infor from hg for
         // REMOTE repository, because neither "hg branch" nor "hg branches" works then
