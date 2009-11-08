@@ -87,10 +87,12 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
                 false);
         command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
         if (branch != null) {
-            if (Branch.isDefault(branch)) {
-                branch = Branch.DEFAULT;
+            if (!Branch.isDefault(branch)) {
+                command.addOptions("-r", branch);
+            } else {
+                // see issue 10495: there can be many "default" heads, so show all of them
+                // otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
             }
-            command.addOptions("-r", branch);
         }
         return command;
     }
