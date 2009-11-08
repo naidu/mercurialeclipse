@@ -22,13 +22,13 @@ import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgIncomingClient extends AbstractParseChangesetClient {
 
@@ -68,6 +68,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                         .getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
                         .getCanonicalPath());
             } catch (IOException e) {
+                ResourceUtils.delete(bundleFile, false);
                 throw new HgException(e.getMessage(), e);
             }
 
@@ -90,15 +91,14 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
                 if (hg.getStatus().getCode() == 1) {
                     return new HashMap<IPath, Set<ChangeSet>>();
                 }
+                ResourceUtils.delete(bundleFile, false);
                 throw new HgException("Incoming comand failed for " + res + ". " + hg.getMessage(), hg);
             }
 		} finally {
-			if (bundleFile != null) {
-				boolean deleted = bundleFile.delete();
-				if(!deleted){
-				    MercurialEclipsePlugin.logWarning("Failed to delete bundle file " + bundleFile, null);
-				}
-			}
+		    // NEVER delete bundle files, because they are used to access not yet pulled content
+		    // during diffs from the synchronize view
 		}
     }
+
+
 }
