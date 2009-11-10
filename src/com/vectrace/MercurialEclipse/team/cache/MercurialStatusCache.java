@@ -1060,6 +1060,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 			Set<IPath> children = getChildrenFromCache(container);
 			for (IPath path : children) {
+				// TODO the if block below costs a lot of time because it requires file I/O
+				// hovewer, without it, Eclipse generates a dummy handle to a FILE instead to the directory...
+//				File file = path.toFile();
+//				if(file.isDirectory()){
+//					continue;
+//				}
 				IFile iFile = root.getFileForLocation(path);
 				if(iFile != null) {
 					members.add(iFile);
