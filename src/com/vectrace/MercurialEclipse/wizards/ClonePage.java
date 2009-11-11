@@ -153,6 +153,8 @@ public class ClonePage extends PushPullPage {
 		directoryTextField = SWTWidgetHelper.createTextField(g);
 		if(lastUsedDir != null){
 			directoryTextField.setText(lastUsedDir.getAbsolutePath());
+		} else {
+			directoryTextField.setText(wsRootLocation);
 		}
 		directoryTextField.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
@@ -177,7 +179,7 @@ public class ClonePage extends PushPullPage {
 			}
 		});
 
-		if(lastUsedDir != null && wsRootLocation.equals(lastUsedDir.getAbsolutePath())){
+		if(lastUsedDir == null || wsRootLocation.equals(lastUsedDir.getAbsolutePath())){
 			useWorkspace.setSelection(true);
 			directoryTextField.setEnabled(false);
 			directoryButton.setEnabled(false);
@@ -245,8 +247,8 @@ public class ClonePage extends PushPullPage {
 			repository = getRepository();
 			dataFetched = hasDataLocally(repository);
 		}
-		if(!dataFetched && getDestinationDirectory().exists()) {
-			cloneNameTextField.setText("");
+		if(!dataFetched) {
+			cloneNameTextField.setText(guessProjectName(getUrlText()));
 		}
 		if(dataFetched){
 			File fullPath = destDirectories.get(repository);
@@ -254,6 +256,38 @@ public class ClonePage extends PushPullPage {
 			cloneNameTextField.setText(fullPath.getName());
 		}
 		return super.urlChanged();
+	}
+
+	/**
+	 * Tries to guess project name from given directory/repository url
+	 * @param urlText non null
+	 * @return never return null, may return empty string
+	 */
+	private String guessProjectName(String urlText) {
+		if(urlText.length() == 0){
+			return urlText;
+		}
+		urlText = urlText.replace('\\', '/');
+		while(urlText.endsWith("/")){
+			urlText = urlText.substring(0, urlText.length() - 1);
+		}
+		// extract last part of path/url (if any)
+		int last = urlText.lastIndexOf('/');
+		String guess = "";
+		if(last > 0 && last + 1 < urlText.length()){
+			guess = urlText.substring(last + 1);
+			// many projects repositories ends with "hg", so try to skip this
+			if("hg".equals(guess)){
+				// google project names are the first part of the repo url, like
+				// https://anyedittools.googlecode.com/hg/
+				if(urlText.contains(".googlecode.")){
+					return guessProjectName(urlText.substring(0, urlText.indexOf(".googlecode.")));
+				}
+				// just try the first part before "hg"
+				return guessProjectName(urlText.substring(0, last));
+			}
+		}
+		return guess;
 	}
 
 	private boolean hasDataLocally(HgRepositoryLocation repo){
