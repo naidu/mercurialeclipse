@@ -86,8 +86,9 @@ public class HgCommitMessageManager extends DefaultHandler {
 				.getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
 						"10")); //$NON-NLS-1$
 
-		while (commitMessages.size() > prefs_commit_message_size_max)
+		while (commitMessages.size() > prefs_commit_message_size_max) {
 			commitMessages.remove(commitMessages.size()-1);
+		}
 	}
 
 	/**
@@ -128,7 +129,7 @@ public class HgCommitMessageManager extends DefaultHandler {
 		if (file.exists()) {
 			/* String line; */
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
+					new FileInputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			parserFactory.setValidating(false);
 /*
@@ -156,7 +157,7 @@ public class HgCommitMessageManager extends DefaultHandler {
 	public void stop() throws IOException {
 		File file = getLocationFile();
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
+				new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
 
 		StreamResult streamResult = new StreamResult(writer);
 		SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactory.newInstance();
@@ -164,7 +165,7 @@ public class HgCommitMessageManager extends DefaultHandler {
 		try {
 			TransformerHandler transformerHandler = transformerFactory.newTransformerHandler();
 			Transformer transformer = transformerHandler.getTransformer();
-			transformer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1"); //$NON-NLS-1$
+			transformer.setOutputProperty(OutputKeys.ENCODING, MercurialEclipsePlugin.getDefaultEncoding());
 /*
 			transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"mercurialeclipse_commitmessage.dtd"); //$NON-NLS-1$
 */
@@ -193,7 +194,7 @@ public class HgCommitMessageManager extends DefaultHandler {
 			{
 				String msg = commitMessages.get(i);
 				transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGE,atts); //$NON-NLS-1$
-				transformerHandler.characters(msg.toCharArray(), 0, msg.length()); //$NON-NLS-1$
+				transformerHandler.characters(msg.toCharArray(), 0, msg.length());
 				transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGE); //$NON-NLS-1$
 			}
 			transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGES); //$NON-NLS-1$

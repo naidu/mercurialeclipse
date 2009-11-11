@@ -96,7 +96,7 @@ public class HgRepositoryLocationManager {
 		File file = getLocationFile();
 
 		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(file), "UTF-8")); //$NON-NLS-1$
+				new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
 
 		try {
 			for (HgRepositoryLocation repo : getAllRepoLocations()) {
@@ -248,7 +248,7 @@ public class HgRepositoryLocationManager {
 			if (file.exists()) {
 				String line;
 				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
+						new InputStreamReader(new FileInputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
 				try {
 					while ((line = reader.readLine()) != null) {
 						try {
@@ -313,7 +313,7 @@ public class HgRepositoryLocationManager {
 				BufferedWriter writer = null;
 				try {
 					writer = new BufferedWriter(new OutputStreamWriter(
-							new FileOutputStream(file), "UTF-8"));
+							new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
 					for (HgRepositoryLocation repo : repoSet) {
 						String line = delegator.delegateCreate(repo);
 						if(line != null){

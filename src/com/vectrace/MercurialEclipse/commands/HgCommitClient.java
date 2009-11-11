@@ -151,7 +151,7 @@ public class HgCommitClient extends AbstractClient {
 		Writer writer = null;
 		try {
 			File messageFile = File.createTempFile("hgcommitmsg", ".txt");
-			writer = new OutputStreamWriter(new FileOutputStream(messageFile),"UTF8");
+			writer = new OutputStreamWriter(new FileOutputStream(messageFile), MercurialEclipsePlugin.getDefaultEncoding());
 			writer.write(message.trim());
 			return messageFile;
 		} catch (IOException ex) {

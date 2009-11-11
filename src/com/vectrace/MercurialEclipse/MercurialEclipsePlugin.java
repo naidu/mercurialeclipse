@@ -16,7 +16,9 @@
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
+import java.nio.charset.Charset;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -37,6 +39,7 @@ import org.osgi.framework.BundleContext;
 
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -61,6 +64,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	// the commit message manager
 	private static HgCommitMessageManager commitMessageManager = new HgCommitMessageManager();
 
+	private static final String defaultEncoding = Charset.isSupported(MercurialPreferenceConstants.PREF_DEFAULT_ENCODING) ?
+			MercurialPreferenceConstants.PREF_DEFAULT_ENCODING : Charset.defaultCharset().name();
 
 	private boolean hgUsable = true;
 
@@ -299,6 +304,25 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	public static Display getStandardDisplay() {
 		return PlatformUI.getWorkbench().getDisplay();
+	}
+
+	/**
+	 * @return the defaultencoding
+	 */
+	public static String getDefaultEncoding() {
+		return defaultEncoding;
+	}
+
+	public static String getDefaultEncoding(IProject project) {
+		if (project != null && getDefaultEncoding().equals(Charset.defaultCharset())) {
+			try {
+				return project.getDefaultCharset();
+			} catch (CoreException ex) {
+				MercurialEclipsePlugin.logError(ex);
+			}
+
+		}
+		return getDefaultEncoding();
 	}
 
 }

@@ -148,29 +148,29 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			throws HgException {
 		try {
 			List<String> cmd = getCommands();
-			// don't output fallbackencoding
-			String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-			final String commandInvoked;
-			if(workingDir == null) {
-				commandInvoked = cmdString.substring(0, cmdString.length() - 1);
-			} else {
-				commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
-			}
 
+			final String commandInvoked = getCommandInvoked(cmd);
 
+			// This is totally
 			Charset charset = null;
 			if (workingDir != null) {
 				HgRoot hgRoot;
 				try {
 					hgRoot = HgClients.getHgRoot(workingDir);
 					charset = hgRoot.getEncoding();
-					cmd.add(2, "--config"); //$NON-NLS-1$
-					cmd.add(3, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+					// Enforce strict command line encoding
+					cmd.add(1, charset.name());
+					cmd.add(1, "--encoding");
+					// Enforce fallback encoding for UI (command output)
+					// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
+					// if actual platfrom don't support it.
+					cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+					cmd.add(1, "--config"); //$NON-NLS-1$
 				} catch (HgCoreException e) {
 					// no hg root found
 				}
 			}
-			// Request non-interactivity
+			// Request non-interactivity flag
 			cmd.add(1, "-y");
 
 			ProcessBuilder builder = new ProcessBuilder(cmd);
@@ -299,7 +299,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		} else if (output instanceof ByteArrayOutputStream) {
 			ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
 			try {
-				msg = baos.toString("UTF-8");
+				msg = baos.toString(MercurialEclipsePlugin.getDefaultEncoding());
 			} catch (UnsupportedEncodingException e) {
 				MercurialEclipsePlugin.logError(e);
 				msg = baos.toString();
@@ -322,7 +322,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		byte[] bytes = executeToBytes();
 		if (bytes != null && bytes.length > 0) {
 			try {
-				return new String(bytes, "UTF-8");
+				return new String(bytes, MercurialEclipsePlugin.getDefaultEncoding());
 			} catch (UnsupportedEncodingException e) {
 				throw new HgException(e.getLocalizedMessage(), e);
 			}
@@ -405,6 +405,17 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	public void setShowOnConsole(boolean b) {
 		showOnConsole = b;
+	}
+
+	private String getCommandInvoked(List<String> cmd) {
+		String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
+		final String commandInvoked;
+		if(workingDir == null) {
+			commandInvoked = cmdString.substring(0, cmdString.length() - 1);
+		} else {
+			commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
+		}
+		return commandInvoked;
 	}
 
 	@Override

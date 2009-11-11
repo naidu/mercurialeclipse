@@ -165,13 +165,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * @throws HgException
 	 */
 	private static void setRepositoryEncoding(IProject project, HgRoot hgRoot) throws CoreException {
-		String encoding = null;
-		// project settings in Eclipse override all other settings
 		if (project != null) {
-			encoding = project.getDefaultCharset();
-			if (encoding != null) {
-				hgRoot.setEncoding(Charset.forName(encoding));
-			}
+			hgRoot.setEncoding(Charset.forName(MercurialEclipsePlugin.getDefaultEncoding(project)));
 		}
 	}
 
