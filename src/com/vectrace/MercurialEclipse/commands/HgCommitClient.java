@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -59,6 +60,20 @@ public class HgCommitClient extends AbstractClient {
 			for (IProject iProject : projects) {
 				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
 			}
+		}
+	}
+
+	/**
+	 * Commit given hg root with all checked out/added/deleted changes and refresh the caches for the assotiated projects
+	 */
+	public static void commitResources(HgRoot root, String user, String message, IProgressMonitor monitor) throws HgException {
+		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
+		List<File> emptyList = Collections.emptyList();
+		commit(root, emptyList, user, message);
+
+		Set<IProject> projects = ResourceUtils.getProjects(root);
+		for (IProject iProject : projects) {
+			new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
 		}
 	}
 

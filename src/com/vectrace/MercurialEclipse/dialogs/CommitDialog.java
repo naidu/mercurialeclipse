@@ -64,6 +64,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
@@ -98,6 +99,8 @@ public class CommitDialog extends TitleAreaDialog {
 	private Text userTextField;
 	private String user;
 	private Button revertCheckBox;
+	private boolean filesSelectable;
+	private HgRoot hgRoot;
 
 	public CommitDialog(Shell shell, List<IResource> resources) {
 		super(shell);
@@ -105,6 +108,7 @@ public class CommitDialog extends TitleAreaDialog {
 		setBlockOnOpen(false);
 		inResources = resources;
 		commitTextDocument = new Document();
+		filesSelectable = true;
 	}
 
 	public String getCommitMessage() {
@@ -160,12 +164,20 @@ public class CommitDialog extends TitleAreaDialog {
 
 	protected void createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		commitFilesList = new CommitFilesChooser(container, true, inResources, true, true);
+		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources, true, true);
 
 		IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade().getCurrentTaskResources();
 		if (mylynTaskResources != null) {
 			commitFilesList.setSelectedResources(Arrays.asList(mylynTaskResources));
 		}
+	}
+
+	private boolean areFilesSelectable() {
+		return filesSelectable;
+	}
+
+	public void setFilesSelectable(boolean on){
+		filesSelectable = on;
 	}
 
 	private void createUserCommitCombo(Composite container) {
@@ -309,7 +321,12 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected void performCommit(String messageToCommit) throws CoreException {
-		HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
+		if(hgRoot != null && !filesSelectable && resourcesToCommit.isEmpty()){
+			// enforce commit anyway
+			HgCommitClient.commitResources(hgRoot, user, messageToCommit, new NullProgressMonitor());
+		} else {
+			HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
+		}
 	}
 
 	private void revertResources() {
@@ -344,6 +361,18 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public String getUser() {
 		return user;
+	}
+
+	public void setDefaultCommitMessage(String defaultCommitMessage) {
+		this.defaultCommitMessage = defaultCommitMessage;
+	}
+
+	public void setHgRoot(HgRoot hgRoot) {
+		this.hgRoot = hgRoot;
+	}
+
+	public HgRoot getHgRoot() {
+		return hgRoot;
 	}
 
 }

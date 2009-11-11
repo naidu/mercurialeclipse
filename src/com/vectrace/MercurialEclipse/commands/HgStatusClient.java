@@ -107,7 +107,7 @@ public class HgStatusClient extends AbstractClient {
 	/**
 	 * @return root relative paths of changed files, never null
 	 */
-	public static String[] getDirtyFiles(HgRoot root, File file) throws HgException {
+	public static String[] getDirtyFiles(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
 
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
