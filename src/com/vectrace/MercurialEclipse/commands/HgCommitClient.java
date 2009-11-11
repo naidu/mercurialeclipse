@@ -9,17 +9,17 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch
  *     StefanC
- *     Zsolt Koppany zsolt.koppany@intland.com
- *     Adam Berkes adam.berkes@intland.com
+ *     Zsolt Koppany (Intland)
+ *     Adam Berkes (Intland)
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,8 +38,10 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgCommitClient extends AbstractClient {
+	private final static boolean isWindows = File.separatorChar == '\\';
+
 	/**
-	 * Commit given resources and refresh the caches for the assotiated projects
+	 * Commit given resources and refresh the caches for the associated projects
 	 */
 	public static void commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
@@ -135,7 +137,10 @@ public class HgCommitClient extends AbstractClient {
 	}
 
 	private static String quote(String str) {
-		if (str == null || str.length() == 0) {
+		if (str != null) {
+			str = str.trim();
+		}
+		if (str == null || str.length() == 0 || !isWindows) {
 			return str;
 		}
 		// escape quotes, otherwise commit will fail at least on windows
@@ -143,11 +148,11 @@ public class HgCommitClient extends AbstractClient {
 	}
 
 	private static File saveMessage(String message) {
-		BufferedWriter writer = null;
+		Writer writer = null;
 		try {
 			File messageFile = File.createTempFile("hgcommitmsg", ".txt");
-			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(messageFile),"UTF8"));
-			writer.write(message);
+			writer = new OutputStreamWriter(new FileOutputStream(messageFile),"UTF8");
+			writer.write(message.trim());
 			return messageFile;
 		} catch (IOException ex) {
 			MercurialEclipsePlugin.logError(ex);
@@ -164,7 +169,7 @@ public class HgCommitClient extends AbstractClient {
 	}
 
 	private static void deleteMessage(File messageFile) {
-		// Try to delete normally, and if not successfull
+		// Try to delete normally, and if not successful
 		// leave it for the JVM exit - I use it in case
 		// mercurial accidentally locks the file.
 		if (!messageFile.delete()) {
