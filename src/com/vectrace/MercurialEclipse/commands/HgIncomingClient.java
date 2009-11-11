@@ -42,11 +42,6 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 	 * @throws HgException
 	 */
 	public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
-			HgRepositoryLocation repository) throws HgException {
-		return getHgIncoming(res, repository, null);
-	}
-
-	public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
 			HgRepositoryLocation repository, String branch) throws HgException {
 		AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
 				false);
