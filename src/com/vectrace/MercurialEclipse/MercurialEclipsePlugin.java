@@ -11,6 +11,7 @@
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Adam Berkes (Intland)     - default encoding
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse;

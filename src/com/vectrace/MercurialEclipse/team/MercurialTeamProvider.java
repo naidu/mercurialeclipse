@@ -12,6 +12,7 @@
  *     StefanC                   - some updates
  *     Bastian Doetsch           - new qualified name for project sets
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Adam Berkes (Intland)     - Fix encoding
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
