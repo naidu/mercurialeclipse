@@ -86,6 +86,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		private final Set<String> filesRemoved = new TreeSet<String>();
 		private Action action;
 		private final IFilePatch[] patches;
+		private final IPath repoPath;
 		private static final Pattern LT = Pattern.compile("&lt;");
 		private static final Pattern GT = Pattern.compile("&gt;");
 		private static final Pattern AMP = Pattern.compile("&amp;");
@@ -102,6 +103,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 			this.hgRoot = hgRoot;
 			this.fileRevisions = fileRevisions;
 			this.patches = patches;
+			this.repoPath = new Path(hgRoot.getPath());
 		}
 
 		private static String replaceAll(Pattern p, String source, String replacement){
@@ -256,7 +258,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		}
 
 		private final void addChangesetToResourceMap(final ChangeSet cs) {
-			IPath repoPath = new Path(cs.getHgRoot().getPath());
 
 			if (cs.getChangedFiles() != null) {
 				for (FileStatus file : cs.getChangedFiles()) {
@@ -267,9 +268,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 				}
 			}
 
-			Set<ChangeSet> projectRevs = addChangeSetRevisions(cs, repoPath);
-
-			fileRevisions.put(repoPath, projectRevs);
+//			Set<ChangeSet> projectRevs = addChangeSetRevisions(cs, repoPath);
+//
+//			fileRevisions.put(repoPath, projectRevs);
 
 			Set<ChangeSet> pathRevs = addChangeSetRevisions(cs, res);
 			fileRevisions.put(res, pathRevs);
