@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
@@ -238,6 +239,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		MercurialRevisionStorage incomingIStorage;
+		int syncMode = -1;
 		if (csIncoming != null) {
 			hasIncomingChanges = true;
 			boolean fileRemoved = csIncoming.isRemoved(resource);
@@ -250,26 +252,48 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			if(!hasOutgoingChanges && Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
 				return null;
 			}
+			if(debug) {
+				System.out.println("Visiting: " + resource);
+			}
 			// if no incoming revision, incoming = base/outgoing
+
 			// TODO it seems that the line below causes NO DIFF shown if the outgoing
 			// change consists from MULTIPLE changes on same file, see issue 10486
 			// we have to get the parent of the first outgoing changeset on a given file here
 			incomingIStorage = outgoingIStorage;
-			// TODO the code below has some issues...
-//            try {
-//                SortedSet<ChangeSet> sets = OUTGOING_CACHE.getChangeSets(resource, getRepo(), currentBranch);
-//                if(sets.size() > 1){
-//                    ChangeSet first = sets.first();
-//                    ChangeSet changesetById = LOCAL_CACHE.getOrFetchChangeSetById(resource.getProject(), first.getChangeset());
-//                    changesetById = LOCAL_CACHE.getOrFetchChangeSetById(resource.getProject(), changesetById.getParents()[0]);
-//                    incomingIStorage = getIncomingIStorage(file, changesetById);
-//                } else {
-//                    incomingIStorage = outgoingIStorage;
-//                }
-//            } catch (HgException e) {
-//                MercurialEclipsePlugin.logError(e);
-//                incomingIStorage = outgoingIStorage;
-//            }
+
+			// TODO validate if code below fixes the issue 10486
+			try {
+				SortedSet<ChangeSet> sets = OUTGOING_CACHE.getChangeSets(resource, getRepo(), currentBranch);
+				int size = sets.size();
+
+				// case where we have one outgoung changeset AND one not committed change
+				if(size == 1 && !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
+					size ++;
+				}
+				if(size > 1){
+					ChangeSet first = sets.first();
+					String[] parents = first.getParents();
+					String parentCs = null;
+					if(parents.length > 0){
+						parentCs = parents[0];
+					} else {
+						ChangeSet tmpCs = LOCAL_CACHE.getOrFetchChangeSetById(resource, first.getChangeset());
+						if(tmpCs != null && tmpCs.getParents().length > 0){
+							parentCs = tmpCs.getParents()[0];
+						}
+					}
+					if(parentCs != null){
+						ChangeSet baseChangeset = LOCAL_CACHE.getOrFetchChangeSetById(resource, parentCs);
+						incomingIStorage = getIncomingIStorage(file, baseChangeset);
+						// we change outgoing (base) to the first parent of the first outgoing changeset
+						outgoing = new MercurialResourceVariant(incomingIStorage);
+						syncMode = SyncInfo.OUTGOING | SyncInfo.CHANGE;
+					}
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 
 		if(!hasIncomingChanges && !hasOutgoingChanges && Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
@@ -285,7 +309,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// now create the sync info object. everything may be null,
 		// but resource and comparator
-		SyncInfo info = new MercurialSyncInfo(resource, outgoing, incoming, getResourceComparator());
+		SyncInfo info = new MercurialSyncInfo(resource, outgoing, incoming, getResourceComparator(), syncMode);
 
 		try {
 			info.init();
@@ -408,16 +432,20 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			}
 		}
 
-		List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
-		monitor.worked(1);
-		if (monitor.isCanceled()) {
-			return;
-		}
+		// we need to send events only if WE trigger status update, not if the refresh
+		// is called from the framework (like F5 hit by user)
+		if(flag < 0){
+			List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
+			monitor.worked(1);
+			if (monitor.isCanceled()) {
+				return;
+			}
 
-		monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
-		lastEvents = changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]);
-		fireTeamResourceChange(lastEvents);
-		monitor.worked(1);
+			monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
+			lastEvents = changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]);
+			fireTeamResourceChange(lastEvents);
+			monitor.worked(1);
+		}
 		monitor.done();
 	}
 
@@ -442,6 +470,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
 		for (IResource res : resourcesToRefresh) {
 			changeEvents.add(new SubscriberChangeEvent(this, ISubscriberChangeEvent.SYNC_CHANGED, res));
+		}
+		if(debug) {
+			System.out.println("created: " + changeEvents.size() + " change events");
 		}
 		return changeEvents;
 	}

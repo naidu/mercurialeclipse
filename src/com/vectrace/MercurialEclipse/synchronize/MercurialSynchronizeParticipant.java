@@ -108,7 +108,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	public void saveState(IMemento memento) {
 		IMemento myMemento = memento
 			.createChild(MercurialSynchronizeParticipant.class.getName());
-		myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getSaveString());
+		myMemento.putString(REPOSITORY_LOCATION, repositoryLocation.getLocation());
 		saveCurrentScope(myMemento);
 		super.saveState(memento);
 	}

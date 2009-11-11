@@ -25,7 +25,6 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -311,8 +310,16 @@ public class LocalChangesetCache extends AbstractCache {
 
 			// every changeset is at least stored for the repository root
 			if (res.getType() != IResource.PROJECT) {
-				IPath rootPath = new Path(root.getAbsolutePath());
-				localChangeSets.put(res.getLocation(), new TreeSet<ChangeSet>(revisions.get(rootPath)));
+//				IPath rootPath = new Path(root.getAbsolutePath());
+				// Strange code...
+				// localChangeSets.put(res.getLocation(), new TreeSet<ChangeSet>(revisions.get(rootPath)));
+				IPath location = ResourceUtils.getPath(res);
+				Set<ChangeSet> csets = revisions.get(location);
+				if(csets != null) {
+					localChangeSets.put(location, new TreeSet<ChangeSet>(csets));
+				} else {
+					localChangeSets.put(location, new TreeSet<ChangeSet>());
+				}
 			}
 			for (Map.Entry<IPath, Set<ChangeSet>> mapEntry : revisions.entrySet()) {
 				IPath path = mapEntry.getKey();

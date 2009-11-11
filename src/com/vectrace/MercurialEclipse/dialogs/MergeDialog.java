@@ -34,7 +34,7 @@ public class MergeDialog extends CommitDialog {
 		super(shell, null);
 		Assert.isNotNull(mergeProject);
 		this.mergeProject = mergeProject;
-		this.defaultCommitMessage = defaultCommitMessage;
+		setDefaultCommitMessage(defaultCommitMessage);
 	}
 
 	@Override

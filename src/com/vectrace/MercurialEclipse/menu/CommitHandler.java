@@ -16,14 +16,34 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class CommitHandler extends MultipleResourcesHandler {
+
+	private String message;
+	private boolean filesSelectable = true;
+	private HgRoot root;
 
 	@Override
 	public void run(final List<IResource> resources) throws HgException {
 		ensureSameRoot(resources);
 		CommitDialog commitDialog = new CommitDialog(getShell(), resources);
+		if(message != null){
+			commitDialog.setDefaultCommitMessage(message);
+		}
+		commitDialog.setFilesSelectable(filesSelectable);
+		commitDialog.setHgRoot(root);
+		commitDialog.setBlockOnOpen(true);
 		commitDialog.open();
 	}
 
+	public void setCommitMessage(String message){
+		this.message = message;
+	}
+	public void setFilesSelectable(boolean on){
+		this.filesSelectable = on;
+	}
+	public void setRoot(HgRoot root){
+		this.root = root;
+	}
 }

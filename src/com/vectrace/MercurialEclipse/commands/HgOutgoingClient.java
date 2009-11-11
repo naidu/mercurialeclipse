@@ -35,11 +35,6 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 	 * @return never return null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
-			HgRepositoryLocation repository) throws HgException {
-		return getOutgoing(res, repository, null);
-	}
-
-	public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
 			HgRepositoryLocation repository, String branch) throws HgException {
 		AbstractShellCommand command = getCommand(res, branch);
 		try {

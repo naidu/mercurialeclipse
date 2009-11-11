@@ -23,14 +23,30 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
  */
 public class MercurialSyncInfo extends SyncInfo {
 
+	private final int description;
+
 	public MercurialSyncInfo(IResource local, IResourceVariant base,
-			IResourceVariant remote, IResourceVariantComparator comparator) {
+			IResourceVariant remote, IResourceVariantComparator comparator, int description) {
 		super(local, base, remote, comparator);
+		this.description = description;
 	}
 
 	@Override
 	protected int calculateKind() throws TeamException {
-		int description = super.calculateKind();
-		return description;
+		if(description >= 0){
+			return description;
+		}
+		return super.calculateKind();
+	}
+
+	// here to avoid FindBugs warnings
+	@Override
+	public boolean equals(Object other) {
+		return super.equals(other);
+	}
+
+	@Override
+	public int hashCode() {
+		return super.hashCode();
 	}
 }

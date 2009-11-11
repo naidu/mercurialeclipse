@@ -16,6 +16,7 @@
 
 package com.vectrace.MercurialEclipse.storage;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
@@ -89,7 +90,12 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	static public boolean validateLocation(String validate) {
 		try {
-			return HgRepositoryLocationParser.parseLocationToURI(validate, null, null) != null;
+			HgRepositoryLocation location2 = HgRepositoryLocationParser.parseLocation(false, validate, null, null);
+			if(location2 == null){
+				return false;
+			}
+			return location2.getUri() != null || (location2.getLocation() != null &&
+					new File(location2.getLocation()).isDirectory());
 		} catch (HgException ex) {
 			MercurialEclipsePlugin.logError(ex);
 			return false;

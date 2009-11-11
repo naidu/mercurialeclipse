@@ -101,8 +101,7 @@ public class ShelveOperation extends HgOperation {
 				monitor.subTask(Messages
 						.getString("ShelveOperation.determiningChanges")); //$NON-NLS-1$
 				HgRoot root = HgClients.getHgRoot(project.getLocation().toFile());
-				String[] dirtyFiles = HgStatusClient.getDirtyFiles(root, project
-						.getLocation().toFile());
+				String[] dirtyFiles = HgStatusClient.getDirtyFiles(root);
 				List<IResource> resources = new ArrayList<IResource>();
 				for (String rootRelativePath : dirtyFiles) {
 					IResource r = ResourceUtils.convertRepoRelPath(root, project, rootRelativePath);
