@@ -306,7 +306,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 	@Override
 	protected IProject getProject() {
-		return resource.getProject();
+		return resource != null ? resource.getProject() : null;
 	}
 
 }
