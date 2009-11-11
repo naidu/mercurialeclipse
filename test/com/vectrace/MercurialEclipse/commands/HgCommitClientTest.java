@@ -7,6 +7,7 @@
  *
  * Contributors:
  * stefanc	implementation
+ * Adam Berkes (Intland) - restructure, special character tests
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -22,33 +23,47 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  */
 public class HgCommitClientTest extends AbstractCommandTest {
 
+	private final static String UE = "\u00FC";
+	private final static String OE = "\u00F6";
+	private final static String AE = "\u00E4";
+	private final static String SS = "\u00DF";
+
 	/* (non-Javadoc)
 	 * @see com.vectrace.MercurialEclipse.commands.AbstractCommandTest#testCreateRepo()
 	 */
 	public void testCommitSimpleMessage() throws Exception {
-		File root = getRepository();
-		File newFile = new File(root.getAbsolutePath() + File.separator + "dummy.txt");
-		assertTrue("Unable to create commit file", newFile.createNewFile());
-		addToRepository(newFile);
-		HgRoot hgroot = new HgRoot(root.getAbsolutePath());
-		List<File> files = new ArrayList<File>();
-		files.add(newFile);
-		HgCommitClient.commit(hgroot, files, "Simple", "the message");
+		doCommit("Simple", "the message");
 	}
 	/* (non-Javadoc)
 	 * @see com.vectrace.MercurialEclipse.commands.AbstractCommandTest#testCreateRepo()
 	 */
 	public void testCommitMessageWithQuote() throws Exception {
+		doCommit("Trasan 'O Banarne", "is this message \" really escaped?");
+	}
+
+	public void testCommitMessageWithSpecialChars1() throws Exception {
+		String special1 = "árvíztűrő tükörfúrógép";
+		String special2 = "Qualit"+AE+"ts Ger"+AE+"te Pl"+AE+"ne Liebesgr"+UE+""+SS+"e Grundgeb"+UE+"hr Kocht"+OE+"pfe";
+		doCommit("Simple", special1);
+		doCommit("Simple",
+				special2,
+				"dummy2.txt");
+	}
+
+	private void doCommit(String user, String message) throws Exception {
+		doCommit(user, message, "dummy.txt");
+	}
+
+	private void doCommit(String user, String message, String commitFileName) throws Exception {
 		File root = getRepository();
-		File newFile = new File(root.getAbsolutePath() + File.separator + "dummy.txt");
-		assertTrue("Unable to create commit file", newFile.createNewFile());
+		File newFile = new File(root.getAbsolutePath(), commitFileName);
+		assertTrue("Unable to create file to commit", newFile.createNewFile());
 
 		addToRepository(newFile);
 
 		HgRoot hgroot = new HgRoot(root.getAbsolutePath());
 		List<File> files = new ArrayList<File>();
 		files.add(newFile);
-		HgCommitClient.commit(hgroot, files, "Trasan 'O Banarne", "is this message \" really escaped?");
-		HgCommitClient.commit(hgroot, files, "Simple", "the message");
+		HgCommitClient.commit(hgroot, files, user, message);
 	}
 }
