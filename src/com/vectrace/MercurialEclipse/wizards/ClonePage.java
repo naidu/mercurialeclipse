@@ -21,16 +21,17 @@ import java.util.Properties;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.dialogs.IPageChangingListener;
+import org.eclipse.jface.dialogs.PageChangingEvent;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.jface.resource.JFaceResources;
+import org.eclipse.jface.wizard.IWizardContainer;
 import org.eclipse.jface.wizard.IWizardPage;
-import org.eclipse.swt.SWT;
+import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
@@ -50,10 +51,13 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class ClonePage extends PushPullPage {
 
+	private static final String DEFAULT_NAME = "with given name";
+	private static final String TOOLTIP = "A folder %s will be created,\n" +
+					"and this will be the root folder for the clone content.";
+
 	private Button pullCheckBox;
 	private Button uncompressedCheckBox;
 	private Text revisionTextField;
-	private Button goButton;
 	private final Map<HgRepositoryLocation, File> destDirectories = new HashMap<HgRepositoryLocation, File>();
 	private HgRepositoryLocation lastRepo;
 	private Text directoryTextField;
@@ -79,7 +83,7 @@ public class ClonePage extends PushPullPage {
 		Composite composite = (Composite) getControl();
 		createDestGroup(composite);
 		createOptionsGroup(composite);
-		createBigButton(composite);
+		hookNextButtonListener(composite);
 		setPageComplete(false);
 	}
 
@@ -87,39 +91,16 @@ public class ClonePage extends PushPullPage {
 		return s == null || s.trim().length() == 0;
 	}
 
-	private void createBigButton(Composite composite) {
-		Composite panel = new Composite(composite, SWT.NONE);
-		panel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
-		panel.setLayout(new GridLayout());
-		goButton = new Button(panel, SWT.CENTER);
-		goButton.setText("Clone data from repository");
-		goButton.setFont(JFaceResources.getBannerFont());
-		goButton.setEnabled(false);
-		goButton.addSelectionListener(new SelectionAdapter() {
+	private void hookNextButtonListener(Composite composite) {
+		IWizardContainer container = getWizard().getContainer();
+		if(!(container instanceof WizardDialog)){
+			return;
+		}
+		WizardDialog dialog = (WizardDialog) container;
+		dialog.addPageChangingListener(new IPageChangingListener() {
 
-			@Override
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				boolean ok = validateFields();
-				if(!ok) {
-					HgRepositoryLocation repository = getRepository();
-					if (hasDataLocally(repository)
-							&& getDestinationDirectory().equals(destDirectories.get(repository))) {
-						return;
-					}
-				}
-				setErrorMessage(null);
-				boolean dataFetched = finish(null);
-				setPageComplete(dataFetched);
-				goButton.setEnabled(!dataFetched);
-				if(dataFetched){
-					// simply switch to the next page
-					getWizard().getContainer().showPage(getNextPage());
-				}
+			public void handlePageChanging(PageChangingEvent event) {
+				event.doit = nextButtonPressed();
 			}
 		});
 	}
@@ -128,7 +109,7 @@ public class ClonePage extends PushPullPage {
 		Group g = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("ClonePage.destinationGroup.title"), 3, GridData.FILL_HORIZONTAL); //$NON-NLS-1$
 
-		useWorkspace = SWTWidgetHelper.createCheckBox(g, "Use workspace as parent directory");
+		useWorkspace = SWTWidgetHelper.createCheckBox(g, "Checkout as a project(s) in the workspace");
 		GridData layoutData = new GridData();
 		layoutData.horizontalSpan = 3;
 		useWorkspace.setLayoutData(layoutData);
@@ -187,17 +168,19 @@ public class ClonePage extends PushPullPage {
 
 		SWTWidgetHelper.createLabel(g, Messages.getString("ClonePage.cloneDirectoryLabel.title")); //$NON-NLS-1$
 		cloneNameTextField = SWTWidgetHelper.createTextField(g);
+		cloneNameTextField.setToolTipText(String.format(TOOLTIP, DEFAULT_NAME));
 		cloneNameTextField.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				validateFields();
 				HgRepositoryLocation repo = getRepository();
+				File destinationDirectory = getDestinationDirectory();
+				cloneNameTextField.setToolTipText(String.format(TOOLTIP, destinationDirectory.getAbsolutePath()));
 				if(repo != null && hasDataLocally(repo)){
 					// if only the target directory name is changed, simply rename it on
 					// the disk to avoid another remote clone operation
 					File file = destDirectories.get(repo);
 					String cloneName = getCloneName();
 					if(cloneName.length() > 0 && !file.getName().equals(cloneName)){
-						File destinationDirectory = getDestinationDirectory();
 						if(!destinationDirectory.exists()){
 							if(file.renameTo(destinationDirectory)) {
 								destDirectories.put(repo, destinationDirectory);
@@ -312,9 +295,6 @@ public class ClonePage extends PushPullPage {
 
 	@Override
 	protected boolean validateFields() {
-		if(goButton != null) {
-			goButton.setEnabled(false);
-		}
 		boolean ok = super.validateFields();
 		if(!ok){
 			setMessage(null, INFORMATION);
@@ -356,11 +336,8 @@ public class ClonePage extends PushPullPage {
 		} else {
 			setMessage(null);
 		}
-		if(goButton != null) {
-			goButton.setEnabled(!dataFetched);
-		}
-		setPageComplete(dataFetched);
-		return dataFetched;
+		setPageComplete(true);
+		return true;
 	}
 
 	private boolean validateDestinationName() {
@@ -475,6 +452,17 @@ public class ClonePage extends PushPullPage {
 		MercurialEclipsePlugin.logError(Messages
 				.getString("CloneRepoWizard.cloneOperationFailed"), e);
 		return false;
+	}
+
+	private boolean nextButtonPressed() {
+		HgRepositoryLocation repository = getRepository();
+		if (hasDataLocally(repository)
+				&& getDestinationDirectory().equals(destDirectories.get(repository))) {
+			// simply forward to the next page
+			return true;
+		}
+		// start clone
+		return finish(null);
 	}
 
 }
