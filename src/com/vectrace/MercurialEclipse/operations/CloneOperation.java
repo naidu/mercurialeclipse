@@ -76,15 +76,7 @@ public class CloneOperation extends HgOperation {
 	public void run(final IProgressMonitor m) throws InvocationTargetException,
 			InterruptedException {
 
-		m.beginTask(Messages.getString("CloneRepoWizard.operation.name"), 50); //$NON-NLS-1$
-
-		m.subTask(Messages
-						.getString("CloneRepoWizard.subTaskParentDirectory.name") + parentDirectory); //$NON-NLS-1$
-		m.worked(1);
-
-		m.subTask(Messages
-						.getString("CloneRepoWizard.subTaskCloneDirectory.name") + cloneName); //$NON-NLS-1$
-		m.worked(1);
+		m.beginTask(Messages.getString("CloneRepoWizard.operation.name"), IProgressMonitor.UNKNOWN); //$NON-NLS-1$
 
 		// Timer which is used to monitor the moniktor cancellation
 		Timer t = new Timer("Clone watcher", false);
@@ -102,8 +94,6 @@ public class CloneOperation extends HgOperation {
 			}, 1000, 50);
 		}
 		try {
-			m.subTask(Messages
-					.getString("CloneRepoWizard.subTask.invokingMercurial")); //$NON-NLS-1$
 			if (svn) {
 				HgSvnClient.clone(parentDirectory, repo, timeout, cloneName);
 			} else if (!forest) {
