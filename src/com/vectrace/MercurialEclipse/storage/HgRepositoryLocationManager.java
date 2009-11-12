@@ -59,10 +59,12 @@ public class HgRepositoryLocationManager {
 	final static private String REPO_LOCATION_FILE = "repositories.txt"; //$NON-NLS-1$
 
 	private final Map<IProject, SortedSet<HgRepositoryLocation>> projectRepos;
+	private final SortedSet<HgRepositoryLocation> repoHistory;
 	private final HgRepositoryLocationParserDelegator delegator;
 
 	public HgRepositoryLocationManager() {
 		projectRepos = new HashMap<IProject, SortedSet<HgRepositoryLocation>>();
+		repoHistory = new TreeSet<HgRepositoryLocation>();
 		delegator = new HgRepositoryLocationParserDelegator();
 	}
 
@@ -76,6 +78,9 @@ public class HgRepositoryLocationManager {
 	}
 
 	public boolean cleanup(IProject project) {
+		Set<HgRepositoryLocation> locations = getAllProjectRepoLocations(project);
+		repoHistory.addAll(locations);
+		removeRepoLocation(project);
 		return getProjectLocationFile(project).delete();
 	}
 
@@ -86,6 +91,7 @@ public class HgRepositoryLocationManager {
 	 */
 	public void start() throws IOException, HgException {
 		getProjectRepos(true);
+		loadRepositoryHistory();
 	}
 
 	/**
@@ -93,23 +99,8 @@ public class HgRepositoryLocationManager {
 	 * area.
 	 */
 	public void stop() throws IOException {
-		File file = getLocationFile();
-
-		BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
-				new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
-
-		try {
-			for (HgRepositoryLocation repo : getAllRepoLocations()) {
-				String line = delegator.delegateCreate(repo);
-				if(line != null){
-					writer.write(line);
-					writer.write('\n');
-				}
-			}
-		} finally {
-			writer.close();
-		}
 		saveProjectRepos();
+		saveRepositoryHistory();
 	}
 
 	/**
@@ -121,6 +112,7 @@ public class HgRepositoryLocationManager {
 		for (SortedSet<HgRepositoryLocation> locations : projectRepos.values()) {
 			allRepos.addAll(locations);
 		}
+		allRepos.addAll(repoHistory);
 		return allRepos;
 	}
 
@@ -193,6 +185,15 @@ public class HgRepositoryLocationManager {
 		return true;
 	}
 
+	private boolean removeRepoLocation(IProject project) {
+		if (project == null) {
+			return false;
+		}
+		synchronized (projectRepos) {
+			return projectRepos.remove(project) != null;
+		}
+	}
+
 	/**
 	 * Add a repository location to the database. Associate a repository
 	 * location to a particular project.
@@ -243,28 +244,53 @@ public class HgRepositoryLocationManager {
 				internalAddRepoLocation(project, loc);
 			}
 
-			File file = getProjectLocationFile(project);
-
-			if (file.exists()) {
-				String line;
-				BufferedReader reader = new BufferedReader(
-						new InputStreamReader(new FileInputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
-				try {
-					while ((line = reader.readLine()) != null) {
-						try {
-							HgRepositoryLocation loc = delegator.delegateParse(line);
-							internalAddRepoLocation(project, loc);
-						} catch (Exception e) {
-							// log exception, but don't bother the user with it.
-							MercurialEclipsePlugin.logError(e);
-						}
-					}
-				} finally {
-					reader.close();
-				}
+			Set<HgRepositoryLocation> locations = loadRepositoriesFromFile(getProjectLocationFile(project));
+			for(HgRepositoryLocation loc : locations) {
+				internalAddRepoLocation(project, loc);
 			}
 		}
 		return hgProjects;
+	}
+
+	private void loadRepositoryHistory() throws IOException {
+		Set<HgRepositoryLocation> locations = loadRepositoriesFromFile(getLocationFile());
+		for (HgRepositoryLocation loc : locations) {
+			boolean usedByProject = false;
+			for (IProject project : projectRepos.keySet()) {
+				if (projectRepos.get(project).contains(loc)) {
+					usedByProject = true;
+				}
+			}
+			if (!usedByProject) {
+				synchronized (repoHistory) {
+					REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
+					repoHistory.add(loc);
+				}
+			}
+		}
+	}
+
+	private Set<HgRepositoryLocation> loadRepositoriesFromFile(File file) throws IOException {
+		Set<HgRepositoryLocation> locations = new TreeSet<HgRepositoryLocation>();
+		if (file != null && file.exists()) {
+			String line;
+			BufferedReader reader = new BufferedReader(
+					new InputStreamReader(new FileInputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
+			try {
+				while ((line = reader.readLine()) != null) {
+					try {
+						HgRepositoryLocation loc = delegator.delegateParse(line);
+						locations.add(loc);
+					} catch (Exception e) {
+						// log exception, but don't bother the user with it.
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			} finally {
+				reader.close();
+			}
+		}
+		return locations;
 	}
 
 	/**
@@ -309,22 +335,30 @@ public class HgRepositoryLocationManager {
 		for (IProject project : projects) {
 			File file = getProjectLocationFile(project);
 			SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
-			if (repoSet != null && !repoSet.isEmpty()) {
-				BufferedWriter writer = null;
-				try {
-					writer = new BufferedWriter(new OutputStreamWriter(
-							new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
-					for (HgRepositoryLocation repo : repoSet) {
-						String line = delegator.delegateCreate(repo);
-						if(line != null){
-							writer.write(line);
-							writer.write('\n');
-						}
+			saveRepositoriesToFile(file, repoSet);
+		}
+	}
+
+	private void saveRepositoryHistory() throws IOException {
+		saveRepositoriesToFile(getLocationFile(), repoHistory);
+	}
+
+	private void saveRepositoriesToFile(File file, Set<HgRepositoryLocation> locations) throws IOException {
+		if (locations != null && !locations.isEmpty()) {
+			BufferedWriter writer = null;
+			try {
+				writer = new BufferedWriter(new OutputStreamWriter(
+						new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
+				for (HgRepositoryLocation repo : locations) {
+					String line = delegator.delegateCreate(repo);
+					if(line != null){
+						writer.write(line);
+						writer.write('\n');
 					}
-				} finally {
-					if(writer != null) {
-						writer.close();
-					}
+				}
+			} finally {
+				if(writer != null) {
+					writer.close();
 				}
 			}
 		}
@@ -522,7 +556,6 @@ public class HgRepositoryLocationManager {
 	public void removeRepositoryListener(IRepositoryListener repositoryListener) {
 		REPOSITORY_RESOURCES_MANAGER
 				.removeRepositoryListener(repositoryListener);
-
 	}
 
 	public void disposeRepository(HgRepositoryLocation hgRepositoryLocation) {
@@ -532,8 +565,7 @@ public class HgRepositoryLocationManager {
 					.hasNext();) {
 				IProject project = iterator.next();
 				if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
-					SortedSet<HgRepositoryLocation> pRepos = projectRepos
-							.get(project);
+					SortedSet<HgRepositoryLocation> pRepos = projectRepos.get(project);
 					if (pRepos != null) {
 						for (HgRepositoryLocation repo : pRepos) {
 							if (repo.equals(hgRepositoryLocation)) {
@@ -543,6 +575,15 @@ public class HgRepositoryLocationManager {
 							}
 						}
 					}
+				}
+			}
+		}
+		synchronized (repoHistory) {
+			for (HgRepositoryLocation loc : repoHistory) {
+				if (loc.equals(hgRepositoryLocation)) {
+					repoHistory.remove(loc);
+					REPOSITORY_RESOURCES_MANAGER.repositoryRemoved(loc);
+					break;
 				}
 			}
 		}

@@ -204,17 +204,21 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 					// repo if no existing one was found
 					HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager().getRepoLocation(getUrlText());
 
-					String user = repo.getUser();
-					if (user != null && user.length() != 0) {
-						getUserCombo().setText(user);
-					} else {
-						getUserCombo().setText("");
+					if (getUserCombo() != null) {
+						String user = repo.getUser();
+						if (user != null && user.length() != 0) {
+							getUserCombo().setText(user);
+						} else {
+							getUserCombo().setText("");
+						}
 					}
-					String password = repo.getPassword();
-					if (password != null && password.length() != 0) {
-						getPasswordText().setText(password);
-					} else {
-						getPasswordText().setText("");
+					if (getPasswordText() != null) {
+						String password = repo.getPassword();
+						if (password != null && password.length() != 0) {
+							getPasswordText().setText(password);
+						} else {
+							getPasswordText().setText("");
+						}
 					}
 				} catch (HgException e1) {
 					// Lookup obviously failed, but verification will
