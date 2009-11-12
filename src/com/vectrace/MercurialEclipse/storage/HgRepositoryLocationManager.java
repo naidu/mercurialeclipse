@@ -157,6 +157,10 @@ public class HgRepositoryLocationManager {
 			if (project != null) {
 				return internalAddRepoLocation(project, loc);
 			}
+		} else {
+			synchronized (repoHistory) {
+				return internalAddRepoLocation(null, loc);
+			}
 		}
 		return false;
 	}
@@ -169,6 +173,7 @@ public class HgRepositoryLocationManager {
 			return false;
 		}
 
+		if (project != null) {
 		synchronized (projectRepos) {
 			SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
 			if (repoSet == null) {
@@ -180,6 +185,12 @@ public class HgRepositoryLocationManager {
 			repoSet.add(loc);
 			REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
 			projectRepos.put(project, repoSet);
+		}
+		} else {
+			synchronized (repoHistory) {
+				REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
+				repoHistory.add(loc);
+			}
 		}
 
 		return true;
@@ -479,11 +490,19 @@ public class HgRepositoryLocationManager {
 		if (update) {
 			HgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName, false, loc.getLocation(), myUser, myPass);
 			updated.setLastUsage(new Date());
-			updated.setProjectName(project.getName());
+			if (project != null) {
+				updated.setProjectName(project.getName());
 
-			for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
-				if (locs.remove(updated)) {
-					locs.add(updated);
+				for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
+					if (locs.remove(updated)) {
+						locs.add(updated);
+					}
+				}
+			} else {
+				synchronized (repoHistory) {
+					if (repoHistory.remove(updated)) {
+						repoHistory.add(updated);
+					}
 				}
 			}
 

@@ -15,6 +15,8 @@ import java.util.Properties;
 import org.eclipse.jface.wizard.IWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * Wizard to add a new location. Uses ConfigurationWizardMainPage for entering
@@ -46,21 +48,15 @@ public class NewLocationWizard extends HgWizard {
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
-		// TODO: Temporarily commented. A project selector must added to
-		// this wizard
-		/*
 		Properties props = page.getProperties();
-		final HgRepositoryLocation[] root = new HgRepositoryLocation[1];
-		HgRepositoryLocationManager provider = MercurialEclipsePlugin
-				.getRepoManager();
+		HgRepositoryLocationManager manager = MercurialEclipsePlugin.getRepoManager();
 		try {
-			root[0] = provider.createRepository(props);
-			return true;
-		} catch (TeamException e) {
-			MercurialEclipsePlugin.logError(e);
+			manager.createRepository(null, props);
+		} catch (HgException ex) {
+			MercurialEclipsePlugin.logError(ex);
+			return false;
 		}
-		*/
-		return false;
+		return true;
 	}
 
 	/**
