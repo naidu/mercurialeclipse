@@ -62,6 +62,8 @@ public class HgRepositoryLocationManager {
 	private final SortedSet<HgRepositoryLocation> repoHistory;
 	private final HgRepositoryLocationParserDelegator delegator;
 
+	private boolean initialized;
+
 	public HgRepositoryLocationManager() {
 		projectRepos = new HashMap<IProject, SortedSet<HgRepositoryLocation>>();
 		repoHistory = new TreeSet<HgRepositoryLocation>();
@@ -90,7 +92,9 @@ public class HgRepositoryLocationManager {
 	 * @throws HgException
 	 */
 	public void start() throws IOException, HgException {
-		getProjectRepos(true);
+		synchronized (projectRepos) {
+			getProjectRepos();
+		}
 		loadRepositoryHistory();
 	}
 
@@ -109,8 +113,10 @@ public class HgRepositoryLocationManager {
 	 */
 	public Set<HgRepositoryLocation> getAllRepoLocations() {
 		SortedSet<HgRepositoryLocation> allRepos = new TreeSet<HgRepositoryLocation>();
-		for (SortedSet<HgRepositoryLocation> locations : projectRepos.values()) {
-			allRepos.addAll(locations);
+		synchronized (projectRepos) {
+			for (SortedSet<HgRepositoryLocation> locations : projectRepos.values()) {
+				allRepos.addAll(locations);
+			}
 		}
 		allRepos.addAll(repoHistory);
 		return allRepos;
@@ -129,21 +135,21 @@ public class HgRepositoryLocationManager {
 	 * @return a set of projects we know managed at given location, never null
 	 */
 	public Set<IProject> getAllRepoLocationProjects(HgRepositoryLocation repo) {
+		Set<IProject> projects = new HashSet<IProject>();
 		synchronized (projectRepos) {
 			try {
-				getProjectRepos(false);
+				getProjectRepos();
 			} catch (Exception e) {
 				MercurialEclipsePlugin.logError(e);
 			}
-		}
 		Set<IProject> loc = projectRepos.keySet();
 
-		Set<IProject> projects = new HashSet<IProject>();
 		for (IProject project : loc) {
 			SortedSet<HgRepositoryLocation> set = projectRepos.get(project);
 			if(set != null && set.contains(repo)){
 				projects.add(project);
 			}
+		}
 		}
 		return Collections.unmodifiableSet(projects);
 	}
@@ -216,9 +222,10 @@ public class HgRepositoryLocationManager {
 		return internalAddRepoLocation(project, loc);
 	}
 
-	private Map<IProject, SortedSet<HgRepositoryLocation>> getProjectRepos(boolean initialize)
+	private Map<IProject, SortedSet<HgRepositoryLocation>> getProjectRepos()
 			throws IOException, HgException {
-		if (initialize) {
+		if (!initialized) {
+			initialized = true;
 			Set<IProject> hgProjects = loadProjectRepos();
 			for (IProject project : hgProjects) {
 				new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule();
@@ -492,10 +499,11 @@ public class HgRepositoryLocationManager {
 			updated.setLastUsage(new Date());
 			if (project != null) {
 				updated.setProjectName(project.getName());
-
-				for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
-					if (locs.remove(updated)) {
-						locs.add(updated);
+				synchronized (projectRepos) {
+					for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
+						if (locs.remove(updated)) {
+							locs.add(updated);
+						}
 					}
 				}
 			} else {
