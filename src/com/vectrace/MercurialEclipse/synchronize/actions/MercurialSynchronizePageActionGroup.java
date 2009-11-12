@@ -8,6 +8,7 @@
  * Contributors:
  *     Bastian Doetsch				- implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (Intland)
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -28,8 +29,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 	public MercurialSynchronizePageActionGroup() {
 		super();
-		expandAction = new Action("Expand All",
-				MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif") ) {
+		expandAction = new Action("Expand All", MercurialEclipsePlugin.getImageDescriptor("elcl16/expandall.gif") ) {
 			@Override
 			public void run() {
 				Viewer viewer = getConfiguration().getPage().getViewer();
@@ -52,12 +52,12 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new CommitSynchronizeAction("Commit",
+				new CommitSynchronizeAction("Commit...",
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new RevertSynchronizeAction("Revert",
+				new RevertSynchronizeAction("Revert...",
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
