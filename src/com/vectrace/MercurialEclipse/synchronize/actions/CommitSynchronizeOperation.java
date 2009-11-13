@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch				- implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -17,6 +18,7 @@ import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
@@ -26,7 +28,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitHandler;
 
 public class CommitSynchronizeOperation extends SynchronizeModelOperation {
-	private IResource[] resources;
+	private final IResource[] resources;
 
 	public CommitSynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
@@ -42,6 +44,11 @@ public class CommitSynchronizeOperation extends SynchronizeModelOperation {
 
 			@Override
 			protected IStatus runSafe(IProgressMonitor moni) {
+				if (resources.length == 0) {
+					MessageDialog.openInformation(getShell(), "Mercurial Commit", //$NON-NLS-1$
+							"Please select at least one file to commit!"); //$NON-NLS-1$
+					return super.runSafe(moni);
+				}
 				try {
 					final CommitHandler commitAction = new CommitHandler();
 					commitAction.run(Arrays.asList(resources));
