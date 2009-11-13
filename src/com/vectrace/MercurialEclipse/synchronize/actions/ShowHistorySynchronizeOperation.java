@@ -24,7 +24,7 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
-	private IResource[] resources;
+	private final IResource[] resources;
 
 	public ShowHistorySynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
@@ -36,7 +36,7 @@ public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
 		monitor.beginTask("Loading History View...", 1);
-		getShell().getDisplay().syncExec(new Runnable() {
+		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
 				IHistoryView view;
 				try {

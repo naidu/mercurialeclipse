@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository;
 
@@ -83,10 +84,11 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	private Action propertiesAction;
 
 	private RemoteContentProvider contentProvider;
+
 	// this listener is used when a repository is added, removed or changed
-	private IRepositoryListener repositoryListener = new IRepositoryListener() {
+	private final IRepositoryListener repositoryListener = new IRepositoryListener() {
 		public void repositoryAdded(final HgRepositoryLocation loc) {
-			getViewer().getControl().getDisplay().syncExec(new Runnable() {
+			getViewer().getControl().getDisplay().asyncExec(new Runnable() {
 				public void run() {
 					refreshViewer(null, false);
 					getViewer().setSelection(new StructuredSelection(loc));
@@ -102,14 +104,12 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			refresh(null, false);
 		}
 
-		private void refresh(Object object, boolean refreshRepositoriesFolders) {
-			final Object finalObject = object;
+		private void refresh(final Object object, boolean refreshRepositoriesFolders) {
 			final boolean finalRefreshReposFolders = refreshRepositoriesFolders;
 			Display display = getViewer().getControl().getDisplay();
-			display.syncExec(new Runnable() {
+			display.asyncExec(new Runnable() {
 				public void run() {
-					RepositoriesView.this.refreshViewer(finalObject,
-							finalRefreshReposFolders);
+					refreshViewer(object, finalRefreshReposFolders);
 				}
 			});
 		}
@@ -119,13 +119,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		}
 	};
 
-	/**
-	 * Constructor for RepositoriesView.
-	 *
-	 * @param partName
-	 */
 	public RepositoriesView() {
-		// super(VIEW_ID);
+		super();
 	}
 
 	/**
@@ -243,8 +238,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		bars.updateActionBars();
 	} // contributeActions
 
-	/**
-	 * @see org.tigris.subversion.subclipse.ui.repo.RemoteViewPart#addWorkbenchActions(org.eclipse.jface.action.IMenuManager)
+	/*
+	 * see org.tigris.subversion.subclipse.ui.repo.RemoteViewPart#addWorkbenchActions(org.eclipse.jface.action.IMenuManager)
 	 */
 	protected void addWorkbenchActions(IMenuManager manager) {
 		// New actions go next
@@ -281,9 +276,6 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		sub.add(newAction);
 	}
 
-	/*
-	 * @see WorkbenchPart#createPartControl
-	 */
 	@Override
 	public void createPartControl(Composite parent) {
 		treeViewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL
@@ -317,12 +309,6 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			@Override
 			public void keyPressed(KeyEvent event) {
 				if (event.keyCode == SWT.F5) {
-					/*
-					 * IStructuredSelection selection =
-					 * (IStructuredSelection)getViewer().getSelection(); if
-					 * (selection.size() == 1) {
-					 * getViewer().refresh(selection.getFirstElement()); }
-					 */
 					refreshAction.run();
 				}
 			}
@@ -349,10 +335,9 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	 * When selection is changed we update the status line
 	 */
 	private String getStatusLineMessage(ISelection selection) {
-		if (selection == null || selection.isEmpty())
+		if (!(selection instanceof IStructuredSelection) || selection.isEmpty()) {
 			return ""; //$NON-NLS-1$
-		if (!(selection instanceof IStructuredSelection))
-			return ""; //$NON-NLS-1$
+		}
 		IStructuredSelection s = (IStructuredSelection) selection;
 
 		if (s.size() > 1) {
@@ -393,8 +378,9 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	 */
 	protected void refreshViewer(Object object,
 			boolean refreshRepositoriesFolders) {
-		if (treeViewer == null)
+		if (treeViewer == null || treeViewer.getControl() == null || treeViewer.getControl().isDisposed()) {
 			return;
+		}
 		if (refreshRepositoriesFolders) {
 			try {
 				MercurialEclipsePlugin.getRepoManager().refreshRepositories(
@@ -405,10 +391,11 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
-		if (object == null)
+		if (object == null) {
 			treeViewer.refresh();
-		else
+		} else {
 			treeViewer.refresh(object);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -427,8 +414,9 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	}
 
 	public void collapseAll() {
-		if (treeViewer == null)
+		if (treeViewer == null) {
 			return;
+		}
 		treeViewer.getControl().setRedraw(false);
 		treeViewer.collapseToLevel(treeViewer.getInput(),
 				AbstractTreeViewer.ALL_LEVELS);
