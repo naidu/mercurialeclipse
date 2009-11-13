@@ -218,7 +218,7 @@ public abstract class AbstractMercurialTestCase extends TestCase {
 		builder.redirectErrorStream(true);
 		Process process = builder.start();
 		LineNumberReader err = null;
-		String result = "";
+		StringBuilder result = new StringBuilder("");
 		try {
 			err = new LineNumberReader(new InputStreamReader(
 
@@ -226,19 +226,20 @@ public abstract class AbstractMercurialTestCase extends TestCase {
 		int ret = process.waitFor();
 		String line = err.readLine();
 		while (line != null) {
-			result += "\n" + line;
+			result.append("\n");
+			result.append(line);
 			line = err.readLine();
 		}
 		if (ret != 0) {
 			throw new RuntimeException(
-					"Cannot clone test repository. Err-Output:".concat(result));
+					"Cannot clone test repository. Err-Output:".concat(result.toString()));
 		}
 		} finally {
 			if (err != null) {
 				err.close();
 			}
 		}
-		return result;
+		return result.toString();
 	}
 
 	/*
