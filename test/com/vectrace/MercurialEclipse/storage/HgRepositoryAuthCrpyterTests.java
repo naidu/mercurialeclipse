@@ -49,8 +49,8 @@ public class HgRepositoryAuthCrpyterTests extends TestCase {
 
 	public void testWrongCrypt() throws Exception {
 		try {
-			SecretKey key = HgRepositoryAuthCrypter.generateKey();
-			HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create(keyFile);
+			HgRepositoryAuthCrypter.generateKey();
+			HgRepositoryAuthCrypterFactory.create(keyFile);
 		} catch (InvalidKeyException ex) {
 			return;
 		}

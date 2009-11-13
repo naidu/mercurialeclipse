@@ -315,7 +315,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	public static String getDefaultEncoding(IProject project) {
-		if (project != null && getDefaultEncoding().equals(Charset.defaultCharset())) {
+		if (project != null && getDefaultEncoding().equals(Charset.defaultCharset().name())) {
 			try {
 				return project.getDefaultCharset();
 			} catch (CoreException ex) {

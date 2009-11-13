@@ -20,6 +20,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
@@ -64,7 +66,7 @@ public class HgRepositoryAuthCrypterFactory {
 			int offset = 0;
 			int numRead = 0;
 			while (offset < bytes.length
-				   && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
+				&& (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
 				offset += numRead;
 			}
 			if (offset < bytes.length) {
@@ -89,9 +91,27 @@ public class HgRepositoryAuthCrypterFactory {
 
 	private static void secureKeyFile(File file) {
 		// Ensure file availability only for user
-		file.setReadable(false, false);
-		file.setReadable(true, true);
-		file.setWritable(false, false);
-		file.setWritable(true, true);
+		List<String> chmod = new ArrayList<String>(3);
+
+		if (File.separatorChar == '\\') {
+			chmod.add("cacls");
+			chmod.add(file.getAbsolutePath());
+			chmod.add("/T");
+			chmod.add("/G");
+			// TODO: find a better method as it is a possible security hole.
+			// property can be overridden at eclipse startup.
+			chmod.add(System.getProperty("user.name") + ":f");
+			chmod.add("/R");
+			chmod.add("Everyone");
+		} else {
+			chmod.add("chmod");
+			chmod.add("600");
+			chmod.add(file.getAbsolutePath());
+		}
+		try {
+			Runtime.getRuntime().exec(chmod.toArray(new String[] {}));
+		} catch (IOException ex) {
+			MercurialEclipsePlugin.logError("Unable to set permission on file", ex);
+		}
 	}
 }
