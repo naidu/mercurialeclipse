@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Adam Berkes (Intland) - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -46,7 +47,7 @@ public class HgRepositoryAuthCrypterFactory {
 	public static HgRepositoryAuthCrypter create() {
 		try {
 			File keyFile = MercurialEclipsePlugin.getDefault().getStateLocation().append(DEFAULT_KEY_FILENAME).toFile();
-			if (keyFile != null && keyFile.isFile()) {
+			if (keyFile.isFile()) {
 				return create(keyFile);
 			}
 			SecretKey key = HgRepositoryAuthCrypter.generateKey();
