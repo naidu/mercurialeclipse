@@ -9,7 +9,8 @@
  *     Jerome Negre              - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch			 - small changes
- *     adam.berkes@intland.com
+ *     Adam Berkes (Intland)     - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -119,8 +120,10 @@ public class RevisionChooserDialog extends Dialog {
 		createHeadTabItem(tabFolder);
 		createRevisionTabItem(tabFolder);
 		createTagTabItem(tabFolder);
-		// This is a sublist of heads: unnecessary duplication to show.
-		// createBranchTabItem(tabFolder);
+		// <wrong>This is a sublist of heads: unnecessary duplication to show.</wrong>
+		// The branch tab shows also *inactive* branches, which do *not* have heads.
+		// it make sense to show it to see the project state at given branch
+		createBranchTabItem(tabFolder);
 		try {
 			if (MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
 					ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
