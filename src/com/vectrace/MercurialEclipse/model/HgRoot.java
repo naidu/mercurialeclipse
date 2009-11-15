@@ -16,6 +16,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
@@ -43,6 +46,7 @@ public class HgRoot extends File {
 	private Charset encoding;
 	private Charset fallbackencoding;
 	private File config;
+	private final Path path;
 
 	public HgRoot(String pathname) throws IOException {
 		this(new File(pathname));
@@ -50,6 +54,7 @@ public class HgRoot extends File {
 
 	public HgRoot(File file) throws IOException {
 		super(file.getCanonicalPath());
+		path = new Path(getAbsolutePath());
 	}
 
 	public void setEncoding(Charset charset) {
@@ -130,6 +135,10 @@ public class HgRoot extends File {
 		}
 		// +1 is to remove the file separator / at the start of the relative path
 		return fullPath.substring(getPath().length() + 1);
+	}
+
+	public IPath toAbsolute(IPath relative){
+		return path.append(relative);
 	}
 
 	@Override
