@@ -119,6 +119,15 @@ public class ResourceUtils {
 	}
 
 	/**
+	 * @param path a path to possibly non-existing or not mapped resource
+	 * @return a (file) representing given resource
+	 */
+	public static IFile getFileHandle(IPath path){
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		return root.getFileForLocation(path);
+	}
+
+	/**
 	 * @param resource a handle to possibly non-existing resource
 	 * @return a (file) path representing given resource
 	 */
