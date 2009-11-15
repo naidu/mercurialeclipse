@@ -98,7 +98,7 @@ public class OutgoingPage extends IncomingPage {
 
 
 			IPath hgRoot = new Path(cs.getHgRoot().getPath());
-			IPath fileRelPath = clickedFileStatus.getPath();
+			IPath fileRelPath = clickedFileStatus.getRootRelativePath();
 			IPath fileAbsPath = hgRoot.append(fileRelPath);
 			IFile file = getProject().getWorkspace().getRoot()
 			.getFileForLocation(fileAbsPath);

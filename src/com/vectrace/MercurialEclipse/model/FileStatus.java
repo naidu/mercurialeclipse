@@ -34,9 +34,12 @@ public class FileStatus {
 
 	private final Action action;
 	private final IPath path;
+	private final HgRoot hgRoot;
+	private IPath absPath;
 
-	public FileStatus(Action action, String path) {
+	public FileStatus(Action action, String path, HgRoot hgRoot) {
 		this.action = action;
+		this.hgRoot = hgRoot;
 		this.path = new Path(path);
 	}
 
@@ -44,8 +47,15 @@ public class FileStatus {
 		return action;
 	}
 
-	public IPath getPath() {
+	public IPath getRootRelativePath() {
 		return path;
+	}
+
+	public IPath getAbsolutePath(){
+		if(absPath == null){
+			absPath = hgRoot.toAbsolute(getRootRelativePath());
+		}
+		return absPath;
 	}
 
 	@Override

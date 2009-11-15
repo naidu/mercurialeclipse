@@ -261,7 +261,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				ret = changeSet.getUser();
 				break;
 			case 5:
-				ret = changeSet.getDate();
+				ret = changeSet.getDateString();
 				break;
 			case 6:
 				ret = changeSet.getSummary();

@@ -369,7 +369,7 @@ public class SWTWidgetHelper {
 			@Override
 			public String getText(Object element) {
 				ChangeSet cs = (ChangeSet) element;
-				return (cs.toString().concat("\t").concat(cs.getDate()).concat( //$NON-NLS-1$
+				return (cs.toString().concat("\t").concat(cs.getDateString()).concat( //$NON-NLS-1$
 				"\t").concat(cs.getUser())); //$NON-NLS-1$
 			}
 		});

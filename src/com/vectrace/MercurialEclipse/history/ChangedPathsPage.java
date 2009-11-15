@@ -168,7 +168,7 @@ public class ChangedPathsPage {
 		}
 		MercurialRevision entry = (MercurialRevision) ss.getFirstElement();
 		textViewer.setDocument(new Document(entry.getChangeSet()
-				.getDescription()));
+				.getComment()));
 		changePathsViewer.setInput(entry);
 	}
 

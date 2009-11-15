@@ -50,26 +50,6 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  */
 public class MercurialHistory extends FileHistory {
 
-	private static final class ChangeSetComparator implements
-	Comparator<ChangeSet>, Serializable {
-
-		private static final long serialVersionUID = 6661721027440425773L;
-
-		public int compare(ChangeSet o1, ChangeSet o2) {
-			int result = o2.getChangesetIndex() - o1.getChangesetIndex();
-
-			// we need to cover the situation when repo-indices are the same
-			if (result == 0 && o1.getDate() != null && o2.getDate() != null) {
-				int dateCompare = o2.getRealDate().compareTo(o1.getRealDate());
-				if (dateCompare != 0) {
-					result = dateCompare;
-				}
-			}
-
-			return result;
-		}
-	}
-
 	private static final class RevisionComparator implements
 	Comparator<MercurialRevision>, Serializable {
 
@@ -79,8 +59,8 @@ public class MercurialHistory extends FileHistory {
 			int result = o2.getRevision() - o1.getRevision();
 
 			// we need to cover the situation when repo-indices are the same
-			if (result == 0 && o1.getChangeSet().getDate() != null
-					&& o2.getChangeSet().getDate() != null) {
+			if (result == 0 && o1.getChangeSet().getDateString() != null
+					&& o2.getChangeSet().getDateString() != null) {
 				int dateCompare = o2.getChangeSet().getRealDate().compareTo(
 						o1.getChangeSet().getRealDate());
 				if (dateCompare != 0) {
