@@ -15,12 +15,22 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.resources.mapping.ModelProvider;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.jface.viewers.ILabelDecorator;
+import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.swt.graphics.Image;
+import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
+import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
 import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.core.mapping.provider.SynchronizationContext;
+import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
+import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipantDescriptor;
@@ -35,13 +45,27 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 
 /**
  * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class?
  * Why not {@link SubscriberParticipant}???
  * @author Andrei
  */
-public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant {
+@SuppressWarnings("restriction")
+public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
+	implements IChangeSetProvider, ISynchronizationScopeParticipant {
+
+	private final static class ChangesetDecorator extends LabelProvider implements ILabelDecorator {
+
+		public String decorateText(String text, Object element) {
+			return text;
+		}
+
+		public Image decorateImage(Image image, Object element) {
+			return image;
+		}
+	}
 
 	private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION"; //$NON-NLS-1$
 	private static final String PROJECTS = "PROJECTS";
@@ -49,6 +73,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	private String secondaryId;
 	private HgRepositoryLocation repositoryLocation;
 	private Set<IProject> restoredProjects;
+	private HgChangeSetCapability changeSetCapability;
 
 	public MercurialSynchronizeParticipant() {
 		super();
@@ -138,6 +163,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 				repoProjects.toArray(new IProject[0]));
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		HgSubscriberScopeManager manager2 = new HgSubscriberScopeManager(scope.getMappings(), subscriber);
+		subscriber.setParticipant(this);
 		return new HgSubscriberMergeContext(subscriber, manager2);
 	}
 
@@ -191,6 +217,17 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			// add our action group in any case
 			configuration.addActionContribution(createMergeActionGroup());
 		}
+		configuration.addLabelDecorator(getLabelDecorator(configuration));
+	}
+
+	/**
+	 * @param configuration
+	 * @return
+	 */
+	private ILabelDecorator getLabelDecorator(ISynchronizePageConfiguration configuration) {
+
+		return new ChangesetDecorator();
+
 	}
 
 	@Override
@@ -215,4 +252,23 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		super.run(part);
 	}
 
+	public ChangeSetCapability getChangeSetCapability() {
+		if(changeSetCapability == null) {
+			changeSetCapability = new HgChangeSetCapability(this);
+		}
+		return changeSetCapability;
+	}
+
+	@Override
+	public ModelProvider[] getEnabledModelProviders() {
+		ModelProvider[] providers = getContext().getScope().getModelProviders();
+
+		return providers;
+	}
+
+	public ResourceMapping[] handleContextChange(ISynchronizationScope scope,
+			IResource[] resources, IProject[] projects) {
+		// TODO Auto-generated method stub
+		return new ResourceMapping[0];
+	}
 }

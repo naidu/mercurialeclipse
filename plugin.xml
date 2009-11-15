@@ -1362,4 +1362,67 @@
             objectClass="org.eclipse.core.resources.IProject">
       </page>
    </extension>
+   
+   <extension
+         point="org.eclipse.ui.navigator.navigatorContent">
+      <navigatorContent
+            activeByDefault="true"
+            contentProvider="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetContentProvider"
+            icon="icons/elcl16/changeset_obj.gif"
+            id="com.vectrace.MercurialEclipse.changeSetContent"
+            labelProvider="com.vectrace.MercurialEclipse.synchronize.cs.SyncViewLabelProvider"
+            name="Hg Change Sets"
+            priority="normal"> 
+         <enablement>
+           <or>         
+            <instanceof value="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"/>
+            <instanceof value="com.vectrace.MercurialEclipse.model.ChangeSet"/>
+            <instanceof value="org.eclipse.core.resources.IResource"/>
+           </or>
+         </enablement>
+         <commonSorter
+               class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetSorter"
+               id="com.vectrace.MercurialEclipse.changeSetSorter"/>
+       <!--  <actionProvider
+               class="org.eclipse.team.internal.ccvs.ui.mappings.ChangeSetActionProvider"
+               id="com.vectrace.MercurialEclipse.changeSetActions"/> -->
+       </navigatorContent>
+   </extension>   
+   
+   <extension
+         point="org.eclipse.team.ui.teamContentProviders">
+      <teamContentProvider
+            contentExtensionId="com.vectrace.MercurialEclipse.changeSetContent"
+            icon="icons/elcl16/changeset_obj.gif"
+            modelProviderId="com.vectrace.MercurialEclipse.changeSetModel"
+            supportsFlatLayout="true">
+      </teamContentProvider>
+   </extension>
+   
+   <extension
+         id="changeSetModel"
+         name="Hg Change Sets"
+         point="org.eclipse.core.resources.modelProviders">
+      <modelProvider
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider">
+      </modelProvider>
+      <extends-model id="org.eclipse.core.resources.modelProvider"/>
+   </extension>
+   
+   <extension
+         point="org.eclipse.core.runtime.adapters">
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.ChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
+   
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider$HgModelScopeParticipantFactory">
+         <adapter type="org.eclipse.team.core.mapping.IResourceMappingMerger"/>
+         <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
+         <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
+      </factory>   
+   </extension>   
 </plugin>

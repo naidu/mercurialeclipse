@@ -283,7 +283,9 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
 		MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
-		return new MercurialSynchronizeParticipant(ctx, repo);
+		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx, repo);
+		subscriber.setParticipant(participant2);
+		return participant2;
 	}
 
 	public void init(IWorkbench workbench, IStructuredSelection selection) {

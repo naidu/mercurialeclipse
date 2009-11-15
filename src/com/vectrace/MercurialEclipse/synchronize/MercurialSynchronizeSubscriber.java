@@ -82,12 +82,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private ISubscriberChangeEvent[] lastEvents;
 
+	private MercurialSynchronizeParticipant participant;
+
 	public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
 		Assert.isNotNull(synchronizationScope);
 		currentCsMap = new ConcurrentHashMap<HgRoot, String>();
 		currentBranchMap = new ConcurrentHashMap<HgRoot, String>();
 		debug = MercurialEclipsePlugin.getDefault().isDebugging();
 		scope = synchronizationScope;
+		synchronizationScope.setSubscriber(this);
 		sema = new Semaphore(1, true);
 	}
 
@@ -530,6 +533,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
+	public RepositorySynchronizationScope getScope() {
+		return scope;
+	}
+
 	protected HgRepositoryLocation getRepo(){
 		return scope.getRepositoryLocation();
 	}
@@ -581,5 +588,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		super.fireTeamResourceChange(deltas);
 	}
 
+	public void setParticipant(MercurialSynchronizeParticipant participant){
+		this.participant = participant;
+	}
+
+	public MercurialSynchronizeParticipant getParticipant() {
+		return participant;
+	}
 
 }
