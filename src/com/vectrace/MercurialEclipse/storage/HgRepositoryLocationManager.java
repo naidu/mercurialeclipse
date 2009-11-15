@@ -385,6 +385,11 @@ public class HgRepositoryLocationManager {
 	 */
 	public HgRepositoryLocation getRepoLocation(String url, String user,
 			String pass) throws HgException {
+		try {
+			getProjectRepos();
+		} catch (IOException e) {
+			throw new HgException("Failed to read project repositories", e);
+		}
 		HgRepositoryLocation location = matchRepoLocation(url);
 		if (location != null) {
 			if (user == null || user.length() == 0 || user.equals(location.getUser())) {
