@@ -23,6 +23,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
+import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.SubscriberScopeManager;
 import org.eclipse.ui.IPropertyListener;
@@ -58,6 +59,14 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 			}
 		};
 		MercurialTeamProvider.addBranchListener(branchListener);
+	}
+
+	@Override
+	public ISynchronizationScope getScope() {
+		// Does NOT return expected (our) scope, but ResourceMappingScope...
+		// super.getScope();
+		RepositorySynchronizationScope scope2 = ((MercurialSynchronizeSubscriber) getSubscriber()).getScope();
+		return scope2;
 	}
 
 	public void update(Observable o, Object arg) {
