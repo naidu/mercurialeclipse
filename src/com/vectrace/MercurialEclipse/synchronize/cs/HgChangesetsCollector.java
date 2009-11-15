@@ -35,12 +35,11 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 @SuppressWarnings("restriction")
 public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
-	public static final String HG_CHECKED_IN_COLLECTOR = "hallo";
 	private final MercurialSynchronizeParticipant participant;
 
-	public HgChangesetsCollector(MercurialSynchronizeParticipant participant, ISynchronizePageConfiguration configuration) {
+	public HgChangesetsCollector(ISynchronizePageConfiguration configuration) {
 		super(configuration);
-		this.participant = participant;
+		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();
 	}
 
 	@Override

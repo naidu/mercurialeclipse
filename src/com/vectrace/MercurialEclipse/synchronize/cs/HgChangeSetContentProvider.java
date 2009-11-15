@@ -351,7 +351,7 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 
 	private Object[] getRootElements() {
 		if (!collectorInitialized) {
-			initializeCheckedInChangeSetCollector(getChangeSetCapability());
+			initializeChangeSetCollector(getChangeSetCapability());
 			collectorInitialized = true;
 		}
 		List<ChangeSet> result = new ArrayList<ChangeSet>();
@@ -690,10 +690,9 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 		return null;
 	}
 
-	private void initializeCheckedInChangeSetCollector(ChangeSetCapability csc) {
+	private void initializeChangeSetCollector(ChangeSetCapability csc) {
 		if (csc.supportsCheckedInChangeSets()) {
-			checkedInCollector = ((HgChangeSetCapability)csc).createCheckedInChangeSetCollector(getConfiguration());
-			getConfiguration().setProperty(HgChangesetsCollector.HG_CHECKED_IN_COLLECTOR, checkedInCollector);
+			checkedInCollector = ((HgChangeSetCapability)csc).createSyncInfoSetChangeSetCollector(getConfiguration());
 			checkedInCollector.getSets();
 			checkedInCollector.addListener(collectorListener);
 			// XXX Andrei: disabled temporarily

@@ -21,9 +21,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ModelProvider;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.viewers.ILabelDecorator;
-import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeManager;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
@@ -55,17 +52,6 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 @SuppressWarnings("restriction")
 public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	implements IChangeSetProvider, ISynchronizationScopeParticipant {
-
-	private final static class ChangesetDecorator extends LabelProvider implements ILabelDecorator {
-
-		public String decorateText(String text, Object element) {
-			return text;
-		}
-
-		public Image decorateImage(Image image, Object element) {
-			return image;
-		}
-	}
 
 	private static final String REPOSITORY_LOCATION = "REPOSITORY_LOCATION"; //$NON-NLS-1$
 	private static final String PROJECTS = "PROJECTS";
@@ -217,17 +203,6 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			// add our action group in any case
 			configuration.addActionContribution(createMergeActionGroup());
 		}
-		configuration.addLabelDecorator(getLabelDecorator(configuration));
-	}
-
-	/**
-	 * @param configuration
-	 * @return
-	 */
-	private ILabelDecorator getLabelDecorator(ISynchronizePageConfiguration configuration) {
-
-		return new ChangesetDecorator();
-
 	}
 
 	@Override
@@ -254,7 +229,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	public ChangeSetCapability getChangeSetCapability() {
 		if(changeSetCapability == null) {
-			changeSetCapability = new HgChangeSetCapability(this);
+			changeSetCapability = new HgChangeSetCapability();
 		}
 		return changeSetCapability;
 	}
