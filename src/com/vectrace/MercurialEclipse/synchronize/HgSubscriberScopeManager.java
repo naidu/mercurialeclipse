@@ -43,6 +43,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 	public static final int OUTGOING = -2;
 	public static final int LOCAL = -3;
 	private final IPropertyListener branchListener;
+	private boolean disposed;
 
 	public HgSubscriberScopeManager(ResourceMapping[] inputMappings, MercurialSynchronizeSubscriber subscriber) {
 		super(HgSubscriberScopeManager.class.getSimpleName(), inputMappings, subscriber, false);
@@ -117,6 +118,10 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 
 	@Override
 	public void dispose() {
+		if(disposed){
+			return;
+		}
+		disposed = true;
 		MercurialStatusCache.getInstance().deleteObserver(this);
 		IncomingChangesetCache.getInstance().deleteObserver(this);
 		OutgoingChangesetCache.getInstance().deleteObserver(this);
