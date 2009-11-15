@@ -23,22 +23,26 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 	@Override
 	public Image getImage(Object element) {
-		Image image = super.getImage(element);
-		if(image == null) {
-			if (element instanceof ChangeSet) {
-				image = MercurialEclipsePlugin.getImage("elcl16/changeset_obj.gif");
-			} else if (element instanceof ChangesetGroup){
-				ChangesetGroup group = (ChangesetGroup) element;
-				if(group.getDirection() == Direction.OUTGOING){
-					image = MercurialEclipsePlugin.getImage("actions/commit.gif");
-				} else {
-					image = MercurialEclipsePlugin.getImage("actions/update.gif");
-				}
+		return super.getImage(element);
+	}
+
+	@Override
+	protected Image getDelegateImage(Object element) {
+		Image image = null;
+		if (element instanceof ChangeSet) {
+			image = MercurialEclipsePlugin.getImage("elcl16/changeset_obj.gif");
+		} else if (element instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) element;
+			if(group.getDirection() == Direction.OUTGOING){
+				image = MercurialEclipsePlugin.getImage("actions/commit.gif");
+			} else {
+				image = MercurialEclipsePlugin.getImage("actions/update.gif");
 			}
+		} else {
+			image = super.getDelegateImage(element);
 		}
 		return image;
 	}
-
 
 	@Override
 	protected String getDelegateText(Object elementOrPath) {
