@@ -384,7 +384,7 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 
 	synchronized WorkingChangeSet getUnassignedSet() {
 		if (unassignedDiffs == null) {
-			unassignedDiffs = new WorkingChangeSet("Unassigned Changeset");
+			unassignedDiffs = new WorkingChangeSet("Uncommitted");
 			addAllUnassignedToUnassignedSet();
 			unassignedDiffs.addListener(diffTreeListener);
 		}

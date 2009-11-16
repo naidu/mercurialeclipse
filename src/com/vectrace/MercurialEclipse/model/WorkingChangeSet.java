@@ -34,7 +34,7 @@ public class WorkingChangeSet extends ChangeSet {
 	private final List<IPropertyChangeListener> listeners;
 
 	public WorkingChangeSet(String name) {
-		super(-1, "Uncommitted", null, null, "", null, "", null, null); //$NON-NLS-1$
+		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 	}
