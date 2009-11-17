@@ -92,6 +92,10 @@ public class WorkingChangeSet extends ChangeSet {
 		return changeset + " (" + size + ")";
 	}
 
+	public void clear(){
+		files = new HashSet<IFile>();
+	}
+
 	public void beginInput() {
 		// TODO Auto-generated method stub
 
