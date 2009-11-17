@@ -365,6 +365,9 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public boolean equals(Object obj) {
+		if(this == obj){
+			return true;
+		}
 		if (obj instanceof ChangeSet) {
 			ChangeSet other = (ChangeSet) obj;
 			if(getChangeset().equals(other.getChangeset())){
@@ -373,6 +376,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			if (date != null && date.equals(other.getDateString())) {
 				return true;
 			}
+			// TODO move this line up to improve performance
+			// if (getChangesetIndex() != other.getChangesetIndex()) return false;
 			return getChangesetIndex() == other.getChangesetIndex();
 		}
 		return false;
