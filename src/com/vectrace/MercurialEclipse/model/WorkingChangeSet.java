@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -32,11 +34,14 @@ public class WorkingChangeSet extends ChangeSet {
 	private static final String REMOVED = "removed";
 	private static final String ADDED = "added";
 	private final List<IPropertyChangeListener> listeners;
+	private final List<PropertyChangeEvent> eventCache;
+	private boolean cachingOn;
 
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
+		eventCache = new ArrayList<PropertyChangeEvent>();
 	}
 
 	public void add(IFile file){
@@ -44,8 +49,14 @@ public class WorkingChangeSet extends ChangeSet {
 		files = new HashSet<IFile>(files2);
 		boolean added = files.add(file);
 		if(added) {
-			for (IPropertyChangeListener listener : listeners) {
-				listener.propertyChange(new PropertyChangeEvent(this, ADDED, null, file));
+			PropertyChangeEvent event = new PropertyChangeEvent(this, ADDED, null, file);
+			// we need only one event
+			if(cachingOn && eventCache.isEmpty()){
+				eventCache.add(event);
+			} else {
+				for (IPropertyChangeListener listener : listeners) {
+					listener.propertyChange(event);
+				}
 			}
 		}
 	}
@@ -56,8 +67,13 @@ public class WorkingChangeSet extends ChangeSet {
 		files = new HashSet<IFile>(files2);
 		boolean removed = files.remove(file);
 		if(removed) {
-			for (IPropertyChangeListener listener : listeners) {
-				listener.propertyChange(new PropertyChangeEvent(this, REMOVED, file, null));
+			PropertyChangeEvent event = new PropertyChangeEvent(this, REMOVED, file, null);
+			if(cachingOn && eventCache.isEmpty()){
+				eventCache.add(event);
+			} else {
+				for (IPropertyChangeListener listener : listeners) {
+					listener.propertyChange(event);
+				}
 			}
 		}
 	}
@@ -97,12 +113,17 @@ public class WorkingChangeSet extends ChangeSet {
 	}
 
 	public void beginInput() {
-		// TODO Auto-generated method stub
-
+		cachingOn = true;
 	}
 
 	public void endInput(IProgressMonitor monitor) {
-		// TODO Auto-generated method stub
-
+		cachingOn = false;
+		Collections.reverse(eventCache);
+		for (IPropertyChangeListener listener : listeners) {
+			for (PropertyChangeEvent event : eventCache) {
+				listener.propertyChange(event);
+			}
+		}
+		eventCache.clear();
 	}
 }
