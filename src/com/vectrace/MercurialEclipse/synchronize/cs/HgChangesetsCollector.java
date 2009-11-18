@@ -15,7 +15,6 @@ import java.util.SortedSet;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
-import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoSetChangeSetCollector;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
@@ -23,8 +22,12 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
+import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.AbstractRemoteCache;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
@@ -88,12 +91,29 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	private void initRemote(AbstractRemoteCache cache) {
 		HgRepositoryLocation repo = participant.getRepositoryLocation();
 		ISynchronizationContext context = participant.getContext();
-		ISynchronizationScope scope = context.getScope();
-		IProject[] projects = scope.getProjects();
+		RepositorySynchronizationScope scope = (RepositorySynchronizationScope) context.getScope();
+		MercurialSynchronizeSubscriber subscriber = scope.getSubscriber();
+		IProject[] projects = subscriber.getProjects();
+		if(projects.length == 0){
+			return;
+		}
+		HgRoot root;
+		try {
+			root = MercurialTeamProvider.getHgRoot(projects[0]);
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
+			return;
+		}
+		String currentBranch = subscriber.getCurrentBranch(projects[0], root);
+		if(MercurialSynchronizeSubscriber.isUncommitedBranch(currentBranch)) {
+			if (cache instanceof IncomingChangesetCache) {
+				return;
+			}
+			currentBranch = MercurialSynchronizeSubscriber.getRealBranchName(currentBranch);
+		}
 		for (IProject project : projects) {
 			try {
-				// XXX enable branching
-				SortedSet<ChangeSet> changeSets = cache.getChangeSets(project, repo, null);
+				SortedSet<ChangeSet> changeSets = cache.getChangeSets(project, repo, currentBranch);
 				for (ChangeSet changeSet : changeSets) {
 					add(changeSet);
 				}
