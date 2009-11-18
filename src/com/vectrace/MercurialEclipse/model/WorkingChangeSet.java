@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -29,7 +31,7 @@ import org.eclipse.jface.util.PropertyChangeEvent;
  *
  * @author Andrei
  */
-public class WorkingChangeSet extends ChangeSet {
+public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	private static final String REMOVED = "removed";
 	private static final String ADDED = "added";
@@ -125,5 +127,15 @@ public class WorkingChangeSet extends ChangeSet {
 			}
 		}
 		eventCache.clear();
+	}
+
+	public void update(Observable o, Object arg) {
+//		if (resource instanceof IFile) {
+//			if (STATUS_CACHE.isClean(resource) || !resource.exists()) {
+//				uncommittedSet.remove(resource);
+//			} else {
+//				uncommittedSet.add((IFile) resource);
+//			}
+//		}
 	}
 }

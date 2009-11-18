@@ -18,6 +18,7 @@ import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
 
 /**
@@ -28,6 +29,8 @@ public class HgChangeSetModelProvider extends ModelProvider {
 
 	public final static String ID = "com.vectrace.MercurialEclipse.changeSetModel";
 	private static HgChangeSetModelProvider provider;
+	private boolean participantCreated;
+	private MercurialSynchronizeSubscriber subscriber;
 
 	public HgChangeSetModelProvider() {
 		super();
@@ -45,6 +48,14 @@ public class HgChangeSetModelProvider extends ModelProvider {
 		return provider;
 	}
 
+	public boolean isParticipantCreated() {
+		return participantCreated;
+	}
+
+	public MercurialSynchronizeSubscriber getSubscriber() {
+		return subscriber;
+	}
+
 	public static class HgModelScopeParticipantFactory implements
 			ISynchronizationScopeParticipantFactory, IAdapterFactory {
 
@@ -54,8 +65,12 @@ public class HgChangeSetModelProvider extends ModelProvider {
 
 		public ISynchronizationScopeParticipant createParticipant(ModelProvider provider1,
 				ISynchronizationScope scope) {
+			HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider)provider1;
 			RepositorySynchronizationScope rscope = (RepositorySynchronizationScope) scope;
-			return rscope.getSubscriber().getParticipant();
+			MercurialSynchronizeSubscriber subscriber = rscope.getSubscriber();
+			modelProvider.participantCreated = true;
+			modelProvider.subscriber = subscriber;
+			return subscriber.getParticipant();
 		}
 
 		@SuppressWarnings("unchecked")
