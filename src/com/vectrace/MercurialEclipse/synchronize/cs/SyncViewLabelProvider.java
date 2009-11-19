@@ -48,10 +48,14 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 	protected String getDelegateText(Object elementOrPath) {
 		if(elementOrPath instanceof ChangeSet){
 			ChangeSet cset = (ChangeSet) elementOrPath;
-			StringBuilder sb = new StringBuilder(cset.toString());
+			StringBuilder sb = new StringBuilder();
 			if(!(cset instanceof WorkingChangeSet)){
-				sb.append(" (").append(cset.getAuthor()).append(")");
-				sb.append(", ").append(cset.getAgeDate());
+				sb.append(cset.getChangesetIndex());
+				sb.append(" [").append(cset.getAuthor()).append("]");
+				sb.append(" (").append(cset.getAgeDate()).append(")");
+				sb.append(" ").append(getShortComment(cset));
+			} else {
+				sb.append(cset.toString());
 			}
 			return sb.toString();
 		}
@@ -68,5 +72,13 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			delegateText = " " + delegateText;
 		}
 		return delegateText;
+	}
+
+	private String getShortComment(ChangeSet cset) {
+		String comment = cset.getComment();
+		if(comment.length() > 50){
+			comment = comment.substring(0, 50) + "...";
+		}
+		return comment;
 	}
 }

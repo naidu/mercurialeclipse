@@ -439,6 +439,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private void setDescription(String description) {
 		if (description != null) {
 			this.description = description;
+		} else {
+			this.description = "";
 		}
 	}
 
