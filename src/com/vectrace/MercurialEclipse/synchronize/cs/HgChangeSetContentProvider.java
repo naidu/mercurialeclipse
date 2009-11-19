@@ -68,15 +68,7 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 				Utils.asyncExec(new Runnable() {
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
-						// TODO: Hide/Show uncommited?
-						/* if (!isVisibleInMode(uncommittedSet)) {
-							treeViewer.remove(uncommittedSet);
-						} else if (!isVisibleInViewer(uncommittedSet)) {
-							Object input1 = treeViewer.getInput();
-							treeViewer.add(input1, uncommittedSet);
-						} else */{
-							treeViewer.refresh(uncommittedSet, true);
-						}
+						treeViewer.refresh(uncommittedSet, true);
 					}
 				}, getTreeViewer());
 			}
@@ -87,228 +79,56 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 
 		public void setAdded(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
 			if (isVisibleInMode((ChangeSet)set)) {
-				Utils.syncExec(new Runnable() {
-					public void run() {
-						if(((ChangeSet)set).getDirection() == Direction.INCOMING){
-							incoming.getChangesets().add((ChangeSet) set);
-							getTreeViewer().refresh(incoming, true);
-						} else {
-							outgoing.getChangesets().add((ChangeSet) set);
-							getTreeViewer().refresh(outgoing, true);
+				final ChangesetGroup toRefresh = ((ChangeSet) set).getDirection() == Direction.INCOMING ? incoming
+						: outgoing;
+				boolean added = toRefresh.getChangesets().add((ChangeSet) set);
+				if(added) {
+					Utils.asyncExec(new Runnable() {
+						public void run() {
+							getTreeViewer().refresh(toRefresh, true);
 						}
-					}
-				}, getTreeViewer());
-			}
-		}
-
-		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault,
-				final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
-			if (isVisibleInMode((ChangeSet)set) || isVisibleInMode((ChangeSet)previousDefault)) {
-				Utils.asyncExec(new Runnable() {
-					public void run() {
-						TreeViewer treeViewer = getTreeViewer();
-						if (set == null) {
-							// unset default changeset
-							treeViewer.update(previousDefault, null);
-						} else if (previousDefault != null) {
-							treeViewer.update(new Object[] {previousDefault, set}, null);
-						} else {
-							// when called for the first time previous default change set is null
-							treeViewer.update(set, null);
-						}
-					}
-				}, getTreeViewer());
+					}, getTreeViewer());
+				}
 			}
 		}
 
 		public void setRemoved(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
 			if (isVisibleInMode((ChangeSet)set)) {
-				Utils.syncExec(new Runnable() {
-					public void run() {
-						if(((ChangeSet)set).getDirection() == Direction.INCOMING){
-							incoming.getChangesets().remove(set);
-							getTreeViewer().refresh(incoming, true);
-						} else {
-							outgoing.getChangesets().remove(set);
-							getTreeViewer().refresh(outgoing, true);
+				final ChangesetGroup toRefresh = ((ChangeSet) set).getDirection() == Direction.INCOMING ? incoming
+						: outgoing;
+				boolean removed = toRefresh.getChangesets().remove(set);
+				if(removed) {
+					Utils.asyncExec(new Runnable() {
+						public void run() {
+							getTreeViewer().refresh(toRefresh, true);
 						}
-					}
-				}, getTreeViewer());
+					}, getTreeViewer());
+				}
 			}
+		}
+
+		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault,
+				final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
+			// ignored
 		}
 
 		public void nameChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
-			if (isVisibleInMode((ChangeSet)set)) {
-				Utils.asyncExec(new Runnable() {
-					public void run() {
-						getTreeViewer().update(set, null);
-					}
-				}, getTreeViewer());
-			}
+			// ignored
 		}
 
 		public void resourcesChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet set, final IPath[] paths) {
-			if(!(set instanceof WorkingChangeSet)){
-				return;
-			}
-			final ChangeSet cs = (ChangeSet) set;
-			if (isVisibleInMode(cs)) {
-				Utils.syncExec(new Runnable() {
-					public void run() {
-						TreeViewer treeViewer = getTreeViewer();
-						if (hasChildrenInContext(cs)) {
-							treeViewer.refresh(set, true);
-						}
-					}
-				}, getTreeViewer());
-			}
-			handleSetChange((WorkingChangeSet) set, paths);
-		}
-
-		private void handleSetChange(final WorkingChangeSet set, final IPath[] paths) {
-			try {
-				uncommittedSet.beginInput();
-				IPath root = ResourcesPlugin.getWorkspace().getRoot().getLocation();
-				for (IPath path : paths) {
-					path = root.append(path);
-					boolean isContained = set.contains(path);
-					if (isContained) {
-						uncommittedSet.remove(ResourceUtils.getFileHandle(path));
-					} else {
-						IDiff diff = getContext().getDiffTree().getDiff(path);
-						if (diff != null && !isContainedInSet(diff)) {
-							IResource resource = ResourceDiffTree.getResourceFor(diff);
-							if(resource instanceof IFile) {
-								uncommittedSet.add((IFile) resource);
-							}
-						}
-					}
-				}
-			} finally {
-				uncommittedSet.endInput(null);
-			}
-		}
-
-		private void addSets(TreeViewer treeViewer, ChangeSet[] sets){
-			boolean in = false, out = false;
-			for (ChangeSet set : sets) {
-				if(set.getDirection() == Direction.INCOMING){
-					incoming.getChangesets().add(set);
-					in = true;
-				} else {
-					outgoing.getChangesets().add(set);
-					out = true;
-				}
-			}
-			if(in){
-				treeViewer.refresh(incoming, true);
-			}
-			if(out){
-				treeViewer.refresh(outgoing, true);
-			}
-		}
-
-		private void removeSets(TreeViewer treeViewer, ChangeSet[] sets){
-			boolean in = false, out = false;
-			for (ChangeSet set : sets) {
-				if(set.getDirection() == Direction.INCOMING){
-					incoming.getChangesets().remove(set);
-					in = true;
-				} else {
-					outgoing.getChangesets().remove(set);
-					out = true;
-				}
-			}
-			if(in){
-				treeViewer.refresh(incoming, true);
-			}
-			if(out){
-				treeViewer.refresh(outgoing, true);
-			}
+			// ignored
 		}
 
 		public void changeSetChanges(final CollectorChangeEvent event, IProgressMonitor monitor) {
-			Set<ChangeSet> addedSets = getChanges(event.getAddedSets());
-			final ChangeSet[] visibleAddedSets = getVisibleSets(addedSets);
-			Set<ChangeSet> removedSets = getChanges(event.getRemovedSets());
-			final ChangeSet[] visibleRemovedSets = getVisibleSets(removedSets);
-			Set<ChangeSet> changedSets = getChanges(event.getChangedSets());
-			final ChangeSet[] visibleChangedSets = getVisibleSets(changedSets);
-			if (visibleAddedSets.length > 0 || visibleRemovedSets.length > 0 || visibleChangedSets.length > 0) {
-				Utils.syncExec(new Runnable() {
-					public void run() {
-						TreeViewer treeViewer = getTreeViewer();
-						try {
-							treeViewer.getControl().setRedraw(false);
-							if (visibleAddedSets.length > 0) {
-								addSets(treeViewer, visibleAddedSets);
-							}
-							if (visibleRemovedSets.length > 0) {
-								removeSets(treeViewer, visibleRemovedSets);
-							}
-							for (ChangeSet set : visibleChangedSets) {
-								treeViewer.refresh(set, true);
-							}
-						} finally {
-							treeViewer.getControl().setRedraw(true);
-						}
-					}
-				}, getTreeViewer());
-			}
-			try {
-				uncommittedSet.beginInput();
-
-				for (ChangeSet set: changedSets) {
-					IPath[] paths = event.getChangesFor(set);
-					if (set instanceof WorkingChangeSet && event.getSource().contains(set)) {
-						handleSetChange((WorkingChangeSet) set, paths);
-					} else {
-						for (IPath path : paths) {
-							IDiff diff = getContext().getDiffTree().getDiff(path);
-							if (diff != null && !isContainedInSet(diff)) {
-								IResource resource = ResourceDiffTree.getResourceFor(diff);
-								if(resource instanceof IFile) {
-									uncommittedSet.add((IFile) resource);
-								}
-							}
-						}
-					}
-				}
-			} finally {
-				uncommittedSet.endInput(monitor);
-			}
-		}
-
-
-		private Set<ChangeSet> getChanges(
-				org.eclipse.team.internal.core.subscribers.ChangeSet[] sets) {
-			Set<ChangeSet> csets = new HashSet<ChangeSet>();
-			for (Object cset : sets) {
-				csets.add((ChangeSet) cset);
-			}
-			return csets;
-		}
-
-		private ChangeSet[] getVisibleSets(Set<ChangeSet> addedSets) {
-			Set<ChangeSet> result = new HashSet<ChangeSet>();
-			for (ChangeSet set : addedSets) {
-				if (isVisibleInMode(set)) {
-					result.add(set);
-				}
-			}
-			return result.toArray(new ChangeSet[0]);
+			// ignored
 		}
 	}
 
-	private final WorkingChangeSet uncommittedSet;
 	private HgChangesetsCollector csCollector;
 	private boolean collectorInitialized;
-
-	/**
-	 * Listener that reacts to changes made to the active change set collector
-	 */
+	private final WorkingChangeSet uncommittedSet;
 	private final IChangeSetChangeListener collectorListener;
-
 	private final IPropertyChangeListener uncommittedSetListener;
 	private final ChangesetGroup incoming;
 	private final ChangesetGroup outgoing;
@@ -355,7 +175,6 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 				initCollector();
 				return new Object[0];
 			}
-//			ensureRootsAdded();
 		}
 		if (parent == getModelProvider()) {
 			return getRootElements();
@@ -369,12 +188,6 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 		if(children.length == 0){
 			viewer.add(viewer.getInput(), getRootElements());
 		}
-//		if (getViewer() instanceof CommonViewerAdvisor.NavigableCommonViewer) {
-//			CommonViewerAdvisor.NavigableCommonViewer cv = (CommonViewerAdvisor.NavigableCommonViewer) getViewer();
-//			if(cv.isEmpty()){
-//				cv.add(cv.getInput(), getRootElements());
-//			}
-//		}
 	}
 
 	private Object[] getRootElements() {
@@ -412,6 +225,7 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 		Set<IResource> dirty = getDirtyFiles();
 		try {
 			uncommittedSet.beginInput();
+			uncommittedSet.clear();
 			for (IResource resource : dirty) {
 				if(resource instanceof IFile) {
 					uncommittedSet.add((IFile) resource);
@@ -431,23 +245,6 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 			resources.addAll(STATUS_CACHE.getFiles(bits, project));
 		}
 		return resources;
-	}
-
-	/**
-	 * Return whether the given diff is contained in a set other than
-	 * the unassigned set.
-	 * @param diff the diff
-	 * @return whether the given diff is contained in a set other than
-	 * the unassigned set
-	 */
-	private boolean isContainedInSet(IDiff diff) {
-		Collection<ChangeSet> sets = getAllSets();
-		for (ChangeSet set : sets) {
-			if (set.contains(ResourceDiffTree.getResourceFor(diff))) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	@Override
@@ -546,8 +343,7 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 			if (first instanceof ChangesetGroup) {
 				ChangesetGroup group = (ChangesetGroup) first;
 				Direction direction = group.getDirection();
-				if (isOutgoingVisible()
-						&& (isOutgoing(direction))) {
+				if (isOutgoingVisible()	&& isOutgoing(direction)) {
 					return true;
 				}
 				if(isIncomingVisible() && direction == Direction.INCOMING){
