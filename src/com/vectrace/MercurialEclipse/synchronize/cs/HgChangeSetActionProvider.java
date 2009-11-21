@@ -10,12 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
-import org.eclipse.team.internal.ui.mapping.ResourceModelActionProvider;
+import org.eclipse.team.ui.mapping.SynchronizationActionProvider;
 
 /**
  * @author Andrei
  */
-@SuppressWarnings("restriction")
-public class HgChangeSetActionProvider extends ResourceModelActionProvider {
+public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 
 }
