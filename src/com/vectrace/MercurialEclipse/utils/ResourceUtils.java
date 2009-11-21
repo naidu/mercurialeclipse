@@ -29,6 +29,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.ui.IEditorPart;
@@ -38,6 +39,7 @@ import org.eclipse.ui.ide.ResourceUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -319,5 +321,39 @@ public class ResourceUtils {
 		}
 		set.add(r);
 		return set;
+	}
+
+	/**
+	 * @param o some object which is or can be adopted to resource
+	 * @return given object as resource, may return null
+	 */
+	public static IResource getResource(Object o){
+		if(o instanceof IResource){
+			return (IResource) o;
+		}
+		if(o instanceof ChangeSet){
+			ChangeSet changeSet = (ChangeSet) o;
+			Set<IFile> files = changeSet.getFiles();
+			if(files.size() > 0){
+				IFile file = files.iterator().next();
+				if(files.size() == 1){
+					return file;
+				}
+				return file.getProject();
+			}
+			return null;
+		}
+		if(o instanceof IAdaptable){
+			IAdaptable adaptable = (IAdaptable) o;
+			IResource adapter = (IResource) adaptable.getAdapter(IResource.class);
+			if(adapter != null){
+				return adapter;
+			}
+			adapter = (IResource) adaptable.getAdapter(IFile.class);
+			if(adapter != null){
+				return adapter;
+			}
+		}
+		return null;
 	}
 }
