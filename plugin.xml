@@ -1384,9 +1384,9 @@
          <commonSorter
                class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetSorter"
                id="com.vectrace.MercurialEclipse.changeSetSorter"/>
-       <!--  <actionProvider
-               class="org.eclipse.team.internal.ccvs.ui.mappings.ChangeSetActionProvider"
-               id="com.vectrace.MercurialEclipse.changeSetActions"/> -->
+         <actionProvider
+               class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider"
+               id="com.vectrace.MercurialEclipse.changeSetActions"/>
        </navigatorContent>
    </extension>   
    
