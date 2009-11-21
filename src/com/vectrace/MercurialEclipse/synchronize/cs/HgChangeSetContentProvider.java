@@ -525,14 +525,18 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 		}, getTreeViewer());
 
 		// Only adjust the set of the rest. The others will be handled by the collectors
+
 		try {
+			// XXX the code below should go away ASAP and be replaced with simply listening
+			// on STATUS_CACHE changes.
 			uncommittedSet.beginInput();
 			for (IPath path : removed) {
 				uncommittedSet.remove(ResourceUtils.getFileHandle(root.append(path)));
 			}
 			for (IDiff diff : added) {
 				IResource resource = ResourceDiffTree.getResourceFor(diff);
-				if(resource instanceof IFile && !STATUS_CACHE.isClean(resource)) {
+				if(resource instanceof IFile && !STATUS_CACHE.isClean(resource)
+						&& STATUS_CACHE.isSupervised(resource)) {
 					uncommittedSet.add((IFile) resource);
 				}
 			}
@@ -549,11 +553,12 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 			}
 		} finally {
 			uncommittedSet.endInput(monitor);
+			// XXX end of dirty code
 		}
+
 		if (csCollector != null) {
 			csCollector.handleChange(event);
 		}
-
 	}
 
 	@Override
