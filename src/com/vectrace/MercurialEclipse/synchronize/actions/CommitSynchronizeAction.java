@@ -18,13 +18,16 @@ import java.util.List;
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
-import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -33,80 +36,65 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 public class CommitSynchronizeAction extends SynchronizeModelAction {
 
 	public CommitSynchronizeAction(String text,
-			ISynchronizePageConfiguration configuration) {
-		super(text, configuration);
-	}
-
-	public CommitSynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
+		setImageDescriptor(createImageDescriptor());
+	}
+
+	protected ImageDescriptor createImageDescriptor() {
+		return MercurialEclipsePlugin.getImageDescriptor("actions/commit.gif");
 	}
 
 	@Override
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
-		List<IResource> selectedResources = new ArrayList<IResource>(
-				elements.length);
-		for (int i = 0; i < elements.length; i++) {
-			if (elements[i] instanceof ISynchronizeModelElement) {
-				selectedResources.add(((ISynchronizeModelElement) elements[i])
-						.getResource());
-			}
-		}
-		// XXX currently I have no idea why IDiffElement[] elements is empty...
-		if(selectedResources.size() == 0){
-			IStructuredSelection sel = getStructuredSelection();
-			Object[] objects = sel.toArray();
-			for (Object object : objects) {
-				if (object instanceof IResource) {
-					selectedResources.add(((IResource) object));
-				} else if (object instanceof IAdaptable){
-					IAdaptable adaptable = (IAdaptable) object;
-					IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-					if(resource != null){
-						selectedResources.add(resource);
-					}
+		List<IResource> selectedResources = new ArrayList<IResource>();
+
+		IStructuredSelection sel = getStructuredSelection();
+		Object[] objects = sel.toArray();
+		for (Object object : objects) {
+			if (object instanceof IResource) {
+				selectedResources.add(((IResource) object));
+			} else if (object instanceof IAdaptable){
+				IAdaptable adaptable = (IAdaptable) object;
+				IResource resource = (IResource) adaptable.getAdapter(IResource.class);
+				if(resource != null){
+					selectedResources.add(resource);
 				}
+			} else if (object instanceof WorkingChangeSet){
+				selectedResources.addAll(((WorkingChangeSet)object).getFiles());
 			}
 		}
 		IResource[] resources = new IResource[selectedResources.size()];
 		selectedResources.toArray(resources);
-		return new CommitSynchronizeOperation(configuration, elements,
-				resources);
+		return createOperation(configuration, elements, resources);
+	}
+
+	protected SynchronizeModelOperation createOperation(ISynchronizePageConfiguration configuration,
+			IDiffElement[] elements, IResource[] resources) {
+		return new CommitSynchronizeOperation(configuration, elements, resources);
 	}
 
 	@Override
-	protected void initialize(ISynchronizePageConfiguration configuration, ISelectionProvider selectionProvider) {
-		// TODO Auto-generated method stub
-		super.initialize(configuration, selectionProvider);
-	}
-
-	@Override
-	public boolean isEnabled() {
-		// TODO Auto-generated method stub
-		return super.isEnabled();
-	}
-
-	@Override
-	public boolean isHandled() {
-		// TODO Auto-generated method stub
-		return super.isHandled();
-	}
-
-	@Override
-	public void selectionChanged(ISelection selection) {
-		// TODO Auto-generated method stub
-		super.selectionChanged(selection);
-	}
-
-	@Override
-	protected boolean updateSelection(IStructuredSelection selection) {
+	protected final boolean updateSelection(IStructuredSelection selection) {
 		boolean updateSelection = super.updateSelection(selection);
 		if(!updateSelection){
-			// TODO implement constraints check here
+			Object[] array = selection.toArray();
+			for (Object object : array) {
+				if(!isSupported(object)){
+					return false;
+				}
+			}
 			return true;
 		}
 		return updateSelection;
+	}
+
+	private boolean isSupported(Object object) {
+		if(object instanceof IResource){
+			return !MercurialStatusCache.getInstance().isClean(((IResource) object));
+		}
+		return object instanceof WorkingChangeSet && ((WorkingChangeSet) object).getFiles().size() > 0;
 	}
 }

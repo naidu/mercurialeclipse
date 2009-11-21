@@ -8,6 +8,7 @@
  * Contributors:
  *     Bastian Doetsch				- implementation
  *     Subclipse                    - original impl.o
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -24,27 +25,25 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ShowHistorySynchronizeOperation extends SynchronizeModelOperation {
-	private final IResource[] resources;
+	private final IResource resource;
 
 	public ShowHistorySynchronizeOperation(
 			ISynchronizePageConfiguration configuration,
-			IDiffElement[] elements, IResource[] resources) {
+			IDiffElement[] elements, IResource resource) {
 		super(configuration, elements);
-		this.resources = resources;
+		this.resource = resource;
 	}
 
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
-		monitor.beginTask("Loading History View...", 1);
+		monitor.beginTask("Opening History View...", 1);
 		getShell().getDisplay().asyncExec(new Runnable() {
 			public void run() {
-				IHistoryView view;
 				try {
-					view = (IHistoryView) getPart().getSite().getPage()
-							.showView("org.eclipse.team.ui.GenericHistoryView");
-
+					IHistoryView view = (IHistoryView) getPart().getSite().getPage()
+						.showView(IHistoryView.VIEW_ID);
 					if (view != null) {
-						view.showHistoryFor(resources[0]);
+						view.showHistoryFor(resource);
 					}
 				} catch (PartInitException e) {
 					MercurialEclipsePlugin.logError(e);

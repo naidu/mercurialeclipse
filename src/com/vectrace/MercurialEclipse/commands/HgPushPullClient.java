@@ -21,6 +21,7 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
@@ -28,9 +29,9 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgPushPullClient extends AbstractClient {
 
-	public static String push(IProject project, HgRepositoryLocation repo,
+	public static String push(HgRoot hgRoot, HgRepositoryLocation repo,
 			boolean force, String revision, int timeout) throws HgException {
-		AbstractShellCommand command = new HgCommand("push", project, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("push", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
 		if (force) {
@@ -47,12 +48,12 @@ public class HgPushPullClient extends AbstractClient {
 
 
 
-	public static String pull(IProject project,
+	public static String pull(HgRoot hgRoot,
 			HgRepositoryLocation location, boolean update) throws HgException {
-		return pull(project, null, location, update, false, false, false);
+		return pull(hgRoot, null, location, update, false, false, false);
 	}
 
-	public static String pull(IProject project, ChangeSet changeset,
+	public static String pull(HgRoot hgRoot, ChangeSet changeset,
 			HgRepositoryLocation repo, boolean update, boolean rebase,
 			boolean force, boolean timeout) throws HgException {
 
@@ -64,14 +65,14 @@ public class HgPushPullClient extends AbstractClient {
 			pullSource = repo.getLocation();
 		}
 
-		return pull(project, changeset, pullSource, update, rebase, force, timeout);
+		return pull(hgRoot, changeset, pullSource, update, rebase, force, timeout);
 	}
 
-	public static String pull(final IProject project, ChangeSet changeset,
+	public static String pull(final HgRoot hgRoot, ChangeSet changeset,
 			String pullSource, boolean update, boolean rebase,
 			boolean force, boolean timeout) throws HgException {
 
-		HgCommand command = new HgCommand("pull", project.getLocation().toFile(), true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("pull", hgRoot, true); //$NON-NLS-1$
 
 		if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$

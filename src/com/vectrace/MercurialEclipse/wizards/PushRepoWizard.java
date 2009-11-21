@@ -32,6 +32,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -123,7 +124,8 @@ public class PushRepoWizard extends HgWizard {
 				result += HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
 				isForest = true;
 			} else {
-				result += HgPushPullClient.push(project, repo, pushRepoPage.isForce(), changeset, timeout);
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+				result += HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
 			}
 
 			updateAfterPush(result, project, repo, isForest);
