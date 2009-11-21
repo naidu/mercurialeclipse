@@ -19,6 +19,7 @@ import org.eclipse.ui.part.Page;
 
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
@@ -31,10 +32,10 @@ public class MercurialHistoryPageSource extends HistoryPageSource {
 	}
 
 	public boolean canShowHistoryFor(Object object) {
-		if (!(object instanceof IResource)) {
+		IResource resource = ResourceUtils.getResource(object);
+		if(resource == null){
 			return false;
 		}
-		IResource resource = (IResource) object;
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 		if(resource.exists()) {
 			return cache.isSupervised(resource) && !cache.isAdded(resource.getLocation());
@@ -45,7 +46,8 @@ public class MercurialHistoryPageSource extends HistoryPageSource {
 	}
 
 	public Page createPage(Object object) {
-		return new MercurialHistoryPage((IResource) object);
+		return new MercurialHistoryPage(ResourceUtils.getResource(object));
 	}
+
 
 }
