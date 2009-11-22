@@ -454,6 +454,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			}
 		}, getTreeViewer());
 
+		if (csCollector != null) {
+			csCollector.handleChange(event);
+		}
+
 		// Only adjust the set of the rest. The others will be handled by the collectors
 
 		try {
@@ -486,9 +490,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			// XXX end of dirty code
 		}
 
-		if (csCollector != null) {
-			csCollector.handleChange(event);
-		}
 	}
 
 	private ChangeSetCapability getChangeSetCapability() {
