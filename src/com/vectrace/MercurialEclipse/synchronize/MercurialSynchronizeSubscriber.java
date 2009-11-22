@@ -201,7 +201,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					return null;
 				}
 
-				if(!Branch.same(csOutgoing.getBranch(), currentBranch)){
+				if(csOutgoing == null || !Branch.same(csOutgoing.getBranch(), currentBranch)){
 					return null;
 				}
 				// construct base revision
