@@ -30,10 +30,8 @@ import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.widgets.TreeItem;
-import org.eclipse.team.core.diff.IDiff;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
-import org.eclipse.team.core.mapping.provider.ResourceDiffTree;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
@@ -53,7 +51,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 @SuppressWarnings("restriction")
 public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
@@ -387,14 +384,10 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	 * @return all the change sets (incoming and outgoing)
 	 */
 	private Collection<ChangeSet> getAllSets() {
-		Set<ChangeSet> result = new HashSet<ChangeSet>();
 		if (csCollector != null) {
-			org.eclipse.team.internal.core.subscribers.ChangeSet[] sets = csCollector.getSets();
-			for (org.eclipse.team.internal.core.subscribers.ChangeSet set : sets) {
-				result.add((ChangeSet) set);
-			}
+			return csCollector.getChangeSets();
 		}
-		return result;
+		return new HashSet<ChangeSet>();
 	}
 
 	@Override
@@ -412,7 +405,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		INavigatorContentExtension extension = getExtensionSite().getExtension();
 		if (extension != null) {
 			ViewerSorter sorter = sortingService.findSorter(extension.getDescriptor(),
-					getModelProvider(), new WorkingChangeSet(""), new WorkingChangeSet(""));
+					getModelProvider(), incoming, incoming);
 			if (sorter instanceof HgChangeSetSorter) {
 				return (HgChangeSetSorter) sorter;
 			}
@@ -424,6 +417,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		if (csc.supportsCheckedInChangeSets()) {
 			csCollector = ((HgChangeSetCapability)csc).createSyncInfoSetChangeSetCollector(getConfiguration());
 			csCollector.addListener(collectorListener);
+			IProject[] projects = csCollector.getSubscriber().getProjects();
+			uncommittedSet.setRoots(projects);
 			uncommittedSet.addListener(uncommittedSetListener);
 			STATUS_CACHE.addObserver(uncommittedSet);
 		}
@@ -437,7 +432,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 		uncommittedSet.removeListener(uncommittedSetListener);
 		STATUS_CACHE.deleteObserver(uncommittedSet);
-		uncommittedSet.clear();
+		uncommittedSet.dispose();
 		outgoing.getChangesets().clear();
 		incoming.getChangesets().clear();
 		super.dispose();
@@ -445,11 +440,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 	@Override
 	public void diffsChanged(IDiffChangeEvent event, IProgressMonitor monitor) {
-		// Override inherited method to reconcile sub-trees
-		IPath[] removed = event.getRemovals();
-		IDiff[] added = event.getAdditions();
-		IDiff[] changed = event.getChanges();
-		IPath root = ResourcesPlugin.getWorkspace().getRoot().getLocation();
 		Utils.asyncExec(new Runnable() {
 			public void run() {
 				ensureRootsAdded();
@@ -459,39 +449,6 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		if (csCollector != null) {
 			csCollector.handleChange(event);
 		}
-
-		// Only adjust the set of the rest. The others will be handled by the collectors
-
-		try {
-			// XXX the code below should go away ASAP and be replaced with simply listening
-			// on STATUS_CACHE changes.
-			uncommittedSet.beginInput();
-			for (IPath path : removed) {
-				uncommittedSet.remove(ResourceUtils.getFileHandle(root.append(path)));
-			}
-			for (IDiff diff : added) {
-				IResource resource = ResourceDiffTree.getResourceFor(diff);
-				if(resource instanceof IFile && !STATUS_CACHE.isClean(resource)
-						&& STATUS_CACHE.isSupervised(resource)) {
-					uncommittedSet.add((IFile) resource);
-				}
-			}
-			for (IDiff diff : changed) {
-				// Only add the diff if it is already contained in the free set
-				IResource resource = ResourceDiffTree.getResourceFor(diff);
-				if (resource instanceof IFile) {
-					if (STATUS_CACHE.isClean(resource) || !resource.exists()) {
-						uncommittedSet.remove(resource);
-					} else {
-						uncommittedSet.add((IFile) resource);
-					}
-				}
-			}
-		} finally {
-			uncommittedSet.endInput(monitor);
-			// XXX end of dirty code
-		}
-
 	}
 
 	private ChangeSetCapability getChangeSetCapability() {

@@ -18,16 +18,24 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
  * as a usual changeset, as many of it's functionality is not supported or limited.
+ * <p>
+ * This changeset CAN observe changes of the status cache. If it is added as a listener
+ * to the {@link MercurialStatusCache}, it only tracks the state of the enabled (root)
+ * projects (see {@link #setRoots(IProject[])}).
  *
  * @author Andrei
  */
@@ -38,12 +46,14 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	private final List<IPropertyChangeListener> listeners;
 	private final List<PropertyChangeEvent> eventCache;
 	private boolean cachingOn;
+	private final Set<IProject> projects;
 
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		eventCache = new ArrayList<PropertyChangeEvent>();
+		projects = new CopyOnWriteArraySet<IProject>();
 	}
 
 	public void add(IFile file){
@@ -120,6 +130,9 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	public void endInput(IProgressMonitor monitor) {
 		cachingOn = false;
+		if(eventCache.isEmpty()){
+			return;
+		}
 		Collections.reverse(eventCache);
 		for (IPropertyChangeListener listener : listeners) {
 			for (PropertyChangeEvent event : eventCache) {
@@ -129,13 +142,53 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		eventCache.clear();
 	}
 
+	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object arg) {
-//		if (resource instanceof IFile) {
-//			if (STATUS_CACHE.isClean(resource) || !resource.exists()) {
-//				uncommittedSet.remove(resource);
-//			} else {
-//				uncommittedSet.add((IFile) resource);
-//			}
-//		}
+		if (!(arg instanceof Set)) {
+			return;
+		}
+		MercurialStatusCache cache = MercurialStatusCache.getInstance();
+		try {
+			beginInput();
+			Set<IResource> changed = (Set<IResource>) arg;
+
+			for (IResource resource : changed) {
+				IProject project = resource.getProject();
+				if(!projects.contains(project)){
+					continue;
+				}
+				if (resource instanceof IFile) {
+					if (cache.isClean(resource) || !resource.exists()) {
+						remove(resource);
+					} else if(!cache.isIgnored(resource)){
+						add((IFile) resource);
+					}
+				} else if(resource instanceof IProject && changed.size() == 1){
+					clear();
+					int bits = MercurialStatusCache.MODIFIED_MASK;
+					Set<IFile> files2 = cache.getFiles(bits, (IProject) resource);
+					for (IFile file : files2) {
+						add(file);
+					}
+				}
+			}
+		} finally {
+			endInput(null);
+		}
+	}
+
+	/**
+	 * @param projects non null project list the changeset is responsible for
+	 */
+	public void setRoots(IProject[] projects) {
+		this.projects.clear();
+		for (IProject project : projects) {
+			this.projects.add(project);
+		}
+	}
+
+	public void dispose() {
+		clear();
+		projects.clear();
 	}
 }

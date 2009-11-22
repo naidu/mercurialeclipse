@@ -44,6 +44,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
 /**
  * TODO why did we choose the {@link ModelSynchronizeParticipant} as a parent class?
@@ -204,6 +205,8 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			// add our action group in any case
 			configuration.addActionContribution(createMergeActionGroup());
 		}
+		// Set changesets mode as default
+		configuration.setProperty(ModelSynchronizeParticipant.P_VISIBLE_MODEL_PROVIDER,	HgChangeSetModelProvider.ID);
 	}
 
 	@Override

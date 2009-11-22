@@ -10,7 +10,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
-import java.util.SortedSet;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
@@ -39,6 +41,7 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	private final MercurialSynchronizeParticipant participant;
+	private final static Set<ChangeSet> EMPTY_SET = Collections.unmodifiableSet(new HashSet<ChangeSet>());
 
 	public HgChangesetsCollector(ISynchronizePageConfiguration configuration) {
 		super(configuration);
@@ -48,85 +51,108 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	@Override
 	protected void add(SyncInfo[] infos) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
 	protected void initializeSets() {
-		org.eclipse.team.internal.core.subscribers.ChangeSet[] sets2 = getSets();
-		for (org.eclipse.team.internal.core.subscribers.ChangeSet changeSet : sets2) {
-			remove(changeSet);
-		}
+		Set<ChangeSet> oldSets = getChangeSets();
+		Set<ChangeSet> newSets = new HashSet<ChangeSet>();
+
 
 		AbstractRemoteCache in = IncomingChangesetCache.getInstance();
 		AbstractRemoteCache out = OutgoingChangesetCache.getInstance();
 		int mode = getConfiguration().getMode();
 		switch (mode) {
 		case ISynchronizePageConfiguration.INCOMING_MODE:
-			initRemote(in);
+			newSets.addAll(initRemote(in));
 			break;
 		case ISynchronizePageConfiguration.OUTGOING_MODE:
-			initRemote(out);
+			newSets.addAll(initRemote(out));
 			break;
 		case ISynchronizePageConfiguration.BOTH_MODE:
-			initRemote(in);
-			initRemote(out);
+			newSets.addAll(initRemote(in));
+			newSets.addAll(initRemote(out));
 			break;
 		case ISynchronizePageConfiguration.CONFLICTING_MODE:
-			initRemote(in);
-			initRemote(out);
-			retainConflicts();
+			newSets.addAll(initRemote(in));
+			newSets.addAll(initRemote(out));
 			break;
 		default:
 			break;
 		}
 
+		if(mode == ISynchronizePageConfiguration.CONFLICTING_MODE){
+			newSets = retainConflicts(newSets);
+		}
+
+		for (ChangeSet changeSet : oldSets) {
+			if(!newSets.contains(changeSet)){
+				remove(changeSet);
+			}
+		}
+
+		for (ChangeSet changeSet : newSets) {
+			if(!oldSets.contains(changeSet)){
+				add(changeSet);
+			}
+		}
 	}
 
-	private void retainConflicts() {
-		// TODO Auto-generated method stub
-
+	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
+		// TODO let only changesets with conflicting changes
+		return newSets;
 	}
 
-	private void initRemote(AbstractRemoteCache cache) {
-		HgRepositoryLocation repo = participant.getRepositoryLocation();
-		ISynchronizationContext context = participant.getContext();
-		RepositorySynchronizationScope scope = (RepositorySynchronizationScope) context.getScope();
-		MercurialSynchronizeSubscriber subscriber = scope.getSubscriber();
+	private Set<ChangeSet> initRemote(AbstractRemoteCache cache) {
+		MercurialSynchronizeSubscriber subscriber = getSubscriber();
 		IProject[] projects = subscriber.getProjects();
 		if(projects.length == 0){
-			return;
+			return EMPTY_SET;
 		}
 		HgRoot root;
 		try {
 			root = MercurialTeamProvider.getHgRoot(projects[0]);
 		} catch (HgException e1) {
 			MercurialEclipsePlugin.logError(e1);
-			return;
+			return EMPTY_SET;
 		}
 		String currentBranch = subscriber.getCurrentBranch(projects[0], root);
 		if(MercurialSynchronizeSubscriber.isUncommitedBranch(currentBranch)) {
 			if (cache instanceof IncomingChangesetCache) {
-				return;
+				return EMPTY_SET;
 			}
 			currentBranch = MercurialSynchronizeSubscriber.getRealBranchName(currentBranch);
 		}
+		HgRepositoryLocation repo = participant.getRepositoryLocation();
+		Set<ChangeSet> result = new HashSet<ChangeSet>();
 		for (IProject project : projects) {
 			try {
-				SortedSet<ChangeSet> changeSets = cache.getChangeSets(project, repo, currentBranch);
-				for (ChangeSet changeSet : changeSets) {
-					add(changeSet);
-				}
+				result.addAll(cache.getChangeSets(project, repo, currentBranch));
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
+		return result;
+	}
+
+	public MercurialSynchronizeSubscriber getSubscriber() {
+		ISynchronizationContext context = participant.getContext();
+		RepositorySynchronizationScope scope = (RepositorySynchronizationScope) context.getScope();
+		return scope.getSubscriber();
 	}
 
 	public void handleChange(IDiffChangeEvent event) {
 		initializeSets();
 	}
 
+	public Set<ChangeSet> getChangeSets() {
+		Set<ChangeSet> result = new HashSet<ChangeSet>();
+		org.eclipse.team.internal.core.subscribers.ChangeSet[] sets = super.getSets();
+		for (org.eclipse.team.internal.core.subscribers.ChangeSet set : sets) {
+			result.add((ChangeSet) set);
+		}
+		return result;
+	}
 
 
 }
