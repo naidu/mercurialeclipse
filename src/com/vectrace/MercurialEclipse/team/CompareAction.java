@@ -20,9 +20,20 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
- *
  */
 public class CompareAction extends SingleFileAction {
+
+	/**
+	 * Empty constructor must be here, otherwise Eclipse wouldn't be able to create the object via reflection
+	 */
+	public CompareAction() {
+		super();
+	}
+
+	public CompareAction(IFile file) {
+		this();
+		this.selection = file;
+	}
 
 	@Override
 	protected void run(IFile file) throws TeamException {
