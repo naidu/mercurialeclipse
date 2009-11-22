@@ -58,6 +58,8 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 @SuppressWarnings("restriction")
 public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
 
+	public static final String ID = "com.vectrace.MercurialEclipse.changeSetContent";
+
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 
 	private final class UcommittedSetListener implements IPropertyChangeListener {
@@ -518,4 +520,37 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
+	/**
+	 *
+	 * @param file may be null
+	 * @return may return null, if the given file is null, not selected or is not contained
+	 * in any selected changesets
+	 */
+	public ChangeSet getParentOfSelection(IFile file){
+		TreeItem[] selection = getTreeViewer().getTree().getSelection();
+		for (TreeItem treeItem : selection) {
+			if(treeItem.getData() != file){
+				continue;
+			}
+			TreeItem parentItem = treeItem.getParentItem();
+			if(parentItem != null){
+				return (ChangeSet) parentItem.getData();
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * @param changeset may be null
+	 * @return may return null
+	 */
+	public ChangesetGroup getParentGroup(ChangeSet changeset){
+		if(changeset == null || changeset instanceof WorkingChangeSet){
+			return null;
+		}
+		if(changeset.getDirection() == Direction.INCOMING){
+			return incoming;
+		}
+		return outgoing;
+	}
 }

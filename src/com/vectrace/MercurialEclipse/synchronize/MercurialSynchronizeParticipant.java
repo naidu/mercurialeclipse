@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.synchronize;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
@@ -203,6 +204,15 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			// add our action group in any case
 			configuration.addActionContribution(createMergeActionGroup());
 		}
+	}
+
+	@Override
+	public boolean hasCompareInputFor(Object object) {
+		if(object instanceof IFile){
+			// always allow "Open in Compare Editor" menu to be shown
+			return true;
+		}
+		return super.hasCompareInputFor(object);
 	}
 
 	@Override
