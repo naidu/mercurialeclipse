@@ -17,7 +17,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -27,7 +26,7 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.eclipse.jface.viewers.TreePath;
+import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.widgets.TreeItem;
@@ -38,13 +37,13 @@ import org.eclipse.team.core.mapping.provider.ResourceDiffTree;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager;
 import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.core.subscribers.BatchingChangeSetManager.CollectorChangeEvent;
-import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.Utils;
-import org.eclipse.team.internal.ui.mapping.ResourceModelContentProvider;
 import org.eclipse.team.internal.ui.synchronize.ChangeSetCapability;
 import org.eclipse.team.internal.ui.synchronize.IChangeSetProvider;
+import org.eclipse.team.ui.mapping.SynchronizationContentProvider;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
+import org.eclipse.ui.model.WorkbenchContentProvider;
 import org.eclipse.ui.navigator.ICommonContentExtensionSite;
 import org.eclipse.ui.navigator.INavigatorContentExtension;
 import org.eclipse.ui.navigator.INavigatorContentService;
@@ -57,7 +56,7 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 @SuppressWarnings("restriction")
-public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
+public class HgChangeSetContentProvider extends SynchronizationContentProvider /* ResourceModelContentProvider */  {
 
 	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 
@@ -132,6 +131,7 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 	private final IPropertyChangeListener uncommittedSetListener;
 	private final ChangesetGroup incoming;
 	private final ChangesetGroup outgoing;
+	private WorkbenchContentProvider provider;
 
 	public HgChangeSetContentProvider() {
 		super();
@@ -161,6 +161,11 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 	}
 
 	@Override
+	public Object[] getChildren(Object parent) {
+		return getElements(parent);
+	}
+
+	@Override
 	public Object[] getElements(Object parent) {
 		if (parent instanceof ISynchronizationContext) {
 			// Do not show change sets when all models are visible because
@@ -179,7 +184,20 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 		if (parent == getModelProvider()) {
 			return getRootElements();
 		}
-		return super.getElements(parent);
+		if (parent instanceof ChangeSet) {
+			return ((ChangeSet)parent).getResources();
+		}
+		if (parent instanceof ChangesetGroup) {
+			ChangesetGroup group = (ChangesetGroup) parent;
+			Direction direction = group.getDirection();
+			if (isOutgoingVisible()	&& isOutgoing(direction)) {
+				return group.getChangesets().toArray();
+			}
+			if(isIncomingVisible() && direction == Direction.INCOMING){
+				return group.getChangesets().toArray();
+			}
+		}
+		return new Object[0];
 	}
 
 	private void ensureRootsAdded() {
@@ -255,31 +273,44 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 			IResource[] resources = set.getResources();
 			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE) };
 		}
-		return super.getTraversals(context, object);
+		if(object instanceof IResource){
+			IResource[] resources = new IResource[]{(IResource) object};
+			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE) };
+		}
+		if(object instanceof ChangesetGroup){
+			ChangesetGroup group = (ChangesetGroup) object;
+			Set<ChangeSet> changesets = group.getChangesets();
+			Set<IFile> all = new HashSet<IFile>();
+			for (ChangeSet changeSet : changesets) {
+				all.addAll(changeSet.getFiles());
+			}
+			IResource[] resources = all.toArray(new IResource[0]);
+			return new ResourceTraversal[] { new ResourceTraversal(resources, IResource.DEPTH_ZERO, IResource.NONE) };
+		}
+		return new ResourceTraversal[0];
+		// return super.getTraversals(context, object);
 	}
 
+	/**
+	 * Return whether the given element has children in the given
+	 * context. The children may or may not exist locally.
+	 * By default, this method returns true if the traversals for
+	 * the element contain any diffs. This could result in false
+	 * positives. Subclasses can override to provide a more
+	 * efficient or precise answer.
+	 * @param element a model element.
+	 * @return whether the given element has children in the given context
+	 */
 	@Override
-	public Object[] getChildren(TreePath parentPath) {
-		if (!isEnabled()) {
-			return new Object[0];
-		}
-		if (parentPath.getSegmentCount() == 0) {
-			return getRootElements();
-		}
-		Object child = parentPath.getLastSegment();
-		if (child instanceof ChangesetGroup){
-			ChangesetGroup group = (ChangesetGroup) child;
-			if(isVisibleInMode(group.getDirection())) {
-				return group.getChangesets().toArray();
-			}
-		} else if (child instanceof ChangeSet) {
-			ChangeSet set = (ChangeSet) child;
-			return set.getResources();
-		} else if(child instanceof IFile){
-			return new Object[0];
-		}
-		return new Object[0];
+	protected boolean hasChildrenInContext(ISynchronizationContext context, Object element) {
+		return internalHasChildren(element);
+//		ResourceTraversal[] traversals = getTraversals(context, element);
+//		if (traversals == null) {
+//			return true;
+//		}
+//		return context.getDiffTree().getDiffs(traversals).length > 0;
 	}
+
 
 	private boolean isVisibleInMode(ChangeSet cs) {
 		int mode = getConfiguration().getMode();
@@ -298,16 +329,6 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 			}
 		}
 		return true;
-	}
-
-	private boolean isVisibleInMode(Direction direction) {
-		if (direction == Direction.INCOMING) {
-			return isIncomingVisible();
-		}
-		if (isOutgoing(direction)) {
-			return isOutgoingVisible();
-		}
-		return false;
 	}
 
 	private boolean isOutgoing(Direction direction) {
@@ -333,25 +354,21 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 	}
 
 
-	@Override
-	public boolean hasChildren(TreePath path) {
-		if (path.getSegmentCount() == 1) {
-			Object first = path.getFirstSegment();
-			if (first instanceof ChangeSet) {
-				return hasChildren((ChangeSet)first);
+	private boolean internalHasChildren(Object first) {
+		if (first instanceof ChangeSet) {
+			return hasChildren((ChangeSet)first);
+		}
+		if (first instanceof ChangesetGroup) {
+			ChangesetGroup group = (ChangesetGroup) first;
+			Direction direction = group.getDirection();
+			if (isOutgoingVisible()	&& isOutgoing(direction)) {
+				return true;
 			}
-			if (first instanceof ChangesetGroup) {
-				ChangesetGroup group = (ChangesetGroup) first;
-				Direction direction = group.getDirection();
-				if (isOutgoingVisible()	&& isOutgoing(direction)) {
-					return true;
-				}
-				if(isIncomingVisible() && direction == Direction.INCOMING){
-					return true;
-				}
+			if(isIncomingVisible() && direction == Direction.INCOMING){
+				return true;
 			}
 		}
-		return getChildren(path).length > 0;
+		return false;
 	}
 
 	private boolean hasChildren(ChangeSet changeset) {
@@ -360,51 +377,6 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 
 	private boolean hasChildrenInContext(ChangeSet set) {
 		return !set.getFiles().isEmpty();
-	}
-
-	@Override
-	public TreePath[] getParents(Object element) {
-		if (element instanceof WorkingChangeSet) {
-			return new TreePath[] { TreePath.EMPTY };
-		}
-		if (element instanceof ChangeSet) {
-			if(((ChangeSet) element).getDirection() == Direction.INCOMING){
-				return new TreePath[]{new TreePath(new Object[]{incoming})};
-			}
-			return new TreePath[]{new TreePath(new Object[]{outgoing})};
-		}
-		if (element instanceof IResource) {
-			IResource resource = (IResource) element;
-			ChangeSet[] sets = getSetsContaining(resource);
-			if (sets.length > 0) {
-				List<TreePath> result = new ArrayList<TreePath>();
-				for (int i = 0; i < sets.length; i++) {
-					ChangeSet set = sets[i];
-					TreePath path = getPathForElement(set, resource);
-					if (path != null) {
-						result.add(path);
-					}
-				}
-				return result.toArray(new TreePath[result.size()]);
-			}
-			TreePath path = getPathForElement(uncommittedSet, resource);
-			if (path != null) {
-				return new TreePath[] { path };
-			}
-		}
-
-		return new TreePath[0];
-	}
-
-	private ChangeSet[] getSetsContaining(IResource resource) {
-		List<ChangeSet> result = new ArrayList<ChangeSet>();
-		Collection<ChangeSet> allSets = getAllSets();
-		for (ChangeSet set : allSets) {
-			if (set.contains(resource)) {
-				result.add(set);
-			}
-		}
-		return result.toArray(new ChangeSet[result.size()]);
 	}
 
 	/**
@@ -418,48 +390,6 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 			org.eclipse.team.internal.core.subscribers.ChangeSet[] sets = csCollector.getSets();
 			for (org.eclipse.team.internal.core.subscribers.ChangeSet set : sets) {
 				result.add((ChangeSet) set);
-			}
-		}
-		return result;
-	}
-
-	private TreePath getPathForElement(ChangeSet set, IResource resource) {
-		List<Object> pathList = getPath(set, resource);
-		if (pathList != null) {
-			pathList.add(0, set);
-			return new TreePath(pathList.toArray());
-		}
-		return null;
-	}
-
-	private List<Object> getPath(ChangeSet set, IResource resource) {
-		if (resource == null || resource.getType() == IResource.ROOT
-				|| !set.contains(resource)) {
-			return null;
-		}
-		List<Object> result = new ArrayList<Object>();
-		result.add(resource.getProject());
-		if (resource.getType() != IResource.PROJECT) {
-			String layout = getTraversalCalculator().getLayout();
-			if (layout.equals(IPreferenceIds.FLAT_LAYOUT)) {
-				result.add(resource.getParent());
-			} else if (layout.equals(IPreferenceIds.COMPRESSED_LAYOUT) && resource.getType() == IResource.FOLDER) {
-				result.add(resource.getParent());
-			} else if (layout.equals(IPreferenceIds.COMPRESSED_LAYOUT) && resource.getType() == IResource.FILE) {
-				IContainer parent = resource.getParent();
-				if (parent.getType() != IResource.PROJECT) {
-					result.add(parent);
-				}
-			} else {
-				List<IResource> resourcePath = new ArrayList<IResource>();
-				IResource next = resource;
-				while (next.getType() != IResource.PROJECT) {
-					resourcePath.add(next);
-					next = next.getParent();
-				}
-				for (int i = resourcePath.size() - 1; i >=0; i--) {
-					result.add(resourcePath.get(i));
-				}
 			}
 		}
 		return result;
@@ -561,58 +491,30 @@ public class HgChangeSetContentProvider extends ResourceModelContentProvider  {
 		}
 	}
 
-	@Override
-	protected void updateLabels(ISynchronizationContext context, IPath[] paths) {
-		super.updateLabels(context, paths);
-		ChangeSet[] sets = getSetsShowingPropogatedStateFrom(paths);
-		if (sets.length > 0) {
-			getTreeViewer().update(sets, null);
-		}
-	}
-
-
-	private ChangeSet[] getSetsShowingPropogatedStateFrom(IPath[] paths) {
-		Set<ChangeSet> result = new HashSet<ChangeSet>();
-		for (IPath path : paths) {
-			Set<ChangeSet> sets = getSetsShowingPropogatedStateFrom(path);
-			result.addAll(sets);
-		}
-		return result.toArray(new ChangeSet[result.size()]);
-	}
-
-	private Set<ChangeSet> getSetsShowingPropogatedStateFrom(IPath path) {
-		Set<ChangeSet> result = new HashSet<ChangeSet>();
-		Collection<ChangeSet> allSets = getAllSets();
-		for (ChangeSet set : allSets) {
-			if (set.contains(path)) {
-				result.add(set);
-			}
-		}
-		return result;
-	}
-
 	private ChangeSetCapability getChangeSetCapability() {
 		ISynchronizeParticipant participant = getConfiguration().getParticipant();
 		if (participant instanceof IChangeSetProvider) {
-			IChangeSetProvider provider = (IChangeSetProvider) participant;
-			return provider.getChangeSetCapability();
+			IChangeSetProvider csProvider = (IChangeSetProvider) participant;
+			return csProvider.getChangeSetCapability();
 		}
 		return null;
 	}
 
-	boolean isVisibleInViewer(ChangeSet set) {
-		TreeItem[] children = getTreeViewer().getTree().getItems();
-		for (TreeItem control : children) {
-			Object data = control.getData();
-			if (set.equals(data)) {
-				return true;
-			}
-		}
-		return false;
-	}
-
 	private TreeViewer getTreeViewer() {
 		return ((TreeViewer)getViewer());
+	}
+
+	@Override
+	protected ITreeContentProvider getDelegateContentProvider() {
+		if (provider == null) {
+			provider = new WorkbenchContentProvider();
+		}
+		return provider;
+	}
+
+	@Override
+	protected Object getModelRoot() {
+		return ResourcesPlugin.getWorkspace().getRoot();
 	}
 
 }
