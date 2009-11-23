@@ -12,7 +12,6 @@ package com.vectrace.MercurialEclipse.model;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
@@ -23,11 +22,15 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
+import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
@@ -48,17 +51,21 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	private boolean cachingOn;
 	private final Set<IProject> projects;
 
+	private HgSubscriberMergeContext context;
+
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
 		eventCache = new ArrayList<PropertyChangeEvent>();
 		projects = new CopyOnWriteArraySet<IProject>();
+		files = new CopyOnWriteArraySet<IFile>();
 	}
 
 	public void add(IFile file){
-		Set<IFile> files2 = getFiles();
-		files = new HashSet<IFile>(files2);
+		if(context != null && context.isHidden(file)){
+			return;
+		}
 		boolean added = files.add(file);
 		if(added) {
 			PropertyChangeEvent event = new PropertyChangeEvent(this, ADDED, null, file);
@@ -75,8 +82,6 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	@Override
 	public void remove(IResource file){
-		Set<IFile> files2 = getFiles();
-		files = new HashSet<IFile>(files2);
 		boolean removed = files.remove(file);
 		if(removed) {
 			PropertyChangeEvent event = new PropertyChangeEvent(this, REMOVED, file, null);
@@ -87,6 +92,27 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 					listener.propertyChange(event);
 				}
 			}
+		}
+	}
+
+	public void hide(IPath[] paths){
+		if(context == null){
+			return;
+		}
+		boolean changed = false;
+		for (IPath path : paths) {
+			path = ResourcesPlugin.getWorkspace().getRoot().getLocation().append(path);
+			IFile file = ResourceUtils.getFileHandle(path);
+			if(files.contains(file)){
+				context.hide(file);
+				files.remove(file);
+				changed = true;
+			}
+		}
+		PropertyChangeEvent event = new PropertyChangeEvent(this, REMOVED, null, null);
+		if(changed){
+			eventCache.add(event);
+			endInput(null);
 		}
 	}
 
@@ -121,7 +147,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	public void clear(){
-		files = new HashSet<IFile>();
+		files.clear();
 	}
 
 	public void beginInput() {
@@ -194,7 +220,13 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	public void dispose() {
+		MercurialStatusCache.getInstance().deleteObserver(this);
 		clear();
 		projects.clear();
 	}
+
+	public void setContext(HgSubscriberMergeContext context) {
+		this.context = context;
+	}
+
 }

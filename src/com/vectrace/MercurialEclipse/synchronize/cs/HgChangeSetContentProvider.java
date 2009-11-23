@@ -50,6 +50,8 @@ import org.eclipse.ui.navigator.INavigatorSorterService;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
+import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 @SuppressWarnings("restriction")
@@ -397,6 +399,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		if (sorter != null) {
 			sorter.setConfiguration(getConfiguration());
 		}
+		MercurialSynchronizeParticipant participant = (MercurialSynchronizeParticipant) getConfiguration().getParticipant();
+		uncommittedSet.setContext((HgSubscriberMergeContext) participant.getContext());
 	}
 
 	private HgChangeSetSorter getSorter() {
@@ -448,6 +452,11 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		if (csCollector != null) {
 			csCollector.handleChange(event);
+		}
+
+		IPath[] removals = event.getRemovals();
+		if(removals.length > 0){
+			uncommittedSet.hide(removals);
 		}
 	}
 
