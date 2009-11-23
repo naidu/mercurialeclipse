@@ -68,7 +68,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 				Utils.asyncExec(new Runnable() {
 					public void run() {
 						TreeViewer treeViewer = getTreeViewer();
+						treeViewer.getTree().setRedraw(false);
 						treeViewer.refresh(uncommittedSet, true);
+						treeViewer.getTree().setRedraw(true);
 					}
 				}, getTreeViewer());
 			}
