@@ -152,23 +152,29 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			beginInput();
 			Set<IResource> changed = (Set<IResource>) arg;
 
+			final int bits = MercurialStatusCache.MODIFIED_MASK;
 			for (IResource resource : changed) {
 				IProject project = resource.getProject();
 				if(!projects.contains(project)){
 					continue;
 				}
-				if (resource instanceof IFile) {
-					if (cache.isClean(resource) || !resource.exists()) {
+				if(resource instanceof IProject || changed.contains(project)){
+					clear();
+					Set<IFile> files2 = cache.getFiles(bits, project);
+					if(files2.isEmpty()){
+						PropertyChangeEvent event = new PropertyChangeEvent(this, ADDED, null, project);
+						eventCache.add(event);
+					} else {
+						for (IFile file : files2) {
+							add(file);
+						}
+					}
+					break;
+				} if (resource instanceof IFile) {
+					if (cache.isClean(resource)) {
 						remove(resource);
 					} else if(!cache.isIgnored(resource)){
 						add((IFile) resource);
-					}
-				} else if(resource instanceof IProject && changed.size() == 1){
-					clear();
-					int bits = MercurialStatusCache.MODIFIED_MASK;
-					Set<IFile> files2 = cache.getFiles(bits, (IProject) resource);
-					for (IFile file : files2) {
-						add(file);
 					}
 				}
 			}

@@ -498,11 +498,22 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return contains(local);
 	}
 
+	/**
+	 * This method should NOT be used directly by clients of Mercurial plugin except
+	 * those from "synchronize" packages. It exists only to fulfill contract with Team
+	 * "synchronize" API and is NOT performant, as it may create dynamic proxy objects.
+	 * {@inheritDoc}
+	 */
 	@Override
 	public IFile[] getResources() {
 		return getFiles().toArray(EMPTY_FILES);
 	}
 
+	/**
+	 * @return not modifiable set of files changed/added/removed in this changeset, never null.
+	 * The returned file references might not exist (yet/anymore) on the disk or in the
+	 * Eclipse workspace.
+	 */
 	public Set<IFile> getFiles(){
 		if(files != null){
 			return files;
