@@ -48,6 +48,7 @@ import org.eclipse.ui.navigator.INavigatorContentService;
 import org.eclipse.ui.navigator.INavigatorSorterService;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
@@ -188,7 +189,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			return getRootElements();
 		}
 		if (parent instanceof ChangeSet) {
-			return ((ChangeSet)parent).getResources();
+			return ((ChangeSet)parent).getChangesetFiles();
 		}
 		if (parent instanceof ChangesetGroup) {
 			ChangesetGroup group = (ChangesetGroup) parent;
@@ -494,7 +495,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	 * @return may return null, if the given file is null, not selected or is not contained
 	 * in any selected changesets
 	 */
-	public ChangeSet getParentOfSelection(IFile file){
+	public ChangeSet getParentOfSelection(FileFromChangeSet file){
 		TreeItem[] selection = getTreeViewer().getTree().getSelection();
 		for (TreeItem treeItem : selection) {
 			if(treeItem.getData() != file){

@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
@@ -507,6 +508,42 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	@Override
 	public IFile[] getResources() {
 		return getFiles().toArray(EMPTY_FILES);
+	}
+
+	public FileFromChangeSet[] getChangesetFiles(){
+		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>();
+		if(changedFiles == null) {
+			return fcs.toArray(new FileFromChangeSet[0]);
+		}
+
+		for (FileStatus fileStatus : changedFiles) {
+			IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
+			int kind = 0;
+			switch (fileStatus.getAction()) {
+			case ADDED:
+				kind = Differencer.ADDITION;
+				break;
+			case MODIFIED:
+				kind = Differencer.CHANGE;
+				break;
+			case REMOVED:
+				kind = Differencer.DELETION;
+				break;
+			}
+			switch(getDirection()){
+				case INCOMING:
+					kind |= Differencer.LEFT;
+					break;
+				case OUTGOING:
+					kind |= Differencer.RIGHT;
+					break;
+				case LOCAL:
+					kind |= Differencer.RIGHT;
+					break;
+			}
+			fcs.add(new FileFromChangeSet(this, fileHandle, kind));
+		}
+		return fcs.toArray(new FileFromChangeSet[0]);
 	}
 
 	/**

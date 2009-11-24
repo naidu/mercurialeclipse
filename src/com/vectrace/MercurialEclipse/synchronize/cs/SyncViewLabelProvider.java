@@ -15,6 +15,7 @@ import org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 
@@ -38,11 +39,28 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			} else {
 				image = MercurialEclipsePlugin.getImage("actions/update.gif");
 			}
+		} else if(element instanceof FileFromChangeSet){
+			FileFromChangeSet file = (FileFromChangeSet) element;
+			image = getDelegateLabelProvider().getImage(file.getFile());
 		} else {
 			image = super.getDelegateImage(element);
 		}
 		return image;
 	}
+
+	@Override
+	protected Image decorateImage(Image base, Object element) {
+		Image decoratedImage;
+		if (element instanceof FileFromChangeSet) {
+			FileFromChangeSet ffc = (FileFromChangeSet) element;
+			int kind = ffc.getDiffKind();
+			decoratedImage = getImageManager().getImage(base, kind);
+		} else {
+			decoratedImage = super.decorateImage(base, element);
+		}
+		return decoratedImage;
+	}
+
 
 	@Override
 	protected String getDelegateText(Object elementOrPath) {
@@ -67,6 +85,15 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 			return name + " (" + group.getChangesets().size() + ")";
 		}
+		if(elementOrPath instanceof FileFromChangeSet){
+			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;
+
+			String delegateText = super.getDelegateText(file.getFile());
+			if(delegateText != null && delegateText.length() > 0){
+				delegateText = " " + delegateText;
+			}
+			return delegateText;
+		}
 		String delegateText = super.getDelegateText(elementOrPath);
 		if(delegateText != null && delegateText.length() > 0){
 			delegateText = " " + delegateText;
@@ -81,4 +108,5 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		}
 		return comment;
 	}
+
 }

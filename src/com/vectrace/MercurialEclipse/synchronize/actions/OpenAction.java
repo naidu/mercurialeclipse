@@ -29,6 +29,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
@@ -73,21 +74,22 @@ public class OpenAction extends Action {
 			return;
 		}
 		Object object = selection2.getFirstElement();
-		if(!(object instanceof IFile)){
+		if(!(object instanceof FileFromChangeSet)){
 			return;
 		}
-		IFile file = (IFile) object;
+		FileFromChangeSet fcs = (FileFromChangeSet) object;
 		Viewer viewer = configuration.getPage().getViewer();
 		if(!(viewer instanceof ContentViewer)){
 			return;
 		}
 		CommonViewer commonViewer = (CommonViewer) viewer;
 		HgChangeSetContentProvider csProvider = getProvider(commonViewer.getNavigatorContentService());
-		ChangeSet cs = csProvider.getParentOfSelection(file);
+		ChangeSet cs = csProvider.getParentOfSelection(fcs);
 		if(cs == null){
 			return;
 		}
 
+		IFile file = fcs.getFile();
 		if(cs instanceof WorkingChangeSet){
 			// default: compare local file against parent changeset
 			new CompareAction(file).run(this);

@@ -26,8 +26,10 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -92,9 +94,20 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		if(object instanceof IResource){
-			return !MercurialStatusCache.getInstance().isClean(((IResource) object));
+		if(object instanceof WorkingChangeSet && ((WorkingChangeSet) object).getFiles().size() > 0){
+			return true;
 		}
-		return object instanceof WorkingChangeSet && ((WorkingChangeSet) object).getFiles().size() > 0;
+		IResource resource = ResourceUtils.getResource(object);
+		if(resource == null){
+			return false;
+		}
+		if(object instanceof FileFromChangeSet){
+			FileFromChangeSet csfile = (FileFromChangeSet) object;
+			if(csfile.getChangeset() instanceof WorkingChangeSet
+					&& !MercurialStatusCache.getInstance().isClean(resource)){
+				return true;
+			}
+		}
+		return false;
 	}
 }

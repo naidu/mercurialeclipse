@@ -31,10 +31,13 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 
+	public static final String ID = "hg.history";
+
 	public ShowHistorySynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
+		setId(ID);
 		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("history.gif"));
 	}
 
@@ -62,7 +65,8 @@ public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		if(object instanceof IResource){
+		IResource resource = ResourceUtils.getResource(object);
+		if(resource != null){
 			return true;
 		}
 		return object instanceof ChangeSet && isMatching(((ChangeSet) object)

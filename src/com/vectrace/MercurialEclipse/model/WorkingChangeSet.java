@@ -19,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -229,4 +230,15 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		this.context = context;
 	}
 
+	@Override
+	public FileFromChangeSet[] getChangesetFiles() {
+		Set<IFile> files2 = getFiles();
+		int diffKind = Differencer.CHANGE | Differencer.RIGHT;
+
+		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>(files2.size());
+		for (IFile file : files2) {
+			fcs.add(new FileFromChangeSet(this, file, diffKind));
+		}
+		return fcs.toArray(new FileFromChangeSet[0]);
+	}
 }

@@ -41,6 +41,7 @@ import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
@@ -211,7 +212,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	@Override
 	public boolean hasCompareInputFor(Object object) {
-		if(object instanceof IFile){
+		if(object instanceof IFile || object instanceof FileFromChangeSet){
 			// always allow "Open in Compare Editor" menu to be shown
 			return true;
 		}

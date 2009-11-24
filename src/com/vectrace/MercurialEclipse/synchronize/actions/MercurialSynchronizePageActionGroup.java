@@ -18,6 +18,7 @@ import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
@@ -63,19 +64,25 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new PushPullSynchronizeAction("Push",
-						configuration, getVisibleRootsSelectionProvider(), false, false));
+				ISynchronizePageConfiguration.FILE_GROUP,
+				new ShowHistorySynchronizeAction("Show History",
+						configuration, getVisibleRootsSelectionProvider()));
+
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+				"hg.commit",
 				new CommitSynchronizeAction("Commit...",
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+				"hg.commit",
 				new RevertSynchronizeAction("Revert...",
 						configuration, getVisibleRootsSelectionProvider()));
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
+				new PushPullSynchronizeAction("Push",
+						configuration, getVisibleRootsSelectionProvider(), false, false));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
@@ -87,15 +94,15 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				new PushPullSynchronizeAction("Pull and Update",
 						configuration, getVisibleRootsSelectionProvider(), true, true));
 
-		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new ShowHistorySynchronizeAction("Show History",
-						configuration, getVisibleRootsSelectionProvider()));
 	}
 
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
+		if(menu.find("hg.commit") == null){
+			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator("hg.commit"));
+		}
 		super.fillContextMenu(menu);
+//		menu.remove("org.eclipse.team.ui.synchronizeLast");
 		replaceCompareAction(menu);
 	}
 
@@ -128,7 +135,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				menu.remove(ai);
 				openAction.setImageDescriptor(action.getImageDescriptor());
 				openAction.setText(action.getText());
-				menu.appendToGroup(fileGroup.getId(), openAction);
+				if(menu.find(ShowHistorySynchronizeAction.ID) != null) {
+					menu.insertBefore(ShowHistorySynchronizeAction.ID, openAction);
+				} else {
+					menu.appendToGroup(fileGroup.getId(), openAction);
+				}
 			}
 		}
 	}
