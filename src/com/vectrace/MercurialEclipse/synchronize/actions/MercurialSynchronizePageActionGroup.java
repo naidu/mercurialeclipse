@@ -9,6 +9,7 @@
  *     Bastian Doetsch				- implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (Intland)
+ *     Adam Berkes (Intland) - modifications
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -64,7 +65,8 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 		}
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, ISynchronizePageConfiguration.FILE_GROUP,
-				new DeleteAction(configuration));
+				new DeleteAction("Delete",
+						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.FILE_GROUP,

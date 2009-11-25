@@ -10,57 +10,80 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
-import org.eclipse.ui.actions.DeleteResourceAction;
+import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
+import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.repository.actions.HgAction;
 
 /**
  * @author adam.berkes <adam.berkes@intland.com>
  */
-public class DeleteAction extends DeleteResourceAction {
+public class DeleteAction extends SynchronizeModelAction {
 	private final ISynchronizePageConfiguration configuration;
-	private final List<IResource> resources;
 
-	public DeleteAction(ISynchronizePageConfiguration configuration) {
-		super(configuration.getSite().getWorkbenchSite());
-		resources = new LinkedList<IResource>();
+	public DeleteAction(String text,
+			ISynchronizePageConfiguration configuration,
+			ISelectionProvider selectionProvider) {
+		super(text, configuration, selectionProvider);
 		this.configuration = configuration;
 	}
 
 	@Override
-	public void run() {
-		initResources(configuration.getSite().getSelectionProvider().getSelection());
-		if (resources.size() > 0) {
-			for (IResource res : resources) {
-				try {
-					res.delete(false, new NullProgressMonitor());
-				} catch (CoreException ex) {
-					MercurialEclipsePlugin.logError(ex);
+	protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration config,
+			IDiffElement[] elements) {
+		List<IResource> selectedResources = new ArrayList<IResource>();
+
+		IStructuredSelection sel = getStructuredSelection();
+		Object[] objects = sel.toArray();
+		for (Object object : objects) {
+			if (object instanceof IResource) {
+				selectedResources.add(((IResource) object));
+			} else if (object instanceof IAdaptable){
+				IAdaptable adaptable = (IAdaptable) object;
+				IResource resource = (IResource) adaptable.getAdapter(IResource.class);
+				if(resource != null){
+					selectedResources.add(resource);
 				}
+			} else if (object instanceof WorkingChangeSet){
+				selectedResources.addAll(((WorkingChangeSet)object).getFiles());
 			}
 		}
+		IResource[] resources = new IResource[selectedResources.size()];
+		selectedResources.toArray(resources);
+		return new DeleteOperation(configuration, elements, resources);
 	}
 
-	protected void initResources(ISelection selection) {
-		resources.clear();
-		if (selection instanceof IStructuredSelection) {
-		for (Object sel : ((IStructuredSelection)selection).toArray()) {
-			Object adapter = HgAction.getAdapter(sel,
-					IResource.class);
-			if (adapter != null && adapter instanceof IResource) {
-				resources.add((IResource)adapter);
+	@Override
+	protected final boolean updateSelection(IStructuredSelection selection) {
+		boolean updateSelection = super.updateSelection(selection);
+		if(!updateSelection){
+			Object[] array = selection.toArray();
+			for (Object object : array) {
+				if(!isSupported(object)){
+					return false;
+				}
 			}
+			return true;
 		}
+		return updateSelection;
+	}
+
+	private boolean isSupported(Object object) {
+		Object adapter = HgAction.getAdapter(object,
+				IResource.class);
+		if (adapter != null && adapter instanceof IResource) {
+			return true;
 		}
+		return false;
 	}
 }
