@@ -82,7 +82,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 							resource.getProject().getLocation().toFile(),
 							Integer.toString(lId), Integer.toString(rId));
 				} catch (HgException e) {
-					// continue
+					// continue: no changeset in the local repo, se issue #10616
 				}
 			}
 
