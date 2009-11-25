@@ -14,6 +14,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.StructuredSelection;
@@ -22,15 +23,20 @@ import org.eclipse.team.internal.ui.synchronize.actions.OpenFileInSystemEditorAc
 import org.eclipse.team.ui.mapping.SynchronizationActionProvider;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchSite;
+import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.OpenWithMenu;
 import org.eclipse.ui.navigator.ICommonViewerSite;
 import org.eclipse.ui.navigator.ICommonViewerWorkbenchSite;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
+import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
+import com.vectrace.MercurialEclipse.synchronize.actions.DeleteAction;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -42,6 +48,7 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 
 	private OpenFileInSystemEditorAction openFileAction;
 	private ISynchronizePageConfiguration configuration;
+	private DeleteAction deleteAction;
 
 	public HgChangeSetActionProvider() {
 		super();
@@ -58,6 +65,10 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 			final IWorkbenchPartSite wps = cvws.getSite();
 			if (wps instanceof IViewSite) {
 				openFileAction = new OpenFileInSystemEditorAction(wps.getPage());
+				deleteAction = new DeleteAction("Delete",
+						configuration, wps.getSelectionProvider());
+				deleteAction.setActionDefinitionId(IWorkbenchCommandConstants.EDIT_DELETE);
+				deleteAction.setId(IWorkbenchCommandConstants.EDIT_DELETE);
 			}
 		}
 	}
@@ -65,10 +76,39 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
 		super.fillContextMenu(menu);
+		if(menu.find(DeleteAction.HG_DELETE_GROUP) == null){
+			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(
+					DeleteAction.HG_DELETE_GROUP));
+		}
 		ISelection selection = getSite().getSelectionProvider().getSelection();
 		if (selection instanceof IStructuredSelection && !hasFileMenu(menu)) {
 			fillOpenWithMenu(menu, ISynchronizePageConfiguration.FILE_GROUP,
 					(IStructuredSelection) selection);
+		}
+		if (selection instanceof IStructuredSelection && !hasDeleteMenu(menu)) {
+			fillDeleteMenu(menu, ISynchronizePageConfiguration.FILE_GROUP,
+					(IStructuredSelection) selection);
+		}
+	}
+
+	private void fillDeleteMenu(IMenuManager menu, String fileGroup, IStructuredSelection selection) {
+		// Only supported if at least one file is selected.
+		if (selection == null || selection.size() != 1) {
+			return;
+		}
+
+		Object element = selection.getFirstElement();
+		if(element instanceof ChangeSet && !(element instanceof WorkingChangeSet)){
+			return;
+		}
+		IResource resource = ResourceUtils.getResource(element);
+		if (!(resource instanceof IFile) || !resource.exists()) {
+			return;
+		}
+
+		if (deleteAction != null) {
+			deleteAction.selectionChanged(new StructuredSelection(resource));
+			menu.appendToGroup(DeleteAction.HG_DELETE_GROUP, deleteAction);
 		}
 	}
 
@@ -114,5 +154,13 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 	private boolean hasFileMenu(IMenuManager menu) {
 		return openFileAction != null && menu.find(openFileAction.getId()) != null;
 	}
+	private boolean hasDeleteMenu(IMenuManager menu) {
+		return deleteAction != null && menu.find(deleteAction.getId()) != null;
+	}
 
+	@Override
+	public void fillActionBars(IActionBars actionBars) {
+		super.fillActionBars(actionBars);
+		actionBars.setGlobalActionHandler(ActionFactory.DELETE.getId(), deleteAction);
+	}
 }

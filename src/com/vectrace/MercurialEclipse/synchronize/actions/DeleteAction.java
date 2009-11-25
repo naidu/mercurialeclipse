@@ -15,26 +15,33 @@ import java.util.List;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.repository.actions.HgAction;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author adam.berkes <adam.berkes@intland.com>
  */
 public class DeleteAction extends SynchronizeModelAction {
+
+	public static final String HG_DELETE_GROUP = "hg.delete";
 	private final ISynchronizePageConfiguration configuration;
 
 	public DeleteAction(String text,
 			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
+		setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(
+				ISharedImages.IMG_ETOOL_DELETE));
 		this.configuration = configuration;
 	}
 
@@ -42,20 +49,16 @@ public class DeleteAction extends SynchronizeModelAction {
 	protected SynchronizeModelOperation getSubscriberOperation(ISynchronizePageConfiguration config,
 			IDiffElement[] elements) {
 		List<IResource> selectedResources = new ArrayList<IResource>();
-
 		IStructuredSelection sel = getStructuredSelection();
 		Object[] objects = sel.toArray();
 		for (Object object : objects) {
-			if (object instanceof IResource) {
-				selectedResources.add(((IResource) object));
-			} else if (object instanceof IAdaptable){
-				IAdaptable adaptable = (IAdaptable) object;
-				IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-				if(resource != null){
+			if (object instanceof WorkingChangeSet){
+				selectedResources.addAll(((WorkingChangeSet)object).getFiles());
+			} else if(!(object instanceof ChangeSet)){
+				IResource resource = ResourceUtils.getResource(object);
+				if(resource != null) {
 					selectedResources.add(resource);
 				}
-			} else if (object instanceof WorkingChangeSet){
-				selectedResources.addAll(((WorkingChangeSet)object).getFiles());
 			}
 		}
 		IResource[] resources = new IResource[selectedResources.size()];
@@ -79,9 +82,8 @@ public class DeleteAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		Object adapter = HgAction.getAdapter(object,
-				IResource.class);
-		if (adapter != null && adapter instanceof IResource) {
+		IResource adapter = HgAction.getAdapter(object,	IResource.class);
+		if (adapter != null) {
 			return true;
 		}
 		return false;
