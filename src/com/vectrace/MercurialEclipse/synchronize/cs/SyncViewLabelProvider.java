@@ -18,13 +18,14 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
 public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 	@Override
 	public Image getImage(Object element) {
-		return super.getImage(element);
+		return getDelegateImage(element);
 	}
 
 	@Override
@@ -43,7 +44,13 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			FileFromChangeSet file = (FileFromChangeSet) element;
 			image = getDelegateLabelProvider().getImage(file.getFile());
 		} else {
-			image = super.getDelegateImage(element);
+			try {
+				image = super.getDelegateImage(element);
+			} catch (NullPointerException npex) {
+				// if element is invalid or not yet fully handled
+				// NPE is possible
+				MercurialEclipsePlugin.logError(npex);
+			}
 		}
 		return image;
 	}
@@ -75,7 +82,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			} else {
 				sb.append(cset.toString());
 			}
-			return sb.toString();
+			return StringUtils.removeLineBreaks(sb.toString());
 		}
 		if(elementOrPath instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) elementOrPath;

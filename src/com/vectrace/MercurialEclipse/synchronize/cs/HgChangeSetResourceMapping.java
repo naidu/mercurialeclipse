@@ -17,13 +17,16 @@ import java.util.Set;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceMappingContext;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class HgChangeSetResourceMapping extends ResourceMapping {
 
@@ -48,7 +51,20 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 		Set<IProject> result = new HashSet<IProject>();
 		Set<IFile> files = changeSet.getFiles();
 		for (IFile file : files) {
-			result.add(file.getProject());
+			if (file != null && file.getProject() != null) {
+				result.add(file.getProject());
+			} else {
+				// it is possible that files are out of eclipse project scope
+				// so resolve project according to hg root.
+				final HgRoot root = changeSet.getHgRoot();
+				IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+				for (IProject project : projects) {
+					IPath fullPath = project.getFullPath();
+					if (fullPath != null && fullPath.toFile().getAbsolutePath().startsWith(root.getAbsolutePath())) {
+						result.add(project);
+					}
+				}
+			}
 		}
 		return result.toArray(new IProject[result.size()]);
 	}
