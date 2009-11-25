@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
@@ -82,7 +81,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 				}
 				Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
 						res, result, true,
-						Direction.INCOMING, repository, bundleFile, new IFilePatch[0]);
+						Direction.INCOMING, repository, bundleFile);
 				return revisions;
 			} catch (HgException hg) {
 				if (hg.getStatus().getCode() == 1) {

@@ -25,7 +25,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
@@ -65,7 +64,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private HgRepositoryLocation repository;
 	Direction direction;
 	private final HgRoot hgRoot;
-	private IFilePatch[] patches;
 	Set<IFile> files;
 
 	/**
@@ -183,11 +181,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			return this;
 		}
 
-
-		public void patches(IFilePatch[] patches) {
-			this.cs.patches = patches;
-		}
-
 		public ChangeSet build() {
 			ChangeSet result = this.cs;
 			this.cs = null;
@@ -208,6 +201,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		this.hgRoot = root;
 		setDescription(description);
 		setParents(parents);
+		// remember index:fullchangesetid
 		setName(toString());
 	}
 
@@ -471,14 +465,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return hgRoot;
 	}
 
-	/**
-	 * @return the patch
-	 */
-	public IFilePatch[] getPatches() {
-		return patches;
-	}
-
-
 	@Override
 	public boolean contains(IResource local) {
 		return getFiles().contains(local);
@@ -578,6 +564,14 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	@Override
 	public Date getDate() {
 		return getRealDate();
+	}
+
+	/**
+	 * Returns index:fullchangesetid pair
+	 */
+	@Override
+	public String getName() {
+		return super.getName();
 	}
 
 	@Override

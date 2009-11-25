@@ -26,10 +26,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 
-import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
@@ -85,8 +83,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		private final Set<String> filesAdded = new TreeSet<String>();
 		private final Set<String> filesRemoved = new TreeSet<String>();
 		private Action action;
-		private final IFilePatch[] patches;
-		private final IPath repoPath;
 		private static final Pattern LT = Pattern.compile("&lt;");
 		private static final Pattern GT = Pattern.compile("&gt;");
 		private static final Pattern AMP = Pattern.compile("&amp;");
@@ -95,15 +91,13 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
 		public ChangesetContentHandler(IPath res, Direction direction,
 				HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot,
-				Map<IPath, Set<ChangeSet>> fileRevisions, IFilePatch[] patches) {
+				Map<IPath, Set<ChangeSet>> fileRevisions) {
 			this.res = res;
 			this.direction = direction;
 			this.repository = repository;
 			this.bundleFile = bundleFile;
 			this.hgRoot = hgRoot;
 			this.fileRevisions = fileRevisions;
-			this.patches = patches;
-			this.repoPath = new Path(hgRoot.getPath());
 		}
 
 		private static String replaceAll(Pattern p, String source, String replacement){
@@ -159,7 +153,6 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 				csb.bundleFile(bundleFile);
 				csb.direction(direction);
 				csb.repository(repository);
-				csb.patches(patches);
 
 				List<FileStatus> list = new ArrayList<FileStatus>(
 						filesModified.size() + filesAdded.size() + filesRemoved.size());
@@ -414,12 +407,12 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	protected final static Map<IPath, Set<ChangeSet>> createMercurialRevisions(
 			IResource res, String input, boolean withFiles,
 			Direction direction, HgRepositoryLocation repository,
-			File bundleFile, IFilePatch[] patches) throws HgException {
+			File bundleFile) throws HgException {
 
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
 		IPath path = res.getLocation();
 
-		return createMercurialRevisions(path, input, direction, repository, bundleFile, patches, hgRoot);
+		return createMercurialRevisions(path, input, direction, repository, bundleFile, hgRoot);
 	}
 
 	/**
@@ -430,7 +423,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	protected static Map<IPath, Set<ChangeSet>> createMercurialRevisions(IPath path, String input, Direction direction,
-			HgRepositoryLocation repository, File bundleFile, IFilePatch[] patches, HgRoot hgRoot)
+			HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot)
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 
@@ -441,14 +434,14 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		try {
 			XMLReader reader = XMLReaderFactory.createXMLReader();
 			reader.setContentHandler(getHandler(path, direction, repository,
-					bundleFile, hgRoot, fileRevisions, patches));
+					bundleFile, hgRoot, fileRevisions));
 			reader.parse(new InputSource(new StringReader(myInput)));
 		} catch (Exception e) {
 			String nextTry = cleanControlChars(myInput);
 			try {
 				XMLReader reader = XMLReaderFactory.createXMLReader();
 				reader.setContentHandler(getHandler(path, direction, repository,
-						bundleFile, hgRoot, fileRevisions, patches));
+						bundleFile, hgRoot, fileRevisions));
 				reader.parse(new InputSource(new StringReader(nextTry)));
 			} catch (Exception e1) {
 				throw new HgException(e1.getLocalizedMessage(), e);
@@ -460,9 +453,9 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	private static ContentHandler getHandler(IPath res,
 			Direction direction, HgRepositoryLocation repository,
 			File bundleFile, HgRoot hgRoot,
-			Map<IPath, Set<ChangeSet>> fileRevisions, IFilePatch[] patches) {
+			Map<IPath, Set<ChangeSet>> fileRevisions) {
 		handler = new ChangesetContentHandler(res, direction, repository,
-				bundleFile, hgRoot, fileRevisions, patches);
+				bundleFile, hgRoot, fileRevisions);
 		return handler;
 	}
 

@@ -385,6 +385,7 @@ public class LocalChangesetCache extends AbstractCache {
 			for (ChangeSet changeSet : changes) {
 				map.put(changeSet.toString(), changeSet);
 				map.put(changeSet.getChangeset(), changeSet);
+				map.put(changeSet.getName(), changeSet);
 			}
 		}
 	}

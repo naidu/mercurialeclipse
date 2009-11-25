@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
@@ -27,7 +26,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
 
@@ -51,15 +49,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		}
 
 		Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-				res, result, true, Direction.OUTGOING, repository, null,
-				getOutgoingPatches(res, repository, branch));
+				res, result, true, Direction.OUTGOING, repository, null);
 		return revisions;
-	}
-
-	private static IFilePatch[] getOutgoingPatches(IResource res,
-			HgRepositoryLocation repository, String branch) throws HgException {
-		String outgoingPatch = getOutgoingPatch(res, repository, branch);
-		return PatchUtils.getFilePatches(outgoingPatch);
 	}
 
 	private static String getResult(AbstractShellCommand command) throws HgException {
@@ -100,13 +91,6 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		} else {
 			command.addOptions(repository.getLocation());
 		}
-	}
-
-	private static String getOutgoingPatch(IResource res, HgRepositoryLocation repository, String branch) throws HgException {
-		AbstractShellCommand command = getCommand(res, branch);
-		command.addOptions("-p");
-		setRepository(repository, command);
-		return getResult(command);
 	}
 
 }

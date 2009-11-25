@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -158,7 +157,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 				return null;
 			}
 			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-					res, result, withFiles, Direction.LOCAL, null, null, new IFilePatch[0]);
+					res, result, withFiles, Direction.LOCAL, null, null);
 			return revisions;
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
@@ -190,7 +189,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			}
 			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
 					new Path(path.getAbsolutePath()),
-					result, Direction.LOCAL, null, null, new IFilePatch[0], root);
+					result, Direction.LOCAL, null, null, root);
 			return revisions;
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
@@ -320,7 +319,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			String result = command.executeToString();
 
 			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-					res, result, withFiles, Direction.LOCAL, null, null, new IFilePatch[0]);
+					res, result, withFiles, Direction.LOCAL, null, null);
 			Set<ChangeSet> set = revisions.get(res.getLocation());
 			if (set != null) {
 				return Collections.min(set);

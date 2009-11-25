@@ -37,7 +37,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 /**
  * @author zingo
@@ -228,8 +227,6 @@ public class MercurialRevisionStorage implements IStorage {
 			} catch (IOException e) {
 				throw new HgException("Unable to determine canonical path for " + changeSet.getBundleFile(), e);
 			}
-		} else if (changeSet.getDirection() == Direction.OUTGOING) {
-			return new ContentHolder(PatchUtils.getPatchedContentsAsBytes(file, changeSet.getPatches(), true));
 		} else {
 			// local: get the contents via cat
 			if(file.exists() && MercurialStatusCache.getInstance().isUnknown(file)){
