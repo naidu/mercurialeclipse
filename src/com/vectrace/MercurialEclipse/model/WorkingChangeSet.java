@@ -31,7 +31,6 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
@@ -102,12 +101,21 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		}
 		boolean changed = false;
 		for (IPath path : paths) {
-			path = ResourcesPlugin.getWorkspace().getRoot().getLocation().append(path);
-			IFile file = ResourceUtils.getFileHandle(path);
-			if(files.contains(file)){
-				context.hide(file);
-				files.remove(file);
-				changed = true;
+			if(path.segmentCount() < 2){
+				continue;
+			}
+			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(path.segment(0));
+			if(project == null){
+				continue;
+			}
+			IResource res = project.findMember(path.removeFirstSegments(1));
+			if(res instanceof IFile){
+				IFile file = (IFile) res;
+				if(files.contains(file)){
+					context.hide(file);
+					files.remove(file);
+					changed = true;
+				}
 			}
 		}
 		PropertyChangeEvent event = new PropertyChangeEvent(this, REMOVED, null, null);

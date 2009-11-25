@@ -26,19 +26,33 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class HgChangeSetResourceMapping extends ResourceMapping {
 
 	private final ChangeSet changeSet;
+	private final IResource[] resources;
+	private FileFromChangeSet file;
 
 	public HgChangeSetResourceMapping(ChangeSet changeSet) {
 		this.changeSet = changeSet;
+		resources = changeSet.getResources();
+	}
+
+	public HgChangeSetResourceMapping(FileFromChangeSet file) {
+		this.file = file;
+		changeSet = file.getChangeset();
+		if(file.getFile() != null) {
+			resources = new IResource[]{file.getFile()};
+		} else {
+			resources = new IResource[0];
+		}
 	}
 
 	@Override
 	public Object getModelObject() {
-		return changeSet;
+		return file != null? file : changeSet;
 	}
 
 	@Override
@@ -72,7 +86,6 @@ public class HgChangeSetResourceMapping extends ResourceMapping {
 	@Override
 	public ResourceTraversal[] getTraversals(ResourceMappingContext context,
 			IProgressMonitor monitor) throws CoreException {
-		IResource[] resources = changeSet.getResources();
 		if (resources.length == 0) {
 			return new ResourceTraversal[0];
 		}

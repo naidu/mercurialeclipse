@@ -1418,6 +1418,11 @@
             class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
          <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
       </factory>
+      <factory
+            adaptableType="com.vectrace.MercurialEclipse.model.FileFromChangeSet"
+            class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetAdapterFactory">
+         <adapter type="org.eclipse.core.resources.mapping.ResourceMapping"/>
+      </factory>
    
       <factory
             adaptableType="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider"
