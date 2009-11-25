@@ -82,12 +82,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private ISubscriberChangeEvent[] lastEvents;
 
+	private MercurialSynchronizeParticipant participant;
+
 	public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
 		Assert.isNotNull(synchronizationScope);
 		currentCsMap = new ConcurrentHashMap<HgRoot, String>();
 		currentBranchMap = new ConcurrentHashMap<HgRoot, String>();
 		debug = MercurialEclipsePlugin.getDefault().isDebugging();
 		scope = synchronizationScope;
+		synchronizationScope.setSubscriber(this);
 		sema = new Semaphore(1, true);
 	}
 
@@ -104,11 +107,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return comparator;
 	}
 
-	private static String getRealBranchName(String currBranch){
+	public static String getRealBranchName(String currBranch){
 		if(currBranch == null){
 			return Branch.DEFAULT;
 		}
-		if(currBranch.startsWith(UNCOMMITTED_BRANCH)){
+		if(isUncommitedBranch(currBranch)){
 			return currBranch.substring(UNCOMMITTED_BRANCH.length());
 		}
 		return currBranch;
@@ -127,11 +130,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			MercurialEclipsePlugin.logError(e1);
 			return null;
 		}
-		String currentBranch = currentBranchMap.get(root);
-		if(currentBranch == null){
-			currentBranch = updateBranchMap(root, MercurialTeamProvider.getCurrentBranch(resource));
-		}
-		boolean uncommittedBranch = currentBranch.startsWith(UNCOMMITTED_BRANCH);
+		String currentBranch = getCurrentBranch(resource, root);
+		boolean uncommittedBranch = isUncommitedBranch(currentBranch);
 		if(uncommittedBranch) {
 			currentBranch = getRealBranchName(currentBranch);
 		}
@@ -176,7 +176,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			boolean exists = resource.exists();
 			// if outgoing != null it's our base, else we gotta construct one
 			if (exists && !Bits.contains(sMask, MercurialStatusCache.BIT_ADDED)
-					|| (!exists && Bits.contains(sMask, MercurialStatusCache.BIT_REMOVED))) {
+					// XXX Probably we do not need to check for BIT_REMOVED
+					// || (!exists && Bits.contains(sMask, MercurialStatusCache.BIT_REMOVED))
+					|| !exists) {
 
 				try {
 					// Find current working directory changeset (not head)
@@ -199,7 +201,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					return null;
 				}
 
-				if(!Branch.same(csOutgoing.getBranch(), currentBranch)){
+				if(csOutgoing == null || !Branch.same(csOutgoing.getBranch(), currentBranch)){
 					return null;
 				}
 				// construct base revision
@@ -320,6 +322,18 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
+	public static boolean isUncommitedBranch(String currentBranch) {
+		return currentBranch.startsWith(UNCOMMITTED_BRANCH);
+	}
+
+	public String getCurrentBranch(IResource resource, HgRoot root) {
+		String currentBranch = currentBranchMap.get(root);
+		if(currentBranch == null){
+			currentBranch = updateBranchMap(root, MercurialTeamProvider.getCurrentBranch(resource));
+		}
+		return currentBranch;
+	}
+
 	private boolean isInteresting(IResource resource) {
 		return resource instanceof IFile
 				&& MercurialTeamProvider.isHgTeamProviderFor(resource.getProject())
@@ -394,7 +408,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			boolean forceRefresh = project.exists();
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 			String currentBranch = currentBranchMap.get(hgRoot);
-			boolean uncommittedBranch = currentBranch.startsWith(UNCOMMITTED_BRANCH);
+			boolean uncommittedBranch = isUncommitedBranch(currentBranch);
 			if(uncommittedBranch) {
 				currentBranch = getRealBranchName(currentBranch);
 			}
@@ -530,11 +544,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
+	public RepositorySynchronizationScope getScope() {
+		return scope;
+	}
+
 	protected HgRepositoryLocation getRepo(){
 		return scope.getRepositoryLocation();
 	}
 
-	protected IProject[] getProjects() {
+	public IProject[] getProjects() {
 		return scope.getProjects();
 	}
 
@@ -581,5 +599,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		super.fireTeamResourceChange(deltas);
 	}
 
+	public void setParticipant(MercurialSynchronizeParticipant participant){
+		this.participant = participant;
+	}
+
+	public MercurialSynchronizeParticipant getParticipant() {
+		return participant;
+	}
 
 }

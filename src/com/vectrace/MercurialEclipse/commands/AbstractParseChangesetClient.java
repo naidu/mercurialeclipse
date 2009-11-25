@@ -164,13 +164,13 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 				List<FileStatus> list = new ArrayList<FileStatus>(
 						filesModified.size() + filesAdded.size() + filesRemoved.size());
 				for (String file : filesModified) {
-					list.add(new FileStatus(FileStatus.Action.MODIFIED, file));
+					list.add(new FileStatus(FileStatus.Action.MODIFIED, file, hgRoot));
 				}
 				for (String file : filesAdded) {
-					list.add(new FileStatus(FileStatus.Action.ADDED, file));
+					list.add(new FileStatus(FileStatus.Action.ADDED, file, hgRoot));
 				}
 				for (String file : filesRemoved) {
-					list.add(new FileStatus(FileStatus.Action.REMOVED, file));
+					list.add(new FileStatus(FileStatus.Action.REMOVED, file, hgRoot));
 				}
 				csb.changedFiles(list.toArray(new FileStatus[list.size()]));
 
@@ -261,9 +261,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
 			if (cs.getChangedFiles() != null) {
 				for (FileStatus file : cs.getChangedFiles()) {
-					IPath fileAbsPath = repoPath.append(file.getPath());
-					Set<ChangeSet> revs = addChangeSetRevisions(cs,
-							fileAbsPath);
+					IPath fileAbsPath = file.getAbsolutePath();
+					Set<ChangeSet> revs = addChangeSetRevisions(cs,	fileAbsPath);
 					fileRevisions.put(fileAbsPath, revs);
 				}
 			}

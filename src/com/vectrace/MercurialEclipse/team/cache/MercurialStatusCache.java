@@ -239,7 +239,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * We propagate only {@link #BIT_MODIFIED} bit to the parent directory, if any from bits:
 	 * BIT_MISSING | BIT_REMOVED | BIT_UNKNOWN | BIT_ADDED | BIT_MODIFIED is set on the child file.
 	 */
-	private static final int MODIFIED_MASK = BIT_MISSING | BIT_REMOVED |
+	public static final int MODIFIED_MASK = BIT_MISSING | BIT_REMOVED |
 			BIT_UNKNOWN | BIT_ADDED | BIT_MODIFIED;
 
 	/** a directory is still supervised if one of the following bits is set */
@@ -508,12 +508,25 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		return result;
 	}
 
-	public Set<IResource> getResources(int statusBit, IContainer folder){
+	public Set<IFile> getFiles(int statusBits, IContainer folder){
+		Set<IResource> resources = getResources(statusBits, folder);
+		Set<IFile> files = new HashSet<IFile>();
+		for (IResource resource : resources) {
+			IPath location = resource.getLocation();
+			if(resource instanceof IFile && location != null && !location.toFile().isDirectory()){
+				files.add((IFile) resource);
+			}
+		}
+		return files;
+	}
+
+	public Set<IResource> getResources(int statusBits, IContainer folder){
 		Set<IResource> resources;
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-		boolean isMappedState = statusBit != BIT_CLEAN && statusBit != BIT_IMPOSSIBLE;
+		boolean isMappedState = statusBits != BIT_CLEAN && statusBits != BIT_IMPOSSIBLE
+			&& Bits.cardinality(statusBits) == 1;
 		if(isMappedState){
-			Set<IPath> set = bitMap.get(statusBit);
+			Set<IPath> set = bitMap.get(statusBits);
 			if(set == null || set.isEmpty()){
 				return EMPTY_SET;
 			}
@@ -541,7 +554,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			IPath parentPath = ResourceUtils.getPath(folder);
 			for (Entry<IPath, Integer> entry : entrySet) {
 				Integer status = entry.getValue();
-				if(status != null && Bits.contains(status.intValue(), statusBit)){
+				if(status != null && Bits.contains(status.intValue(), statusBits)){
 					IPath path = entry.getKey();
 					// we don't know if it is a file or folder...
 					IFile tmp = root.getFileForLocation(path);

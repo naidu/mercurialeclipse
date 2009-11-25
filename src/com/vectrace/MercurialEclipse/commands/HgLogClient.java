@@ -49,6 +49,17 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		return getRevisions(command);
 	}
 
+	public static ChangeSet getTip(IProject project) throws HgException {
+		HgCommand command = new HgCommand("log", project, true); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+		command.addOptions("-r", "tip");
+		ChangeSet[] sets = getRevisions(command);
+		if(sets.length != 1){
+			throw new HgException("Unable to get changeset for 'tip' version");
+		}
+		return sets[0];
+	}
+
 	/**
 	 * @param command
 	 *            a command with optionally its Files set

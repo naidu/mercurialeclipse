@@ -63,7 +63,7 @@ public class MergeHandler extends SingleResourceHandler {
 				mb.setText("Merge");
 				String csSummary = "Changeset: " + cs.getRevision().toString().substring(0, 20) + "\n" +
 				"User: " + cs.getUser() + "\n" +
-				"Date: " + cs.getDate() + "\n" +
+				"Date: " + cs.getDateString() + "\n" +
 				"Summary: " + cs.getSummary();
 
 				String branch = cs.getBranch();

@@ -22,7 +22,7 @@ public class ChangeSetLabelProvider
 			case 1:
 				return rev.getChangeset();
 			case 2:
-				return rev.getDate();
+				return rev.getDateString();
 			case 3:
 				return rev.getUser();
 			case 4:

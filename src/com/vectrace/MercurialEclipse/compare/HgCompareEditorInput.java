@@ -21,8 +21,10 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class HgCompareEditorInput extends CompareEditorInput {
@@ -84,6 +86,12 @@ public class HgCompareEditorInput extends CompareEditorInput {
 				return null;
 			}
 			if (commonAncestor == rId) {
+				return null;
+			}
+			ChangeSet tip = HgLogClient.getTip(resource.getProject());
+			boolean localKnown = tip.getChangesetIndex() >= commonAncestor;
+			if(!localKnown){
+				// no common ancestor
 				return null;
 			}
 			return new RevisionNode(new MercurialRevisionStorage(resource, commonAncestor));

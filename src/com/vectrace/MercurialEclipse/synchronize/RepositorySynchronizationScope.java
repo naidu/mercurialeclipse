@@ -26,19 +26,22 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeChangeListener;
+import org.eclipse.team.internal.core.mapping.AbstractResourceMappingScope;
 import org.eclipse.team.internal.ui.Utils;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
 /**
  * @author Andrei
  */
-public class RepositorySynchronizationScope implements ISynchronizationScope {
+public class RepositorySynchronizationScope extends AbstractResourceMappingScope implements ISynchronizationScope {
 
 	private final IResource[] roots;
 	private final ListenerList listeners;
 	private final HgRepositoryLocation repo;
+	private MercurialSynchronizeSubscriber subscriber;
 
 	public RepositorySynchronizationScope(HgRepositoryLocation repo, IResource[] roots) {
 		Assert.isNotNull(repo);
@@ -49,6 +52,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		listeners = new ListenerList(ListenerList.IDENTITY);
 	}
 
+	@Override
 	public void addScopeChangeListener(ISynchronizationScopeChangeListener listener) {
 		listeners.add(listener);
 	}
@@ -57,6 +61,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		return this;
 	}
 
+	@Override
 	public boolean contains(IResource resource) {
 		ResourceTraversal[] traversals = getTraversals();
 		if(traversals == null){
@@ -79,6 +84,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		return Utils.getResourceMappings(getRoots());
 	}
 
+	@Override
 	public ResourceMapping getMapping(Object modelObject) {
 		ResourceMapping[] mappings = getMappings();
 		for (ResourceMapping mapping : mappings) {
@@ -93,6 +99,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		return getInputMappings();
 	}
 
+	@Override
 	public ResourceMapping[] getMappings(String modelProviderId) {
 		if(!isSupportedModelProvider(modelProviderId)){
 			return null;
@@ -108,11 +115,14 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 	}
 
 	private boolean isSupportedModelProvider(String modelProviderId) {
-		return ModelProvider.RESOURCE_MODEL_PROVIDER_ID.equals(modelProviderId);
+		return ModelProvider.RESOURCE_MODEL_PROVIDER_ID.equals(modelProviderId)
+			|| HgChangeSetModelProvider.ID.equals(modelProviderId);
 	}
 
+	@Override
 	public ModelProvider[] getModelProviders() {
 		Set<ModelProvider> result = new HashSet<ModelProvider>();
+
 		ResourceMapping[] mappings = getMappings();
 		for (ResourceMapping mapping : mappings) {
 			ModelProvider modelProvider = mapping.getModelProvider();
@@ -120,6 +130,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 				result.add(modelProvider);
 			}
 		}
+		result.add(HgChangeSetModelProvider.getProvider());
 		return result.toArray(new ModelProvider[result.size()]);
 	}
 
@@ -131,6 +142,7 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		return projects.toArray(new IProject[projects.size()]);
 	}
 
+	@Override
 	public IResource[] getRoots() {
 		return roots;
 	}
@@ -149,9 +161,10 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		}
 	}
 
+	@Override
 	public ResourceTraversal[] getTraversals(String modelProviderId) {
 		// TODO Auto-generated method stub
-		return null;
+		return super.getTraversals(modelProviderId);
 	}
 
 	public boolean hasAdditionalMappings() {
@@ -171,12 +184,21 @@ public class RepositorySynchronizationScope implements ISynchronizationScope {
 		}
 	}
 
+	@Override
 	public void removeScopeChangeListener(ISynchronizationScopeChangeListener listener) {
 		listeners.remove(listener);
 	}
 
 	public HgRepositoryLocation getRepositoryLocation() {
 		return repo;
+	}
+
+	public void setSubscriber(MercurialSynchronizeSubscriber mercurialSynchronizeSubscriber) {
+		this.subscriber = mercurialSynchronizeSubscriber;
+	}
+
+	public MercurialSynchronizeSubscriber getSubscriber() {
+		return subscriber;
 	}
 
 }

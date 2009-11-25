@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - additions for sync
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -29,6 +30,7 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -314,7 +316,25 @@ public class MercurialRevisionStorage implements IStorage {
 	 * @param rev
 	 */
 	public MercurialRevisionStorage(IFile res, int rev) {
-		this(res, String.valueOf(rev));
+		super();
+		resource = res;
+		if(rev < 0){
+			return;
+		}
+		try {
+			ChangeSet tip = HgLogClient.getTip(res.getProject());
+			boolean localKnown = tip.getChangesetIndex() >= rev;
+			if(!localKnown){
+				return;
+			}
+			this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, String.valueOf(rev));
+			if(changeSet != null){
+				this.revision = changeSet.getChangesetIndex();
+				this.global = changeSet.getChangeset();
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	@Override

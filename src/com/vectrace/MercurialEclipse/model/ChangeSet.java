@@ -13,20 +13,24 @@
  *     Zsolt Koppany (Intland)   - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.model;
 
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
+import org.eclipse.compare.structuremergeviewer.Differencer;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
@@ -34,12 +38,10 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
-/**
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
- */
-public class ChangeSet implements Comparable<ChangeSet> {
+@SuppressWarnings("restriction")
+public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSet> {
 
+	private static final IFile[] EMPTY_FILES = new IFile[0];
 	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm Z");
 	public static final Date UNKNOWN_DATE = new Date(0);
 	public static enum Direction {
@@ -64,6 +66,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	Direction direction;
 	private final HgRoot hgRoot;
 	private IFilePatch[] patches;
+	Set<IFile> files;
 
 	/**
 	 *  A more or less dummy changeset containing only index and global id. Such
@@ -192,7 +195,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		}
 	}
 
-	private ChangeSet(int changesetIndex, String changeSet, String tag,
+	ChangeSet(int changesetIndex, String changeSet, String tag,
 			String branch, String user, String date, String description,
 			String[] parents, HgRoot root) {
 		this.changesetIndex = changesetIndex;
@@ -205,6 +208,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		this.hgRoot = root;
 		setDescription(description);
 		setParents(parents);
+		setName(toString());
 	}
 
 
@@ -236,7 +240,7 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		return user;
 	}
 
-	public String getDate() {
+	public String getDateString() {
 //      return date;
 		String dt = date;
 		if (dt != null) {
@@ -254,7 +258,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		return dt;
 	}
 
-	public String getDescription() {
+	@Override
+	public String getComment() {
 		return description;
 	}
 
@@ -307,10 +312,10 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	/**
-		* @param resource non null
-		* @param action non null
-		* @return true if this changeset contains a resource with given action state
-		*/
+	 * @param resource non null
+	 * @param action non null
+	 * @return true if this changeset contains a resource with given action state
+	 */
 	private boolean contains(IResource resource, Action action) {
 		if(changedFiles.length == 0){
 			return false;
@@ -320,9 +325,9 @@ public class ChangeSet implements Comparable<ChangeSet> {
 		for (FileStatus fileStatus : changedFiles) {
 			if(fileStatus.getAction() == action){
 				if(path == null){
-					path = new Path(hgRoot.toRelative(ResourceUtils.getFileHandle(resource)));
+					path = ResourceUtils.getPath(resource);
 				}
-				if(path.equals(fileStatus.getPath())){
+				if(path.equals(fileStatus.getAbsolutePath())){
 					match = true;
 					break;
 				}
@@ -361,24 +366,24 @@ public class ChangeSet implements Comparable<ChangeSet> {
 
 	@Override
 	public boolean equals(Object obj) {
+		if(this == obj){
+			return true;
+		}
 		if (obj instanceof ChangeSet) {
 			ChangeSet other = (ChangeSet) obj;
 			if(getChangeset().equals(other.getChangeset())){
 				return true;
 			}
-			if (date != null && date.equals(other.getDate())) {
+			if (date != null && date.equals(other.getDateString())) {
 				return true;
 			}
+			// TODO move this line up to improve performance
+			// if (getChangesetIndex() != other.getChangesetIndex()) return false;
 			return getChangesetIndex() == other.getChangesetIndex();
 		}
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -407,7 +412,8 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	}
 
 	/**
-	 * @return the bundleFile
+	 * @return the bundleFile, may be null. The file can contain additional changeset
+	 * information, if this is a changeset used by "incoming" or "pull" operation
 	 */
 	public File getBundleFile() {
 		return bundleFile;
@@ -434,11 +440,13 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	private void setDescription(String description) {
 		if (description != null) {
 			this.description = description;
+		} else {
+			this.description = "";
 		}
 	}
 
 	public String getSummary() {
-		return StringUtils.removeLineBreaks(getDescription());
+		return StringUtils.removeLineBreaks(getComment());
 	}
 
 	/**
@@ -469,4 +477,118 @@ public class ChangeSet implements Comparable<ChangeSet> {
 	public IFilePatch[] getPatches() {
 		return patches;
 	}
+
+
+	@Override
+	public boolean contains(IResource local) {
+		return getFiles().contains(local);
+	}
+
+	public boolean contains(IPath local) {
+		for (IFile resource : getFiles()) {
+			if(local.equals(resource.getLocation())){
+				return true;
+			}
+		}
+		return false;
+	}
+
+
+	@Override
+	public boolean containsChildren(final IResource local, int depth) {
+		return contains(local);
+	}
+
+	/**
+	 * This method should NOT be used directly by clients of Mercurial plugin except
+	 * those from "synchronize" packages. It exists only to fulfill contract with Team
+	 * "synchronize" API and is NOT performant, as it may create dynamic proxy objects.
+	 * {@inheritDoc}
+	 */
+	@Override
+	public IFile[] getResources() {
+		return getFiles().toArray(EMPTY_FILES);
+	}
+
+	public FileFromChangeSet[] getChangesetFiles(){
+		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>();
+		if(changedFiles == null) {
+			return fcs.toArray(new FileFromChangeSet[0]);
+		}
+
+		for (FileStatus fileStatus : changedFiles) {
+			IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
+			int kind = 0;
+			switch (fileStatus.getAction()) {
+			case ADDED:
+				kind = Differencer.ADDITION;
+				break;
+			case MODIFIED:
+				kind = Differencer.CHANGE;
+				break;
+			case REMOVED:
+				kind = Differencer.DELETION;
+				break;
+			}
+			switch(getDirection()){
+				case INCOMING:
+					kind |= Differencer.LEFT;
+					break;
+				case OUTGOING:
+					kind |= Differencer.RIGHT;
+					break;
+				case LOCAL:
+					kind |= Differencer.RIGHT;
+					break;
+			}
+			fcs.add(new FileFromChangeSet(this, fileHandle, kind));
+		}
+		return fcs.toArray(new FileFromChangeSet[0]);
+	}
+
+	/**
+	 * @return not modifiable set of files changed/added/removed in this changeset, never null.
+	 * The returned file references might not exist (yet/anymore) on the disk or in the
+	 * Eclipse workspace.
+	 */
+	public Set<IFile> getFiles(){
+		if(files != null){
+			return files;
+		}
+		Set<IFile> files1 = new HashSet<IFile>();
+		if(changedFiles != null) {
+			for (FileStatus fileStatus : changedFiles) {
+				files1.add(ResourceUtils.getFileHandle(fileStatus.getAbsolutePath()));
+			}
+		}
+		files = Collections.unmodifiableSet(files1);
+		return files;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return changedFiles == null || changedFiles.length == 0;
+	}
+
+	@Override
+	public String getAuthor() {
+		return getUser();
+	}
+
+	@Override
+	public Date getDate() {
+		return getRealDate();
+	}
+
+	@Override
+	public void remove(IResource resource) {
+		// not supported
+	}
+
+
+	@Override
+	public void rootRemoved(IResource resource, int depth) {
+		// not supported
+	}
+
 }

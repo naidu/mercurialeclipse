@@ -30,6 +30,7 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.custom.BusyIndicator;
+import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchPage;
@@ -176,7 +177,28 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	 * @return the image descriptor
 	 */
 	public static ImageDescriptor getImageDescriptor(String path) {
-		return AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
+		if(descriptor == null) {
+			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path);
+			getDefault().getImageRegistry().put(path, descriptor);
+		}
+		return descriptor;
+	}
+
+	/**
+	 * Returns an image at the given plug-in relative path.
+	 *
+	 * @param path
+	 *            the path
+	 * @return the image
+	 */
+	public static Image getImage(String path) {
+		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
+		if(descriptor == null) {
+			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path);
+			getDefault().getImageRegistry().put(path, descriptor);
+		}
+		return getDefault().getImageRegistry().get(path);
 	}
 
 	public static final void logError(String message, Throwable error) {

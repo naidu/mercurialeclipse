@@ -11,6 +11,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
@@ -29,13 +33,13 @@ import org.eclipse.ui.PlatformUI;
  */
 public class HgSubscriberMergeContext extends SubscriberMergeContext {
 
-//    private final MercurialSynchronizeSubscriber subscriber;
+	private final Set<IFile> hidden;
 
 	public HgSubscriberMergeContext(Subscriber subscriber,
 			ISynchronizationScopeManager manager) {
 		super(subscriber, manager);
 		initialize();
-//        this.subscriber = (MercurialSynchronizeSubscriber)subscriber;
+		hidden = new HashSet<IFile>();
 	}
 
 	/**
@@ -100,6 +104,18 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 		if(!PlatformUI.getWorkbench().isClosing()) {
 			super.dispose();
 		}
+		hidden.clear();
+	}
+
+	/**
+	 * @param file
+	 */
+	public void hide(IFile file) {
+		hidden.add(file);
+	}
+
+	public boolean isHidden(IFile file){
+		return hidden.contains(file);
 	}
 
 //    private void doPullAndMerge(HgRepositoryLocation location,

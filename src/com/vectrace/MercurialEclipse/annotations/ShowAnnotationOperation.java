@@ -10,7 +10,6 @@
  *     StefanC           - jobs framework, code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.annotations;
 
 import java.lang.reflect.InvocationTargetException;
@@ -81,7 +80,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 		public Object getHoverInfo() {
 			return block.getUser()
 					+ " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-					(entry != null ? entry.getDescription() : ""); //$NON-NLS-1$
+					(entry != null ? entry.getComment() : ""); //$NON-NLS-1$
 		}
 
 		@Override

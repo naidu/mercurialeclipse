@@ -12,18 +12,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.viewers.ISelectionProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.team.ui.synchronize.ISynchronizeModelElement;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.SynchronizeModelAction;
 import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Get action that appears in the synchronize view. It's main purpose is to
@@ -31,57 +31,49 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
  */
 public class ShowHistorySynchronizeAction extends SynchronizeModelAction {
 
-	public ShowHistorySynchronizeAction(String text,
-			ISynchronizePageConfiguration configuration) {
-		super(text, configuration);
-	}
+	public static final String ID = "hg.history";
 
 	public ShowHistorySynchronizeAction(String text,
 			ISynchronizePageConfiguration configuration,
 			ISelectionProvider selectionProvider) {
 		super(text, configuration, selectionProvider);
+		setId(ID);
+		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("history.gif"));
 	}
 
 	@Override
 	protected SynchronizeModelOperation getSubscriberOperation(
 			ISynchronizePageConfiguration configuration, IDiffElement[] elements) {
-		List<IResource> selectedResources = new ArrayList<IResource>(
-				elements.length);
-		for (int i = 0; i < elements.length; i++) {
-			if (elements[i] instanceof ISynchronizeModelElement) {
-				selectedResources.add(((ISynchronizeModelElement) elements[i])
-						.getResource());
-			}
-		}
-		// XXX currently I have no idea why IDiffElement[] elements is empty...
-		if(selectedResources.size() == 0){
-			IStructuredSelection sel = getStructuredSelection();
-			Object[] objects = sel.toArray();
-			for (Object object : objects) {
-				if (object instanceof IResource) {
-					selectedResources.add(((IResource) object));
-				} else if (object instanceof IAdaptable){
-					IAdaptable adaptable = (IAdaptable) object;
-					IResource resource = (IResource) adaptable.getAdapter(IResource.class);
-					if(resource != null){
-						selectedResources.add(resource);
-					}
-				}
-			}
-		}
-		IResource[] resources = new IResource[selectedResources.size()];
-		selectedResources.toArray(resources);
-		return new ShowHistorySynchronizeOperation(configuration, elements,
-				resources);
+		IStructuredSelection sel = getStructuredSelection();
+		// it's guaranteed that we have exact one element
+		Object object = sel.getFirstElement();
+		IResource resource = ResourceUtils.getResource(object);
+		return new ShowHistorySynchronizeOperation(configuration, elements,	resource);
 	}
 
 	@Override
 	protected boolean updateSelection(IStructuredSelection selection) {
 		boolean updateSelection = super.updateSelection(selection);
 		if(!updateSelection){
-			// TODO implement constraints check here
-			return true;
+			Object[] array = selection.toArray();
+			if(selection.size() != 1){
+				return false;
+			}
+			return isSupported(array[0]);
 		}
 		return updateSelection;
+	}
+
+	private boolean isSupported(Object object) {
+		IResource resource = ResourceUtils.getResource(object);
+		if(resource != null){
+			return true;
+		}
+		return object instanceof ChangeSet && isMatching(((ChangeSet) object)
+						.getDirection());
+	}
+
+	private boolean isMatching(Direction d){
+		return (d == Direction.OUTGOING);
 	}
 }

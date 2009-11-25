@@ -33,6 +33,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -123,21 +124,23 @@ class PullOperation extends HgOperation {
 				r += HgSvnClient.rebase(resource);
 			}
 		} else if (bundleFile == null) {
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 			if (forest) {
-				File forestRoot = MercurialTeamProvider.getHgRoot(resource).getParentFile();
+				File forestRoot = hgRoot.getParentFile();
 				r += HgFpushPullClient.fpull(forestRoot, repo,
 						doUpdate, timeout, pullRevision, true, snapFile, false);
 			} else {
 				if (doUpdate) {
 					updateSeparately = true;
 				}
-				r += HgPushPullClient.pull(resource, pullRevision, repo, false, rebase, force, timeout);
+				r += HgPushPullClient.pull(hgRoot, pullRevision, repo, false, rebase, force, timeout);
 			}
 		} else {
 			if (doUpdate) {
 				updateSeparately = true;
 			}
-			r += HgPushPullClient.pull(resource, pullRevision, getBundlePath(), false, rebase, force, timeout);
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+			r += HgPushPullClient.pull(hgRoot, pullRevision, getBundlePath(), false, rebase, force, timeout);
 		}
 
 		monitor.worked(1);
