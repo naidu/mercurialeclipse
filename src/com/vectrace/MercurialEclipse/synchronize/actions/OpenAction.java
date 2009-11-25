@@ -15,6 +15,7 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ContentViewer;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ISelection;
@@ -90,6 +91,12 @@ public class OpenAction extends Action {
 		}
 
 		IFile file = fcs.getFile();
+		if(file == null){
+			// TODO this can happen, if the file was modified but is OUTSIDE Eclipse workspace
+			MessageDialog.openInformation(null, "Compare",
+					"Diff for files external to Eclipse workspace is not supported yet!");
+			return;
+		}
 		if(cs instanceof WorkingChangeSet){
 			// default: compare local file against parent changeset
 			new CompareAction(file).run(this);

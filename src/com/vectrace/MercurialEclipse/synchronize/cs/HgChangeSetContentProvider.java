@@ -380,7 +380,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private boolean hasChildrenInContext(ChangeSet set) {
-		return !set.getFiles().isEmpty();
+		return !set.getFiles().isEmpty() || set.getChangesetFiles().length > 0;
 	}
 
 	/**

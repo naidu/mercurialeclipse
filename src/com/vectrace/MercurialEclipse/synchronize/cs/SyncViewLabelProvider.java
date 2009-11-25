@@ -10,8 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -25,7 +28,8 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 	@Override
 	public Image getImage(Object element) {
-		return getDelegateImage(element);
+		// we MUST call super, to get the nice in/outgoing decorations...
+		return super.getImage(element);
 	}
 
 	@Override
@@ -42,7 +46,11 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 		} else if(element instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) element;
-			image = getDelegateLabelProvider().getImage(file.getFile());
+			if(file.getFile() != null){
+				image = getDelegateLabelProvider().getImage(file.getFile());
+			} else {
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
+			}
 		} else {
 			try {
 				image = super.getDelegateImage(element);
@@ -63,7 +71,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			int kind = ffc.getDiffKind();
 			decoratedImage = getImageManager().getImage(base, kind);
 		} else {
-			decoratedImage = super.decorateImage(base, element);
+			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
 		return decoratedImage;
 	}
@@ -95,7 +103,12 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;
 
-			String delegateText = super.getDelegateText(file.getFile());
+			String delegateText;
+			if(file.getFile() != null) {
+				delegateText = super.getDelegateText(file.getFile());
+			} else {
+				delegateText = file.toString();
+			}
 			if(delegateText != null && delegateText.length() > 0){
 				delegateText = " " + delegateText;
 			}
