@@ -63,6 +63,9 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			configuration.setProperty(keyOpen, openAction);
 		}
 
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU, ISynchronizePageConfiguration.FILE_GROUP,
+				new DeleteAction(configuration));
+
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.FILE_GROUP,
 				new ShowHistorySynchronizeAction("Show History",
@@ -86,13 +89,13 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new PushPullSynchronizeAction("Pull",
-						configuration, getVisibleRootsSelectionProvider(), true, false));
+				new PushPullSynchronizeAction("Pull and Update",
+						configuration, getVisibleRootsSelectionProvider(), true, true));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new PushPullSynchronizeAction("Pull and Update",
-						configuration, getVisibleRootsSelectionProvider(), true, true));
+				new PushPullSynchronizeAction("Pull",
+						configuration, getVisibleRootsSelectionProvider(), true, false));
 
 	}
 
