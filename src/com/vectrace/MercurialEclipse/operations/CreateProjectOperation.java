@@ -157,7 +157,7 @@ public class CreateProjectOperation extends HgOperation {
 			// files that we cloned into the project.
 			monitor
 			.subTask(Messages
-					.getString("CloneRepoWizard.subTask.registeringProject1") + p.getName() //$NON-NLS-1$
+					.getString("CloneRepoWizard.subTask.registeringProject1") + " " + p.getName() //$NON-NLS-1$
 					+ Messages
 					.getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
 			RepositoryProvider.map(p, MercurialTeamProvider.class.getName());
@@ -166,7 +166,7 @@ public class CreateProjectOperation extends HgOperation {
 			// It appears good. Stash the repo location.
 			monitor
 			.subTask(Messages
-					.getString("CloneRepoWizard.subTask.addingRepository.1") + repo //$NON-NLS-1$
+					.getString("CloneRepoWizard.subTask.addingRepository.1") + " " + repo //$NON-NLS-1$
 					+ Messages
 					.getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
 			MercurialEclipsePlugin.getRepoManager().addRepoLocation(p, repo);
