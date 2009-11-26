@@ -96,7 +96,7 @@ public class PullRepoWizard extends HgWizard {
 		File snapFile = null;
 		if (pullPage.isShowForest()) {
 			forest = pullPage.getForestCheckBox().getSelection();
-			String snapFileText = pullPage.getSnapFileCombo().getText();
+			String snapFileText = pullPage.getSnapFileText();
 			if (snapFileText.length() > 0) {
 				snapFile = new File(snapFileText);
 			}
