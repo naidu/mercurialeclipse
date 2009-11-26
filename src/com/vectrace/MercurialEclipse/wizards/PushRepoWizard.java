@@ -109,20 +109,20 @@ public class PushRepoWizard extends HgWizard {
 				}
 			}
 			String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
-			boolean isForest = false;
-			if (pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection()) {
+			boolean svnEnabled = isSvnEnabled(pushRepoPage);
+			boolean isForest = !svnEnabled && isForestEnabled(pushRepoPage);
+			String snapFileText = pushRepoPage.getSnapFileCombo().getText();
+			if (svnEnabled) {
 				result += HgSvnClient.push(project.getLocation().toFile());
-			} else if (pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection()) {
+			} else if (isForest) {
 				File forestRoot = MercurialTeamProvider.getHgRoot(
 						project.getLocation().toFile()).getParentFile();
 
 				File snapFile = null;
-				String snapFileText = pushRepoPage.getSnapFileCombo().getText();
 				if (snapFileText.length() > 0) {
 					snapFile = new File(snapFileText);
 				}
 				result += HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
-				isForest = true;
 			} else {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 				result += HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
@@ -140,6 +140,14 @@ public class PushRepoWizard extends HgWizard {
 			return false;
 		}
 		return true;
+	}
+
+	private boolean isForestEnabled(PushPullPage pushRepoPage) {
+		return pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection();
+	}
+
+	private boolean isSvnEnabled(PushPullPage pushRepoPage) {
+		return pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection();
 	}
 
 	private static void updateAfterPush(String result, IProject project, HgRepositoryLocation repo, boolean isForest) throws HgException {
