@@ -100,6 +100,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			return;
 		}
 		boolean changed = false;
+		MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
 		for (IPath path : paths) {
 			if(path.segmentCount() < 2){
 				continue;
@@ -109,7 +110,8 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 				continue;
 			}
 			IResource res = project.findMember(path.removeFirstSegments(1));
-			if(res instanceof IFile){
+			// only allow to hide files which are dirty
+			if(res instanceof IFile && !statusCache.isClean(res)){
 				IFile file = (IFile) res;
 				if(files.contains(file)){
 					context.hide(file);
