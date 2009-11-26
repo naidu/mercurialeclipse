@@ -80,42 +80,41 @@ public class CompareUtils {
 
 		if (dialog) {
 			openCompareDialog(left, right, localEditable);
-		} else {
-			CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
-			if (compareInput != null) {
+			return;
+		}
 
-				IWorkbenchPage workBenchPage = MercurialEclipsePlugin.getActivePage();
-				IEditorReference[] editorRefs = workBenchPage.getEditorReferences();
-				boolean reuse = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(IPreferenceIds.REUSE_OPEN_COMPARE_EDITOR);
-				IEditorPart editor = null;
-				if(reuse) {
-					for (IEditorReference ref : editorRefs) {
-						IEditorPart part = ref.getEditor(false);
-						if(part != null && part instanceof CompareEditor){
-							editor = part;
-							break;
-						}
-					}
+		CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
+		if (compareInput == null) {
+			return;
+		}
+
+		IWorkbenchPage workBenchPage = MercurialEclipsePlugin.getActivePage();
+		boolean reuse = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(
+				IPreferenceIds.REUSE_OPEN_COMPARE_EDITOR);
+		IEditorPart editor = null;
+		if(reuse) {
+			IEditorReference[] editorRefs = workBenchPage.getEditorReferences();
+			for (IEditorReference ref : editorRefs) {
+				IEditorPart part = ref.getEditor(false);
+				if(part != null && part instanceof CompareEditor){
+					editor = part;
+					break;
 				}
-
-				if (editor != null) {
-					IEditorInput otherInput = editor.getEditorInput();
-					if (otherInput.equals(compareInput)) {
-						// simply provide focus to editor
-						workBenchPage.activate(editor);
-					} else {
-						// if editor is currently not open on that input either re-use
-						// existing
-						CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
-						workBenchPage.activate(editor);
-					}
-				} else {
-					CompareUI.openCompareEditor(compareInput);
-				}
-
-				CompareUI.openCompareEditor(compareInput);
 			}
 		}
+
+		if (editor == null) {
+			CompareUI.openCompareEditor(compareInput);
+			return;
+		}
+
+		IEditorInput otherInput = editor.getEditorInput();
+		if (!otherInput.equals(compareInput)) {
+			// if editor is currently not open on that input either re-use existing
+			CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
+		}
+		// provide focus to editor
+		workBenchPage.activate(editor);
 	}
 
 	/**
