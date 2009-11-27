@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.utils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -213,7 +214,7 @@ public class ResourceUtils {
 	 * @param resources non null
 	 * @return never null
 	 */
-	public static Map<IProject, List<IResource>> groupByProject(List<IResource> resources) {
+	public static Map<IProject, List<IResource>> groupByProject(Collection<IResource> resources) {
 		Map<IProject, List<IResource>> result = new HashMap<IProject, List<IResource>>();
 		for (IResource resource : resources) {
 			IProject root = resource.getProject();
