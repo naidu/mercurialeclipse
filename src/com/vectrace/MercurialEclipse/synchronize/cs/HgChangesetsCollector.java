@@ -15,16 +15,21 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
 import org.eclipse.team.core.synchronize.SyncInfo;
+import org.eclipse.team.internal.core.subscribers.IChangeSetChangeListener;
 import org.eclipse.team.internal.ui.synchronize.SyncInfoSetChangeSetCollector;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
+import org.eclipse.ui.IPropertyListener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
@@ -41,11 +46,37 @@ import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	private final MercurialSynchronizeParticipant participant;
+	private final IPropertyListener branchListener;
 	private final static Set<ChangeSet> EMPTY_SET = Collections.unmodifiableSet(new HashSet<ChangeSet>());
 
 	public HgChangesetsCollector(ISynchronizePageConfiguration configuration) {
 		super(configuration);
 		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();
+		branchListener = new IPropertyListener() {
+			public void propertyChanged(Object source, int propId) {
+				branchChanged((IProject) source);
+			}
+		};
+		MercurialTeamProvider.addBranchListener(branchListener);
+	}
+
+
+	protected void branchChanged(IProject source) {
+		MercurialSynchronizeSubscriber subscriber = getSubscriber();
+		IProject[] projects = subscriber.getProjects();
+		for (IProject project : projects) {
+			if(project.equals(source)){
+				Job job = new Job("Updating branch info for " + project.getName()){
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						initializeSets();
+						return Status.OK_STATUS;
+					}
+				};
+				job.schedule(100);
+				return;
+			}
+		}
 	}
 
 	@Override
@@ -109,20 +140,8 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		if(projects.length == 0){
 			return EMPTY_SET;
 		}
-		HgRoot root;
-		try {
-			root = MercurialTeamProvider.getHgRoot(projects[0]);
-		} catch (HgException e1) {
-			MercurialEclipsePlugin.logError(e1);
-			return EMPTY_SET;
-		}
-		String currentBranch = subscriber.getCurrentBranch(projects[0], root);
-		if(MercurialSynchronizeSubscriber.isUncommitedBranch(currentBranch)) {
-			if (cache instanceof IncomingChangesetCache) {
-				return EMPTY_SET;
-			}
-			currentBranch = MercurialSynchronizeSubscriber.getRealBranchName(currentBranch);
-		}
+
+		String currentBranch = MercurialTeamProvider.getCurrentBranch(projects[0]);
 		HgRepositoryLocation repo = participant.getRepositoryLocation();
 		Set<ChangeSet> result = new HashSet<ChangeSet>();
 		for (IProject project : projects) {
@@ -154,5 +173,13 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		return result;
 	}
 
-
+	@Override
+	public void dispose() {
+		MercurialTeamProvider.removeBranchListener(branchListener);
+		Object[] objects = getListeners();
+		for (Object object : objects) {
+			removeListener((IChangeSetChangeListener) object);
+		}
+		super.dispose();
+	}
 }

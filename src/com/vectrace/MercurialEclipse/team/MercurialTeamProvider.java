@@ -271,11 +271,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		if(branch == null){
 			try {
 				branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
-				branch = branch == null? "" : branch;
+				branch = branch == null? Branch.DEFAULT : branch;
 				BRANCH_MAP.put(project, branch);
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
-				return "";
+				return Branch.DEFAULT;
 			}
 		}
 		return branch;
