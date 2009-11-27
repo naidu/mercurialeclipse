@@ -52,7 +52,7 @@ public class IncomingChangesetCache extends AbstractRemoteCache {
 		.getRepoManager().getAllProjectRepoLocations(resource.getProject());
 		SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
 		for (HgRepositoryLocation repository : locs) {
-			ChangeSet candidate = getNewestChangeSet(resource, repository);
+			ChangeSet candidate = getNewestChangeSet(resource, repository, null);
 			if (candidate != null) {
 				changeSets1.add(candidate);
 			}
