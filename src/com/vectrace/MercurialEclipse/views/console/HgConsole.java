@@ -230,11 +230,11 @@ public class HgConsole extends MessageConsole {
 		appendLine(ConsoleDocument.COMMAND, line);
 	}
 
-	public void messageLineReceived(String line, IStatus status) {
+	public void messageLineReceived(String line) {
 		appendLine(ConsoleDocument.MESSAGE, line);
 	}
 
-	public void errorLineReceived(String line, IStatus status) {
+	public void errorLineReceived(String line) {
 		appendLine(ConsoleDocument.ERROR, line);
 	}
 
