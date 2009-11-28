@@ -62,7 +62,6 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * TODO enable tree/flat view switch
  *
  * @author steeven
- *
  */
 public class CommitFilesChooser extends Composite {
 	private final UntrackedFilesFilter untrackedFilesFilter;
@@ -170,17 +169,17 @@ public class CommitFilesChooser extends Composite {
 		TableColumn col;
 
 		// File name
-		col = new TableColumn(table, SWT.NONE);
-		col.setResizable(true);
-		col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
-		col.setWidth(400);
-		col.setMoveable(true);
-
-		// File status
-		col = new TableColumn(table, SWT.NONE);
+		col = new TableColumn(table, SWT.LEFT);
 		col.setResizable(true);
 		col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
 		col.setWidth(70);
+		col.setMoveable(true);
+
+		// File status
+		col = new TableColumn(table, SWT.LEFT);
+		col.setResizable(true);
+		col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
+		col.setWidth(400);
 		col.setMoveable(true);
 		return table;
 	}
