@@ -51,7 +51,9 @@ public class HgException extends TeamException {
 	public String getMessage() {
 		IStatus status = getStatus();
 		StringBuilder sb = new StringBuilder(status.getMessage());
-		sb.append(", error code: ").append(status.getCode());
+		if(status.getCode() != OPERATION_FAILED) {
+			sb.append(", error code: ").append(status.getCode());
+		}
 		return sb.toString();
 	}
 
