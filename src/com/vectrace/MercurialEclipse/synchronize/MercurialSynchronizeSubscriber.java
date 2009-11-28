@@ -48,6 +48,7 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -80,6 +81,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	private ISubscriberChangeEvent[] lastEvents;
 
 	private MercurialSynchronizeParticipant participant;
+
+	private HgChangesetsCollector collector;
 
 	public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
 		Assert.isNotNull(synchronizationScope);
@@ -575,4 +578,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return participant;
 	}
 
+	public void setCollector(HgChangesetsCollector collector){
+		this.collector = collector;
+	}
+
+	public HgChangesetsCollector getCollector() {
+		return collector;
+	}
 }

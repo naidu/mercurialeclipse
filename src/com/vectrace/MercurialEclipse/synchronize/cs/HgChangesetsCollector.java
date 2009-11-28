@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -54,10 +55,13 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
-				branchChanged((IProject) source);
+				if(HgChangeSetModelProvider.getProvider().isParticipantCreated()) {
+					branchChanged((IProject) source);
+				}
 			}
 		};
 		MercurialTeamProvider.addBranchListener(branchListener);
+		getSubscriber().setCollector(this);
 	}
 
 
@@ -175,11 +179,17 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	@Override
 	public void dispose() {
+		getSubscriber().setCollector(null);
 		MercurialTeamProvider.removeBranchListener(branchListener);
 		Object[] objects = getListeners();
 		for (Object object : objects) {
 			removeListener((IChangeSetChangeListener) object);
 		}
 		super.dispose();
+	}
+
+	public void refresh(ResourceMapping[] roots) {
+		// user has requested a manual refresh
+		fireDefaultChangedEvent(null, null);
 	}
 }
