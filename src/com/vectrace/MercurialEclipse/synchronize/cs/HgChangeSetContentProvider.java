@@ -245,30 +245,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private void addAllUnassignedToUnassignedSet() {
-		Set<IResource> dirty = getDirtyFiles();
-		try {
-			uncommittedSet.beginInput();
-			uncommittedSet.clear();
-			for (IResource resource : dirty) {
-				if(resource instanceof IFile) {
-					uncommittedSet.add((IFile) resource);
-				}
-			}
-		} finally {
-			uncommittedSet.endInput(null);
-		}
+		uncommittedSet.update(STATUS_CACHE, null);
 	}
 
-	private Set<IResource> getDirtyFiles() {
-		HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider) getModelProvider();
-		IProject[] projects = modelProvider.getSubscriber().getProjects();
-		int bits = MercurialStatusCache.MODIFIED_MASK;
-		Set<IResource> resources = new HashSet<IResource>();
-		for (IProject project : projects) {
-			resources.addAll(STATUS_CACHE.getFiles(bits, project));
-		}
-		return resources;
-	}
 
 	@Override
 	protected ResourceTraversal[] getTraversals(
@@ -458,8 +437,17 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector.handleChange(event);
 		}
 
+		// the code below seems to be responsible for some dirty files are NOT shown
+		// in the uncommited changeset. However, this code is also the only one
+		// possibility I see right now to support "remove from view" action.
 		IPath[] removals = event.getRemovals();
-		if(removals.length > 0){
+		if(removals.length > 0) {
+			// if there are NOT ONLY removals, it can't be "remove from view" action.
+			if (event.getAdditions().length != 0 || event.getChanges().length != 0) {
+				// this can't
+				return;
+			}
+			// must be "remove from view" action => hide files
 			uncommittedSet.hide(removals);
 		}
 	}

@@ -11,14 +11,12 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CopyOnWriteArraySet;
 
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
@@ -57,21 +55,25 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	private HgSubscriberMergeContext context;
 	private final PropertyChangeEvent event;
+	private final MercurialStatusCache cache = MercurialStatusCache.getInstance();
 
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
-		projects = new CopyOnWriteArraySet<IProject>();
-		files = new CopyOnWriteArraySet<IFile>();
+		projects = new HashSet<IProject>();
+		files = new HashSet<IFile>();
 		event = new PropertyChangeEvent(this, "", null, "");
 	}
 
-	public void add(IFile file){
+	private boolean add(IFile file){
 		if(context != null && context.isHidden(file)){
-			return;
+			return false;
 		}
-		boolean added = files.add(file);
+		boolean added;
+		synchronized (files){
+			added = files.add(file);
+		}
 		if(added) {
 			// we need only one event
 			if(cachingOn){
@@ -80,6 +82,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 				notifyListeners();
 			}
 		}
+		return added;
 	}
 
 	private void notifyListeners() {
@@ -104,14 +107,14 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	@Override
 	public void remove(IResource file){
-		boolean removed = files.remove(file);
-		if(removed) {
-			if(cachingOn){
-				updateRequired = true;
-			} else {
-				notifyListeners();
-			}
-		}
+//		boolean removed = files.remove(file);
+//		if(removed) {
+//			if(cachingOn){
+//				updateRequired = true;
+//			} else {
+//				notifyListeners();
+//			}
+//		}
 	}
 
 	public void hide(IPath[] paths){
@@ -132,10 +135,12 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			// only allow to hide files which are dirty
 			if(res instanceof IFile && !statusCache.isClean(res)){
 				IFile file = (IFile) res;
-				if(files.contains(file)){
-					context.hide(file);
-					files.remove(file);
-					changed = true;
+				synchronized (files) {
+					if(files.contains(file)){
+						context.hide(file);
+						files.remove(file);
+						changed = true;
+					}
 				}
 			}
 		}
@@ -176,7 +181,9 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	public void clear(){
-		files.clear();
+		synchronized (files){
+			files.clear();
+		}
 	}
 
 	public void beginInput() {
@@ -194,57 +201,45 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object arg) {
+		if(arg == null){
+			update(projects);
+			return;
+		}
 		if (!(arg instanceof Set)) {
 			return;
 		}
-		MercurialStatusCache cache = MercurialStatusCache.getInstance();
-		boolean needUpdate = false;
 		Set<IResource> changed = (Set<IResource>) arg;
-		Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(changed);
-		Set<Entry<IProject,List<IResource>>> entrySet = byProject.entrySet();
-		final int bits = MercurialStatusCache.MODIFIED_MASK;
+		update(ResourceUtils.groupByProject(changed).keySet());
+	}
+
+	private void update(Set<IProject> projectSet){
+		boolean changed = false;
 		try {
 			beginInput();
-			for (Entry<IProject, List<IResource>> entry : entrySet) {
-				IProject project = entry.getKey();
-				if(!projects.contains(project)){
-					continue;
-				}
-				clear();
-				Set<IFile> files2 = cache.getFiles(bits, project);
-				if(files2.isEmpty()){
-					needUpdate = true;
-				} else {
-					for (IFile file : files2) {
-						add(file);
-					}
-				}
-//				List<IResource> list = entry.getValue();
-//				for (IResource resource : list) {
-//					if(resource instanceof IProject || list.contains(project)){
-//						clear();
-//						Set<IFile> files2 = cache.getFiles(bits, project);
-//						if(files2.isEmpty()){
-//							needUpdate = true;
-//						} else {
-//							for (IFile file : files2) {
-//								add(file);
-//							}
-//						}
-//						break;
-//					} if (resource instanceof IFile) {
-//						if (cache.isClean(resource)) {
-//							remove(resource);
-//						} else if(!cache.isIgnored(resource)){
-//							add((IFile) resource);
-//						}
-//					}
-//				}
+			clear();
+			for (IProject project : projectSet) {
+				changed |= update(project);
 			}
 		} finally {
-			updateRequired |= needUpdate;
+			updateRequired |= changed;
 			endInput(null);
 		}
+	}
+
+	private boolean update(IProject project){
+		if(!projects.contains(project)){
+			return false;
+		}
+		final int bits = MercurialStatusCache.MODIFIED_MASK;
+		Set<IFile> files2 = cache.getFiles(bits, project);
+		if(files2.isEmpty()){
+			return true;
+		}
+		boolean changed = false;
+		for (IFile file : files2) {
+			changed |= add(file);
+		}
+		return changed;
 	}
 
 	/**
