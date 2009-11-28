@@ -28,11 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -238,57 +235,29 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	protected void logConsoleCommandInvoked(final String commandInvoked) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					getConsole().commandInvoked(commandInvoked);
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			getConsole().commandInvoked(commandInvoked);
 		}
 	}
 
 	protected void logConsoleMessage(final String msg, final Throwable t) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					getConsole().printMessage(msg, t);
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			getConsole().printMessage(msg, t);
 		}
 	}
 
 	protected void logConsoleError(final String msg, final HgException hgEx) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console...") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					if (msg != null) {
-						getConsole().printError(msg, hgEx);
-					} else {
-						getConsole().printError(hgEx.getMessage(), hgEx);
-					}
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			if (msg != null) {
+				getConsole().printError(msg, hgEx);
+			} else {
+				getConsole().printError(hgEx.getMessage(), hgEx);
+			}
 		}
 	}
 
 	private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console...") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					getConsole().commandCompleted(exitCode, msg, hgex);
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			getConsole().commandCompleted(exitCode, msg, hgex);
 		}
 	}
 

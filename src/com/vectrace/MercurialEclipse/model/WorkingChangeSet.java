@@ -11,11 +11,12 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 
@@ -26,11 +27,16 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
@@ -44,22 +50,21 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
  */
 public class WorkingChangeSet extends ChangeSet implements Observer {
 
-	private static final String REMOVED = "removed";
-	private static final String ADDED = "added";
 	private final List<IPropertyChangeListener> listeners;
-	private final List<PropertyChangeEvent> eventCache;
-	private boolean cachingOn;
+	private volatile boolean updateRequired;
+	private volatile boolean cachingOn;
 	private final Set<IProject> projects;
 
 	private HgSubscriberMergeContext context;
+	private final PropertyChangeEvent event;
 
 	public WorkingChangeSet(String name) {
 		super(-1, name, null, null, "", null, "", null, null); //$NON-NLS-1$
 		direction = Direction.OUTGOING;
 		listeners = new CopyOnWriteArrayList<IPropertyChangeListener>();
-		eventCache = new ArrayList<PropertyChangeEvent>();
 		projects = new CopyOnWriteArraySet<IProject>();
 		files = new CopyOnWriteArraySet<IFile>();
+		event = new PropertyChangeEvent(this, "", null, "");
 	}
 
 	public void add(IFile file){
@@ -68,29 +73,43 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		}
 		boolean added = files.add(file);
 		if(added) {
-			PropertyChangeEvent event = new PropertyChangeEvent(this, ADDED, null, file);
 			// we need only one event
-			if(cachingOn && eventCache.isEmpty()){
-				eventCache.add(event);
+			if(cachingOn){
+				updateRequired = true;
 			} else {
+				notifyListeners();
+			}
+		}
+	}
+
+	private void notifyListeners() {
+		Job job = new Job("Uncommitted changeset update"){
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
 				for (IPropertyChangeListener listener : listeners) {
 					listener.propertyChange(event);
 				}
+				monitor.done();
+				return Status.OK_STATUS;
 			}
-		}
+			@Override
+			public boolean belongsTo(Object family) {
+				return family == ExclusiveRule.class;
+			}
+		};
+		Job.getJobManager().cancel(ExclusiveRule.class);
+		job.setRule(new ExclusiveRule());
+		job.schedule(50);
 	}
 
 	@Override
 	public void remove(IResource file){
 		boolean removed = files.remove(file);
 		if(removed) {
-			PropertyChangeEvent event = new PropertyChangeEvent(this, REMOVED, file, null);
-			if(cachingOn && eventCache.isEmpty()){
-				eventCache.add(event);
+			if(cachingOn){
+				updateRequired = true;
 			} else {
-				for (IPropertyChangeListener listener : listeners) {
-					listener.propertyChange(event);
-				}
+				notifyListeners();
 			}
 		}
 	}
@@ -120,9 +139,8 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 				}
 			}
 		}
-		PropertyChangeEvent event = new PropertyChangeEvent(this, REMOVED, null, null);
 		if(changed){
-			eventCache.add(event);
+			updateRequired = true;
 			endInput(null);
 		}
 	}
@@ -167,16 +185,11 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	public void endInput(IProgressMonitor monitor) {
 		cachingOn = false;
-		if(eventCache.isEmpty()){
+		if(!updateRequired){
 			return;
 		}
-		Collections.reverse(eventCache);
-		for (IPropertyChangeListener listener : listeners) {
-			for (PropertyChangeEvent event : eventCache) {
-				listener.propertyChange(event);
-			}
-		}
-		eventCache.clear();
+		updateRequired = false;
+		notifyListeners();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -185,37 +198,51 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			return;
 		}
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
+		boolean needUpdate = false;
+		Set<IResource> changed = (Set<IResource>) arg;
+		Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(changed);
+		Set<Entry<IProject,List<IResource>>> entrySet = byProject.entrySet();
+		final int bits = MercurialStatusCache.MODIFIED_MASK;
 		try {
 			beginInput();
-			Set<IResource> changed = (Set<IResource>) arg;
-
-			final int bits = MercurialStatusCache.MODIFIED_MASK;
-			for (IResource resource : changed) {
-				IProject project = resource.getProject();
+			for (Entry<IProject, List<IResource>> entry : entrySet) {
+				IProject project = entry.getKey();
 				if(!projects.contains(project)){
 					continue;
 				}
-				if(resource instanceof IProject || changed.contains(project)){
-					clear();
-					Set<IFile> files2 = cache.getFiles(bits, project);
-					if(files2.isEmpty()){
-						PropertyChangeEvent event = new PropertyChangeEvent(this, ADDED, null, project);
-						eventCache.add(event);
-					} else {
-						for (IFile file : files2) {
-							add(file);
-						}
-					}
-					break;
-				} if (resource instanceof IFile) {
-					if (cache.isClean(resource)) {
-						remove(resource);
-					} else if(!cache.isIgnored(resource)){
-						add((IFile) resource);
+				clear();
+				Set<IFile> files2 = cache.getFiles(bits, project);
+				if(files2.isEmpty()){
+					needUpdate = true;
+				} else {
+					for (IFile file : files2) {
+						add(file);
 					}
 				}
+//				List<IResource> list = entry.getValue();
+//				for (IResource resource : list) {
+//					if(resource instanceof IProject || list.contains(project)){
+//						clear();
+//						Set<IFile> files2 = cache.getFiles(bits, project);
+//						if(files2.isEmpty()){
+//							needUpdate = true;
+//						} else {
+//							for (IFile file : files2) {
+//								add(file);
+//							}
+//						}
+//						break;
+//					} if (resource instanceof IFile) {
+//						if (cache.isClean(resource)) {
+//							remove(resource);
+//						} else if(!cache.isIgnored(resource)){
+//							add((IFile) resource);
+//						}
+//					}
+//				}
 			}
 		} finally {
+			updateRequired |= needUpdate;
 			endInput(null);
 		}
 	}
@@ -250,5 +277,15 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			fcs.add(new FileFromChangeSet(this, file, diffKind));
 		}
 		return fcs.toArray(new FileFromChangeSet[0]);
+	}
+
+	private final class ExclusiveRule implements ISchedulingRule {
+		public boolean isConflicting(ISchedulingRule rule) {
+			return contains(rule);
+		}
+
+		public boolean contains(ISchedulingRule rule) {
+			return rule instanceof ExclusiveRule;
+		}
 	}
 }
