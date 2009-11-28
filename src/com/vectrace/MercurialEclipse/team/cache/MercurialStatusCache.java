@@ -287,7 +287,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 		}
 
-		void put(IPath path, Integer set){
+		synchronized void put(IPath path, Integer set){
 			// removed is the first one for speed
 			int mask = set.intValue();
 			if((mask & BIT_REMOVED) != 0){
@@ -313,7 +313,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			}
 		}
 
-		Set<IPath> get(int bit){
+		synchronized Set<IPath> get(int bit){
 			switch (bit) {
 			case BIT_REMOVED:
 				return REMOVED_SET;
@@ -334,7 +334,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			}
 		}
 
-		public void remove(IPath path) {
+		synchronized void remove(IPath path) {
 			remove(path, REMOVED_SET);
 			remove(path, MISSING_SET);
 			remove(path, UNKNOWN_SET);
@@ -344,7 +344,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			remove(path, IGNORE_SET);
 		}
 
-		public void remove(IPath path, Set<IPath> set) {
+		void remove(IPath path, Set<IPath> set) {
 			if(!set.isEmpty()) {
 				set.remove(path);
 			}
