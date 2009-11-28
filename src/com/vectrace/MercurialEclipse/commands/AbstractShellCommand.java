@@ -146,6 +146,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		try {
 			List<String> cmd = getCommands();
 
+			// Request non-interactivity flag
+			cmd.add(1, "-y");
+
 			final String commandInvoked = getCommandInvoked(cmd);
 
 			// This is totally
@@ -167,8 +170,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 					// no hg root found
 				}
 			}
-			// Request non-interactivity flag
-			cmd.add(1, "-y");
 
 			ProcessBuilder builder = new ProcessBuilder(cmd);
 
