@@ -112,7 +112,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault,
 				final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
-			// ignored
+			// user has requested a manual refresh: simply refresh root elements
+			getRootElements();
 		}
 
 		public void nameChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
@@ -380,7 +381,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private boolean hasChildrenInContext(ChangeSet set) {
-		return !set.getFiles().isEmpty();
+		return !set.getFiles().isEmpty() || set.getChangesetFiles().length > 0;
 	}
 
 	/**

@@ -15,6 +15,7 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.Properties;
 import java.util.Set;
@@ -22,10 +23,11 @@ import java.util.Set;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
@@ -80,66 +82,122 @@ public class PushRepoWizard extends HgWizard {
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
+		Properties props = page.getProperties();
+		final HgRepositoryLocation repo;
 		try {
-			Properties props = page.getProperties();
-			HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
-					.fromProperties(project, props);
-
-			// Check that this project exist.
-			if (project.getLocation() == null) {
-				String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
-						+ Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
-				MercurialEclipsePlugin.logError(msg, null);
-				// System.out.println( string);
-				return false;
-			}
-
-			PushPullPage pushRepoPage = (PushPullPage) page;
-
-			int timeout = HgClients.getTimeOut(MercurialPreferenceConstants.PUSH_TIMEOUT);
-			if (!pushRepoPage.isTimeout()) {
-				timeout = Integer.MAX_VALUE;
-			}
-
-			String changeset = null;
-			if (outgoingPage.getRevisionCheckBox().getSelection()) {
-				ChangeSet cs = outgoingPage.getRevision();
-				if (cs != null) {
-					changeset = cs.getChangeset();
-				}
-			}
-			String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
-			boolean isForest = false;
-			if (pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection()) {
-				result += HgSvnClient.push(project.getLocation().toFile());
-			} else if (pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection()) {
-				File forestRoot = MercurialTeamProvider.getHgRoot(
-						project.getLocation().toFile()).getParentFile();
-
-				File snapFile = null;
-				String snapFileText = pushRepoPage.getSnapFileCombo().getText();
-				if (snapFileText.length() > 0) {
-					snapFile = new File(snapFileText);
-				}
-				result += HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
-				isForest = true;
-			} else {
-				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-				result += HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
-			}
-
-			updateAfterPush(result, project, repo, isForest);
-
-		} catch (CoreException e) {
+			repo = MercurialEclipsePlugin.getRepoManager().fromProperties(project, props);
+		} catch (HgException e){
 			if(!(e.getCause() instanceof URISyntaxException)){
 				MercurialEclipsePlugin.logError(e);
 			}
-			MessageDialog.openError(
-					Display.getCurrent().getActiveShell(),
+			return false;
+		}
+		// Check that this project exist.
+		if (project.getLocation() == null) {
+			String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
+					+ Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
+			MercurialEclipsePlugin.logError(msg, null);
+			// System.out.println( string);
+			return false;
+		}
+
+		final PushPullPage pushRepoPage = (PushPullPage) page;
+
+		final int timeout;
+		if (!pushRepoPage.isTimeout()) {
+			timeout = Integer.MAX_VALUE;
+		} else {
+			timeout = HgClients.getTimeOut(MercurialPreferenceConstants.PUSH_TIMEOUT);
+		}
+
+		final String changeset;
+		if (outgoingPage.getRevisionCheckBox().getSelection()) {
+			ChangeSet cs = outgoingPage.getRevision();
+			if (cs != null) {
+				changeset = cs.getChangeset();
+			} else {
+				changeset = null;
+			}
+		} else {
+			changeset = null;
+		}
+		String result = Messages.getString("PushRepoWizard.pushOutput.header"); //$NON-NLS-1$
+		final boolean svnEnabled = isSvnEnabled(pushRepoPage);
+		final boolean isForest = !svnEnabled && isForestEnabled(pushRepoPage);
+		final String snapFileText = pushRepoPage.getSnapFileText();
+
+		class PushOperation extends HgOperation {
+			private String output;
+
+			public PushOperation() {
+				super(getContainer());
+			}
+
+			@Override
+			public void run(IProgressMonitor monitor) throws InvocationTargetException,	InterruptedException {
+				monitor.beginTask("Pushing...", IProgressMonitor.UNKNOWN);
+				try {
+					if (svnEnabled) {
+						output = HgSvnClient.push(project.getLocation().toFile());
+					} else if (isForest) {
+						File forestRoot = MercurialTeamProvider.getHgRoot(
+								project.getLocation().toFile()).getParentFile();
+
+						File snapFile = null;
+						if (snapFileText.length() > 0) {
+							snapFile = new File(snapFileText);
+						}
+						output = HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
+					} else {
+						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+						output = HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
+					}
+				} catch (CoreException e){
+					throw new InvocationTargetException(e, e.getMessage());
+				} finally {
+					monitor.done();
+				}
+			}
+
+			@Override
+			protected String getActionDescription() {
+				return "Pushing " + project.getName() + " ...";
+			}
+
+			public String getOutput() {
+				return output;
+			}
+		}
+
+		PushOperation pushOperation = new PushOperation();
+		try {
+			getContainer().run(true, false, pushOperation);
+			result += pushOperation.getOutput();
+		} catch (Exception e) {
+			Throwable error = e.getCause() == null? e : e.getCause();
+			MercurialEclipsePlugin.logError(error);
+			MessageDialog.openError(getContainer().getShell(),
 					"Error during push", e.getMessage()); //$NON-NLS-1$
 			return false;
 		}
+
+		try {
+			updateAfterPush(result, project, repo, isForest);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MessageDialog.openError(getContainer().getShell(),
+					"Error on refreshing status after push", e.getMessage()); //$NON-NLS-1$
+			return false;
+		}
 		return true;
+	}
+
+	private boolean isForestEnabled(PushPullPage pushRepoPage) {
+		return pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection();
+	}
+
+	private boolean isSvnEnabled(PushPullPage pushRepoPage) {
+		return pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection();
 	}
 
 	private static void updateAfterPush(String result, IProject project, HgRepositoryLocation repo, boolean isForest) throws HgException {

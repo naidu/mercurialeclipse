@@ -90,18 +90,30 @@ public class HgPushPullClient extends AbstractClient {
 
 		command.addOptions(pullSource);
 
+		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
 		String result;
-		if (timeout) {
-			command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-			result = new String(command.executeToBytes());
-		} else {
-			result = new String(command.executeToBytes(Integer.MAX_VALUE));
+		try {
+			if (timeout) {
+				command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+				result = new String(command.executeToBytes());
+			} else {
+				result = new String(command.executeToBytes(Integer.MAX_VALUE));
+			}
+		} finally {
+			// doesn't metter how far we was: we have to trigger update of caches in case
+			// the pull was *partly* successfull (e.g. pull was ok, but update not)
+			refreshProjects(update, projects);
 		}
+		return result;
+	}
+
+
+
+	private static void refreshProjects(boolean update, Set<IProject> projects) {
 		// The reason to use "all" instead of only "local + incoming", is that we can pull
 		// from another repo as the sync clients for given project may use
 		// in this case, we also need to update "outgoing" changesets
 		final int flags = RefreshJob.ALL;
-		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
 		for (final IProject iProject : projects) {
 			if(update) {
 				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
@@ -116,6 +128,5 @@ public class HgPushPullClient extends AbstractClient {
 				new RefreshJob("Refreshing " + iProject.getName(), iProject, flags).schedule();
 			}
 		}
-		return result;
 	}
 }

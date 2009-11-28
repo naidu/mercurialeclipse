@@ -168,7 +168,7 @@ public class HgRepositoryLocationManager {
 	 * Add a repository location to the database without to triggering loadRepos again
 	 */
 	private boolean internalAddRepoLocation(IProject project, HgRepositoryLocation loc) {
-		if (loc == null) {
+		if (loc == null || loc.isEmpty()) {
 			return false;
 		}
 

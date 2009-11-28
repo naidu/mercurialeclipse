@@ -32,11 +32,6 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
 	public RefreshStatusJob(String name, IProject project) {
 		super(name);
 		this.project = project;
-		/*
-		if(MercurialEclipsePlugin.getDefault().isDebugging()){
-			new Exception("refreshStatus " + project).printStackTrace();
-		}
-		*/
 	}
 
 	@Override
@@ -46,6 +41,8 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
 			mercurialStatusCache.refreshStatus(project, monitor);
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError(e);
+		} finally {
+			monitor.done();
 		}
 		return super.runSafe(monitor);
 	}

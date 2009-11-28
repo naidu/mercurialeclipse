@@ -594,7 +594,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		*/
 		Assert.isNotNull(res);
 		monitor = checkMonitor(monitor);
-		monitor.subTask(Messages.mercurialStatusCache_Refreshing + res.getName());
+		monitor.subTask(NLS.bind(Messages.mercurialStatusCache_Refreshing, res.getName()));
 
 		IProject project = res.getProject();
 

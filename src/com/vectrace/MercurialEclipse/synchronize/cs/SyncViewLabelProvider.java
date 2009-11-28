@@ -10,20 +10,25 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
+import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.team.internal.ui.mapping.ResourceModelLabelProvider;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 @SuppressWarnings("restriction")
 public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 
 	@Override
 	public Image getImage(Object element) {
+		// we MUST call super, to get the nice in/outgoing decorations...
 		return super.getImage(element);
 	}
 
@@ -41,9 +46,19 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			}
 		} else if(element instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) element;
-			image = getDelegateLabelProvider().getImage(file.getFile());
+			if(file.getFile() != null){
+				image = getDelegateLabelProvider().getImage(file.getFile());
+			} else {
+				image = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
+			}
 		} else {
-			image = super.getDelegateImage(element);
+			try {
+				image = super.getDelegateImage(element);
+			} catch (NullPointerException npex) {
+				// if element is invalid or not yet fully handled
+				// NPE is possible
+				MercurialEclipsePlugin.logError(npex);
+			}
 		}
 		return image;
 	}
@@ -56,7 +71,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			int kind = ffc.getDiffKind();
 			decoratedImage = getImageManager().getImage(base, kind);
 		} else {
-			decoratedImage = super.decorateImage(base, element);
+			decoratedImage = getImageManager().getImage(base, Differencer.NO_CHANGE);
 		}
 		return decoratedImage;
 	}
@@ -75,7 +90,7 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 			} else {
 				sb.append(cset.toString());
 			}
-			return sb.toString();
+			return StringUtils.removeLineBreaks(sb.toString());
 		}
 		if(elementOrPath instanceof ChangesetGroup){
 			ChangesetGroup group = (ChangesetGroup) elementOrPath;
@@ -88,7 +103,12 @@ public class SyncViewLabelProvider extends ResourceModelLabelProvider {
 		if(elementOrPath instanceof FileFromChangeSet){
 			FileFromChangeSet file = (FileFromChangeSet) elementOrPath;
 
-			String delegateText = super.getDelegateText(file.getFile());
+			String delegateText;
+			if(file.getFile() != null) {
+				delegateText = super.getDelegateText(file.getFile());
+			} else {
+				delegateText = file.toString();
+			}
 			if(delegateText != null && delegateText.length() > 0){
 				delegateText = " " + delegateText;
 			}

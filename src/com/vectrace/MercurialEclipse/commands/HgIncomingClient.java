@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IPath;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -42,12 +43,18 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 	 */
 	public static Map<IPath, Set<ChangeSet>> getHgIncoming(IResource res,
 			HgRepositoryLocation repository, String branch) throws HgException {
-		AbstractShellCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
+		HgCommand command = new HgCommand("incoming", getWorkingDirectory(res), //$NON-NLS-1$
 				false);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {
-				command.addOptions("-r", branch);
+				HgRoot root = command.getHgRoot();
+				if(HgBranchClient.isKnownRemote(root, repository, branch)) {
+					command.addOptions("-r", branch);
+				} else {
+					// this branch is not known remote, so there can be NO incoming changes
+					return new HashMap<IPath, Set<ChangeSet>>();
+				}
 			} else {
 				// see issue 10495: there can be many "default" heads, so show all of them
 				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any

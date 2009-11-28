@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation for repository view.
+ *     Andrei Loskutov (Intland)    - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.actions;
 
@@ -35,7 +36,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 abstract public class HgAction extends ReplaceableIconAction {
 
-	private List<IStatus> accumulatedStatus = new ArrayList<IStatus>();
+	private final List<IStatus> accumulatedStatus = new ArrayList<IStatus>();
 
 	/**
 	 * Common run method for all Hg actions.
@@ -43,7 +44,9 @@ abstract public class HgAction extends ReplaceableIconAction {
 	@Override
 	final public void run(IAction action) {
 		try {
-			if (!beginExecution(action)) return;
+			if (!beginExecution(action)) {
+				return;
+			}
 			execute(action);
 			endExecution();
 		} catch (InvocationTargetException e) {
@@ -136,7 +139,7 @@ abstract public class HgAction extends ReplaceableIconAction {
 		if (problems.length == 1) {
 			return problems[0];
 		}
-		MultiStatus combinedStatus = new MultiStatus(MercurialEclipsePlugin.ID, 0, getMultiStatusMessage(), null); //$NON-NLS-1$
+		MultiStatus combinedStatus = new MultiStatus(MercurialEclipsePlugin.ID, 0, getMultiStatusMessage(), null);
 		for (int i = 0; i < problems.length; i++) {
 			combinedStatus.merge(problems[i]);
 		}
@@ -150,8 +153,6 @@ abstract public class HgAction extends ReplaceableIconAction {
 	 * information (if any) to show the user.
 	 *
 	 * @param exception the exception that occured (or null if none occured)
-	 * @param status any status accumulated by the action before the end of
-	 * the action or the exception occured.
 	 */
 	protected void handle(Exception exception) {
 		// Get the non-OK statii
@@ -167,7 +168,9 @@ abstract public class HgAction extends ReplaceableIconAction {
 		}
 		// Handle the case where there are no problem statii
 		if (problems.size() == 0) {
-			if (exception == null) return;
+			if (exception == null) {
+				return;
+			}
 			handle(exception, getErrorTitle(), null);
 			return;
 		}
@@ -180,7 +183,9 @@ abstract public class HgAction extends ReplaceableIconAction {
 
 		String message = null;
 		IStatus statusToDisplay = getStatusToDisplay(problems.toArray(new IStatus[problems.size()]));
-		if (statusToDisplay.isOK()) return;
+		if (statusToDisplay.isOK()) {
+			return;
+		}
 		if (statusToDisplay.isMultiStatus() && statusToDisplay.getChildren().length == 1) {
 			message = statusToDisplay.getMessage();
 			statusToDisplay = statusToDisplay.getChildren()[0];
@@ -233,8 +238,9 @@ abstract public class HgAction extends ReplaceableIconAction {
 				break;
 		}
 		if (exceptions[0] != null) {
-			if (exceptions[0] instanceof InvocationTargetException)
+			if (exceptions[0] instanceof InvocationTargetException) {
 				throw (InvocationTargetException)exceptions[0];
+			}
 			throw (InterruptedException)exceptions[0];
 		}
 	}
@@ -254,29 +260,25 @@ abstract public class HgAction extends ReplaceableIconAction {
 	 *
 	 * @param selection
 	 * @param c
-	 * @return Object
+	 * @return adapted object or null if no adapter provided
 	 */
-	@SuppressWarnings("unchecked")
-	public static Object getAdapter(Object selection, Class c) {
+	public static <V> V getAdapter(Object selection, Class<V> c) {
 		if (c.isInstance(selection)) {
-			return selection;
+			return c.cast(selection);
 		}
 		if (selection instanceof IAdaptable) {
 			IAdaptable a = (IAdaptable) selection;
 			Object adapter = a.getAdapter(c);
 			if (c.isInstance(adapter)) {
-				return adapter;
+				return c.cast(adapter);
 			}
 		}
 		return null;
 	}
 
 
-	/**
-	 * @see org.tigris.subversion.subclipse.ui.actions.TeamAction#handle(java.lang.Exception, java.lang.String, java.lang.String)
-	 */
 	@Override
 	protected void handle(Exception exception, String title, String message) {
-		MercurialEclipsePlugin.logError(title+","+message,exception);
+		MercurialEclipsePlugin.logError(title + "," + message, exception);
 	}
 }

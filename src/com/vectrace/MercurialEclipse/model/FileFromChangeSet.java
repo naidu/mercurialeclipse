@@ -13,7 +13,11 @@ package com.vectrace.MercurialEclipse.model;
 import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdaptable;
+
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetResourceMapping;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Andrei
@@ -23,12 +27,18 @@ public class FileFromChangeSet implements IAdaptable{
 	private final IFile file;
 	private final ChangeSet changeset;
 	private final int kind;
+	private FileStatus fileStatus;
 
 	/**
 	 * @param changeset non null
-	 * @param file non null
+	 * @param fileStatus non null
 	 * @param diffKind see {@link Differencer}
 	 */
+	public FileFromChangeSet(ChangeSet changeset, FileStatus fileStatus, int diffKind) {
+		this(changeset, ResourceUtils.getFileHandle(fileStatus.getAbsolutePath()), diffKind);
+		this.fileStatus = fileStatus;
+	}
+
 	public FileFromChangeSet(ChangeSet changeset, IFile file, int diffKind) {
 		this.changeset = changeset;
 		this.file = file;
@@ -45,6 +55,9 @@ public class FileFromChangeSet implements IAdaptable{
 		if (adapter == IFile.class /* || adapter == IResource.class*/) {
 			return file;
 		}
+		if(adapter == ResourceMapping.class){
+			return new HgChangeSetResourceMapping(this);
+		}
 		return null;
 	}
 
@@ -57,7 +70,7 @@ public class FileFromChangeSet implements IAdaptable{
 
 	@Override
 	public String toString() {
-		return file.toString();
+		return file != null? file.toString() : fileStatus.getAbsolutePath().toOSString();
 	}
 
 	@Override

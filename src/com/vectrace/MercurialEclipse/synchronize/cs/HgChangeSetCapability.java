@@ -23,7 +23,6 @@ import org.eclipse.team.ui.synchronize.SynchronizePageActionGroup;
 @SuppressWarnings("restriction")
 public class HgChangeSetCapability extends ChangeSetCapability {
 
-	private HgChangesetsCollector changesetsCollector;
 
 	public HgChangeSetCapability() {
 		super();
@@ -32,10 +31,7 @@ public class HgChangeSetCapability extends ChangeSetCapability {
 	@Override
 	public HgChangesetsCollector createSyncInfoSetChangeSetCollector(
 			ISynchronizePageConfiguration configuration) {
-		if(changesetsCollector == null) {
-			changesetsCollector = new HgChangesetsCollector(configuration);
-		}
-		return changesetsCollector;
+		return new HgChangesetsCollector(configuration);
 	}
 
 	@Override
@@ -56,7 +52,6 @@ public class HgChangeSetCapability extends ChangeSetCapability {
 
 	@Override
 	public SynchronizePageActionGroup getActionGroup() {
-		// TODO Auto-generated method stub
 		return super.getActionGroup();
 	}
 

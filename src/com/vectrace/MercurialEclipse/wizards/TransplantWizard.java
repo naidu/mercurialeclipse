@@ -105,7 +105,9 @@ public class TransplantWizard extends HgWizard {
 			}
 			MessageDialog.openError(Display.getCurrent().getActiveShell(), e
 					.getMessage(), e.getMessage());
-			return false;
+			// return normally (as success) to refresh project because exception means
+			// not totally successful transplant but user has to see what has already
+			// happened.
 		}
 		return true;
 	}

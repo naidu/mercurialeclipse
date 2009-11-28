@@ -27,6 +27,8 @@ import org.eclipse.team.core.subscribers.SubscriberMergeContext;
 import org.eclipse.team.core.synchronize.SyncInfo;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
+
 /**
  * @author bastian
  *
@@ -34,12 +36,14 @@ import org.eclipse.ui.PlatformUI;
 public class HgSubscriberMergeContext extends SubscriberMergeContext {
 
 	private final Set<IFile> hidden;
+	private final MercurialSynchronizeSubscriber subscriber;
 
 	public HgSubscriberMergeContext(Subscriber subscriber,
 			ISynchronizationScopeManager manager) {
 		super(subscriber, manager);
 		initialize();
 		hidden = new HashSet<IFile>();
+		this.subscriber = (MercurialSynchronizeSubscriber)subscriber;
 	}
 
 	/**
@@ -90,6 +94,10 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 	@Override
 	public void refresh(ResourceMapping[] mappings, IProgressMonitor monitor) throws CoreException {
 		super.refresh(mappings, monitor);
+		HgChangesetsCollector collector = subscriber.getCollector();
+		if(collector != null) {
+			collector.refresh(mappings);
+		}
 	}
 
 	@Override
@@ -107,9 +115,6 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 		hidden.clear();
 	}
 
-	/**
-	 * @param file
-	 */
 	public void hide(IFile file) {
 		hidden.add(file);
 	}

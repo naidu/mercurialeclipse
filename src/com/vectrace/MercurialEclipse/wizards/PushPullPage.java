@@ -262,8 +262,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 						ResourceProperties.EXT_FOREST_AVAILABLE, null);
 	}
 
-	public Combo getSnapFileCombo() {
-		return snapFileCombo;
+	public String getSnapFileText() {
+		return snapFileCombo != null? snapFileCombo.getText() : null;
 	}
 
 	public void setSnapFileCombo(Combo snapFileCombo) {

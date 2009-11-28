@@ -503,7 +503,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 
 		for (FileStatus fileStatus : changedFiles) {
-			IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
 			int kind = 0;
 			switch (fileStatus.getAction()) {
 			case ADDED:
@@ -527,7 +526,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 					kind |= Differencer.RIGHT;
 					break;
 			}
-			fcs.add(new FileFromChangeSet(this, fileHandle, kind));
+			fcs.add(new FileFromChangeSet(this, fileStatus, kind));
 		}
 		return fcs.toArray(new FileFromChangeSet[0]);
 	}
@@ -544,7 +543,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		Set<IFile> files1 = new HashSet<IFile>();
 		if(changedFiles != null) {
 			for (FileStatus fileStatus : changedFiles) {
-				files1.add(ResourceUtils.getFileHandle(fileStatus.getAbsolutePath()));
+				IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
+				if(fileHandle != null) {
+					files1.add(fileHandle);
+				}
 			}
 		}
 		files = Collections.unmodifiableSet(files1);

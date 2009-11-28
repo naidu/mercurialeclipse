@@ -42,13 +42,13 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -59,8 +59,6 @@ import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MercurialSynchronizeSubscriber extends Subscriber /*implements Observer*/ {
-
-	private static final String UNCOMMITTED_BRANCH = "_UNCOMMITTED_BRANCH_!!!_";
 
 	private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
 
@@ -83,6 +81,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	private ISubscriberChangeEvent[] lastEvents;
 
 	private MercurialSynchronizeParticipant participant;
+
+	private HgChangesetsCollector collector;
 
 	public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
 		Assert.isNotNull(synchronizationScope);
@@ -107,16 +107,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return comparator;
 	}
 
-	public static String getRealBranchName(String currBranch){
-		if(currBranch == null){
-			return Branch.DEFAULT;
-		}
-		if(isUncommitedBranch(currBranch)){
-			return currBranch.substring(UNCOMMITTED_BRANCH.length());
-		}
-		return currBranch;
-	}
-
 	@Override
 	public SyncInfo getSyncInfo(IResource resource) {
 		if (!isInteresting(resource)) {
@@ -131,10 +121,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			return null;
 		}
 		String currentBranch = getCurrentBranch(resource, root);
-		boolean uncommittedBranch = isUncommitedBranch(currentBranch);
-		if(uncommittedBranch) {
-			currentBranch = getRealBranchName(currentBranch);
-		}
 
 		try {
 			if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
@@ -218,26 +204,23 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// determine incoming revision get newest incoming changeset
 		ChangeSet csIncoming = null;
-		// do not call incoming if the branch is known only locally
-		if(!uncommittedBranch){
-			try {
-				if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
-					// waiting didn't worked for us...
-					return null;
-				}
-			} catch (InterruptedException e) {
-				MercurialEclipsePlugin.logError(e);
+		try {
+			if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
+				// waiting didn't worked for us...
 				return null;
 			}
-			try {
-				// this can trigger a refresh and a call to the remote server...
-				csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-				return null;
-			} finally {
-				sema.release();
-			}
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
+		try {
+			// this can trigger a refresh and a call to the remote server...
+			csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		} finally {
+			sema.release();
 		}
 
 		MercurialRevisionStorage incomingIStorage;
@@ -322,10 +305,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
-	public static boolean isUncommitedBranch(String currentBranch) {
-		return currentBranch.startsWith(UNCOMMITTED_BRANCH);
-	}
-
 	public String getCurrentBranch(IResource resource, HgRoot root) {
 		String currentBranch = currentBranchMap.get(root);
 		if(currentBranch == null){
@@ -408,10 +387,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			boolean forceRefresh = project.exists();
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 			String currentBranch = currentBranchMap.get(hgRoot);
-			boolean uncommittedBranch = isUncommitedBranch(currentBranch);
-			if(uncommittedBranch) {
-				currentBranch = getRealBranchName(currentBranch);
-			}
+
 			try {
 				sema.acquire();
 				if(debug) {
@@ -425,11 +401,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				if (monitor.isCanceled()) {
 					return;
 				}
-				if(!uncommittedBranch){
-					monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-					refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
-					monitor.worked(1);
-				}
+				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
+				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
 				}
@@ -464,9 +438,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	private String updateBranchMap(HgRoot root, String branch) {
-		if (!HgBranchClient.isKnownRemote(root, getRepo(), branch)) {
-			branch = UNCOMMITTED_BRANCH + branch;
-		}
 		currentBranchMap.put(root, branch);
 		return branch;
 	}
@@ -607,4 +578,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return participant;
 	}
 
+	public void setCollector(HgChangesetsCollector collector){
+		this.collector = collector;
+	}
+
+	public HgChangesetsCollector getCollector() {
+		return collector;
+	}
 }

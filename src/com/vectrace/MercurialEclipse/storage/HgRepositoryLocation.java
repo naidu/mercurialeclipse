@@ -263,4 +263,8 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	public boolean isPush() {
 		return isPush;
 	}
+
+	public boolean isEmpty() {
+		return (getLocation() == null || getLocation().length() == 0);
+	}
 }
