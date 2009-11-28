@@ -437,19 +437,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector.handleChange(event);
 		}
 
-		// the code below seems to be responsible for some dirty files are NOT shown
-		// in the uncommited changeset. However, this code is also the only one
-		// possibility I see right now to support "remove from view" action.
-		IPath[] removals = event.getRemovals();
-		if(removals.length > 0) {
-			// if there are NOT ONLY removals, it can't be "remove from view" action.
-			if (event.getAdditions().length != 0 || event.getChanges().length != 0) {
-				// this can't
-				return;
-			}
-			// must be "remove from view" action => hide files
-			uncommittedSet.hide(removals);
-		}
+		// no other updates here, as it simply doesn't fit into the changeset concept.
 	}
 
 	private ChangeSetCapability getChangeSetCapability() {

@@ -22,6 +22,7 @@ import org.eclipse.compare.structuremergeviewer.Differencer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -107,48 +108,42 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 
 	@Override
 	public void remove(IResource file){
-//		boolean removed = files.remove(file);
-//		if(removed) {
-//			if(cachingOn){
-//				updateRequired = true;
-//			} else {
-//				notifyListeners();
-//			}
-//		}
+		// simply not supported, as it may be called not only from our code
 	}
 
 	public void hide(IPath[] paths){
 		if(context == null){
 			return;
 		}
-		boolean changed = false;
-		MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
-		for (IPath path : paths) {
-			if(path.segmentCount() < 2){
-				continue;
-			}
-			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(path.segment(0));
-			if(project == null){
-				continue;
-			}
-			IResource res = project.findMember(path.removeFirstSegments(1));
-			// only allow to hide files which are dirty
-			if(res instanceof IFile && !statusCache.isClean(res)){
-				IFile file = (IFile) res;
-				synchronized (files) {
-					if(files.contains(file)){
-						context.hide(file);
-						files.remove(file);
-						changed = true;
+				boolean changed = false;
+				MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
+				for (IPath path : paths) {
+					if(path.segmentCount() < 2){
+						continue;
+					}
+					IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+					IProject project = root.getProject(path.segment(0));
+					if(project == null || !projects.contains(project)){
+						continue;
+					}
+					IResource res = project.findMember(path.removeFirstSegments(1));
+					// only allow to hide files which are dirty
+					if(res instanceof IFile && !statusCache.isClean(res)){
+						IFile file = (IFile) res;
+						synchronized (files) {
+							if(files.contains(file)){
+								context.hide(file);
+								files.remove(file);
+								changed = true;
+							}
+						}
 					}
 				}
+				if(changed){
+					updateRequired = true;
+					endInput(null);
+				}
 			}
-		}
-		if(changed){
-			updateRequired = true;
-			endInput(null);
-		}
-	}
 
 	public void addListener(IPropertyChangeListener listener){
 		if(!listeners.contains(listener)) {
@@ -213,17 +208,17 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	private void update(Set<IProject> projectSet){
-		boolean changed = false;
-		try {
-			beginInput();
-			clear();
-			for (IProject project : projectSet) {
-				changed |= update(project);
-			}
-		} finally {
-			updateRequired |= changed;
-			endInput(null);
-		}
+				boolean changed = false;
+				try {
+					beginInput();
+					clear();
+					for (IProject project : projectSet) {
+						changed |= update(project);
+					}
+				} finally {
+					updateRequired |= changed;
+					endInput(null);
+				}
 	}
 
 	private boolean update(IProject project){

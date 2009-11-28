@@ -112,11 +112,19 @@ public class HgSubscriberMergeContext extends SubscriberMergeContext {
 		if(!PlatformUI.getWorkbench().isClosing()) {
 			super.dispose();
 		}
-		hidden.clear();
+		clearHiddenFiles();
 	}
 
 	public void hide(IFile file) {
 		hidden.add(file);
+//		HgChangesetsCollector collector = subscriber.getCollector();
+//		if(collector != null) {
+//			collector.refresh(null);
+//		}
+	}
+
+	public void clearHiddenFiles(){
+		hidden.clear();
 	}
 
 	public boolean isHidden(IFile file){
