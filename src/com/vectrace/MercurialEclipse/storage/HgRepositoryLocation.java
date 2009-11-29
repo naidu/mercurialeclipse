@@ -13,7 +13,6 @@
  *     Adam Berkes (Intland)     - bug fixes
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.storage;
 
 import java.io.File;
@@ -37,7 +36,6 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	private static final String PASSWORD_MASK = "***";
 
 	private final String logicalName;
-	private String projectName;
 	private String location;
 	private final String user;
 	private final String password;
@@ -190,11 +188,6 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 		return location;
 	}
 
-	@Deprecated
-	public String getSaveString() {
-		return HgRepositoryLocationParser.createSaveString(this);
-	}
-
 	@Override
 	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
 		return new HgRepositoryLocation[0];
@@ -229,37 +222,14 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 		return logicalName;
 	}
 
-	/**
-	 * @return the lastUsage
-	 */
 	public Date getLastUsage() {
 		return lastUsage;
 	}
 
-	/**
-	 * @param lastUsage the lastUsage to set
-	 */
 	public void setLastUsage(Date lastUsage) {
 		this.lastUsage = lastUsage;
 	}
 
-	/**
-	 * @return the projectName
-	 */
-	public String getProjectName() {
-		return projectName;
-	}
-
-	/**
-	 * @param projectName the projectName to set
-	 */
-	public void setProjectName(String projectName) {
-		this.projectName = projectName;
-	}
-
-	/**
-	 * @return the isPush
-	 */
 	public boolean isPush() {
 		return isPush;
 	}

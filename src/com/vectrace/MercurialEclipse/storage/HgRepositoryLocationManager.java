@@ -153,15 +153,7 @@ public class HgRepositoryLocationManager {
 	 * Add a repository location to the database.
 	 */
 	private boolean addRepoLocation(HgRepositoryLocation loc) {
-		if (loc.getProjectName() != null) {
-			IProject project = ResourcesPlugin.getWorkspace().getRoot().getProject(loc.getProjectName());
-			if (project != null) {
-				return internalAddRepoLocation(project, loc);
-			}
-		} else {
-			return internalAddRepoLocation(null, loc);
-		}
-		return false;
+		return internalAddRepoLocation(null, loc);
 	}
 
 	/**
@@ -176,9 +168,6 @@ public class HgRepositoryLocationManager {
 			SortedSet<HgRepositoryLocation> repoSet = projectRepos.get(project);
 			if (repoSet == null) {
 				repoSet = new TreeSet<HgRepositoryLocation>();
-			}
-			if (project.getName().equals(loc.getProjectName())) {
-				loc.setProjectName(project.getName());
 			}
 			repoSet.add(loc);
 			projectRepos.put(project, repoSet);
@@ -492,7 +481,6 @@ public class HgRepositoryLocationManager {
 			HgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName, false, loc.getLocation(), myUser, myPass);
 			updated.setLastUsage(new Date());
 			if (project != null) {
-				updated.setProjectName(project.getName());
 				for (SortedSet<HgRepositoryLocation> locs : projectRepos.values()) {
 					if (locs.remove(updated)) {
 						locs.add(updated);

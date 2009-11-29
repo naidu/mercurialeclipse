@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Adam Berkes (Intland) - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.storage;
 
@@ -36,9 +37,8 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		final String user = "test";
 		final String password = "test";
 		final String alias = "default";
-		final String project = "hgeclipse";
 		final Date date = new Date();
-		HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(createTestLine(true, date, uri, user, password, alias, project, true));
+		HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(createTestLine(true, date, uri, user, password, alias, true));
 		assertNotNull(location);
 		assertTrue(location.isPush());
 		assertEquals(date, location.getLastUsage());
@@ -46,7 +46,6 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertEquals(user, location.getUser());
 		assertEquals(password, location.getPassword());
 		assertEquals(alias, location.getLogicalName());
-		assertEquals(project, location.getProjectName());
 	}
 
 	public void testCreateLine() throws Exception {
@@ -61,7 +60,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertNotNull(repoLine);
 		assertTrue(repoLine.length() > 0);
 		assertEquals(createTestLine(location.isPush(), location.getLastUsage(), location.getLocation(), location.getUser(),
-				location.getPassword(), location.getLogicalName(), location.getProjectName(), true), repoLine);
+				location.getPassword(), location.getLogicalName(), true), repoLine);
 	}
 
 	public void testCreateLineWithProject() throws Exception {
@@ -69,16 +68,14 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		final String user = "test";
 		final String password = "test";
 		final String alias = "default";
-		final String project = "hgeclipse";
 		final Date date = new Date();
 		HgRepositoryLocation location = new HgRepositoryLocation(alias, false, repo, user, password);
 		location.setLastUsage(date);
-		location.setProjectName(project);
 		String repoLine = HgRepositoryLocationParser.createLine(location);
 		assertNotNull(repoLine);
 		assertTrue(repoLine.length() > 0);
 		assertEquals(createTestLine(location.isPush(), location.getLastUsage(), location.getLocation(), location.getUser(),
-				location.getPassword(), location.getLogicalName(), location.getProjectName(), true), repoLine);
+				location.getPassword(), location.getLogicalName(), true), repoLine);
 	}
 
 	public void testParseCreateLineLocalWinOld() throws Exception {
@@ -96,7 +93,6 @@ public class HgRepositoryLocationParserTests extends TestCase {
 			assertEquals(user, location.getUser());
 			assertEquals(password, location.getPassword());
 			assertEquals(alias, location.getLogicalName());
-			assertEquals(null, location.getProjectName());
 			saveString = HgRepositoryLocationParser.createSaveString(location);
 		} catch(HgException ex) {
 			if (File.pathSeparator.equals("\\")) {
@@ -121,7 +117,6 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertEquals(null, location.getUser());
 		assertEquals(null, location.getPassword());
 		assertEquals(alias, location.getLogicalName());
-		assertEquals(null, location.getProjectName());
 		String saveString = HgRepositoryLocationParser.createSaveString(location);
 		assertNotNull(saveString);
 		assertTrue(saveString.length() > 0);
@@ -134,7 +129,7 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		final String password = "test";
 		final String alias = "default";
 		final Date date = new Date();
-		HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(createTestLine(true, date, uri, user, password, alias, null, toEncryptAuth));
+		HgRepositoryLocation location = HgRepositoryLocationParser.parseLine(createTestLine(true, date, uri, user, password, alias, toEncryptAuth));
 		assertNotNull(location);
 		assertTrue(location.isPush());
 		assertEquals(date, location.getLastUsage());
@@ -142,10 +137,9 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		assertEquals(user, location.getUser());
 		assertEquals(password, location.getPassword());
 		assertEquals(alias, location.getLogicalName());
-		assertNull(location.getProjectName());
 	}
 
-	private String createTestLine(boolean isPush, Date date, String uri, String user, String password, String alias, String project, boolean toEncryptAuth) {
+	private String createTestLine(boolean isPush, Date date, String uri, String user, String password, String alias, boolean toEncryptAuth) {
 		HgRepositoryAuthCrypter crypter = HgRepositoryAuthCrypterFactory.create();
 		StringBuilder line = new StringBuilder(isPush ? "u" : "d");
 		line.append(date.getTime());
@@ -171,12 +165,6 @@ public class HgRepositoryLocationParserTests extends TestCase {
 		line.append(alias.length());
 		line.append(HgRepositoryLocationParser.PART_SEPARATOR);
 		line.append(alias);
-		if (project != null) {
-			line.append(HgRepositoryLocationParser.PART_SEPARATOR);
-			line.append(project.length());
-			line.append(HgRepositoryLocationParser.PART_SEPARATOR);
-			line.append(project);
-		}
 		return line.toString();
 	}
 }
