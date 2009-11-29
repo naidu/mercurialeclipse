@@ -18,7 +18,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgMergeClient extends AbstractClient {
 
-	public static String merge(IResource res, String revision, boolean useExternalMergeTool)
+	public static String merge(IResource res, String revision, boolean useExternalMergeTool, boolean forced)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("merge", getWorkingDirectory(res), //$NON-NLS-1$
 				false);
@@ -33,6 +33,9 @@ public class HgMergeClient extends AbstractClient {
 
 		if (revision != null) {
 			command.addOptions("-r", revision); //$NON-NLS-1$
+		}
+		if (forced) {
+			command.addOptions("-f"); //$NON-NLS-1$
 		}
 
 		try {

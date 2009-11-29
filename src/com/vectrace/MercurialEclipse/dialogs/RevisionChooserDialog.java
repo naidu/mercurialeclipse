@@ -25,6 +25,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
@@ -71,6 +72,10 @@ public class RevisionChooserDialog extends Dialog {
 	private final int[] parents;
 
 	private ChangeSet changeSet;
+	private boolean showForceButton;
+	private Button forceButton;
+	private String forceButtonText;
+	private boolean isForceChecked;
 
 	public RevisionChooserDialog(Shell parentShell, String title, IFile file) {
 		this(parentShell, title, new FileDataLoader(file));
@@ -133,8 +138,45 @@ public class RevisionChooserDialog extends Dialog {
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
-
+		createOptions(composite);
 		return composite;
+	}
+
+	private void createOptions(Composite composite) {
+		if(showForceButton){
+			forceButton = new Button(composite, SWT.CHECK);
+			String message = getForceText();
+			if(message == null) {
+				message = "Forced operation";
+			}
+			forceButton.setText(message);
+			forceButton.setSelection(isForceChecked);
+			forceButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					isForceChecked = forceButton.getSelection();
+				}
+			});
+		}
+	}
+
+	public void setForceChecked(boolean on){
+		isForceChecked = true;
+	}
+	public boolean isForceChecked(){
+		return isForceChecked;
+	}
+
+	private String getForceText() {
+		return forceButtonText;
+	}
+
+	public void showForceButton(boolean show){
+		showForceButton = show;
+	}
+
+	public void setForceButtonText(String forceButtonText) {
+		this.forceButtonText = forceButtonText;
 	}
 
 	@Override

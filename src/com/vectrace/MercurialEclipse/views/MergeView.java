@@ -20,6 +20,7 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IToolBarManager;
@@ -94,15 +95,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			public void widgetDefaultSelected(SelectionEvent event) {
 				try {
 					TableItem item = (TableItem) event.item;
-					FlaggedAdaptable flagged = (FlaggedAdaptable) item
-							.getData();
+					FlaggedAdaptable flagged = (FlaggedAdaptable) item.getData();
 					IFile file = (IFile) flagged.getAdapter(IFile.class);
 
 					String mergeNodeId = currentProject
 							.getPersistentProperty(ResourceProperties.MERGING);
 
-					String[] parents = HgParentClient
-							.getParentNodeIds(currentProject);
+					String[] parents = HgParentClient.getParentNodeIds(currentProject);
 					int ancestor = HgParentClient.findCommonAncestor(
 							currentProject.getLocation().toFile(), parents[0],
 							parents[1]);
@@ -116,10 +115,8 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 							new CompareConfiguration(), file, ancestorNode,
 							mergeNode, true);
 
-					int returnValue = CompareUtils
-							.openCompareDialog(compareInput);
-					if (returnValue == Window.OK
-							&& markResolvedAction.isEnabled()) {
+					int returnValue = CompareUtils.openCompareDialog(compareInput);
+					if (returnValue == Window.OK && markResolvedAction.isEnabled()) {
 						markResolvedAction.run();
 					}
 				} catch (Exception e) {
@@ -207,7 +204,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	}
 
 	private void populateView(boolean attemptToCommit) throws HgException {
-		statusLabel.setText(currentProject.getName());
+		try {
+			String mergeNodeId = currentProject.getPersistentProperty(ResourceProperties.MERGING);
+			statusLabel.setText("Merging " + currentProject.getName() + " with " + mergeNodeId);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			statusLabel.setText("Merging " + currentProject.getName());
+		}
 		List<FlaggedAdaptable> status = null;
 		if (HgResolveClient.checkAvailable()) {
 			//HgResolveClient.resolveAll(currentProject.getLocation().toFile());
@@ -243,14 +246,14 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			// are found
 			boolean allResolved = areAllResolved();
 			if (allResolved) {
-				this.statusLabel.setText(currentProject.getName()
+				statusLabel.setText(currentProject.getName()
 								+ Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
-								+ mergeNode);
+								+ " " + mergeNode);
 				if (currentProject
 						.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
 					new CommitMergeHandler()
 							.commitMergeWithCommitDialog(
-									this.currentProject, getSite()
+									currentProject, getSite()
 											.getShell());
 					currentProject
 							.setSessionProperty(
@@ -275,8 +278,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	public void setCurrentProject(IProject project) {
 		if (currentProject != project && project != null && project.isAccessible()) {
 			try {
-				if (project
-						.getPersistentProperty(ResourceProperties.MERGING) != null) {
+				if (project.getPersistentProperty(ResourceProperties.MERGING) != null) {
 					currentProject = project;
 					populateView(false);
 				} else {
@@ -290,11 +292,9 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	private boolean areAllResolved() {
 		boolean allResolved = true;
-		if (table.getItems() != null
-				&& table.getItems().length > 0) {
+		if (table.getItems() != null && table.getItems().length > 0) {
 			for (TableItem item : table.getItems()) {
-				FlaggedAdaptable fa = (FlaggedAdaptable) item
-						.getData();
+				FlaggedAdaptable fa = (FlaggedAdaptable) item.getData();
 				allResolved &= fa.getFlag() == MercurialStatusCache.CHAR_RESOLVED;
 			}
 		}

@@ -419,9 +419,9 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 				suffix.append('(').append(tags).append(')');
 			}
 
-			// merge info
+			// merge flag
 			if (merging != null && merging.length() > 0) {
-				suffix.append(Messages.getString("ResourceDecorator.merging")).append(merging);
+				suffix.append(Messages.getString("ResourceDecorator.merging"));
 			}
 			suffix.append(']');
 		}
