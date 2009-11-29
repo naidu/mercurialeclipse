@@ -77,7 +77,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 /**
  * @author $Author: l2fprod $
  * @created 27 avril 2002
- * @Id$
+ * $Id$
  */
 public class IniFile {
 
