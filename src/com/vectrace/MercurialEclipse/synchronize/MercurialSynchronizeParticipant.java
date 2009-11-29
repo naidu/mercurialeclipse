@@ -68,10 +68,11 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		super();
 	}
 
-	public MercurialSynchronizeParticipant(MergeContext ctx, HgRepositoryLocation repositoryLocation) {
+	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx,
+			HgRepositoryLocation repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
 		this.repositoryLocation = repositoryLocation;
-		secondaryId = "" + repositoryLocation.getLocation();
+		secondaryId = computeSecondaryId(scope, repositoryLocation);
 		try {
 			ISynchronizeParticipantDescriptor descriptor = TeamUI
 				.getSynchronizeManager().getParticipantDescriptor(getId());
@@ -79,6 +80,23 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
+	}
+
+	private String computeSecondaryId(RepositorySynchronizationScope scope, HgRepositoryLocation repo) {
+		IProject[] projects = scope.getProjects();
+		StringBuilder sb = new StringBuilder(repo.getLocation());
+		if(sb.charAt(sb.length() - 1) == '/'){
+			sb.deleteCharAt(sb.length() - 1);
+		}
+		sb.append(" [");
+		for (IProject project : projects) {
+			sb.append(project.getName()).append(',');
+		}
+		if(projects.length > 0){
+			sb.deleteCharAt(sb.length() - 1);
+		}
+		sb.append(']');
+		return sb.toString();
 	}
 
 	@Override
@@ -182,8 +200,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	@Override
 	public String getName() {
-		return Messages.getString("MercurialSynchronizeParticipant.syncOnRepo") //$NON-NLS-1$
-		+ repositoryLocation;
+		return secondaryId;
 	}
 
 	/**
