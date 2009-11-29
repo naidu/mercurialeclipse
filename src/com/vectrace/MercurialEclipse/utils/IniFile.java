@@ -8,6 +8,7 @@
  * Contributors:
  * wleggette	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (Intland)
  *******************************************************************************/
 /* ====================================================================
  *
@@ -76,7 +77,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 /**
  * @author $Author: l2fprod $
  * @created 27 avril 2002
- * @version $Revision: 1.5 $, $Date: 2002/04/27 11:27:42 $
+ * @Id$
  */
 public class IniFile {
 
@@ -113,15 +114,7 @@ public class IniFile {
 	public IniFile(URL url) throws IOException {
 		this();
 		InputStream in = url.openStream();
-		try {
-			load(in);
-		} finally {
-			try {
-				in.close();
-			} catch (IOException e) {
-				// ignore
-			}
-		}
+		load(in);
 	}
 
 	/**
@@ -239,16 +232,7 @@ public class IniFile {
 	 *                Description of Exception
 	 */
 	public void load(String filename) throws FileNotFoundException {
-		FileInputStream in = new FileInputStream(filename);
-		try {
-			load(in);
-		} finally {
-			try {
-				in.close();
-			} catch (IOException e) {
-				// ignore
-			}
-		}
+		load(new FileInputStream(filename));
 	}
 
 	/**
@@ -281,28 +265,29 @@ public class IniFile {
 	private void load(InputStream in) {
 		try {
 			BufferedReader input = new BufferedReader(new InputStreamReader(in));
-			String read;
-			Map<String,String> section = null;
-			String section_name;
-			while ((read = input.readLine()) != null) {
-				if (read.startsWith(";") || read.startsWith("#")) {
-					continue;
-				} else if (read.startsWith("[")) {
-					// new section
-					section_name = read.substring(1, read.indexOf("]"))
-					.toLowerCase();
-					section = sections.get(section_name);
-					if (section == null) {
-						section = new HashMap<String,String>();
-						sections.put(section_name, section);
+			try {
+				Map<String,String> section = null;
+				String section_name;
+				for (String read = null; (read = input.readLine()) != null; ) {
+					if (read.startsWith(";") || read.startsWith("#")) {
+						continue;
+					} else if (read.startsWith("[")) {
+						// new section
+						section_name = read.substring(1, read.indexOf("]")).toLowerCase();
+						section = sections.get(section_name);
+						if (section == null) {
+							section = new HashMap<String,String>();
+							sections.put(section_name, section);
+						}
+					} else if (read.indexOf("=") != -1 && section != null) {
+						// new key
+						String key = read.substring(0, read.indexOf("=")).trim().toLowerCase();
+						String value = read.substring(read.indexOf("=") + 1).trim();
+						section.put(key, value);
 					}
-				} else if (read.indexOf("=") != -1 && section != null) {
-					// new key
-					String key = read.substring(0, read.indexOf("=")).trim()
-					.toLowerCase();
-					String value = read.substring(read.indexOf("=") + 1).trim();
-					section.put(key, value);
 				}
+			} finally {
+				input.close();
 			}
 		} catch (IOException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -318,18 +303,22 @@ public class IniFile {
 	private void save(OutputStream out) {
 		try {
 			PrintWriter output = new PrintWriter(out);
-			for (String section : sections.keySet()) {
-				output.println("[" + section + "]");
-				for (Map.Entry<String, String> entry : getSection(section).entrySet()) {
-					output.println(entry.getKey() + "=" + entry.getValue());
+
+			try {
+				for (String section : sections.keySet()) {
+					output.println("[" + section + "]");
+					for (Map.Entry<String, String> entry : getSection(section).entrySet()) {
+						output.println(entry.getKey() + "=" + entry.getValue());
+					}
 				}
+			} finally {
+				output.close();
 			}
-			output.flush();
-			output.close();
-			out.flush();
-			out.close();
-		} catch (IOException e) {
-			MercurialEclipsePlugin.logError(e);
+		} finally {
+			try {
+				out.close();
+			} catch (IOException ex) {
+			}
 		}
 	}
 
