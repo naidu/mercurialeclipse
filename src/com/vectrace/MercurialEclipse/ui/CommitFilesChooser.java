@@ -8,6 +8,7 @@
  * Contributors:
  * Administrator	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (Intland)
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -62,6 +63,7 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * TODO enable tree/flat view switch
  *
  * @author steeven
+ * $Id$
  */
 public class CommitFilesChooser extends Composite {
 	private final UntrackedFilesFilter untrackedFilesFilter;
@@ -160,6 +162,7 @@ public class CommitFilesChooser extends Composite {
 		} else {
 			flags |= SWT.READ_ONLY | SWT.HIDE_SELECTION;
 		}
+
 		Table table = new Table(this, flags);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
@@ -172,7 +175,7 @@ public class CommitFilesChooser extends Composite {
 		col = new TableColumn(table, SWT.LEFT);
 		col.setResizable(true);
 		col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
-		col.setWidth(70);
+		col.setWidth(90);
 		col.setMoveable(true);
 
 		// File status
