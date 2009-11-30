@@ -177,8 +177,8 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		Map<IPath, SortedSet<ChangeSet>> changeSets;
 		synchronized (repoChangeSets){
 			changeSets = getMap(resource, repository, branch);
+			return getMembers(resource, changeSets);
 		}
-		return getMembers(resource, changeSets);
 	}
 
 	/**
