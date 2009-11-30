@@ -84,18 +84,19 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	private String computeSecondaryId(RepositorySynchronizationScope scope, HgRepositoryLocation repo) {
 		IProject[] projects = scope.getProjects();
-		StringBuilder sb = new StringBuilder(repo.getLocation());
+		StringBuilder sb = new StringBuilder();
+		if(projects.length > 0){
+			sb.append("[");
+			for (IProject project : projects) {
+				sb.append(project.getName()).append(',');
+			}
+			sb.deleteCharAt(sb.length() - 1);
+			sb.append("] ");
+		}
+		sb.append(repo.getLocation());
 		if(sb.charAt(sb.length() - 1) == '/'){
 			sb.deleteCharAt(sb.length() - 1);
 		}
-		sb.append(" [");
-		for (IProject project : projects) {
-			sb.append(project.getName()).append(',');
-		}
-		if(projects.length > 0){
-			sb.deleteCharAt(sb.length() - 1);
-		}
-		sb.append(']');
 		return sb.toString();
 	}
 
