@@ -15,11 +15,20 @@ import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.ResourceNode;
+import org.eclipse.compare.internal.CompareEditor;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.window.Window;
+import org.eclipse.team.internal.ui.IPreferenceIds;
+import org.eclipse.team.internal.ui.TeamUIPlugin;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IEditorPart;
+import org.eclipse.ui.IEditorReference;
+import org.eclipse.ui.IReusableEditor;
+import org.eclipse.ui.IWorkbenchPage;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -65,17 +74,47 @@ public class CompareUtils {
 		openEditor(leftNode, rightNode, dialog, localEditable);
 	}
 
+	@SuppressWarnings("restriction")
 	public static void openEditor(ResourceNode left, ResourceNode right, boolean dialog, boolean localEditable) {
 		Assert.isNotNull(right);
 
 		if (dialog) {
 			openCompareDialog(left, right, localEditable);
-		} else {
-			CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
-			if (compareInput != null) {
-				CompareUI.openCompareEditor(compareInput);
+			return;
+		}
+
+		CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
+		if (compareInput == null) {
+			return;
+		}
+
+		IWorkbenchPage workBenchPage = MercurialEclipsePlugin.getActivePage();
+		boolean reuse = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(
+				IPreferenceIds.REUSE_OPEN_COMPARE_EDITOR);
+		IEditorPart editor = null;
+		if(reuse) {
+			IEditorReference[] editorRefs = workBenchPage.getEditorReferences();
+			for (IEditorReference ref : editorRefs) {
+				IEditorPart part = ref.getEditor(false);
+				if(part != null && part instanceof CompareEditor){
+					editor = part;
+					break;
+				}
 			}
 		}
+
+		if (editor == null) {
+			CompareUI.openCompareEditor(compareInput);
+			return;
+		}
+
+		IEditorInput otherInput = editor.getEditorInput();
+		if (!otherInput.equals(compareInput)) {
+			// if editor is currently not open on that input either re-use existing
+			CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
+		}
+		// provide focus to editor
+		workBenchPage.activate(editor);
 	}
 
 	/**

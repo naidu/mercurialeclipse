@@ -79,6 +79,13 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToBytes().length != 0;
 	}
 
+	public static boolean isDirty(HgRoot root) throws HgException {
+		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
+		return command.executeToBytes().length != 0;
+	}
+
 	public static String getMergeStatus(IResource res) throws HgException {
 		AbstractShellCommand command = new HgCommand("identify", getWorkingDirectory(res), true); //$NON-NLS-1$
 		// Full global IDs

@@ -25,7 +25,6 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.mapping.provider.MergeContext;
 import org.eclipse.team.internal.ui.Utils;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.team.ui.synchronize.ISynchronizeParticipant;
@@ -282,8 +281,8 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
 		RepositorySynchronizationScope scope = new RepositorySynchronizationScope(repo, array);
 		MercurialSynchronizeSubscriber subscriber = new MercurialSynchronizeSubscriber(scope);
 		HgSubscriberScopeManager manager = new HgSubscriberScopeManager(selectedMappings, subscriber);
-		MergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
-		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx, repo);
+		HgSubscriberMergeContext ctx = new HgSubscriberMergeContext(subscriber, manager);
+		MercurialSynchronizeParticipant participant2 = new MercurialSynchronizeParticipant(ctx, repo, scope);
 		subscriber.setParticipant(participant2);
 		return participant2;
 	}

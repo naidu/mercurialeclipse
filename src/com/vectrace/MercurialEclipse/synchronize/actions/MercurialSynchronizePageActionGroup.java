@@ -9,6 +9,7 @@
  *     Bastian Doetsch				- implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (Intland)
+ *     Adam Berkes (Intland) - modifications
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
@@ -27,12 +28,15 @@ import org.eclipse.team.internal.ui.synchronize.actions.OpenInCompareAction;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchCommandConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 
 @SuppressWarnings("restriction")
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
 
+	private static final String HG_COMMIT_GROUP = "hg.commit";
 	private final IAction expandAction;
 	private OpenAction openAction;
 
@@ -63,19 +67,19 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			configuration.setProperty(keyOpen, openAction);
 		}
 
+
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.FILE_GROUP,
 				new ShowHistorySynchronizeAction("Show History",
 						configuration, getVisibleRootsSelectionProvider()));
 
-
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				"hg.commit",
+				HG_COMMIT_GROUP,
 				new CommitSynchronizeAction("Commit...",
 						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
-				"hg.commit",
+				HG_COMMIT_GROUP,
 				new RevertSynchronizeAction("Revert...",
 						configuration, getVisibleRootsSelectionProvider()));
 
@@ -86,33 +90,37 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new PushPullSynchronizeAction("Pull",
-						configuration, getVisibleRootsSelectionProvider(), true, false));
+				new PushPullSynchronizeAction("Pull and Update",
+						configuration, getVisibleRootsSelectionProvider(), true, true));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.OBJECT_CONTRIBUTIONS_GROUP,
-				new PushPullSynchronizeAction("Pull and Update",
-						configuration, getVisibleRootsSelectionProvider(), true, true));
+				new PushPullSynchronizeAction("Pull",
+						configuration, getVisibleRootsSelectionProvider(), true, false));
 
 	}
 
 	@Override
 	public void fillContextMenu(IMenuManager menu) {
-		if(menu.find("hg.commit") == null){
-			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator("hg.commit"));
+		if(menu.find(DeleteAction.HG_DELETE_GROUP) == null){
+			menu.insertBefore(ISynchronizePageConfiguration.NAVIGATE_GROUP, new Separator(
+					DeleteAction.HG_DELETE_GROUP));
+		}
+		if(menu.find(HG_COMMIT_GROUP) == null){
+			menu.insertBefore(DeleteAction.HG_DELETE_GROUP, new Separator(HG_COMMIT_GROUP));
 		}
 		super.fillContextMenu(menu);
 //		menu.remove("org.eclipse.team.ui.synchronizeLast");
-		replaceCompareAction(menu);
+		replaceCompareAndMoveDeleteAction(menu);
 	}
 
 	/**
-	 * Replaces default "OpenInCompareAction" action with our custom
-	 * @param menu
+	 * Replaces default "OpenInCompareAction" action with our custom, moves delete action
 	 * @see OpenInCompareAction
 	 * @see ModelSynchronizeParticipantActionGroup
+	 * @see HgChangeSetActionProvider
 	 */
-	private void replaceCompareAction(IMenuManager menu) {
+	private void replaceCompareAndMoveDeleteAction(IMenuManager menu) {
 		if(openAction == null){
 			return;
 		}
@@ -135,11 +143,10 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				menu.remove(ai);
 				openAction.setImageDescriptor(action.getImageDescriptor());
 				openAction.setText(action.getText());
-				if(menu.find(ShowHistorySynchronizeAction.ID) != null) {
-					menu.insertBefore(ShowHistorySynchronizeAction.ID, openAction);
-				} else {
-					menu.appendToGroup(fileGroup.getId(), openAction);
-				}
+				menu.prependToGroup(fileGroup.getId(), openAction);
+			} else if(IWorkbenchCommandConstants.EDIT_DELETE.equals(action.getActionDefinitionId())){
+				menu.remove(ai);
+				menu.appendToGroup(DeleteAction.HG_DELETE_GROUP, ai);
 			}
 		}
 	}

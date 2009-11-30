@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -145,11 +146,24 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			if (repoMap != null) {
 				SortedSet<ChangeSet> revisions = repoMap.get(location);
 				if (revisions != null) {
-					return revisions;
+					return filterByBranch(revisions, branch);
 				}
 			}
 		}
 		return EMPTY_SET;
+	}
+
+	private SortedSet<ChangeSet> filterByBranch(SortedSet<ChangeSet> sets, String branch){
+		if(branch == null || sets.isEmpty()){
+			return sets;
+		}
+		SortedSet<ChangeSet> newSets = new TreeSet<ChangeSet>();
+		for (ChangeSet cs : sets) {
+			if(Branch.same(branch, cs.getBranch())){
+				newSets.add(cs);
+			}
+		}
+		return newSets;
 	}
 
 	/**
@@ -251,14 +265,6 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 				map.put(path, Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>(changes)));
 			}
 		}
-	}
-
-	/**
-	 * Get newest revision of resource regardless of branch
-	 */
-	public ChangeSet getNewestChangeSet(IResource resource,
-			HgRepositoryLocation repository) throws HgException {
-		return getNewestChangeSet(resource, repository, null);
 	}
 
 	/**

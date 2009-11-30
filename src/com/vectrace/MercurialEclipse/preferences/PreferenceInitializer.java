@@ -14,6 +14,14 @@
 
 package com.vectrace.MercurialEclipse.preferences;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+
+import org.eclipse.core.runtime.FileLocator;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
@@ -27,7 +35,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
-		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
+		detectAndSetHgExecutable(store);
 		store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, System.getProperty ( "user.name" )); //$NON-NLS-1$
 
 		// Andrei: not really sure why it was ever set to "modified" as default.
@@ -57,6 +65,28 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
 		store.setDefault(PreferenceConstants.P_STRING,"Default value");
 		 */
+	}
+
+	private void detectAndSetHgExecutable(IPreferenceStore store) {
+		// Currently only tested on Windows. The binary is expected to be found
+		// at "os\win32\x86\hg.exe" (relative to the plugin/fragment directory)
+		boolean isWindows = File.separatorChar == '\\';
+		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg");
+		URL url = FileLocator.find(MercurialEclipsePlugin.getDefault().getBundle(), path, null);
+		if(url != null){
+			try {
+				url = FileLocator.toFileURL(url);
+				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, new File(url.toURI()).getAbsolutePath());
+			} catch (IOException e1) {
+				MercurialEclipsePlugin.logError(e1);
+				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+			} catch (URISyntaxException e) {
+				MercurialEclipsePlugin.logError(e);
+				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+			}
+		} else {
+			store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+		}
 	}
 
 }

@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
@@ -29,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
@@ -36,9 +38,11 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -57,24 +61,41 @@ public class MergeHandler extends SingleResourceHandler {
 
 		// can we do the equivalent of plain "hg merge"?
 		ChangeSet cs = getOtherHeadInCurrentBranch(project, loader);
+		boolean forced = false;
+
+		String forceMessage = "Forced merge (this will discard all uncommitted changes!)";
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		boolean hasDirtyFiles = HgStatusClient.isDirty(hgRoot);
 		if (cs != null) {
 			if (!autoPickOtherHead) {
-				MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
-				mb.setText("Merge");
-				String csSummary = "Changeset: " + cs.getRevision().toString().substring(0, 20) + "\n" +
-				"User: " + cs.getUser() + "\n" +
-				"Date: " + cs.getDateString() + "\n" +
-				"Summary: " + cs.getSummary();
+
+				String csSummary = "    Changeset: " + cs.getRevision().toString().substring(0, 20)
+						+ "\n    User: " + cs.getUser() + "\n    Date: "
+						+ cs.getDateString() + "\n    Summary: " + cs.getSummary();
 
 				String branch = cs.getBranch();
 				if (Branch.isDefault(branch)) {
 					branch = Branch.DEFAULT;
 				}
-				mb.setMessage(MessageFormat.format(Messages.getString("MergeHandler.mergeWithOtherHead"),
-						branch, csSummary));
-				if (mb.open() == SWT.NO) {
-					cs = null;
+				String message = MessageFormat.format(Messages
+						.getString("MergeHandler.mergeWithOtherHead"), branch, csSummary);
+
+				if(hasDirtyFiles){
+					MessageDialogWithToggle dialog = MessageDialogWithToggle.openYesNoQuestion(
+							shell, "Merge", message, forceMessage, false, null, null);
+					if(dialog.getReturnCode() != IDialogConstants.YES_ID) {
+						cs = null;
+					}
+					forced = dialog.getToggleState();
+				} else {
+					MessageBox mb = new MessageBox(shell, SWT.ICON_QUESTION | SWT.YES | SWT.NO);
+					mb.setText("Merge");
+					mb.setMessage(message);
+					if (mb.open() == SWT.NO) {
+						cs = null;
+					}
 				}
+
 			}
 		}
 
@@ -84,12 +105,15 @@ public class MergeHandler extends SingleResourceHandler {
 					Messages.getString("MergeHandler.mergeWith"), loader); //$NON-NLS-1$
 			dialog.setDefaultShowingHeads(true);
 			dialog.setDisallowSelectingParents(true);
-
+			dialog.showForceButton(hasDirtyFiles);
+			dialog.setForceChecked(forced);
+			dialog.setForceButtonText(forceMessage);
 			if (dialog.open() != IDialogConstants.OK_ID) {
 				return "";
 			}
 
 			cs = dialog.getChangeSet();
+			forced = dialog.isForceChecked();
 		}
 
 		boolean useExternalMergeTool = Boolean.valueOf(
@@ -100,7 +124,7 @@ public class MergeHandler extends SingleResourceHandler {
 		boolean useResolve = isHgResolveAvailable();
 		if (useResolve) {
 			result = HgMergeClient.merge(project, cs.getRevision().getChangeset(),
-					useExternalMergeTool);
+					useExternalMergeTool, forced);
 		} else {
 			result = HgIMergeClient.merge(project, cs.getRevision().getChangeset());
 		}

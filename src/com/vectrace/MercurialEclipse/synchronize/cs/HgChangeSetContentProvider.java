@@ -112,7 +112,8 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 
 		public void defaultSetChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet previousDefault,
 				final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
-			// ignored
+			// user has requested a manual refresh: simply refresh root elements
+			getRootElements();
 		}
 
 		public void nameChanged(final org.eclipse.team.internal.core.subscribers.ChangeSet set) {
@@ -244,30 +245,9 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private void addAllUnassignedToUnassignedSet() {
-		Set<IResource> dirty = getDirtyFiles();
-		try {
-			uncommittedSet.beginInput();
-			uncommittedSet.clear();
-			for (IResource resource : dirty) {
-				if(resource instanceof IFile) {
-					uncommittedSet.add((IFile) resource);
-				}
-			}
-		} finally {
-			uncommittedSet.endInput(null);
-		}
+		uncommittedSet.update(STATUS_CACHE, null);
 	}
 
-	private Set<IResource> getDirtyFiles() {
-		HgChangeSetModelProvider modelProvider = (HgChangeSetModelProvider) getModelProvider();
-		IProject[] projects = modelProvider.getSubscriber().getProjects();
-		int bits = MercurialStatusCache.MODIFIED_MASK;
-		Set<IResource> resources = new HashSet<IResource>();
-		for (IProject project : projects) {
-			resources.addAll(STATUS_CACHE.getFiles(bits, project));
-		}
-		return resources;
-	}
 
 	@Override
 	protected ResourceTraversal[] getTraversals(
@@ -380,7 +360,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private boolean hasChildrenInContext(ChangeSet set) {
-		return !set.getFiles().isEmpty();
+		return !set.getFiles().isEmpty() || set.getChangesetFiles().length > 0;
 	}
 
 	/**
@@ -457,10 +437,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 			csCollector.handleChange(event);
 		}
 
-		IPath[] removals = event.getRemovals();
-		if(removals.length > 0){
-			uncommittedSet.hide(removals);
-		}
+		// no other updates here, as it simply doesn't fit into the changeset concept.
 	}
 
 	private ChangeSetCapability getChangeSetCapability() {

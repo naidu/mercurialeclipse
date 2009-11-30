@@ -14,6 +14,7 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IAdapterFactory;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 
 public class HgChangeSetAdapterFactory implements IAdapterFactory {
 
@@ -21,6 +22,10 @@ public class HgChangeSetAdapterFactory implements IAdapterFactory {
 	public Object getAdapter(Object adaptableObject, Class adapterType) {
 		if (adaptableObject instanceof ChangeSet && adapterType == ResourceMapping.class) {
 			ChangeSet cs = (ChangeSet) adaptableObject;
+			return new HgChangeSetResourceMapping(cs);
+		}
+		if (adaptableObject instanceof FileFromChangeSet && adapterType == ResourceMapping.class) {
+			FileFromChangeSet cs = (FileFromChangeSet) adaptableObject;
 			return new HgChangeSetResourceMapping(cs);
 		}
 		return null;

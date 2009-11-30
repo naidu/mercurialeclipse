@@ -23,7 +23,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * Repository location line format:
- * [u|d]<dateAsLong> <len> uri <len> [e] username <len> [e] password <len> alias/id[ <len> project]
+ * [u|d]<dateAsLong> <len> uri <len> [e] username <len> [e] password <len> alias/id
  */
 public class HgRepositoryLocationParser {
 
@@ -75,9 +75,6 @@ public class HgRepositoryLocationParser {
 						PUSH_PREFIX.equals(direction), parts.get(0), "", "");
 			}
 			location.setLastUsage(lastUsage);
-			if (parts.size() > 4) {
-				location.setProjectName(parts.get(4));
-			}
 			return location;
 		} catch(Throwable th) {
 			MercurialEclipsePlugin.logError(th);
@@ -115,12 +112,6 @@ public class HgRepositoryLocationParser {
 		line.append(String.valueOf(logicalName.length()));
 		line.append(PART_SEPARATOR);
 		line.append(logicalName);
-		if (location.getProjectName() != null) {
-			line.append(PART_SEPARATOR);
-			line.append(String.valueOf(location.getProjectName().length()));
-			line.append(PART_SEPARATOR);
-			line.append(location.getProjectName());
-		}
 		return line.toString();
 	}
 

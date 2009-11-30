@@ -27,6 +27,8 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.QualifiedName;
+import org.eclipse.core.runtime.jobs.IJobManager;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
@@ -193,34 +195,33 @@ public class MercurialUtilities {
 	 * preference page.
 	 */
 	public static void configureHgExecutable() {
-		new SafeUiJob(
-				Messages
-				.getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse")) { //$NON-NLS-1$
-			/*
-			 * (non-Javadoc)
-			 *
-			 * @see
-			 * com.vectrace.MercurialEclipse.SafeUiJob#runSafe(org.eclipse.core
-			 * .runtime.IProgressMonitor)
-			 */
+		final String jobName = Messages
+				.getString("MercurialUtilities.openingPreferencesForConfiguringMercurialEclipse");
+		SafeUiJob job = new SafeUiJob(jobName) {
+
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
-				String[] dsplIds = null;
-				Object data = null;
-				PreferenceDialog dlg = PreferencesUtil
-				.createPreferenceDialogOn(
-						getDisplay().getActiveShell(), pageId, dsplIds,
-						data);
-				dlg
-				.setErrorMessage(Messages
+				PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(getDisplay()
+						.getActiveShell(), pageId, null, null);
+				dlg.setErrorMessage(Messages
 						.getString("MercurialUtilities.errorNotConfiguredCorrectly") //$NON-NLS-1$
-						+ Messages
-						.getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
+						+ Messages.getString("MercurialUtilities.runDebugInstall")); //$NON-NLS-1$
 				dlg.open();
 				return super.runSafe(monitor);
 			}
-		}.schedule();
+
+			@Override
+			public boolean belongsTo(Object family) {
+				return jobName.equals(family);
+			}
+		};
+		IJobManager jobManager = Job.getJobManager();
+		jobManager.cancel(jobName);
+		Job[] jobs = jobManager.find(jobName);
+		if(jobs.length == 0) {
+			job.schedule(50);
+		}
 	}
 
 	public static boolean isPossiblySupervised(IResource resource){

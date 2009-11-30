@@ -18,6 +18,7 @@ import java.util.Set;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.mapping.ResourceMapping;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -67,6 +68,14 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 		// super.getScope();
 		RepositorySynchronizationScope scope2 = ((MercurialSynchronizeSubscriber) getSubscriber()).getScope();
 		return scope2;
+	}
+
+	@Override
+	public void initialize(IProgressMonitor monitor) throws CoreException {
+		super.initialize(monitor);
+//		MercurialSynchronizeParticipant participant = ((MercurialSynchronizeSubscriber) getSubscriber()).getParticipant();
+//		HgSubscriberMergeContext context2 = (HgSubscriberMergeContext) participant.getContext();
+//		context2.clearHiddenFiles();
 	}
 
 	public void update(Observable o, Object arg) {

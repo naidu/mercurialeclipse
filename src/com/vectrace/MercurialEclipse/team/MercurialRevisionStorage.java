@@ -110,7 +110,9 @@ public class MercurialRevisionStorage implements IStorage {
 		super();
 		resource = res;
 		try {
-			this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, changeset);
+			if(changeset != null) {
+				this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, changeset);
+			}
 			if(changeSet != null){
 				this.revision = changeSet.getChangesetIndex();
 				this.global = changeSet.getChangeset();

@@ -28,11 +28,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -149,6 +146,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		try {
 			List<String> cmd = getCommands();
 
+			// Request non-interactivity flag
+			cmd.add(1, "-y");
+
 			final String commandInvoked = getCommandInvoked(cmd);
 
 			// This is totally
@@ -170,8 +170,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 					// no hg root found
 				}
 			}
-			// Request non-interactivity flag
-			cmd.add(1, "-y");
 
 			ProcessBuilder builder = new ProcessBuilder(cmd);
 
@@ -238,57 +236,29 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	protected void logConsoleCommandInvoked(final String commandInvoked) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					getConsole().commandInvoked(commandInvoked);
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			getConsole().commandInvoked(commandInvoked);
 		}
 	}
 
 	protected void logConsoleMessage(final String msg, final Throwable t) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					getConsole().printMessage(msg, t);
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			getConsole().printMessage(msg, t);
 		}
 	}
 
 	protected void logConsoleError(final String msg, final HgException hgEx) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console...") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					if (msg != null) {
-						getConsole().printError(msg, hgEx);
-					} else {
-						getConsole().printError(hgEx.getMessage(), hgEx);
-					}
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			if (msg != null) {
+				getConsole().printError(msg, hgEx);
+			} else {
+				getConsole().printError(hgEx.getMessage(), hgEx);
+			}
 		}
 	}
 
 	private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
 		if (showOnConsole) {
-			new SafeWorkspaceJob("Writing to console...") {
-				@Override
-				public IStatus runSafe(IProgressMonitor monitor) {
-					getConsole().commandCompleted(exitCode, msg, hgex);
-					monitor.done();
-					return super.runSafe(monitor);
-				}
-			}.schedule();
+			getConsole().commandCompleted(exitCode, msg, hgex);
 		}
 	}
 
@@ -408,14 +378,32 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	private String getCommandInvoked(List<String> cmd) {
-		String cmdString = cmd.toString().replace(",", "").substring(1); //$NON-NLS-1$ //$NON-NLS-2$
-		final String commandInvoked;
-		if(workingDir == null) {
-			commandInvoked = cmdString.substring(0, cmdString.length() - 1);
-		} else {
-			commandInvoked = workingDir + File.separator + cmdString.substring(0, cmdString.length() - 1);
+		if(cmd.isEmpty()){
+			// paranoia
+			return "<empty command>";
 		}
-		return commandInvoked;
+		StringBuilder sb = new StringBuilder();
+		if(workingDir != null){
+			sb.append(workingDir);
+			sb.append(File.separatorChar);
+		}
+		String exec = cmd.get(0);
+		exec = exec.replace('\\', '/');
+		int lastSep = exec.lastIndexOf('/');
+		if(lastSep <= 0){
+			sb.append(exec);
+		} else {
+			// just the exec. name, not the full path
+			if(exec.endsWith(".exe")){
+				sb.append(exec.substring(lastSep + 1, exec.length() - 4));
+			} else {
+				sb.append(exec.substring(lastSep + 1));
+			}
+		}
+		for (int i = 1; i < cmd.size(); i++) {
+			sb.append(" ").append(cmd.get(i));
+		}
+		return sb.toString();
 	}
 
 	@Override
