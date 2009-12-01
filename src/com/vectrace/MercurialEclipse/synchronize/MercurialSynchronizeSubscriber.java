@@ -371,8 +371,15 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			String branch = MercurialTeamProvider.getCurrentBranch(res);
 			updateBranchMap(entry.getKey(), branch);
 		}
-
-		Set<IResource> resourcesToRefresh = new HashSet<IResource>();
+		// we need to send events only if WE trigger status update, not if the refresh
+		// is called from the framework (like F5 hit by user)
+		Set<IResource> resourcesToRefresh;
+		if(flag < 0){
+			resourcesToRefresh = new HashSet<IResource>();
+		} else {
+			// no need
+			resourcesToRefresh = null;
+		}
 
 		HgRepositoryLocation repositoryLocation = getRepo();
 		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
@@ -492,8 +499,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			}
 
 			// this can trigger a refresh and a call to the remote server...
-			Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, branch);
-			resourcesToRefresh.addAll(incomingMembers);
+			if(resourcesToRefresh != null){
+				Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, branch);
+				resourcesToRefresh.addAll(incomingMembers);
+			} else {
+				INCOMING_CACHE.getChangeSets(project, repositoryLocation, branch);
+			}
 		}
 	}
 
@@ -510,8 +521,12 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				System.out.println("\nget outgoing: " + project + ", depth: " + flag);
 			}
 			// this can trigger a refresh and a call to the remote server...
-			Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, branch);
-			resourcesToRefresh.addAll(outgoingMembers);
+			if(resourcesToRefresh != null){
+				Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, branch);
+				resourcesToRefresh.addAll(outgoingMembers);
+			} else {
+				OUTGOING_CACHE.getChangeSets(project, repositoryLocation, branch);
+			}
 		}
 	}
 
