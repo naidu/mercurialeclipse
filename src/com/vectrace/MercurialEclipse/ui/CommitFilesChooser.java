@@ -83,8 +83,7 @@ public class CommitFilesChooser extends Composite {
 		return viewer;
 	}
 
-	public CommitFilesChooser(Composite container, boolean selectable,
-			List<IResource> resources, boolean showUntracked, boolean showMissing) {
+	public CommitFilesChooser(Composite container, boolean selectable, List<IResource> resources, boolean showUntracked, boolean showMissing) {
 		super(container, container.getStyle());
 		this.selectable = selectable;
 		this.showUntracked = showUntracked;
@@ -171,14 +170,14 @@ public class CommitFilesChooser extends Composite {
 
 		TableColumn col;
 
-		// File name
+		// File status
 		col = new TableColumn(table, SWT.LEFT);
 		col.setResizable(true);
 		col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
-		col.setWidth(90);
+		col.setWidth(95);
 		col.setMoveable(true);
 
-		// File status
+		// File name
 		col = new TableColumn(table, SWT.LEFT);
 		col.setResizable(true);
 		col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
@@ -204,7 +203,6 @@ public class CommitFilesChooser extends Composite {
 	}
 
 	protected CompareEditorInput getCompareEditorInput() {
-
 		if (selectedFile == null) {
 			return null;
 		}
@@ -225,10 +223,10 @@ public class CommitFilesChooser extends Composite {
 				fireStateChanged();
 			}
 		});
+
 		if (selectable) {
 			selectAllButton.setSelection(false); // Start not selected
-		}
-		if (selectable) {
+
 			selectAllButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -330,8 +328,7 @@ public class CommitFilesChooser extends Composite {
 	public List<IResource> getViewerResources(boolean checked, String... status) {
 		TableItem[] children = getViewer().getTable().getItems();
 		List<IResource> list = new ArrayList<IResource>(children.length);
-		for (int i = 0; i < children.length; i++) {
-			TableItem item = children[i];
+		for (TableItem item : children) {
 			if (item.getChecked() == checked && item.getData() instanceof CommitResource) {
 				CommitResource resource = (CommitResource) item.getData();
 				if (status == null || status.length == 0) {
