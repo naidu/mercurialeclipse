@@ -429,7 +429,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
-		if(flag < 0){
+		if(resourcesToRefresh != null){
 			List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
 			monitor.worked(1);
 			if (monitor.isCanceled()) {
