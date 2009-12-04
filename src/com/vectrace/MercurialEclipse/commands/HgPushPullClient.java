@@ -8,19 +8,22 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - added authentication to push
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 public class HgPushPullClient extends AbstractClient {
@@ -50,22 +53,26 @@ public class HgPushPullClient extends AbstractClient {
     }
 
     public static String pull(IProject project, ChangeSet changeset,
-            HgRepositoryLocation repo, boolean update, boolean rebase,
+            String pullSource, boolean update, boolean rebase,
             boolean force, boolean timeout) throws HgException {
 
-        URI uri = repo.getUri();
-        String pullSource;
-        if (uri != null) {
-            pullSource = uri.toASCIIString();
-        } else {
-            pullSource = repo.getLocation();
+        String result;
+        try {
+            HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+            HgRepositoryLocation repo = repoManager.getRepoLocation(pullSource);
+            result = pull(project, changeset, repo, update, rebase, force, timeout);
+
+        } catch (URISyntaxException e) {
+            // getRepoLocation() never throws an URISyntaxException!
+            MercurialEclipsePlugin.logError(e);
+            result = null;
         }
 
-        return pull(project, changeset, pullSource, update, rebase, force, timeout);
+        return result;
     }
 
     public static String pull(final IProject project, ChangeSet changeset,
-            String pullSource, boolean update, boolean rebase,
+            HgRepositoryLocation repo, boolean update, boolean rebase,
             boolean force, boolean timeout) throws HgException {
 
         AbstractShellCommand command = new HgCommand("pull", project.getLocation() //$NON-NLS-1$
@@ -85,7 +92,7 @@ public class HgPushPullClient extends AbstractClient {
             command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
         }
 
-        command.addOptions(pullSource);
+        addRepoToHgCommand(repo, command);
 
         String result;
         if (timeout) {

@@ -10,12 +10,14 @@
  *     Stefan Groschupf          - logError
  *     Jérôme Nègre              - some fixes
  *     Stefan C                  - Code cleanup
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse;
 
 import java.lang.reflect.InvocationTargetException;
 
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -33,6 +35,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.util.tracker.ServiceTracker;
 
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
@@ -63,6 +66,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     private boolean hgUsable = true;
 
+    private ServiceTracker proxyServiceTracker;
+
     /**
      * The constructor.
      */
@@ -76,6 +81,9 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
         plugin = this;
         DefaultConfiguration cfg = new DefaultConfiguration();
         HgClients.initialize(cfg, cfg, cfg);
+
+        proxyServiceTracker = new ServiceTracker(getBundle().getBundleContext(), IProxyService.class.getName(), null);
+        proxyServiceTracker.open();
 
         new Job("Starting MercurialEclipse.") {
             @Override
@@ -148,6 +156,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
             repoManager.stop();
             // save commit messages to disk
             commitMessageManager.stop();
+            proxyServiceTracker.close();
             plugin = null;
         } finally {
             super.stop(context);
@@ -299,6 +308,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
     public static Display getStandardDisplay() {
         return PlatformUI.getWorkbench().getDisplay();
+    }
+
+    public IProxyService getProxyService() {
+        return (IProxyService) proxyServiceTracker.getService();
     }
 
 }

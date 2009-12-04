@@ -4,14 +4,15 @@
  * under the terms of the Eclipse Public License v1.0 which accompanies this
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *
- * Contributors: Bastian Doetsch - implementation
+ * Contributors:
+ *     Bastian Doetsch           - implementation
+ *     Philip Graf               - proxy support
  ******************************************************************************/
 
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedSet;
@@ -55,12 +56,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
             throw new HgException(e.getMessage(), e);
         }
 
-        URI uri = repository.getUri();
-        if (uri != null) {
-            command.addOptions(uri.toASCIIString());
-        } else {
-            command.addOptions(repository.getLocation());
-        }
+        addRepoToHgCommand(repository, command);
+
         try {
             String result = command.executeToString();
             if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
