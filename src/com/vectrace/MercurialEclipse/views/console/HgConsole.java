@@ -46,10 +46,10 @@ public class HgConsole extends MessageConsole {
 	private Color commandColor;
 	private Color messageColor;
 	private Color errorColor;
-	private final static String HTTP_PATTERN_STRING = "[hH][tT][tT][pP].*[@]"; //$NON-NLS-1$
-	private final static String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS].*[@]"; //$NON-NLS-1$
-	private final static String SSH_PATTERN_STRING = "[sS][sS][hH].*[@]"; //$NON-NLS-1$
-	private final static String SVN_PATTERN_STRING = "[sS][vV][nN].*[@]"; //$NON-NLS-1$
+	private final static String HTTP_PATTERN_STRING = "[hH][tT][tT][pP]:.*[@]"; //$NON-NLS-1$
+	private final static String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS]:.*[@]"; //$NON-NLS-1$
+	private final static String SSH_PATTERN_STRING = "[sS][sS][hH]:.*[@]"; //$NON-NLS-1$
+	private final static String SVN_PATTERN_STRING = "[sS][vV][nN]:.*[@]"; //$NON-NLS-1$
 
 	private final static Pattern HTTP_PATTERN = Pattern.compile(HTTP_PATTERN_STRING);
 	private final static Pattern HTTPS_PATTERN = Pattern.compile(HTTPS_PATTERN_STRING);
