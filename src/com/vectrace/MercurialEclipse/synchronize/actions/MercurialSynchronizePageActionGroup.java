@@ -28,7 +28,6 @@ import org.eclipse.team.internal.ui.synchronize.actions.OpenInCompareAction;
 import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ModelSynchronizeParticipantActionGroup;
 import org.eclipse.ui.IActionBars;
-import org.eclipse.ui.IWorkbenchCommandConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
@@ -37,6 +36,10 @@ import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetActionProvider;
 public class MercurialSynchronizePageActionGroup extends ModelSynchronizeParticipantActionGroup {
 
 	private static final String HG_COMMIT_GROUP = "hg.commit";
+	// see org.eclipse.ui.IWorkbenchCommandConstants.EDIT_DELETE which was introduced in 3.5
+	// see https://bugs.eclipse.org/bugs/show_bug.cgi?id=54581
+	// TODO replace with the constant as soon as we drop Eclipse 3.4 support
+	public static final String EDIT_DELETE = "org.eclipse.ui.edit.delete";
 	private final IAction expandAction;
 	private OpenAction openAction;
 
@@ -144,7 +147,7 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 				openAction.setImageDescriptor(action.getImageDescriptor());
 				openAction.setText(action.getText());
 				menu.prependToGroup(fileGroup.getId(), openAction);
-			} else if(IWorkbenchCommandConstants.EDIT_DELETE.equals(action.getActionDefinitionId())){
+			} else if(EDIT_DELETE.equals(action.getActionDefinitionId())){
 				menu.remove(ai);
 				menu.appendToGroup(DeleteAction.HG_DELETE_GROUP, ai);
 			}

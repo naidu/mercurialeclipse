@@ -547,18 +547,6 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		projectsList.refresh(true);
 	}
 
-
-	/**
-	 * Display an error dialog with the specified message.
-	 *
-	 * @param message
-	 * 		the error message
-	 */
-	protected void displayErrorDialog(String message) {
-		MessageDialog.open(MessageDialog.ERROR, getContainer().getShell(),
-				getErrorDialogTitle(), message, SWT.SHEET);
-	}
-
 	/**
 	 * Get the title for an error dialog. Subclasses should override.
 	 */
@@ -823,7 +811,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 			IDialogConstants.CANCEL_LABEL }, 0) {
 			@Override
 			protected int getShellStyle() {
-				return super.getShellStyle() | SWT.SHEET;
+				// TODO add  "| SWT.SHEET" flag as soon as we drop Eclipse 3.4 support
+				return super.getShellStyle()/* | SWT.SHEET*/;
 			}
 		};
 		String[] response = new String[] { YES, ALL, NO, NO_ALL, CANCEL };

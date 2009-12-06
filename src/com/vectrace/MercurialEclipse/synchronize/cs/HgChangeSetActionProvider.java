@@ -25,7 +25,6 @@ import org.eclipse.team.ui.synchronize.ISynchronizePageConfiguration;
 import org.eclipse.team.ui.synchronize.ISynchronizePageSite;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.IWorkbenchCommandConstants;
 import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchSite;
 import org.eclipse.ui.actions.ActionFactory;
@@ -37,6 +36,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
 import com.vectrace.MercurialEclipse.synchronize.actions.DeleteAction;
+import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -67,8 +67,8 @@ public class HgChangeSetActionProvider extends SynchronizationActionProvider {
 				openFileAction = new OpenFileInSystemEditorAction(wps.getPage());
 				deleteAction = new DeleteAction("Delete",
 						configuration, wps.getSelectionProvider());
-				deleteAction.setActionDefinitionId(IWorkbenchCommandConstants.EDIT_DELETE);
-				deleteAction.setId(IWorkbenchCommandConstants.EDIT_DELETE);
+				deleteAction.setActionDefinitionId(MercurialSynchronizePageActionGroup.EDIT_DELETE);
+				deleteAction.setId(MercurialSynchronizePageActionGroup.EDIT_DELETE);
 			}
 		}
 	}
