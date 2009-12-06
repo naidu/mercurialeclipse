@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.net.URI;
 import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
@@ -46,30 +45,8 @@ public class HgPushPullClient extends AbstractClient {
 		return new String(command.executeToBytes(timeout));
 	}
 
-
-
-	public static String pull(HgRoot hgRoot,
-			HgRepositoryLocation location, boolean update) throws HgException {
-		return pull(hgRoot, null, location, update, false, false, false);
-	}
-
 	public static String pull(HgRoot hgRoot, ChangeSet changeset,
 			HgRepositoryLocation repo, boolean update, boolean rebase,
-			boolean force, boolean timeout) throws HgException {
-
-		URI uri = repo.getUri();
-		String pullSource;
-		if (uri != null) {
-			pullSource = uri.toASCIIString();
-		} else {
-			pullSource = repo.getLocation();
-		}
-
-		return pull(hgRoot, changeset, pullSource, update, rebase, force, timeout);
-	}
-
-	public static String pull(final HgRoot hgRoot, ChangeSet changeset,
-			String pullSource, boolean update, boolean rebase,
 			boolean force, boolean timeout) throws HgException {
 
 		HgCommand command = new HgCommand("pull", hgRoot, true); //$NON-NLS-1$
@@ -88,7 +65,7 @@ public class HgPushPullClient extends AbstractClient {
 			command.addOptions("--rev", changeset.getChangeset()); //$NON-NLS-1$
 		}
 
-		command.addOptions(pullSource);
+		addRepoToHgCommand(repo, command);
 
 		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
 		String result;

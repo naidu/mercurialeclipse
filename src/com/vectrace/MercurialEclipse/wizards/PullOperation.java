@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation.BundleRepository;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 class PullOperation extends HgOperation {
@@ -140,7 +141,9 @@ class PullOperation extends HgOperation {
 				updateSeparately = true;
 			}
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-			r += HgPushPullClient.pull(hgRoot, pullRevision, getBundlePath(), false, rebase, force, timeout);
+			File canonicalBundle = toCanonicalBundle();
+			BundleRepository bundleRepo = new BundleRepository(canonicalBundle, false);
+			r += HgPushPullClient.pull(hgRoot, pullRevision, bundleRepo, false, rebase, force, timeout);
 		}
 
 		monitor.worked(1);
@@ -153,16 +156,16 @@ class PullOperation extends HgOperation {
 
 	}
 
-	private String getBundlePath() throws HgException {
-		String canonicalPath = null;
+	private File toCanonicalBundle() throws HgException {
+		File canonicalFile = null;
 		try {
-			canonicalPath = bundleFile.getCanonicalPath();
+			canonicalFile = bundleFile.getCanonicalFile();
 		} catch (IOException e) {
 			String message = "Failed to get canonical bundle path for: " + bundleFile;
 			MercurialEclipsePlugin.logError(message, e);
 			throw new HgException(message, e);
 		}
-		return canonicalPath;
+		return canonicalFile;
 	}
 
 	private void runUpdate() {

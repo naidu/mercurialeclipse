@@ -8,7 +8,8 @@
  * Contributors:
  * 	   Bastian	implementation
  *     Andrei Loskutov (Intland) - bug fixes
- *     Adam Berkes (Intland) - bug fixes
+ *     Adam Berkes (Intland)     - bug fixes
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -17,10 +18,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.net.proxy.IProxyData;
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -122,13 +126,78 @@ public abstract class AbstractClient {
 		return returnValue;
 	}
 
+	/**
+	 * Add the proxy-aware repository location to the command
+	 * @param repo not null
+	 * @param cmd  not null
+	 * @throws HgException
+	 */
 	protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) throws HgException {
 		URI uri = repo.getUri();
-		if (uri != null ) {
-			cmd.addOptions(uri.toASCIIString());
+		String location;
+		if (uri != null) {
+			location = uri.toASCIIString();
+			addProxyToHgCommand(uri, cmd);
 		} else {
-			cmd.addOptions(repo.getLocation());
+			location = repo.getLocation();
+		}
+		cmd.addOptions(location);
+	}
+
+	/**
+	 * If a proxy server is necessary to access the pull or push location, this method will add the
+	 * respective command options.
+	 *
+	 * @param repository
+	 *            The URI of the repository, never null
+	 * @param command
+	 *            not null
+	 */
+	protected static void addProxyToHgCommand(URI repository, AbstractShellCommand command) {
+		IProxyService proxyService = MercurialEclipsePlugin.getDefault().getProxyService();
+		if (proxyService != null) {
+			// check if there is an applicable proxy for the location
+			IProxyData[] proxies = proxyService.getProxyDataForHost(repository.getHost());
+
+			if (proxies.length > 0) {
+				// there is at least one applicable proxy, use the first
+				IProxyData proxy = proxies[0];
+
+				if (proxy.getHost() != null) {
+					// set the host incl. port
+					command.addOptions("--config", "http_proxy.host=" + getProxyHost(proxy)); //$NON-NLS-1$ //$NON-NLS-2$
+
+					// check if authentication is required
+					if (proxy.isRequiresAuthentication()) {
+
+						// set the user name if available
+						if (proxy.getUserId() != null) {
+							command.addOptions("--config", "http_proxy.user=" + proxy.getUserId()); //$NON-NLS-1$ //$NON-NLS-2$
+						}
+
+						// set the password if available
+						if (proxy.getPassword() != null) {
+							command.addOptions("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
+									+ proxy.getPassword());
+						}
+					}
+				}
+			}
 		}
 	}
 
+	/**
+	 * Returns the proxy host parameter for the {@code http_proxy.host} configuration.
+	 *
+	 * @param proxy
+	 *            The proxy data.
+	 * @return The proxy host.
+	 */
+	private static String getProxyHost(IProxyData proxy) {
+		StringBuilder host = new StringBuilder(proxy.getHost());
+		if (proxy.getPort() >= 0) {
+			host.append(':').append(proxy.getPort());
+		}
+		return host.toString();
+	}
 }

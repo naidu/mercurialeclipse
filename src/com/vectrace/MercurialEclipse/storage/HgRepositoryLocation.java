@@ -36,17 +36,41 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	private static final String PASSWORD_MASK = "***";
 
 	private final String logicalName;
-	private String location;
+	protected String location;
 	private final String user;
 	private final String password;
 	private final boolean isPush;
 	private Date lastUsage;
 
-	HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
+	/**
+	 * hg repository which is represented by a bundle file (on local disk)
+	 */
+	public static class BundleRepository extends HgRepositoryLocation {
+
+		/**
+		 * @param location canonical representation of a bundle file path, never null
+		 * @param isPush
+		 */
+		public BundleRepository(File location, boolean isPush) {
+			super(null, isPush, null, null);
+			this.location = location.getAbsolutePath();
+		}
+
+		@Override
+		public URI getUri(boolean isSafe) throws HgException {
+			return null;
+		}
+	}
+
+	HgRepositoryLocation(String logicalName, boolean isPush, String user, String password){
 		this.logicalName = logicalName;
 		this.isPush = isPush;
 		this.user = user;
 		this.password = password;
+	}
+
+	HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
+		this(logicalName, isPush, user, password);
 		URI uri = HgRepositoryLocationParser.parseLocationToURI(location, user, password);
 		if(uri != null) {
 			try {
@@ -66,13 +90,11 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	}
 
 	HgRepositoryLocation(String logicalName, boolean isPush, URI uri) throws HgException {
+		this(logicalName, isPush, HgRepositoryLocationParser.getUserNameFromURI(uri),
+				HgRepositoryLocationParser.getPasswordFromURI(uri));
 		if (uri == null) {
 			throw new HgException("Given URI cannot be null");
 		}
-		this.logicalName = logicalName;
-		this.isPush = isPush;
-		this.user = HgRepositoryLocationParser.getUserNameFromURI(uri);
-		this.password = HgRepositoryLocationParser.getPasswordFromURI(uri);
 		try {
 			this.location = new URI(uri.getScheme(),
 					null,
@@ -163,7 +185,7 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	/**
 	 * Return unsafe (with password) URI for repository location if possible
-	 * @return a valid URI of the repository or null
+	 * @return a valid URI of the repository or null if repository is local directory
 	 * @throws HgException unable to parse to URI or location is invalid.
 	 */
 	public URI getUri() throws HgException {
@@ -173,7 +195,7 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	/**
 	 * Return URI for repository location if possible
 	 * @param isSafe add password to userinfo if false or add a mask instead
-	 * @return a valid URI of the repository or null
+	 * @return a valid URI of the repository or null if repository is local directory
 	 * @throws HgException unable to parse to URI or location is invalid.
 	 */
 	public URI getUri(boolean isSafe) throws HgException {
@@ -183,7 +205,7 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	@Override
 	public String toString() {
 		if (logicalName!= null && logicalName.length()>0) {
-			return logicalName + " (" + location + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+			return logicalName + " (" + location + ")";
 		}
 		return location;
 	}

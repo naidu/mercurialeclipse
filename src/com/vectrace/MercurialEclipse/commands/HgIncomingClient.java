@@ -5,15 +5,15 @@
  * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors: Bastian Doetsch - implementation
- *     Zsolt Koppany zsolt.koppany@intland.com
+ *     Zsolt Koppany (Intland)   - bug fixes
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - proxy support
  ******************************************************************************/
 
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -75,12 +75,8 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 				throw new HgException(e.getMessage(), e);
 			}
 
-			URI uri = repository.getUri();
-			if (uri != null) {
-				command.addOptions(uri.toASCIIString());
-			} else {
-				command.addOptions(repository.getLocation());
-			}
+			addRepoToHgCommand(repository, command);
+
 			try {
 				String result = command.executeToString();
 				if (result.trim().endsWith("no changes found")) { //$NON-NLS-1$
@@ -100,8 +96,9 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 		} finally {
 			// NEVER delete bundle files, because they are used to access not yet pulled content
 			// during diffs from the synchronize view
+			// TODO Andrei: it would make sense to track created bundle files and delete
+			// them on the next incoming operation for same repo/branch pair
 		}
 	}
-
 
 }

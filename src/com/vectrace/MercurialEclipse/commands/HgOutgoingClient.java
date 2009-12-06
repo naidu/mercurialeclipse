@@ -6,13 +6,13 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch  -  implementation
- * Andrei Loskutov (Intland) - bugfixes
+ *     Bastian Doetsch           - implementation
+ *     Andrei Loskutov (Intland) - bugfixes
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +41,8 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
-		setRepository(repository, command);
+
+		addRepoToHgCommand(repository, command);
 
 		String result = getResult(command);
 		if (result == null) {
@@ -81,16 +82,6 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 			}
 		}
 		return command;
-	}
-
-	private static void setRepository(HgRepositoryLocation repository,
-			AbstractShellCommand command) throws HgException {
-		URI uri = repository.getUri();
-		if (uri != null) {
-			command.addOptions(uri.toASCIIString());
-		} else {
-			command.addOptions(repository.getLocation());
-		}
 	}
 
 }

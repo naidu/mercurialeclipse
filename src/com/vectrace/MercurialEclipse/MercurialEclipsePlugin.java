@@ -12,6 +12,7 @@
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
  *     Adam Berkes (Intland)     - default encoding
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse;
@@ -24,6 +25,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -47,6 +49,7 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Version;
+import org.osgi.util.tracker.ServiceTracker;
 
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgClients;
@@ -83,6 +86,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	private boolean hgUsable = true;
 
+	private ServiceTracker proxyServiceTracker;
+
 	private static final Version LOWEST_WORKING_VERSION = new Version(1, 3, 1);
 
 	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE);
@@ -97,6 +102,9 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		plugin = this;
 		DefaultConfiguration cfg = new DefaultConfiguration();
 		HgClients.initialize(cfg, cfg, cfg);
+
+		proxyServiceTracker = new ServiceTracker(context, IProxyService.class.getName(), null);
+		proxyServiceTracker.open();
 
 		new Job("Starting MercurialEclipse") {
 			@Override
@@ -185,6 +193,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			repoManager.stop();
 			// save commit messages to disk
 			commitMessageManager.stop();
+			proxyServiceTracker.close();
 		} finally {
 			super.stop(context);
 		}
@@ -344,6 +353,10 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	public static Display getStandardDisplay() {
 		return PlatformUI.getWorkbench().getDisplay();
+	}
+
+	public IProxyService getProxyService() {
+		return (IProxyService) proxyServiceTracker.getService();
 	}
 
 	/**

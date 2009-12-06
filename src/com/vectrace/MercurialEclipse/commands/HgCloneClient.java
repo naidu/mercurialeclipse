@@ -8,17 +8,17 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - proxy support
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.net.URI;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
-public class HgCloneClient {
+public class HgCloneClient extends AbstractClient {
 
 	public static void clone(File parentDirectory, HgRepositoryLocation repo,
 			boolean noUpdate, boolean pull, boolean uncompressed,
@@ -39,12 +39,7 @@ public class HgCloneClient {
 			command.addOptions("--rev", rev); //$NON-NLS-1$
 		}
 
-		URI uri = repo.getUri();
-		if (uri != null) {
-			command.addOptions(uri.toASCIIString());
-		} else {
-			command.addOptions(repo.getLocation());
-		}
+		addRepoToHgCommand(repo, command);
 
 		if (cloneName != null) {
 			command.addOptions(cloneName);
