@@ -1347,10 +1347,9 @@
 </extension>
    <extension
          point="org.eclipse.team.core.ignore">
-      <ignore
-            enabled="true"
-            pattern=".hg">
-      </ignore>
+      <ignore enabled="true" pattern=".hg" />
+      <ignore enabled="true" pattern="*.orig" />
+      <ignore enabled="true" pattern="*.rej" />
    </extension>
    <extension
          point="org.eclipse.ui.propertyPages">
