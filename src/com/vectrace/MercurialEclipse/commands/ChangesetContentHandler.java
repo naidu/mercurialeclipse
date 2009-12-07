@@ -69,6 +69,9 @@ final class ChangesetContentHandler implements ContentHandler {
 	private final Set<String> filesAdded;
 	private final Set<String> filesRemoved;
 	private Action action;
+	private String prevNodeShort;
+	private int prevRev;
+
 
 	ChangesetContentHandler(IPath res, Direction direction, HgRepositoryLocation repository,
 			File bundleFile, HgRoot hgRoot, Map<IPath, Set<ChangeSet>> fileRevisions) {
@@ -101,7 +104,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	 * @return
 	 */
 	private static String untab(String string) {
-		return replaceAll(NEWLINE_TAB, string, "\n"); //$NON-NLS-1$
+		return replaceAll(NEWLINE_TAB, string, "\n");
 	}
 
 
@@ -121,15 +124,16 @@ final class ChangesetContentHandler implements ContentHandler {
 
 	public void endElement(String uri, String localName, String name) throws SAXException {
 
-		if (name.equals("de")) { //$NON-NLS-1$
+		if (name.equals("de")) {
 			description = chars.toString();
-		} else if (name.equals("cs")) { //$NON-NLS-1$
+		} else if (name.equals("cs")) {
 			ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branches, dateIso, unescape(author), hgRoot);
 			csb.tag(tags);
 			csb.nodeShort(nodeShort);
 			csb.ageDate(dateAge);
 			csb.description(untab(unescape(description)));
-			csb.parents(splitWords(parents));
+
+			addParentsInfo(csb);
 
 			csb.bundleFile(bundleFile);
 			csb.direction(direction);
@@ -155,7 +159,23 @@ final class ChangesetContentHandler implements ContentHandler {
 			filesModified.clear();
 			filesAdded.clear();
 			filesRemoved.clear();
+			prevRev = rev;
+			prevNodeShort = nodeShort;
 		}
+	}
+
+	/**
+	 * It seems that hg do not report parents if the parent changeset is printed out in
+	 * the same command output. So we guess: if parents are empty, we have to create them
+	 * from the revision + short node of the previous run.
+	 * @param csb
+	 */
+	private void addParentsInfo(ChangeSet.Builder csb) {
+		String[] myParents = splitWords(parents);
+		if(myParents.length == 0 && prevRev == rev - 1 && prevNodeShort != null){
+			myParents = new String[]{prevRev + ":" + prevNodeShort};
+		}
+		csb.parents(myParents);
 	}
 
 	/**
@@ -192,34 +212,34 @@ final class ChangesetContentHandler implements ContentHandler {
 		 * <de>{desc|escape|tabindent}</de>
 		 */
 		chars = new StringBuilder(42);
-		if (name.equals("br")) { //$NON-NLS-1$
+		if (name.equals("br")) {
 			branches = atts.getValue(0);
-		} else if (name.equals("tg")) { //$NON-NLS-1$
+		} else if (name.equals("tg")) {
 			tags = atts.getValue(0);
-		} else if (name.equals("rv")) { //$NON-NLS-1$
+		} else if (name.equals("rv")) {
 			rev = Integer.parseInt(atts.getValue(0));
-		} else if (name.equals("ns")) { //$NON-NLS-1$
+		} else if (name.equals("ns")) {
 			nodeShort = atts.getValue(0);
-		} else if (name.equals("nl")) { //$NON-NLS-1$
+		} else if (name.equals("nl")) {
 			nodeLong = atts.getValue(0);
-		} else if (name.equals("di")) { //$NON-NLS-1$
+		} else if (name.equals("di")) {
 			dateIso = atts.getValue(0);
-		} else if (name.equals("da")) { //$NON-NLS-1$
+		} else if (name.equals("da")) {
 			dateAge = atts.getValue(0);
-		} else if (name.equals("au")) { //$NON-NLS-1$
+		} else if (name.equals("au")) {
 			author = atts.getValue(0);
-		} else if (name.equals("pr")) { //$NON-NLS-1$
+		} else if (name.equals("pr")) {
 			parents = atts.getValue(0);
 		/*  } else if (name.equals("de")) {
 			de = untab(unescape(atts.getValue(0)));
 		*/
-		} else if (name.equals("fl")) { //$NON-NLS-1$
+		} else if (name.equals("fl")) {
 			action = FileStatus.Action.MODIFIED;
-		} else if (name.equals("fa")) { //$NON-NLS-1$
+		} else if (name.equals("fa")) {
 			action = FileStatus.Action.ADDED;
-		} else if (name.equals("fd")) { //$NON-NLS-1$
+		} else if (name.equals("fd")) {
 			action = FileStatus.Action.REMOVED;
-		} else if (name.equals("f")) { //$NON-NLS-1$
+		} else if (name.equals("f")) {
 			if (action == Action.ADDED) {
 				String value = atts.getValue(0);
 				filesAdded.add(value);
