@@ -48,16 +48,16 @@ final class ChangesetContentHandler implements ContentHandler {
 	private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
 	private static final Pattern WORDS =  Pattern.compile(" ");
 
-	private String br;
-	private String tg;
-	private int rv;
-	private String ns;
-	private String nl;
-	private String di;
-	private String da;
-	private String au;
-	private String pr;
-	private String de;
+	private String branches;
+	private String tags;
+	private int rev;
+	private String nodeShort;
+	private String nodeLong;
+	private String dateIso;
+	private String dateAge;
+	private String author;
+	private String parents;
+	private String description;
 	private StringBuilder chars;
 	private final IPath res;
 	private final Direction direction;
@@ -122,14 +122,14 @@ final class ChangesetContentHandler implements ContentHandler {
 	public void endElement(String uri, String localName, String name) throws SAXException {
 
 		if (name.equals("de")) { //$NON-NLS-1$
-			de = chars.toString();
+			description = chars.toString();
 		} else if (name.equals("cs")) { //$NON-NLS-1$
-			ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di, unescape(au), hgRoot);
-			csb.tag(tg);
-			csb.nodeShort(ns);
-			csb.ageDate(da);
-			csb.description(untab(unescape(de)));
-			csb.parents(splitWords(pr));
+			ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branches, dateIso, unescape(author), hgRoot);
+			csb.tag(tags);
+			csb.nodeShort(nodeShort);
+			csb.ageDate(dateAge);
+			csb.description(untab(unescape(description)));
+			csb.parents(splitWords(parents));
 
 			csb.bundleFile(bundleFile);
 			csb.direction(direction);
@@ -158,24 +158,31 @@ final class ChangesetContentHandler implements ContentHandler {
 		}
 	}
 
-	public void endPrefixMapping(String prefix) throws SAXException {
-	}
-
-	public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
-	}
-
-	public void processingInstruction(String target, String data) throws SAXException {
-	}
-
-	public void setDocumentLocator(Locator locator) {
-	}
-
-	public void skippedEntity(String name) throws SAXException {
-	}
-
-	public void startDocument() throws SAXException {
-	}
-
+	/**
+	 * <p>
+	 * Format of input is defined in the two style files in /styles and is as
+	 * follows for each changeset.
+	 *
+	 * <pre>
+	 * &lt;cs&gt;
+	 * &lt;br v=&quot;{branches}&quot;/&gt;
+	 * &lt;tg v=&quot;{tags}&quot;/&gt;
+	 * &lt;rv v=&quot;{rev}&quot;/&gt;
+	 * &lt;ns v=&quot;{node|short}&quot;/&gt;
+	 * &lt;nl v=&quot;{node}&quot;/&gt;
+	 * &lt;di v=&quot;{date|isodate}&quot;/&gt;
+	 * &lt;da v=&quot;{date|age}&quot;/&gt;
+	 * &lt;au v=&quot;{author|person}&quot;/&gt;
+	 * &lt;pr v=&quot;{parents}&quot;/&gt;
+	 * &lt;de v=&quot;{desc|escape|tabindent}&quot;/&gt;
+	 * &lt;fl v=&quot;{files}&quot;/&gt;
+	 * &lt;fa v=&quot;{file_adds}&quot;/&gt;
+	 * &lt;fd v=&quot;{file_dels}&quot;/&gt;
+	 * &lt;f v=&quot;{root relative path}&quot;/&gt;
+	 * &lt;/cs&gt;
+	 * </pre>
+	 * {@inheritDoc}
+	 */
 	public void startElement(String uri, String localName, String name, Attributes atts)
 			throws SAXException {
 		/*
@@ -186,25 +193,26 @@ final class ChangesetContentHandler implements ContentHandler {
 		 */
 		chars = new StringBuilder(42);
 		if (name.equals("br")) { //$NON-NLS-1$
-			br = atts.getValue(0);
+			branches = atts.getValue(0);
 		} else if (name.equals("tg")) { //$NON-NLS-1$
-			tg = atts.getValue(0);
+			tags = atts.getValue(0);
 		} else if (name.equals("rv")) { //$NON-NLS-1$
-			rv = Integer.parseInt(atts.getValue(0));
+			rev = Integer.parseInt(atts.getValue(0));
 		} else if (name.equals("ns")) { //$NON-NLS-1$
-			ns = atts.getValue(0);
+			nodeShort = atts.getValue(0);
 		} else if (name.equals("nl")) { //$NON-NLS-1$
-			nl = atts.getValue(0);
+			nodeLong = atts.getValue(0);
 		} else if (name.equals("di")) { //$NON-NLS-1$
-			di = atts.getValue(0);
+			dateIso = atts.getValue(0);
 		} else if (name.equals("da")) { //$NON-NLS-1$
-			da = atts.getValue(0);
+			dateAge = atts.getValue(0);
 		} else if (name.equals("au")) { //$NON-NLS-1$
-			au = atts.getValue(0);
+			author = atts.getValue(0);
 		} else if (name.equals("pr")) { //$NON-NLS-1$
-			pr = atts.getValue(0);
-			/*  } else if (name.equals("de")) {
-				de = untab(unescape(atts.getValue(0))); */
+			parents = atts.getValue(0);
+		/*  } else if (name.equals("de")) {
+			de = untab(unescape(atts.getValue(0)));
+		*/
 		} else if (name.equals("fl")) { //$NON-NLS-1$
 			action = FileStatus.Action.MODIFIED;
 		} else if (name.equals("fa")) { //$NON-NLS-1$
@@ -226,31 +234,47 @@ final class ChangesetContentHandler implements ContentHandler {
 		}
 	}
 
-	public void startPrefixMapping(String prefix, String uri) throws SAXException {
-	}
-
 	private final void addChangesetToResourceMap(final ChangeSet cs) {
 		if (cs.getChangedFiles() != null) {
 			for (FileStatus file : cs.getChangedFiles()) {
 				IPath fileAbsPath = file.getAbsolutePath();
-				Set<ChangeSet> revs = addChangeSetRevisions(cs,	fileAbsPath);
-				fileRevisions.put(fileAbsPath, revs);
+				mapPathToChangeset(fileAbsPath, cs);
 			}
 		}
-		//			Set<ChangeSet> projectRevs = addChangeSetRevisions(cs, repoPath);
-		//
-		//			fileRevisions.put(repoPath, projectRevs);
-
-		Set<ChangeSet> pathRevs = addChangeSetRevisions(cs, res);
-		fileRevisions.put(res, pathRevs);
+		// mapPathToChangeset(repoPath, cs);
+		mapPathToChangeset(res, cs);
 	}
 
-	private Set<ChangeSet> addChangeSetRevisions(ChangeSet cs, IPath path) {
+	private void mapPathToChangeset(IPath path, ChangeSet cs) {
 		Set<ChangeSet> fileRevs = fileRevisions.get(path);
 		if (fileRevs == null) {
 			fileRevs = new HashSet<ChangeSet>();
 		}
 		fileRevs.add(cs);
-		return fileRevs;
+		fileRevisions.put(path, fileRevs);
+	}
+
+
+	//####################################################################################
+
+	public void endPrefixMapping(String prefix) throws SAXException {
+	}
+
+	public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
+	}
+
+	public void processingInstruction(String target, String data) throws SAXException {
+	}
+
+	public void setDocumentLocator(Locator locator) {
+	}
+
+	public void skippedEntity(String name) throws SAXException {
+	}
+
+	public void startDocument() throws SAXException {
+	}
+
+	public void startPrefixMapping(String prefix, String uri) throws SAXException {
 	}
 }
