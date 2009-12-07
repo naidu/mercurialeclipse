@@ -43,6 +43,9 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 abstract class AbstractParseChangesetClient extends AbstractClient {
 
+	private static final String OPEN_TAG = "<c>";
+	private static final String CLOSE_TAG = "</c>";
+	private static final int OPEN_CLOSE_TAG_SIZE = OPEN_TAG.length() + CLOSE_TAG.length();
 	private static final String STYLE_SRC = "/styles/log_style"; //$NON-NLS-1$
 	private static final String STYLE = "/log_style"; //$NON-NLS-1$
 	private static final String STYLE_WITH_FILES_SRC = "/styles/log_style_with_files"; //$NON-NLS-1$
@@ -151,6 +154,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * &lt;fl v=&quot;{files}&quot;/&gt;
 	 * &lt;fa v=&quot;{file_adds}&quot;/&gt;
 	 * &lt;fd v=&quot;{file_dels}&quot;/&gt;
+	 * &lt;f v=&quot;{root relative path}&quot;/&gt;
 	 * &lt;/cs&gt;
 	 * </pre>
 	 *
@@ -185,40 +189,38 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @return map where the key is an absolute file path
 	 * @throws HgException
 	 */
-	protected static Map<IPath, Set<ChangeSet>> createMercurialRevisions(IPath path, String input, Direction direction,
-			HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot)
+	protected static Map<IPath, Set<ChangeSet>> createMercurialRevisions(IPath path, String input,
+			Direction direction, HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot)
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 
 		if (input == null || input.length() == 0) {
 			return fileRevisions;
 		}
-		String myInput = "<top>" + input + "</top>"; //$NON-NLS-1$ //$NON-NLS-2$
+		StringBuilder sb = new StringBuilder(input.length() + OPEN_CLOSE_TAG_SIZE);
+		sb.append(OPEN_TAG);
+		sb.append(input);
+		sb.append(CLOSE_TAG);
+		String myInput = sb.toString();
+
+		ContentHandler xmlHandler = new ChangesetContentHandler(path, direction, repository,
+				bundleFile, hgRoot, fileRevisions);
 		try {
 			XMLReader reader = XMLReaderFactory.createXMLReader();
-			reader.setContentHandler(getHandler(path, direction, repository,
-					bundleFile, hgRoot, fileRevisions));
+			reader.setContentHandler(xmlHandler);
 			reader.parse(new InputSource(new StringReader(myInput)));
 		} catch (Exception e) {
 			String nextTry = cleanControlChars(myInput);
 			try {
 				XMLReader reader = XMLReaderFactory.createXMLReader();
-				reader.setContentHandler(getHandler(path, direction, repository,
-						bundleFile, hgRoot, fileRevisions));
+				reader.setContentHandler(xmlHandler);
 				reader.parse(new InputSource(new StringReader(nextTry)));
 			} catch (Exception e1) {
-				throw new HgException(e1.getLocalizedMessage(), e);
+				MercurialEclipsePlugin.logError(e);
+				throw new HgException(e1.getLocalizedMessage(), e1);
 			}
 		}
 		return fileRevisions;
-	}
-
-	private static ContentHandler getHandler(IPath res,
-			Direction direction, HgRepositoryLocation repository,
-			File bundleFile, HgRoot hgRoot,
-			Map<IPath, Set<ChangeSet>> fileRevisions) {
-		return new ChangesetContentHandler(res, direction, repository,
-				bundleFile, hgRoot, fileRevisions);
 	}
 
 	/**
@@ -243,7 +245,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 				buf.append("&amp;");
 			} else if (ch == '"') {
 				buf.append("\"");
-			}else {
+			} else {
 				buf.appendCodePoint(ch);
 			}
 		}
