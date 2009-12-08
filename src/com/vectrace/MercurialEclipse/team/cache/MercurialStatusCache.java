@@ -1149,6 +1149,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 		statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE);// STATUS_BATCH_SIZE;
 		if (statusBatchSize <= 0) {
+			store.setValue(MercurialPreferenceConstants.STATUS_BATCH_SIZE, STATUS_BATCH_SIZE);
 			statusBatchSize = STATUS_BATCH_SIZE;
 			MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
 		}
