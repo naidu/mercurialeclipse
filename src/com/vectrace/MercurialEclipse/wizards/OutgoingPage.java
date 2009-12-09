@@ -6,8 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
- * Andrei Loskutov (Intland) - bugfixes
+ * 		bastian					  - implementation
+ * 		Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -42,7 +42,6 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
  * @author bastian
- *
  */
 public class OutgoingPage extends IncomingPage {
 	private boolean svn;
@@ -100,8 +99,7 @@ public class OutgoingPage extends IncomingPage {
 			IPath hgRoot = new Path(cs.getHgRoot().getPath());
 			IPath fileRelPath = clickedFileStatus.getRootRelativePath();
 			IPath fileAbsPath = hgRoot.append(fileRelPath);
-			IFile file = getProject().getWorkspace().getRoot()
-			.getFileForLocation(fileAbsPath);
+			IFile file = getProject().getWorkspace().getRoot().getFileForLocation(fileAbsPath);
 
 			if (file != null) {
 				// See issue #10249: Push/Pull diff problem on outgoing/incoming stage
@@ -137,10 +135,8 @@ public class OutgoingPage extends IncomingPage {
 
 	protected OutgoingPage(String pageName) {
 		super(pageName);
-		this.setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
-		this
-				.setDescription(Messages.getString("OutgoingPage.description1") //$NON-NLS-1$
-						+ Messages.getString("OutgoingPage.description2")); //$NON-NLS-1$
+		setTitle(Messages.getString("OutgoingPage.title")); //$NON-NLS-1$
+		setDescription(Messages.getString("OutgoingPage.description1")); //$NON-NLS-1$
 	}
 
 	@Override
@@ -156,8 +152,7 @@ public class OutgoingPage extends IncomingPage {
 	@Override
 	protected void getInputForPage() throws InvocationTargetException,
 			InterruptedException {
-		getContainer().run(true, false,
-				new GetOutgoingOperation(getContainer()));
+		getContainer().run(true, false, new GetOutgoingOperation(getContainer()));
 	}
 
 	@Override
