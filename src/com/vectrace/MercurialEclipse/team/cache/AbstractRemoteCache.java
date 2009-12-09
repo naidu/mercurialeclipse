@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.team.cache;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -108,7 +109,14 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		synchronized (repoChangeSets) {
 			Map<IPath, SortedSet<ChangeSet>> map = repoChangeSets.get(repo);
 			if(map != null){
-				map.remove(project.getLocation());
+				IPath location = project.getLocation();
+				map.remove(location);
+				Iterator<IPath> iterator = map.keySet().iterator();
+				while(iterator.hasNext()){
+					if(location.isPrefixOf(iterator.next())){
+						iterator.remove();
+					}
+				}
 			}
 		}
 		if(notify) {
