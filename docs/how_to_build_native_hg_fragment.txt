@@ -14,7 +14,7 @@ Windows XP and it works. Hovewer, I can imagine, that this may NOT work for Vist
 Vista SP2 (Windows 7). Similar way is to go for all other operating systems.
 
 1) Create a new "Plugin Fragment" project with Eclipse wizard. Please use for the fragment
-project name the plugin name plus the target platform, like: "hgeclipseFragment_win32"
+project name the plugin name plus the target platform, like: "MercurialEclipseFragment_win32"
 
 2) Please give the fragment a meaningful, full-qualified bundle id (also derived from the
 target platform), like: "com.intland.hgbinary.win32"
@@ -36,7 +36,7 @@ bin.includes = META-INF/,\
 6) Run the installer and let it install the hg "as usual"
 
 7) Go to the installation directory and copy everything EXCEPT the "locale" directory to the
-"hgeclipseFragment_win32/os/win32" directory. The "locale" contains translated hg messages,
+"MercurialEclipseFragment_win32/os/win32" directory. The "locale" contains translated hg messages,
 which are bad for Eclipse plugin, because it relies sometimes on EXACT hg output messages.
 On a german PC it would simply sometimes not work... Default *hardcoded* hg language
 used by plugin is english and does not require anything from "locale".
@@ -58,18 +58,18 @@ Eclipse-PlatformFilter: (osgi.os=win32)
 -------------
 Please notice 3 important things:
 - "Bundle-Version: 1.3.1" - must match hg version
-- "Fragment-Host: ... " - must match hgeclipse plugin version
+- "Fragment-Host: ... " - must match MercurialEclipse plugin version
 - "Eclipse-PlatformFilter: (osgi.os=win32)" -  it MUST contain right platform filter
 
 10) Create a "feature" project with Eclipse wizard. This is required for the update site.
-As name, use something like "hgeclipseFragmentFeature_win32". Feature ID must be unique,
-so it can be something like "hgeclipse_win32".
+As name, use something like "MercurialEclipseFragmentFeature_win32". Feature ID must be unique,
+so it can be something like "MercurialEclipse_win32".
 
 11) Check the feature.xml in the feature project. The file should look like:
 -------------
 <?xml version="1.0" encoding="UTF-8"?>
 <feature
-	id="hgeclipse_win32"
+	id="MercurialEclipse_win32"
 	label="Mercurial executable (recommended)"
 	version="1.3.1"
 	provider-name="Intland Software"
@@ -102,21 +102,21 @@ Please notice 4 important things:
 
 12) Now, in the update site of your choice, add something like this:
 
-<feature url="features/hgeclipse_win32_1.3.1.jar" id="hgeclipse_win32" version="1.3.1" os="win32">
-	<category name="HgEclipse"/>
+<feature url="features/MercurialEclipse_win32_1.3.1.jar" id="MercurialEclipse_win32" version="1.3.1" os="win32">
+	<category name="MercurialEclipse"/>
 </feature>
 
 An example update site.xml file can look like:
 -------------
 <?xml version="1.0" encoding="UTF-8"?>
 <site>
-<feature url="features/hgeclipse_1.5.0.200911291812.jar" id="hgeclipse" version="1.5.0.200911291812">
-	<category name="HgEclipse"/>
+<feature url="features/MercurialEclipse_1.5.0.200911291812.jar" id="MercurialEclipse" version="1.5.0.200911291812">
+	<category name="MercurialEclipse"/>
 </feature>
-<feature url="features/hgeclipse_win32_1.3.1.jar" id="hgeclipse_win32" version="1.3.1" os="win32">
-	<category name="HgEclipse"/>
+<feature url="features/MercurialEclipse_win32_1.3.1.jar" id="MercurialEclipse_win32" version="1.3.1" os="win32">
+	<category name="MercurialEclipse"/>
 </feature>
-<category-def name="HgEclipse" label="HgEclipse"/>
+<category-def name="MercurialEclipse" label="MercurialEclipse"/>
 </site>
 -------------
 Again, important to consider is:
@@ -124,7 +124,7 @@ Again, important to consider is:
 	install the Windows version, which will be a little bit disappointing for them at the end.
 
 13) So now we are ready to build: open site.xml with Eclipse default site editor, click
-on "hgeclipse_win32" entry and then on "Build" button. This would trigger the generation
+on "MercurialEclipse_win32" entry and then on "Build" button. This would trigger the generation
 of the fragment and feature jars.
 
 Put jars and site.xml to the web server of your choice and you are done.
