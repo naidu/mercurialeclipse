@@ -72,7 +72,7 @@ public class BackoutWizardPage extends HgWizardPage {
 				backoutRevision = changesetTable.getSelection();
 				messageTextField.setText(Messages.getString(
 						"BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
-						.concat(backoutRevision.toString()));
+						.concat(" "+ backoutRevision.toString())); //$NON-NLS-1$
 				setPageComplete(true);
 			}
 
