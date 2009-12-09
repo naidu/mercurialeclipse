@@ -48,9 +48,6 @@ public class ChangedPathsPage {
 	private final static String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
 	private final static String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$
 
-	private final static int LAYOUT_HORIZONTAL = 1;
-	private final static int LAYOUT_VERTICAL = 2;
-
 	private SashForm mainSashForm;
 	private SashForm innerSashForm;
 

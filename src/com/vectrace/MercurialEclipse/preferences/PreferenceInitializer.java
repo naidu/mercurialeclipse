@@ -62,6 +62,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, true);
 		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, true);
 		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_PATHS, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_AFFECTED_PATHS_LAYOUT, MercurialPreferenceConstants.LAYOUT_HORIZONTAL);
 
 		/*
 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
