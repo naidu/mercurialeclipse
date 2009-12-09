@@ -11,6 +11,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -42,11 +44,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangedPathsPage {
-
-	private final static String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
-	private final static String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
-	private final static String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
-	private final static String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$
 
 	private final static String IMG_COMMENTS = "comments.gif"; //$NON-NLS-1$
 	private final static String IMG_AFFECTED_PATHS_FLAT_MODE = "flatLayout.gif"; //$NON-NLS-1$

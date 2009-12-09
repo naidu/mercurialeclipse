@@ -60,6 +60,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR, "255,0,0");
 
 		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_PATHS, true);
 
 		/*
 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
