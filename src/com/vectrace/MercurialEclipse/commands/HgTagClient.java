@@ -3,6 +3,8 @@
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Bastian Doetsch - implementation of remove
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -24,7 +26,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
  * @version $Id$
  */
-public class HgTagClient {
+public class HgTagClient extends AbstractClient {
 	private static final Pattern GET_TAGS_PATTERN = Pattern.compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( local)?$"); //$NON-NLS-1$
 
 	public static Tag[] getTags(IProject project) throws HgException {
@@ -76,5 +78,16 @@ public class HgTagClient {
 		command.addUserName(user);
 		command.addOptions(name);
 		command.executeToBytes();
+	}
+
+	/**
+	 * @param selection
+	 * @throws HgException
+	 */
+	public static String removeTag(IResource res, Tag tag) throws HgException {
+		HgCommand command = new HgCommand("tag", getWorkingDirectory(res), false); //$NON-NLS-1$
+		command.addOptions("--remove");
+		command.addOptions(tag.getName());
+		return command.executeToString();
 	}
 }
