@@ -157,7 +157,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 				return null;
 			}
 			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-					res, result, withFiles, Direction.LOCAL, null, null);
+					res, result, Direction.LOCAL, null, null, null);
 			return revisions;
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
@@ -189,7 +189,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			}
 			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
 					new Path(path.getAbsolutePath()),
-					result, Direction.LOCAL, null, null, root);
+					result, Direction.LOCAL, null, null, null, root);
 			return revisions;
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
@@ -319,7 +319,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			String result = command.executeToString();
 
 			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-					res, result, withFiles, Direction.LOCAL, null, null);
+					res, result, Direction.LOCAL, null, null, null);
 			Set<ChangeSet> set = revisions.get(res.getLocation());
 			if (set != null) {
 				return Collections.min(set);

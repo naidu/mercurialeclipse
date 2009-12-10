@@ -50,7 +50,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		}
 
 		Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-				res, result, true, Direction.OUTGOING, repository, null);
+				res, result, Direction.OUTGOING, repository, null, branch);
 		return revisions;
 	}
 

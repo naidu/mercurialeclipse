@@ -83,8 +83,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 					return new HashMap<IPath, Set<ChangeSet>>();
 				}
 				Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-						res, result, true,
-						Direction.INCOMING, repository, bundleFile);
+						res, result, Direction.INCOMING, repository, bundleFile, branch);
 				return revisions;
 			} catch (HgException hg) {
 				if (hg.getStatus().getCode() == 1) {
