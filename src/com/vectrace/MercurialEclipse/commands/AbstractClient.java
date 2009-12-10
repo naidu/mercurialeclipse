@@ -155,9 +155,11 @@ public abstract class AbstractClient {
 	 */
 	protected static void addProxyToHgCommand(URI repository, AbstractShellCommand command) {
 		IProxyService proxyService = MercurialEclipsePlugin.getDefault().getProxyService();
-		if (proxyService != null) {
+		// Host can be null URI is a local path
+		final String host = repository.getHost();
+		if (proxyService != null && host != null) {
 			// check if there is an applicable proxy for the location
-			IProxyData[] proxies = proxyService.getProxyDataForHost(repository.getHost());
+			IProxyData[] proxies = proxyService.getProxyDataForHost(host);
 
 			if (proxies.length > 0) {
 				// there is at least one applicable proxy, use the first
