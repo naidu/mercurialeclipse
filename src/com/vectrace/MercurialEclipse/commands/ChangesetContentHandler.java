@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
@@ -32,6 +34,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset
@@ -71,17 +74,23 @@ final class ChangesetContentHandler implements ContentHandler {
 	private Action action;
 	private String prevNodeShort;
 	private int prevRev;
+	private final String branch;
+	private final IPath repoPath;
+	private final boolean withFiles;
 
 
-	ChangesetContentHandler(IPath res, Direction direction, HgRepositoryLocation repository,
-			File bundleFile, HgRoot hgRoot, Map<IPath, Set<ChangeSet>> fileRevisions) {
+	ChangesetContentHandler(IPath res, boolean withFiles, Direction direction, HgRepositoryLocation repository,
+			File bundleFile, String branch, HgRoot hgRoot) {
 
 		this.res = res;
+		this.withFiles = withFiles;
 		this.direction = direction;
 		this.repository = repository;
 		this.bundleFile = bundleFile;
 		this.hgRoot = hgRoot;
-		this.fileRevisions = fileRevisions;
+		repoPath = new Path(hgRoot.getPath());
+		this.branch = branch;
+		this.fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 		filesModified = new TreeSet<String>();
 		filesAdded = new TreeSet<String>();
 		filesRemoved = new TreeSet<String>();
@@ -255,13 +264,16 @@ final class ChangesetContentHandler implements ContentHandler {
 	}
 
 	private final void addChangesetToResourceMap(final ChangeSet cs) {
-		if (cs.getChangedFiles() != null) {
-			for (FileStatus file : cs.getChangedFiles()) {
-				IPath fileAbsPath = file.getAbsolutePath();
-				mapPathToChangeset(fileAbsPath, cs);
+		if(withFiles) {
+			if (cs.getChangedFiles() != null) {
+				for (FileStatus file : cs.getChangedFiles()) {
+					IPath fileAbsPath = file.getAbsolutePath();
+					mapPathToChangeset(fileAbsPath, cs);
+				}
 			}
+		} else {
+			mapPathToChangeset(repoPath, cs);
 		}
-		// mapPathToChangeset(repoPath, cs);
 		mapPathToChangeset(res, cs);
 	}
 
@@ -274,6 +286,13 @@ final class ChangesetContentHandler implements ContentHandler {
 		fileRevisions.put(path, fileRevs);
 	}
 
+	public Map<IPath, Set<ChangeSet>> getFileRevisions() {
+		return fileRevisions;
+	}
+
+	public RemoteData createRemoteData() {
+		return new RemoteData(repository, hgRoot, direction, branch, fileRevisions);
+	}
 
 	//####################################################################################
 

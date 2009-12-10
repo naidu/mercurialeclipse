@@ -21,9 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset objects.
@@ -136,34 +137,10 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	/**
 	 * Parse log output into a set of changesets.
 	 * <p>
-	 * Format of input is defined in the two style files in /styles and is as
-	 * follows for each changeset.
-	 *
-	 * <pre>
-	 * &lt;cs&gt;
-	 * &lt;br v=&quot;{branches}&quot;/&gt;
-	 * &lt;tg v=&quot;{tags}&quot;/&gt;
-	 * &lt;rv v=&quot;{rev}&quot;/&gt;
-	 * &lt;ns v=&quot;{node|short}&quot;/&gt;
-	 * &lt;nl v=&quot;{node}&quot;/&gt;
-	 * &lt;di v=&quot;{date|isodate}&quot;/&gt;
-	 * &lt;da v=&quot;{date|age}&quot;/&gt;
-	 * &lt;au v=&quot;{author|person}&quot;/&gt;
-	 * &lt;pr v=&quot;{parents}&quot;/&gt;
-	 * &lt;de v=&quot;{desc|escape|tabindent}&quot;/&gt;
-	 * &lt;fl v=&quot;{files}&quot;/&gt;
-	 * &lt;fa v=&quot;{file_adds}&quot;/&gt;
-	 * &lt;fd v=&quot;{file_dels}&quot;/&gt;
-	 * &lt;f v=&quot;{root relative path}&quot;/&gt;
-	 * &lt;/cs&gt;
-	 * </pre>
-	 *
-	 * <br>
+	 * Format of input is defined in the two style files in /styles directory
 	 *
 	 * @param input
 	 *            output from the hg log command
-	 * @param withFiles
-	 *            Are files included in the log output
 	 * @param direction
 	 *            Incoming, Outgoing or Local changesets
 	 * @param repository
@@ -172,14 +149,28 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	protected final static Map<IPath, Set<ChangeSet>> createMercurialRevisions(
-			IResource res, String input, boolean withFiles,
+			IResource res, String input,
 			Direction direction, HgRepositoryLocation repository,
-			File bundleFile) throws HgException {
+			File bundleFile, String branch) throws HgException {
 
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
 		IPath path = res.getLocation();
 
-		return createMercurialRevisions(path, input, direction, repository, bundleFile, hgRoot);
+		return createMercurialRevisions(path, input, direction, repository, bundleFile, branch, hgRoot);
+	}
+
+	protected final static RemoteData createMercurialRevisions(IProject project, String input,
+			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch)
+			throws HgException {
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		if (input == null || input.length() == 0){
+			return new RemoteData(repository, hgRoot, direction, branch);
+		}
+
+		IPath path = project.getLocation();
+		ChangesetContentHandler xmlHandler = parseInput(path, false, input, direction, repository,
+				bundleFile, branch, hgRoot);
+		return xmlHandler.createRemoteData();
 	}
 
 	/**
@@ -190,21 +181,29 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	protected static Map<IPath, Set<ChangeSet>> createMercurialRevisions(IPath path, String input,
-			Direction direction, HgRepositoryLocation repository, File bundleFile, HgRoot hgRoot)
+			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 
 		if (input == null || input.length() == 0) {
 			return fileRevisions;
 		}
+		ChangesetContentHandler xmlHandler = parseInput(path, true, input, direction, repository,
+				bundleFile, branch, hgRoot);
+		return xmlHandler.getFileRevisions();
+	}
+
+	private static ChangesetContentHandler parseInput(IPath path, boolean withFiles, String input,
+			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
+			throws HgException {
 		StringBuilder sb = new StringBuilder(input.length() + OPEN_CLOSE_TAG_SIZE);
 		sb.append(OPEN_TAG);
 		sb.append(input);
 		sb.append(CLOSE_TAG);
 		String myInput = sb.toString();
 
-		ContentHandler xmlHandler = new ChangesetContentHandler(path, direction, repository,
-				bundleFile, hgRoot, fileRevisions);
+		ChangesetContentHandler xmlHandler = new ChangesetContentHandler(path, withFiles, direction, repository,
+				bundleFile, branch, hgRoot);
 		try {
 			XMLReader reader = XMLReaderFactory.createXMLReader();
 			reader.setContentHandler(xmlHandler);
@@ -220,7 +219,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 				throw new HgException(e1.getLocalizedMessage(), e1);
 			}
 		}
-		return fileRevisions;
+		return xmlHandler;
 	}
 
 	/**

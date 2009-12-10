@@ -14,6 +14,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
@@ -34,6 +35,11 @@ public class ProjectCache {
 	}
 
 	public SortedSet<ChangeSet> getChangesets() {
+		return changesets;
+	}
+
+	public SortedSet<ChangeSet> getChangesets(IResource resource) {
+		// TODO sort out the changesets by a file.
 		return changesets;
 	}
 

@@ -19,6 +19,7 @@ import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -43,26 +44,53 @@ public class RemoteData {
 	private final String branch;
 	private final Map<IProject, ProjectCache> projectMap;
 	private final Direction direction;
+	private final Map<IPath, Set<ChangeSet>> changesets;
 
 	public RemoteData(HgRepositoryLocation repo, HgRoot root, Direction direction, String branch) {
+		this(repo, root, direction, branch, new HashMap<IPath, Set<ChangeSet>>());
+	}
+
+	/**
+	 * @param changesets this map contains AT LEAST a key corresponding to the hgroot of
+	 * this data, and may also contain additional keys for one or more projects under
+	 * the given hgroot.
+	 */
+	public RemoteData(HgRepositoryLocation repo, HgRoot root, Direction direction, String branch,
+			Map<IPath, Set<ChangeSet>> changesets) {
 		super();
 		this.repo = repo;
 		this.root = root;
 		this.direction = direction;
 		this.branch = branch;
+		this.changesets = changesets;
 		projectMap = new HashMap<IProject, ProjectCache>();
 	}
 
 	public SortedSet<ChangeSet> getChangeSets(IResource resource){
-		if(resource == null){
+		if(resource == null || changesets.isEmpty()){
 			return EMPTY_SETS;
 		}
 		IProject project = resource.getProject();
-		ProjectCache cache = projectMap.get(project);
-		if(cache == null || cache.isEmpty()) {
+		if(project == null){
 			return EMPTY_SETS;
 		}
-		return cache.getChangesets();
+		ProjectCache cache = projectMap.get(project);
+		if(cache == null) {
+			populateCache(resource.getProject());
+			return getChangeSets(resource);
+		}
+		if (cache.isEmpty()) {
+			return EMPTY_SETS;
+		}
+		if(resource instanceof IProject){
+			return cache.getChangesets();
+		}
+		return cache.getChangesets(resource);
+	}
+
+	private void populateCache(IProject project) {
+		// TODO Auto-generated method stub
+
 	}
 
 	public boolean isValid(IProject project){
@@ -80,6 +108,9 @@ public class RemoteData {
 		return changed;
 	}
 
+	/**
+	 * @return never null, a list with all projects contained by related hg root directory
+	 */
 	public Set<IProject> getRelatedProjects(){
 		return ResourceUtils.getProjects(root);
 	}
@@ -92,6 +123,9 @@ public class RemoteData {
 		return root;
 	}
 
+	/**
+	 * @return specific branch or null if the changesets are not limited by the branch
+	 */
 	public String getBranch() {
 		return branch;
 	}
