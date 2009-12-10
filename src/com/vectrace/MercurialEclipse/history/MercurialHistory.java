@@ -9,6 +9,7 @@
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
+ *     Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -19,6 +20,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -48,219 +50,201 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  */
 public class MercurialHistory extends FileHistory {
 
-    private static final class ChangeSetComparator implements
-    Comparator<ChangeSet>, Serializable {
+	private static final class RevisionComparator implements
+	Comparator<MercurialRevision>, Serializable {
 
-        private static final long serialVersionUID = 6661721027440425773L;
+		private static final long serialVersionUID = 5305190339206751711L;
 
-        public int compare(ChangeSet o1, ChangeSet o2) {
-            int result = o2.getChangesetIndex() - o1.getChangesetIndex();
+		public int compare(MercurialRevision o1, MercurialRevision o2) {
+			int result = o2.getRevision() - o1.getRevision();
 
-            // we need to cover the situation when repo-indices are the same
-            if (result == 0 && o1.getDate() != null && o2.getDate() != null) {
-                int dateCompare = o2.getRealDate().compareTo(o1.getRealDate());
-                if (dateCompare != 0) {
-                    result = dateCompare;
-                }
-            }
+			// we need to cover the situation when repo-indices are the same
+			if (result == 0 && o1.getChangeSet().getDateString() != null
+					&& o2.getChangeSet().getDateString() != null) {
+				int dateCompare = o2.getChangeSet().getRealDate().compareTo(
+						o1.getChangeSet().getRealDate());
+				if (dateCompare != 0) {
+					result = dateCompare;
+				}
+			}
 
-            return result;
-        }
-    }
+			return result;
+		}
+	}
 
-    private static final class RevisionComparator implements
-    Comparator<MercurialRevision>, Serializable {
+	private static final ChangeSetComparator csComparator = new ChangeSetComparator();
+	private static final RevisionComparator revComparator = new RevisionComparator();
 
-        private static final long serialVersionUID = 5305190339206751711L;
+	private final IResource resource;
+	private SortedSet<MercurialRevision> revisions;
+	private Map<Integer, GChangeSet> gChangeSets;
+	private int bottom;
 
-        public int compare(MercurialRevision o1, MercurialRevision o2) {
-            int result = o2.getRevision() - o1.getRevision();
+	public MercurialHistory(IResource resource) {
+		super();
+		this.resource = resource;
+	}
 
-            // we need to cover the situation when repo-indices are the same
-            if (result == 0 && o1.getChangeSet().getDate() != null
-                    && o2.getChangeSet().getDate() != null) {
-                int dateCompare = o2.getChangeSet().getRealDate().compareTo(
-                        o1.getChangeSet().getRealDate());
-                if (dateCompare != 0) {
-                    result = dateCompare;
-                }
-            }
+	/**
+	 * @param prev
+	 * @return a next revision int the history: revision wich is the successor of the
+	 * given one (has higher rev number)
+	 */
+	public MercurialRevision getNext(MercurialRevision prev){
+		// revisions are sorted descending: first has the highest rev number
+		List<MercurialRevision> list = new ArrayList<MercurialRevision>(revisions);
 
-            return result;
-        }
-    }
+		for (int i = 0; i < list.size(); i++) {
+			if(list.get(i) == prev){
+				if(i > 0){
+					return list.get(i - 1);
+				}
+			}
+		}
+		return null;
+	}
 
-    private static final ChangeSetComparator csComparator = new ChangeSetComparator();
-    private static final RevisionComparator revComparator = new RevisionComparator();
+	/**
+	 * @param next
+	 * @return a previous revision int the history: revision wich is the ancestor of the
+	 * given one (has lower rev number)
+	 */
+	public MercurialRevision getPrev(MercurialRevision next){
+		// revisions are sorted descending: first has the highest rev number
+		List<MercurialRevision> list = new ArrayList<MercurialRevision>(revisions);
 
-    private final IResource resource;
-    private SortedSet<MercurialRevision> revisions;
-    private Map<Integer, GChangeSet> gChangeSets;
-    private int bottom;
+		for (int i = 0; i < list.size(); i++) {
+			if(list.get(i) == next){
+				if(i + 1 < list.size()){
+					return list.get(i + 1);
+				}
+			}
+		}
+		return null;
+	}
 
-    public MercurialHistory(IResource resource) {
-        super();
-        this.resource = resource;
-    }
+	public int getBottom() {
+		return bottom;
+	}
 
-    /**
-     * @param prev
-     * @return a next revision int the history: revision wich is the successor of the
-     * given one (has higher rev number)
-     */
-    public MercurialRevision getNext(MercurialRevision prev){
-        // revisions are sorted descending: first has the highest rev number
-        List<MercurialRevision> list = new ArrayList<MercurialRevision>(revisions);
+	public void setBottom(int bottom) {
+		this.bottom = bottom;
+	}
 
-        for (int i = 0; i < list.size(); i++) {
-            if(list.get(i) == prev){
-                if(i > 0){
-                    return list.get(i - 1);
-                }
-            }
-        }
-        return null;
-    }
+	public IFileRevision[] getContributors(IFileRevision revision) {
+		return null;
+	}
 
-    /**
-     * @param next
-     * @return a previous revision int the history: revision wich is the ancestor of the
-     * given one (has lower rev number)
-     */
-    public MercurialRevision getPrev(MercurialRevision next){
-        // revisions are sorted descending: first has the highest rev number
-        List<MercurialRevision> list = new ArrayList<MercurialRevision>(revisions);
+	public IFileRevision getFileRevision(String id) {
+		if (revisions == null || revisions.size() == 0) {
+			return null;
+		}
 
-        for (int i = 0; i < list.size(); i++) {
-            if(list.get(i) == next){
-                if(i + 1 < list.size()){
-                    return list.get(i + 1);
-                }
-            }
-        }
-        return null;
-    }
+		for (MercurialRevision rev : revisions) {
+			if (rev.getContentIdentifier().equals(id)) {
+				return rev;
+			}
+		}
+		return null;
+	}
 
-    public int getBottom() {
-        return bottom;
-    }
+	public IFileRevision[] getFileRevisions() {
+		if (revisions != null) {
+			return revisions.toArray(new MercurialRevision[revisions.size()]);
+		}
+		return new IFileRevision[0];
+	}
 
-    public void setBottom(int bottom) {
-        this.bottom = bottom;
-    }
+	public IFileRevision[] getTargets(IFileRevision revision) {
+		return new IFileRevision[0];
+	}
 
-    public IFileRevision[] getContributors(IFileRevision revision) {
-        return null;
-    }
+	public void refresh(IProgressMonitor monitor, int from)
+	throws CoreException {
+		RepositoryProvider provider = RepositoryProvider.getProvider(resource
+				.getProject());
+		if (!(provider instanceof MercurialTeamProvider)) {
+			return;
+		}
+		if (from == Integer.MAX_VALUE && revisions != null) {
+			// We're getting revisions up to the latest one available.
+			// So clear out the cached list, as it may contain revisions
+			// that no longer exist (e.g. after a strip/rollback).
+			revisions.clear();
+		}
+		// We need these to be in order for the GChangeSets to display
+		// properly
 
-    public IFileRevision getFileRevision(String id) {
-        if (revisions == null || revisions.size() == 0) {
-            return null;
-        }
+		SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(csComparator);
 
-        for (MercurialRevision rev : revisions) {
-            if (rev.getContentIdentifier().equals(id)) {
-                return rev;
-            }
-        }
-        return null;
-    }
+		int logBatchSize = Integer.parseInt(MercurialUtilities
+				.getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
+						"500")); //$NON-NLS-1$
 
-    public IFileRevision[] getFileRevisions() {
-        if (revisions != null) {
-            return revisions.toArray(new MercurialRevision[revisions.size()]);
-        }
-        return new IFileRevision[0];
-    }
+		// check if we have reached the bottom (initially = 0)
+		if (from == this.bottom || from < 0) {
+			return;
+		}
+		Map<IPath, Set<ChangeSet>> map = HgLogClient.getProjectLog(
+				resource, logBatchSize, from, false);
 
-    public IFileRevision[] getTargets(IFileRevision revision) {
-        return new IFileRevision[0];
-    }
+		// no result -> bottom reached
+		if (map == null) {
+			this.bottom = from;
+			return;
+		}
 
-    public void refresh(IProgressMonitor monitor, int from)
-    throws CoreException {
-        RepositoryProvider provider = RepositoryProvider.getProvider(resource
-                .getProject());
-        if (!(provider instanceof MercurialTeamProvider)) {
-            return;
-        }
-        if (from == Integer.MAX_VALUE && revisions != null) {
-            // We're getting revisions up to the latest one available.
-            // So clear out the cached list, as it may contain revisions
-            // that no longer exist (e.g. after a strip/rollback).
-            revisions.clear();
-        }
-        // We need these to be in order for the GChangeSets to display
-        // properly
+		// still changesets there -> process
+		Set<ChangeSet> localChangeSets = map.get(resource
+				.getLocation());
+		if (localChangeSets == null) {
+			return;
+		}
 
-        SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(csComparator);
+		// get signatures
+		File file = resource.getLocation().toFile();
 
-        int logBatchSize = Integer.parseInt(MercurialUtilities
-                .getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
-                        "500")); //$NON-NLS-1$
+		List<Signature> sigs = HgSigsClient.getSigs(file);
+		Map<String, Signature> sigMap = new HashMap<String, Signature>();
+		if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
+			for (Signature signature : sigs) {
+				sigMap.put(signature.getNodeId(), signature);
+			}
+		}
 
-        // check if we have reached the bottom (initially = 0)
-        if (from == this.bottom || from < 0) {
-            return;
-        }
-        Map<IPath, SortedSet<ChangeSet>> map = HgLogClient.getProjectLog(
-                resource, logBatchSize, from, false);
+		changeSets.addAll(localChangeSets);
 
-        // no result -> bottom reached
-        if (map == null) {
-            this.bottom = from;
-            return;
-        }
+		if (revisions == null || revisions.size() == 0
+				|| revisions.size() < changeSets.size()
+				|| !(revisions.first().getResource().equals(resource))) {
+			revisions = new TreeSet<MercurialRevision>(revComparator);
+		}
 
-        // still changesets there -> process
-        SortedSet<ChangeSet> localChangeSets = map.get(resource
-                .getLocation());
-        if (localChangeSets == null) {
-            return;
-        }
+		// Update graph data also in batch
+		updateGraphData(changeSets, logBatchSize, from);
 
-        // get signatures
-        File file = resource.getLocation().toFile();
+		for (ChangeSet cs : changeSets) {
+			Signature sig = sigMap.get(cs.getChangeset());
+			revisions.add(new MercurialRevision(cs, gChangeSets
+					.get(Integer.valueOf(cs.getChangesetIndex())),
+					resource, sig));
+		}
+	}
 
-        List<Signature> sigs = HgSigsClient.getSigs(file);
-        Map<String, Signature> sigMap = new HashMap<String, Signature>();
-        if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
-            for (Signature signature : sigs) {
-                sigMap.put(signature.getNodeId(), signature);
-            }
-        }
-
-        changeSets.addAll(localChangeSets);
-
-        if (revisions == null || revisions.size() == 0
-                || revisions.size() < changeSets.size()
-                || !(revisions.first().getResource().equals(resource))) {
-            revisions = new TreeSet<MercurialRevision>(revComparator);
-
-            updateGraphData(changeSets);
-        }
-        for (ChangeSet cs : changeSets) {
-            Signature sig = sigMap.get(cs.getChangeset());
-            revisions.add(new MercurialRevision(cs, gChangeSets
-                    .get(Integer.valueOf(cs.getChangesetIndex())),
-                    resource, sig));
-        }
-    }
-
-    private void updateGraphData(SortedSet<ChangeSet> changeSets) {
-        // put glog changesets in map for later referencing
-        gChangeSets = new HashMap<Integer, GChangeSet>();
-        try {
-            List<GChangeSet> gLogChangeSets = new HgGLogClient(resource)
-                .update(changeSets).getChangeSets();
-            for (GChangeSet gs : gLogChangeSets) {
-                if (gs != null) {
-                    gChangeSets.put(Integer.valueOf(gs.getRev()), gs);
-                }
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-    }
+	private void updateGraphData(SortedSet<ChangeSet> changeSets, int logBatchSize, int from) {
+		// put glog changesets in map for later referencing
+		gChangeSets = new HashMap<Integer, GChangeSet>();
+		try {
+			List<GChangeSet> gLogChangeSets = new HgGLogClient(resource, logBatchSize, from)
+				.update(changeSets).getChangeSets();
+			for (GChangeSet gs : gLogChangeSets) {
+				if (gs != null) {
+					gChangeSets.put(Integer.valueOf(gs.getRev()), gs);
+				}
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
 
 }

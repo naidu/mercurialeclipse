@@ -7,7 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
- *     Stefan Groschupf          - logError 
+ *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
@@ -31,37 +31,37 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class MercurialHistoryProvider extends FileHistoryProvider
 {
-  
-  public MercurialHistoryProvider()
-  {
-    super();
+
+public MercurialHistoryProvider()
+{
+	super();
 //    System.out.println("MercurialHistoryProvider::MercurialHistoryProvider()");
-  }
+}
 
-  public IFileHistory getFileHistoryFor(IResource resource, int flags, IProgressMonitor monitor)
-  {
+public IFileHistory getFileHistoryFor(IResource resource, int flags, IProgressMonitor monitor)
+{
 //    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + resource.toString() + ")");
-//    if (resource instanceof IResource && ((IResource) resource).getType() == IResource.FILE) 
+//    if (resource instanceof IResource && ((IResource) resource).getType() == IResource.FILE)
 //    {
-      RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) resource).getProject());
-      if (provider instanceof MercurialTeamProvider)
-      {
-        return new MercurialHistory(resource);
-      }
+	  RepositoryProvider provider = RepositoryProvider.getProvider(((IFile) resource).getProject());
+	  if (provider instanceof MercurialTeamProvider)
+	  {
+		return new MercurialHistory(resource);
+	  }
 //    }
-    return null;
-  }
-   
-  public IFileHistory getFileHistoryFor(IFileStore store, int flags, IProgressMonitor monitor)
-  {
-//    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + store.toString() + ")");
-    return null; //new MercurialFileHistory();
-  }
+	return null;
+}
 
-  public IFileRevision getWorkspaceFileRevision(IResource resource)
-  {
+public IFileHistory getFileHistoryFor(IFileStore store, int flags, IProgressMonitor monitor)
+{
+//    System.out.println("MercurialHistoryProvider::getFileHistoryFor(" + store.toString() + ")");
+	return null; //new MercurialFileHistory();
+}
+
+public IFileRevision getWorkspaceFileRevision(IResource resource)
+{
 //    System.out.println("MercurialHistoryProvider::getWorkspaceFileRevision(" + resource.toString() + ")");
-    return null;
-  }
+	return null;
+}
 
 }

@@ -28,33 +28,33 @@ import com.vectrace.MercurialEclipse.operations.UnShelveOperation;
  */
 public class UnShelveHandler extends SingleResourceHandler {
 
-    /* (non-Javadoc)
-     * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
-     */
-    @Override
-    protected void run(final IResource resource) throws Exception {
-        new SafeWorkspaceJob(Messages.getString("UnShelveHandler.Unshelving")) { //$NON-NLS-1$
-            /* (non-Javadoc)
-             * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
-             */
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                UnShelveOperation op = new UnShelveOperation(
-                        (IWorkbenchPart) null,
-                        resource.getProject());
-                try {
-                    op.run(monitor);
-                    return super.runSafe(monitor);
-                } catch (InvocationTargetException e) {                    
-                    return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-                            0, e.getLocalizedMessage(), e);
-                } catch (InterruptedException e) {
-                    return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
-                            0, e.getLocalizedMessage(), e);
-                }               
-            }
-        }.schedule();
-        
-    }
+	/* (non-Javadoc)
+	 * @see com.vectrace.MercurialEclipse.menu.SingleResourceHandler#run(org.eclipse.core.resources.IResource)
+	 */
+	@Override
+	protected void run(final IResource resource) throws Exception {
+		new SafeWorkspaceJob(Messages.getString("UnShelveHandler.Unshelving")) { //$NON-NLS-1$
+			/* (non-Javadoc)
+			 * @see com.vectrace.MercurialEclipse.SafeWorkspaceJob#runSafe(org.eclipse.core.runtime.IProgressMonitor)
+			 */
+			@Override
+			protected IStatus runSafe(IProgressMonitor monitor) {
+				UnShelveOperation op = new UnShelveOperation(
+						(IWorkbenchPart) null,
+						resource.getProject());
+				try {
+					op.run(monitor);
+					return super.runSafe(monitor);
+				} catch (InvocationTargetException e) {
+					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+							0, e.getLocalizedMessage(), e);
+				} catch (InterruptedException e) {
+					return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
+							0, e.getLocalizedMessage(), e);
+				}
+			}
+		}.schedule();
+
+	}
 
 }

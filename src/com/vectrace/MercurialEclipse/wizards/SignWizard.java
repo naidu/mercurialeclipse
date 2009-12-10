@@ -19,36 +19,36 @@ import org.eclipse.jface.wizard.Wizard;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class SignWizard extends Wizard {
-    SignWizardPage page = null;
+	SignWizardPage page = null;
 
-    public SignWizard(IProject proj) {        
-        ImageDescriptor image = MercurialEclipsePlugin
-                .getImageDescriptor(Messages.getString("SignWizard.signWizardPage.image")); //$NON-NLS-1$
-        page = new SignWizardPage(Messages.getString("SignWizard.signWizardPage.name"), Messages.getString("SignWizard.signWizardPage.title"), image, //$NON-NLS-1$ //$NON-NLS-2$
-                Messages.getString("SignWizard.signWizardPage.description"), proj); //$NON-NLS-1$
-        IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
-                .getDialogSettings();
-        IDialogSettings section = workbenchSettings.getSection("SignWizard"); //$NON-NLS-1$
-        if (section == null) {
-            section = workbenchSettings.addNewSection("SignWizard"); //$NON-NLS-1$
-        }
-        setDialogSettings(section);
-    }
+	public SignWizard(IProject proj) {
+		ImageDescriptor image = MercurialEclipsePlugin
+				.getImageDescriptor(Messages.getString("SignWizard.signWizardPage.image")); //$NON-NLS-1$
+		page = new SignWizardPage(Messages.getString("SignWizard.signWizardPage.name"), Messages.getString("SignWizard.signWizardPage.title"), image, //$NON-NLS-1$ //$NON-NLS-2$
+				Messages.getString("SignWizard.signWizardPage.description"), proj); //$NON-NLS-1$
+		IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
+				.getDialogSettings();
+		IDialogSettings section = workbenchSettings.getSection("SignWizard"); //$NON-NLS-1$
+		if (section == null) {
+			section = workbenchSettings.addNewSection("SignWizard"); //$NON-NLS-1$
+		}
+		setDialogSettings(section);
+	}
 
-    @Override
-    public boolean performFinish() {
-        return page.finish(new NullProgressMonitor());
-    }
+	@Override
+	public boolean performFinish() {
+		return page.finish(new NullProgressMonitor());
+	}
 
-    @Override
-    public void addPages() {
-        super.addPages();
-        addPage(page);
-    }
+	@Override
+	public void addPages() {
+		super.addPages();
+		addPage(page);
+	}
 
-    @Override
-    public boolean canFinish() {
-        return super.canFinish() && page.isPageComplete();
-    }
+	@Override
+	public boolean canFinish() {
+		return super.canFinish() && page.isPageComplete();
+	}
 
 }

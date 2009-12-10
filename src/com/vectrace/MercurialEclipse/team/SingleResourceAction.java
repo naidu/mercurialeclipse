@@ -12,7 +12,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
- * 
+ *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  *
  */
@@ -43,10 +43,10 @@ public abstract class SingleResourceAction implements IActionDelegate {
 		try {
 			run(getSelectedResource());
 		} catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-		    MessageDialog.openError(getShell(), Messages.getString("SingleResourceAction.hgSays"), e.getMessage()+Messages.getString("SingleResourceAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
+			MercurialEclipsePlugin.logError(e);
+			MessageDialog.openError(getShell(), Messages.getString("SingleResourceAction.hgSays"), e.getMessage()+Messages.getString("SingleResourceAction.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 		}
 	}
-	
+
 	protected abstract void run(IResource resource) throws Exception ;
 }

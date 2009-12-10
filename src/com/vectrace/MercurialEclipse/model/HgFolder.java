@@ -7,6 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -24,50 +25,50 @@ import org.eclipse.core.runtime.CoreException;
  */
 public class HgFolder extends HgFilesystemObject {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    public HgFolder(String pathname) throws IOException, CoreException {
-        super(pathname);
-    }
+	public HgFolder(String pathname) throws IOException, CoreException {
+		super(pathname);
+	}
 
-    public HgFolder(URI uri) throws IOException, CoreException {
-        super(uri);
-    }
+	public HgFolder(URI uri) throws IOException, CoreException {
+		super(uri);
+	}
 
-    public HgFolder(String parent, String child) throws IOException,
-            CoreException {
-        super(parent, child);
-    }
+	public HgFolder(String parent, String child) throws IOException,
+			CoreException {
+		super(parent, child);
+	}
 
-    public HgFolder(File parent, String child) throws IOException,
-            CoreException {
-        super(parent, child);
-    }
+	public HgFolder(File parent, String child) throws IOException,
+			CoreException {
+		super(parent, child);
+	}
 
-    public HgFolder(File file) throws IOException, CoreException {
-        super(file);
-    }
+	public HgFolder(File file) throws IOException, CoreException {
+		super(file);
+	}
 
-    public List<File> getProjectFiles() throws IOException, CoreException {
-        List<File> pFiles = new ArrayList<File>();
-        File[] subFiles = this.listFiles();
-        if (subFiles != null) {
-            for (File fileString : subFiles) {
-                HgFolder file = new HgFolder(fileString.toURI());
-                if (file.isDirectory()) {
-                    pFiles.addAll(file.getProjectFiles());
-                } else {
-                    if (file.getName().equals(".project")) { //$NON-NLS-1$
-                        pFiles.add(file);
-                    }
-                }
-            }
-        }
-        return pFiles;
-    }
+	public List<File> getProjectFiles() throws IOException, CoreException {
+		List<File> pFiles = new ArrayList<File>();
+		File[] subFiles = this.listFiles();
+		if (subFiles != null) {
+			for (File fileString : subFiles) {
+				HgFolder file = new HgFolder(fileString.toURI());
+				if (file.isDirectory()) {
+					pFiles.addAll(file.getProjectFiles());
+				} else {
+					if (file.getName().equals(".project")) { //$NON-NLS-1$
+						pFiles.add(file);
+					}
+				}
+			}
+		}
+		return pFiles;
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
-    }
+	@Override
+	public boolean equals(Object obj) {
+		return super.equals(obj);
+	}
 }

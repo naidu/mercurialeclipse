@@ -20,12 +20,12 @@ import junit.framework.TestCase;
  */
 public class HgIdentClientTest extends TestCase {
 
-    public void testGetCurrentChangesetId() throws Exception {
-        String expected = "9b417223cbb2f53e54872bfbd559db35645a6afb";
-        InputStream dirstate = Thread.currentThread().getContextClassLoader()
-            .getResourceAsStream("dirstate");
-        String id = HgIdentClient.getCurrentChangesetId(dirstate);
-        assertEquals(expected, id);
-    }
+	public void testGetCurrentChangesetId() throws Exception {
+		String expected = "9b417223cbb2f53e54872bfbd559db35645a6afb";
+		InputStream dirstate = Thread.currentThread().getContextClassLoader()
+			.getResourceAsStream("dirstate");
+		String id = HgIdentClient.getCurrentChangesetId(dirstate);
+		assertEquals(expected, id);
+	}
 
 }

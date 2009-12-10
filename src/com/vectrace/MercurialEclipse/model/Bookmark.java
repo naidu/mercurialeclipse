@@ -7,7 +7,7 @@ public class Bookmark {
 	private final int revision;
 	private final String shortNode;
 	private final boolean active;
-	
+
 	public Bookmark(String name, int revision, String globalId, boolean active) {
 		super();
 		this.name = name;
@@ -15,17 +15,17 @@ public class Bookmark {
 		this.shortNode = globalId;
 		this.active = active;
 	}
-	
+
 	public Bookmark(String line) {
-        assert (line != null && line.length() > 0);
-        assert (!line.startsWith("no bookmarks set"));         //$NON-NLS-1$
-        active = line.startsWith(" *"); //$NON-NLS-1$
-        int lastSpace = line.lastIndexOf(" "); //$NON-NLS-1$
-        name = line.substring(3, lastSpace).trim();
-        int colon = line.lastIndexOf(":"); //$NON-NLS-1$
-        revision = Integer.parseInt(line.substring(lastSpace + 1, colon));
-        shortNode = line.substring(colon + 1);
-    }
+		assert (line != null && line.length() > 0);
+		assert (!line.startsWith("no bookmarks set"));         //$NON-NLS-1$
+		active = line.startsWith(" *"); //$NON-NLS-1$
+		int lastSpace = line.lastIndexOf(" "); //$NON-NLS-1$
+		name = line.substring(3, lastSpace).trim();
+		int colon = line.lastIndexOf(":"); //$NON-NLS-1$
+		revision = Integer.parseInt(line.substring(lastSpace + 1, colon));
+		shortNode = line.substring(colon + 1);
+	}
 
 	public String getName() {
 		return name;
@@ -36,9 +36,9 @@ public class Bookmark {
 	}
 
 	public String getShortNodeId() {
-        return shortNode;
+		return shortNode;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -50,30 +50,30 @@ public class Bookmark {
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
-            return true;
-        }
+			return true;
+		}
 		if (obj == null) {
-            return false;
-        }
+			return false;
+		}
 		if (getClass() != obj.getClass()) {
-            return false;
-        }
+			return false;
+		}
 		final Bookmark other = (Bookmark) obj;
 		if (name == null) {
 			if (other.name != null) {
-                return false;
-            }
+				return false;
+			}
 		} else if (!name.equals(other.name)) {
-            return false;
-        }
+			return false;
+		}
 		return true;
 	}
 
-    /**
-     * @return the active
-     */
-    public boolean isActive() {
-        return active;
-    }
-	
+	/**
+	 * @return the active
+	 */
+	public boolean isActive() {
+		return active;
+	}
+
 }

@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.model;
 
@@ -28,96 +29,96 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  */
 public abstract class HgModelElement implements IWorkbenchAdapter, IAdaptable {
 
-    @SuppressWarnings("unchecked")
-    public Object getAdapter(Class adapter) {
-        if (adapter == IWorkbenchAdapter.class) {
-            return this;
-        }
-        if ((adapter == IDeferredWorkbenchAdapter.class)
-                && this instanceof IDeferredWorkbenchAdapter) {
-            return this;
-        }
-        return null;
-    }
+	@SuppressWarnings("unchecked")
+	public Object getAdapter(Class adapter) {
+		if (adapter == IWorkbenchAdapter.class) {
+			return this;
+		}
+		if ((adapter == IDeferredWorkbenchAdapter.class)
+				&& this instanceof IDeferredWorkbenchAdapter) {
+			return this;
+		}
+		return null;
+	}
 
-    /**
-     * Handles exceptions that occur in model elements.
-     */
-    protected void handle(Throwable t) {
-        MercurialEclipsePlugin.logError(t);
-    }
+	/**
+	 * Handles exceptions that occur in model elements.
+	 */
+	protected void handle(Throwable t) {
+		MercurialEclipsePlugin.logError(t);
+	}
 
-    /**
-     * Gets the children of the receiver by invoking the
-     * <code>internalGetChildren</code>. A appropriate progress indicator
-     * will be used if requested.
-     */
-    public Object[] getChildren(final Object o, boolean needsProgress) {
-        try {
-            if (needsProgress) {
-                final Object[][] result = new Object[1][];
-                IRunnableWithProgress runnable = new IRunnableWithProgress() {
-                    public void run(IProgressMonitor monitor)
-                            throws InvocationTargetException {
-                        try {
-                            result[0] = HgModelElement.this
-                                    .internalGetChildren(o, monitor);
-                        } catch (TeamException e) {
-                            throw new InvocationTargetException(e);
-                        }
-                    }
-                };
-                getRunnableContext().run(isInterruptable() /* fork */,
-                        isInterruptable() /* cancelable */, runnable);
-                return result[0];
-            }
-            return internalGetChildren(o, null);
-        } catch (InterruptedException e) {
-        } catch (InvocationTargetException e) {
-            handle(e);
-        } catch (TeamException e) {
-            handle(e);
-        }
-        return new Object[0];
-    }
+	/**
+	 * Gets the children of the receiver by invoking the
+	 * <code>internalGetChildren</code>. A appropriate progress indicator
+	 * will be used if requested.
+	 */
+	public Object[] getChildren(final Object o, boolean needsProgress) {
+		try {
+			if (needsProgress) {
+				final Object[][] result = new Object[1][];
+				IRunnableWithProgress runnable = new IRunnableWithProgress() {
+					public void run(IProgressMonitor monitor)
+							throws InvocationTargetException {
+						try {
+							result[0] = HgModelElement.this
+									.internalGetChildren(o, monitor);
+						} catch (TeamException e) {
+							throw new InvocationTargetException(e);
+						}
+					}
+				};
+				getRunnableContext().run(isInterruptable() /* fork */,
+						isInterruptable() /* cancelable */, runnable);
+				return result[0];
+			}
+			return internalGetChildren(o, null);
+		} catch (InterruptedException e) {
+		} catch (InvocationTargetException e) {
+			handle(e);
+		} catch (TeamException e) {
+			handle(e);
+		}
+		return new Object[0];
+	}
 
-    /**
-     * Method internalGetChildren.
-     *
-     * @param o
-     * @return Object[]
-     */
-    public abstract Object[] internalGetChildren(Object o,
-            IProgressMonitor monitor) throws TeamException;
+	/**
+	 * Method internalGetChildren.
+	 *
+	 * @param o
+	 * @return Object[]
+	 */
+	public abstract Object[] internalGetChildren(Object o,
+			IProgressMonitor monitor) throws TeamException;
 
-    /**
-     * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
-     */
-    public Object[] getChildren(Object o) {
-        return getChildren(o, isNeedsProgress());
-    }
+	/**
+	 * @see org.eclipse.ui.model.IWorkbenchAdapter#getChildren(java.lang.Object)
+	 */
+	public Object[] getChildren(Object o) {
+		return getChildren(o, isNeedsProgress());
+	}
 
-    public boolean isNeedsProgress() {
-        return false;
-    }
+	public boolean isNeedsProgress() {
+		return false;
+	}
 
-    public boolean isInterruptable() {
-        return false;
-    }
+	public boolean isInterruptable() {
+		return false;
+	}
 
-    /**
-     * Returns the runnableContext.
-     *
-     * @return IRunnableContext
-     */
-    public IRunnableContext getRunnableContext() {
-        return new IRunnableContext() {
-            public void run(boolean fork, boolean cancelable,
-                    IRunnableWithProgress runnable)
-                    throws InvocationTargetException, InterruptedException {
-                MercurialEclipsePlugin.runWithProgress(null, cancelable, runnable);
-            }
-        };
-    }
+	/**
+	 * Returns the runnableContext.
+	 *
+	 * @return IRunnableContext
+	 */
+	public IRunnableContext getRunnableContext() {
+		return new IRunnableContext() {
+			public void run(boolean fork, boolean cancelable,
+					IRunnableWithProgress runnable)
+					throws InvocationTargetException, InterruptedException {
+				MercurialEclipsePlugin.runWithProgress(null, cancelable, runnable);
+			}
+		};
+	}
 
 }

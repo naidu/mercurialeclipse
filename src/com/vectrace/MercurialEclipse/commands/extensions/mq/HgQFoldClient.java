@@ -23,28 +23,28 @@ import com.vectrace.MercurialEclipse.model.Patch;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgQFoldClient extends AbstractClient {
-    public static String fold(IResource resource, boolean keep, String message,
-            List<Patch> patches) throws HgException {
-        Assert.isNotNull(patches);
-        Assert.isNotNull(resource);
-        AbstractShellCommand command = new HgCommand("qfold", //$NON-NLS-1$
-                getWorkingDirectory(resource), true);
-        command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
-        
-        if (keep) {
-            command.addOptions("--keep"); //$NON-NLS-1$
-        }
-        if (message != null && message.length() > 0) {
-            command.addOptions("--message", message); //$NON-NLS-1$
-        }
-        
-        for (Patch patch : patches) {
-            command.addOptions(patch.getName());
-        }
+	public static String fold(IResource resource, boolean keep, String message,
+			List<Patch> patches) throws HgException {
+		Assert.isNotNull(patches);
+		Assert.isNotNull(resource);
+		AbstractShellCommand command = new HgCommand("qfold", //$NON-NLS-1$
+				getWorkingDirectory(resource), true);
+		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
-        return command.executeToString();
-    }
+		if (keep) {
+			command.addOptions("--keep"); //$NON-NLS-1$
+		}
+		if (message != null && message.length() > 0) {
+			command.addOptions("--message", message); //$NON-NLS-1$
+		}
+
+		for (Patch patch : patches) {
+			command.addOptions(patch.getName());
+		}
+
+		return command.executeToString();
+	}
 }

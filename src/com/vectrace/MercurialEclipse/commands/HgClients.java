@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Stefan	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.eclipse.core.resources.IResource;
+
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -24,64 +26,64 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public final class HgClients {
 
-    private static IConsole console;
-    private static IConfiguration config;
-    private static IErrorHandler error;
+	private static IConsole console;
+	private static IConfiguration config;
+	private static IErrorHandler error;
 
-    public static void initialize(IConsole c, IErrorHandler errorHandler,
-            IConfiguration configuration) {
-        HgClients.config = configuration;
-        HgClients.console = c;
-        HgClients.error = errorHandler;
-    }
+	public static void initialize(IConsole c, IErrorHandler errorHandler,
+			IConfiguration configuration) {
+		HgClients.config = configuration;
+		HgClients.console = c;
+		HgClients.error = errorHandler;
+	}
 
-    public static String getExecutable() {
-        if (config == null) {
-            throw new IllegalStateException(
-                    Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
-        }
-        return config.getExecutable();
-    }
+	public static String getExecutable() {
+		if (config == null) {
+			throw new IllegalStateException(
+					Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
+		}
+		return config.getExecutable();
+	}
 
-    public static String getDefaultUserName() {
-        if (config == null) {
-            throw new IllegalStateException(
-                    Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
-        }
-        return config.getDefaultUserName();
-    }
+	public static String getDefaultUserName() {
+		if (config == null) {
+			throw new IllegalStateException(
+					Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
+		}
+		return config.getDefaultUserName();
+	}
 
-    public static IConsole getConsole() {
-        if (console == null) {
-            throw new IllegalStateException(
-                    Messages.getString("HgClients.error.notInitializedWithConsole")); //$NON-NLS-1$
-        }
-        return console;
-    }
+	public static IConsole getConsole() {
+		if (console == null) {
+			throw new IllegalStateException(
+					Messages.getString("HgClients.error.notInitializedWithConsole")); //$NON-NLS-1$
+		}
+		return console;
+	}
 
-    public static void logError(IOException e) {
-        error.logError(e);
-    }
+	public static void logError(IOException e) {
+		error.logError(e);
+	}
 
-    public static void logWarning(String message, Throwable e) {
-        error.logWarning(message, e);
-        MercurialEclipsePlugin.logWarning(message, e);
-    }
+	public static void logWarning(String message, Throwable e) {
+		error.logWarning(message, e);
+		MercurialEclipsePlugin.logWarning(message, e);
+	}
 
-    public static int getTimeOut(String commandId) {
-        return config.getTimeOut(commandId);
-    }
+	public static int getTimeOut(String commandId) {
+		return config.getTimeOut(commandId);
+	}
 
-    public static String getPreference(String preferenceConstant,
-            String defaultIfNotSet) {
-        return config.getPreference(preferenceConstant, defaultIfNotSet);
-    }
+	public static String getPreference(String preferenceConstant,
+			String defaultIfNotSet) {
+		return config.getPreference(preferenceConstant, defaultIfNotSet);
+	}
 
-    public static HgRoot getHgRoot(File file) {
-        return config.getHgRoot(file);
-    }
+	public static HgRoot getHgRoot(File file) {
+		return config.getHgRoot(file);
+	}
 
-    public static HgRoot getHgRoot(IResource resource) {
-        return config.getHgRoot(ResourceUtils.getFileHandle(resource));
-    }
+	public static HgRoot getHgRoot(IResource resource) {
+		return config.getHgRoot(ResourceUtils.getFileHandle(resource));
+	}
 }

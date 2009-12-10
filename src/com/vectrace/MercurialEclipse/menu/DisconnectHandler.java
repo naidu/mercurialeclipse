@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -14,19 +15,19 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.RepositoryProvider;
 
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class DisconnectHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        IProject project = resource.getProject();
-        project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
-        RepositoryProvider.unmap(project);
-        MercurialStatusCache.getInstance().clear(project, false);
-        LocalChangesetCache.getInstance().clear(project, false);
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		IProject project = resource.getProject();
+		MercurialTeamProvider.setCurrentBranch(null, project);
+		RepositoryProvider.unmap(project);
+		MercurialStatusCache.getInstance().clear(project, false);
+		LocalChangesetCache.getInstance().clear(project, false);
+	}
 
 }

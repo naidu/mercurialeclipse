@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch	- implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.utils;
 
@@ -41,7 +42,7 @@ public class HistoryPainterRevision implements Comparable<HistoryPainterRevision
 		this.resource = res;
 		List<String> list = RepositoryGraph.getParentsForResource(res, changeSet);
 		for (String string : list) {
-			ChangeSet parent = LOCAL_CACHE.getChangeset(res.getProject(), string);
+			ChangeSet parent = LOCAL_CACHE.getChangesetById(res.getProject(), string);
 			if (parent != null) {
 				parents.add(new HistoryPainterRevision(res, parent));
 			}
@@ -93,22 +94,22 @@ public class HistoryPainterRevision implements Comparable<HistoryPainterRevision
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {
-            return true;
-        }
+			return true;
+		}
 		if (obj == null) {
-            return false;
-        }
+			return false;
+		}
 		if (!(obj instanceof HistoryPainterRevision)) {
-            return false;
-        }
+			return false;
+		}
 		final HistoryPainterRevision other = (HistoryPainterRevision) obj;
 		if (changeSet == null) {
 			if (other.changeSet != null) {
-                return false;
-            }
+				return false;
+			}
 		} else if (!changeSet.equals(other.changeSet)) {
-            return false;
-        }
+			return false;
+		}
 		return true;
 	}
 

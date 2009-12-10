@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -33,97 +34,97 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgResourceMapping extends ResourceMapping {
 
-    private HgFilesystemObject file;
+	private HgFilesystemObject file;
 
-    /**
-     * Constructor
-     * 
-     * @param file
-     *            the file to create a mapping for. This can also be a folder.
-     * @throws CoreException
-     * @throws IOException
-     */
-    public HgResourceMapping(File file) throws IOException, CoreException {
-        if (file.isDirectory()) {
-            this.file = new HgFolder(file);
-        } else {
-            this.file = new HgFile(file);
-        }
-    }
+	/**
+	 * Constructor
+	 *
+	 * @param file
+	 *            the file to create a mapping for. This can also be a folder.
+	 * @throws CoreException
+	 * @throws IOException
+	 */
+	public HgResourceMapping(File file) throws IOException, CoreException {
+		if (file.isDirectory()) {
+			this.file = new HgFolder(file);
+		} else {
+			this.file = new HgFile(file);
+		}
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.core.resources.mapping.ResourceMapping#getModelObject()
-     */
-    @Override
-    public Object getModelObject() {
-        return file;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.core.resources.mapping.ResourceMapping#getModelObject()
+	 */
+	@Override
+	public Object getModelObject() {
+		return file;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.core.resources.mapping.ResourceMapping#getModelProviderId()
-     */
-    @Override
-    public String getModelProviderId() {
-        return MercurialTeamProvider.ID;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.eclipse.core.resources.mapping.ResourceMapping#getModelProviderId()
+	 */
+	@Override
+	public String getModelProviderId() {
+		return MercurialTeamProvider.ID;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.core.resources.mapping.ResourceMapping#getProjects()
-     */
-    @Override
-    public IProject[] getProjects() {
-        List<IProject> projects = new ArrayList<IProject>();
-        if (file instanceof HgFolder) {
-            HgFolder folder = (HgFolder) file;
-            List<File> projectFiles;
-            try {
-                projectFiles = folder.getProjectFiles();
-                IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
-                        .getRoot();
-                for (File f : projectFiles) {
-                    try {
-                        IProject project = (IProject) workspaceRoot
-                                .findContainersForLocation(new Path(f
-                                        .getParentFile().getCanonicalPath()))[0];
-                        projects.add(project);
-                    } catch (IOException e) {
-                        MercurialEclipsePlugin.logError(e);
-                    }
-                }
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-        return projects.toArray(new IProject[projects.size()]);
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.core.resources.mapping.ResourceMapping#getProjects()
+	 */
+	@Override
+	public IProject[] getProjects() {
+		List<IProject> projects = new ArrayList<IProject>();
+		if (file instanceof HgFolder) {
+			HgFolder folder = (HgFolder) file;
+			List<File> projectFiles;
+			try {
+				projectFiles = folder.getProjectFiles();
+				IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
+						.getRoot();
+				for (File f : projectFiles) {
+					try {
+						IProject project = (IProject) workspaceRoot
+								.findContainersForLocation(new Path(f
+										.getParentFile().getCanonicalPath()))[0];
+						projects.add(project);
+					} catch (IOException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			} catch (Exception e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		return projects.toArray(new IProject[projects.size()]);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.core.resources.mapping.ResourceMapping#getTraversals(org.
-     * eclipse.core.resources.mapping.ResourceMappingContext,
-     * org.eclipse.core.runtime.IProgressMonitor)
-     */
-    @Override
-    public ResourceTraversal[] getTraversals(ResourceMappingContext context,
-            IProgressMonitor monitor) throws CoreException {
-        IResource resource = ResourceUtils.convert(file);
-        int depth = IResource.DEPTH_ZERO;        
-        ResourceTraversal resourceTraversal = new ResourceTraversal(
-                new IResource[] { resource }, depth, IContainer.EXCLUDE_DERIVED);
-        return new ResourceTraversal[] { resourceTraversal };
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.eclipse.core.resources.mapping.ResourceMapping#getTraversals(org.
+	 * eclipse.core.resources.mapping.ResourceMappingContext,
+	 * org.eclipse.core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public ResourceTraversal[] getTraversals(ResourceMappingContext context,
+			IProgressMonitor monitor) throws CoreException {
+		IResource resource = ResourceUtils.convert(file);
+		int depth = IResource.DEPTH_ZERO;
+		ResourceTraversal resourceTraversal = new ResourceTraversal(
+				new IResource[] { resource }, depth, IContainer.EXCLUDE_DERIVED);
+		return new ResourceTraversal[] { resourceTraversal };
+	}
 
 }

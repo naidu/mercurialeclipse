@@ -1,0 +1,15 @@
+#Sat Nov 14 22:57:56 CET 2009
+activeContentFilterList=*.makefile,makefile,*.Makefile,Makefile,Makefile.*,*.mk,MANIFEST.MF,plugin.xml
+convertActionOnSaave=AnyEdit.CnvrtSpacesToTabs
+eclipse.preferences.version=1
+inActiveContentFilterList=
+javaTabWidthForJava=true
+org.eclipse.jdt.ui.editor.tab.width=4
+projectPropsEnabled=true
+removeTrailingSpaces=true
+replaceAllSpaces=false
+replaceAllTabs=false
+saveAndAddLine=false
+saveAndConvert=true
+saveAndTrim=true
+useModulo4Tabs=false

@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.repository.actions;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.actions.SelectionListenerAction;
@@ -26,68 +25,64 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * RemoveRootAction removes a repository
  */
 public class RemoveRootAction extends SelectionListenerAction {
-    private IStructuredSelection selection;
+	private IStructuredSelection selection;
 
-    public RemoveRootAction(Shell shell) {
-        super("Remove repository");
-    }
+	public RemoveRootAction(Shell shell) {
+		super("Remove repository");
+	}
 
-    /**
-     * Returns the selected remote files
-     */
-    @SuppressWarnings("unchecked")
-    protected HgRepositoryLocation[] getSelectedRemoteRoots() {
-        ArrayList<HgRepositoryLocation> resources = null;
-        if (selection != null && !selection.isEmpty()) {
-            resources = new ArrayList<HgRepositoryLocation>();
-            Iterator<HgRepositoryLocation> elements = selection.iterator();
-            while (elements.hasNext()) {
-                Object next = HgAction.getAdapter(elements.next(),
-                        HgRepositoryLocation.class);
-                if (next instanceof HgRepositoryLocation) {
-                    resources.add((HgRepositoryLocation) next);
-                }
-            }
-        }
-        if (resources != null && !resources.isEmpty()) {
-            HgRepositoryLocation[] result = new HgRepositoryLocation[resources
-                    .size()];
-            resources.toArray(result);
-            return result;
-        }
-        return new HgRepositoryLocation[0];
-    }
+	/**
+	 * Returns the selected remote files
+	 */
+	@SuppressWarnings("unchecked")
+	protected HgRepositoryLocation[] getSelectedRemoteRoots() {
+		ArrayList<HgRepositoryLocation> resources = null;
+		if (selection != null && !selection.isEmpty()) {
+			resources = new ArrayList<HgRepositoryLocation>();
+			Iterator<HgRepositoryLocation> elements = selection.iterator();
+			while (elements.hasNext()) {
+				Object next = HgAction.getAdapter(elements.next(),
+						HgRepositoryLocation.class);
+				if (next instanceof HgRepositoryLocation) {
+					resources.add((HgRepositoryLocation) next);
+				}
+			}
+		}
+		if (resources != null && !resources.isEmpty()) {
+			HgRepositoryLocation[] result = new HgRepositoryLocation[resources
+					.size()];
+			resources.toArray(result);
+			return result;
+		}
+		return new HgRepositoryLocation[0];
+	}
 
-    protected String getErrorTitle() {
-        return "Error";
-    }
+	protected String getErrorTitle() {
+		return "Error";
+	}
 
-    @Override
-    public void run() {
-        HgRepositoryLocation[] roots = getSelectedRemoteRoots();
-        if (roots.length == 0)
-            return;
-        for (int i = 0; i < roots.length; i++) {
-            try {
-                MercurialEclipsePlugin.getRepoManager().disposeRepository(
-                        roots[i]);
+	@Override
+	public void run() {
+		HgRepositoryLocation[] roots = getSelectedRemoteRoots();
+		if (roots.length == 0) {
+			return;
+		}
+		for (int i = 0; i < roots.length; i++) {
+			MercurialEclipsePlugin.getRepoManager().disposeRepository(
+						roots[i]);
+		}
+	}
 
-            } catch (CoreException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-    }
+	/**
+	 * updates the selection. this selection will be used during run returns
+	 * true if action can be enabled
+	 */
+	@Override
+	protected boolean updateSelection(IStructuredSelection sel) {
+		this.selection = sel;
 
-    /**
-     * updates the selection. this selection will be used during run returns
-     * true if action can be enabled
-     */
-    @Override
-    protected boolean updateSelection(IStructuredSelection sel) {
-        this.selection = sel;
-
-        HgRepositoryLocation[] roots = getSelectedRemoteRoots();
-        return roots.length > 0;
-    }
+		HgRepositoryLocation[] roots = getSelectedRemoteRoots();
+		return roots.length > 0;
+	}
 
 }

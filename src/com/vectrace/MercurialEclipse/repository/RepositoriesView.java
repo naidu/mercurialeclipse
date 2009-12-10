@@ -8,6 +8,7 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository;
 
@@ -62,406 +63,393 @@ import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
  * RepositoriesView is a view on a set of known Hg repositories
  */
 public class RepositoriesView extends ViewPart implements ISelectionListener {
-    public static final String VIEW_ID = "com.vectrace.MercurialEclipse.repository.RepositoriesView"; //$NON-NLS-1$
+	public static final String VIEW_ID = "com.vectrace.MercurialEclipse.repository.RepositoriesView"; //$NON-NLS-1$
 
-    // The root
-    private AllRootsElement root;
+	// The root
+	private AllRootsElement root;
 
-    // Actions
-    private Action newAction;
-    private RemoveRootAction removeRootAction;
+	// Actions
+	private Action newAction;
+	private RemoveRootAction removeRootAction;
 
-    // The tree viewer
-    protected TreeViewer treeViewer;
+	// The tree viewer
+	protected TreeViewer treeViewer;
 
-    // Drill down adapter
-    private DrillDownAdapter drillPart; // Home, back, and "drill into"
+	// Drill down adapter
+	private DrillDownAdapter drillPart; // Home, back, and "drill into"
 
-    private Action refreshAction;
-    private Action refreshPopupAction;
-    private Action collapseAllAction;
-    private Action propertiesAction;
+	private Action refreshAction;
+	private Action refreshPopupAction;
+	private Action collapseAllAction;
+	private Action propertiesAction;
 
-    private RemoteContentProvider contentProvider;
-    // this listener is used when a repository is added, removed or changed
-    private IRepositoryListener repositoryListener = new IRepositoryListener() {
-        public void repositoryAdded(final HgRepositoryLocation loc) {
-            getViewer().getControl().getDisplay().syncExec(new Runnable() {
-                public void run() {
-                    refreshViewer(null, false);
-                    getViewer().setSelection(new StructuredSelection(loc));
-                }
-            });
-        }
+	private RemoteContentProvider contentProvider;
 
-        public void repositoryRemoved(HgRepositoryLocation loc) {
-            refresh(null, false);
-        }
+	// this listener is used when a repository is added, removed or changed
+	private final IRepositoryListener repositoryListener = new IRepositoryListener() {
+		public void repositoryAdded(final HgRepositoryLocation loc) {
+			getViewer().getControl().getDisplay().asyncExec(new Runnable() {
+				public void run() {
+					refreshViewer(null, false);
+					getViewer().setSelection(new StructuredSelection(loc));
+				}
+			});
+		}
 
-        public void repositoriesChanged(HgRepositoryLocation[] roots) {
-            refresh(null, false);
-        }
+		public void repositoryRemoved(HgRepositoryLocation loc) {
+			refresh(null, false);
+		}
 
-        private void refresh(Object object, boolean refreshRepositoriesFolders) {
-            final Object finalObject = object;
-            final boolean finalRefreshReposFolders = refreshRepositoriesFolders;
-            Display display = getViewer().getControl().getDisplay();
-            display.syncExec(new Runnable() {
-                public void run() {
-                    RepositoriesView.this.refreshViewer(finalObject,
-                            finalRefreshReposFolders);
-                }
-            });
-        }
+		public void repositoriesChanged(HgRepositoryLocation[] roots) {
+			refresh(null, false);
+		}
 
-        public void repositoryModified(HgRepositoryLocation loc) {
-            refresh(null, false);
-        }
-    };
+		private void refresh(final Object object, boolean refreshRepositoriesFolders) {
+			final boolean finalRefreshReposFolders = refreshRepositoriesFolders;
+			Display display = getViewer().getControl().getDisplay();
+			display.asyncExec(new Runnable() {
+				public void run() {
+					refreshViewer(object, finalRefreshReposFolders);
+				}
+			});
+		}
 
-    /**
-     * Constructor for RepositoriesView.
-     * 
-     * @param partName
-     */
-    public RepositoriesView() {
-        // super(VIEW_ID);
-    }
+		public void repositoryModified(HgRepositoryLocation loc) {
+			refresh(null, false);
+		}
+	};
 
-    /**
-     * Contribute actions to the view
-     */
-    protected void contributeActions() {
+	public RepositoriesView() {
+		super();
+	}
 
-        final Shell shell = getShell();
+	/**
+	 * Contribute actions to the view
+	 */
+	protected void contributeActions() {
 
-        // Create actions
+		final Shell shell = getShell();
 
-        // New Repository (popup)
-        newAction = new Action(Messages.getString("RepositoriesView.createRepo"), MercurialEclipsePlugin //$NON-NLS-1$
-                .getImageDescriptor("wizards/newlocation_wiz.gif")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                NewLocationWizard wizard = new NewLocationWizard();
-                WizardDialog dialog = new WizardDialog(shell, wizard);
-                dialog.open();
-            }
-        };
+		// Create actions
 
-        // Properties
-        propertiesAction = new PropertyDialogAction(
-                new SameShellProvider(shell), getViewer());
-        getViewSite().getActionBars().setGlobalActionHandler(
-                ActionFactory.PROPERTIES.getId(), propertiesAction);
-        IStructuredSelection selection = (IStructuredSelection) getViewer()
-                .getSelection();
-        if (selection.size() == 1
-                && selection.getFirstElement() instanceof HgRepositoryLocation) {
-            propertiesAction.setEnabled(true);
-        } else {
-            propertiesAction.setEnabled(false);
-        }
-        getViewer().addSelectionChangedListener(
-                new ISelectionChangedListener() {
-                    public void selectionChanged(SelectionChangedEvent event) {
-                        IStructuredSelection ss = (IStructuredSelection) event
-                                .getSelection();
-                        boolean enabled = ss.size() == 1
-                                && ss.getFirstElement() instanceof HgRepositoryLocation;
-                        propertiesAction.setEnabled(enabled);
-                    }
-                });
+		// New Repository (popup)
+		newAction = new Action(Messages.getString("RepositoriesView.createRepo"), MercurialEclipsePlugin //$NON-NLS-1$
+				.getImageDescriptor("wizards/newlocation_wiz.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				NewLocationWizard wizard = new NewLocationWizard();
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				dialog.open();
+			}
+		};
 
-        // Remove Root
-        removeRootAction = new RemoveRootAction(treeViewer.getControl()
-                .getShell());
-        removeRootAction.selectionChanged((IStructuredSelection) null);
+		// Properties
+		propertiesAction = new PropertyDialogAction(
+				new SameShellProvider(shell), getViewer());
+		getViewSite().getActionBars().setGlobalActionHandler(
+				ActionFactory.PROPERTIES.getId(), propertiesAction);
+		IStructuredSelection selection = (IStructuredSelection) getViewer()
+				.getSelection();
+		if (selection.size() == 1
+				&& selection.getFirstElement() instanceof HgRepositoryLocation) {
+			propertiesAction.setEnabled(true);
+		} else {
+			propertiesAction.setEnabled(false);
+		}
+		getViewer().addSelectionChangedListener(
+				new ISelectionChangedListener() {
+					public void selectionChanged(SelectionChangedEvent event) {
+						IStructuredSelection ss = (IStructuredSelection) event
+								.getSelection();
+						boolean enabled = ss.size() == 1
+								&& ss.getFirstElement() instanceof HgRepositoryLocation;
+						propertiesAction.setEnabled(enabled);
+					}
+				});
 
-        IActionBars bars = getViewSite().getActionBars();
-        bars.setGlobalActionHandler(ActionFactory.DELETE.getId(),
-                removeRootAction);
+		// Remove Root
+		removeRootAction = new RemoveRootAction(treeViewer.getControl()
+				.getShell());
+		removeRootAction.selectionChanged((IStructuredSelection) null);
 
-        // Refresh action (toolbar)
-        refreshAction = new Action(Messages.getString("RepositoriesView.refreshRepos"), //$NON-NLS-1$
-                MercurialEclipsePlugin.getImageDescriptor("elcl16/refresh.gif")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                refreshViewer(null, true);
-            }
-        };
-        refreshAction.setToolTipText(Messages.getString("RepositoriesView.refresh"));  //$NON-NLS-1$
-        refreshAction.setDisabledImageDescriptor(MercurialEclipsePlugin
-                .getImageDescriptor("dlcl16/refresh.gif")); //$NON-NLS-1$
-        refreshAction.setHoverImageDescriptor(MercurialEclipsePlugin
-                .getImageDescriptor("clcl16/refresh.gif")); //$NON-NLS-1$
-        getViewSite().getActionBars().setGlobalActionHandler(
-                ActionFactory.REFRESH.getId(), refreshAction);
+		IActionBars bars = getViewSite().getActionBars();
+		bars.setGlobalActionHandler(ActionFactory.DELETE.getId(),
+				removeRootAction);
 
-        refreshPopupAction = new Action(Messages.getString("RepositoriesView.refresh"), MercurialEclipsePlugin //$NON-NLS-1$
-                .getImageDescriptor("clcl16/refresh.gif")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                refreshViewerNode();
-            }
-        };
+		// Refresh action (toolbar)
+		refreshAction = new Action(Messages.getString("RepositoriesView.refreshRepos"), //$NON-NLS-1$
+				MercurialEclipsePlugin.getImageDescriptor("elcl16/refresh.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				refreshViewer(null, true);
+			}
+		};
+		refreshAction.setToolTipText(Messages.getString("RepositoriesView.refresh"));  //$NON-NLS-1$
+		refreshAction.setDisabledImageDescriptor(MercurialEclipsePlugin
+				.getImageDescriptor("dlcl16/refresh.gif")); //$NON-NLS-1$
+		refreshAction.setHoverImageDescriptor(MercurialEclipsePlugin
+				.getImageDescriptor("clcl16/refresh.gif")); //$NON-NLS-1$
+		getViewSite().getActionBars().setGlobalActionHandler(
+				ActionFactory.REFRESH.getId(), refreshAction);
 
-        // Collapse action
-        collapseAllAction = new Action("RepositoriesView.collapseAll", //$NON-NLS-1$
-                MercurialEclipsePlugin
-                        .getImageDescriptor("elcl16/collapseall.gif")) { //$NON-NLS-1$
-            @Override
-            public void run() {
-                collapseAll();
-            }
-        };
-        collapseAllAction.setToolTipText(Messages.getString("RepositoriesView.collapseAll")); //$NON-NLS-1$
-        collapseAllAction.setHoverImageDescriptor(MercurialEclipsePlugin
-                .getImageDescriptor("clcl16/collapseall.gif")); //$NON-NLS-1$
+		refreshPopupAction = new Action(Messages.getString("RepositoriesView.refresh"), MercurialEclipsePlugin //$NON-NLS-1$
+				.getImageDescriptor("clcl16/refresh.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				refreshViewerNode();
+			}
+		};
 
-        // Create the popup menu
-        MenuManager menuMgr = new MenuManager();
-        Tree tree = treeViewer.getTree();
-        Menu menu = menuMgr.createContextMenu(tree);
-        menuMgr.addMenuListener(new IMenuListener() {
-            public void menuAboutToShow(IMenuManager manager) {
-                addWorkbenchActions(manager);
-            }
+		// Collapse action
+		collapseAllAction = new Action("RepositoriesView.collapseAll", //$NON-NLS-1$
+				MercurialEclipsePlugin
+						.getImageDescriptor("elcl16/collapseall.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				collapseAll();
+			}
+		};
+		collapseAllAction.setToolTipText(Messages.getString("RepositoriesView.collapseAll")); //$NON-NLS-1$
+		collapseAllAction.setHoverImageDescriptor(MercurialEclipsePlugin
+				.getImageDescriptor("clcl16/collapseall.gif")); //$NON-NLS-1$
 
-        });
-        menuMgr.setRemoveAllWhenShown(true);
-        tree.setMenu(menu);
-        getSite().registerContextMenu(menuMgr, treeViewer);
+		// Create the popup menu
+		MenuManager menuMgr = new MenuManager();
+		Tree tree = treeViewer.getTree();
+		Menu menu = menuMgr.createContextMenu(tree);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager manager) {
+				addWorkbenchActions(manager);
+			}
 
-        // Create the local tool bar
-        IToolBarManager tbm = bars.getToolBarManager();
-        drillPart.addNavigationActions(tbm);
-        tbm.add(refreshAction);
-        tbm.add(new Separator());
-        tbm.add(collapseAllAction);
-        tbm.update(false);
+		});
+		menuMgr.setRemoveAllWhenShown(true);
+		tree.setMenu(menu);
+		getSite().registerContextMenu(menuMgr, treeViewer);
 
-        bars.updateActionBars();
-    } // contributeActions
+		// Create the local tool bar
+		IToolBarManager tbm = bars.getToolBarManager();
+		drillPart.addNavigationActions(tbm);
+		tbm.add(refreshAction);
+		tbm.add(new Separator());
+		tbm.add(collapseAllAction);
+		tbm.update(false);
 
-    /**
-     * @see org.tigris.subversion.subclipse.ui.repo.RemoteViewPart#addWorkbenchActions(org.eclipse.jface.action.IMenuManager)
-     */
-    protected void addWorkbenchActions(IMenuManager manager) {
-        // New actions go next
+		bars.updateActionBars();
+	} // contributeActions
 
-        MenuManager sub = new MenuManager(Messages.getString("RepositoriesView.new"), //$NON-NLS-1$
-                IWorkbenchActionConstants.GROUP_ADD);
-        sub.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-        manager.add(sub);
+	/*
+	 * see org.tigris.subversion.subclipse.ui.repo.RemoteViewPart#addWorkbenchActions(org.eclipse.jface.action.IMenuManager)
+	 */
+	protected void addWorkbenchActions(IMenuManager manager) {
+		// New actions go next
 
-        // File actions go first (view file)
-        manager.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-        // Misc additions
-        manager.add(new Separator("historyGroup")); //$NON-NLS-1$
-        manager.add(new Separator("checkoutGroup")); //$NON-NLS-1$
-        manager.add(new Separator("exportImportGroup")); //$NON-NLS-1$
-        manager.add(new Separator("miscGroup")); //$NON-NLS-1$
+		MenuManager sub = new MenuManager(Messages.getString("RepositoriesView.new"), //$NON-NLS-1$
+				IWorkbenchActionConstants.GROUP_ADD);
+		sub.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+		manager.add(sub);
 
-        manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+		// File actions go first (view file)
+		manager.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+		// Misc additions
+		manager.add(new Separator("historyGroup")); //$NON-NLS-1$
+		manager.add(new Separator("checkoutGroup")); //$NON-NLS-1$
+		manager.add(new Separator("exportImportGroup")); //$NON-NLS-1$
+		manager.add(new Separator("miscGroup")); //$NON-NLS-1$
 
-        manager.add(refreshPopupAction);
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
-        IStructuredSelection selection = (IStructuredSelection) getViewer()
-                .getSelection();
-        removeRootAction.selectionChanged(selection);
-        if (removeRootAction.isEnabled()) {
-            manager.add(removeRootAction);
-        }
+		manager.add(refreshPopupAction);
 
-        if (selection.size() == 1
-                && selection.getFirstElement() instanceof HgRepositoryLocation) {
-            manager.add(new Separator());
-            manager.add(propertiesAction);
-        }
-        sub.add(newAction);
-    }
+		IStructuredSelection selection = (IStructuredSelection) getViewer()
+				.getSelection();
+		removeRootAction.selectionChanged(selection);
+		if (removeRootAction.isEnabled()) {
+			manager.add(removeRootAction);
+		}
 
-    /*
-     * @see WorkbenchPart#createPartControl
-     */
-    @Override
-    public void createPartControl(Composite parent) {
-        treeViewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL
-                | SWT.V_SCROLL);
-        contentProvider = new RemoteContentProvider();
-        treeViewer.setContentProvider(contentProvider);
-        treeViewer.setLabelProvider(new WorkbenchLabelProvider());
-        getSite().setSelectionProvider(treeViewer);
-        root = new AllRootsElement();
-        treeViewer.setInput(root);
-        treeViewer.setSorter(new RepositorySorter());
-        drillPart = new DrillDownAdapter(treeViewer);
+		if (selection.size() == 1
+				&& selection.getFirstElement() instanceof HgRepositoryLocation) {
+			manager.add(new Separator());
+			manager.add(propertiesAction);
+		}
+		sub.add(newAction);
+	}
 
-        contributeActions();
+	@Override
+	public void createPartControl(Composite parent) {
+		treeViewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL
+				| SWT.V_SCROLL);
+		contentProvider = new RemoteContentProvider();
+		treeViewer.setContentProvider(contentProvider);
+		treeViewer.setLabelProvider(new WorkbenchLabelProvider());
+		getSite().setSelectionProvider(treeViewer);
+		root = new AllRootsElement();
+		treeViewer.setInput(root);
+		treeViewer.setSorter(new RepositorySorter());
+		drillPart = new DrillDownAdapter(treeViewer);
 
-        initializeListeners();
-        MercurialEclipsePlugin.getRepoManager().addRepositoryListener(
-                repositoryListener);
-    }
+		contributeActions();
 
-    /**
-     * initialize the listeners
-     */
-    protected void initializeListeners() {
-        getSite().getWorkbenchWindow().getSelectionService()
-                .addPostSelectionListener(this);
-        treeViewer.addSelectionChangedListener(removeRootAction);
+		initializeListeners();
+		MercurialEclipsePlugin.getRepoManager().addRepositoryListener(
+				repositoryListener);
+	}
 
-        // when F5 is pressed, refresh this view
-        treeViewer.getControl().addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent event) {
-                if (event.keyCode == SWT.F5) {
-                    /*
-                     * IStructuredSelection selection =
-                     * (IStructuredSelection)getViewer().getSelection(); if
-                     * (selection.size() == 1) {
-                     * getViewer().refresh(selection.getFirstElement()); }
-                     */
-                    refreshAction.run();
-                }
-            }
-        });
+	/**
+	 * initialize the listeners
+	 */
+	protected void initializeListeners() {
+		getSite().getWorkbenchWindow().getSelectionService()
+				.addPostSelectionListener(this);
+		treeViewer.addSelectionChangedListener(removeRootAction);
 
-        treeViewer.addDoubleClickListener(new IDoubleClickListener() {
-            public void doubleClick(DoubleClickEvent e) {
-                handleDoubleClick(e);
-            }
-        });
+		// when F5 is pressed, refresh this view
+		treeViewer.getControl().addKeyListener(new KeyAdapter() {
+			@Override
+			public void keyPressed(KeyEvent event) {
+				if (event.keyCode == SWT.F5) {
+					refreshAction.run();
+				}
+			}
+		});
 
-    }
+		treeViewer.addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent e) {
+				handleDoubleClick(e);
+			}
+		});
 
-    /**
-     * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart,
-     *      org.eclipse.jface.viewers.ISelection)
-     */
-    public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-        String msg = getStatusLineMessage(selection);
-        getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
-    }
+	}
 
-    /**
-     * When selection is changed we update the status line
-     */
-    private String getStatusLineMessage(ISelection selection) {
-        if (selection == null || selection.isEmpty())
-            return ""; //$NON-NLS-1$
-        if (!(selection instanceof IStructuredSelection))
-            return ""; //$NON-NLS-1$
-        IStructuredSelection s = (IStructuredSelection) selection;
+	/**
+	 * @see org.eclipse.ui.ISelectionListener#selectionChanged(org.eclipse.ui.IWorkbenchPart,
+	 *      org.eclipse.jface.viewers.ISelection)
+	 */
+	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+		String msg = getStatusLineMessage(selection);
+		getViewSite().getActionBars().getStatusLineManager().setMessage(msg);
+	}
 
-        if (s.size() > 1) {
-            return String.valueOf(s.size()) + Messages.getString("RepositoriesView.multiSelected"); //$NON-NLS-1$
-        }
-        return Messages.getString("RepositoriesView.oneSelected"); //$NON-NLS-1$
-    }
+	/**
+	 * When selection is changed we update the status line
+	 */
+	private String getStatusLineMessage(ISelection selection) {
+		if (!(selection instanceof IStructuredSelection) || selection.isEmpty()) {
+			return ""; //$NON-NLS-1$
+		}
+		IStructuredSelection s = (IStructuredSelection) selection;
 
-    /**
-     * @see WorkbenchPart#setFocus
-     */
-    @Override
-    public void setFocus() {
-        treeViewer.getControl().setFocus();
-    }
+		if (s.size() > 1) {
+			return String.valueOf(s.size()) + Messages.getString("RepositoriesView.multiSelected"); //$NON-NLS-1$
+		}
+		return Messages.getString("RepositoriesView.oneSelected"); //$NON-NLS-1$
+	}
 
-    /**
-     * Method getShell.
-     * 
-     * @return Shell
-     */
-    protected Shell getShell() {
-        return treeViewer.getTree().getShell();
-    }
+	/**
+	 * @see WorkbenchPart#setFocus
+	 */
+	@Override
+	public void setFocus() {
+		treeViewer.getControl().setFocus();
+	}
 
-    /**
-     * Returns the viewer.
-     * 
-     * @return TreeViewer
-     */
-    protected TreeViewer getViewer() {
-        return treeViewer;
-    }
+	/**
+	 * Method getShell.
+	 *
+	 * @return Shell
+	 */
+	protected Shell getShell() {
+		return treeViewer.getTree().getShell();
+	}
 
-    /**
-     * this is called whenever a new repository location is added for example or
-     * when user wants to refresh
-     */
-    protected void refreshViewer(Object object,
-            boolean refreshRepositoriesFolders) {
-        if (treeViewer == null)
-            return;
-        if (refreshRepositoriesFolders) {
-            try {
-                MercurialEclipsePlugin.getRepoManager().refreshRepositories(
-                        null);
-            } catch (HgException e) {
-                MercurialEclipsePlugin.logError(e);
-            } catch (IOException e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-        if (object == null)
-            treeViewer.refresh();
-        else
-            treeViewer.refresh(object);
-    }
+	/**
+	 * Returns the viewer.
+	 *
+	 * @return TreeViewer
+	 */
+	protected TreeViewer getViewer() {
+		return treeViewer;
+	}
 
-    @SuppressWarnings("unchecked")
-    protected void refreshViewerNode() {
-        IStructuredSelection selection = (IStructuredSelection) treeViewer
-                .getSelection();
-        Iterator iter = selection.iterator();
-        while (iter.hasNext()) {
-            Object object = iter.next();
-            if (object instanceof HgRepositoryLocation) {
-                refreshAction.run();
-                break;
-            }
-            treeViewer.refresh(object);
-        }
-    }
+	/**
+	 * this is called whenever a new repository location is added for example or
+	 * when user wants to refresh
+	 */
+	protected void refreshViewer(Object object,
+			boolean refreshRepositoriesFolders) {
+		if (treeViewer == null || treeViewer.getControl() == null || treeViewer.getControl().isDisposed()) {
+			return;
+		}
+		if (refreshRepositoriesFolders) {
+			try {
+				MercurialEclipsePlugin.getRepoManager().refreshRepositories(
+						null);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		if (object == null) {
+			treeViewer.refresh();
+		} else {
+			treeViewer.refresh(object);
+		}
+	}
 
-    public void collapseAll() {
-        if (treeViewer == null)
-            return;
-        treeViewer.getControl().setRedraw(false);
-        treeViewer.collapseToLevel(treeViewer.getInput(),
-                AbstractTreeViewer.ALL_LEVELS);
-        treeViewer.getControl().setRedraw(true);
-    }
+	@SuppressWarnings("unchecked")
+	protected void refreshViewerNode() {
+		IStructuredSelection selection = (IStructuredSelection) treeViewer
+				.getSelection();
+		Iterator iter = selection.iterator();
+		while (iter.hasNext()) {
+			Object object = iter.next();
+			if (object instanceof HgRepositoryLocation) {
+				refreshAction.run();
+				break;
+			}
+			treeViewer.refresh(object);
+		}
+	}
 
-    /**
-     * The mouse has been double-clicked in the tree, perform appropriate
-     * behaviour.
-     */
-    private void handleDoubleClick(DoubleClickEvent e) {
-        // Only act on single selection
-        ISelection selection = e.getSelection();
-        if (selection instanceof IStructuredSelection) {
-            IStructuredSelection structured = (IStructuredSelection) selection;
-            if (structured.size() == 1) {
-                Object first = structured.getFirstElement();
-                // Try to expand/contract
-                treeViewer.setExpandedState(first, !treeViewer
-                        .getExpandedState(first));
-            }
-        }
-    }
+	public void collapseAll() {
+		if (treeViewer == null) {
+			return;
+		}
+		treeViewer.getControl().setRedraw(false);
+		treeViewer.collapseToLevel(treeViewer.getInput(),
+				AbstractTreeViewer.ALL_LEVELS);
+		treeViewer.getControl().setRedraw(true);
+	}
 
-    /**
-     * @see org.eclipse.ui.IWorkbenchPart#dispose()
-     */
-    @Override
-    public void dispose() {
-        MercurialEclipsePlugin.getRepoManager().removeRepositoryListener(
-                repositoryListener);
-        super.dispose();
-        treeViewer = null;
-    }
+	/**
+	 * The mouse has been double-clicked in the tree, perform appropriate
+	 * behaviour.
+	 */
+	private void handleDoubleClick(DoubleClickEvent e) {
+		// Only act on single selection
+		ISelection selection = e.getSelection();
+		if (selection instanceof IStructuredSelection) {
+			IStructuredSelection structured = (IStructuredSelection) selection;
+			if (structured.size() == 1) {
+				Object first = structured.getFirstElement();
+				// Try to expand/contract
+				treeViewer.setExpandedState(first, !treeViewer
+						.getExpandedState(first));
+			}
+		}
+	}
+
+	/**
+	 * @see org.eclipse.ui.IWorkbenchPart#dispose()
+	 */
+	@Override
+	public void dispose() {
+		MercurialEclipsePlugin.getRepoManager().removeRepositoryListener(
+				repositoryListener);
+		super.dispose();
+		treeViewer = null;
+	}
 
 }

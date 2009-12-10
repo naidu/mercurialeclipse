@@ -19,24 +19,24 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  *
  */
 public class HgConfigClient extends AbstractClient {
-    public static String getHgConfigLine(File dir, String key)
-            throws HgException {
-        String[] lines = getHgConfigLines(dir, key);
-        return lines[0];
-    }
+	public static String getHgConfigLine(File dir, String key)
+			throws HgException {
+		String[] lines = getHgConfigLines(dir, key);
+		return lines[0];
+	}
 
-    /**
-     * @param dir
-     * @param key
-     * @return
-     * @throws HgException
-     */
-    public static String[] getHgConfigLines(File dir, String key)
-            throws HgException {
-        AbstractShellCommand cmd = new HgCommand("showconfig", getWorkingDirectory(dir), //$NON-NLS-1$
-                false);
-        cmd.addOptions(key);
-        String[] lines = cmd.executeToString().split("\n"); //$NON-NLS-1$
-        return lines;
-    }
+	/**
+	 * @param dir
+	 * @param key
+	 * @return
+	 * @throws HgException
+	 */
+	public static String[] getHgConfigLines(File dir, String key)
+			throws HgException {
+		AbstractShellCommand cmd = new HgCommand("showconfig", getWorkingDirectory(dir), //$NON-NLS-1$
+				false);
+		cmd.addOptions(key);
+		String[] lines = cmd.executeToString().split("\n"); //$NON-NLS-1$
+		return lines;
+	}
 }

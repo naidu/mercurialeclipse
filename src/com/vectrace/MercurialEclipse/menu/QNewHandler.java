@@ -18,19 +18,19 @@ import com.vectrace.MercurialEclipse.wizards.mq.QNewWizard;
 
 public class QNewHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        openWizard(resource, getShell());        
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		openWizard(resource, getShell());
+	}
 
-    /**
-     * @param resource
-     */
-    public static void openWizard(IResource resource, Shell shell) {
-        QNewWizard wizard = new QNewWizard(resource);
-        WizardDialog dialog = new WizardDialog(shell, wizard);
-        dialog.setBlockOnOpen(true);
-        dialog.open();
-    }
+	/**
+	 * @param resource
+	 */
+	public static void openWizard(IResource resource, Shell shell) {
+		QNewWizard wizard = new QNewWizard(resource);
+		WizardDialog dialog = new WizardDialog(shell, wizard);
+		dialog.setBlockOnOpen(true);
+		dialog.open();
+	}
 
 }

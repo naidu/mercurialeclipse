@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Stefan	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -27,80 +28,80 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  *
  */
 public class TestConfiguration extends TestCase implements IConsole,
-        IErrorHandler, IConfiguration {
-    private final Map<String, String> preferences = new HashMap<String, String>() {
-        {
-            put(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "true");
-        }
-    };
+		IErrorHandler, IConfiguration {
+	private final Map<String, String> preferences = new HashMap<String, String>() {
+		{
+			put(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "true");
+		}
+	};
 
-    public void test(){
-        // just a dumy method for JUnit to avoid test failure because of missing test
-    }
+	public void test(){
+		// just a dumy method for JUnit to avoid test failure because of missing test
+	}
 
-    public PrintStream getOutputStream() {
-        return System.out;
-    }
+	public PrintStream getOutputStream() {
+		return System.out;
+	}
 
-    public void logError(Throwable e) {
-        fail(e.getMessage());
-    }
+	public void logError(Throwable e) {
+		fail(e.getMessage());
+	}
 
-    public void logWarning(String message, Throwable e) {
-        fail(e.getMessage());
-    }
+	public void logWarning(String message, Throwable e) {
+		fail(e.getMessage());
+	}
 
-    public String getDefaultUserName() {
-        return "foo";
-    }
+	public String getDefaultUserName() {
+		return "foo";
+	}
 
-    public String getExecutable() {
-        String path = "hg";
-        // path = "hg";
-        return path;
-    }
+	public String getExecutable() {
+		String path = "hg";
+		// path = "hg";
+		return path;
+	}
 
-    public int getTimeOut(String commandId) {
-        return 12000;
-    }
+	public int getTimeOut(String commandId) {
+		return 12000;
+	}
 
-    public void commandCompleted(int exitCode, String message, Throwable error) {
-        System.out.println(exitCode + " - " + message);
-        if (error != null) {
-            error.printStackTrace(System.err);
-        }
-    }
+	public void commandCompleted(int exitCode, String message, Throwable error) {
+		System.out.println(exitCode + " - " + message);
+		if (error != null) {
+			error.printStackTrace(System.err);
+		}
+	}
 
-    public void commandInvoked(String command) {
-        System.out.println(command);
-    }
+	public void commandInvoked(String command) {
+		System.out.println(command);
+	}
 
-    public void printError(String message, Throwable root) {
-        System.err.println(message);
-        root.printStackTrace(System.err);
-    }
+	public void printError(String message, Throwable root) {
+		System.err.println(message);
+		root.printStackTrace(System.err);
+	}
 
-    public void printMessage(String message, Throwable root) {
-        System.out.println(message);
-        if (root != null) {
-            root.printStackTrace(System.out);
-        }
-    }
+	public void printMessage(String message, Throwable root) {
+		System.out.println(message);
+		if (root != null) {
+			root.printStackTrace(System.out);
+		}
+	}
 
-    public String getPreference(String preferenceConstant,
-            String defaultIfNotSet) {
-        String pref = preferences.get(preferenceConstant);
-        if (pref != null) {
-            return pref;
-        }
-        return defaultIfNotSet;
-    }
+	public String getPreference(String preferenceConstant,
+			String defaultIfNotSet) {
+		String pref = preferences.get(preferenceConstant);
+		if (pref != null) {
+			return pref;
+		}
+		return defaultIfNotSet;
+	}
 
-    public HgRoot getHgRoot(File file) {
-        try {
-            return HgRootClient.getHgRoot(file);
-        } catch (HgException e) {
-            throw new HgCoreException(e);
-        }
-    }
+	public HgRoot getHgRoot(File file) {
+		try {
+			return HgRootClient.getHgRoot(file);
+		} catch (HgException e) {
+			throw new HgCoreException(e);
+		}
+	}
 }

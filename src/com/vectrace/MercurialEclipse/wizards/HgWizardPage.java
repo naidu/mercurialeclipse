@@ -23,85 +23,85 @@ import org.eclipse.jface.wizard.WizardPage;
  * widget creation.
  */
 public abstract class HgWizardPage extends WizardPage {
-    protected Properties properties = null;
-    protected IDialogSettings settings;
+	protected Properties properties = null;
+	protected IDialogSettings settings;
 
-    /**
-     * HgWizardPage constructor comment.
-     * 
-     * @param pageName
-     *            the name of the page
-     */
-    public HgWizardPage(String pageName) {
-        super(pageName);
-    }
+	/**
+	 * HgWizardPage constructor comment.
+	 *
+	 * @param pageName
+	 *            the name of the page
+	 */
+	public HgWizardPage(String pageName) {
+		super(pageName);
+	}
 
-    /**
-     * HgWizardPage constructor comment.
-     * 
-     * @param pageName
-     *            the name of the page
-     * @param title
-     *            the title of the page
-     * @param titleImage
-     *            the image for the page
-     */
-    public HgWizardPage(String pageName, String title,
-            ImageDescriptor titleImage) {
-        super(pageName, title, titleImage);
-    }
+	/**
+	 * HgWizardPage constructor comment.
+	 *
+	 * @param pageName
+	 *            the name of the page
+	 * @param title
+	 *            the title of the page
+	 * @param titleImage
+	 *            the image for the page
+	 */
+	public HgWizardPage(String pageName, String title,
+			ImageDescriptor titleImage) {
+		super(pageName, title, titleImage);
+	}
 
-    /**
-     * HgWizardPage constructor comment.
-     * 
-     * @param pageName
-     *            the name of the page
-     * @param title
-     *            the title of the page
-     * @param titleImage
-     *            the image for the page
-     * @param description
-     *            the description of the page
-     */
-    public HgWizardPage(String pageName, String title,
-            ImageDescriptor titleImage, String description) {
-        super(pageName, title, titleImage);
-        setDescription(description);
-    }
+	/**
+	 * HgWizardPage constructor comment.
+	 *
+	 * @param pageName
+	 *            the name of the page
+	 * @param title
+	 *            the title of the page
+	 * @param titleImage
+	 *            the image for the page
+	 * @param description
+	 *            the description of the page
+	 */
+	public HgWizardPage(String pageName, String title,
+			ImageDescriptor titleImage, String description) {
+		super(pageName, title, titleImage);
+		setDescription(description);
+	}
 
-    /**
-     * @param monitor
-     * @return
-     */
-    public boolean finish(IProgressMonitor monitor) {
-        return true;
-    }
+	/**
+	 * @param monitor
+	 * @return
+	 */
+	public boolean finish(IProgressMonitor monitor) {
+		return true;
+	}
 
-    /**
-     * Returns the properties for the repository connection
-     * 
-     * @return the properties or null
-     */
-    public Properties getProperties() {
-        return properties;
-    }
+	/**
+	 * Returns the properties for the repository connection
+	 *
+	 * @return the properties or null
+	 */
+	public Properties getProperties() {
+		return properties;
+	}
 
-    /**
-     * Sets the properties for the repository connection
-     * 
-     * @param properties
-     *            the properties or null
-     */
-    public void setProperties(Properties properties) {
-        this.properties = properties;
-    }
+	/**
+	 * Sets the properties for the repository connection
+	 *
+	 * @param properties
+	 *            the properties or null
+	 */
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
 
-    @Override
-    public IDialogSettings getDialogSettings() {
-        return settings;
-    }
+	@Override
+	public IDialogSettings getDialogSettings() {
+		return settings;
+	}
 
-    public void setDialogSettings(IDialogSettings settings) {
-        this.settings = settings;
-    }
+	public void setDialogSettings(IDialogSettings settings) {
+		this.settings = settings;
+	}
 }

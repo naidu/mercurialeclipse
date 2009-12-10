@@ -8,6 +8,7 @@
  * Contributors:
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - support for multi-select tables
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -40,214 +41,222 @@ import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
  */
 public class ChangesetTable extends Composite {
 
-    private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
-            .getItalic(JFaceResources.DIALOG_FONT);
+	private final static Font PARENT_FONT = JFaceResources.getFontRegistry()
+			.getBold(JFaceResources.DIALOG_FONT);
 
-    private final Table table;
-    private int[] parents;
-    private final IResource resource;
+	private final Table table;
+	private int[] parents;
+	private final IResource resource;
 
-    private ChangeSet[] changesets = new ChangeSet[0];
-    private int logBatchSize;
-    private boolean autoFetch = true;
+	private ChangeSet[] changesets = new ChangeSet[0];
+	private int logBatchSize;
+	private boolean autoFetch = true;
 
-    private boolean bottomNotFetched = true;
+	private boolean bottomNotFetched = true;
 
-    public ChangesetTable(Composite parent, IResource resource) {
-        this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
-                | SWT.V_SCROLL | SWT.H_SCROLL, resource);
-    }
+	public ChangesetTable(Composite parent, IResource resource) {
+		this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+				| SWT.V_SCROLL | SWT.H_SCROLL, resource);
+	}
 
-    public ChangesetTable(Composite parent, IResource resource,
-            boolean autoFetch) {
-        this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
-                | SWT.V_SCROLL | SWT.H_SCROLL, resource);
-        this.autoFetch = autoFetch;
-    }
+	public ChangesetTable(Composite parent, IResource resource,
+			boolean autoFetch) {
+		this(parent, SWT.SINGLE | SWT.BORDER | SWT.FULL_SELECTION
+				| SWT.V_SCROLL | SWT.H_SCROLL, resource);
+		this.autoFetch = autoFetch;
+	}
 
-    public ChangesetTable(Composite parent, int tableStyle, IResource resource,
-            boolean autoFetch) {
-        this(parent, tableStyle, resource);
-        this.autoFetch = autoFetch;
-    }
+	public ChangesetTable(Composite parent, int tableStyle, IResource resource,
+			boolean autoFetch) {
+		this(parent, tableStyle, resource);
+		this.autoFetch = autoFetch;
+	}
 
-    /**
-     *
-     */
-    public ChangesetTable(Composite parent, int tableStyle, IResource resource) {
-        super(parent, SWT.NONE);
-        this.logBatchSize = LocalChangesetCache.getInstance().getLogBatchSize();
-        this.resource = resource;
-        this.setLayout(new GridLayout());
-        this.setLayoutData(new GridData());
+	/**
+	 *
+	 */
+	public ChangesetTable(Composite parent, int tableStyle, IResource resource) {
+		super(parent, SWT.NONE);
+		this.logBatchSize = LocalChangesetCache.getInstance().getLogBatchSize();
+		this.resource = resource;
+		this.setLayout(new GridLayout());
+		this.setLayoutData(new GridData());
 
-        table = new Table(this, tableStyle);
-        table.setLinesVisible(true);
-        table.setHeaderVisible(true);
-        GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
-        data.heightHint = 150;
-        data.minimumHeight = 50;
-        table.setLayoutData(data);
+		table = new Table(this, tableStyle);
+		table.setLinesVisible(true);
+		table.setHeaderVisible(true);
+		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
+		data.heightHint = 150;
+		data.minimumHeight = 50;
+		table.setLayoutData(data);
 
-        String[] titles = { Messages.getString("ChangesetTable.column.rev"), Messages.getString("ChangesetTable.column.global"), Messages.getString("ChangesetTable.column.date"), Messages.getString("ChangesetTable.column.author"), Messages.getString("ChangesetTable.column.branch"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-                Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$
-        int[] widths = { 50, 150, 150, 100, 100, 300 };
-        for (int i = 0; i < titles.length; i++) {
-            TableColumn column = new TableColumn(table, SWT.NONE);
-            column.setText(titles[i]);
-            column.setWidth(widths[i]);
-        }
-        Listener paintListener = new Listener() {
+		String[] titles = { Messages.getString("ChangesetTable.column.rev"), Messages.getString("ChangesetTable.column.global"), Messages.getString("ChangesetTable.column.date"), Messages.getString("ChangesetTable.column.author"), Messages.getString("ChangesetTable.column.branch"), //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+				Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$
+		int[] widths = { 50, 150, 150, 100, 100, 300 };
+		for (int i = 0; i < titles.length; i++) {
+			TableColumn column = new TableColumn(table, SWT.NONE);
+			column.setText(titles[i]);
+			column.setWidth(widths[i]);
+		}
+		Listener paintListener = new Listener() {
 
-            public void paintControl(Event e) {
-                TableItem tableItem = (TableItem) e.item;
-                ChangeSet cs = (ChangeSet) tableItem.getData();
-                if (table.isEnabled()
-                        && tableItem.equals(table.getItems()[table.getItemCount() - 1])
-                        && cs.getChangesetIndex() > 0) {
-                    // limit log to allow "smooth" scrolling (not too small and not too big)
-                    logBatchSize = 200;
-                    try {
-                        int startRev = cs.getChangesetIndex() - 1;
-                        updateTable(startRev);
-                    } catch (HgException e1) {
-                        MercurialEclipsePlugin.logError(e1);
-                    }
-                }
-            }
+			public void paintControl(Event e) {
+				TableItem tableItem = (TableItem) e.item;
+				ChangeSet cs = (ChangeSet) tableItem.getData();
+				if (table.isEnabled()
+						&& tableItem.equals(table.getItems()[table.getItemCount() - 1])
+						&& cs.getChangesetIndex() > 0) {
+					// limit log to allow "smooth" scrolling (not too small and not too big)
+					logBatchSize = 200;
+					try {
+						int startRev = cs.getChangesetIndex() - 1;
+						updateTable(startRev);
+					} catch (HgException e1) {
+						MercurialEclipsePlugin.logError(e1);
+					}
+				}
+			}
 
-            public void handleEvent(Event event) {
-                paintControl(event);
-            }
-        };
-        table.addListener(SWT.PaintItem, paintListener);
+			public void handleEvent(Event event) {
+				paintControl(event);
+			}
+		};
+		table.addListener(SWT.PaintItem, paintListener);
 
-    }
+	}
 
-    public void highlightParents(int[] newParents) {
-        this.parents = newParents;
-    }
+	public void highlightParents(int[] newParents) {
+		this.parents = newParents;
+	}
 
-    /**
-     * @param startRev
-     * @throws HgException
-     */
-    private void updateTable(int startRev) throws HgException {
-        if (resource != null && table.isEnabled() && autoFetch) {
-            if (startRev - logBatchSize > 0 || bottomNotFetched) {
-                LocalChangesetCache.getInstance().fetchLocalRevisions(
-                        resource, true, logBatchSize, startRev, false);
-            }
-            SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
-                    .getLocalChangeSets(resource);
+	/**
+	 * @param startRev
+	 * @throws HgException
+	 */
+	private void updateTable(int startRev) throws HgException {
+		if (resource != null && table.isEnabled() && autoFetch) {
+			if (startRev - logBatchSize > 0 || bottomNotFetched) {
+				LocalChangesetCache.getInstance().fetchRevisions(
+						resource, true, logBatchSize, startRev, false);
+			}
+			SortedSet<ChangeSet> set = LocalChangesetCache.getInstance()
+					.getOrFetchChangeSets(resource);
 
-            // only fetch rev 0:0+logbatchsize once
-            if (set.size() == 0 || set.first().getChangesetIndex() == 0) {
-                bottomNotFetched = false;
-            }
+			// only fetch rev 0:0+logbatchsize once
+			if (set == null || set.size() == 0 || set.first().getChangesetIndex() == 0) {
+				bottomNotFetched = false;
+				if(set == null) {
+					return;
+				}
+			}
 
-            SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
-                    Collections.reverseOrder());
-            reverseOrderSet.addAll(set);
-            setChangesets(reverseOrderSet.toArray(new ChangeSet[reverseOrderSet
-                    .size()]));
-        }
-    }
+			SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
+					Collections.reverseOrder());
+			reverseOrderSet.addAll(set);
+			setChangesets(reverseOrderSet.toArray(new ChangeSet[reverseOrderSet
+					.size()]));
+		}
+	}
 
-    public void setChangesets(ChangeSet[] sets) {
-        this.changesets = sets;
-        // table.removeAll();
-        for (int i = Math.max(0, table.getItemCount()); i < sets.length; i++) {
-            ChangeSet rev = sets[i];
-            TableItem row = new TableItem(table, SWT.NONE);
-            if (parents != null && isParent(rev.getChangesetIndex())) {
-                row.setFont(PARENT_FONT);
-            }
-            row.setText(0, Integer.toString(rev.getChangesetIndex()));
-            row.setText(1, rev.getChangeset());
-            row.setText(2, rev.getDate());
-            row.setText(3, rev.getUser());
-            row.setText(4, rev.getBranch());
-            row.setText(5, rev.getSummary());
-            row.setData(rev);
-        }
-        table.setItemCount(sets.length);
+	public void setChangesets(ChangeSet[] sets) {
+		this.changesets = sets;
+		// table.removeAll();
+		for (int i = Math.max(0, table.getItemCount()); i < sets.length; i++) {
+			ChangeSet rev = sets[i];
+			TableItem row = new TableItem(table, SWT.NONE);
+			if (parents != null && isParent(rev.getChangesetIndex())) {
+				row.setFont(PARENT_FONT);
+			}
+			row.setText(0, Integer.toString(rev.getChangesetIndex()));
+			row.setText(1, rev.getChangeset());
+			row.setText(2, rev.getDateString());
+			row.setText(3, rev.getUser());
+			row.setText(4, rev.getBranch());
+			row.setText(5, rev.getSummary());
+			row.setData(rev);
+		}
+		table.setItemCount(sets.length);
 
-    }
+	}
 
-    public ChangeSet[] getSelections() {
-        TableItem[] selection = table.getSelection();
-        if (selection.length == 0) {
-            return null;
-        }
+	public void clearTable() {
+		table.removeAll();
+		this.changesets = null;
+	}
 
-        ChangeSet[] csArray = new ChangeSet[selection.length];
-        for (int i = 0; i < selection.length; i++) {
-            csArray[i] = (ChangeSet) selection[i].getData();
-        }
-        return csArray;
-    }
+	public ChangeSet[] getSelections() {
+		TableItem[] selection = table.getSelection();
+		if (selection.length == 0) {
+			return null;
+		}
 
-    public ChangeSet getSelection() {
-        if (getSelections() != null) {
-            return getSelections()[0];
-        }
-        return null;
-    }
+		ChangeSet[] csArray = new ChangeSet[selection.length];
+		for (int i = 0; i < selection.length; i++) {
+			csArray[i] = (ChangeSet) selection[i].getData();
+		}
+		return csArray;
+	}
 
-    public void addSelectionListener(SelectionListener listener) {
-        table.addSelectionListener(listener);
-    }
+	public ChangeSet getSelection() {
+		if (getSelections() != null) {
+			return getSelections()[0];
+		}
+		return null;
+	}
 
-    @Override
-    public void setEnabled(boolean enabled) {
-        table.setEnabled(enabled);
-        try {
-            if (enabled) {
-                updateTable(-1);
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-        }
-    }
+	public void addSelectionListener(SelectionListener listener) {
+		table.addSelectionListener(listener);
+	}
 
-    private boolean isParent(int r) {
-        switch (parents.length) {
-        case 2:
-            if (r == parents[1]) {
-                return true;
-            }
-            //$FALL-THROUGH$
-        case 1:
-            if (r == parents[0]) {
-                return true;
-            }
-            //$FALL-THROUGH$
-        default:
-            return false;
-        }
-    }
+	@Override
+	public void setEnabled(boolean enabled) {
+		table.setEnabled(enabled);
+		try {
+			if (enabled) {
+				updateTable(-1);
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+	}
 
-    /**
-     * @return the changesets
-     */
-    public ChangeSet[] getChangesets() {
-        return changesets;
-    }
+	private boolean isParent(int r) {
+		switch (parents.length) {
+		case 2:
+			if (r == parents[1]) {
+				return true;
+			}
+			//$FALL-THROUGH$
+		case 1:
+			if (r == parents[0]) {
+				return true;
+			}
+			//$FALL-THROUGH$
+		default:
+			return false;
+		}
+	}
 
-    /**
-     * @param autoFetch
-     *            the autoFetch to set
-     */
-    public void setAutoFetch(boolean autoFetch) {
-        this.autoFetch = autoFetch;
-    }
+	/**
+	 * @return the changesets
+	 */
+	public ChangeSet[] getChangesets() {
+		return changesets;
+	}
 
-    /**
-     * @return the autoFetch
-     */
-    public boolean isAutoFetch() {
-        return autoFetch;
-    }
+	/**
+	 * @param autoFetch
+	 *            the autoFetch to set
+	 */
+	public void setAutoFetch(boolean autoFetch) {
+		this.autoFetch = autoFetch;
+	}
+
+	/**
+	 * @return the autoFetch
+	 */
+	public boolean isAutoFetch() {
+		return autoFetch;
+	}
 
 }

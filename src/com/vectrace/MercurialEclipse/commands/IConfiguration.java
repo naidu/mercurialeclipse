@@ -16,33 +16,33 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan
- * 
+ *
  */
 public interface IConfiguration {
 
-    /**
-     * @return
-     */
-    String getDefaultUserName();
+	/**
+	 * @return
+	 */
+	String getDefaultUserName();
 
-    /**
-     * @return
-     */
-    String getExecutable();
+	/**
+	 * @return
+	 */
+	String getExecutable();
 
-    /**
-     * @param commandId
-     * @return
-     */
-    int getTimeOut(String commandId);
+	/**
+	 * @param commandId
+	 * @return
+	 */
+	int getTimeOut(String commandId);
 
-    /**
-     * @param preferenceConstant
-     * @param defaultIfNotSet
-     * @return
-     */
-    String getPreference(String preferenceConstant, String defaultIfNotSet);
-    
-    HgRoot getHgRoot(File file);
+	/**
+	 * @param preferenceConstant
+	 * @param defaultIfNotSet
+	 * @return
+	 */
+	String getPreference(String preferenceConstant, String defaultIfNotSet);
+
+	HgRoot getHgRoot(File file);
 
 }

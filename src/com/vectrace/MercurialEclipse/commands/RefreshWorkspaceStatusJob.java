@@ -6,7 +6,7 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Andrei	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -18,34 +18,43 @@ import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
-    private final IProject project;
+	private final IProject project;
+	private final boolean refreshOnly;
 
-    public RefreshWorkspaceStatusJob(IProject project) {
-        super("Refreshing status for project " + project.getName() + "...");
-        this.project = project;
-    }
+	public RefreshWorkspaceStatusJob(IProject project) {
+		this(project, false);
+	}
 
-    @Override
-    protected IStatus runSafe(IProgressMonitor monitor) {
-        try {
-            final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-            // update branch name
-            project.setSessionProperty(ResourceProperties.HG_BRANCH, branch);
+	public RefreshWorkspaceStatusJob(IProject project, boolean refreshOnly) {
+		super("Refreshing status for project " + project.getName() + "...");
+		this.project = project;
+		this.refreshOnly = refreshOnly;
+	}
 
-            // reset merge properties
-            project.setPersistentProperty(ResourceProperties.MERGING, null);
-            project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+	@Override
+	protected IStatus runSafe(IProgressMonitor monitor) {
+		try {
+			if(!refreshOnly){
+				final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+				// update branch name
+				MercurialTeamProvider.setCurrentBranch(branch, project);
 
-            // refresh resources
-            project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+				// reset merge properties
+				project.setPersistentProperty(ResourceProperties.MERGING, null);
+				project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+			}
 
-            return super.runSafe(monitor);
-        } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
-            return e.getStatus();
-        }
-    }
+			// refresh resources
+			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+
+			return super.runSafe(monitor);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return e.getStatus();
+		}
+	}
 }

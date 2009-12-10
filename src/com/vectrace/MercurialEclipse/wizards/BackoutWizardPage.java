@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -37,93 +38,93 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class BackoutWizardPage extends HgWizardPage {
 
-    private ChangesetTable changesetTable;
-    private Text messageTextField;
-    private Button mergeCheckBox;
-    protected ChangeSet backoutRevision;
-    private final IProject project;
-    private Text userTextField;
+	private ChangesetTable changesetTable;
+	private Text messageTextField;
+	private Button mergeCheckBox;
+	protected ChangeSet backoutRevision;
+	private final IProject project;
+	private Text userTextField;
 
-    public BackoutWizardPage(String pageName, String title,
-            ImageDescriptor image, IProject project) {
-        super(pageName, title, image);
-        this.project = project;
-    }
+	public BackoutWizardPage(String pageName, String title,
+			ImageDescriptor image, IProject project) {
+		super(pageName, title, image);
+		this.project = project;
+	}
 
-    public void createControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
+	public void createControl(Composite parent) {
+		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
-        // list view of changesets
-        Group changeSetGroup = SWTWidgetHelper
-                .createGroup(
-                        composite,
-                        Messages
-                                .getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
+		// list view of changesets
+		Group changeSetGroup = SWTWidgetHelper
+				.createGroup(
+						composite,
+						Messages
+								.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-        changesetTable = new ChangesetTable(changeSetGroup, project);
-        GridData gridData = new GridData(GridData.FILL_BOTH);
-        gridData.heightHint = 200;
-        gridData.minimumHeight = 50;
-        changesetTable.setLayoutData(gridData);
+		changesetTable = new ChangesetTable(changeSetGroup, project);
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = 200;
+		gridData.minimumHeight = 50;
+		changesetTable.setLayoutData(gridData);
 
-        SelectionListener listener = new SelectionListener() {
-            public void widgetSelected(SelectionEvent e) {
-                backoutRevision = changesetTable.getSelection();
-                messageTextField.setText(Messages.getString(
-                        "BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
-                        .concat(backoutRevision.toString()));
-                setPageComplete(true);
-            }
+		SelectionListener listener = new SelectionListener() {
+			public void widgetSelected(SelectionEvent e) {
+				backoutRevision = changesetTable.getSelection();
+				messageTextField.setText(Messages.getString(
+						"BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
+						.concat(" "+ backoutRevision.toString())); //$NON-NLS-1$
+				setPageComplete(true);
+			}
 
-            public void widgetDefaultSelected(SelectionEvent e) {
-                widgetSelected(e);
-            }
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
 
-        };
+		};
 
-        changesetTable.addSelectionListener(listener);
-        changesetTable.setEnabled(true);
+		changesetTable.addSelectionListener(listener);
+		changesetTable.setEnabled(true);
 
-        // now the options
-        Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages
-                .getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
+		// now the options
+		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("BackoutWizardPage.optionGroup.title")); //$NON-NLS-1$
 
-        SWTWidgetHelper.createLabel(optionGroup, Messages
-                .getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
-        this.userTextField = SWTWidgetHelper.createTextField(optionGroup);
-        this.userTextField.setText(MercurialUtilities.getHGUsername());
+		SWTWidgetHelper.createLabel(optionGroup, Messages
+				.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
+		this.userTextField = SWTWidgetHelper.createTextField(optionGroup);
+		this.userTextField.setText(MercurialUtilities.getHGUsername());
 
-        SWTWidgetHelper.createLabel(optionGroup, Messages
-                .getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
-        this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
+		SWTWidgetHelper.createLabel(optionGroup, Messages
+				.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
+		this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
 
-        // --merge merge with old dirstate parent after backout
-        this.mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-                Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
-        this.mergeCheckBox.setSelection(true);
+		// --merge merge with old dirstate parent after backout
+		this.mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+				Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
+		this.mergeCheckBox.setSelection(true);
 
 
-        setControl(composite);
-    }
+		setControl(composite);
+	}
 
-    @Override
-    public boolean finish(IProgressMonitor monitor) {
-        String msg = messageTextField.getText();
-        boolean merge = mergeCheckBox.getSelection();
-        backoutRevision = changesetTable.getSelection();
-        try {
-            String result = HgBackoutClient.backout(project, backoutRevision,
-                    merge, msg, userTextField.getText());
-            HgClients.getConsole().printMessage(result, null);
+	@Override
+	public boolean finish(IProgressMonitor monitor) {
+		String msg = messageTextField.getText();
+		boolean merge = mergeCheckBox.getSelection();
+		backoutRevision = changesetTable.getSelection();
+		try {
+			String result = HgBackoutClient.backout(project, backoutRevision,
+					merge, msg, userTextField.getText());
+			HgClients.getConsole().printMessage(result, null);
 
-        } catch (CoreException e) {
-            MessageDialog.openError(getShell(), Messages
-                    .getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
-                    .getMessage());
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
-        return true;
-    }
+		} catch (CoreException e) {
+			MessageDialog.openError(getShell(), Messages
+					.getString("BackoutWizardPage.backoutError"), e //$NON-NLS-1$
+					.getMessage());
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
+		return true;
+	}
 
 }

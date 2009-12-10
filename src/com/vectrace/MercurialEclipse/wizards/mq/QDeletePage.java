@@ -34,140 +34,140 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class QDeletePage extends HgWizardPage {
 
-    private IResource resource;
-    private ListViewer patchViewer;
-    private ChangesetTable changesetTable;
-    private Button revCheckBox;
-    private Button keepCheckBox;
+	private IResource resource;
+	private ListViewer patchViewer;
+	private ChangesetTable changesetTable;
+	private Button revCheckBox;
+	private Button keepCheckBox;
 
-    /**
-     * @param pageName
-     * @param title
-     * @param titleImage
-     * @param description
-     */
-    public QDeletePage(String pageName, String title,
-            ImageDescriptor titleImage, String description, IResource resource) {
-        super(pageName, title, titleImage, description);
-        this.resource = resource;
-    }
+	/**
+	 * @param pageName
+	 * @param title
+	 * @param titleImage
+	 * @param description
+	 */
+	public QDeletePage(String pageName, String title,
+			ImageDescriptor titleImage, String description, IResource resource) {
+		super(pageName, title, titleImage, description);
+		this.resource = resource;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
-     */
-    public void createControl(Composite parent) {
-        Composite composite = SWTWidgetHelper.createComposite(parent, 2);
-        Group g = SWTWidgetHelper.createGroup(composite,
-                Messages.getString("QDeletePage.patchGroup.title")); //$NON-NLS-1$
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.eclipse.jface.dialogs.IDialogPage#createControl(org.eclipse.swt.widgets.Composite)
+	 */
+	public void createControl(Composite parent) {
+		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
+		Group g = SWTWidgetHelper.createGroup(composite,
+				Messages.getString("QDeletePage.patchGroup.title")); //$NON-NLS-1$
 
-        IBaseLabelProvider labelProvider = new LabelProvider() {
-            /*
-             * (non-Javadoc)
-             * 
-             * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
-             */
-            @Override
-            public String getText(Object element) {
-                return element.toString();
-            }
+		IBaseLabelProvider labelProvider = new LabelProvider() {
+			/*
+			 * (non-Javadoc)
+			 *
+			 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
+			 */
+			@Override
+			public String getText(Object element) {
+				return element.toString();
+			}
 
-        };
+		};
 
-        this.patchViewer = SWTWidgetHelper.createListViewer(g, Messages.getString("QDeletePage.patchViewer.title"), 100, //$NON-NLS-1$
-                labelProvider);
-        populatePatchViewer();                
+		this.patchViewer = SWTWidgetHelper.createListViewer(g, Messages.getString("QDeletePage.patchViewer.title"), 100, //$NON-NLS-1$
+				labelProvider);
+		populatePatchViewer();
 
-        g = SWTWidgetHelper.createGroup(composite, Messages.getString("QDeletePage.optionGroup.title")); //$NON-NLS-1$
-        this.keepCheckBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QDeletePage.keepCheckBox.title")); //$NON-NLS-1$
-        this.revCheckBox = SWTWidgetHelper.createCheckBox(g,
-                Messages.getString("QDeletePage.revCheckBox.title")); //$NON-NLS-1$
+		g = SWTWidgetHelper.createGroup(composite, Messages.getString("QDeletePage.optionGroup.title")); //$NON-NLS-1$
+		this.keepCheckBox = SWTWidgetHelper.createCheckBox(g, Messages.getString("QDeletePage.keepCheckBox.title")); //$NON-NLS-1$
+		this.revCheckBox = SWTWidgetHelper.createCheckBox(g,
+				Messages.getString("QDeletePage.revCheckBox.title")); //$NON-NLS-1$
 
-        SelectionListener revListener = new SelectionListener() {
+		SelectionListener revListener = new SelectionListener() {
 
-            public void widgetDefaultSelected(SelectionEvent e) {
-                widgetSelected(e);
-            }
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
 
-            public void widgetSelected(SelectionEvent e) {
-                changesetTable.setEnabled(revCheckBox.getSelection());
-                patchViewer.getControl().setEnabled(!revCheckBox.getSelection());
-            }
+			public void widgetSelected(SelectionEvent e) {
+				changesetTable.setEnabled(revCheckBox.getSelection());
+				patchViewer.getControl().setEnabled(!revCheckBox.getSelection());
+			}
 
-        };
+		};
 
-        revCheckBox.addSelectionListener(revListener);
+		revCheckBox.addSelectionListener(revListener);
 
-        GridData gridData = new GridData(GridData.FILL_BOTH);
-        gridData.heightHint = 150;
-        gridData.minimumHeight = 50;
-        this.changesetTable = new ChangesetTable(g, resource.getProject());
-        this.changesetTable.setLayoutData(gridData);
-        this.changesetTable.setEnabled(false);
-        setControl(composite);
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		gridData.heightHint = 150;
+		gridData.minimumHeight = 50;
+		this.changesetTable = new ChangesetTable(g, resource.getProject());
+		this.changesetTable.setLayoutData(gridData);
+		this.changesetTable.setEnabled(false);
+		setControl(composite);
 
-    }    
+	}
 
-    /**
-     * 
-     */
-    private void populatePatchViewer() {
-        try {
-            List<Patch>patches = HgQAppliedClient.getUnappliedPatches(resource);
-            for (Patch patch : patches) {
-                patchViewer.add(patch);
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            setErrorMessage(e.getLocalizedMessage());
-        }
-    }
+	/**
+	 *
+	 */
+	private void populatePatchViewer() {
+		try {
+			List<Patch>patches = HgQAppliedClient.getUnappliedPatches(resource);
+			for (Patch patch : patches) {
+				patchViewer.add(patch);
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			setErrorMessage(e.getLocalizedMessage());
+		}
+	}
 
-    /**
-     * @return the patchViewer
-     */
-    public ListViewer getPatchViewer() {
-        return patchViewer;
-    }
+	/**
+	 * @return the patchViewer
+	 */
+	public ListViewer getPatchViewer() {
+		return patchViewer;
+	}
 
-    /**
-     * @return the resource
-     */
-    public IResource getResource() {
-        return resource;
-    }
+	/**
+	 * @return the resource
+	 */
+	public IResource getResource() {
+		return resource;
+	}
 
-    /**
-     * @param resource the resource to set
-     */
-    public void setResource(IResource resource) {
-        this.resource = resource;
-    }
+	/**
+	 * @param resource the resource to set
+	 */
+	public void setResource(IResource resource) {
+		this.resource = resource;
+	}
 
-    /**
-     * @return the revCheckBox
-     */
-    public Button getRevCheckBox() {
-        return revCheckBox;
-    }
+	/**
+	 * @return the revCheckBox
+	 */
+	public Button getRevCheckBox() {
+		return revCheckBox;
+	}
 
-    /**
-     * @return the keepCheckBox
-     */
-    public Button getKeepCheckBox() {
-        return keepCheckBox;
-    }
+	/**
+	 * @return the keepCheckBox
+	 */
+	public Button getKeepCheckBox() {
+		return keepCheckBox;
+	}
 
-    /**
-     * @return the changesetTable
-     */
-    public ChangesetTable getChangesetTable() {
-        return changesetTable;
-    }
+	/**
+	 * @return the changesetTable
+	 */
+	public ChangesetTable getChangesetTable() {
+		return changesetTable;
+	}
 
 }

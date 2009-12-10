@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch - Implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
@@ -33,132 +34,122 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 /**
  * This action adds projects to the workspace using their unique Mercurial
  * reference strings from projectsets
- * 
+ *
  * @author Bastian Doetsch
  */
 public class AddToWorkspaceAction extends WorkspaceModifyOperation {
-    private String[] referenceStrings = null;
-    private IProject[] projectsCreated = null;
+	private String[] referenceStrings;
+	private IProject[] projectsCreated;
 
-    /**
-     * 
-     */
-    public AddToWorkspaceAction() {
-    }
+	public AddToWorkspaceAction() {
+		super();
+	}
 
-    /**
-     * @param rule
-     */
-    public AddToWorkspaceAction(ISchedulingRule rule) {
-        super(rule);
-    }
+	public AddToWorkspaceAction(ISchedulingRule rule) {
+		super(rule);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.eclipse.ui.actions.WorkspaceModifyOperation#execute(org.eclipse.core.runtime.IProgressMonitor)
-     */
-    @Override
-    protected void execute(IProgressMonitor monitor) throws CoreException,
-            InvocationTargetException, InterruptedException {
+	@Override
+	protected void execute(IProgressMonitor monitor) throws CoreException,
+			InvocationTargetException, InterruptedException {
 
-        try {
-            monitor.beginTask("Adding projects to workspace...",
-                    referenceStrings.length);
+		try {
+			monitor.beginTask("Adding projects to workspace...",
+					referenceStrings.length);
 
-            IWorkspace workspace = ResourcesPlugin.getWorkspace();
+			IWorkspace workspace = ResourcesPlugin.getWorkspace();
 
-            ArrayList<IProject> projects = new ArrayList<IProject>(
-                    referenceStrings.length);
+			ArrayList<IProject> projects = new ArrayList<IProject>(
+					referenceStrings.length);
 
-            /*
-             * iterate over all reference strings and use them to create
-             * projects in the current workspace.
-             * 
-             * A reference string uses underscore as delimiter and looks like
-             * this:
-             * 
-             * "MercurialEclipseProjectSet_ProjectName_RepositoryURLForClone"
-             * 
-             */
+			/*
+			 * iterate over all reference strings and use them to create
+			 * projects in the current workspace.
+			 *
+			 * A reference string uses underscore as delimiter and looks like
+			 * this:
+			 *
+			 * "MercurialEclipseProjectSet_ProjectName_RepositoryURLForClone"
+			 *
+			 */
 
-            for (String reference : referenceStrings) {
-                if (monitor.isCanceled()) {
-                    break;
-                }
-                String[] referenceParts = reference.split("_");
+			for (String reference : referenceStrings) {
+				if (monitor.isCanceled()) {
+					break;
+				}
+				String[] referenceParts = reference.split("_");
 
-                // Project name is stored in part 1
-                IProject proj = workspace.getRoot().getProject(
-                        referenceParts[1]);
+				// Project name is stored in part 1
+				IProject proj = workspace.getRoot().getProject(
+						referenceParts[1]);
 
-                // only new projects
-                if (proj.exists() || proj.getLocation() != null) {
-                    MercurialEclipsePlugin.logInfo("Project" + proj.getName()
-                            + " not imported. Already exists.", null);
-                    monitor.worked(1);
-                    continue;
-                }
-                try {
-                    // Repository-URL is stored in part 2
-                    HgRepositoryLocation location = MercurialEclipsePlugin
-                            .getRepoManager()
-                            .getRepoLocation(
-                            referenceParts[2], null, null);
+				// only new projects
+				if (proj.exists() || proj.getLocation() != null) {
+					MercurialEclipsePlugin.logInfo("Project" + proj.getName()
+							+ " not imported. Already exists.", null);
+					monitor.worked(1);
+					continue;
+				}
+				try {
+					// Repository-URL is stored in part 2
+					HgRepositoryLocation location = MercurialEclipsePlugin
+							.getRepoManager()
+							.getRepoLocation(
+							referenceParts[2], null, null);
 
-                    HgCloneClient.clone(workspace.getRoot().getLocation()
-                            .toOSString(), location, false, false, false,
-                            false, null, referenceParts[1]);
+					HgCloneClient.clone(workspace.getRoot().getLocation()
+							.toFile(), location, false, false, false,
+							false, null, referenceParts[1]);
 
-                    proj.create(monitor);
-                    proj.open(monitor);
+					proj.create(monitor);
+					proj.open(monitor);
 
-                    // Register the project with Team.
-                    RepositoryProvider.map(proj, MercurialTeamProvider.class
-                            .getName());
-                    RepositoryProvider.getProvider(proj,
-                            MercurialTeamProvider.class.getName());
-                    projects.add(proj);
+					// Register the project with Team.
+					RepositoryProvider.map(proj, MercurialTeamProvider.class
+							.getName());
+					RepositoryProvider.getProvider(proj,
+							MercurialTeamProvider.class.getName());
+					projects.add(proj);
 
-                    // store repo as default repo
-                    MercurialEclipsePlugin.getRepoManager()
-                            .setDefaultProjectRepository(proj, location);
-                    MercurialEclipsePlugin.getRepoManager().addRepoLocation(
-                            proj, location);
+					// store repo as default repo
+					MercurialEclipsePlugin.getRepoManager()
+							.setDefaultProjectRepository(proj, location);
+					MercurialEclipsePlugin.getRepoManager().addRepoLocation(
+							proj, location);
 
-                    // refresh project to get decorations
-                    proj.refreshLocal(IResource.DEPTH_INFINITE, monitor);
+					// refresh project to get decorations
+					proj.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 
-                } catch (Exception e) {
-                    CoreException ex = new CoreException(new Status(
-                            IStatus.ERROR, MercurialEclipsePlugin.ID, e
-                                    .getLocalizedMessage()));
-                    ex.initCause(e);
-                    throw ex;
-                }
-                // increase monitor so we see at least a bit of a progress when
-                // importing multiple projects
-                monitor.worked(1);
-            }
-            projectsCreated = projects.toArray(new IProject[projects.size()]);
-        } finally {
-            monitor.done();
-        }
-    }
+				} catch (CoreException e) {
+					CoreException ex = new CoreException(new Status(
+							IStatus.ERROR, MercurialEclipsePlugin.ID, e
+									.getLocalizedMessage()));
+					ex.initCause(e);
+					throw ex;
+				}
+				// increase monitor so we see at least a bit of a progress when
+				// importing multiple projects
+				monitor.worked(1);
+			}
+			projectsCreated = projects.toArray(new IProject[projects.size()]);
+		} finally {
+			monitor.done();
+		}
+	}
 
-    public String[] getReferenceStrings() {
-        return referenceStrings;
-    }
+	public String[] getReferenceStrings() {
+		return referenceStrings;
+	}
 
-    public void setReferenceStrings(String[] referenceStrings) {
-        this.referenceStrings = referenceStrings;
-    }
+	public void setReferenceStrings(String[] referenceStrings) {
+		this.referenceStrings = referenceStrings;
+	}
 
-    public IProject[] getProjectsCreated() {
-        return projectsCreated;
-    }
+	public IProject[] getProjectsCreated() {
+		return projectsCreated;
+	}
 
-    public void setProjectsCreated(IProject[] projectsCreated) {
-        this.projectsCreated = projectsCreated;
-    }
+	public void setProjectsCreated(IProject[] projectsCreated) {
+		this.projectsCreated = projectsCreated;
+	}
 }

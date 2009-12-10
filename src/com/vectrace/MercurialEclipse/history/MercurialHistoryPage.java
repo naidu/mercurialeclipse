@@ -11,9 +11,11 @@
  *     Stefan Groschupf          - logError
  *     Subclipse project committers - reference
  *     Charles O'Farrell         - comparison diff
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IFile;
@@ -30,7 +32,12 @@ import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ColumnWeightData;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -58,10 +65,12 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.actions.ActionFactory;
-import org.eclipse.ui.actions.BaseSelectionListenerAction;
+import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -71,396 +80,467 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
-    public MercurialHistory getMercurialHistory() {
-        return mercurialHistory;
-    }
 
-    private GraphLogTableViewer viewer;
-    private IResource resource;
-    private ChangeLogContentProvider changeLogViewContentProvider;
-    private MercurialHistory mercurialHistory;
-    private IFileRevision[] entries;
-    private RefreshMercurialHistory refreshFileHistoryJob;
-    private ChangedPathsPage changedPaths;
+	private GraphLogTableViewer viewer;
+	private IResource resource;
+	private ChangeLogContentProvider changeLogViewContentProvider;
+	private MercurialHistory mercurialHistory;
+	private IFileRevision[] entries;
+	private RefreshMercurialHistory refreshFileHistoryJob;
+	private ChangedPathsPage changedPaths;
+	private ChangeSet currentWorkdirChangeset;
+	private OpenMercurialRevisionAction openAction;
 
-    private ChangeSet currentWorkdirChangeset;
+	private final class CompareRevisionAction extends Action {
 
-    class RefreshMercurialHistory extends Job {
-        MercurialHistory mercurialHistory;
-        private final int from;
+		private CompareRevisionAction(String text) {
+			super(text);
+			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
+		}
 
-        public RefreshMercurialHistory(int from, MercurialHistory fileHistory) {
-            super("Fetching Mercurial revisions..."); //$NON-NLS-1$
-            this.from = from;
-            this.mercurialHistory = fileHistory;
-        }
+		@Override
+		public void run() {
+			IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+			final Object[] revs = selection.toArray();
 
-        public void setFileHistory(MercurialHistory mercurialHistory) {
-            this.mercurialHistory = mercurialHistory;
-        }
+			final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
+			final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
+			final IRunnableWithProgress runnable = new IRunnableWithProgress() {
 
-        @Override
-        public IStatus run(IProgressMonitor monitor) {
+				public void run(IProgressMonitor monitor) throws InvocationTargetException,
+						InterruptedException {
+					try {
+						if(revs.length > 0 && !monitor.isCanceled()){
+							left[0] = getStorage((MercurialRevision) revs[0], monitor);
+							if(revs.length > 1 && !monitor.isCanceled()){
+								right[0] = getStorage((MercurialRevision) revs[1], monitor);
+							}
+						}
+					} catch (CoreException e) {
+						MercurialEclipsePlugin.logError(e);
+						throw new InvocationTargetException(e);
+					}
+					if(monitor.isCanceled()){
+						throw new InterruptedException("Cancelled by user");
+					}
+				}
+			};
+			ProgressMonitorDialog progress = new ProgressMonitorDialog(viewer.getControl().getShell());
+			try {
+				progress.run(true, true, runnable);
+			} catch (InvocationTargetException e) {
+				MercurialEclipsePlugin.logError(e.getCause());
+				return;
+			} catch (InterruptedException e) {
+				// user cancel
+				return;
+			}
 
-            IStatus status = Status.OK_STATUS;
+			if(left[0] == null){
+				return;
+			}
+			boolean localEditable = right[0] == null;
+			CompareUtils.openEditor(left[0], right[0], false, localEditable);
+		}
 
-            if (mercurialHistory != null) {
-                try {
-                    mercurialHistory.refresh(monitor, from);
-                    currentWorkdirChangeset = LocalChangesetCache.getInstance().getCurrentWorkDirChangeset(resource);
-                } catch (CoreException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
+		@Override
+		public boolean isEnabled() {
+			int size = ((IStructuredSelection) viewer.getSelection()).size();
+			return IFile.class.isAssignableFrom(getInput().getClass()) && (size == 1 || size == 2);
+		}
 
-                final Runnable runnable = new Runnable() {
-                    public void run() {
-                        viewer.setInput(mercurialHistory);
-                        viewer.refresh();
-                    }
-                };
+		/**
+		 * this can take a lot of time, and UI must take care that it will not be frozen until
+		 * the info is fetched...
+		 * @param monitor
+		 */
+		private MercurialRevisionStorage getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
+			if(rev.getParent() == null){
+				// see issue #10302: this is a dirty trick to make sure to get content even
+				// if the file was renamed/copied.
+				HgLogClient.getLogWithBranchInfo(rev, mercurialHistory, monitor);
+			}
+			return (MercurialRevisionStorage) rev.getStorage(monitor);
+		}
+	}
 
-                // Internal code copied here from Utils.asyncExec
-                if (viewer == null) {
-                    return status;
-                }
+	class RefreshMercurialHistory extends Job {
+		private final int from;
 
-                final Control ctrl = viewer.getControl();
-                if (ctrl != null && !ctrl.isDisposed()) {
-                    ctrl.getDisplay().asyncExec(new Runnable() {
-                        public void run() {
-                            if (!ctrl.isDisposed()) {
-                                BusyIndicator.showWhile(ctrl.getDisplay(),
-                                        runnable);
-                            }
-                        }
-                    });
-                }
-            }
+		public RefreshMercurialHistory(int from) {
+			super("Fetching Mercurial revisions..."); //$NON-NLS-1$
+			this.from = from;
+		}
 
-            return status;
-        }
-    }
+		@Override
+		public IStatus run(IProgressMonitor monitor) {
+			if (mercurialHistory == null) {
+				return Status.OK_STATUS;
+			}
 
-    class ChangeLogContentProvider implements IStructuredContentProvider {
+			try {
+				mercurialHistory.refresh(monitor, from);
+				currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+				return e.getStatus();
+			}
 
-        public void inputChanged(Viewer v, Object oldInput, Object newInput) {
-            entries = null;
-        }
+			final Runnable runnable = new Runnable() {
+				public void run() {
+					viewer.setInput(mercurialHistory);
+					viewer.refresh();
+				}
+			};
 
-        public void dispose() {
-        }
+			// Internal code copied here from Utils.asyncExec
+			if (viewer == null) {
+				return Status.OK_STATUS;
+			}
 
-        public Object[] getElements(Object parent) {
-            if (entries != null) {
-                return entries;
-            }
+			final Control ctrl = viewer.getControl();
+			if (ctrl != null && !ctrl.isDisposed()) {
+				ctrl.getDisplay().asyncExec(new Runnable() {
+					public void run() {
+						if (!ctrl.isDisposed()) {
+							BusyIndicator.showWhile(ctrl.getDisplay(),
+									runnable);
+						}
+					}
+				});
+			}
+			return Status.OK_STATUS;
+		}
+	}
 
-            final IFileHistory fileHistory = (IFileHistory) parent;
-            entries = fileHistory.getFileRevisions();
+	class ChangeLogContentProvider implements IStructuredContentProvider {
 
-            return entries;
-        }
-    }
+		public void inputChanged(Viewer v, Object oldInput, Object newInput) {
+			entries = null;
+		}
 
-    static class ChangeSetLabelProvider extends LabelProvider implements
-            ITableLabelProvider {
+		public void dispose() {
+		}
 
-        public String getColumnText(Object obj, int index) {
-            String ret;
+		public Object[] getElements(Object parent) {
+			if (entries != null) {
+				return entries;
+			}
 
-            if ((obj instanceof MercurialRevision) != true) {
-                return "Type Error"; //$NON-NLS-1$
-            }
+			final IFileHistory fileHistory = (IFileHistory) parent;
+			entries = fileHistory.getFileRevisions();
 
-            MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
-            ChangeSet changeSet = mercurialFileRevision.getChangeSet();
+			return entries;
+		}
+	}
 
-            switch (index) {
-            case 1:
-                ret = changeSet.toString();
-                break;
-            case 2:
-                ret = changeSet.getTag();
-                break;
-            case 3:
-                ret = changeSet.getBranch();
-                break;
-            case 4:
-                ret = changeSet.getUser();
-                break;
-            case 5:
-                ret = changeSet.getDate();
-                break;
-            case 6:
-                ret = changeSet.getSummary();
-                break;
-            default:
-                ret = null;
-                break;
-            }
-            return ret;
-        }
+	static class ChangeSetLabelProvider extends LabelProvider implements
+			ITableLabelProvider {
 
-        public Image getColumnImage(Object obj, int index) {
-            return null;
-        }
-    }
+		public String getColumnText(Object obj, int index) {
+			String ret;
 
-    public MercurialHistoryPage(IResource resource) {
-        super();
-        if (isValidInput(resource)) {
-            this.resource = resource;
-        }
-    }
+			if ((obj instanceof MercurialRevision) != true) {
+				return "Type Error"; //$NON-NLS-1$
+			}
 
-    @Override
-    public boolean inputSet() {
-        mercurialHistory = new MercurialHistory(resource);
-        refresh();
-        return true;
-    }
+			MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
+			ChangeSet changeSet = mercurialFileRevision.getChangeSet();
 
-    @Override
-    public void createControl(Composite parent) {
-        changedPaths = new ChangedPathsPage(this, parent);
-        createTableHistory(changedPaths.getControl());
-        changedPaths.createControl();
-        getSite().setSelectionProvider(viewer);
-        getSite().getActionBars().setGlobalActionHandler(ActionFactory.COPY.getId(), new Action() {
-            @Override
-            public void run() {
-                copyToClipboard();
-            }
-        });
-    }
+			switch (index) {
+			case 1:
+				ret = changeSet.toString();
+				break;
+			case 2:
+				ret = changeSet.getTag();
+				break;
+			case 3:
+				ret = changeSet.getBranch();
+				break;
+			case 4:
+				ret = changeSet.getUser();
+				break;
+			case 5:
+				ret = changeSet.getDateString();
+				break;
+			case 6:
+				ret = changeSet.getSummary();
+				break;
+			default:
+				ret = null;
+				break;
+			}
+			return ret;
+		}
 
-    private void createTableHistory(Composite parent) {
-        Composite composite = new Composite(parent, SWT.NONE);
-        GridLayout layout0 = new GridLayout();
-        layout0.marginHeight = 0;
-        layout0.marginWidth = 0;
-        composite.setLayout(layout0);
-        GridData data = new GridData(GridData.FILL_BOTH);
-        data.grabExcessVerticalSpace = true;
-        composite.setLayoutData(data);
+		public Image getColumnImage(Object obj, int index) {
+			return null;
+		}
+	}
 
-        viewer = new GraphLogTableViewer(composite, SWT.MULTI | SWT.H_SCROLL
-                | SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.VIRTUAL, this);
-        Table changeLogTable = viewer.getTable();
+	public MercurialHistoryPage(IResource resource) {
+		super();
+		if (isValidInput(resource)) {
+			this.resource = resource;
+		}
+	}
 
-        changeLogTable.setLinesVisible(true);
-        changeLogTable.setHeaderVisible(true);
+	public MercurialHistory getMercurialHistory() {
+		return mercurialHistory;
+	}
 
-        GridData gridData = new GridData(GridData.FILL_BOTH);
-        changeLogTable.setLayoutData(gridData);
+	@Override
+	public boolean inputSet() {
+		mercurialHistory = new MercurialHistory(resource);
+		refresh();
+		return true;
+	}
 
-        TableLayout layout = new TableLayout();
-        changeLogTable.setLayout(layout);
+	@Override
+	public void createControl(Composite parent) {
+		changedPaths = new ChangedPathsPage(this, parent);
+		createTableHistory(changedPaths.getControl());
+		changedPaths.createControl();
+		getSite().setSelectionProvider(viewer);
+		getSite().getActionBars().setGlobalActionHandler(ActionFactory.COPY.getId(), new Action() {
+			@Override
+			public void run() {
+				copyToClipboard();
+			}
+		});
+	}
 
-        TableColumn column = new TableColumn(changeLogTable, SWT.CENTER);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.graph")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(7, true));
-        column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.changeset")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(15, true));
-        column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.tag")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(10, true));
-        column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.branch")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(10, true));
-        column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.user")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(7, true));
-        column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.date")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(13, true));
-        column = new TableColumn(changeLogTable, SWT.LEFT);
-        column.setText(Messages.getString("MercurialHistoryPage.columnHeader.summary")); //$NON-NLS-1$
-        layout.addColumnData(new ColumnWeightData(25, true));
+	private void createTableHistory(Composite parent) {
+		Composite composite = new Composite(parent, SWT.NONE);
+		GridLayout layout0 = new GridLayout();
+		layout0.marginHeight = 0;
+		layout0.marginWidth = 0;
+		composite.setLayout(layout0);
+		GridData data = new GridData(GridData.FILL_BOTH);
+		data.grabExcessVerticalSpace = true;
+		composite.setLayoutData(data);
 
-        viewer.setLabelProvider(new ChangeSetLabelProvider());
-        changeLogViewContentProvider = new ChangeLogContentProvider();
-        viewer.setContentProvider(changeLogViewContentProvider);
+		viewer = new GraphLogTableViewer(composite, SWT.MULTI | SWT.H_SCROLL
+				| SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.VIRTUAL, this);
+		Table changeLogTable = viewer.getTable();
 
-        contributeActions();
-    }
+		changeLogTable.setLinesVisible(true);
+		changeLogTable.setHeaderVisible(true);
 
-    private void copyToClipboard() {
-        IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
-        Iterator<?> iterator = selection.iterator();
-        StringBuilder text = new StringBuilder();
-        for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
-            text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
-        }
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		changeLogTable.setLayoutData(gridData);
 
-        text.append(System.getProperty("line.separator")); //$NON-NLS-1$
+		TableLayout layout = new TableLayout();
+		changeLogTable.setLayout(layout);
 
-        while(iterator.hasNext()) {
-            Object next = iterator.next();
-            ITableLabelProvider labelProvider = (ITableLabelProvider) viewer.getLabelProvider();
-            for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
-                text.append(labelProvider.getColumnText(next, columnIndex)).append('\t');
-            }
-            text.append(System.getProperty("line.separator")); //$NON-NLS-1$
-        }
-        new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()},
-                new Transfer[]{ TextTransfer.getInstance() });
-    }
+		TableColumn column = new TableColumn(changeLogTable, SWT.CENTER);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.graph")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(7, true));
+		column = new TableColumn(changeLogTable, SWT.LEFT);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.changeset")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(15, true));
+		column = new TableColumn(changeLogTable, SWT.LEFT);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.tag")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(10, true));
+		column = new TableColumn(changeLogTable, SWT.LEFT);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.branch")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(10, true));
+		column = new TableColumn(changeLogTable, SWT.LEFT);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.user")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(12, true));
+		column = new TableColumn(changeLogTable, SWT.LEFT);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.date")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(12, true));
+		column = new TableColumn(changeLogTable, SWT.LEFT);
+		column.setText(Messages.getString("MercurialHistoryPage.columnHeader.summary")); //$NON-NLS-1$
+		layout.addColumnData(new ColumnWeightData(25, true));
 
-    private void contributeActions() {
-        final BaseSelectionListenerAction openAction = getOpenAction();
-        final Action compareAction = getCompareAction();
+		viewer.setLabelProvider(new ChangeSetLabelProvider());
+		changeLogViewContentProvider = new ChangeLogContentProvider();
+		viewer.setContentProvider(changeLogViewContentProvider);
+		viewer.addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				getOpenAction();
+				updateOpenActionEnablement();
+				if(openAction.isEnabled()) {
+					openAction.run();
+				}
+			}
+		});
+		contributeActions();
+	}
 
-        final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
-            private MercurialRevision rev;
+	private void copyToClipboard() {
+		IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
+		Iterator<?> iterator = selection.iterator();
+		StringBuilder text = new StringBuilder();
+		for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
+			text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
+		}
 
-            @Override
-            public void run() {
-                try {
-                    IProject project = resource.getProject();
-                    Assert.isNotNull(project);
-                    HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
-                    refresh();
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
+		text.append(System.getProperty("line.separator")); //$NON-NLS-1$
 
-            @Override
-            public boolean isEnabled() {
-                IStructuredSelection selection = (IStructuredSelection) viewer
-                        .getSelection();
-                Object[] revs = selection.toArray();
-                if (revs != null && revs.length == 1) {
-                    rev = (MercurialRevision) revs[0];
-                    return true;
-                }
-                return false;
-            }
-        };
+		while(iterator.hasNext()) {
+			Object next = iterator.next();
+			ITableLabelProvider labelProvider = (ITableLabelProvider) viewer.getLabelProvider();
+			for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
+				text.append(labelProvider.getColumnText(next, columnIndex)).append('\t');
+			}
+			text.append(System.getProperty("line.separator")); //$NON-NLS-1$
+		}
+		new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()},
+				new Transfer[]{ TextTransfer.getInstance() });
+	}
 
-        // Contribute actions to popup menu
-        final MenuManager menuMgr = new MenuManager();
-        Menu menu = menuMgr.createContextMenu(viewer.getTable());
-        menuMgr.addMenuListener(new IMenuListener() {
-            public void menuAboutToShow(IMenuManager menuMgr1) {
-                menuMgr1
-                        .add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-                menuMgr1.add(openAction);
-                if (resource == null || resource.getType() != IResource.FILE) {
-                    openAction.setEnabled(false);
-                } else {
-                    openAction.setEnabled(true);
-                }
-                // TODO This is a HACK but I can't get the menu to update on
-                // selection :-(
-                compareAction.setEnabled(compareAction.isEnabled());
-                menuMgr1.add(compareAction);
-                updateAction.setEnabled(updateAction.isEnabled());
-                menuMgr1.add(updateAction);
-            }
-        });
-        menuMgr.setRemoveAllWhenShown(true);
-        viewer.getTable().setMenu(menu);
-    }
+	private void contributeActions() {
+		final Action compareAction = getCompareAction();
 
-    private OpenMercurialRevisionAction getOpenAction() {
-        final OpenMercurialRevisionAction openAction = new OpenMercurialRevisionAction(
-                "Open"); //$NON-NLS-1$
-        viewer.getTable().addSelectionListener(new SelectionAdapter() {
-            @Override
-            public void widgetSelected(SelectionEvent e) {
-                openAction.selectionChanged((IStructuredSelection) viewer
-                        .getSelection());
-            }
-        });
-        openAction.setPage(this);
-        return openAction;
-    }
+		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
+			private MercurialRevision rev;
 
-    private Action getCompareAction() {
-        return new Action(Messages.getString("CompareAction.label")) { //$NON-NLS-1$) {
-            @Override
-            public void run() {
-                try {
-                    MercurialRevisionStorage secondSelection = getStorage(1);
-                    boolean localEditable = secondSelection == null;
-                    CompareUtils.openEditor(getStorage(0), secondSelection,
-                            false, localEditable);
-                } catch (Exception e) {
-                    MercurialEclipsePlugin.logError(e);
-                }
-            }
+			@Override
+			public void run() {
+				try {
+					IProject project = resource.getProject();
+					Assert.isNotNull(project);
+					if (HgStatusClient.isDirty(project)) {
+						if (!MessageDialog
+								.openQuestion(getControl().getShell(),
+										"Uncommited Changes",
+										"Your project has uncommited changes.\nDo you really want to continue?")){
+							return;
+						}
+					}
+					HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
+					refresh();
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
 
-            @Override
-            public boolean isEnabled() {
-                int size = ((IStructuredSelection) viewer.getSelection())
-                        .size();
-                return IFile.class.isAssignableFrom(getInput().getClass())
-                        && (size == 1 || size == 2);
-            }
+			@Override
+			public boolean isEnabled() {
+				IStructuredSelection selection = (IStructuredSelection) viewer
+						.getSelection();
+				Object[] revs = selection.toArray();
+				if (revs != null && revs.length == 1) {
+					rev = (MercurialRevision) revs[0];
+					return true;
+				}
+				return false;
+			}
+		};
+		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 
-            private MercurialRevisionStorage getStorage(int i)
-                    throws CoreException {
-                IStructuredSelection selection = (IStructuredSelection) viewer
-                        .getSelection();
-                Object[] revs = selection.toArray();
-                if (i >= revs.length) {
-                    return null;
-                }
-                MercurialRevision rev = (MercurialRevision) revs[i];
-                return (MercurialRevisionStorage) rev.getStorage(null);
-            }
-        };
-    }
+		// Contribute actions to popup menu
+		final MenuManager menuMgr = new MenuManager();
+		Menu menu = menuMgr.createContextMenu(viewer.getTable());
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				getOpenAction();
+				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+				menuMgr1.add(openAction);
+				updateOpenActionEnablement();
+				// TODO This is a HACK but I can't get the menu to update on
+				// selection :-(
+				compareAction.setEnabled(compareAction.isEnabled());
+				menuMgr1.add(compareAction);
+				updateAction.setEnabled(updateAction.isEnabled());
+				menuMgr1.add(updateAction);
+			}
+		});
+		menuMgr.setRemoveAllWhenShown(true);
+		viewer.getTable().setMenu(menu);
+	}
 
-    @Override
-    public Control getControl() {
-        return changedPaths.getControl();
-    }
+	private OpenMercurialRevisionAction getOpenAction() {
+		if(openAction != null){
+			return openAction;
+		}
+		openAction = new OpenMercurialRevisionAction("Open");
+		viewer.getTable().addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				openAction.selectionChanged((IStructuredSelection) viewer
+						.getSelection());
+			}
+		});
+		openAction.setPage(this);
+		return openAction;
+	}
 
-    @Override
-    public void setFocus() {
-        // Nothing to see here
-    }
+	private Action getCompareAction() {
+		return new CompareRevisionAction(Messages.getString("CompareAction.label"));
+	}
 
-    public String getDescription() {
-        return resource.getFullPath().toOSString();
-    }
+	@Override
+	public Control getControl() {
+		return changedPaths.getControl();
+	}
 
-    public String getName() {
-        return resource.getFullPath().toOSString();
-    }
+	@Override
+	public void setFocus() {
+		// Nothing to see here
+	}
 
-    public boolean isValidInput(Object object) {
-        return true;
-    }
+	public String getDescription() {
+		return resource.getFullPath().toOSString();
+	}
 
-    public ChangeSet getCurrentWorkdirChangeset() {
-        return currentWorkdirChangeset;
-    }
+	public String getName() {
+		return resource.getFullPath().toOSString();
+	}
 
-    public void refresh() {
-        if (refreshFileHistoryJob == null) {
-            refreshFileHistoryJob = new RefreshMercurialHistory(
-                    Integer.MAX_VALUE,
-                    mercurialHistory);
-        }
+	public boolean isValidInput(Object object) {
+		return true;
+	}
 
-        if (refreshFileHistoryJob.getState() != Job.NONE) {
-            refreshFileHistoryJob.cancel();
-        }
-        refreshFileHistoryJob.setFileHistory(mercurialHistory);
-        refreshFileHistoryJob.schedule();
-    }
+	public ChangeSet getCurrentWorkdirChangeset() {
+		return currentWorkdirChangeset;
+	}
 
-    @SuppressWarnings("unchecked")
-    public Object getAdapter(Class adapter) {
-        return null;
-    }
+	public void refresh() {
+		if (refreshFileHistoryJob == null) {
+			refreshFileHistoryJob = new RefreshMercurialHistory(Integer.MAX_VALUE);
+		}
 
-    public TableViewer getTableViewer() {
-        return viewer;
-    }
+		if (refreshFileHistoryJob.getState() != Job.NONE) {
+			refreshFileHistoryJob.cancel();
+		}
+		scheduleInPage(refreshFileHistoryJob);
+	}
+
+	public void scheduleInPage(Job job) {
+		IWorkbenchSiteProgressService progressService = getProgressService();
+
+		if (progressService != null) {
+			progressService.schedule(job);
+		} else {
+			job.schedule();
+		}
+	}
+
+	private IWorkbenchSiteProgressService getProgressService() {
+		IWorkbenchSiteProgressService progressService = (IWorkbenchSiteProgressService) getHistoryPageSite()
+				.getWorkbenchPageSite().getService(IWorkbenchSiteProgressService.class);
+		return progressService;
+	}
+
+	@SuppressWarnings("unchecked")
+	public Object getAdapter(Class adapter) {
+		return null;
+	}
+
+	public TableViewer getTableViewer() {
+		return viewer;
+	}
+
+	private void updateOpenActionEnablement() {
+		openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
+		if (resource == null || resource.getType() != IResource.FILE) {
+			openAction.setEnabled(false);
+		} else {
+			openAction.setEnabled(true);
+		}
+	}
 }

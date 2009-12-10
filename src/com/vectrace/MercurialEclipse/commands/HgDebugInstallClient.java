@@ -16,11 +16,11 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgDebugInstallClient {
 
-    public static String debugInstall() throws HgException {
-        // we don't really need a working dir...
-        AbstractShellCommand command = new HgCommand(
-                "debuginstall", (File) null, true); //$NON-NLS-1$
-        command.setShowOnConsole(false);
-        return new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
-    }
+	public static String debugInstall() throws HgException {
+		// we don't really need a working dir...
+		AbstractShellCommand command = new HgCommand(
+				"debuginstall", (File) null, true); //$NON-NLS-1$
+		command.setShowOnConsole(false);
+		return new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
+	}
 }

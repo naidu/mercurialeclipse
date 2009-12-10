@@ -22,82 +22,82 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class QImportWizard extends HgWizard {
-    private QImportWizardPage page = null;
+	private QImportWizardPage page = null;
 
-    private IResource resource;
+	private IResource resource;
 
-    /**
-     * @param windowTitle
-     */
-    public QImportWizard(IResource resource) {
-        super(Messages.getString("QImportWizard.title")); //$NON-NLS-1$
-        this.resource = resource;
-        setNeedsProgressMonitor(true);
-        page = new QImportWizardPage(
-                Messages.getString("QImportWizard.pageName"), //$NON-NLS-1$
-                Messages.getString("QImportWizard.page.title"), //$NON-NLS-1$
-                Messages.getString("QImportWizard.page.description"), //$NON-NLS-1$
-                resource, null);
-        initPage(page.getDescription(), page);
-        addPage(page);
-    }
+	/**
+	 * @param windowTitle
+	 */
+	public QImportWizard(IResource resource) {
+		super(Messages.getString("QImportWizard.title")); //$NON-NLS-1$
+		this.resource = resource;
+		setNeedsProgressMonitor(true);
+		page = new QImportWizardPage(
+				Messages.getString("QImportWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("QImportWizard.page.title"), //$NON-NLS-1$
+				Messages.getString("QImportWizard.page.description"), //$NON-NLS-1$
+				resource, null);
+		initPage(page.getDescription(), page);
+		addPage(page);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-     */
-    @Override
-    public boolean performFinish() {
-        page.setErrorMessage(null);
-        ChangeSet[] changesets = page.getRevisions();
-        IPath patchFile = null;
-        if (changesets == null) {
-            if (page.getPatchFile().getText().length()==0) {
-                page.setErrorMessage(Messages.getString("QImportWizard.page.error.mustSelectChangesetOrFile")); //$NON-NLS-1$
-                return false;
-            }
-            
-            patchFile = new Path(page.getPatchFile().getText());
-            if (!patchFile.toFile().exists()) {
-                page.setErrorMessage(Messages.getString("QImportWizard.page.error.patchFileNotExists")); //$NON-NLS-1$
-                return false;
-            }            
-        }
-        
-        boolean existing = page.isExisting();
-        boolean git = page.getGitCheckBox().getSelection();
-        boolean force = page.getForceCheckBox().getSelection();
-        
-        QImportOperation impOperation = new QImportOperation(getContainer(),
-                patchFile, changesets, existing, git, force, resource);
-        try {
-            getContainer().run(true, false, impOperation);
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-            page.setErrorMessage(e.getLocalizedMessage());
-            return false;
-        }
-        PatchQueueView.getView().populateTable();
-        return true;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
+	 */
+	@Override
+	public boolean performFinish() {
+		page.setErrorMessage(null);
+		ChangeSet[] changesets = page.getRevisions();
+		IPath patchFile = null;
+		if (changesets == null) {
+			if (page.getPatchFile().getText().length()==0) {
+				page.setErrorMessage(Messages.getString("QImportWizard.page.error.mustSelectChangesetOrFile")); //$NON-NLS-1$
+				return false;
+			}
 
-    /**
-     * @return the resource
-     */
-    public IResource getResource() {
-        return resource;
-    }
+			patchFile = new Path(page.getPatchFile().getText());
+			if (!patchFile.toFile().exists()) {
+				page.setErrorMessage(Messages.getString("QImportWizard.page.error.patchFileNotExists")); //$NON-NLS-1$
+				return false;
+			}
+		}
 
-    /**
-     * @param resource
-     *            the resource to set
-     */
-    public void setResource(IResource resource) {
-        this.resource = resource;
-    }
+		boolean existing = page.isExisting();
+		boolean git = page.getGitCheckBox().getSelection();
+		boolean force = page.getForceCheckBox().getSelection();
+
+		QImportOperation impOperation = new QImportOperation(getContainer(),
+				patchFile, changesets, existing, git, force, resource);
+		try {
+			getContainer().run(true, false, impOperation);
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+			page.setErrorMessage(e.getLocalizedMessage());
+			return false;
+		}
+		PatchQueueView.getView().populateTable();
+		return true;
+	}
+
+	/**
+	 * @return the resource
+	 */
+	public IResource getResource() {
+		return resource;
+	}
+
+	/**
+	 * @param resource
+	 *            the resource to set
+	 */
+	public void setResource(IResource resource) {
+		this.resource = resource;
+	}
 
 }

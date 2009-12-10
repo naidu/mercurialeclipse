@@ -10,285 +10,253 @@
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch           - additions for repository view
  *     Subclipse contributors    - fromProperties() initial source
+ *     Adam Berkes (Intland)     - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.storage;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 
-/*
+/**
  * A class abstracting a Mercurial repository location which may be either local
  * or remote.
  */
-public class HgRepositoryLocation extends AllRootsElement implements
-        Comparable<HgRepositoryLocation> {
-    private String logicalName;
-    private String location;
-    private String user;
-    private String password;
-    private URI uri;
-    private static final String SPLIT_TOKEN = "@@@"; //$NON-NLS-1$
-    private static final String ALIAS_TOKEN = "@alias@"; //$NON-NLS-1$
-    private static final String PASSWORD_TOKEN = ":"; //$NON-NLS-1$
-    
+public class HgRepositoryLocation extends AllRootsElement implements Comparable<HgRepositoryLocation> {
 
-    HgRepositoryLocation(String logicalName, String uri)
-            throws URISyntaxException {
-        this(logicalName, uri, null, null);
-    }
+	private static final String PASSWORD_MASK = "***";
 
-    HgRepositoryLocation(String logicalName, String uri, String user,
-            String password)
-            throws URISyntaxException {
-        this.logicalName = logicalName;
-        this.location = uri;
-        String[] repoInfo = uri.split(SPLIT_TOKEN);
-        
-        this.user = user;
-        this.password = password;
-        
-        if ((this.user == null || this.user.length() == 0)
-                && repoInfo.length > 1) {
-            String userInfo = repoInfo[1];
-            if (userInfo.contains(ALIAS_TOKEN)) {
-                userInfo = userInfo.substring(0, userInfo.indexOf(ALIAS_TOKEN));
-            }
-            String[] splitUserInfo = userInfo.split(PASSWORD_TOKEN);
-            this.user = splitUserInfo[0];
-            if (splitUserInfo.length > 1)
-                this.password = splitUserInfo[1];
-            else
-                this.password = null;
-            location = repoInfo[0];
-        }
-        
-        String[] alias = uri.split(ALIAS_TOKEN);
-        if (alias.length == 2
-                && (logicalName == null || logicalName.length() == 0)) {
-            this.logicalName = alias[1];
-            if (location.contains(ALIAS_TOKEN)) {
-                location = location.substring(0, location.indexOf(ALIAS_TOKEN));
-            }
-        }
-        
-        URI myUri = null;
-        try {
-            myUri = new URI(location);
-        } catch (URISyntaxException e) {
+	private final String logicalName;
+	protected String location;
+	private final String user;
+	private final String password;
+	private final boolean isPush;
+	private Date lastUsage;
 
-            // do nothing. workaround below doesn't work :-(
+	/**
+	 * hg repository which is represented by a bundle file (on local disk)
+	 */
+	public static class BundleRepository extends HgRepositoryLocation {
 
-            // this creates an URI like file:/c:/hurz
-            // myUri = new File(uri).toURI();
-            // normalize
-            // myUri = myUri.normalize();
-            // adding two slashes for Mercurial => file:///c:/hurz
-            // see http://www.selenic.com/mercurial/bts/issue1153
-            // myUri = new URI(myUri.toASCIIString().substring(0, 5) + "//"
-            // + myUri.toASCIIString().substring(5));
-        }        
-        if (myUri != null) {
-            if (myUri.getScheme() != null
-                    && !myUri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
-                String userInfo = null;
-                if (myUri.getUserInfo() == null) {
-                    // This is a hack: ssh doesn't allow us to directly enter
-                    // in passwords in the URI (even though it says it does)
-                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
-                        userInfo = this.user;
-                    } else {
-                        userInfo = createUserinfo(this.user, this.password);
-                    }
-                    
-                } else {
-                    // extract user and password from given URI
-                    String[] authorization = myUri.getUserInfo().split(":"); //$NON-NLS-1$
-                    this.user = authorization[0];
-                    if (authorization.length > 1) {
-                        this.password = authorization[1];
-                    }
-                    
-                    // This is a hack: ssh doesn't allow us to directly enter 
-                    // in passwords in the URI (even though it says it does)
-                    if (myUri.getScheme().equalsIgnoreCase("ssh")) {
-                        userInfo = this.user;
-                    } else {
-                        userInfo = createUserinfo(this.user, this.password);
-                    }
-                }
-                this.uri = new URI(myUri.getScheme(), userInfo,
-                        myUri.getHost(), myUri.getPort(), myUri.getPath(),
-                        myUri.getQuery(), myUri.getFragment());
-            }
-            /*
-             * Bugfix for issue #208, port number not displayed for push/pull drop-down
-             * June 03 2009 - slyons
-             */
-            //this.location = new URI(myUri.getScheme(), myUri.getHost(), myUri
-            //        .getPath(), myUri.getFragment()).toASCIIString();
-            this.location = new URI(myUri.getScheme(), null, myUri.getHost(), myUri.getPort(),
-                    myUri.getPath(), null, myUri.getFragment()).toASCIIString();
-        }
-    }
+		/**
+		 * @param location canonical representation of a bundle file path, never null
+		 * @param isPush
+		 */
+		public BundleRepository(File location, boolean isPush) {
+			super(null, isPush, null, null);
+			this.location = location.getAbsolutePath();
+		}
 
-    /**
-     * @param user
-     * @param password
-     * @return
-     */
-    private String createUserinfo(String user, String password) {
-        String userInfo = null;
-        if (user != null && user.length() > 0) {
-            // pass gotta be separated by a colon
-            userInfo = user;
-            if (password != null && password.length() != 0) {
-                userInfo = userInfo.concat(":").concat(password); //$NON-NLS-1$
-            }
-        }
-        return userInfo;
-    }
+		@Override
+		public URI getUri(boolean isSafe) throws HgException {
+			return null;
+		}
+	}
 
-    static public boolean validateLocation(String validate) {
-        return validate.trim().length() > 0;
-        /*
-         * TODO: Something like this would be nice, but it doesn't understand
-         * ssh and allows several other protocols. try { URL url = new
-         * URL(validate); } catch(MalformedURLException e) { return false; }
-         * return true;
-         */
-    }
+	HgRepositoryLocation(String logicalName, boolean isPush, String user, String password){
+		this.logicalName = logicalName;
+		this.isPush = isPush;
+		this.user = user;
+		this.password = password;
+	}
 
-    public int compareTo(HgRepositoryLocation loc) {
-        return this.location.compareTo(loc.location);
-    }
+	HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
+		this(logicalName, isPush, user, password);
+		URI uri = HgRepositoryLocationParser.parseLocationToURI(location, user, password);
+		if(uri != null) {
+			try {
+				this.location = new URI(uri.getScheme(),
+						null,
+						uri.getHost(),
+						uri.getPort(),
+						uri.getPath(),
+						null,
+						uri.getFragment()).toASCIIString();
+			} catch (URISyntaxException ex) {
+				MercurialEclipsePlugin.logError(ex);
+			}
+		} else {
+			this.location = location;
+		}
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result
-                + ((location == null) ? 0 : location.hashCode());
-        return result;
-    }
+	HgRepositoryLocation(String logicalName, boolean isPush, URI uri) throws HgException {
+		this(logicalName, isPush, HgRepositoryLocationParser.getUserNameFromURI(uri),
+				HgRepositoryLocationParser.getPasswordFromURI(uri));
+		if (uri == null) {
+			throw new HgException("Given URI cannot be null");
+		}
+		try {
+			this.location = new URI(uri.getScheme(),
+					null,
+					uri.getHost(),
+					uri.getPort(),
+					uri.getPath(),
+					null,
+					uri.getFragment()).toASCIIString();
+		} catch (URISyntaxException ex) {
+			MercurialEclipsePlugin.logError(ex);
+		}
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null) {
-            return false;
-        }
-        if (!(obj instanceof HgRepositoryLocation)) {
-            return false;
-        }
-        final HgRepositoryLocation other = (HgRepositoryLocation) obj;
-        if (location == null) {
-            if (other.location != null) {
-                return false;
-            }
-        } else if (!location.equals(other.location)) {
-            return false;
-        }
-        return true;
-    }
+	static public boolean validateLocation(String validate) {
+		try {
+			HgRepositoryLocation location2 = HgRepositoryLocationParser.parseLocation(false, validate, null, null);
+			if(location2 == null){
+				return false;
+			}
+			return location2.getUri() != null || (location2.getLocation() != null &&
+					new File(location2.getLocation()).isDirectory());
+		} catch (HgException ex) {
+			MercurialEclipsePlugin.logError(ex);
+			return false;
+		}
+	}
 
-    /**
-     * @return the user
-     */
-    public String getUser() {
-        return user;
-    }
+	public int compareTo(HgRepositoryLocation loc) {
+		if(getLastUsage() == null){
+			return compareToLocation(loc);
+		}
+		if(loc.getLastUsage() == null){
+			return compareToLocation(loc);
+		}
+		int compareTo = getLastUsage().compareTo(loc.getLastUsage());
+		if (compareTo == 0) {
+			return compareToLocation(loc);
+		}
+		return compareTo;
+	}
 
-    /**
-     * @return the password
-     */
-    public String getPassword() {
-        return password;
-    }
+	private int compareToLocation(HgRepositoryLocation loc) {
+		if(getLocation() == null) {
+			return -1;
+		}
+		if(loc.getLocation() == null){
+			return 1;
+		}
+		int compareTo = getLocation().compareTo(loc.getLocation());
+		return compareTo;
+	}
 
-    @Override
-    public String toString() {
-        if (logicalName!= null && logicalName.length()>0) {
-            return logicalName + " (" + location + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        return location;
-    }
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result
+				+ ((location == null) ? 0 : location.hashCode());
+		return result;
+	}
 
-    public String getSaveString() {
-        String r = location;
-        if (uri != null && uri.getUserInfo() != null) {
-            r += SPLIT_TOKEN + uri.getUserInfo();
-        }
-        if (logicalName != null && logicalName.length() > 0) {
-            r += ALIAS_TOKEN + logicalName;
-        }
-        return r;
-    }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!(obj instanceof HgRepositoryLocation)) {
+			return false;
+		}
+		final HgRepositoryLocation other = (HgRepositoryLocation) obj;
+		if (location == null) {
+			if (other.location != null) {
+				return false;
+			}
+		} else if (!location.equals(other.location)) {
+			return false;
+		}
+		return true;
+	}
 
-    @Override
-    public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
-        return new HgRepositoryLocation[0];
-    }
+	public String getUser() {
+		return user;
+	}
 
-    @Override
-    public ImageDescriptor getImageDescriptor(Object object) {
-        return super.getImageDescriptor(object);
-    }
+	public String getPassword() {
+		return password;
+	}
 
-    /**
-     * @return the uri
-     */
-    public URI getUri() {
-        return uri;
-    }
+	/**
+	 * Return unsafe (with password) URI for repository location if possible
+	 * @return a valid URI of the repository or null if repository is local directory
+	 * @throws HgException unable to parse to URI or location is invalid.
+	 */
+	public URI getUri() throws HgException {
+		return getUri(false);
+	}
 
-    /**
-     * @return the location
-     */
-    public String getLocation() {
-        return location;
-    }
-    
-    /**
-     * @return a location with password removed that is safe to display on screen
-     */
-    public String getDisplayLocation() {
-        if (uri == null) {
-            return this.location;
-        }
-        
-        try {
-            return (new URI(uri.getScheme(), user,
-                    uri.getHost(), uri.getPort(), uri.getPath(),
-                    uri.getQuery(), uri.getFragment())).toString();
-            
-        } catch (URISyntaxException e) {
-            // This shouldn't happen at this point
-            throw new RuntimeException(e);
-        }
-    }
+	/**
+	 * Return URI for repository location if possible
+	 * @param isSafe add password to userinfo if false or add a mask instead
+	 * @return a valid URI of the repository or null if repository is local directory
+	 * @throws HgException unable to parse to URI or location is invalid.
+	 */
+	public URI getUri(boolean isSafe) throws HgException {
+		return HgRepositoryLocationParser.parseLocationToURI(getLocation(), getUser(), isSafe ? PASSWORD_MASK : getPassword());
+	}
 
-    /**
-     * @return the logicalName
-     */
-    public String getLogicalName() {
-        return logicalName;
-    }
+	@Override
+	public String toString() {
+		if (logicalName!= null && logicalName.length()>0) {
+			return logicalName + " (" + location + ")";
+		}
+		return location;
+	}
+
+	@Override
+	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
+		return new HgRepositoryLocation[0];
+	}
+
+	@Override
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return super.getImageDescriptor(object);
+	}
+
+	public String getLocation() {
+		return location;
+	}
+
+	/**
+	 * @return a location with password removed that is safe to display on screen
+	 */
+	public String getDisplayLocation() {
+		try {
+			URI uri = getUri(true);
+			if (uri != null) {
+				return uri.toString();
+			}
+		} catch (HgException ex) {
+			// This shouldn't happen at this point
+			throw new RuntimeException(ex);
+		}
+		return getLocation();
+	}
+
+	public String getLogicalName() {
+		return logicalName;
+	}
+
+	public Date getLastUsage() {
+		return lastUsage;
+	}
+
+	public void setLastUsage(Date lastUsage) {
+		this.lastUsage = lastUsage;
+	}
+
+	public boolean isPush() {
+		return isPush;
+	}
+
+	public boolean isEmpty() {
+		return (getLocation() == null || getLocation().length() == 0);
+	}
 }

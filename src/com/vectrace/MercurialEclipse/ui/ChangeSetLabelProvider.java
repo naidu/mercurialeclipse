@@ -7,29 +7,29 @@ import org.eclipse.swt.graphics.Image;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 
 public class ChangeSetLabelProvider
-        extends LabelProvider
-        implements ITableLabelProvider {
+		extends LabelProvider
+		implements ITableLabelProvider {
 
-    public Image getColumnImage(Object element, int columnIndex) {
-        return null;
-    }
+	public Image getColumnImage(Object element, int columnIndex) {
+		return null;
+	}
 
-    public String getColumnText(Object element, int columnIndex) {
-        ChangeSet rev = (ChangeSet) element;
-        switch(columnIndex) {
-            case 0:
-                return Integer.toString(rev.getChangesetIndex());
-            case 1:
-                return rev.getChangeset();
-            case 2:
-                return rev.getDate();
-            case 3:
-                return rev.getUser();
-            case 4:
-                return rev.getBranch();
-            case 5:
-                return rev.getSummary();
-        }
-        return null;
-    }
+	public String getColumnText(Object element, int columnIndex) {
+		ChangeSet rev = (ChangeSet) element;
+		switch(columnIndex) {
+			case 0:
+				return Integer.toString(rev.getChangesetIndex());
+			case 1:
+				return rev.getChangeset();
+			case 2:
+				return rev.getDateString();
+			case 3:
+				return rev.getUser();
+			case 4:
+				return rev.getBranch();
+			case 5:
+				return rev.getSummary();
+		}
+		return null;
+	}
 }

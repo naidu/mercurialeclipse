@@ -22,44 +22,44 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class DiffTray extends org.eclipse.jface.dialogs.DialogTray {
 
-    private CompareEditorInput compareInput;
-    private Composite comp;
+	private CompareEditorInput compareInput;
+	private Composite comp;
 
-    /**
-     * 
-     */
-    public DiffTray(CompareEditorInput compareInput) {
-        this.compareInput = compareInput;
-    }
+	/**
+	 *
+	 */
+	public DiffTray(CompareEditorInput compareInput) {
+		this.compareInput = compareInput;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * org.eclipse.jface.dialogs.DialogTray#createContents(org.eclipse.swt.widgets
-     * .Composite)
-     */
-    @Override
-    protected Control createContents(Composite parent) {
-        try {
-        comp = SWTWidgetHelper.createComposite(parent, 1);
-        compareInput.run(new NullProgressMonitor());
-        } catch (InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            MercurialEclipsePlugin.logError(e);
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            MercurialEclipsePlugin.logError(e);
-        }
-        Control c = compareInput.createContents(comp);
-        GridData layoutData = new GridData(GridData.FILL_BOTH);
-        layoutData.minimumWidth = 400;
-        c.setLayoutData(layoutData);
-        return comp;
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.eclipse.jface.dialogs.DialogTray#createContents(org.eclipse.swt.widgets
+	 * .Composite)
+	 */
+	@Override
+	protected Control createContents(Composite parent) {
+		try {
+		comp = SWTWidgetHelper.createComposite(parent, 1);
+		compareInput.run(new NullProgressMonitor());
+		} catch (InvocationTargetException e) {
+			// TODO Auto-generated catch block
+			MercurialEclipsePlugin.logError(e);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			MercurialEclipsePlugin.logError(e);
+		}
+		Control c = compareInput.createContents(comp);
+		GridData layoutData = new GridData(GridData.FILL_BOTH);
+		layoutData.minimumWidth = 400;
+		c.setLayoutData(layoutData);
+		return comp;
+	}
 
 }

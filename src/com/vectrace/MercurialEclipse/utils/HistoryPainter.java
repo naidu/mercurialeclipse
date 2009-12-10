@@ -43,11 +43,11 @@ public class HistoryPainter {
 
 	public HistoryPainter(IResource resource) {
 		try {
-		    LocalChangesetCache.getInstance().refreshAllLocalRevisions(
+			LocalChangesetCache.getInstance().refreshAllLocalRevisions(
 					resource.getProject(), false);
 
 			this.roof = new HistoryPainterRevision(resource,
-			        LocalChangesetCache.getInstance().getNewestLocalChangeSet(
+					LocalChangesetCache.getInstance().getNewestChangeSet(
 							resource));
 
 			// cleanup

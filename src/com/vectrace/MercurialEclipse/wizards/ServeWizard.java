@@ -6,63 +6,58 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
+ *     Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class ServeWizard extends HgWizard {
-    private IProject project;
-    private ServeWizardPage page;
+	private HgRoot hgRoot;
+	private ServeWizardPage servePage;
 
-    private ServeWizard() {
-        super(Messages.getString("ServeWizard.name")); //$NON-NLS-1$
-        setNeedsProgressMonitor(true);
-    }
+	private ServeWizard() {
+		super(Messages.getString("ServeWizard.name")); //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+	}
 
-    public ServeWizard(IResource resource) {
-        this();
-        this.project = resource.getProject();
-    }
+	public ServeWizard(HgRoot hgRoot) {
+		this();
+		this.hgRoot = hgRoot;
+	}
 
-    @Override
-    public void addPages() {
-        super.addPages();
-        page = createPage(Messages.getString("ServeWizard.pageName"), Messages.getString("ServeWizard.pageTitle"), Messages //$NON-NLS-1$ //$NON-NLS-2$
-                .getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
-                Messages.getString("ServeWizard.pageDescription")); //$NON-NLS-1$
-        addPage(page);
-    }
+	@Override
+	public void addPages() {
+		super.addPages();
+		servePage = createPage(Messages.getString("ServeWizard.pageName"), Messages.getString("ServeWizard.pageTitle"), Messages //$NON-NLS-1$ //$NON-NLS-2$
+				.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
+				Messages.getString("ServeWizard.pageDescription")); //$NON-NLS-1$
+		addPage(servePage);
+	}
 
-    /**
-     * Creates a Page.
-     */
-    protected ServeWizardPage createPage(String pageName, String pageTitle,
-            String iconPath, String description) {
-        this.page = new ServeWizardPage(pageName, pageTitle,
-                MercurialEclipsePlugin.getImageDescriptor(iconPath), project);
-        initPage(description, page);
-        return page;
-    }
+	/**
+	 * Creates a Page.
+	 */
+	protected ServeWizardPage createPage(String pageName, String pageTitle,
+			String iconPath, String description) {
+		this.servePage = new ServeWizardPage(pageName, pageTitle,
+				MercurialEclipsePlugin.getImageDescriptor(iconPath), hgRoot);
+		initPage(description, servePage);
+		return servePage;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-     */
-    @Override
-    public boolean performFinish() {
-        page.finish(new NullProgressMonitor());
-        return super.performFinish();
-    }
+	@Override
+	public boolean performFinish() {
+		servePage.finish(new NullProgressMonitor());
+		return super.performFinish();
+	}
 
 }

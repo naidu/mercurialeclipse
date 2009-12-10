@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre              - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -27,7 +28,6 @@ import org.eclipse.core.resources.IResourceChangeListener;
 import org.eclipse.core.resources.IResourceDelta;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
@@ -38,121 +38,121 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
 public class FlagManager implements IResourceChangeListener {
 
-    private Map<IProject, FlaggedProject> projects;
-    private List<FlagManagerListener> listeners;
+	private final Map<IProject, FlaggedProject> projects;
+	private final List<FlagManagerListener> listeners;
 
-    public FlagManager() {
-        projects = new HashMap<IProject, FlaggedProject>();
-        listeners = new ArrayList<FlagManagerListener>();
-        ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
-    }
+	public FlagManager() {
+		projects = new HashMap<IProject, FlaggedProject>();
+		listeners = new ArrayList<FlagManagerListener>();
+		ResourcesPlugin.getWorkspace().addResourceChangeListener(this);
+	}
 
-    public void dispose() {
-        ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
-    }
+	public void dispose() {
+		ResourcesPlugin.getWorkspace().removeResourceChangeListener(this);
+	}
 
-    public void addListener(FlagManagerListener listener) {
-        listeners.add(listener);
-    }
+	public void addListener(FlagManagerListener listener) {
+		listeners.add(listener);
+	}
 
-    public void removeListener(FlagManagerListener listener) {
-        listeners.remove(listener);
-    }
+	public void removeListener(FlagManagerListener listener) {
+		listeners.remove(listener);
+	}
 
-    public FlaggedProject getFlaggedProject(IProject project) throws CoreException, HgException {
-        if (project == null || RepositoryProvider.getProvider(project, MercurialTeamProvider.ID) == null) {
-            return null;
-        }
-        if (!projects.containsKey(project)) {
-            refresh(project);
-        }
-        return projects.get(project);
-    }
+	public FlaggedProject getFlaggedProject(IProject project) throws CoreException, HgException {
+		if (project == null || !MercurialTeamProvider.isHgTeamProviderFor(project)) {
+			return null;
+		}
+		if (!projects.containsKey(project)) {
+			refresh(project);
+		}
+		return projects.get(project);
+	}
 
-    // FIXME should be replaced byrefreshHgStatus and refreshMergeStatus
-    // FIXME need synchronization
-    public FlaggedProject refresh(IProject project) throws CoreException, HgException {
-        // status
-        String statusOutput = HgStatusClient.getStatus(project);
-        IContainer workspace = project.getParent();
-        Map<IResource, FlaggedResource> statusMap = new HashMap<IResource, FlaggedResource>();
-        Scanner scanner = new Scanner(statusOutput);
-        while (scanner.hasNext()) {
-            String status = scanner.next();
-            String localName = scanner.nextLine();
-            IResource member = project.getFile(localName.trim());
+	// FIXME should be replaced byrefreshHgStatus and refreshMergeStatus
+	// FIXME need synchronization
+	public FlaggedProject refresh(IProject project) throws CoreException, HgException {
+		// status
+		String statusOutput = HgStatusClient.getStatus(project);
+		IContainer workspace = project.getParent();
+		Map<IResource, FlaggedResource> statusMap = new HashMap<IResource, FlaggedResource>();
+		Scanner scanner = new Scanner(statusOutput);
+		while (scanner.hasNext()) {
+			String status = scanner.next();
+			String localName = scanner.nextLine();
+			IResource member = project.getFile(localName.trim());
 
-            BitSet bitSet = new BitSet();
-            bitSet.set(getBitIndex(status.charAt(0)));
-            statusMap.put(member, new FlaggedResource(member, bitSet));
+			BitSet bitSet = new BitSet();
+			bitSet.set(getBitIndex(status.charAt(0)));
+			statusMap.put(member, new FlaggedResource(member, bitSet));
 
-            // ancestors
-            for (IResource parent = member.getParent(); parent != workspace; parent = parent
-                    .getParent()) {
-                FlaggedResource parentFlagged = statusMap.get(parent);
-                if (parentFlagged == null) {
-                    statusMap.put(parent, new FlaggedResource(parent, bitSet));
-                } else {
-                    bitSet = parentFlagged.combineStatus(bitSet);
-                }
-            }
-        }
-        // version
-        String version = HgIdentClient.getCurrentRevision(project);
-        // merge status
-        if (project.getPersistentProperty(ResourceProperties.MERGING) != null) {
-            // TODO merge status
-        }
-        // populate map
-        FlaggedProject fp = new FlaggedProject(project, statusMap, version);
-        projects.put(project, fp);
-        // notification
-        for (FlagManagerListener listener : listeners) {
-            listener.onRefresh(project);
-        }
-        return fp;
-    }
+			// ancestors
+			for (IResource parent = member.getParent(); parent != workspace; parent = parent
+					.getParent()) {
+				FlaggedResource parentFlagged = statusMap.get(parent);
+				if (parentFlagged == null) {
+					statusMap.put(parent, new FlaggedResource(parent, bitSet));
+				} else {
+					bitSet = parentFlagged.combineStatus(bitSet);
+				}
+			}
+		}
+		// version
+		String version = HgIdentClient.getCurrentRevision(project);
+		// merge status
+		if (project.getPersistentProperty(ResourceProperties.MERGING) != null) {
+			// TODO merge status
+		}
+		// populate map
+		FlaggedProject fp = new FlaggedProject(project, statusMap, version);
+		projects.put(project, fp);
+		// notification
+		for (FlagManagerListener listener : listeners) {
+			listener.onRefresh(project);
+		}
+		return fp;
+	}
 
-    private final int getBitIndex(char status) {
-        switch (status) {
-            case '!':
-                return FlaggedResource.BIT_DELETED;
-            case 'R':
-                return FlaggedResource.BIT_REMOVED;
-            case 'I':
-                return FlaggedResource.BIT_IGNORE;
-            case 'C':
-                return FlaggedResource.BIT_CLEAN;
-            case '?':
-                return FlaggedResource.BIT_UNKNOWN;
-            case 'A':
-                return FlaggedResource.BIT_ADDED;
-            case 'M':
-                return FlaggedResource.BIT_MODIFIED;
-            default:
-                MercurialEclipsePlugin.logWarning(Messages.getString("FlagManager.unknownStatus") + status + "'", null); //$NON-NLS-1$ //$NON-NLS-2$
-                return FlaggedResource.BIT_IMPOSSIBLE;
-        }
-    }
+	private final int getBitIndex(char status) {
+		switch (status) {
+			case '!':
+				return FlaggedResource.BIT_DELETED;
+			case 'R':
+				return FlaggedResource.BIT_REMOVED;
+			case 'I':
+				return FlaggedResource.BIT_IGNORE;
+			case 'C':
+				return FlaggedResource.BIT_CLEAN;
+			case '?':
+				return FlaggedResource.BIT_UNKNOWN;
+			case 'A':
+				return FlaggedResource.BIT_ADDED;
+			case 'M':
+				return FlaggedResource.BIT_MODIFIED;
+			default:
+				MercurialEclipsePlugin.logWarning(Messages.getString("FlagManager.unknownStatus") + status + "'", null); //$NON-NLS-1$ //$NON-NLS-2$
+				return FlaggedResource.BIT_IMPOSSIBLE;
+		}
+	}
 
-    public void resourceChanged(IResourceChangeEvent event) {
-        Set<IProject> changedProjects = new HashSet<IProject>();
-        if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
-            IResourceDelta[] children = event.getDelta().getAffectedChildren();
-            for (IResourceDelta delta : children) {
-                IProject project = delta.getResource().getProject();                
-                if (null != RepositoryProvider.getProvider(project, MercurialTeamProvider.ID)) {
-                    changedProjects.add(project);
-                }
-            }
-        }
-        for (IProject project : changedProjects) {
-            try {
-                refresh(project);
-            } catch (Exception e) {
-                MercurialEclipsePlugin.logError(e);
-            }
-        }
-    }
+	public void resourceChanged(IResourceChangeEvent event) {
+		Set<IProject> changedProjects = new HashSet<IProject>();
+		if (event.getType() == IResourceChangeEvent.POST_CHANGE) {
+			IResourceDelta[] children = event.getDelta().getAffectedChildren();
+			for (IResourceDelta delta : children) {
+				IProject project = delta.getResource().getProject();
+				if (MercurialTeamProvider.isHgTeamProviderFor(project)) {
+					changedProjects.add(project);
+				}
+			}
+		}
+		for (IProject project : changedProjects) {
+			try {
+				refresh(project);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+	}
 
 }

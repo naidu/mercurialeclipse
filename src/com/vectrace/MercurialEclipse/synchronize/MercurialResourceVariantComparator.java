@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -16,73 +17,75 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import org.eclipse.team.core.variants.IResourceVariantComparator;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public class MercurialResourceVariantComparator implements
-        IResourceVariantComparator {
+/**
+ * Comparator for the identity with remote content
+ * @author Andrei
+ */
+public class MercurialResourceVariantComparator implements IResourceVariantComparator {
 
-    private static MercurialStatusCache statusCache = MercurialStatusCache
-            .getInstance();
-    private ChangeSet csWorkDir;
+	private final MercurialStatusCache statusCache;
 
-    public MercurialResourceVariantComparator() {
-    }
+	public MercurialResourceVariantComparator() {
+		statusCache = MercurialStatusCache.getInstance();
+	}
 
-    public boolean compare(IResource local, IResourceVariant repoRevision) {
-        try {
-            if (csWorkDir == null) {
-                csWorkDir = LocalChangesetCache.getInstance()
-                        .getCurrentWorkDirChangeset(local);
-            }
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
+	public boolean compare(IResource local, IResourceVariant repoRevision) {
+		if (!statusCache.isClean(local)) {
+			return false;
+		}
+		if(repoRevision == null){
+			return true;
+		}
 
-        if (!statusCache.isClean(local)) {
-            return false;
-        }
-        if(repoRevision == null){
-            return true;
-        }
+		MercurialRevisionStorage remoteIStorage;
+		try {
+			remoteIStorage = (MercurialRevisionStorage) repoRevision.getStorage(null);
+		} catch (TeamException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
+		}
 
-        try {
-            MercurialRevisionStorage remoteIStorage = (MercurialRevisionStorage) repoRevision
-            .getStorage(null);
-            ChangeSet cs = remoteIStorage.getChangeSet();
+		ChangeSet cs = remoteIStorage.getChangeSet();
 
-            // if this is outgoing or incoming, it can't be equal to
-            // any other changeset
-            if ((cs.getDirection() == Direction.INCOMING || cs
-                    .getDirection() == Direction.OUTGOING)
-                    && cs.getBranch().equals(csWorkDir.getBranch())) {
-                return false;
-            }
-        } catch (TeamException e) {
-            MercurialEclipsePlugin.logError(e);
-            return false;
-        }
-        // resource is clean and we compare against our local repository
-        return true;
-    }
+		// if this is outgoing or incoming, it can't be equal to any other changeset
+		Direction direction = cs.getDirection();
+		if (direction == Direction.INCOMING || direction == Direction.OUTGOING) {
+			String branch = MercurialTeamProvider.getCurrentBranch(local);
+			if (Branch.same(cs.getBranch(), branch)) {
+				return false;
+			}
+		}
+		// resource is clean and we compare against our local repository
+		return true;
+	}
 
-    public boolean compare(IResourceVariant base, IResourceVariant remote) {
-        MercurialResourceVariant mrv = (MercurialResourceVariant) remote;
-        if (csWorkDir != null && mrv.getRev().getChangeSet().getBranch().equals(
-                csWorkDir.getBranch())) {
-            return base.getContentIdentifier().equals(
-                    remote.getContentIdentifier());
-        }
-        return true;
-    }
+	public boolean compare(IResourceVariant base, IResourceVariant remote) {
+		MercurialResourceVariant mbase = (MercurialResourceVariant) base;
+		MercurialResourceVariant mremote = (MercurialResourceVariant) remote;
+		MercurialRevisionStorage remoteRev = mremote.getRev();
+		if(mbase.getRev() == remoteRev){
+			return true;
+		}
+		IResource resource = remoteRev.getResource();
+		String remoteBranch = remoteRev.getChangeSet().getBranch();
+		String currentBranch = MercurialTeamProvider.getCurrentBranch(resource);
+		if (Branch.same(currentBranch, remoteBranch)) {
+			return base.getContentIdentifier().equals(remote.getContentIdentifier());
+		}
+		return true;
+	}
 
-    public boolean isThreeWay() {
-        return true;
-    }
+	public boolean isThreeWay() {
+		return true;
+	}
+
+
 
 }

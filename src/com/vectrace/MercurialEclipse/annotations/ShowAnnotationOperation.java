@@ -7,9 +7,9 @@
  *
  * Contributors:
  *     Charles O'Farrell - implementation (based on subclipse)
- *     StefanC           - jobs framework, code cleenup
+ *     StefanC           - jobs framework, code cleanup
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.annotations;
 
 import java.lang.reflect.InvocationTargetException;
@@ -59,247 +59,247 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ShowAnnotationOperation extends TeamOperation {
-    private static final class MercurialRevision extends Revision {
-        private final CommitterColors colors;
+	private static final class MercurialRevision extends Revision {
+		private final CommitterColors colors;
 
-        private final ChangeSet entry;
+		private final ChangeSet entry;
 
-        private final String string;
+		private final String string;
 
-        private final AnnotateBlock block;
+		private final AnnotateBlock block;
 
-        private MercurialRevision(CommitterColors colors, ChangeSet entry,
-                String string, AnnotateBlock block) {
-            this.colors = colors;
-            this.entry = entry;
-            this.string = string;
-            this.block = block;
-        }
+		private MercurialRevision(CommitterColors colors, ChangeSet entry,
+				String string, AnnotateBlock block) {
+			this.colors = colors;
+			this.entry = entry;
+			this.string = string;
+			this.block = block;
+		}
 
-        @Override
-        public Object getHoverInfo() {
-            return block.getUser()
-                    + " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    (entry != null ? entry.getDescription() : ""); //$NON-NLS-1$
-        }
+		@Override
+		public Object getHoverInfo() {
+			return block.getUser()
+					+ " " + string + " " + DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT).format(block.getDate()) + "\n\n" + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					(entry != null ? entry.getComment() : ""); //$NON-NLS-1$
+		}
 
-        @Override
-        public String getAuthor() {
-            return block.getUser();
-        }
+		@Override
+		public String getAuthor() {
+			return block.getUser();
+		}
 
-        @Override
-        public String getId() {
-            return string;
-        }
+		@Override
+		public String getId() {
+			return string;
+		}
 
-        @Override
-        public Date getDate() {
-            return block.getDate();
-        }
+		@Override
+		public Date getDate() {
+			return block.getDate();
+		}
 
-        @Override
-        public RGB getColor() {
-            return colors.getCommitterRGB(getAuthor());
-        }
-    }
+		@Override
+		public RGB getColor() {
+			return colors.getCommitterRGB(getAuthor());
+		}
+	}
 
-    private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
-    private final HgFile remoteFile;
-    private final IResource res;
+	private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
+	private final HgFile remoteFile;
+	private final IResource res;
 
-    public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
-            throws HgException {
-        super(part);
-        this.remoteFile = remoteFile;
-        this.res = ResourceUtils.convert(remoteFile);
-    }
+	public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
+			throws HgException {
+		super(part);
+		this.remoteFile = remoteFile;
+		this.res = ResourceUtils.convert(remoteFile);
+	}
 
-    public void run(IProgressMonitor monitor) throws InvocationTargetException,
-            InterruptedException {
-        monitor.beginTask(null, 100);
-        try {
-            if (!MercurialStatusCache.getInstance().isSupervised(
-                    res,
-                    new Path(remoteFile.getCanonicalPath()))) {
-                return;
-            }
+	public void run(IProgressMonitor monitor) throws InvocationTargetException,
+			InterruptedException {
+		monitor.beginTask(null, 100);
+		try {
+			if (!MercurialStatusCache.getInstance().isSupervised(
+					res,
+					new Path(remoteFile.getCanonicalPath()))) {
+				return;
+			}
 
-            final AnnotateBlocks annotateBlocks = new AnnotateCommand(
-                    remoteFile).execute();
+			final AnnotateBlocks annotateBlocks = new AnnotateCommand(
+					remoteFile).execute();
 
-            // this is not needed if there is no live annotate
-            final RevisionInformation information = createRevisionInformation(
-                    annotateBlocks, monitor);
+			// this is not needed if there is no live annotate
+			final RevisionInformation information = createRevisionInformation(
+					annotateBlocks, monitor);
 
-            // We aren't running from a UI thread
-            new SafeUiJob(Messages.getString("ShowAnnotationOperation.job.name")) { //$NON-NLS-1$
-                @Override
-                protected IStatus runSafe(IProgressMonitor moni) {
-                    moni.beginTask(Messages.getString("ShowAnnotationOperation.beginAnnotation"), //$NON-NLS-1$
-                            IProgressMonitor.UNKNOWN);
-                    final AbstractDecoratedTextEditor editor = getEditor();
-                    if (editor != null) {
-                        editor
-                                .showRevisionInformation(
-                                        information,
-                                        HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER);
+			// We aren't running from a UI thread
+			new SafeUiJob(Messages.getString("ShowAnnotationOperation.job.name")) { //$NON-NLS-1$
+				@Override
+				protected IStatus runSafe(IProgressMonitor moni) {
+					moni.beginTask(Messages.getString("ShowAnnotationOperation.beginAnnotation"), //$NON-NLS-1$
+							IProgressMonitor.UNKNOWN);
+					final AbstractDecoratedTextEditor editor = getEditor();
+					if (editor != null) {
+						editor
+								.showRevisionInformation(
+										information,
+										HgPristineCopyQuickDiffProvider.HG_REFERENCE_PROVIDER);
 
-                    }
-                    moni.done();
-                    return super.runSafe(moni);
-                }
-            }.schedule();
+					}
+					moni.done();
+					return super.runSafe(moni);
+				}
+			}.schedule();
 
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-        } finally {
-            monitor.done();
-        }
-    }
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+		} finally {
+			monitor.done();
+		}
+	}
 
-    @Override
-    protected IAction getGotoAction() {
-        return super.getGotoAction();
-    }
+	@Override
+	protected IAction getGotoAction() {
+		return super.getGotoAction();
+	}
 
-    private AbstractDecoratedTextEditor getEditor() {
-        final IWorkbench workbench = PlatformUI.getWorkbench();
-        final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-        IEditorReference[] references = window.getActivePage()
-                .getEditorReferences();
-        IResource resource = res;
-        if (resource == null) {
-            return null;
-        }
+	private AbstractDecoratedTextEditor getEditor() {
+		final IWorkbench workbench = PlatformUI.getWorkbench();
+		final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+		IEditorReference[] references = window.getActivePage()
+				.getEditorReferences();
+		IResource resource = res;
+		if (resource == null) {
+			return null;
+		}
 
-        for (int i = 0; i < references.length; i++) {
-            IEditorReference reference = references[i];
-            try {
-                if (resource != null
-                        && resource.equals(reference.getEditorInput()
-                                .getAdapter(IFile.class))) {
-                    IEditorPart editor = reference.getEditor(false);
-                    if (editor instanceof AbstractDecoratedTextEditor) {
-                        return (AbstractDecoratedTextEditor) editor;
-                    }
-                    // editor opened is not a text editor - reopen file using
-                    // the
-                    // defualt text editor
-                    IEditorPart part = getPart().getSite().getPage()
-                            .openEditor(new FileEditorInput((IFile) resource),
-                                    DEFAULT_TEXT_EDITOR_ID, true,
-                                    IWorkbenchPage.MATCH_NONE);
-                    if (part != null
-                            && part instanceof AbstractDecoratedTextEditor) {
-                        return (AbstractDecoratedTextEditor) part;
-                    }
-                }
-            } catch (PartInitException e) {
-                // ignore
-            }
-        }
+		for (int i = 0; i < references.length; i++) {
+			IEditorReference reference = references[i];
+			try {
+				if (resource != null
+						&& resource.equals(reference.getEditorInput()
+								.getAdapter(IFile.class))) {
+					IEditorPart editor = reference.getEditor(false);
+					if (editor instanceof AbstractDecoratedTextEditor) {
+						return (AbstractDecoratedTextEditor) editor;
+					}
+					// editor opened is not a text editor - reopen file using
+					// the
+					// defualt text editor
+					IEditorPart part = getPart().getSite().getPage()
+							.openEditor(new FileEditorInput((IFile) resource),
+									DEFAULT_TEXT_EDITOR_ID, true,
+									IWorkbenchPage.MATCH_NONE);
+					if (part != null
+							&& part instanceof AbstractDecoratedTextEditor) {
+						return (AbstractDecoratedTextEditor) part;
+					}
+				}
+			} catch (PartInitException e) {
+				// ignore
+			}
+		}
 
-        // no existing editor references found, try to open a new editor for the
-        // file
+		// no existing editor references found, try to open a new editor for the
+		// file
 
-        try {
-            IEditorDescriptor descrptr = IDE
-                    .getEditorDescriptor((IFile) resource);
-            // try to open the associated editor only if its an internal
-            // editor
-            if (descrptr.isInternal()) {
-                IEditorPart part = IDE.openEditor(
-                        getPart().getSite().getPage(), (IFile) resource);
-                if (part instanceof AbstractDecoratedTextEditor) {
-                    return (AbstractDecoratedTextEditor) part;
-                }
+		try {
+			IEditorDescriptor descrptr = IDE
+					.getEditorDescriptor((IFile) resource);
+			// try to open the associated editor only if its an internal
+			// editor
+			if (descrptr.isInternal()) {
+				IEditorPart part = IDE.openEditor(
+						getPart().getSite().getPage(), (IFile) resource);
+				if (part instanceof AbstractDecoratedTextEditor) {
+					return (AbstractDecoratedTextEditor) part;
+				}
 
-                // editor opened is not a text editor - close it
-                getPart().getSite().getPage().closeEditor(part, false);
-            }
-            // open file in default text editor
-            IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
-                    (IFile) resource, DEFAULT_TEXT_EDITOR_ID);
-            if (part != null && part instanceof AbstractDecoratedTextEditor) {
-                return (AbstractDecoratedTextEditor) part;
-            }
+				// editor opened is not a text editor - close it
+				getPart().getSite().getPage().closeEditor(part, false);
+			}
+			// open file in default text editor
+			IEditorPart part = IDE.openEditor(getPart().getSite().getPage(),
+					(IFile) resource, DEFAULT_TEXT_EDITOR_ID);
+			if (part != null && part instanceof AbstractDecoratedTextEditor) {
+				return (AbstractDecoratedTextEditor) part;
+			}
 
-        } catch (PartInitException e) {
-        }
+		} catch (PartInitException e) {
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    @SuppressWarnings("unchecked")
-    private RevisionInformation createRevisionInformation(
-            final AnnotateBlocks annotateBlocks, IProgressMonitor monitor)
-            throws HgException {
-        Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();
-        LocalChangesetCache.getInstance().refreshAllLocalRevisions(
-                res, true);
-        Iterable<ChangeSet> revisions = LocalChangesetCache.getInstance()
-                .getLocalChangeSets(res);
-        for (ChangeSet changeSet : revisions) {
-            logEntriesByRevision.put(Integer.valueOf(changeSet.getRevision()
-                    .getRevision()),
-                    changeSet);
-        }
+	@SuppressWarnings("unchecked")
+	private RevisionInformation createRevisionInformation(
+			final AnnotateBlocks annotateBlocks, IProgressMonitor monitor)
+			throws HgException {
+		Map<Integer, ChangeSet> logEntriesByRevision = new HashMap<Integer, ChangeSet>();
+		LocalChangesetCache.getInstance().refreshAllLocalRevisions(
+				res, true);
+		Iterable<ChangeSet> revisions = LocalChangesetCache.getInstance()
+				.getOrFetchChangeSets(res);
+		for (ChangeSet changeSet : revisions) {
+			logEntriesByRevision.put(Integer.valueOf(changeSet.getRevision()
+					.getRevision()),
+					changeSet);
+		}
 
-        RevisionInformation info = new RevisionInformation();
+		RevisionInformation info = new RevisionInformation();
 
-        try {
-            Class infoClass = info.getClass();
-            Class[] paramTypes = { IInformationControlCreator.class };
-            Method method1 = infoClass.getMethod("setHoverControlCreator", //$NON-NLS-1$
-                    paramTypes);
-            Method method2 = infoClass.getMethod(
-                    "setInformationPresenterControlCreator", paramTypes); //$NON-NLS-1$
+		try {
+			Class infoClass = info.getClass();
+			Class[] paramTypes = { IInformationControlCreator.class };
+			Method method1 = infoClass.getMethod("setHoverControlCreator", //$NON-NLS-1$
+					paramTypes);
+			Method method2 = infoClass.getMethod(
+					"setInformationPresenterControlCreator", paramTypes); //$NON-NLS-1$
 
-            final class AnnotationControlCreator implements
-                    IInformationControlCreator {
-                private final String statusFieldText;
+			final class AnnotationControlCreator implements
+					IInformationControlCreator {
+				private final String statusFieldText;
 
-                public AnnotationControlCreator(String statusFieldText) {
-                    this.statusFieldText = statusFieldText;
-                }
+				public AnnotationControlCreator(String statusFieldText) {
+					this.statusFieldText = statusFieldText;
+				}
 
-                public IInformationControl createInformationControl(Shell parent) {
-                    return new SourceViewerInformationControl(parent, SWT.TOOL,
-                            SWT.NONE, JFaceResources.DEFAULT_FONT,
-                            statusFieldText);
-                }
-            }
+				public IInformationControl createInformationControl(Shell parent) {
+					return new SourceViewerInformationControl(parent, SWT.TOOL,
+							SWT.NONE, JFaceResources.DEFAULT_FONT,
+							statusFieldText);
+				}
+			}
 
-            method1.invoke(info, new Object[] { new AnnotationControlCreator(
-                    Messages.getString("ShowAnnotationOperation.pressF2ForFocus")) }); //$NON-NLS-1$
-            method2.invoke(info, new Object[] { new AnnotationControlCreator(
-                    null) });
+			method1.invoke(info, new Object[] { new AnnotationControlCreator(
+					Messages.getString("ShowAnnotationOperation.pressF2ForFocus")) }); //$NON-NLS-1$
+			method2.invoke(info, new Object[] { new AnnotationControlCreator(
+					null) });
 
-        } catch (Exception e) {
-            MercurialEclipsePlugin.logError(e);
-        }
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 
-        final CommitterColors colors = CommitterColors.getDefault();
+		final CommitterColors colors = CommitterColors.getDefault();
 
-        HashMap<String, Revision> sets = new HashMap<String, Revision>();
+		HashMap<String, Revision> sets = new HashMap<String, Revision>();
 
-        for (final AnnotateBlock block : annotateBlocks.getAnnotateBlocks()) {
-            final String revisionString = block.getRevision().toString();
-            final ChangeSet logEntry = logEntriesByRevision.get(block
-                    .getRevision().getRevision());
+		for (final AnnotateBlock block : annotateBlocks.getAnnotateBlocks()) {
+			final String revisionString = block.getRevision().toString();
+			final ChangeSet logEntry = logEntriesByRevision.get(block
+					.getRevision().getRevision());
 
-            Revision revision = sets.get(revisionString);
-            if (revision == null) {
-                revision = new MercurialRevision(colors, logEntry,
-                        revisionString, block);
-                sets.put(revisionString, revision);
-                info.addRevision(revision);
-            }
-            revision.addRange(new LineRange(block.getStartLine(), block
-                    .getEndLine()
-                    - block.getStartLine() + 1));
-        }
-        return info;
-    }
+			Revision revision = sets.get(revisionString);
+			if (revision == null) {
+				revision = new MercurialRevision(colors, logEntry,
+						revisionString, block);
+				sets.put(revisionString, revision);
+				info.addRevision(revision);
+			}
+			revision.addRange(new LineRange(block.getStartLine(), block
+					.getEndLine()
+					- block.getStartLine() + 1));
+		}
+		return info;
+	}
 }

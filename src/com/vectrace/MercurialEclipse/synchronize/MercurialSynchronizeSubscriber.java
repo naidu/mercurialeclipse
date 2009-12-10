@@ -7,6 +7,8 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ * Andrei Loskutov (Intland) - bugfixes
+ * Adam Berkes (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -16,17 +18,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.team.core.RepositoryProvider;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.subscribers.ISubscriberChangeEvent;
 import org.eclipse.team.core.subscribers.Subscriber;
 import org.eclipse.team.core.subscribers.SubscriberChangeEvent;
@@ -37,367 +44,545 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
+import com.vectrace.MercurialEclipse.utils.Bits;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MercurialSynchronizeSubscriber extends Subscriber /*implements Observer*/ {
 
+	private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
 
-    private static final LocalChangesetCache LOCAL_CACHE = LocalChangesetCache.getInstance();
+	private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
 
-    private static final IncomingChangesetCache INCOMING_CACHE = IncomingChangesetCache.getInstance();
+	private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache.getInstance();
 
-    private static final OutgoingChangesetCache OUTGOING_CACHE = OutgoingChangesetCache.getInstance();
+	private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
 
-    private static final MercurialStatusCache STATUS_CACHE = MercurialStatusCache.getInstance();
+	private final boolean debug;
+	private final RepositorySynchronizationScope scope;
+	private IResourceVariantComparator comparator;
+	private final Semaphore sema;
 
-    private final boolean debug;
-    private final ISynchronizationScope scope;
-    private IResource[] myRoots;
-    private IResourceVariantComparator comparator;
-    private final Semaphore sema;
+	/** key is hg root, value is the *current* changeset of this root */
+	private final Map<HgRoot, String> currentCsMap;
+	/** key is hg root, value is the *current* changeset of this root */
+	private final Map<HgRoot, String> currentBranchMap;
 
-    public MercurialSynchronizeSubscriber(ISynchronizationScope synchronizationScope) {
-        debug = MercurialEclipsePlugin.getDefault().isDebugging();
-        scope = synchronizationScope;
-        sema = new Semaphore(1, true);
-    }
+	private ISubscriberChangeEvent[] lastEvents;
 
-    @Override
-    public String getName() {
-        return Messages.getString("MercurialSynchronizeSubscriber.repoWatcher"); //$NON-NLS-1$
-    }
+	private MercurialSynchronizeParticipant participant;
 
-    @Override
-    public IResourceVariantComparator getResourceComparator() {
-        if (comparator == null) {
-            comparator = new MercurialResourceVariantComparator();
-        }
-        return comparator;
-    }
+	private HgChangesetsCollector collector;
 
-    @Override
-    public SyncInfo getSyncInfo(IResource resource) {
-        if (!isInteresting(resource)) {
-            return null;
-        }
-        HgRepositoryLocation repositoryLocation = getRepo(resource);
+	public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
+		Assert.isNotNull(synchronizationScope);
+		currentCsMap = new ConcurrentHashMap<HgRoot, String>();
+		currentBranchMap = new ConcurrentHashMap<HgRoot, String>();
+		debug = MercurialEclipsePlugin.getDefault().isDebugging();
+		scope = synchronizationScope;
+		synchronizationScope.setSubscriber(this);
+		sema = new Semaphore(1, true);
+	}
 
-        try {
-            if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
-                // waiting didn't worked for us...
-                return null;
-            }
-        } catch (InterruptedException e) {
-            MercurialEclipsePlugin.logError(e);
-            return null;
-        }
+	@Override
+	public String getName() {
+		return Messages.getString("MercurialSynchronizeSubscriber.repoWatcher"); //$NON-NLS-1$
+	}
 
-        ChangeSet csOutgoing;
-        try {
-            // this can trigger a refresh and a call to the remote server...
-            csOutgoing = OUTGOING_CACHE.getNewestOutgoingChangeSet(resource, repositoryLocation);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            return null;
-        } finally {
-            sema.release();
-        }
+	@Override
+	public IResourceVariantComparator getResourceComparator() {
+		if (comparator == null) {
+			comparator = new MercurialResourceVariantComparator();
+		}
+		return comparator;
+	}
 
-        MercurialRevisionStorage outgoingIStorage;
-        IResourceVariant outgoing;
-        // determine outgoing revision
-        if (csOutgoing != null) {
-            outgoingIStorage = new MercurialRevisionStorage(resource,
-                    csOutgoing.getRevision().getRevision(),
-                    csOutgoing.getChangeset(), csOutgoing);
+	@Override
+	public SyncInfo getSyncInfo(IResource resource) {
+		if (!isInteresting(resource)) {
+			return null;
+		}
+		IFile file = (IFile) resource;
+		HgRoot root;
+		try {
+			root = MercurialTeamProvider.getHgRoot(resource);
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
+			return null;
+		}
+		String currentBranch = getCurrentBranch(resource, root);
 
-            outgoing = new MercurialResourceVariant(outgoingIStorage);
-        } else {
-            // if outgoing != null it's our base, else we gotta construct one
-            boolean exists = resource.exists();
-            if (exists && !STATUS_CACHE.isAdded(resource.getLocation())
-                    || (!exists && STATUS_CACHE.isRemoved(resource))) {
+		try {
+			if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
+				// waiting didn't worked for us...
+				return null;
+			}
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
 
-                try {
-                    // Find current working directory changeset (not head)
-                    HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-                    String nodeId = HgIdentClient.getCurrentChangesetId(root);
+		ChangeSet csOutgoing;
+		try {
+			// this can trigger a refresh and a call to the remote server...
 
-                    // try to get from cache (without loading)
-                    csOutgoing = LOCAL_CACHE.getChangeset(resource.getProject(), nodeId);
+			csOutgoing = OUTGOING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		} finally {
+			sema.release();
+		}
 
-                    // okay, we gotta load the changeset via hg log
-                    if (csOutgoing == null) {
-                        csOutgoing = LOCAL_CACHE.getLocalChangeSet(resource, nodeId);
-                    }
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return null;
-                }
+		MercurialRevisionStorage outgoingIStorage;
+		IResourceVariant outgoing;
+		// determine outgoing revision
+		boolean hasOutgoingChanges = false;
+		boolean hasIncomingChanges = false;
+		Integer status = STATUS_CACHE.getStatus(resource);
+		int sMask = status != null? status.intValue() : 0;
+		if (csOutgoing != null) {
+			outgoingIStorage = new MercurialRevisionStorage(file,
+					csOutgoing.getRevision().getRevision(),
+					csOutgoing.getChangeset(), csOutgoing);
 
-                // construct base revision
-                outgoingIStorage = new MercurialRevisionStorage(resource,
-                        csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
+			outgoing = new MercurialResourceVariant(outgoingIStorage);
+			hasOutgoingChanges = true;
+		} else {
+			boolean exists = resource.exists();
+			// if outgoing != null it's our base, else we gotta construct one
+			if (exists && !Bits.contains(sMask, MercurialStatusCache.BIT_ADDED)
+					// XXX Probably we do not need to check for BIT_REMOVED
+					// || (!exists && Bits.contains(sMask, MercurialStatusCache.BIT_REMOVED))
+					|| !exists) {
 
-                outgoing = new MercurialResourceVariant(outgoingIStorage);
-            } else {
-                // new incoming file - no local available
-                outgoingIStorage = null;
-                outgoing = null;
-            }
-        }
+				try {
+					// Find current working directory changeset (not head)
 
-        // determine incoming revision get newest incoming changeset
-        try {
-            if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
-                // waiting didn't worked for us...
-                return null;
-            }
-        } catch (InterruptedException e) {
-            MercurialEclipsePlugin.logError(e);
-            return null;
-        }
-        ChangeSet csIncoming;
-        try {
-            // this can trigger a refresh and a call to the remote server...
-            csIncoming = INCOMING_CACHE.getNewestIncomingChangeSet(resource, repositoryLocation);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            return null;
-        } finally {
-            sema.release();
-        }
+					String nodeId = currentCsMap.get(root);
+					if(nodeId == null){
+						nodeId = HgIdentClient.getCurrentChangesetId(root);
+						currentCsMap.put(root, nodeId);
+					}
 
-        MercurialRevisionStorage incomingIStorage;
-        if (csIncoming != null) {
-            boolean fileRemoved = csIncoming.isRemoved(resource);
-            if(fileRemoved){
-                incomingIStorage = null;
-            } else {
-                incomingIStorage = getIncomingIStorage(resource, csIncoming);
-            }
-        } else {
-            // if no incoming revision, incoming = base/outgoing
-            incomingIStorage = outgoingIStorage;
-        }
+					// try to get from cache (without loading)
+					csOutgoing = LOCAL_CACHE.getChangesetById(resource.getProject(), nodeId);
 
-        IResourceVariant incoming;
-        if (incomingIStorage != null) {
-            incoming = new MercurialResourceVariant(incomingIStorage);
-        } else {
-            // neither base nor outgoing nor incoming revision
-            incoming = null;
-        }
+					// okay, we gotta load the changeset via hg log
+					if (csOutgoing == null) {
+						csOutgoing = LOCAL_CACHE.getOrFetchChangeSetById(resource, nodeId);
+					}
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+					return null;
+				}
 
-        // now create the sync info object. everything may be null,
-        // but resource and comparator
-        SyncInfo info = new MercurialSyncInfo(resource, outgoing, incoming, getResourceComparator());
+				if(csOutgoing == null || !Branch.same(csOutgoing.getBranch(), currentBranch)){
+					return null;
+				}
+				// construct base revision
+				outgoingIStorage = new MercurialRevisionStorage(file,
+						csOutgoing.getChangesetIndex(), csOutgoing.getChangeset(), csOutgoing);
 
-        try {
-            info.init();
-            return info;
-        } catch (CoreException e) {
-            MercurialEclipsePlugin.logError(e);
-            return null;
-        }
-    }
+				outgoing = new MercurialResourceVariant(outgoingIStorage);
+			} else {
+				// new incoming file - no local available
+				outgoingIStorage = null;
+				outgoing = null;
+			}
+		}
 
-    private boolean isInteresting(IResource resource) {
-        return resource != null
-                && RepositoryProvider.getProvider(resource.getProject(), MercurialTeamProvider.ID) != null
-                && (isSupervised(resource) || (!resource.exists()));
-    }
+		// determine incoming revision get newest incoming changeset
+		ChangeSet csIncoming = null;
+		try {
+			if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
+				// waiting didn't worked for us...
+				return null;
+			}
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
+		try {
+			// this can trigger a refresh and a call to the remote server...
+			csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		} finally {
+			sema.release();
+		}
 
-    private MercurialRevisionStorage getIncomingIStorage(IResource resource,
-            ChangeSet csRemote) {
-        MercurialRevisionStorage incomingIStorage = new MercurialRevisionStorage(
-                resource, csRemote.getRevision().getRevision(), csRemote
-                .getChangeset(), csRemote);
-        return incomingIStorage;
-    }
+		MercurialRevisionStorage incomingIStorage;
+		int syncMode = -1;
+		if (csIncoming != null) {
+			hasIncomingChanges = true;
+			boolean fileRemoved = csIncoming.isRemoved(resource);
+			if(fileRemoved){
+				incomingIStorage = null;
+			} else {
+				incomingIStorage = getIncomingIStorage(file, csIncoming);
+			}
+		} else {
+			if(!hasOutgoingChanges && Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
+				return null;
+			}
+			if(debug) {
+				System.out.println("Visiting: " + resource);
+			}
+			// if no incoming revision, incoming = base/outgoing
 
-    @Override
-    public boolean isSupervised(IResource resource) {
-        return resource.getType() == IResource.FILE && MercurialUtilities.isPossiblySupervised(resource);
-    }
+			// TODO it seems that the line below causes NO DIFF shown if the outgoing
+			// change consists from MULTIPLE changes on same file, see issue 10486
+			// we have to get the parent of the first outgoing changeset on a given file here
+			incomingIStorage = outgoingIStorage;
 
-    @Override
-    public IResource[] members(IResource resource) throws TeamException {
-        return new IResource[0];
-    }
+			// TODO validate if code below fixes the issue 10486
+			try {
+				SortedSet<ChangeSet> sets = OUTGOING_CACHE.getChangeSets(resource, getRepo(), currentBranch);
+				int size = sets.size();
 
-    /**
-     * @param flag one of {@link HgSubscriberScopeManager} constants, if the value is negative,
-     * otherwise some depth hints from the Team API (which are ignored here).
-     * <p>
-     * {@inheritDoc}
-     */
-    @Override
-    public void refresh(IResource[] resources, int flag, IProgressMonitor monitor) throws TeamException {
-        if (resources == null) {
-            return;
-        }
+				// case where we have one outgoung changeset AND one not committed change
+				if(size == 1 && !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
+					size ++;
+				}
+				if(size > 1){
+					ChangeSet first = sets.first();
+					String[] parents = first.getParents();
+					String parentCs = null;
+					if(parents.length > 0){
+						parentCs = parents[0];
+					} else {
+						ChangeSet tmpCs = LOCAL_CACHE.getOrFetchChangeSetById(resource, first.getChangeset());
+						if(tmpCs != null && tmpCs.getParents().length > 0){
+							parentCs = tmpCs.getParents()[0];
+						}
+					}
+					if(parentCs != null){
+						ChangeSet baseChangeset = LOCAL_CACHE.getOrFetchChangeSetById(resource, parentCs);
+						incomingIStorage = getIncomingIStorage(file, baseChangeset);
+						// we change outgoing (base) to the first parent of the first outgoing changeset
+						outgoing = new MercurialResourceVariant(incomingIStorage);
+						syncMode = SyncInfo.OUTGOING | SyncInfo.CHANGE;
+					}
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 
-        Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(Arrays.asList(resources));
-        Set<IProject> projects = byProject.keySet();
-        if(projects.isEmpty()){
-            return;
-        }
+		if(!hasIncomingChanges && !hasOutgoingChanges && Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN)){
+			return null;
+		}
+		IResourceVariant incoming;
+		if (incomingIStorage != null) {
+			incoming = new MercurialResourceVariant(incomingIStorage);
+		} else {
+			// neither base nor outgoing nor incoming revision
+			incoming = null;
+		}
 
-        Set<IResource> resourcesToRefresh = new HashSet<IResource>();
+		// now create the sync info object. everything may be null,
+		// but resource and comparator
+		SyncInfo info = new MercurialSyncInfo(resource, outgoing, incoming, getResourceComparator(), syncMode);
 
-        for (IProject project : projects) {
-            HgRepositoryLocation repositoryLocation = getRepo(project);
-            if (repositoryLocation == null) {
-                continue;
-            }
-            monitor.beginTask(getName(), 5);
-            // clear caches in any case, but refresh them only if project exists
-            boolean forceRefresh = project.exists();
+		try {
+			info.init();
+			return info;
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+			return null;
+		}
+	}
 
-            try {
-                sema.acquire();
-                if(debug) {
-                    System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
-                }
-                monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
-                refreshLocal(flag, monitor, project, forceRefresh);
-                monitor.worked(1);
-                if (monitor.isCanceled()) {
-                    return;
-                }
-                monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-                refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh);
-                monitor.worked(1);
-                if (monitor.isCanceled()) {
-                    return;
-                }
-                monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
-                refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh);
-                monitor.worked(1);
-                if (monitor.isCanceled()) {
-                    return;
-                }
-            } catch (InterruptedException e) {
-                MercurialEclipsePlugin.logError(e);
-            } finally {
-                sema.release();
-            }
-        }
+	public String getCurrentBranch(IResource resource, HgRoot root) {
+		String currentBranch = currentBranchMap.get(root);
+		if(currentBranch == null){
+			currentBranch = updateBranchMap(root, MercurialTeamProvider.getCurrentBranch(resource));
+		}
+		return currentBranch;
+	}
 
-        List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
-        monitor.worked(1);
-        if (monitor.isCanceled()) {
-            return;
-        }
+	private boolean isInteresting(IResource resource) {
+		return resource instanceof IFile
+				&& MercurialTeamProvider.isHgTeamProviderFor(resource.getProject())
+				&& (isSupervised(resource) || (!resource.exists()));
+	}
 
-        monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
-        fireTeamResourceChange(changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]));
-        monitor.worked(1);
-        monitor.done();
-    }
+	private MercurialRevisionStorage getIncomingIStorage(IFile resource,
+			ChangeSet csRemote) {
+		MercurialRevisionStorage incomingIStorage = new MercurialRevisionStorage(
+				resource, csRemote.getRevision().getRevision(), csRemote
+				.getChangeset(), csRemote);
+		return incomingIStorage;
+	}
 
-    private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
-            Set<IResource> resourcesToRefresh) {
-        for (IResource resource : resources) {
-            if(resource.getType() == IResource.FILE) {
-                resourcesToRefresh.add(resource);
-            } else {
-                Set<IFile> localMembers = STATUS_CACHE.getLocalMembers(resource);
-                resourcesToRefresh.addAll(localMembers);
-            }
-        }
-        List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
-        for (IResource res : resourcesToRefresh) {
-            changeEvents.add(new SubscriberChangeEvent(this, ISubscriberChangeEvent.SYNC_CHANGED, res));
-        }
-        return changeEvents;
-    }
+	@Override
+	public boolean isSupervised(IResource resource) {
+		boolean result = resource.getType() == IResource.FILE && !resource.isTeamPrivateMember()
+			/* && MercurialUtilities.isPossiblySupervised(resource)*/;
+		if(!result){
+			return false;
+		}
+		// fix for issue 10153: Resources ignored in .hgignore are still shown in Synchronize view
+		if(STATUS_CACHE.isIgnored(resource)){
+			return false;
+		}
+		return true;
+	}
 
-    private void refreshLocal(int flag, IProgressMonitor monitor, IProject project,
-            boolean forceRefresh) throws HgException {
-        if(flag == HgSubscriberScopeManager.LOCAL || flag >= 0) {
-            STATUS_CACHE.clear(project, false);
-            if(forceRefresh) {
-                STATUS_CACHE.refreshStatus(project, monitor);
-            }
-        }
-    }
+	@Override
+	public IResource[] members(IResource resource) throws TeamException {
+		return new IResource[0];
+	}
 
-    private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,
-            HgRepositoryLocation repositoryLocation, boolean forceRefresh) throws HgException {
-        if(flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
-            if(debug) {
-                System.out.println("\nclear incoming: " + project + ", depth: " + flag);
-            }
-            INCOMING_CACHE.clear(repositoryLocation, project, false);
-        }
-        if(forceRefresh && flag != HgSubscriberScopeManager.OUTGOING){
-            if(debug) {
-                System.out.println("\nget incoming: " + project + ", depth: " + flag);
-            }
-            // this can trigger a refresh and a call to the remote server...
-            Set<IResource> incomingMembers = INCOMING_CACHE.getIncomingMembers(project, repositoryLocation);
-            resourcesToRefresh.addAll(incomingMembers);
-        }
-    }
+	/**
+	 * @param flag one of {@link HgSubscriberScopeManager} constants, if the value is negative,
+	 * otherwise some depth hints from the Team API (which are ignored here).
+	 * <p>
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void refresh(IResource[] resources, int flag, IProgressMonitor monitor) throws TeamException {
+		if (resources == null) {
+			return;
+		}
 
-    private void refreshOutgoing(int flag, Set<IResource> resourcesToRefresh, IProject project,
-            HgRepositoryLocation repositoryLocation, boolean forceRefresh) throws HgException {
-        if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
-            if(debug) {
-                System.out.println("\nclear outgoing: " + project + ", depth: " + flag);
-            }
-            OUTGOING_CACHE.clear(repositoryLocation, project, false);
-        }
-        if(forceRefresh && flag != HgSubscriberScopeManager.INCOMING){
-            if(debug) {
-                System.out.println("\nget outgoing: " + project + ", depth: " + flag);
-            }
-            // this can trigger a refresh and a call to the remote server...
-            Set<IResource> outgoingMembers = OUTGOING_CACHE.getOutgoingMembers(project, repositoryLocation);
-            resourcesToRefresh.addAll(outgoingMembers);
-        }
-    }
+		List<IResource> resources2 = Arrays.asList(resources);
+		Map<IProject, List<IResource>> byProject = ResourceUtils.groupByProject(resources2);
+		Set<IProject> projects = byProject.keySet();
+		if(projects.isEmpty()){
+			return;
+		}
 
-    protected HgRepositoryLocation getRepo(IResource resource){
-        if(scope instanceof RepositorySynchronizationScope){
-            RepositorySynchronizationScope repoScope = (RepositorySynchronizationScope) scope;
-            return repoScope.getRepositoryLocation();
-        }
-        return MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(resource.getProject());
-    }
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(new ArrayList<IResource>(byProject.keySet()));
+		for (Entry<HgRoot, List<IResource>> entry : byRoot.entrySet()) {
+			IResource res = entry.getValue().get(0);
+			String branch = MercurialTeamProvider.getCurrentBranch(res);
+			updateBranchMap(entry.getKey(), branch);
+		}
 
-    @Override
-    public IResource[] roots() {
-        if (myRoots == null) {
-            if (scope != null && scope.getRoots() != null) {
-                myRoots = scope.getRoots();
-            } else {
-                myRoots = MercurialStatusCache.getInstance().getAllManagedProjects();
-            }
-        }
-        return myRoots;
-    }
+		Set<IResource> resourcesToRefresh = new HashSet<IResource>();
 
-    /**
-     * Overriden to made it accessible from {@link HgSubscriberScopeManager#update(java.util.Observable, Object)}
-     * {@inheritDoc}
-     */
-    @Override
-    public void fireTeamResourceChange(ISubscriberChangeEvent[] deltas) {
-        super.fireTeamResourceChange(deltas);
-    }
+		HgRepositoryLocation repositoryLocation = getRepo();
+		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
+				.getAllRepoLocationProjects(repositoryLocation);
 
+		for (IProject project : projects) {
+			if (!repoLocationProjects.contains(project)) {
+				continue;
+			}
+			monitor.beginTask(getName(), 5);
+			// clear caches in any case, but refresh them only if project exists
+			boolean forceRefresh = project.exists();
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			String currentBranch = currentBranchMap.get(hgRoot);
 
+			try {
+				sema.acquire();
+				if(debug) {
+					System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
+				}
+				currentCsMap.remove(hgRoot);
+
+				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
+				refreshLocal(flag, monitor, project, forceRefresh);
+				monitor.worked(1);
+				if (monitor.isCanceled()) {
+					return;
+				}
+				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
+				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				monitor.worked(1);
+				if (monitor.isCanceled()) {
+					return;
+				}
+				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
+				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				monitor.worked(1);
+				if (monitor.isCanceled()) {
+					return;
+				}
+			} catch (InterruptedException e) {
+				MercurialEclipsePlugin.logError(e);
+			} finally {
+				sema.release();
+			}
+		}
+
+		// we need to send events only if WE trigger status update, not if the refresh
+		// is called from the framework (like F5 hit by user)
+		if(flag < 0){
+			List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
+			monitor.worked(1);
+			if (monitor.isCanceled()) {
+				return;
+			}
+
+			monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.triggeringStatusCalc")); //$NON-NLS-1$
+			lastEvents = changeEvents.toArray(new ISubscriberChangeEvent[changeEvents.size()]);
+			fireTeamResourceChange(lastEvents);
+			monitor.worked(1);
+		}
+		monitor.done();
+	}
+
+	private String updateBranchMap(HgRoot root, String branch) {
+		currentBranchMap.put(root, branch);
+		return branch;
+	}
+
+	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
+			Set<IResource> resourcesToRefresh) {
+		for (IResource resource : resources) {
+			if(resource.getType() == IResource.FILE) {
+				resourcesToRefresh.add(resource);
+			} else {
+				Set<IResource> localMembers = STATUS_CACHE.getLocalMembers(resource);
+				resourcesToRefresh.addAll(localMembers);
+			}
+		}
+		List<ISubscriberChangeEvent> changeEvents = new ArrayList<ISubscriberChangeEvent>();
+		for (IResource res : resourcesToRefresh) {
+			changeEvents.add(new SubscriberChangeEvent(this, ISubscriberChangeEvent.SYNC_CHANGED, res));
+		}
+		if(debug) {
+			System.out.println("created: " + changeEvents.size() + " change events");
+		}
+		return changeEvents;
+	}
+
+	private void refreshLocal(int flag, IProgressMonitor monitor, IProject project,
+			boolean forceRefresh) throws HgException {
+		if(flag == HgSubscriberScopeManager.LOCAL || flag >= 0) {
+			STATUS_CACHE.clear(project, false);
+			if(forceRefresh) {
+				STATUS_CACHE.refreshStatus(project, monitor);
+			}
+//            if(!forceRefresh) {
+//                LOCAL_CACHE.clear(project, false);
+//            }
+//            if(forceRefresh) {
+//                LOCAL_CACHE.refreshAllLocalRevisions(project, true);
+//            }
+		}
+	}
+
+	private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,
+			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
+		if(flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
+			if(debug) {
+				System.out.println("\nclear incoming: " + project + ", depth: " + flag);
+			}
+			INCOMING_CACHE.clear(repositoryLocation, project, false);
+		}
+		if(forceRefresh && flag != HgSubscriberScopeManager.OUTGOING){
+			if(debug) {
+				System.out.println("\nget incoming: " + project + ", depth: " + flag);
+			}
+
+			// this can trigger a refresh and a call to the remote server...
+			Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, branch);
+			resourcesToRefresh.addAll(incomingMembers);
+		}
+	}
+
+	private void refreshOutgoing(int flag, Set<IResource> resourcesToRefresh, IProject project,
+			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
+		if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
+			if(debug) {
+				System.out.println("\nclear outgoing: " + project + ", depth: " + flag);
+			}
+			OUTGOING_CACHE.clear(repositoryLocation, project, false);
+		}
+		if(forceRefresh && flag != HgSubscriberScopeManager.INCOMING){
+			if(debug) {
+				System.out.println("\nget outgoing: " + project + ", depth: " + flag);
+			}
+			// this can trigger a refresh and a call to the remote server...
+			Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, branch);
+			resourcesToRefresh.addAll(outgoingMembers);
+		}
+	}
+
+	public RepositorySynchronizationScope getScope() {
+		return scope;
+	}
+
+	protected HgRepositoryLocation getRepo(){
+		return scope.getRepositoryLocation();
+	}
+
+	public IProject[] getProjects() {
+		return scope.getProjects();
+	}
+
+	@Override
+	public IResource[] roots() {
+		return scope.getRoots();
+	}
+
+	public void branchChanged(final IProject project){
+		IResource[] roots = roots();
+		boolean related = false;
+		for (IResource resource : roots) {
+			if(resource.getProject().equals(project)){
+				related = true;
+				break;
+			}
+		}
+		if(!related){
+			return;
+		}
+		Job job = new Job("Updating branch info for " + project.getName()){
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					currentCsMap.remove(MercurialTeamProvider.getHgRoot(project));
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+				if(lastEvents != null) {
+					fireTeamResourceChange(lastEvents);
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule(100);
+	}
+
+	/**
+	 * Overriden to made it accessible from {@link HgSubscriberScopeManager#update(java.util.Observable, Object)}
+	 * {@inheritDoc}
+	 */
+	@Override
+	public void fireTeamResourceChange(ISubscriberChangeEvent[] deltas) {
+		super.fireTeamResourceChange(deltas);
+	}
+
+	public void setParticipant(MercurialSynchronizeParticipant participant){
+		this.participant = participant;
+	}
+
+	public MercurialSynchronizeParticipant getParticipant() {
+		return participant;
+	}
+
+	public void setCollector(HgChangesetsCollector collector){
+		this.collector = collector;
+	}
+
+	public HgChangesetsCollector getCollector() {
+		return collector;
+	}
 }

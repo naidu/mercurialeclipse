@@ -23,59 +23,59 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgTransplantClient {
 
-    /**
-     * Cherrypicks given ChangeSets from repository or branch.
-     */
-    public static String transplant(IProject project, List<String> nodeIds,
-            HgRepositoryLocation repo, boolean branch, String branchName,
-            boolean all, boolean merge, String mergeNodeId, boolean prune,
-            String pruneNodeId, boolean continueLastTransplant,
-            boolean filterChangesets, String filter) throws HgException {
+	/**
+	 * Cherrypicks given ChangeSets from repository or branch.
+	 */
+	public static String transplant(IProject project, List<String> nodeIds,
+			HgRepositoryLocation repo, boolean branch, String branchName,
+			boolean all, boolean merge, String mergeNodeId, boolean prune,
+			String pruneNodeId, boolean continueLastTransplant,
+			boolean filterChangesets, String filter) throws HgException {
 
-        AbstractShellCommand command = new HgCommand("transplant", project, false); //$NON-NLS-1$
-        command
-                .setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-        command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
-        if (continueLastTransplant) {
-            command.addOptions("--continue"); //$NON-NLS-1$
-        } else {
-            command.addOptions("--log"); //$NON-NLS-1$
-            if (branch) {
-                command.addOptions("--branch"); //$NON-NLS-1$
-                command.addOptions(branchName);
-                if (all) {
-                    command.addOptions("--all"); //$NON-NLS-1$
-                }
-            } else {
-                command.addOptions("--source"); //$NON-NLS-1$
-                URI uri = repo.getUri();
-                if (uri != null ) {
-                    command.addOptions(uri.toASCIIString());
-                } else {
-                    command.addOptions(repo.getLocation());
-                }
-            }
+		AbstractShellCommand command = new HgCommand("transplant", project, false); //$NON-NLS-1$
+		command
+				.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+		command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
+		if (continueLastTransplant) {
+			command.addOptions("--continue"); //$NON-NLS-1$
+		} else {
+			command.addOptions("--log"); //$NON-NLS-1$
+			if (branch) {
+				command.addOptions("--branch"); //$NON-NLS-1$
+				command.addOptions(branchName);
+				if (all) {
+					command.addOptions("--all"); //$NON-NLS-1$
+				}
+			} else {
+				command.addOptions("--source"); //$NON-NLS-1$
+				URI uri = repo.getUri();
+				if (uri != null ) {
+					command.addOptions(uri.toASCIIString());
+				} else {
+					command.addOptions(repo.getLocation());
+				}
+			}
 
-            if (prune) {
-                command.addOptions("--prune"); //$NON-NLS-1$
-                command.addOptions(pruneNodeId);
-            }
+			if (prune) {
+				command.addOptions("--prune"); //$NON-NLS-1$
+				command.addOptions(pruneNodeId);
+			}
 
-            if (merge) {
-                command.addOptions("--merge"); //$NON-NLS-1$
-                command.addOptions(mergeNodeId);
-            }
+			if (merge) {
+				command.addOptions("--merge"); //$NON-NLS-1$
+				command.addOptions(mergeNodeId);
+			}
 
-            if (nodeIds != null && nodeIds.size() > 0) {
-                for (String node : nodeIds) {
-                    command.addOptions(node);
-                }
-            }
+			if (nodeIds != null && nodeIds.size() > 0) {
+				for (String node : nodeIds) {
+					command.addOptions(node);
+				}
+			}
 
-            if (filterChangesets) {
-                command.addOptions("--filter", filter); //$NON-NLS-1$
-            }
-        }
-        return new String(command.executeToBytes());
-    }
+			if (filterChangesets) {
+				command.addOptions("--filter", filter); //$NON-NLS-1$
+			}
+		}
+		return new String(command.executeToBytes());
+	}
 }

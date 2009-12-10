@@ -18,15 +18,15 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class RepositorySorter extends ViewerSorter {
 
 	private static final int REPO_ROOT_CATEGORY = 1;
-	
+
 	/* (non-Javadoc)
 	 * @see org.eclipse.jface.viewers.ViewerSorter#category(java.lang.Object)
 	 */
 	@Override
-    public int category(Object element) {
+	public int category(Object element) {
 		if (element instanceof HgRepositoryLocation) {
 			return REPO_ROOT_CATEGORY;
-		}		
+		}
 		return 0;
 	}
 }

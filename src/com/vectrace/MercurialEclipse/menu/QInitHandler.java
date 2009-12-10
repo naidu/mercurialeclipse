@@ -17,12 +17,12 @@ import com.vectrace.MercurialEclipse.wizards.mq.QInitWizard;
 
 public class QInitHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        QInitWizard wizard = new QInitWizard(resource);
-        WizardDialog dialog = new WizardDialog(getShell(), wizard);
-        dialog.setBlockOnOpen(true);
-        dialog.open();        
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		QInitWizard wizard = new QInitWizard(resource);
+		WizardDialog dialog = new WizardDialog(getShell(), wizard);
+		dialog.setBlockOnOpen(true);
+		dialog.open();
+	}
 
 }

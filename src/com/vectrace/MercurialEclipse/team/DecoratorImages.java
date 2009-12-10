@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.team;
@@ -21,44 +22,44 @@ import org.eclipse.jface.resource.ImageDescriptor;
  */
 public class DecoratorImages
 {
-  /**
+/**
    * Added Image Descriptor
    */
-  public static final ImageDescriptor addedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/added_ov.gif"); //$NON-NLS-1$
+public static final ImageDescriptor addedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/added_ov.gif"); //$NON-NLS-1$
 
-  /**
+/**
    * Deleted but still tracked Image Descriptor
    */
-  public static final ImageDescriptor deletedStillTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/deleted_still_tracked_ov.gif"); //$NON-NLS-1$
+public static final ImageDescriptor deletedStillTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/deleted_still_tracked_ov.gif"); //$NON-NLS-1$
 
-  /**
+/**
    * Ignored Image Descriptor
    */
-  public static final ImageDescriptor ignoredDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/ignored_ov.gif"); //$NON-NLS-1$
+public static final ImageDescriptor ignoredDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/ignored_ov.gif"); //$NON-NLS-1$
 
-  /**
+/**
    * Modified Image Descriptor
    */
-  public static final ImageDescriptor modifiedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/modified_ov.gif"); //$NON-NLS-1$
+public static final ImageDescriptor modifiedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/modified_ov.gif"); //$NON-NLS-1$
 
-  /**
+/**
    * Not tracked Image Descriptor
    */
-  public static final ImageDescriptor notTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/not_tracked_ov.gif"); //$NON-NLS-1$
-  /**
+public static final ImageDescriptor notTrackedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/not_tracked_ov.gif"); //$NON-NLS-1$
+/**
    * Removed Image Descriptor
    */
-  public static final ImageDescriptor removedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/removed_ov.gif"); //$NON-NLS-1$
+public static final ImageDescriptor removedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/removed_ov.gif"); //$NON-NLS-1$
 
-  /**
+/**
    * Managed Image Descriptor
    */
-  public static final ImageDescriptor managedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/managed_ov.gif"); //$NON-NLS-1$
+public static final ImageDescriptor managedDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/managed_ov.gif"); //$NON-NLS-1$
 
-  /**
+/**
    * Conflict Image Descriptor
    */
-  //FIXME temporary picture
-  public static final ImageDescriptor conflictDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/confchg_ov.gif"); //$NON-NLS-1$
+//FIXME temporary picture
+public static final ImageDescriptor conflictDescriptor = ImageDescriptor.createFromFile (DecoratorImages.class, "images/confchg_ov.gif"); //$NON-NLS-1$
 
 }

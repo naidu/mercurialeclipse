@@ -7,6 +7,7 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.operations;
 
@@ -27,70 +28,70 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 
 public class InitOperation extends HgOperation {
 
-    private IProject project;
-    private String hgPath;
-    private HgRoot foundHgPath;
+	private final IProject project;
+	private final String hgPath;
+	private final HgRoot foundHgPath;
 
-    /**
-     * 
-     */
-    public InitOperation(IRunnableContext ctx, IProject project,
-            HgRoot foundHgRoot, String hgPath) {
-        super(ctx);
-        this.hgPath = hgPath;
-        this.project = project;
-        this.foundHgPath = foundHgRoot;
-    }
+	/**
+	 *
+	 */
+	public InitOperation(IRunnableContext ctx, IProject project,
+			HgRoot foundHgRoot, String hgPath) {
+		super(ctx);
+		this.hgPath = hgPath;
+		this.project = project;
+		this.foundHgPath = foundHgRoot;
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
-     * ()
-     */
-    @Override
-    protected String getActionDescription() {
-        return Messages.getString("InitOperation.creatingRepo"); //$NON-NLS-1$
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
+	 * ()
+	 */
+	@Override
+	protected String getActionDescription() {
+		return Messages.getString("InitOperation.creatingRepo"); //$NON-NLS-1$
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see
-     * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
-     * .core.runtime.IProgressMonitor)
-     */
-    @Override
-    public void run(IProgressMonitor monitor)
-            throws InvocationTargetException, InterruptedException {
-        try {
-            monitor.beginTask(Messages.getString("InitOperation.share"), 3); //$NON-NLS-1$
-            if ((this.foundHgPath == null)
-                    || (!this.foundHgPath.getAbsolutePath().equals(hgPath))) {
-                monitor
-                        .subTask(Messages.getString("InitOperation.call")); //$NON-NLS-1$
-                HgInitClient.init(project, hgPath);
-                monitor.worked(1);
-            }
-            monitor.subTask(Messages.getString("InitOperation.mapping.1") + project.getName() //$NON-NLS-1$
-                    + Messages.getString("InitOperation.mapping.2")); //$NON-NLS-1$
-            RepositoryProvider.map(project, MercurialTeamProvider.class
-                    .getName());
-            monitor.worked(1);
-            project.touch(monitor);
-            monitor
-                    .subTask(Messages.getString("InitOperation.schedulingRefresh")); //$NON-NLS-1$
-            new RefreshStatusJob(Messages.getString("InitOperation.refresh.1") + project //$NON-NLS-1$
-                    + Messages.getString("InitOperation.refresh.2"), project) //$NON-NLS-1$
-                    .schedule();
-            monitor.worked(1);
-        } catch (HgException e) {
-            throw new InvocationTargetException(e);
-        } catch (CoreException e) {
-            throw new InvocationTargetException(e);
-        }
-        monitor.done();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
+	 * .core.runtime.IProgressMonitor)
+	 */
+	@Override
+	public void run(IProgressMonitor monitor)
+			throws InvocationTargetException, InterruptedException {
+		try {
+			monitor.beginTask(Messages.getString("InitOperation.share"), 3); //$NON-NLS-1$
+			if ((this.foundHgPath == null)
+					|| (!this.foundHgPath.getAbsolutePath().equals(hgPath))) {
+				monitor
+						.subTask(Messages.getString("InitOperation.call")); //$NON-NLS-1$
+				HgInitClient.init(project, hgPath);
+				monitor.worked(1);
+			}
+			monitor.subTask(Messages.getString("InitOperation.mapping.1") + project.getName() //$NON-NLS-1$
+					+ Messages.getString("InitOperation.mapping.2")); //$NON-NLS-1$
+			RepositoryProvider.map(project, MercurialTeamProvider.class
+					.getName());
+			monitor.worked(1);
+			project.touch(monitor);
+			monitor
+					.subTask(Messages.getString("InitOperation.schedulingRefresh")); //$NON-NLS-1$
+			new RefreshStatusJob(Messages.getString("InitOperation.refresh.1") + project //$NON-NLS-1$
+					+ Messages.getString("InitOperation.refresh.2"), project) //$NON-NLS-1$
+					.schedule();
+			monitor.worked(1);
+		} catch (HgException e) {
+			throw new InvocationTargetException(e);
+		} catch (CoreException e) {
+			throw new InvocationTargetException(e);
+		}
+		monitor.done();
+	}
 
 }

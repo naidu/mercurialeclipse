@@ -11,213 +11,66 @@
  *     Stefan Groschupf          - logError
  *     Stefan C                  - Code cleanup
  *     Bastian Doetsch	         - saving repository to project-specific repos
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.List;
-
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IImportWizard;
+import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.HgFolder;
-import com.vectrace.MercurialEclipse.operations.CloneOperation;
-import com.vectrace.MercurialEclipse.operations.CreateProjectOperation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 
 /**
- *
  * This class implements the import wizard extension and the new wizard
  * extension.
- *
  */
-public class CloneRepoWizard extends HgWizard implements IImportWizard {
-    private ClonePage clonePage;
+public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWizard {
+	private ClonePage clonePage;
+	private ProjectsImportPage importPage;
 
 
-    public CloneRepoWizard() {
-        super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
-    }
+	public CloneRepoWizard() {
+		super(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
+	}
 
-    @Override
-    public boolean performFinish() {
-        clonePage.finish(null);
-        clonePage.setErrorMessage(null);
-        HgRepositoryLocation repo;
-        IResource res = null;
-        try {
-            repo = MercurialEclipsePlugin.getRepoManager().fromProperties(
-                    clonePage
-                    .getProperties());
-        } catch (Exception e) {
-            MessageDialog
-                    .openError(
-                            Display.getCurrent().getActiveShell(),
-                            Messages.getString("CloneRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$
-            return false;
-        }
-        String cloneName = clonePage.getCloneNameTextField().getText();
-        if (cloneName.length() == 0) {
-            if (repo.getUri() != null) {
-                cloneName = repo.getUri().getFragment();
-            } else {
-                cloneName = null;
-            }
-        }
+	@Override
+	public boolean performFinish() {
+		return importPage.createProjects();
+	}
 
-        if (cloneName != null && cloneName.length() > 0) {
-            res = ResourcesPlugin.getWorkspace().getRoot()
-                    .findMember(cloneName);
-        }
+	@Override
+	public boolean performCancel() {
+		clonePage.performCleanup();
+		return super.performCancel();
+	}
 
-        // Check that this project doesn't exist.
-        if (res != null) {
-            MessageDialog
-                    .openError(
-                            Display.getCurrent().getActiveShell(),
-                            "Error occurred while cloning",
-                            Messages.getString("CloneRepoWizard.project") + res.getName()
-                            + Messages.getString("CloneRepoWizard.alreadyExists"));
-            return false;
-        }
+	public HgRepositoryLocation getRepository() {
+		return clonePage.getLastUsedRepository();
+	}
 
-        IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
-        String parentDirectory = clonePage.getDirectoryTextField().getText();
-        // set defaults
-        if (parentDirectory.length() == 0) {
-            parentDirectory = workspaceRoot.getLocation().toOSString();
-        }
+	public void init(IWorkbench workbench, IStructuredSelection selection) {
+		setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
+		setNeedsProgressMonitor(true);
+		clonePage = new ClonePage(null, Messages
+				.getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
+				Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
 
-        File parDirFile = new File(parentDirectory);
-        final File[] filesBefore = parDirFile.listFiles();
-        boolean forest = false;
+		clonePage.setDescription(Messages
+				.getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
+		initPage(clonePage.getDescription(), clonePage);
 
-        if (clonePage.isShowForest()) {
-            forest = clonePage.getForestCheckBox().getSelection();
-        }
+		importPage = new ProjectsImportPage("ProjectsImportPage");
 
-        boolean svn = false;
-        if (clonePage.isShowSvn()) {
-            svn = clonePage.getSvnCheckBox().getSelection();
-        }
+		addPage(clonePage);
+		// TODO Add here "select branch/revision" page
+		addPage(importPage);
+	}
 
-        try {
-            // run clone
-            CloneOperation cloneOperation = new CloneOperation(getContainer(),
-                    parentDirectory, repo, clonePage.getNoUpdateCheckBox()
-                            .getSelection(), clonePage.getPullCheckBox()
-                            .getSelection(), clonePage
-                            .getUncompressedCheckBox().getSelection(),
-                    clonePage.getTimeoutCheckBox().getSelection(), clonePage
-                            .getRevisionTextField().getText(), cloneName,
-                    forest, svn);
-            getContainer().run(true, false, cloneOperation);
-
-            File cloneDirectory = null;
-
-            // try to find new directory in parentdirectory
-            FileFilter filter = new FileFilter() {
-                public boolean accept(File pathname) {
-                    if (pathname.isFile()) {
-                        return false;
-                    }
-                    boolean newFile = true;
-                    for (File file : filesBefore) {
-                        try {
-                            if (file.getCanonicalPath().equals(
-                                    pathname.getCanonicalPath())) {
-                                newFile = false;
-                                break;
-                            }
-                        } catch (IOException e) {
-                            MercurialEclipsePlugin.logError(e);
-                            newFile = false;
-                            break;
-                        }
-                    }
-                    return newFile;
-                }
-
-            };
-            File[] filesAfter = new File(parentDirectory).listFiles(filter);
-            cloneDirectory = filesAfter[0];
-            cloneName = cloneDirectory.getName();
-
-            // create project(s)
-            List<File> projectFiles = null;
-            if (clonePage.getSearchProjectFilesCheckBox().getSelection()) {
-                HgFolder folder = new HgFolder(cloneDirectory.getCanonicalPath());
-                projectFiles = folder.getProjectFiles();
-            }
-
-            if (projectFiles == null || projectFiles.size() == 0) {
-                CreateProjectOperation op = new CreateProjectOperation(
-                        getContainer(), cloneDirectory, null, repo, false,
-                        cloneName);
-                getContainer().run(true, false, op);
-                new RefreshJob(
-                        Messages.getString("CloneRepoWizard.refreshJob.name"), //$NON-NLS-1$
-                        op.getProject()).schedule();
-            } else {
-                for (File file : projectFiles) {
-                    CreateProjectOperation op = new CreateProjectOperation(
-                            getContainer(), file.getParentFile(), file, repo,
-                            true, null);
-                    getContainer().run(true, false, op);
-                    new RefreshJob(
-                            Messages
-                                    .getString("CloneRepoWizard.refreshJob.name"), //$NON-NLS-1$
-                                    op.getProject()).schedule();
-                }
-            }
-
-        } catch (InvocationTargetException e) {
-            return handle(e);
-        } catch (InterruptedException e) {
-            return handle(e);
-        } catch (IOException e) {
-            return handle(e);
-        } catch (CoreException e) {
-            return handle(e);
-        }
-        return true;
-    }
-
-    private boolean handle(Exception e) {
-        if (e.getCause() != null) {
-            clonePage.setErrorMessage(e.getCause().getLocalizedMessage());
-        } else {
-            clonePage.setErrorMessage(e.getLocalizedMessage());
-        }
-        MercurialEclipsePlugin.logError(Messages
-                .getString("CloneRepoWizard.cloneOperationFailed"), e); //$NON-NLS-1$
-        return false;
-    }
-
-    public void init(IWorkbench workbench, IStructuredSelection selection) {
-        setWindowTitle(Messages.getString("CloneRepoWizard.title")); //$NON-NLS-1$
-        setNeedsProgressMonitor(true);
-        clonePage = new ClonePage(null, Messages
-                .getString("CloneRepoWizard.pageName"), //$NON-NLS-1$
-                Messages.getString("CloneRepoWizard.pageTitle"), null); //$NON-NLS-1$
-
-        clonePage.setDescription(Messages
-                .getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
-        initPage(clonePage.getDescription(), clonePage);
-        addPage(clonePage);
-    }
-
+	@Override
+	public boolean canFinish() {
+		return getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
+	}
 }

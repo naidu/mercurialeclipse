@@ -7,6 +7,7 @@
  *
  * Contributors:
  * Bastian Doetsch	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
@@ -18,37 +19,37 @@ import org.eclipse.team.core.variants.IResourceVariant;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class MercurialResourceVariant implements IResourceVariant {
-    private final MercurialRevisionStorage rev;
+	private final MercurialRevisionStorage rev;
 
-    public MercurialResourceVariant(MercurialRevisionStorage rev) {
-        this.rev = rev;
-    }
+	public MercurialResourceVariant(MercurialRevisionStorage rev) {
+		this.rev = rev;
+	}
 
-    public byte[] asBytes() {
-        return getContentIdentifier().getBytes();
-    }
+	public byte[] asBytes() {
+		return getContentIdentifier().getBytes();
+	}
 
-    public String getContentIdentifier() {
-        return rev.getGlobal();
-    }
+	public String getContentIdentifier() {
+		return rev.getGlobal();
+	}
 
-    public String getName() {
-        return rev.getResource().getName();
-    }
+	public String getName() {
+		return rev.getResource().getName();
+	}
 
-    public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
-        return rev;
-    }
+	public IStorage getStorage(IProgressMonitor monitor) throws TeamException {
+		return rev;
+	}
 
-    public boolean isContainer() {
-        return false;
-    }
+	public boolean isContainer() {
+		return false;
+	}
 
-    /**
-     * @return the rev
-     */
-    public MercurialRevisionStorage getRev() {
-        return rev;
-    }
+	/**
+	 * @return the rev
+	 */
+	public MercurialRevisionStorage getRev() {
+		return rev;
+	}
 
 }

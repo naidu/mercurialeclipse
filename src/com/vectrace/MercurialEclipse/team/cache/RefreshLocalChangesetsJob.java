@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch           - init
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
@@ -25,27 +26,27 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class RefreshLocalChangesetsJob extends SafeWorkspaceJob {
 
-    private final IProject project;
+	private final IProject project;
 
-    public RefreshLocalChangesetsJob(String name, IProject project) {
-        super(name);
-        this.project = project;
-    }
+	public RefreshLocalChangesetsJob(String name, IProject project) {
+		super(name);
+		this.project = project;
+	}
 
-    public RefreshLocalChangesetsJob(IResource resource) {
-        super("Refreshing local changesets.");
-        this.project = resource.getProject();
-    }
+	public RefreshLocalChangesetsJob(IResource resource) {
+		super("Refreshing local changesets.");
+		this.project = resource.getProject();
+	}
 
-    @Override
-    protected IStatus runSafe(IProgressMonitor monitor) {
-        try {
-            LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
-            return super.runSafe(monitor);
-        } catch (HgException e) {
-            MercurialEclipsePlugin.logError(e);
-            return e.getStatus();
-        }
+	@Override
+	protected IStatus runSafe(IProgressMonitor monitor) {
+		try {
+			LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true);
+			return super.runSafe(monitor);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			return e.getStatus();
+		}
 
-    }
+	}
 }

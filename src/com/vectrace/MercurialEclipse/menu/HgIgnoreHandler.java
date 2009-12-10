@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -14,13 +15,17 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.IDialogConstants;
-import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
+import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 public class HgIgnoreHandler extends SingleResourceHandler {
@@ -38,7 +43,7 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 			default:
 				dialog = new IgnoreDialog(getShell());
 		}
-		
+
 		if(dialog.open() == IDialogConstants.OK_ID) {
 			switch(dialog.getResultType()) {
 				case FILE:
@@ -57,21 +62,45 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 					HgIgnoreClient.addRegexp(resource.getProject(), dialog.getPattern());
 					break;
 			}
-			try {
-			    IProject project = resource.getProject();
-			    // if there is a .hgignore at project level, get it via a
-                // refresh.
-                IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
-                hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, null);			        			    
-		
-                // refresh status of newly ignored resource
-                MercurialStatusCache.getInstance().refreshStatus(resource,
-                        new NullProgressMonitor());
-			} catch (TeamException e) {
-				MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
-						e);
-			}
+			refreshStatus(resource);
 		}
+	}
+
+	private void refreshStatus(final IResource resource) {
+		Job job = new Job("Refreshing status for ignored resource: " + resource.getName()){
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+
+					// if there is a .hgignore at project level, update it via a refresh.
+					IProject project = resource.getProject();
+					IResource hgIgnoreFile = project.getFile(".hgignore"); //$NON-NLS-1$
+
+					hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
+					if(!hgIgnoreFile.exists()){
+						// refresh status of newly ignored resource, but only if .hgignore
+						// is not in the project, because if .hgignore is inside the project,
+						// the status would be updated automatically
+						MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
+					} else {
+						MercurialStatusCache.getInstance().clearStatusCache(resource, true);
+					}
+
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(Messages.getString("HgIgnoreHandler.unableToRefreshProject"), //$NON-NLS-1$
+							e);
+					return e.getStatus();
+				}
+
+				// fix for issue #10152:
+				// trigger decorator update for resources being ignored
+				// For some reasons, resource.touch() and refreshLocal() isn't enough
+				// to get updated status into the Navigator/Explorer views
+				ResourceDecorator.updateClientDecorations();
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 
 }

@@ -17,11 +17,11 @@ import com.vectrace.MercurialEclipse.wizards.AddBranchWizard;
 
 public class AddBranchHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {       
-        AddBranchWizard wizard = new AddBranchWizard(resource);
-        WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
-        wizardDialog.open();
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		AddBranchWizard wizard = new AddBranchWizard(resource);
+		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
+		wizardDialog.open();
+	}
 
 }

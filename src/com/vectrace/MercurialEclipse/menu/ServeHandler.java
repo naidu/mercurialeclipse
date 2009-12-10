@@ -7,23 +7,25 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.wizards.ServeWizard;
 
 public class ServeHandler extends SingleResourceHandler {
 
-    @Override
-    protected void run(IResource resource) throws Exception {
-        // FIXME: Get correct hg root
-        IResource hgRoot = resource.getProject();
-        ServeWizard wizard = new ServeWizard(hgRoot);
-        WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
-        wizardDialog.open();
-    }
+	@Override
+	protected void run(IResource resource) throws Exception {
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		ServeWizard wizard = new ServeWizard(hgRoot);
+		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
+		wizardDialog.open();
+	}
 
 }

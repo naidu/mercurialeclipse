@@ -15,39 +15,39 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class HgDebugInstallTest extends AbstractMercurialTestCase {
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.AbstractMercurialTestCase#setUp()
-     */
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.vectrace.MercurialEclipse.AbstractMercurialTestCase#setUp()
+	 */
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.AbstractMercurialTestCase#tearDown()
-     */
-    @Override
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.vectrace.MercurialEclipse.AbstractMercurialTestCase#tearDown()
+	 */
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+	}
 
-    /**
-     * Test method for
-     * {@link com.vectrace.MercurialEclipse.commands.HgDebugInstallClient#debugInstall()}.
-     * @throws HgException 
-     */
-    public void testDebugInstall() throws HgException {
-        String result;
-        result = HgDebugInstallClient.debugInstall();
-        assertTrue(result != null);
-    }
+	/**
+	 * Test method for
+	 * {@link com.vectrace.MercurialEclipse.commands.HgDebugInstallClient#debugInstall()}.
+	 * @throws HgException
+	 */
+	public void testDebugInstall() throws HgException {
+		String result;
+		result = HgDebugInstallClient.debugInstall();
+		assertTrue(result != null);
+	}
 
 }

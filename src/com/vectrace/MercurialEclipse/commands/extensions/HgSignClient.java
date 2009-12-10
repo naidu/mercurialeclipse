@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch      - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
@@ -36,93 +37,93 @@ public class HgSignClient {
 
 
 
-    /**
-     * Calls hg sign. add a signature for the current or given revision If no
-     * revision is given, the parent of the working directory is used, or tip if
-     * no revision is checked out.
-     *
-     * @param directory
-     *            the current project (working directory)
-     * @param cs
-     *            ChangeSet, may be null
-     * @param key
-     *            the keyId to use
-     * @param message
-     *            commit message
-     * @param user
-     *            user name for commit
-     * @param local
-     *            flag, if signing is only local
-     * @param force
-     *            flag to even sign if sigfile is changed
-     * @param noCommit
-     *            flag, if commit shall happen (invalidates params message and
-     *            user)
-     * @param passphrase
-     *            the passphrase or null
-     * @author Bastian Doetsch
-     * @return
-     *
-     */
-    public static String sign(File directory, ChangeSet cs, String key,
-            String message, String user, boolean local, boolean force,
-            boolean noCommit, String passphrase) throws HgException {
-        AbstractShellCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
-        File file = new File("me.gpg.tmp"); //$NON-NLS-1$
-        String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
-                MercurialUtilities.getGpgExecutable(true)).concat(
-                " --batch --no-tty --armor"); //$NON-NLS-1$
-        if (passphrase != null && passphrase.length() > 0) {
-            FileWriter fw = null;
-            try {
-                fw = new FileWriter(file);
-                fw.write(passphrase.concat("\n")); //$NON-NLS-1$
-                fw.flush();
-                cmd = cmd.concat(" --passphrase-file ").concat( //$NON-NLS-1$
-                        file.getCanonicalPath());
-            } catch (IOException e) {
-                throw new HgException(e.getMessage());
-            } finally {
-                if (fw != null) {
-                    try {
-                        fw.close();
-                    } catch (Exception e) {
-                        MercurialEclipsePlugin.logError(e);
-                    }
-                }
-            }
-        }
-        command.addOptions("-k", key, "--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
-        if (local) {
-            command.addOptions("-l"); //$NON-NLS-1$
-        }
-        if (force) {
-            command.addOptions("-f"); //$NON-NLS-1$
-        }
-        if (noCommit) {
-            command.addOptions("--no-commit"); //$NON-NLS-1$
-        } else {
-            command.addOptions("-m", message, "-u", user); //$NON-NLS-1$ //$NON-NLS-2$
-        }
+	/**
+	 * Calls hg sign. add a signature for the current or given revision If no
+	 * revision is given, the parent of the working directory is used, or tip if
+	 * no revision is checked out.
+	 *
+	 * @param directory
+	 *            the current project (working directory)
+	 * @param cs
+	 *            ChangeSet, may be null
+	 * @param key
+	 *            the keyId to use
+	 * @param message
+	 *            commit message
+	 * @param user
+	 *            user name for commit
+	 * @param local
+	 *            flag, if signing is only local
+	 * @param force
+	 *            flag to even sign if sigfile is changed
+	 * @param noCommit
+	 *            flag, if commit shall happen (invalidates params message and
+	 *            user)
+	 * @param passphrase
+	 *            the passphrase or null
+	 * @author Bastian Doetsch
+	 * @return
+	 *
+	 */
+	public static String sign(File directory, ChangeSet cs, String key,
+			String message, String user, boolean local, boolean force,
+			boolean noCommit, String passphrase) throws HgException {
+		AbstractShellCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
+		File file = new File("me.gpg.tmp"); //$NON-NLS-1$
+		String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
+				MercurialUtilities.getGpgExecutable(true)).concat(
+				" --batch --no-tty --armor"); //$NON-NLS-1$
+		if (passphrase != null && passphrase.length() > 0) {
+			FileWriter fw = null;
+			try {
+				fw = new FileWriter(file);
+				fw.write(passphrase.concat("\n")); //$NON-NLS-1$
+				fw.flush();
+				cmd = cmd.concat(" --passphrase-file ").concat( //$NON-NLS-1$
+						file.getCanonicalPath());
+			} catch (IOException e) {
+				throw new HgException(e.getMessage());
+			} finally {
+				if (fw != null) {
+					try {
+						fw.close();
+					} catch (Exception e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			}
+		}
+		command.addOptions("-k", key, "--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
+		if (local) {
+			command.addOptions("-l"); //$NON-NLS-1$
+		}
+		if (force) {
+			command.addOptions("-f"); //$NON-NLS-1$
+		}
+		if (noCommit) {
+			command.addOptions("--no-commit"); //$NON-NLS-1$
+		} else {
+			command.addOptions("-m", message, "-u", user); //$NON-NLS-1$ //$NON-NLS-2$
+		}
 
-        command.addOptions(cs.getChangeset());
-        String result;
-        try {
-            result = command.executeToString();
-            return result;
-        } finally {
-            if (file.delete() == false) {
-                throw new HgException(file.getName()+" could not be deleted.");
-            }
-        }
-    }
+		command.addOptions(cs.getChangeset());
+		String result;
+		try {
+			result = command.executeToString();
+			return result;
+		} finally {
+			if (file.delete() == false) {
+				throw new HgException(file.getName()+" could not be deleted.");
+			}
+		}
+	}
 
-    public static String getPrivateKeyList() throws HgException {
-        List<String> getKeysCmd = new ArrayList<String>();
-        getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
-        getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
-        GpgCommand command = new GpgCommand(getKeysCmd, ResourcesPlugin
-                .getWorkspace().getRoot().getLocation().toFile(), false);
-        return new String(command.executeToBytes());
-    }
+	public static String getPrivateKeyList() throws HgException {
+		List<String> getKeysCmd = new ArrayList<String>();
+		getKeysCmd.add(MercurialUtilities.getGpgExecutable(true));
+		getKeysCmd.add("--list-secret-keys"); //$NON-NLS-1$
+		GpgCommand command = new GpgCommand(getKeysCmd, ResourcesPlugin
+				.getWorkspace().getRoot().getLocation().toFile(), false);
+		return new String(command.executeToBytes());
+	}
 }

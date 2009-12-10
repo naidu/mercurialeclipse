@@ -17,21 +17,21 @@ import org.eclipse.core.resources.IResource;
 
 public class FlaggedProject {
 
-    private Map<IResource, FlaggedResource> resources;
-    private String version;
+	private Map<IResource, FlaggedResource> resources;
+	private String version;
 
-    public FlaggedProject(IProject project, Map<IResource, FlaggedResource> resources,
-            String version) {
-        this.resources = resources;
-        this.version = version;
-    }
+	public FlaggedProject(IProject project, Map<IResource, FlaggedResource> resources,
+			String version) {
+		this.resources = resources;
+		this.version = version;
+	}
 
-    public FlaggedResource getFlaggedResource(IResource resource) {
-        return resources.get(resource);
-    }
+	public FlaggedResource getFlaggedResource(IResource resource) {
+		return resources.get(resource);
+	}
 
-    public String getVersion() {
-        return version;
-    }
+	public String getVersion() {
+		return version;
+	}
 
 }

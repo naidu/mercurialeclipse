@@ -18,24 +18,24 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
- * 
+ *
  */
 public class GpgCommand extends AbstractShellCommand {
 
-    public GpgCommand(List<String> commands, File workingDir,
-            boolean escapeFiles) {
-        super(commands, workingDir, escapeFiles);
-    }
+	public GpgCommand(List<String> commands, File workingDir,
+			boolean escapeFiles) {
+		super(commands, workingDir, escapeFiles);
+	}
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#getExecutable()
-     */
-    @Override
-    protected String getExecutable() {
-        return MercurialEclipsePlugin.getDefault().getPreferenceStore()
-                .getString(MercurialPreferenceConstants.GPG_EXECUTABLE);
-    }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see com.vectrace.MercurialEclipse.commands.AbstractShellCommand#getExecutable()
+	 */
+	@Override
+	protected String getExecutable() {
+		return MercurialEclipsePlugin.getDefault().getPreferenceStore()
+				.getString(MercurialPreferenceConstants.GPG_EXECUTABLE);
+	}
 
 }

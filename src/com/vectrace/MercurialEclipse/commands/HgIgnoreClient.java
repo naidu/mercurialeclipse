@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Andrei Loskutov (Intland) - bug fixes
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.BufferedOutputStream;
@@ -8,32 +18,48 @@ import java.io.IOException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgIgnoreClient extends AbstractClient {
 
 	public static void addExtension(IFile file) throws HgException {
-		addPattern(file.getProject(), "regexp", escape("."+file.getFileExtension())+"$"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+		HgRoot hgRoot = getHgRoot(file.getProject());
+		addPattern(hgRoot, "regexp", escape("." + file.getFileExtension()) + "$"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
 
 	public static void addFile(IFile file) throws HgException {
-		String regexp = "^"+escape(file.getProjectRelativePath().toString())+"$"; //$NON-NLS-1$ //$NON-NLS-2$
-		addPattern(file.getProject(), "regexp", regexp); //$NON-NLS-1$
+		HgRoot hgRoot = getHgRoot(file.getProject());
+
+		String regexp = "^" + getRelativePath(hgRoot, file) + "$"; //$NON-NLS-1$ //$NON-NLS-2$
+		addPattern(hgRoot, "regexp", regexp); //$NON-NLS-1$
+	}
+
+	private static String getRelativePath(HgRoot hgRoot, IResource resource) {
+		IPath path = ResourceUtils.getPath(resource);
+		String relative = hgRoot.toRelative(path.toFile());
+		relative = relative.replace('\\', '/');
+		return escape(relative);
 	}
 
 	public static void addFolder(IFolder folder) throws HgException {
-		String regexp = "^"+escape(folder.getProjectRelativePath().toString())+"$"; //$NON-NLS-1$ //$NON-NLS-2$
-		addPattern(folder.getProject(), "regexp", regexp); //$NON-NLS-1$
+		HgRoot hgRoot = getHgRoot(folder.getProject());
+		String regexp = "^" + getRelativePath(hgRoot, folder) + "$"; //$NON-NLS-1$ //$NON-NLS-2$
+		addPattern(hgRoot, "regexp", regexp); //$NON-NLS-1$
 	}
 
 	public static void addRegexp(IProject project, String regexp) throws HgException {
-		addPattern(project, "regexp", regexp); //$NON-NLS-1$
+		HgRoot hgRoot = getHgRoot(project);
+		addPattern(hgRoot, "regexp", regexp); //$NON-NLS-1$
 	}
 
 	public static void addGlob(IProject project, String glob) throws HgException {
-		addPattern(project, "glob", glob); //$NON-NLS-1$
+		HgRoot hgRoot = getHgRoot(project);
+		addPattern(hgRoot, "glob", glob); //$NON-NLS-1$
 	}
 
 	private static String escape(String string) {
@@ -63,12 +89,12 @@ public class HgIgnoreClient extends AbstractClient {
 		return result.toString();
 	}
 
-	private static void addPattern(IProject project, String syntax, String pattern) throws HgException {
+	private static void addPattern(HgRoot hgRoot, String syntax, String pattern) throws HgException {
 		//TODO use existing sections
-	    BufferedOutputStream buffer = null;
+		BufferedOutputStream buffer = null;
 		try {
-		    File hgignore = new File(getHgRoot(project), ".hgignore");
-		    // append to file if it exists, else create a new one
+			File hgignore = new File(hgRoot, ".hgignore");
+			// append to file if it exists, else create a new one
 			buffer = new BufferedOutputStream(new FileOutputStream(hgignore,true));
 			// write contents
 			buffer.write(new byte[]{'\n','s','y','n','t','a','x',':',' '});
@@ -76,19 +102,17 @@ public class HgIgnoreClient extends AbstractClient {
 			buffer.write('\n');
 			buffer.write(pattern.getBytes());
 			buffer.flush();
-		} catch (CoreException e) {
-			throw new HgException(Messages.getString("HgIgnoreClient.failedToAddHgIgnore"), e); //$NON-NLS-1$
 		} catch (IOException e) {
 			throw new HgException(Messages.getString("HgIgnoreClient.failedToAddEntry"), e); //$NON-NLS-1$
 		} finally {
-		    // we don't want to leak file descriptors...
-		    if (buffer != null) {
-		        try {
-                    buffer.close();
-                } catch (IOException e) {
-                   throw new HgException(Messages.getString("HgIgnoreClient.failedToCloseHgIgnore"),e); //$NON-NLS-1$
-                }
-		    }
+			// we don't want to leak file descriptors...
+			if (buffer != null) {
+				try {
+					buffer.close();
+				} catch (IOException e) {
+				throw new HgException(Messages.getString("HgIgnoreClient.failedToCloseHgIgnore"),e); //$NON-NLS-1$
+				}
+			}
 		}
 
 	}

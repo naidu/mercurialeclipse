@@ -7,8 +7,11 @@
  *
  * Contributors:
  *     Bastian Doetsch - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
+
+import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -19,24 +22,26 @@ import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
-public class RefreshStatusHandler extends SingleResourceHandler {
+public class RefreshStatusHandler extends MultipleResourcesHandler {
 
-    @Override
-    protected void run(final IResource resource) throws Exception {
-        new SafeWorkspaceJob(Messages.getString("RefreshStatusHandler.refreshingResource")+resource.getName()+"...") { //$NON-NLS-1$ //$NON-NLS-2$
+	@Override
+	protected void run(List<IResource> resources) throws Exception {
+		for (final IResource resource : resources) {
+			new SafeWorkspaceJob(
+					Messages.getString("RefreshStatusHandler.refreshingResource") + resource.getName() + "...") { //$NON-NLS-1$ //$NON-NLS-2$
 
-            @Override
-            protected IStatus runSafe(IProgressMonitor monitor) {
-                try {
-                    MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
-                } catch (HgException e) {
-                    MercurialEclipsePlugin.logError(e);
-                    return e.getStatus();
-                }
-                return super.runSafe(monitor);
-            }
-        }.schedule();
-    }
-
+				@Override
+				protected IStatus runSafe(IProgressMonitor monitor) {
+					try {
+						MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+						return e.getStatus();
+					}
+					return super.runSafe(monitor);
+				}
+			}.schedule();
+		}
+	}
 
 }
