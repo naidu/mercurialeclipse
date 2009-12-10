@@ -145,7 +145,7 @@ public abstract class AbstractClient {
 	}
 
 	/**
-	 * If a proxy server is necessary to access the pull or push location, this method will add the
+	 * If a proxy server is necessary to access the repository, this method will add the
 	 * respective command options.
 	 *
 	 * @param repository
@@ -157,29 +157,24 @@ public abstract class AbstractClient {
 		IProxyService proxyService = MercurialEclipsePlugin.getDefault().getProxyService();
 		if (proxyService != null) {
 			// check if there is an applicable proxy for the location
-			IProxyData[] proxies = proxyService.getProxyDataForHost(repository.getHost());
+			IProxyData proxy = proxyService.getProxyDataForHost(repository.getHost(), repository.getScheme());
 
-			if (proxies.length > 0) {
-				// there is at least one applicable proxy, use the first
-				IProxyData proxy = proxies[0];
+			if (proxy != null && proxy.getHost() != null) {
+				// set the host incl. port
+				command.addOptions("--config", "http_proxy.host=" + getProxyHost(proxy)); //$NON-NLS-1$ //$NON-NLS-2$
 
-				if (proxy.getHost() != null) {
-					// set the host incl. port
-					command.addOptions("--config", "http_proxy.host=" + getProxyHost(proxy)); //$NON-NLS-1$ //$NON-NLS-2$
+				// check if authentication is required
+				if (proxy.isRequiresAuthentication()) {
 
-					// check if authentication is required
-					if (proxy.isRequiresAuthentication()) {
+					// set the user name if available
+					if (proxy.getUserId() != null) {
+						command.addOptions("--config", "http_proxy.user=" + proxy.getUserId()); //$NON-NLS-1$ //$NON-NLS-2$
+					}
 
-						// set the user name if available
-						if (proxy.getUserId() != null) {
-							command.addOptions("--config", "http_proxy.user=" + proxy.getUserId()); //$NON-NLS-1$ //$NON-NLS-2$
-						}
-
-						// set the password if available
-						if (proxy.getPassword() != null) {
-							command.addOptions("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
-									+ proxy.getPassword());
-						}
+					// set the password if available
+					if (proxy.getPassword() != null) {
+						command.addOptions("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
+								+ proxy.getPassword());
 					}
 				}
 			}
