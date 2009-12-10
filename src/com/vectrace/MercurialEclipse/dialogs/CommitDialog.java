@@ -101,6 +101,7 @@ public class CommitDialog extends TitleAreaDialog {
 	private Button revertCheckBox;
 	private boolean filesSelectable;
 	private HgRoot hgRoot;
+	private Button closeBranchCheckBox;
 
 	public CommitDialog(Shell shell, List<IResource> resources) {
 		super(shell);
@@ -146,8 +147,10 @@ public class CommitDialog extends TitleAreaDialog {
 		createCommitTextBox(container);
 		createOldCommitCombo(container);
 		createUserCommitCombo(container);
-		createFilesList(container);
+		createCloseBranchCheckBox(container);
 		createRevertCheckBox(container);
+		createFilesList(container);
+
 
 		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade().getCurrentTaskComment(inResources == null ? null : inResources.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
@@ -156,6 +159,13 @@ public class CommitDialog extends TitleAreaDialog {
 		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$");
 		setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$");
 		return container;
+	}
+
+	/**
+	 * @param container
+	 */
+	protected void createCloseBranchCheckBox(Composite container) {
+		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.closeBranch")); //$NON-NLS-1$
 	}
 
 	protected void createRevertCheckBox(Composite container) {
@@ -219,7 +229,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 		commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
 		commitTextBox.setEditable(true);
-		commitTextBox.getTextWidget().setLayoutData(getFillGD(150));
+		commitTextBox.getTextWidget().setLayoutData(getFillGD(100));
 
 		// set up spell-check annotations
 		decorationSupport = new SourceViewerDecorationSupport(commitTextBox, null, new DefaultMarkerAnnotationAccess(),
@@ -307,7 +317,7 @@ public class CommitDialog extends TitleAreaDialog {
 				user = getInitialCommitUserName();
 			}
 
-			performCommit(messageToCommit);
+			performCommit(messageToCommit, this.closeBranchCheckBox.getSelection());
 
 			// revertCheckBox can be null if this is a merge dialog
 			if (revertCheckBox != null && revertCheckBox.getSelection()) {
@@ -320,12 +330,12 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 	}
 
-	protected void performCommit(String messageToCommit) throws CoreException {
+	protected void performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
 		if(hgRoot != null && !filesSelectable && resourcesToCommit.isEmpty()){
 			// enforce commit anyway
-			HgCommitClient.commitResources(hgRoot, user, messageToCommit, new NullProgressMonitor());
+			HgCommitClient.commitResources(hgRoot, closeBranch, user, messageToCommit, new NullProgressMonitor());
 		} else {
-			HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
+			HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor(), closeBranch);
 		}
 	}
 
@@ -373,6 +383,13 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public HgRoot getHgRoot() {
 		return hgRoot;
+	}
+
+	/**
+	 * @return the closeBranchCheckBox
+	 */
+	public Button getCloseBranchCheckBox() {
+		return closeBranchCheckBox;
 	}
 
 }

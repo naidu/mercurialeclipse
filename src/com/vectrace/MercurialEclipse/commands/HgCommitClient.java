@@ -43,7 +43,8 @@ public class HgCommitClient extends AbstractClient {
 	/**
 	 * Commit given resources and refresh the caches for the associated projects
 	 */
-	public static void commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor) throws HgException {
+	public static void commitResources(List<IResource> resources, String user, String message,
+			IProgressMonitor monitor, boolean closeBranch) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
@@ -52,43 +53,51 @@ public class HgCommitClient extends AbstractClient {
 				if (monitor.isCanceled()) {
 					break;
 				}
-				monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
+				monitor
+						.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 			}
 			List<IResource> files = mapEntry.getValue();
-			commit(root, AbstractClient.toFiles(files), user, message);
+			commit(root, AbstractClient.toFiles(files), user, message, closeBranch);
 		}
 		for (HgRoot root : resourcesByRoot.keySet()) {
 			Set<IProject> projects = ResourceUtils.getProjects(root);
 			for (IProject iProject : projects) {
-				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+				new RefreshJob("Refreshing " + iProject.getName(), iProject,
+						RefreshJob.LOCAL_AND_OUTGOING).schedule();
 			}
 		}
 	}
 
 	/**
-	 * Commit given hg root with all checked out/added/deleted changes and refresh the caches for the assotiated projects
+	 * Commit given hg root with all checked out/added/deleted changes and refresh the caches for
+	 * the assotiated projects
 	 */
-	public static void commitResources(HgRoot root, String user, String message, IProgressMonitor monitor) throws HgException {
+	public static void commitResources(HgRoot root, boolean closeBranch, String user,
+			String message, IProgressMonitor monitor) throws HgException {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
-		commit(root, emptyList, user, message);
+		commit(root, emptyList, user, message, closeBranch);
 
 		Set<IProject> projects = ResourceUtils.getProjects(root);
 		for (IProject iProject : projects) {
-			new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+			new RefreshJob("Refreshing " + iProject.getName(), iProject,
+					RefreshJob.LOCAL_AND_OUTGOING).schedule();
 		}
 	}
 
 	/**
-	 * Preforms commit. No refresh of any cashes is done afterwards.
+	 * Performs commit. No refresh of any cashes is done afterwards.
 	 *
-	 * <b>Note</b> clients should not use this method directly, it is NOT private
-	 *  for tests only
+	 * <b>Note</b> clients should not use this method directly, it is NOT private for tests only
 	 */
-	protected static String commit(HgRoot root, List<File> files, String user, String message) throws HgException {
+	protected static String commit(HgRoot root, List<File> files, String user, String message,
+			boolean closeBranch) throws HgException {
 		HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(quote(user));
+		if (closeBranch) {
+			command.addOptions("--close-branch");
+		}
 		File messageFile = saveMessage(message);
 		try {
 			addMessage(command, messageFile, message);
@@ -115,10 +124,11 @@ public class HgCommitClient extends AbstractClient {
 	}
 
 	/**
-	 * Commit given project after the merge and refresh the caches.
-	 * Implementation note: after merge, no files should be specified.
+	 * Commit given project after the merge and refresh the caches. Implementation note: after
+	 * merge, no files should be specified.
 	 */
-	public static String commitProject(IProject project, String user, String message) throws HgException {
+	public static String commitProject(IProject project, String user, String message)
+			throws HgException {
 		HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(quote(user));
@@ -128,7 +138,8 @@ public class HgCommitClient extends AbstractClient {
 			String result = command.executeToString();
 			Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
 			for (IProject iProject : projects) {
-				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+				new RefreshJob("Refreshing " + iProject.getName(), iProject,
+						RefreshJob.LOCAL_AND_OUTGOING).schedule();
 			}
 			return result;
 		} finally {
@@ -151,7 +162,8 @@ public class HgCommitClient extends AbstractClient {
 		Writer writer = null;
 		try {
 			File messageFile = File.createTempFile("hgcommitmsg", ".txt");
-			writer = new OutputStreamWriter(new FileOutputStream(messageFile), MercurialEclipsePlugin.getDefaultEncoding());
+			writer = new OutputStreamWriter(new FileOutputStream(messageFile),
+					MercurialEclipsePlugin.getDefaultEncoding());
 			writer.write(message.trim());
 			return messageFile;
 		} catch (IOException ex) {
