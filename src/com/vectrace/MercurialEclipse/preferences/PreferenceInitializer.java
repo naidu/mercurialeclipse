@@ -10,13 +10,13 @@
  *     Jérôme Nègre              - adding label decorator section
  *     Stefan C                  - Code cleanup
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (intland)   - bug fixes
  *******************************************************************************/
 
 package com.vectrace.MercurialEclipse.preferences;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.eclipse.core.runtime.FileLocator;
@@ -76,20 +76,31 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		boolean isWindows = File.separatorChar == '\\';
 		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg");
 		URL url = FileLocator.find(MercurialEclipsePlugin.getDefault().getBundle(), path, null);
+
+		String defaultExecPath = "hg";
+
 		if(url != null){
 			try {
 				url = FileLocator.toFileURL(url);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, new File(url.toURI()).getAbsolutePath());
+				File execFile = new File(url.getPath());
+				if (execFile.isFile()) {
+					defaultExecPath = execFile.getAbsolutePath();
+
+					File currentValue = null;
+					try {
+						currentValue = new File(store.getString(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE));
+					} catch (Exception ex) {
+					}
+
+					if (currentValue == null || !currentValue.isAbsolute()) {
+						store.setValue(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, defaultExecPath);
+					}
+				}
 			} catch (IOException e1) {
 				MercurialEclipsePlugin.logError(e1);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
-			} catch (URISyntaxException e) {
-				MercurialEclipsePlugin.logError(e);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
 			}
-		} else {
-			store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
 		}
-	}
 
+		store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, defaultExecPath);
+	}
 }
