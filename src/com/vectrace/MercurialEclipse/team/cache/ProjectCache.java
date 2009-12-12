@@ -11,7 +11,6 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -28,10 +27,10 @@ public class ProjectCache {
 	private final SortedSet<ChangeSet> changesets;
 	private final String branch;
 
-	public ProjectCache(IProject project, String branch) {
+	public ProjectCache(IProject project, String branch, SortedSet<ChangeSet> changesets) {
 		this.project = project;
 		this.branch = branch;
-		this.changesets = new TreeSet<ChangeSet>();
+		this.changesets = changesets;
 	}
 
 	public SortedSet<ChangeSet> getChangesets() {

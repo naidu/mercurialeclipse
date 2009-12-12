@@ -21,9 +21,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLReaderFactory;
@@ -36,6 +36,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
+import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
 
 /**
  * This class helps HgClients to parse the changeset output of hg to Changeset objects.
@@ -148,7 +149,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @return map where the key is an absolute file path
 	 * @throws HgException
 	 */
-	protected final static Map<IPath, Set<ChangeSet>> createMercurialRevisions(
+	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(
 			IResource res, String input,
 			Direction direction, HgRepositoryLocation repository,
 			File bundleFile, String branch) throws HgException {
@@ -156,20 +157,19 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
 		IPath path = res.getLocation();
 
-		return createMercurialRevisions(path, input, direction, repository, bundleFile, branch, hgRoot);
+		return createLocalRevisions(path, input, direction, repository, bundleFile, branch, hgRoot);
 	}
 
-	protected final static RemoteData createMercurialRevisions(IProject project, String input,
-			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch)
+	protected static RemoteData createRemoteRevisions(RemoteKey key, String input,
+			Direction direction, File bundleFile)
 			throws HgException {
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 		if (input == null || input.length() == 0){
-			return new RemoteData(repository, hgRoot, direction, branch);
+			return new RemoteData(key, direction);
 		}
 
-		IPath path = project.getLocation();
-		ChangesetContentHandler xmlHandler = parseInput(path, false, input, direction, repository,
-				bundleFile, branch, hgRoot);
+		IPath path = new Path(key.getRoot().getAbsolutePath());
+		ChangesetContentHandler xmlHandler = parseInput(path, false, input, direction, key.getRepo(),
+				bundleFile, key.getBranch(), key.getRoot());
 		return xmlHandler.createRemoteData();
 	}
 
@@ -180,7 +180,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @return map where the key is an absolute file path
 	 * @throws HgException
 	 */
-	protected static Map<IPath, Set<ChangeSet>> createMercurialRevisions(IPath path, String input,
+	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(IPath path, String input,
 			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,24 +20,19 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.resources.IWorkspaceRoot;
-import org.eclipse.core.runtime.Assert;
-import org.eclipse.core.runtime.IPath;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIncomingClient;
 import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A base class for remote caches (caching changesets which are either not present
@@ -71,11 +67,12 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 
 	private static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 
+
 	/**
-	 * The Map has the following structure: RepositoryLocation -> IResource ->
-	 * Changeset-Set
+	 * Map hg root -> branch -> repo -> projects -> changeset
 	 */
-	protected final Map<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>> repoChangeSets;
+	protected final Map<HgRoot, Set<RemoteData>> repoDatas;
+	protected final Map<RemoteKey, RemoteData> fastRepoMap;
 
 	protected final Direction direction;
 
@@ -84,7 +81,8 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public AbstractRemoteCache(Direction direction) {
 		this.direction = direction;
-		repoChangeSets = new HashMap<HgRepositoryLocation, Map<IPath, SortedSet<ChangeSet>>>();
+		repoDatas = new HashMap<HgRoot, Set<RemoteData>>();
+		fastRepoMap = new HashMap<RemoteKey, RemoteData>();
 	}
 
 	/**
@@ -96,8 +94,32 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	}
 
 	public void clear(HgRepositoryLocation repo) {
-		synchronized (repoChangeSets) {
-			repoChangeSets.remove(repo);
+		synchronized (repoDatas) {
+			Collection<Set<RemoteData>> values = repoDatas.values();
+			for (Set<RemoteData> set : values) {
+				Iterator<RemoteData> iterator = set.iterator();
+				while (iterator.hasNext()) {
+					RemoteData data = iterator.next();
+					if(repo.equals(data.getRepo())){
+						iterator.remove();
+						fastRepoMap.remove(data.getKey());
+					}
+				}
+			}
+			notifyChanged(repo, false);
+		}
+	}
+
+	public void clear(HgRoot root) {
+		synchronized (repoDatas) {
+			Set<RemoteData> set = repoDatas.get(root);
+			if(set == null){
+				return;
+			}
+			for (RemoteData data : set) {
+				fastRepoMap.remove(data.getKey());
+			}
+			set.clear();
 		}
 	}
 
@@ -106,30 +128,49 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * false to supress the event notification
 	 */
 	public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
-		synchronized (repoChangeSets) {
-			Map<IPath, SortedSet<ChangeSet>> map = repoChangeSets.get(repo);
-			if(map != null){
-				IPath location = project.getLocation();
-				map.remove(location);
-				Iterator<IPath> iterator = map.keySet().iterator();
-				while(iterator.hasNext()){
-					if(location.isPrefixOf(iterator.next())){
+		synchronized (repoDatas) {
+			try {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+				Set<RemoteData> set = repoDatas.get(hgRoot);
+				if(set == null){
+					return;
+				}
+				Iterator<RemoteData> iterator = set.iterator();
+				while(iterator.hasNext()) {
+					RemoteData data = iterator.next();
+					if(repo.equals(data.getRepo())){
 						iterator.remove();
+						fastRepoMap.remove(data.getKey());
 					}
 				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
 			}
 		}
 		if(notify) {
-			notifyChanged(project, false);
+			notifyChanged(repo, false);
+		}
+	}
+
+	protected void notifyChanged(HgRepositoryLocation repo, boolean expandMembers){
+		Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+		for (IProject project : projects) {
+			notifyChanged(project, expandMembers);
 		}
 	}
 
 	@Override
-	protected void clearProjectCache(IProject project) {
-		Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager()
-				.getAllProjectRepoLocations(project);
-		for (HgRepositoryLocation repo : repos) {
-			clear(repo, project, false);
+	protected void projectDeleted(IProject project) {
+		synchronized (repoDatas) {
+			try {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+				Set<RemoteData> set = repoDatas.get(hgRoot);
+				for (RemoteData rd : set) {
+					rd.clear(project);
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 	}
 
@@ -142,36 +183,31 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> getChangeSets(IResource resource,
 			HgRepositoryLocation repository, String branch) throws HgException {
-		Map<IPath, SortedSet<ChangeSet>> repoMap;
-		synchronized (repoChangeSets){
-			repoMap = repoChangeSets.get(repository);
-			IPath location = resource.getLocation();
-			if (repoMap == null || ((resource instanceof IProject) && repoMap.get(location) == null)) {
-				// lazy loading: refresh cache on demand only.
-				refreshChangeSets(resource.getProject(), repository, branch);
-				repoMap = repoChangeSets.get(repository);
+		synchronized (repoDatas){
+			IProject project = resource.getProject();
+			// check if mercurial is team provider and if we're working on an open project
+			if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
+				return EMPTY_SET;
 			}
-			if (repoMap != null) {
-				SortedSet<ChangeSet> revisions = repoMap.get(location);
-				if (revisions != null) {
-					return filterByBranch(revisions, branch);
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
+			RemoteData data = fastRepoMap.get(key);
+
+			// XXX new code
+			if(data == null){
+				// lazy loading: refresh cache on demand only.
+				// lock the cache till update is complete
+				synchronized (repoDatas){
+					addResourcesToCache(key);
 				}
+				notifyChanged(key.getRepo(), true);
+			}
+			RemoteData remoteData = fastRepoMap.get(key);
+			if(remoteData != null) {
+				return remoteData.getChangeSets(resource);
 			}
 		}
 		return EMPTY_SET;
-	}
-
-	private SortedSet<ChangeSet> filterByBranch(SortedSet<ChangeSet> sets, String branch){
-		if(branch == null || sets.isEmpty()){
-			return sets;
-		}
-		SortedSet<ChangeSet> newSets = new TreeSet<ChangeSet>();
-		for (ChangeSet cs : sets) {
-			if(Branch.same(branch, cs.getBranch())){
-				newSets.add(cs);
-			}
-		}
-		return newSets;
 	}
 
 	/**
@@ -182,9 +218,10 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public Set<IResource> getMembers(IResource resource,
 			HgRepositoryLocation repository, String branch) throws HgException {
-		Map<IPath, SortedSet<ChangeSet>> changeSets;
-		synchronized (repoChangeSets){
-			changeSets = getMap(resource, repository, branch);
+		SortedSet<ChangeSet> changeSets;
+		synchronized (repoDatas){
+			// make sure data is there: will refresh (in or out) changesets if needed
+			changeSets = getChangeSets(resource, repository, branch);
 			return getMembers(resource, changeSets);
 		}
 	}
@@ -193,86 +230,40 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @return never null
 	 */
 	private static Set<IResource> getMembers(IResource resource,
-			Map<IPath, SortedSet<ChangeSet>> changeSets) {
+			SortedSet<ChangeSet> changeSets) {
 		Set<IResource> members = new HashSet<IResource>();
 		if (changeSets == null) {
 			return members;
 		}
-		IWorkspaceRoot root = resource.getWorkspace().getRoot();
-		IPath location = ResourceUtils.getPath(resource);
-		for (IPath path : changeSets.keySet()) {
-			IFile member = root.getFileForLocation(path);
-			if (member != null) {
-				IPath memberLocation = ResourceUtils.getPath(member);
-				if (location.isPrefixOf(memberLocation)) {
-					members.add(member);
-				}
-			}
+		for (ChangeSet cs : changeSets) {
+			members.addAll(cs.getFiles());
 		}
 		return members;
 	}
 
-	private Map<IPath, SortedSet<ChangeSet>> getMap(IResource resource, HgRepositoryLocation repository, String branch)
-			throws HgException {
-		// make sure data is there: will refresh (in or out) changesets if needed
-		getChangeSets(resource, repository, branch);
-		return repoChangeSets.get(repository);
-	}
-
-
-	/**
-	 * Gets all (in or out) changesets by querying Mercurial and adds them to the caches.
-	 */
-	private void refreshChangeSets(IProject project, HgRepositoryLocation repository, String branch) throws HgException {
-		Assert.isNotNull(project);
-
-		// check if mercurial is team provider and if we're working on an open project
-		if (project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project)) {
-
-			// lock the cache till update is complete
-			synchronized (repoChangeSets){
-				addResourcesToCache(project, repository, branch);
-			}
-			notifyChanged(project, true);
-		}
-	}
-
-	private void addResourcesToCache(IProject project, HgRepositoryLocation repository, String branch)
-			throws HgException {
-
+	private void addResourcesToCache(RemoteKey key) throws HgException {
 		if(debug) {
-			System.out.println("\n!fetch " + direction + " for " + project);
+			System.out.println("\n!fetch " + direction + " for " + key);
 		}
 
-		// clear cache of old members
-		final Map<IPath, SortedSet<ChangeSet>> removeMap = repoChangeSets.get(repository);
-
-		if (removeMap != null) {
-			removeMap.clear();
-			repoChangeSets.remove(repository);
-		}
+		fastRepoMap.remove(key);
 
 		// get changesets from hg
-		Map<IPath, Set<ChangeSet>> resources;
+		RemoteData data = null;
 		if (direction == Direction.OUTGOING) {
-			resources = HgOutgoingClient.getOutgoing(project, repository, branch);
+			data = HgOutgoingClient.getOutgoing(key);
 		} else {
-			resources = HgIncomingClient.getHgIncoming(project, repository, branch);
+			data = HgIncomingClient.getHgIncoming(key);
 		}
 
-		HashMap<IPath, SortedSet<ChangeSet>> map = new HashMap<IPath, SortedSet<ChangeSet>>();
-		repoChangeSets.put(repository, map);
-		IPath projectPath = project.getLocation();
-		map.put(projectPath, EMPTY_SET);
+		fastRepoMap.put(key, data);
 
-		// add them to cache(s)
-		for (Map.Entry<IPath, Set<ChangeSet>> mapEntry : resources.entrySet()) {
-			IPath path = mapEntry.getKey();
-			Set<ChangeSet> changes = mapEntry.getValue();
-			if (changes != null && changes.size() > 0) {
-				map.put(path, Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>(changes)));
-			}
+		Set<RemoteData> set = repoDatas.get(key.getRoot());
+		if(set == null){
+			set = new HashSet<RemoteData>();
+			repoDatas.put(key.getRoot(), set);
 		}
+		set.add(data);
 	}
 
 	/**
@@ -284,14 +275,12 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			HgRepositoryLocation repository, String branch) throws HgException {
 
 		if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
-			synchronized (repoChangeSets){
-				Map<IPath, SortedSet<ChangeSet>> repoMap = getMap(resource, repository, branch);
+			synchronized (repoDatas){
+				// make sure data is there: will refresh (in or out) changesets if needed
+				SortedSet<ChangeSet> changeSets = getChangeSets(resource, repository, branch);
 
-				if (repoMap != null) {
-					SortedSet<ChangeSet> revisions = repoMap.get(resource.getLocation());
-					if (revisions != null && revisions.size() > 0) {
-						return revisions.last();
-					}
+				if (changeSets != null && changeSets.size() > 0) {
+					return changeSets.last();
 				}
 			}
 		}

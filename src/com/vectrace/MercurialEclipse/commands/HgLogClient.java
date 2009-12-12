@@ -156,7 +156,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			if (result.length() == 0) {
 				return null;
 			}
-			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					res, result, Direction.LOCAL, null, null, null);
 			return revisions;
 		} catch (IOException e) {
@@ -187,7 +187,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			if (result.length() == 0) {
 				return null;
 			}
-			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					new Path(path.getAbsolutePath()),
 					result, Direction.LOCAL, null, null, null, root);
 			return revisions;
@@ -318,7 +318,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			command.addOptions("--rev", nodeId); //$NON-NLS-1$
 			String result = command.executeToString();
 
-			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					res, result, Direction.LOCAL, null, null, null);
 			Set<ChangeSet> set = revisions.get(res.getLocation());
 			if (set != null) {

@@ -102,7 +102,7 @@ public class LocalChangesetCache extends AbstractCache {
 	}
 
 	@Override
-	protected void clearProjectCache(IProject project) {
+	protected void projectDeleted(IProject project) {
 		clear(project, false);
 	}
 

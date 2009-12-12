@@ -385,6 +385,29 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
 				.getAllRepoLocationProjects(repositoryLocation);
 
+		Set<HgRoot> roots = byRoot.keySet();
+		try {
+			sema.acquire();
+			for (HgRoot hgRoot : roots) {
+				if (flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
+					if (debug) {
+						System.out.println("\nclear incoming: " + hgRoot + ", depth: " + flag);
+					}
+					INCOMING_CACHE.clear(hgRoot);
+				}
+				if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
+					if(debug) {
+						System.out.println("\nclear outgoing: " + hgRoot + ", depth: " + flag);
+					}
+					OUTGOING_CACHE.clear(hgRoot);
+				}
+			}
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+		} finally {
+			sema.release();
+		}
+
 		for (IProject project : projects) {
 			if (!repoLocationProjects.contains(project)) {
 				continue;
@@ -487,12 +510,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,
 			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
-		if(flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
-			if(debug) {
-				System.out.println("\nclear incoming: " + project + ", depth: " + flag);
-			}
-			INCOMING_CACHE.clear(repositoryLocation, project, false);
-		}
+
 		if(forceRefresh && flag != HgSubscriberScopeManager.OUTGOING){
 			if(debug) {
 				System.out.println("\nget incoming: " + project + ", depth: " + flag);
@@ -510,12 +528,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private void refreshOutgoing(int flag, Set<IResource> resourcesToRefresh, IProject project,
 			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
-		if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
-			if(debug) {
-				System.out.println("\nclear outgoing: " + project + ", depth: " + flag);
-			}
-			OUTGOING_CACHE.clear(repositoryLocation, project, false);
-		}
+
 		if(forceRefresh && flag != HgSubscriberScopeManager.INCOMING){
 			if(debug) {
 				System.out.println("\nget outgoing: " + project + ", depth: " + flag);

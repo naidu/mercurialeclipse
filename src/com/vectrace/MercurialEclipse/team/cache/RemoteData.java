@@ -17,9 +17,11 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -45,9 +47,14 @@ public class RemoteData {
 	private final Map<IProject, ProjectCache> projectMap;
 	private final Direction direction;
 	private final Map<IPath, Set<ChangeSet>> changesets;
+	private final RemoteKey key;
 
-	public RemoteData(HgRepositoryLocation repo, HgRoot root, Direction direction, String branch) {
-		this(repo, root, direction, branch, new HashMap<IPath, Set<ChangeSet>>());
+	public RemoteData(RemoteKey key, Direction direction) {
+		this(key.getRepo(), key.getRoot(), key.getBranch(), direction, new HashMap<IPath, Set<ChangeSet>>());
+	}
+
+	public RemoteData(HgRepositoryLocation repo, HgRoot root, String branch, Direction direction) {
+		this(repo, root, branch, direction, new HashMap<IPath, Set<ChangeSet>>());
 	}
 
 	/**
@@ -55,7 +62,7 @@ public class RemoteData {
 	 * this data, and may also contain additional keys for one or more projects under
 	 * the given hgroot.
 	 */
-	public RemoteData(HgRepositoryLocation repo, HgRoot root, Direction direction, String branch,
+	public RemoteData(HgRepositoryLocation repo, HgRoot root, String branch, Direction direction,
 			Map<IPath, Set<ChangeSet>> changesets) {
 		super();
 		this.repo = repo;
@@ -63,6 +70,7 @@ public class RemoteData {
 		this.direction = direction;
 		this.branch = branch;
 		this.changesets = changesets;
+		key = new RemoteKey(root, repo, branch);
 		projectMap = new HashMap<IProject, ProjectCache>();
 	}
 
@@ -76,7 +84,9 @@ public class RemoteData {
 		}
 		ProjectCache cache = projectMap.get(project);
 		if(cache == null) {
-			populateCache(resource.getProject());
+			synchronized (projectMap) {
+				populateCache(resource.getProject());
+			}
 			return getChangeSets(resource);
 		}
 		if (cache.isEmpty()) {
@@ -89,22 +99,54 @@ public class RemoteData {
 	}
 
 	private void populateCache(IProject project) {
-		// TODO Auto-generated method stub
-
+		if(projectMap.containsKey(project)){
+			return;
+		}
+		TreeSet<ChangeSet> psets = new TreeSet<ChangeSet>();
+		ProjectCache cache = new ProjectCache(project, branch, psets);
+		projectMap.put(project, cache);
+		IPath projectPath = project.getLocation();
+		Set<ChangeSet> set = changesets.get(projectPath);
+		if(set != null){
+			psets.addAll(set);
+			return;
+		}
+		Path rootPath = new Path(root.getAbsolutePath());
+		set = changesets.get(rootPath);
+		for (ChangeSet changeSet : set) {
+			Set<IFile> files = changeSet.getFiles();
+			for (IFile file : files) {
+				IPath path = file.getLocation();
+				if(path != null && projectPath.isPrefixOf(path)){
+					// TODO filter by branch, or it is already filtered?
+					// if(Branch.same(branch, changeSet.getBranch()))
+					psets.add(changeSet);
+					break;
+				}
+			}
+		}
 	}
 
 	public boolean isValid(IProject project){
-		return projectMap.containsKey(project);
+		synchronized (projectMap) {
+			return projectMap.containsKey(project);
+		}
 	}
 
 	public boolean clear(IProject project){
-		ProjectCache removed = projectMap.remove(project);
+		ProjectCache removed;
+		synchronized (projectMap) {
+			removed = projectMap.remove(project);
+		}
 		return removed != null && !removed.isEmpty();
 	}
 
 	public boolean clear(){
-		boolean changed = !projectMap.isEmpty();
-		projectMap.clear();
+		boolean changed;
+		synchronized (projectMap) {
+			changed = !projectMap.isEmpty();
+			projectMap.clear();
+		}
 		return changed;
 	}
 
@@ -132,5 +174,13 @@ public class RemoteData {
 
 	public Direction getDirection(){
 		return direction;
+	}
+
+	public boolean matches(RemoteKey otherKey){
+		return key.equals(otherKey);
+	}
+
+	public RemoteKey getKey(){
+		return key;
 	}
 }

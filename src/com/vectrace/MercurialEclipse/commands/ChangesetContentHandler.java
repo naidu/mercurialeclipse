@@ -88,9 +88,9 @@ final class ChangesetContentHandler implements ContentHandler {
 		this.repository = repository;
 		this.bundleFile = bundleFile;
 		this.hgRoot = hgRoot;
-		repoPath = new Path(hgRoot.getPath());
 		this.branch = branch;
-		this.fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
+		repoPath = new Path(hgRoot.getPath());
+		fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 		filesModified = new TreeSet<String>();
 		filesAdded = new TreeSet<String>();
 		filesRemoved = new TreeSet<String>();
@@ -271,10 +271,10 @@ final class ChangesetContentHandler implements ContentHandler {
 					mapPathToChangeset(fileAbsPath, cs);
 				}
 			}
+			mapPathToChangeset(res, cs);
 		} else {
 			mapPathToChangeset(repoPath, cs);
 		}
-		mapPathToChangeset(res, cs);
 	}
 
 	private void mapPathToChangeset(IPath path, ChangeSet cs) {
@@ -291,7 +291,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	}
 
 	public RemoteData createRemoteData() {
-		return new RemoteData(repository, hgRoot, direction, branch, fileRevisions);
+		return new RemoteData(repository, hgRoot, branch, direction, fileRevisions);
 	}
 
 	//####################################################################################
