@@ -15,6 +15,10 @@
 
 package com.vectrace.MercurialEclipse.preferences;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
+import java.io.File;
+
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.FileFieldEditor;
@@ -26,7 +30,6 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-
 
 /**
  * This class represents a preference page that is contributed to the
@@ -41,6 +44,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class GeneralPreferencePage extends FieldEditorPreferencePage implements
 IWorkbenchPreferencePage {
+
+	private MercurialExecutableFileFieldEditor execField;
 
 	private static final class LabelDecoratorRadioGroupFieldEditor extends
 	RadioGroupFieldEditor {
@@ -58,43 +63,46 @@ IWorkbenchPreferencePage {
 		}
 	}
 
-	private static final class MercurialExecutableFileFieldEditor extends
-	FileFieldEditor {
+	private static final class MercurialExecutableFileFieldEditor extends FileFieldEditor {
 		private MercurialExecutableFileFieldEditor(String name,
 				String labelText, Composite parent) {
-			super(name, labelText, parent);
+			super(name, labelText, false, StringFieldEditor.VALIDATE_ON_KEY_STROKE, parent);
 		}
 
 		@Override
-		protected boolean checkState() {
+		public boolean checkState() {
 			// There are other ways of doing this properly but this is
 			// better than the default behavior
-			return MercurialPreferenceConstants.MERCURIAL_EXECUTABLE
-			.equals(getTextControl().getText())
-			|| super.checkState();
+			String stringValue = getStringValue();
+			if(MERCURIAL_EXECUTABLE.equals(stringValue)){
+				clearErrorMessage();
+				return true;
+			}
+			return super.checkState();
 		}
 	}
 
 	private static final class GpgExecutableFileFieldEditor extends FileFieldEditor {
 		private GpgExecutableFileFieldEditor(String name, String labelText,
 				Composite parent) {
-			super(name, labelText, parent);
+			super(name, labelText, false, StringFieldEditor.VALIDATE_ON_KEY_STROKE, parent);
 		}
 
 		@Override
 		protected boolean checkState() {
 			// There are other ways of doing this properly but this is
 			// better than the default behaviour
-			return MercurialPreferenceConstants.GPG_EXECUTABLE
-			.equals(getTextControl().getText())
-			|| super.checkState();
+			if(GPG_EXECUTABLE.equals(getStringValue())){
+				clearErrorMessage();
+				return true;
+			}
+			return super.checkState();
 		}
 	}
 
 	public GeneralPreferencePage() {
 		super(GRID);
-		setPreferenceStore(MercurialEclipsePlugin.getDefault()
-				.getPreferenceStore());
+		setPreferenceStore(MercurialEclipsePlugin.getDefault().getPreferenceStore());
 		setDescription(Messages.getString("GeneralPreferencePage.description")); //$NON-NLS-1$
 	}
 
@@ -105,55 +113,107 @@ IWorkbenchPreferencePage {
 	 */
 	@Override
 	public void createFieldEditors() {
-		FileFieldEditor execField = new MercurialExecutableFileFieldEditor(
-				MercurialPreferenceConstants.MERCURIAL_EXECUTABLE,
-				Messages.getString("GeneralPreferencePage.field.hgExecutable"), getFieldEditorParent()); //$NON-NLS-1$
+
+		File integratedHgExecutable = PreferenceInitializer.getIntegratedHgExecutable();
+		if(integratedHgExecutable != null){
+			addField(new BooleanFieldEditor(USE_BUILT_IN_HG_EXECUTABLE,
+					"Use default (built-in) Mercurial executable",
+					getFieldEditorParent()){
+				@Override
+				protected void fireValueChanged(String property, Object oldValue,
+						Object newValue) {
+					super.fireValueChanged(property, oldValue, newValue);
+					if(newValue instanceof Boolean) {
+						enablePathEditor(!((Boolean)newValue).booleanValue());
+					}
+				}
+				@Override
+				protected void doLoadDefault() {
+					super.doLoadDefault();
+					enablePathEditor(!getBooleanValue());
+				}
+
+			});
+		}
+
+		execField = new MercurialExecutableFileFieldEditor(
+				MERCURIAL_EXECUTABLE,
+				Messages.getString("GeneralPreferencePage.field.hgExecutable"), getFieldEditorParent());
 
 		addField(execField);
+
+		execField.setEmptyStringAllowed(false);
+
 		if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
 			execField.setErrorMessage(Messages.getString("GeneralPreferencePage.error.HgNotInstalled")); //$NON-NLS-1$
 		}
+		if (integratedHgExecutable != null && getPreferenceStore().getBoolean(USE_BUILT_IN_HG_EXECUTABLE)) {
+			execField.setEnabled(false, getFieldEditorParent());
+		}
 
 		addField(new GpgExecutableFileFieldEditor(
-				MercurialPreferenceConstants.GPG_EXECUTABLE,
+				GPG_EXECUTABLE,
 				Messages.getString("GeneralPreferencePage.field.gpgExecutable"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new StringFieldEditor(
-				MercurialPreferenceConstants.MERCURIAL_USERNAME,
+				MERCURIAL_USERNAME,
 				Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+				PREF_USE_EXTERNAL_MERGE,
 				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new LabelDecoratorRadioGroupFieldEditor(
-				MercurialPreferenceConstants.LABELDECORATOR_LOGIC,
+				LABELDECORATOR_LOGIC,
 				Messages.getString("GeneralPreferencePage.field.decorationGroup.description"), //$NON-NLS-1$
 				1,
 				new String[][] {
 					{
 						Messages.getString("GeneralPreferencePage.field.decorationGroup.asModified"), //$NON-NLS-1$
-						MercurialPreferenceConstants.LABELDECORATOR_LOGIC_2MM },
+						LABELDECORATOR_LOGIC_2MM },
 						{
 							Messages.getString("GeneralPreferencePage.field.decorationGroup.mostImportant"), //$NON-NLS-1$
-							MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB } },
+							LABELDECORATOR_LOGIC_HB } },
 							getFieldEditorParent(), true));
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS,
+				PREF_DECORATE_WITH_COLORS,
 				Messages.getString("GeneralPreferencePage.enableFontAndColorDecorations"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS,
+				PREF_AUTO_SHARE_PROJECTS,
 				Messages.getString("GeneralPreferencePage.autoshare"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
 		IntegerFieldEditor commitSizeEditor = new IntegerFieldEditor(
-				MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
+				COMMIT_MESSAGE_BATCH_SIZE,
 				Messages.getString("GeneralPreferencePage.field.commitMessageBatchSize"), //$NON-NLS-1$
 				getFieldEditorParent());
 		commitSizeEditor.setValidRange(1, Integer.MAX_VALUE);
 		addField(commitSizeEditor);
+	}
+
+	protected void enablePathEditor(boolean on) {
+		if(execField == null){
+			return;
+		}
+		execField.setEnabled(on, getFieldEditorParent());
+		if(!on){
+			execField.setStringValue(PreferenceInitializer.getIntegratedHgExecutable().getPath());
+		}
+	}
+
+	@Override
+	public void setVisible(boolean visible) {
+		super.setVisible(visible);
+		if(!execField.checkState()){
+			execField.showErrorMessage();
+		}
+	}
+
+	@Override
+	public boolean isValid() {
+		return execField.checkState() && super.isValid();
 	}
 
 	public void init(IWorkbench workbench) {
