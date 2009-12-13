@@ -95,7 +95,7 @@ public abstract class AbstractCache extends Observable {
 			IProject project = (IProject) res;
 			if(delta.getKind() == IResourceDelta.REMOVED ||
 					((delta.getFlags() & IResourceDelta.OPEN) != 0 && !project.isOpen())){
-				projectDeleted(project);
+				projectDeletedOrClosed(project);
 			}
 			return false;
 		}
@@ -105,7 +105,7 @@ public abstract class AbstractCache extends Observable {
 	/**
 	 * Clients has cleanup all caches related to given project.
 	 */
-	abstract protected void projectDeleted(IProject project);
+	abstract protected void projectDeletedOrClosed(IProject project);
 
 	/**
 	 * does nothing, clients has to override and update preferences
