@@ -20,6 +20,7 @@ package com.vectrace.MercurialEclipse.preferences;
 public class MercurialPreferenceConstants {
 	// executables
 	public static final String MERCURIAL_EXECUTABLE = "hg"; //$NON-NLS-1$
+	public static final String USE_BUILT_IN_HG_EXECUTABLE = "hg.useBuiltInHgExecutable"; //$NON-NLS-1$
 	public static final String GPG_EXECUTABLE = "hg.gpg.executable"; //$NON-NLS-1$
 
 	// user name should be per project in the future, different repositories

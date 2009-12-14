@@ -18,7 +18,7 @@ import com.vectrace.MercurialEclipse.wizards.PushRepoWizard;
 public class PushHandler extends SingleResourceHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
+	public void run(IResource resource) throws Exception {
 		PushRepoWizard pushRepoWizard = new PushRepoWizard(resource);
 		WizardDialog pushWizardDialog = new WizardDialog(getShell(),
 				pushRepoWizard);
