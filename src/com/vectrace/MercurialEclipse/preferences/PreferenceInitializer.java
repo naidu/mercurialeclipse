@@ -56,6 +56,8 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(RESOURCE_DECORATOR_SHOW_CHANGESET, false);
 		store.setDefault(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET, false);
 
+		store.setDefault(SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS, true);
+
 		store.setDefault(LOG_BATCH_SIZE, 200);
 		store.setDefault(STATUS_BATCH_SIZE, 10);
 		store.setDefault(COMMIT_MESSAGE_BATCH_SIZE, 10);

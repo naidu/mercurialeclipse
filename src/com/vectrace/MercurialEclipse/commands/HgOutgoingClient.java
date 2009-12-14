@@ -20,6 +20,7 @@ import java.util.Set;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -35,9 +36,11 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 	public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
 			HgRepositoryLocation repository, String branch) throws HgException {
 		AbstractShellCommand command = getCommand(res, branch);
+		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
+		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 		try {
 			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
-					.getStyleFile(true).getCanonicalPath());
+					.getStyleFile(style).getCanonicalPath());
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}

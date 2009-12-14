@@ -15,6 +15,8 @@
 
 package com.vectrace.MercurialEclipse.preferences;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
@@ -54,34 +56,41 @@ implements IWorkbenchPreferencePage {
 	 */
 	@Override
 	public void createFieldEditors() {
+
+		// for incoming/outgoing, compute add/remove/modified status on changeset files
+		addField(new BooleanFieldEditor(
+				SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS,
+				Messages.getString("PerformancePreferencePage.field.computeFullStatus"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
 		// batch size preferences
 
 		IntegerFieldEditor batchLogRevisionEditor = new IntegerFieldEditor(
-				MercurialPreferenceConstants.LOG_BATCH_SIZE,
+				LOG_BATCH_SIZE,
 				Messages.getString("PerformancePreferencePage.field.revisionLimit"), getFieldEditorParent()); //$NON-NLS-1$
 		addField(batchLogRevisionEditor);
 		batchLogRevisionEditor.setValidRange(1, Integer.MAX_VALUE);
 
 		IntegerFieldEditor batchStatusSeditor = new IntegerFieldEditor(
-				MercurialPreferenceConstants.STATUS_BATCH_SIZE,
+				STATUS_BATCH_SIZE,
 				Messages.getString("PerformancePreferencePage.field.statusBatchSize"), //$NON-NLS-1$
 				getFieldEditorParent());
 		addField(batchStatusSeditor);
 		batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
+				RESOURCE_DECORATOR_COMPLETE_STATUS,
 				Messages.getString("PerformancePreferencePage.field.completeStatus"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(
-				MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
+				RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS,
 				Messages.getString("PerformancePreferencePage.field.computeDeep"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
 
 		final BooleanFieldEditor showChangesetsInfo = new BooleanFieldEditor(
-				MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+				RESOURCE_DECORATOR_SHOW_CHANGESET,
 				Messages.getString("PerformancePreferencePage.field.showChangesetOnFiles"), //$NON-NLS-1$
 				getFieldEditorParent()){
 
@@ -97,7 +106,7 @@ implements IWorkbenchPreferencePage {
 		addField(showChangesetsInfo);
 
 		showIncomingInfo = new BooleanFieldEditor(
-				MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET,
+				RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET,
 				Messages.getString("PerformancePreferencePage.field.showIncomingChangesetOnFiles"), //$NON-NLS-1$
 				getFieldEditorParent());
 		addField(showIncomingInfo);

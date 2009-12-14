@@ -55,6 +55,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 abstract class AbstractParseChangesetClient extends AbstractClient {
 
+
 	/**
 	 * @author bastian
 	 *
@@ -278,11 +279,14 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		}
 	}
 
-	private static final String STYLE_SRC = "/styles/log_style"; //$NON-NLS-1$
-	private static final String STYLE = "/log_style"; //$NON-NLS-1$
-	private static final String STYLE_WITH_FILES_SRC = "/styles/log_style_with_files"; //$NON-NLS-1$
-	private static final String STYLE_WITH_FILES = "/log_style_with_files"; //$NON-NLS-1$
-	private static final String STYLE_TEMP_EXTN = ".tmpl"; //$NON-NLS-1$
+	private static final String STYLES = "/styles";
+	private static final String DEFAULT = "/log_style"; //$NON-NLS-1$
+	private static final String WITH_FILES = "/log_style_with_files"; //$NON-NLS-1$
+	private static final String WITH_FILES_FAST = "/log_style_fast"; //$NON-NLS-1$
+	private static final String TEMP_EXTN = ".tmpl"; //$NON-NLS-1$
+	public static final int STYLE_DEFAULT = 0;
+	public static final int STYLE_WITH_FILES = 1;
+	public static final int STYLE_WITH_FILES_FAST = 2;
 
 	private static ContentHandler handler;
 
@@ -295,23 +299,25 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * copied out of there into the plugin state area so a path can be given to
 	 * the hg command.
 	 *
-	 * @param withFiles
-	 *            return the style that includes the files if true.
+	 * @param styleBit
+	 *            return one of the STYLE_ constants
 	 * @return a File reference to an existing file
 	 */
-	protected static File getStyleFile(boolean withFiles) throws HgException {
-		String style_src;
+	protected static File getStyleFile(int styleBit) throws HgException {
 		String style;
 
-		if (!withFiles) {
-			style = STYLE;
-			style_src = STYLE_SRC;
-		} else {
-			style = STYLE_WITH_FILES;
-			style_src = STYLE_WITH_FILES_SRC;
+		switch (styleBit) {
+		case STYLE_WITH_FILES:
+			style = WITH_FILES;
+			break;
+		case STYLE_WITH_FILES_FAST:
+			style = WITH_FILES_FAST;
+			break;
+		default:
+			style = DEFAULT;
+			break;
 		}
-		String style_tmpl = style + STYLE_TEMP_EXTN;
-		String style_tmpl_src = style_src + STYLE_TEMP_EXTN;
+		String style_tmpl = style + TEMP_EXTN;
 
 		IPath sl = MercurialEclipsePlugin.getDefault().getStateLocation();
 
@@ -329,8 +335,8 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 		// Need to make copies into the state directory from the jar file.
 		// set delete on exit so a new copy is made each time eclipse is started
 		// so we don't use stale copies on plugin updates.
-		InputStream styleistr = cl.getResourceAsStream(style_src);
-		InputStream tmplistr = cl.getResourceAsStream(style_tmpl_src);
+		InputStream styleistr = cl.getResourceAsStream(STYLES + style);
+		InputStream tmplistr = cl.getResourceAsStream(STYLES + style_tmpl);
 		OutputStream styleostr = null;
 		OutputStream tmplostr = null;
 		try {

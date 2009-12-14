@@ -21,6 +21,7 @@ import java.util.Set;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -66,8 +67,11 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 				bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
 						res.getProject().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
 				bundleFile.deleteOnExit();
+
+				boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
+				int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 				command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-						AbstractParseChangesetClient.getStyleFile(true)
+						AbstractParseChangesetClient.getStyleFile(style)
 						.getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
 						.getCanonicalPath());
 			} catch (IOException e) {

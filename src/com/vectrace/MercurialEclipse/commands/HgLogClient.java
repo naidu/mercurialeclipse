@@ -138,8 +138,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
 			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-					AbstractParseChangesetClient.getStyleFile(withFiles)
+					AbstractParseChangesetClient.getStyleFile(style)
 							.getCanonicalPath());
 
 			addRange(command, startRev, limitNumber);
@@ -171,8 +172,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			AbstractShellCommand command = new HgCommand("log", root, //$NON-NLS-1$
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
 			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-					AbstractParseChangesetClient.getStyleFile(withFiles)
+					AbstractParseChangesetClient.getStyleFile(style)
 					.getCanonicalPath());
 
 			addRange(command, startRev, limitNumber);
@@ -311,10 +313,10 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			AbstractShellCommand command = new HgCommand("log", res.getProject().getLocation().toFile(), //$NON-NLS-1$
 					false);
-			command
-					.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
 			command.addOptions("--debug", "--style", AbstractParseChangesetClient //$NON-NLS-1$ //$NON-NLS-2$
-					.getStyleFile(withFiles).getCanonicalPath());
+					.getStyleFile(style).getCanonicalPath());
 			command.addOptions("--rev", nodeId); //$NON-NLS-1$
 			String result = command.executeToString();
 

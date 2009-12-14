@@ -57,8 +57,8 @@ public class MercurialPreferenceConstants {
 	public static final String STATUS_BATCH_SIZE = "hg.batchsize.status"; //$NON-NLS-1$
 	public static final String COMMIT_MESSAGE_BATCH_SIZE = "hg.batchsize.commitmessage"; //$NON-NLS-1$
 
-	// synchronize
-	public static final String SYNCHRONIZE_FILES = "hg.synchronize.synchronizeOnFileLevel"; //$NON-NLS-1$
+	// remote performance: for incoming/outgoing, compute add/remove/modified status on changeset files
+	public static final String SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS = "hg.computeFullRemoteFileStatus"; //$NON-NLS-1$
 
 	// console
 	public static final String PREF_CONSOLE_SHOW_ON_MESSAGE = "hg.console.showOnMessage"; //$NON-NLS-1$
