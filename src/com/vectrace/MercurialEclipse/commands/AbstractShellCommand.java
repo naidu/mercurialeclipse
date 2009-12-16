@@ -9,10 +9,10 @@
  * Bastian Doetsch	implementation (with lots of stuff pulled up from HgCommand)
  *     Andrei Loskutov (Intland) - bug fixes
  *     Adam Berkes (Intland) - bug fixes/restructure
+ *     Zsolt Koppany (Intland) - enhancements
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -37,11 +37,13 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
- *
  */
 public abstract class AbstractShellCommand extends AbstractClient {
 
 	public static final int DEFAULT_TIMEOUT = 360000;
+
+	private static final int BUFFER_SIZE = 8192;
+
 	// private static final Object executionLock = new Object();
 
 	private static class InputStreamConsumer extends Thread {
@@ -51,14 +53,14 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
 			super(name);
 			this.output = output;
-			this.stream = new BufferedInputStream(stream);
+			this.stream = stream;
 		}
 
 		@Override
 		public void run() {
 			try {
 				int length;
-				byte[] buffer = new byte[8192];
+				byte[] buffer = new byte[BUFFER_SIZE];
 				while ((length = stream.read(buffer)) != -1) {
 					output.write(buffer, 0, length);
 				}
@@ -134,7 +136,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * @throws HgException
 	 */
 	public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(BUFFER_SIZE);
 		if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
 			return bos.toByteArray();
 		}
@@ -301,7 +303,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	public boolean executeToFile(File file, int timeout, boolean expectPositiveReturnValue) throws HgException {
-		FileOutputStream fos = null;
+		OutputStream fos = null;
 		try {
 			fos = new FileOutputStream(file, false);
 			return executeToStream(fos, timeout, expectPositiveReturnValue);
