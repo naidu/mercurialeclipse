@@ -139,7 +139,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
-			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--style", //$NON-NLS-1$
 					AbstractParseChangesetClient.getStyleFile(style)
 							.getCanonicalPath());
 
@@ -173,7 +173,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
-			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--style", //$NON-NLS-1$
 					AbstractParseChangesetClient.getStyleFile(style)
 					.getCanonicalPath());
 
@@ -315,7 +315,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
-			command.addOptions("--debug", "--style", AbstractParseChangesetClient //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
 					.getStyleFile(style).getCanonicalPath());
 			command.addOptions("--rev", nodeId); //$NON-NLS-1$
 			String result = command.executeToString();

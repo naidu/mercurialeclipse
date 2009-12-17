@@ -70,7 +70,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 
 				boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 				int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
-				command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+				command.addOptions( "--style", //$NON-NLS-1$
 						AbstractParseChangesetClient.getStyleFile(style)
 						.getCanonicalPath(), "--bundle", bundleFile //$NON-NLS-1$
 						.getCanonicalPath());
