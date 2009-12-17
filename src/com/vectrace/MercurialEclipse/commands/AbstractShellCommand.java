@@ -12,7 +12,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedInputStream;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -33,15 +34,16 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
- *
  */
 public abstract class AbstractShellCommand extends AbstractClient {
 
 	public static final int DEFAULT_TIMEOUT = 360000;
+
+	private static final int BUFFER_SIZE = 32768;
+
 	// private static final Object executionLock = new Object();
 
 	private static class InputStreamConsumer extends Thread {
@@ -51,14 +53,14 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
 			super(name);
 			this.output = output;
-			this.stream = new BufferedInputStream(stream);
+			this.stream = stream;
 		}
 
 		@Override
 		public void run() {
 			try {
 				int length;
-				byte[] buffer = new byte[8192];
+				byte[] buffer = new byte[BUFFER_SIZE];
 				while ((length = stream.read(buffer)) != -1) {
 					output.write(buffer, 0, length);
 				}
@@ -82,22 +84,27 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	public static final int MAX_PARAMS = 120;
+
 	protected String command;
 	protected List<String> commands;
 	protected boolean escapeFiles;
 	protected List<String> options;
 	protected File workingDir;
 	protected final List<String> files;
-
 	private String timeoutConstant;
 	private InputStreamConsumer consumer;
 	private Process process;
-	private boolean showOnConsole = true;
+	private boolean showOnConsole;
+	private final boolean debugMode;
+	private final boolean debugExecTime;
 
 	protected AbstractShellCommand() {
 		super();
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
+		showOnConsole = true;
+		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
+		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 	}
 
 	public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
@@ -134,7 +141,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 * @throws HgException
 	 */
 	public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(BUFFER_SIZE);
 		if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
 			return bos.toByteArray();
 		}
@@ -192,8 +199,13 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			//synchronized (executionLock) {
 				process = builder.start();
 				consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
+				long startTime;
+				if(debugExecTime) {
+					startTime = System.currentTimeMillis();
+				} else {
+					startTime = 0;
+				}
 				consumer.start();
-
 				logConsoleCommandInvoked(commandInvoked);
 				consumer.join(timeout); // 30 seconds timeout
 				msg = getMessage(output);
@@ -201,17 +213,18 @@ public abstract class AbstractShellCommand extends AbstractClient {
 					final int exitCode = process.waitFor();
 					// everything fine
 					if (exitCode == 0 || !expectPositiveReturnValue) {
-						if (isDebugExecutionTime() || isDebugMode()) {
-							logConsoleCompleted(msg, exitCode, null);
+						if (debugExecTime || debugMode) {
+							long timeInMillis = debugExecTime? System.currentTimeMillis() - startTime : 0;
+							logConsoleCompleted(timeInMillis, msg, exitCode, null);
 						}
 						return true;
 					}
 
 					// exit code > 0
 					final HgException hgex = new HgException(exitCode, getMessage(output));
-
+					long timeInMillis = debugExecTime? System.currentTimeMillis() - startTime : 0;
 					// exit code == 1 usually isn't fatal.
-					logConsoleCompleted(msg, exitCode, hgex);
+					logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
 					throw hgex;
 				}
 			//}
@@ -256,9 +269,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
+	private void logConsoleCompleted(final long timeInMillis, final String msg, final int exitCode, final HgException hgex) {
 		if (showOnConsole) {
-			getConsole().commandCompleted(exitCode, msg, hgex);
+			getConsole().commandCompleted(exitCode, timeInMillis, msg, hgex);
 		}
 	}
 
@@ -276,16 +289,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			}
 		}
 		return msg;
-	}
-
-	private boolean isDebugMode() {
-		return Boolean
-				.valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
-	}
-
-	private boolean isDebugExecutionTime() {
-		return Boolean
-		.valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 	}
 
 	public String executeToString() throws HgException {
