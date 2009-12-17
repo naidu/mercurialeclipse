@@ -233,13 +233,16 @@ public class HgRepositoryLocationManager {
 			Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
 			for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
 				// if not existent, add to repository browser
-				HgRepositoryLocation loc = updateRepoLocation(project,
-						entry.getValue(),
-						entry.getKey(),
-						null, null);
-				internalAddRepoLocation(project, loc);
+				try {
+					HgRepositoryLocation loc = updateRepoLocation(project,
+							entry.getValue(),
+							entry.getKey(),
+							null, null);
+					internalAddRepoLocation(project, loc);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
-
 			Set<HgRepositoryLocation> locations = loadRepositoriesFromFile(getProjectLocationFile(project));
 			for(HgRepositoryLocation loc : locations) {
 				internalAddRepoLocation(project, loc);
@@ -276,7 +279,9 @@ public class HgRepositoryLocationManager {
 				while ((line = reader.readLine()) != null) {
 					try {
 						HgRepositoryLocation loc = delegator.delegateParse(line);
-						locations.add(loc);
+						if(loc != null) {
+							locations.add(loc);
+						}
 					} catch (Exception e) {
 						// log exception, but don't bother the user with it.
 						MercurialEclipsePlugin.logError(e);
