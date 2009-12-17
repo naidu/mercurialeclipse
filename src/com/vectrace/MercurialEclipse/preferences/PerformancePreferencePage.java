@@ -56,15 +56,7 @@ implements IWorkbenchPreferencePage {
 	 */
 	@Override
 	public void createFieldEditors() {
-
-		// for incoming/outgoing, compute add/remove/modified status on changeset files
-		addField(new BooleanFieldEditor(
-				SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS,
-				Messages.getString("PerformancePreferencePage.field.computeFullStatus"), //$NON-NLS-1$
-				getFieldEditorParent()));
-
 		// batch size preferences
-
 		IntegerFieldEditor batchLogRevisionEditor = new IntegerFieldEditor(
 				LOG_BATCH_SIZE,
 				Messages.getString("PerformancePreferencePage.field.revisionLimit"), getFieldEditorParent()); //$NON-NLS-1$
@@ -77,6 +69,12 @@ implements IWorkbenchPreferencePage {
 				getFieldEditorParent());
 		addField(batchStatusSeditor);
 		batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
+
+		// for incoming/outgoing, compute add/remove/modified status on changeset files
+		addField(new BooleanFieldEditor(
+				SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS,
+				Messages.getString("PerformancePreferencePage.field.computeFullStatus"), //$NON-NLS-1$
+				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(
 				RESOURCE_DECORATOR_COMPLETE_STATUS,
