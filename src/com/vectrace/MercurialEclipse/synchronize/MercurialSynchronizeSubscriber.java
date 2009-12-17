@@ -108,19 +108,19 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	@Override
-	public SyncInfo getSyncInfo(IResource resource) {
+	public SyncInfo getSyncInfo(final IResource resource) {
 		if (!isInteresting(resource)) {
 			return null;
 		}
 		IFile file = (IFile) resource;
 		HgRoot root;
 		try {
-			root = MercurialTeamProvider.getHgRoot(resource);
+			root = MercurialTeamProvider.getHgRoot(file);
 		} catch (HgException e1) {
 			MercurialEclipsePlugin.logError(e1);
 			return null;
 		}
-		String currentBranch = getCurrentBranch(resource, root);
+		String currentBranch = getCurrentBranch(file, root);
 
 		try {
 			if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
@@ -136,7 +136,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		try {
 			// this can trigger a refresh and a call to the remote server...
 
-			csOutgoing = OUTGOING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
+			csOutgoing = OUTGOING_CACHE.getNewestChangeSet(file, getRepo(), currentBranch);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			return null;
@@ -149,7 +149,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		// determine outgoing revision
 		boolean hasOutgoingChanges = false;
 		boolean hasIncomingChanges = false;
-		Integer status = STATUS_CACHE.getStatus(resource);
+		Integer status = STATUS_CACHE.getStatus(file);
 		int sMask = status != null? status.intValue() : 0;
 		if (csOutgoing != null) {
 			outgoingIStorage = new MercurialRevisionStorage(file,
@@ -159,7 +159,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			outgoing = new MercurialResourceVariant(outgoingIStorage);
 			hasOutgoingChanges = true;
 		} else {
-			boolean exists = resource.exists();
+			boolean exists = file.exists();
 			// if outgoing != null it's our base, else we gotta construct one
 			if (exists && !Bits.contains(sMask, MercurialStatusCache.BIT_ADDED)
 					// XXX Probably we do not need to check for BIT_REMOVED
@@ -176,11 +176,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					}
 
 					// try to get from cache (without loading)
-					csOutgoing = LOCAL_CACHE.getChangesetById(resource.getProject(), nodeId);
+					csOutgoing = LOCAL_CACHE.getChangesetById(file.getProject(), nodeId);
 
 					// okay, we gotta load the changeset via hg log
 					if (csOutgoing == null) {
-						csOutgoing = LOCAL_CACHE.getOrFetchChangeSetById(resource, nodeId);
+						csOutgoing = LOCAL_CACHE.getOrFetchChangeSetById(file, nodeId);
 					}
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
@@ -215,7 +215,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		try {
 			// this can trigger a refresh and a call to the remote server...
-			csIncoming = INCOMING_CACHE.getNewestChangeSet(resource, getRepo(), currentBranch);
+			csIncoming = INCOMING_CACHE.getNewestChangeSet(file, getRepo(), currentBranch);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			return null;
@@ -227,7 +227,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		int syncMode = -1;
 		if (csIncoming != null) {
 			hasIncomingChanges = true;
-			boolean fileRemoved = csIncoming.isRemoved(resource);
+			boolean fileRemoved = csIncoming.isRemoved(file);
 			if(fileRemoved){
 				incomingIStorage = null;
 			} else {
@@ -238,7 +238,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				return null;
 			}
 			if(debug) {
-				System.out.println("Visiting: " + resource);
+				System.out.println("Visiting: " + file);
 			}
 			// if no incoming revision, incoming = base/outgoing
 
@@ -249,7 +249,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 			// TODO validate if code below fixes the issue 10486
 			try {
-				SortedSet<ChangeSet> sets = OUTGOING_CACHE.getChangeSets(resource, getRepo(), currentBranch);
+				SortedSet<ChangeSet> sets = OUTGOING_CACHE.getChangeSets(file, getRepo(), currentBranch);
 				int size = sets.size();
 
 				// case where we have one outgoung changeset AND one not committed change
@@ -263,13 +263,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					if(parents.length > 0){
 						parentCs = parents[0];
 					} else {
-						ChangeSet tmpCs = LOCAL_CACHE.getOrFetchChangeSetById(resource, first.getChangeset());
+						ChangeSet tmpCs = LOCAL_CACHE.getOrFetchChangeSetById(file, first.getChangeset());
 						if(tmpCs != null && tmpCs.getParents().length > 0){
 							parentCs = tmpCs.getParents()[0];
 						}
 					}
 					if(parentCs != null){
-						ChangeSet baseChangeset = LOCAL_CACHE.getOrFetchChangeSetById(resource, parentCs);
+						ChangeSet baseChangeset = LOCAL_CACHE.getOrFetchChangeSetById(file, parentCs);
 						incomingIStorage = getIncomingIStorage(file, baseChangeset);
 						// we change outgoing (base) to the first parent of the first outgoing changeset
 						outgoing = new MercurialResourceVariant(incomingIStorage);
@@ -294,7 +294,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// now create the sync info object. everything may be null,
 		// but resource and comparator
-		SyncInfo info = new MercurialSyncInfo(resource, outgoing, incoming, getResourceComparator(), syncMode);
+		SyncInfo info = new MercurialSyncInfo(file, outgoing, incoming, getResourceComparator(), syncMode);
 
 		try {
 			info.init();
