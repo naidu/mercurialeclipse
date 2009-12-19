@@ -9,6 +9,7 @@
  * Bastian Doetsch	implementation (with lots of stuff pulled up from HgCommand)
  *     Andrei Loskutov (Intland) - bug fixes
  *     Adam Berkes (Intland) - bug fixes/restructure
+ *     Zsolt Koppany (Intland) - enhancements
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
