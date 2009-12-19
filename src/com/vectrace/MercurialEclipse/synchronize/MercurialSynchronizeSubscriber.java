@@ -507,12 +507,42 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			String branch = MercurialTeamProvider.getCurrentBranch(res);
 			updateBranchMap(entry.getKey(), branch);
 		}
-
-		Set<IResource> resourcesToRefresh = new HashSet<IResource>();
+		// we need to send events only if WE trigger status update, not if the refresh
+		// is called from the framework (like F5 hit by user)
+		Set<IResource> resourcesToRefresh;
+		if(flag < 0){
+			resourcesToRefresh = new HashSet<IResource>();
+		} else {
+			// no need
+			resourcesToRefresh = null;
+		}
 
 		HgRepositoryLocation repositoryLocation = getRepo();
 		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
 				.getAllRepoLocationProjects(repositoryLocation);
+
+		Set<HgRoot> roots = byRoot.keySet();
+		try {
+			cacheSema.acquire();
+			for (HgRoot hgRoot : roots) {
+				if (flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
+					if (debug) {
+						System.out.println("\nclear incoming: " + hgRoot + ", depth: " + flag);
+					}
+					INCOMING_CACHE.clear(hgRoot);
+				}
+				if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
+					if(debug) {
+						System.out.println("\nclear outgoing: " + hgRoot + ", depth: " + flag);
+					}
+					OUTGOING_CACHE.clear(hgRoot);
+				}
+			}
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+		} finally {
+			cacheSema.release();
+		}
 
 		for (IProject project : projects) {
 			if (!repoLocationProjects.contains(project)) {
@@ -558,7 +588,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
-		if(flag < 0){
+		if(resourcesToRefresh != null){
 			List<ISubscriberChangeEvent> changeEvents = createEvents(resources, resourcesToRefresh);
 			monitor.worked(1);
 			if (monitor.isCanceled()) {
@@ -616,38 +646,36 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,
 			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
-		if(flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
-			if(debug) {
-				System.out.println("\nclear incoming: " + project + ", depth: " + flag);
-			}
-			INCOMING_CACHE.clear(repositoryLocation, project, false);
-		}
+
 		if(forceRefresh && flag != HgSubscriberScopeManager.OUTGOING){
 			if(debug) {
 				System.out.println("\nget incoming: " + project + ", depth: " + flag);
 			}
 
 			// this can trigger a refresh and a call to the remote server...
-			Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, branch);
-			resourcesToRefresh.addAll(incomingMembers);
+			if(resourcesToRefresh != null){
+				Set<IResource> incomingMembers = INCOMING_CACHE.getMembers(project, repositoryLocation, branch);
+				resourcesToRefresh.addAll(incomingMembers);
+			} else {
+				INCOMING_CACHE.getChangeSets(project, repositoryLocation, branch);
+			}
 		}
 	}
 
 	private void refreshOutgoing(int flag, Set<IResource> resourcesToRefresh, IProject project,
 			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
-		if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
-			if(debug) {
-				System.out.println("\nclear outgoing: " + project + ", depth: " + flag);
-			}
-			OUTGOING_CACHE.clear(repositoryLocation, project, false);
-		}
+
 		if(forceRefresh && flag != HgSubscriberScopeManager.INCOMING){
 			if(debug) {
 				System.out.println("\nget outgoing: " + project + ", depth: " + flag);
 			}
 			// this can trigger a refresh and a call to the remote server...
-			Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, branch);
-			resourcesToRefresh.addAll(outgoingMembers);
+			if(resourcesToRefresh != null){
+				Set<IResource> outgoingMembers = OUTGOING_CACHE.getMembers(project, repositoryLocation, branch);
+				resourcesToRefresh.addAll(outgoingMembers);
+			} else {
+				OUTGOING_CACHE.getChangeSets(project, repositoryLocation, branch);
+			}
 		}
 	}
 

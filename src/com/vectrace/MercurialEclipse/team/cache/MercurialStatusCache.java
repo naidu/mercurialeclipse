@@ -613,7 +613,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			monitor.worked(1);
 			// clear status for files, folders or project
 			if(res instanceof IProject){
-				clearProjectCache(project);
+				projectDeletedOrClosed(project);
 			} else {
 				clearStatusCache(res, false);
 			}
@@ -1091,7 +1091,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	}
 
 	@Override
-	protected void clearProjectCache(IProject project) {
+	protected void projectDeletedOrClosed(IProject project) {
 		clear(project, false);
 		knownStatus.remove(project);
 	}
