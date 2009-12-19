@@ -32,6 +32,7 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
@@ -69,24 +70,24 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			case ISynchronizePageConfiguration.INCOMING_MODE:
 				monitor.subTask("Collecting incoming changesets");
 				newSets = initRemote(in);
-				updateChangesets(oldSets, newSets);
+				updateChangesets(oldSets, newSets, null);
 				monitor.internalWorked(2);
 				break;
 			case ISynchronizePageConfiguration.OUTGOING_MODE:
 				monitor.subTask("Collecting outgoing changesets");
 				newSets = initRemote(out);
-				updateChangesets(oldSets, newSets);
+				updateChangesets(oldSets, newSets, null);
 				monitor.internalWorked(2);
 				break;
 			case ISynchronizePageConfiguration.BOTH_MODE:
 				monitor.subTask("Collecting outgoing changesets");
 				newSets = initRemote(out);
-				updateChangesets(oldSets, newSets);
+				updateChangesets(oldSets, newSets, Direction.OUTGOING);
 				monitor.internalWorked(1);
 
 				monitor.subTask("Collecting incoming changesets");
 				newSets = initRemote(in);
-				updateChangesets(oldSets, newSets);
+				updateChangesets(oldSets, newSets, Direction.INCOMING);
 				monitor.internalWorked(1);
 				break;
 			case ISynchronizePageConfiguration.CONFLICTING_MODE:
@@ -99,7 +100,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 				monitor.internalWorked(1);
 
 				newSets = retainConflicts(newSets);
-				updateChangesets(oldSets, newSets);
+				updateChangesets(oldSets, newSets, null);
 				break;
 			default:
 				break;
@@ -110,9 +111,12 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		}
 	}
 
-	private void updateChangesets(Set<ChangeSet> oldSets, Set<ChangeSet> newSets){
+	private void updateChangesets(Set<ChangeSet> oldSets, Set<ChangeSet> newSets, Direction direction){
 		Set<ChangeSet> removed = new HashSet<ChangeSet>();
 		for (ChangeSet changeSet : oldSets) {
+			if(direction != null && direction != changeSet.getDirection()){
+				continue;
+			}
 			if(!newSets.contains(changeSet)){
 				remove(changeSet);
 				removed.add(changeSet);
