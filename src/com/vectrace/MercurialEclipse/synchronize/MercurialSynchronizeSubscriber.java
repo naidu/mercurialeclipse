@@ -76,7 +76,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	private final static boolean debug = MercurialEclipsePlugin.getDefault().isDebugging();
 	private final static IResourceVariantComparator comparator = new MercurialResourceVariantComparator();
-	private final static Semaphore sema = new Semaphore(1, true);
+	private final static Semaphore cacheSema = new Semaphore(1, true);
 
 	private final RepositorySynchronizationScope scope;
 
@@ -293,10 +293,25 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 	}
 
+	public static void executeLockedCacheTask(Runnable run) throws InterruptedException {
+		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
+			// waiting didn't worked for us...
+			throw new InterruptedException("Timeout elapsed");
+		}
+		try {
+			run.run();
+		} catch (Exception e) {
+			MercurialEclipsePlugin.logError(e);
+			throw new InterruptedException("Cancelled due the exception: " + e.getMessage());
+		} finally {
+			cacheSema.release();
+		}
+	}
+
 	private static ChangeSet getNewestOutgoing(IFile file, String currentBranch,
 			HgRepositoryLocation repo) throws InterruptedException {
 		ChangeSet csOutgoing = null;
-		if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
+		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
 			// waiting didn't worked for us...
 			throw new InterruptedException("Timeout elapsed");
 		}
@@ -307,7 +322,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			MercurialEclipsePlugin.logError(e);
 			throw new InterruptedException("Cancelled due the exception: " + e.getMessage());
 		} finally {
-			sema.release();
+			cacheSema.release();
 		}
 		return csOutgoing;
 	}
@@ -315,7 +330,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	private static ChangeSet getNewestIncoming(IFile file, String currentBranch,
 			HgRepositoryLocation repo) throws InterruptedException {
 		ChangeSet csIncoming = null;
-		if(!sema.tryAcquire(60 * 5, TimeUnit.SECONDS)){
+		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
 			// waiting didn't worked for us...
 			throw new InterruptedException("Timeout elapsed");
 		}
@@ -326,7 +341,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			MercurialEclipsePlugin.logError(e);
 			throw new InterruptedException("Cancelled due the exception: " + e.getMessage());
 		} finally {
-			sema.release();
+			cacheSema.release();
 		}
 		return csIncoming;
 	}
@@ -510,7 +525,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			String currentBranch = currentBranchMap.get(hgRoot);
 
 			try {
-				sema.acquire();
+				cacheSema.acquire();
 				if(debug) {
 					System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
 				}
@@ -522,14 +537,14 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				if (monitor.isCanceled()) {
 					return;
 				}
-				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
-				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
+				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
 				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
 				}
-				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingOutgoing")); //$NON-NLS-1$
-				refreshOutgoing(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
+				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingIncoming")); //$NON-NLS-1$
+				refreshIncoming(flag, resourcesToRefresh, project, repositoryLocation, forceRefresh, currentBranch);
 				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
@@ -537,7 +552,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			} catch (InterruptedException e) {
 				MercurialEclipsePlugin.logError(e);
 			} finally {
-				sema.release();
+				cacheSema.release();
 			}
 		}
 
