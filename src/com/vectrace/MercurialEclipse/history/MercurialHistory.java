@@ -186,7 +186,7 @@ public class MercurialHistory extends FileHistory {
 			return;
 		}
 		Map<IPath, Set<ChangeSet>> map = HgLogClient.getProjectLog(
-				resource, logBatchSize, from, false);
+				resource, logBatchSize, from, false); // TODO should be true?
 
 		// no result -> bottom reached
 		if (map == null) {
