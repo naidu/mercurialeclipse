@@ -61,7 +61,8 @@ final class ChangesetContentHandler implements ContentHandler {
 	private String author;
 	private String parents;
 	private String description;
-	private StringBuilder chars;
+	private StringBuilder descriptionChars;
+	private boolean readDescription;
 	private final IPath res;
 	private final Direction direction;
 	private final HgRepositoryLocation repository;
@@ -125,7 +126,9 @@ final class ChangesetContentHandler implements ContentHandler {
 	}
 
 	public void characters(char[] ch, int start, int length) {
-		chars.append(ch, start, length);
+		if(readDescription) {
+			descriptionChars.append(ch, start, length);
+		}
 	}
 
 	public void endDocument() throws SAXException {
@@ -134,7 +137,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	public void endElement(String uri, String localName, String name) throws SAXException {
 
 		if (name.equals("de")) {
-			description = chars.toString();
+			description = descriptionChars.toString();
 		} else if (name.equals("cs")) {
 			ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branches, dateIso, unescape(author), hgRoot);
 			csb.tag(tags);
@@ -220,7 +223,7 @@ final class ChangesetContentHandler implements ContentHandler {
 		 * v="{date|age}"/> <au v="{author|person}"/> <pr v="{parents}"/>
 		 * <de>{desc|escape|tabindent}</de>
 		 */
-		chars = new StringBuilder(42);
+		readDescription = false;
 		if (name.equals("br")) {
 			branches = atts.getValue(0);
 		} else if (name.equals("tg")) {
@@ -239,9 +242,10 @@ final class ChangesetContentHandler implements ContentHandler {
 			author = atts.getValue(0);
 		} else if (name.equals("pr")) {
 			parents = atts.getValue(0);
-		/*  } else if (name.equals("de")) {
-			de = untab(unescape(atts.getValue(0)));
-		*/
+		} else if (name.equals("de")) {
+			description = null;
+			descriptionChars = new StringBuilder(42);
+			readDescription = true;
 		} else if (name.equals("fl")) {
 			action = FileStatus.Action.MODIFIED;
 		} else if (name.equals("fa")) {
@@ -249,12 +253,12 @@ final class ChangesetContentHandler implements ContentHandler {
 		} else if (name.equals("fd")) {
 			action = FileStatus.Action.REMOVED;
 		} else if (name.equals("f")) {
-			if (action == Action.ADDED) {
+			if (action == Action.MODIFIED) {
+				filesModified.add(atts.getValue(0));
+			} else if (action == Action.ADDED) {
 				String value = atts.getValue(0);
 				filesAdded.add(value);
 				filesModified.remove(value);
-			} else if (action == Action.MODIFIED) {
-				filesModified.add(atts.getValue(0));
 			} else if (action == Action.REMOVED) {
 				String value = atts.getValue(0);
 				filesRemoved.add(value);
