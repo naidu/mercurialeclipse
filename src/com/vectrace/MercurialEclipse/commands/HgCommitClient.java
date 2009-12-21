@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgCommitClient extends AbstractClient {
@@ -58,10 +59,7 @@ public class HgCommitClient extends AbstractClient {
 			commit(root, AbstractClient.toFiles(files), user, message);
 		}
 		for (HgRoot root : resourcesByRoot.keySet()) {
-			Set<IProject> projects = ResourceUtils.getProjects(root);
-			for (IProject iProject : projects) {
-				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-			}
+			new RefreshRootJob("Refreshing " + root.getName(), root, RefreshJob.LOCAL_AND_OUTGOING).schedule();
 		}
 	}
 

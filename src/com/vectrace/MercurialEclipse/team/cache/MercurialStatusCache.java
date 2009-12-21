@@ -584,14 +584,59 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	}
 
 	/**
+	 * Refreshes the local repository status for all projects under the given hg root
+	 *  and notifies the listeners about changes. No refresh of changesets.
+	 */
+	public void refreshStatus(HgRoot root, IProgressMonitor monitor) throws HgException {
+		Assert.isNotNull(root);
+		monitor = checkMonitor(monitor);
+		monitor.subTask(NLS.bind(Messages.mercurialStatusCache_Refreshing, root.getName()));
+
+
+		Set<IProject> projects = ResourceUtils.getProjects(root);
+		Set<IResource> changed = new HashSet<IResource>();
+		synchronized (statusUpdateLock) {
+			// get status and branch for hg root
+			String output = HgStatusClient.getStatusWithoutIgnored(root);
+			String branch = HgBranchClient.getActiveBranch(root);
+			String mergeNode = HgStatusClient.getMergeStatus(root);
+			String[] lines = NEWLINE.split(output);
+
+			for (IProject project : projects) {
+				if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(project)) {
+					continue;
+				}
+				// clear status for project
+				projectDeletedOrClosed(project);
+				monitor.worked(1);
+				if(monitor.isCanceled()){
+					return;
+				}
+				// TODO use multiple projects (from this hg root) as input at ONCE
+				changed.addAll(parseStatus(root, project, lines));
+				knownStatus.put(project, root);
+				try {
+					project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
+					MercurialTeamProvider.setCurrentBranch(branch, project);
+				} catch (CoreException e) {
+					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
+				}
+				changed.addAll(checkForConflict(project));
+			}
+		}
+		monitor.worked(1);
+		if(monitor.isCanceled()){
+			return;
+		}
+		notifyChanged(changed, false);
+
+		monitor.worked(1);
+	}
+
+	/**
 	 * Refreshes local repository status and notifies the listeners about changes. No refresh of changesets.
 	 */
 	public void refreshStatus(IResource res, IProgressMonitor monitor) throws HgException {
-		/*
-		if(debug){
-			new Exception("refreshStatus " + res).printStackTrace();
-		}
-		*/
 		Assert.isNotNull(res);
 		monitor = checkMonitor(monitor);
 		monitor.subTask(NLS.bind(Messages.mercurialStatusCache_Refreshing, res.getName()));
@@ -621,7 +666,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			if(monitor.isCanceled()){
 				return;
 			}
-			changed = parseStatus(root, project, output);
+			String[] lines = NEWLINE.split(output);
+			changed = parseStatus(root, project, lines);
 			if(!(res instanceof IProject) && !changed.contains(res)){
 				// fix for issue 10155: No status update after reverting changes on .hgignore
 				changed.add(res);
@@ -644,6 +690,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				String mergeNode = HgStatusClient.getMergeStatus(project);
 				project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
 				String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+				// TODO use branch map
 				MercurialTeamProvider.setCurrentBranch(branch, project);
 			} catch (CoreException e) {
 				throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
@@ -726,10 +773,11 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	Pattern NEWLINE = Pattern.compile("\n");
 
 	/**
-	 * @param output must contain file paths as paths relative to the hg root
-	 * @return
+	 * TODO allow to use multiple projects (from this hg root) as input
+	 * @param lines must contain file paths as paths relative to the hg root
+	 * @return set with resources to refresh
 	 */
-	private Set<IResource> parseStatus(HgRoot root, final IProject project, String output) {
+	private Set<IResource> parseStatus(HgRoot root, final IProject project, String[] lines) {
 		long start = System.currentTimeMillis();
 
 		// we need the project for performance reasons - gotta hand it to
@@ -738,7 +786,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 
 		List<String> strangeStates = new ArrayList<String>();
-		String[] lines = NEWLINE.split(output);
 		String hgRootPath = root.getAbsolutePath();
 		IPath projectPath = project.getLocation();
 		for (String line : lines) {
@@ -1015,7 +1062,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 						}
 					}
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
-					changed.addAll(parseStatus(root, project, output));
+					String[] lines = NEWLINE.split(output);
+					changed.addAll(parseStatus(root, project, lines));
 				}
 				currentBatch.clear();
 			}
@@ -1094,6 +1142,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	protected void projectDeletedOrClosed(IProject project) {
 		clear(project, false);
 		knownStatus.remove(project);
+	}
+
+	public void clear(HgRoot root, boolean notify) {
+		Set<IProject> projects = ResourceUtils.getProjects(root);
+		for (IProject project : projects) {
+			clearStatusCache(project, false);
+			if(notify) {
+				notifyChanged(project, false);
+			}
+		}
 	}
 
 	public void clear(IProject project, boolean notify) {

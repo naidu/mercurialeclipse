@@ -57,6 +57,15 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	public static String getStatusWithoutIgnored(HgRoot root) throws HgException {
+		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+
+		// modified, added, removed, deleted, unknown, ignored, clean
+		command.addOptions("-marduc"); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+		return command.executeToString();
+	}
+
 	public static String[] getUntrackedFiles(IContainer root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -88,6 +97,21 @@ public class HgStatusClient extends AbstractClient {
 
 	public static String getMergeStatus(IResource res) throws HgException {
 		AbstractShellCommand command = new HgCommand("identify", getWorkingDirectory(res), true); //$NON-NLS-1$
+		// Full global IDs
+		command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+		String versionIds = command.executeToString().trim();
+
+		Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE); //$NON-NLS-1$
+		Matcher m = p.matcher(versionIds);
+		if(m.matches()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
+	public static String getMergeStatus(HgRoot root) throws HgException {
+		AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
 		// Full global IDs
 		command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);

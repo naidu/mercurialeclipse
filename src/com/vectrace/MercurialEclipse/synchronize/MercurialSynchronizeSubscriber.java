@@ -176,12 +176,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					String nodeId = getCurrentChangesetId(root);
 
 					// try to get from cache (without loading)
-					csOutgoing = LOCAL_CACHE.getChangesetById(file.getProject(), nodeId);
-
-					// okay, we gotta load the changeset via hg log
-					if (csOutgoing == null) {
-						csOutgoing = LOCAL_CACHE.getOrFetchChangeSetById(file, nodeId);
-					}
+					csOutgoing =  LOCAL_CACHE.getOrFetchChangeSetById(file, nodeId);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return null;
@@ -525,6 +520,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		try {
 			cacheSema.acquire();
 			for (HgRoot hgRoot : roots) {
+				currentCsMap.remove(hgRoot);
 				if (flag == HgSubscriberScopeManager.INCOMING || flag >= 0) {
 					if (debug) {
 						System.out.println("\nclear incoming: " + hgRoot + ", depth: " + flag);
@@ -537,6 +533,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					}
 					OUTGOING_CACHE.clear(hgRoot);
 				}
+				if(flag == HgSubscriberScopeManager.LOCAL || flag >= 0) {
+					if(debug) {
+						System.out.println("\nclear and refresh local: " + hgRoot + ", depth: " + flag);
+					}
+					STATUS_CACHE.clear(hgRoot, false);
+					STATUS_CACHE.refreshStatus(hgRoot, monitor);
+				}
 			}
 		} catch (InterruptedException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -548,7 +551,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			if (!repoLocationProjects.contains(project)) {
 				continue;
 			}
-			monitor.beginTask(getName(), 5);
+			monitor.beginTask(getName(), 4);
 			// clear caches in any case, but refresh them only if project exists
 			boolean forceRefresh = project.exists();
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
@@ -559,11 +562,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 				if(debug) {
 					System.out.println("going to refresh local/in/out: " + project + ", depth: " + flag);
 				}
-				currentCsMap.remove(hgRoot);
-
-				monitor.subTask(Messages.getString("MercurialSynchronizeSubscriber.refreshingLocal")); //$NON-NLS-1$
-				refreshLocal(flag, monitor, project, forceRefresh);
-				monitor.worked(1);
 				if (monitor.isCanceled()) {
 					return;
 				}
@@ -626,22 +624,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			System.out.println("created: " + changeEvents.size() + " change events");
 		}
 		return changeEvents;
-	}
-
-	private void refreshLocal(int flag, IProgressMonitor monitor, IProject project,
-			boolean forceRefresh) throws HgException {
-		if(flag == HgSubscriberScopeManager.LOCAL || flag >= 0) {
-			STATUS_CACHE.clear(project, false);
-			if(forceRefresh) {
-				STATUS_CACHE.refreshStatus(project, monitor);
-			}
-//            if(!forceRefresh) {
-//                LOCAL_CACHE.clear(project, false);
-//            }
-//            if(forceRefresh) {
-//                LOCAL_CACHE.refreshAllLocalRevisions(project, true);
-//            }
-		}
 	}
 
 	private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,

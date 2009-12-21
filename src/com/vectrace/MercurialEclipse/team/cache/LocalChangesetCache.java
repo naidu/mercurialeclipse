@@ -64,6 +64,7 @@ public class LocalChangesetCache extends AbstractCache {
 
 	private final Map<IPath, SortedSet<ChangeSet>> localChangeSets;
 	private final Map<IProject, Map<String, ChangeSet>> changesets;
+	private final Map<HgRoot, ChangeSet> latestChangesets;
 
 	private int logBatchSize;
 
@@ -73,6 +74,7 @@ public class LocalChangesetCache extends AbstractCache {
 		super();
 		localChangeSets = new HashMap<IPath, SortedSet<ChangeSet>>();
 		changesets = new HashMap<IProject, Map<String, ChangeSet>>();
+		latestChangesets = new HashMap<HgRoot, ChangeSet>();
 	}
 
 	private boolean isGetFileInformationForChangesets() {
@@ -86,6 +88,23 @@ public class LocalChangesetCache extends AbstractCache {
 		return instance;
 	}
 
+	public void clear(HgRoot root, boolean notify) {
+		synchronized (latestChangesets) {
+			latestChangesets.remove(root);
+		}
+		Set<IProject> projects = ResourceUtils.getProjects(root);
+		for (IProject project : projects) {
+			clear(project, notify);
+		}
+	}
+
+	/**
+	 *
+	 * @param resource
+	 * @param notify
+	 * @deprecated {@link #clear(HgRoot, boolean)} should be used in most cases
+	 */
+	@Deprecated
 	public void clear(IResource resource, boolean notify) {
 		Set<IResource> members = ResourceUtils.getMembers(resource);
 		members.add(resource);
@@ -222,7 +241,9 @@ public class LocalChangesetCache extends AbstractCache {
 	 * @param changesetId
 	 *            string in format rev:nodeshort or rev:node
 	 * @return may return null, if changeset is not known
+	 * @deprecated this method should be private, please use {@link #getOrFetchChangeSets(IResource)}
 	 */
+	@Deprecated
 	public ChangeSet getChangesetById(IProject project, String changesetId) {
 		Map<String, ChangeSet> map;
 		synchronized (changesets) {
@@ -262,9 +283,20 @@ public class LocalChangesetCache extends AbstractCache {
 	 */
 	public ChangeSet getChangesetByRootId(IResource res) throws HgException {
 		HgRoot root = HgClients.getHgRoot(res);
-		String nodeId = HgIdentClient.getCurrentChangesetId(root);
-		if (!"0000000000000000000000000000000000000000".equals(nodeId)) { //$NON-NLS-1$
-			return getOrFetchChangeSetById(res, nodeId);
+		// for projects in the same root try to use root cache
+		synchronized (latestChangesets) {
+			ChangeSet changeSet = latestChangesets.get(root);
+			if(changeSet != null) {
+				return changeSet;
+			}
+			String nodeId = HgIdentClient.getCurrentChangesetId(root);
+			if (!"0000000000000000000000000000000000000000".equals(nodeId)) { //$NON-NLS-1$
+				ChangeSet lastSet = HgLogClient.getChangeset(root, nodeId);
+				if(lastSet != null) {
+					latestChangesets.put(root, lastSet);
+				}
+				return lastSet;
+			}
 		}
 		return null;
 	}

@@ -331,4 +331,28 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
 	}
+
+	public static ChangeSet getChangeset(HgRoot root, String nodeId) throws HgException {
+		Assert.isNotNull(nodeId);
+		String stylePath;
+		try {
+			stylePath = AbstractParseChangesetClient.getStyleFile(
+					AbstractParseChangesetClient.STYLE_DEFAULT).getCanonicalPath();
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
+		AbstractShellCommand command = new HgCommand("log", root, false);
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+		command.addOptions("--style", stylePath);
+		command.addOptions("--rev", nodeId); //$NON-NLS-1$
+		String result = command.executeToString();
+
+		Path path = new Path(root.getAbsolutePath());
+		Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(path, result, Direction.LOCAL, null, null, null, root);
+		Set<ChangeSet> set = revisions.get(path);
+		if (set != null) {
+			return Collections.min(set);
+		}
+		return null;
+	}
 }
