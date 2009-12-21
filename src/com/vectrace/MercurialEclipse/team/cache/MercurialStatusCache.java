@@ -601,9 +601,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			String branch = HgBranchClient.getActiveBranch(root);
 			String mergeNode = HgStatusClient.getMergeStatus(root);
 			String[] lines = NEWLINE.split(output);
-
-			for (IProject project : projects) {
+			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+			Iterator<IProject> iterator = projects.iterator();
+			while (iterator.hasNext()) {
+				IProject project = iterator.next();
 				if (!project.isOpen() || !MercurialUtilities.isPossiblySupervised(project)) {
+					iterator.remove();
 					continue;
 				}
 				// clear status for project
@@ -612,8 +615,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				if(monitor.isCanceled()){
 					return;
 				}
+				pathMap.put(project, project.getLocation());
+			}
+
+			changed.addAll(parseStatus(root, pathMap, lines));
+
+			for (IProject project : projects) {
 				// TODO use multiple projects (from this hg root) as input at ONCE
-				changed.addAll(parseStatus(root, project, lines));
 				knownStatus.put(project, root);
 				try {
 					project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
@@ -650,6 +658,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		HgRoot root = AbstractClient.getHgRoot(res);
 
 		Set<IResource> changed;
+		IPath projectLocation = project.getLocation();
 		synchronized (statusUpdateLock) {
 			String output = HgStatusClient.getStatusWithoutIgnored(root, res);
 			if(monitor.isCanceled()){
@@ -667,7 +676,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				return;
 			}
 			String[] lines = NEWLINE.split(output);
-			changed = parseStatus(root, project, lines);
+			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+			pathMap.put(project, projectLocation);
+			changed = parseStatus(root, pathMap, lines);
 			if(!(res instanceof IProject) && !changed.contains(res)){
 				// fix for issue 10155: No status update after reverting changes on .hgignore
 				changed.add(res);
@@ -689,7 +700,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			try {
 				String mergeNode = HgStatusClient.getMergeStatus(project);
 				project.setPersistentProperty(ResourceProperties.MERGING, mergeNode);
-				String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+				String branch = HgBranchClient.getActiveBranch(projectLocation.toFile());
 				// TODO use branch map
 				MercurialTeamProvider.setCurrentBranch(branch, project);
 			} catch (CoreException e) {
@@ -775,9 +786,10 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	/**
 	 * TODO allow to use multiple projects (from this hg root) as input
 	 * @param lines must contain file paths as paths relative to the hg root
+	 * @param pathMap
 	 * @return set with resources to refresh
 	 */
-	private Set<IResource> parseStatus(HgRoot root, final IProject project, String[] lines) {
+	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines) {
 		long start = System.currentTimeMillis();
 
 		// we need the project for performance reasons - gotta hand it to
@@ -786,8 +798,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 
 		List<String> strangeStates = new ArrayList<String>();
-		String hgRootPath = root.getAbsolutePath();
-		IPath projectPath = project.getLocation();
+		IPath hgRootPath = new Path(root.getAbsolutePath());
+
 		for (String line : lines) {
 			if(line.length() <= 2){
 				strangeStates.add(line);
@@ -800,17 +812,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				continue;
 			}
 			String localName = line.substring(2);
-			IPath memberPath = convertRepoRelPath(hgRootPath, projectPath, localName);
-			IResource member = project.findMember(memberPath);
+			IResource member = findMember(pathMap, hgRootPath, localName);
 
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
 			if (member == null) {
 				if(bit == BIT_REMOVED){
-					IPath path = new Path(hgRootPath).append(localName);
+					IPath path = hgRootPath.append(localName);
 					// creates a handle to non-existent file. This is ok.
 					member = workspaceRoot.getFileForLocation(path);
-					if(member == null || !member.getProject().equals(project)) {
+					if(member == null/* TODO? || !member.getProject().equals(project)*/) {
 						continue;
 					}
 				} else {
@@ -844,6 +855,23 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			System.out.println("Parse status took: " + (System.currentTimeMillis() - start));
 		}
 		return changed;
+	}
+
+	private IResource findMember(Map<IProject, IPath> pathMap, IPath hgRootPath, String repoRelPath) {
+		// determine absolute path
+		IPath path = hgRootPath.append(repoRelPath);
+		int rootegmentCount = hgRootPath.segmentCount();
+		Set<Entry<IProject,IPath>> set = pathMap.entrySet();
+		for (Entry<IProject, IPath> entry : set) {
+			IPath projectLocation = entry.getValue();
+			// determine project relative path
+			int equalSegments = path.matchingFirstSegments(projectLocation);
+			if(equalSegments > rootegmentCount || pathMap.size() == 1) {
+				IPath segments = path.removeFirstSegments(equalSegments);
+				return entry.getKey().findMember(segments);
+			}
+		}
+		return null;
 	}
 
 	private void setStatus(IPath location, Integer status) {
@@ -1063,7 +1091,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 					}
 					String output = HgStatusClient.getStatusWithoutIgnored(root, currentBatch);
 					String[] lines = NEWLINE.split(output);
-					changed.addAll(parseStatus(root, project, lines));
+					Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
+					pathMap.put(project, project.getLocation());
+					changed.addAll(parseStatus(root, pathMap, lines));
 				}
 				currentBatch.clear();
 			}
@@ -1222,9 +1252,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * @param repoRelPath path <b>relative</b> to the hg root
 	 * @return may return null, if the path is not found in the project
 	 */
-	private static IPath convertRepoRelPath(String hgRootPath, IPath projectLocation, String repoRelPath) {
+	private static IPath convertRepoRelPath(IPath hgRootPath, IPath projectLocation, String repoRelPath) {
 		// determine absolute path
-		IPath path = new Path(hgRootPath).append(repoRelPath);
+		IPath path = hgRootPath.append(repoRelPath);
 
 		// determine project relative path
 		int equalSegments = path.matchingFirstSegments(projectLocation);
