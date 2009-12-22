@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.text.MessageFormat;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -46,6 +47,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends SingleResourceHandler {
@@ -123,24 +125,29 @@ public class MergeHandler extends SingleResourceHandler {
 		String result = ""; //$NON-NLS-1$
 		boolean useResolve = isHgResolveAvailable();
 		if (useResolve) {
-			result = HgMergeClient.merge(project, cs.getRevision().getChangeset(),
+			result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
 					useExternalMergeTool, forced);
 		} else {
-			result = HgIMergeClient.merge(project, cs.getRevision().getChangeset());
+			result = HgIMergeClient.merge(hgRoot, cs.getRevision().getChangeset());
 		}
 
-		project.setPersistentProperty(ResourceProperties.MERGING, cs.getChangeset());
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		for (IProject iProject : projects) {
+			iProject.setPersistentProperty(ResourceProperties.MERGING, cs.getChangeset());
+		}
 		try {
+			// XXX this should be refactored to use hg root. See also MercurialStatusCache.checkForConflict
 			result += commitMerge(monitor, project, shell, result, showCommitDialog);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 		}
 
-
-		// trigger refresh of project decoration
-		project.touch(new NullProgressMonitor());
-		new RefreshWorkspaceStatusJob(project, true).schedule();
+		for (IProject iProject : projects) {
+			// trigger refresh of project decoration
+			iProject.touch(new NullProgressMonitor());
+		}
+		new RefreshWorkspaceStatusJob(hgRoot, true).schedule();
 		return result;
 	}
 
