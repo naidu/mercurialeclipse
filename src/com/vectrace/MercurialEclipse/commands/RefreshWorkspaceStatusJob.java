@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import java.util.Set;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -18,15 +20,23 @@ import org.eclipse.core.runtime.IStatus;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 	private final IProject project;
 	private final boolean refreshOnly;
+	private HgRoot root;
 
 	public RefreshWorkspaceStatusJob(IProject project) {
 		this(project, false);
+	}
+
+	public RefreshWorkspaceStatusJob(HgRoot root) {
+		this(root, false);
 	}
 
 	public RefreshWorkspaceStatusJob(IProject project, boolean refreshOnly) {
@@ -35,26 +45,54 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 		this.refreshOnly = refreshOnly;
 	}
 
+	public RefreshWorkspaceStatusJob(HgRoot root, boolean refreshOnly) {
+		super("Refreshing status for " + root.getName() + "...");
+		this.project = null;
+		this.root = root;
+		this.refreshOnly = refreshOnly;
+	}
+
 	@Override
 	protected IStatus runSafe(IProgressMonitor monitor) {
 		try {
-			if(!refreshOnly){
-				final String branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-				// update branch name
-				MercurialTeamProvider.setCurrentBranch(branch, project);
-
-				// reset merge properties
-				project.setPersistentProperty(ResourceProperties.MERGING, null);
-				project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+			String branch = null;
+			if(project != null) {
+				if(!refreshOnly) {
+					branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
+				}
+				refreshProject(monitor, project, branch);
+			} else {
+				if(!refreshOnly) {
+					branch = HgBranchClient.getActiveBranch(root);
+				}
+				Set<IProject> projects = ResourceUtils.getProjects(root);
+				for (IProject project1 : projects) {
+					refreshProject(monitor, project1, branch);
+				}
 			}
-
-			// refresh resources
-			project.refreshLocal(IResource.DEPTH_INFINITE, monitor);
-
 			return super.runSafe(monitor);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			return e.getStatus();
 		}
+	}
+
+	/**
+	 * @param monitor
+	 * @throws HgException
+	 * @throws CoreException
+	 */
+	private void refreshProject(IProgressMonitor monitor, IProject toRefresh, String branch) throws HgException, CoreException {
+		if(!refreshOnly){
+			// update branch name
+			MercurialTeamProvider.setCurrentBranch(branch, toRefresh);
+
+			// reset merge properties
+			toRefresh.setPersistentProperty(ResourceProperties.MERGING, null);
+			toRefresh.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+		}
+
+		// refresh resources
+		toRefresh.refreshLocal(IResource.DEPTH_INFINITE, monitor);
 	}
 }
