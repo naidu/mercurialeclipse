@@ -101,12 +101,12 @@ public final class RefreshRootJob extends SafeWorkspaceJob {
 			}
 			if((type & INCOMING) != 0){
 				monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + root.getName());
-				IncomingChangesetCache.getInstance().clear(root);
+				IncomingChangesetCache.getInstance().clear(root, true);
 				monitor.worked(1);
 			}
 			if((type & OUTGOING) != 0){
 				monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + root.getName());
-				OutgoingChangesetCache.getInstance().clear(root);
+				OutgoingChangesetCache.getInstance().clear(root, true);
 				monitor.worked(1);
 			}
 		} catch (HgException e) {

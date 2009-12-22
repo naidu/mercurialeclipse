@@ -98,6 +98,24 @@ public class RemoteData {
 		return cache.getChangesets(resource);
 	}
 
+	/**
+	 * @return ALL changesets known by the hg root, or empty set, never null
+	 */
+	public SortedSet<ChangeSet> getChangeSets(){
+		if(changesets.isEmpty()){
+			return EMPTY_SETS;
+		}
+		Set<ChangeSet> set = changesets.get(new Path(root.getAbsolutePath()));
+		if(set == null || set.isEmpty()) {
+			return EMPTY_SETS;
+		}
+		if(set instanceof SortedSet) {
+			return Collections.unmodifiableSortedSet((SortedSet) set);
+		}
+		TreeSet<ChangeSet> sorted = new TreeSet<ChangeSet>(set);
+		return Collections.unmodifiableSortedSet(sorted);
+	}
+
 	private void populateCache(IProject project) {
 		if(projectMap.containsKey(project)){
 			return;

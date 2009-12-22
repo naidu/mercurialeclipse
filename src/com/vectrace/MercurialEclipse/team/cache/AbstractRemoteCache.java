@@ -33,6 +33,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A base class for remote caches (caching changesets which are either not present
@@ -110,7 +111,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 	}
 
-	public void clear(HgRoot root) {
+	public void clear(HgRoot root, boolean notify) {
 		synchronized (repoDatas) {
 			Set<RemoteData> set = repoDatas.get(root);
 			if(set == null){
@@ -121,6 +122,14 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			}
 			set.clear();
 		}
+		if(notify) {
+			notifyChanged(root, false);
+		}
+	}
+
+	private void notifyChanged(HgRoot root, boolean expandMembers) {
+		Set<?> projects = ResourceUtils.getProjects(root);
+		notifyChanged((Set<IResource>)projects, expandMembers);
 	}
 
 	/**
@@ -153,10 +162,8 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	}
 
 	protected void notifyChanged(HgRepositoryLocation repo, boolean expandMembers){
-		Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-		for (IProject project : projects) {
-			notifyChanged(project, expandMembers);
-		}
+		Set<?> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
+		notifyChanged((Set<IResource>)projects, expandMembers);
 	}
 
 	@Override
@@ -194,11 +201,44 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 				synchronized (repoDatas){
 					addResourcesToCache(key);
 				}
-				notifyChanged(key.getRepo(), true);
+				// XXX not sure if the full repo refresh event need to be sent here
+//				notifyChanged(key.getRepo(), true);
+				notifyChanged(resource, true);
 			}
 			RemoteData remoteData = fastRepoMap.get(key);
 			if(remoteData != null) {
 				return remoteData.getChangeSets(resource);
+			}
+		}
+		return EMPTY_SET;
+	}
+
+	/**
+	 * Gets all (in or out) changesets of the given hg root
+	 *
+	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
+	 * @return never null
+	 */
+	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot,
+			HgRepositoryLocation repository, String branch) throws HgException {
+		synchronized (repoDatas){
+			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
+			RemoteData data = fastRepoMap.get(key);
+
+			// XXX new code
+			if(data == null){
+				// lazy loading: refresh cache on demand only.
+				// lock the cache till update is complete
+				synchronized (repoDatas){
+					addResourcesToCache(key);
+				}
+				// XXX not sure if the full repo refresh event need to be sent here
+//				notifyChanged(key.getRepo(), true);
+				notifyChanged(hgRoot, true);
+			}
+			RemoteData remoteData = fastRepoMap.get(key);
+			if(remoteData != null) {
+				return remoteData.getChangeSets();
 			}
 		}
 		return EMPTY_SET;

@@ -311,6 +311,9 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			throw new InterruptedException("Timeout elapsed");
 		}
 		try {
+			// XXX [multi-project issue?] this call seems not to be properly understood by the cache,
+			// so that the later call to getChangeSets() on the same hg root causes the cache to call
+			// remote command again.
 			// this can trigger a refresh and a call to the remote server...
 			csOutgoing = OUTGOING_CACHE.getNewestChangeSet(file, repo, currentBranch);
 		} catch (HgException e) {
@@ -525,13 +528,13 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 					if (debug) {
 						System.out.println("\nclear incoming: " + hgRoot + ", depth: " + flag);
 					}
-					INCOMING_CACHE.clear(hgRoot);
+					INCOMING_CACHE.clear(hgRoot, false);
 				}
 				if(flag == HgSubscriberScopeManager.OUTGOING || flag >= 0) {
 					if(debug) {
 						System.out.println("\nclear outgoing: " + hgRoot + ", depth: " + flag);
 					}
-					OUTGOING_CACHE.clear(hgRoot);
+					OUTGOING_CACHE.clear(hgRoot, false);
 				}
 				if(flag == HgSubscriberScopeManager.LOCAL || flag >= 0) {
 					if(debug) {
