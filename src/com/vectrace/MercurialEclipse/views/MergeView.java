@@ -48,7 +48,6 @@ import org.eclipse.ui.part.ViewPart;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -165,11 +164,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				try {
 					IFile file = getSelection();
 					if (file != null) {
-						if (HgResolveClient.checkAvailable()) {
-							HgResolveClient.markResolved(file);
-						} else {
-							HgIMergeClient.markResolved(file);
-						}
+						HgResolveClient.markResolved(file);
 						populateView(true);
 					}
 				} catch (Exception e) {
@@ -186,11 +181,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				try {
 					IFile file = getSelection();
 					if (file != null) {
-						if (HgResolveClient.checkAvailable()) {
-							HgResolveClient.markUnresolved(file);
-						} else {
-							HgIMergeClient.markUnresolved(file);
-						}
+						HgResolveClient.markUnresolved(file);
 						populateView(true);
 					}
 				} catch (Exception e) {
@@ -212,12 +203,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			statusLabel.setText("Merging " + currentProject.getName());
 		}
 		List<FlaggedAdaptable> status = null;
-		if (HgResolveClient.checkAvailable()) {
-			//HgResolveClient.resolveAll(currentProject.getLocation().toFile());
-			status = HgResolveClient.list(currentProject);
-		} else {
-			status = HgIMergeClient.getMergeStatus(currentProject);
-		}
+		status = HgResolveClient.list(currentProject);
 		table.removeAll();
 		for (FlaggedAdaptable flagged : status) {
 			TableItem row = new TableItem(table, SWT.NONE);

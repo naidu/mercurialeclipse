@@ -58,7 +58,6 @@ import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -619,7 +618,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			}
 
 			changed.addAll(parseStatus(root, pathMap, lines));
-
+			boolean mergeInProgress = false;
 			for (IProject project : projects) {
 				// TODO use multiple projects (from this hg root) as input at ONCE
 				knownStatus.put(project, root);
@@ -629,7 +628,18 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				} catch (CoreException e) {
 					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
 				}
-				changed.addAll(checkForConflict(project));
+				if(!mergeInProgress) {
+					try {
+						if (project.getPersistentProperty(ResourceProperties.MERGING) != null) {
+							mergeInProgress = true;
+						}
+					} catch (CoreException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			}
+			if(mergeInProgress) {
+				changed.addAll(checkForConflict(root));
 			}
 		}
 		monitor.worked(1);
@@ -735,8 +745,16 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * @return non null set of all child oath entries managed by this cache
 	 */
 	private Set<IPath> getChildrenFromCache(IContainer folder) {
-		Set<IPath> children = new HashSet<IPath>();
 		IPath parentPath = ResourceUtils.getPath(folder);
+		return getPathChildrenFromCache(parentPath);
+	}
+
+	/**
+	 * @param parentPath
+	 * @return
+	 */
+	private Set<IPath> getPathChildrenFromCache(IPath parentPath) {
+		Set<IPath> children = new HashSet<IPath>();
 		Set<IPath> keySet = statusMap.keySet();
 		for (IPath path : keySet) {
 			if(path != null && parentPath.isPrefixOf(path)) {
@@ -756,21 +774,39 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			MercurialEclipsePlugin.logError(e);
 			return Collections.emptySet();
 		}
-		List<FlaggedAdaptable> status;
-		if (HgResolveClient.checkAvailable()) {
-			status = HgResolveClient.list(project);
-		} else {
-			status = HgIMergeClient.getMergeStatus(project);
-		}
+		List<FlaggedAdaptable> status = HgResolveClient.list(project);
 		Set<IResource> changed = new HashSet<IResource>();
 		Set<IResource> members = getLocalMembers(project);
 		for (IResource res : members) {
-			if(removeConflict(res)){
+			if(removeConflict(res.getLocation())){
 				changed.add(res);
 			}
 		}
-		if(removeConflict(project)){
+		if(removeConflict(project.getLocation())){
 			changed.add(project);
+		}
+		for (FlaggedAdaptable flaggedAdaptable : status) {
+			IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
+			if (flaggedAdaptable.getFlag() == CHAR_UNRESOLVED) {
+				changed.addAll(addConflict(file));
+			}
+		}
+		return changed;
+	}
+
+	private Set<IResource> checkForConflict(final HgRoot hgRoot) throws HgException {
+
+		List<FlaggedAdaptable> status = HgResolveClient.list(hgRoot);
+		Set<IResource> changed = new HashSet<IResource>();
+		IPath parentPath = new Path(hgRoot.getAbsolutePath());
+		Set<IPath> members = getPathChildrenFromCache(parentPath );
+		for (IPath childPath : members) {
+			if(removeConflict(childPath)){
+				IFile fileHandle = ResourceUtils.getFileHandle(childPath);
+				if(fileHandle != null) {
+					changed.add(fileHandle);
+				}
+			}
 		}
 		for (FlaggedAdaptable flaggedAdaptable : status) {
 			IFile file = (IFile) flaggedAdaptable.getAdapter(IFile.class);
@@ -1212,18 +1248,18 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	/**
 	 * Removes conflict marker on resource status
 	 *
-	 * @param local
+	 * @param local non null
 	 * @return true if there was a conflict and now it is removed
 	 */
-	private boolean removeConflict(IResource local) {
-		Integer statusInt = getStatus(local);
+	private boolean removeConflict(IPath local) {
+		Integer statusInt = statusMap.get(local);
 		if(statusInt == null){
 			return false;
 		}
 		int status = statusInt.intValue();
 		if(Bits.contains(status, BIT_CONFLICT)) {
 			status = Bits.clear(status, BIT_CONFLICT);
-			setStatus(local.getLocation(), Integer.valueOf(status));
+			setStatus(local, Integer.valueOf(status));
 			return true;
 		}
 		return false;

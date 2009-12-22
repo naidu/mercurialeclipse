@@ -33,7 +33,6 @@ import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
-import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -123,13 +122,8 @@ public class MergeHandler extends SingleResourceHandler {
 						MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 				"false")).booleanValue(); //$NON-NLS-1$
 		String result = ""; //$NON-NLS-1$
-		boolean useResolve = isHgResolveAvailable();
-		if (useResolve) {
-			result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
-					useExternalMergeTool, forced);
-		} else {
-			result = HgIMergeClient.merge(hgRoot, cs.getRevision().getChangeset());
-		}
+		result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
+				useExternalMergeTool, forced);
 
 		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 		for (IProject iProject : projects) {
@@ -156,21 +150,17 @@ public class MergeHandler extends SingleResourceHandler {
 		boolean commit = true;
 
 		String output = "";
-		if (!HgResolveClient.checkAvailable()) {
-			if (!mergeResult.contains("all conflicts resolved")) { //$NON-NLS-1$
+
+		List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(project);
+		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
+		for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
+			if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
 				commit = false;
+				break;
 			}
-		} else {
-			List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(project);
-			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
-			for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
-				if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
-					commit = false;
-					break;
-				}
-			}
-			monitor.worked(1);
 		}
+		monitor.worked(1);
+
 		if (commit) {
 			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
 			output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
@@ -222,10 +212,6 @@ public class MergeHandler extends SingleResourceHandler {
 
 
 		return candidate;
-	}
-
-	private static boolean isHgResolveAvailable() throws HgException {
-		return HgResolveClient.checkAvailable();
 	}
 
 }
