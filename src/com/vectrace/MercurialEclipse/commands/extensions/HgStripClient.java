@@ -21,8 +21,6 @@ package com.vectrace.MercurialEclipse.commands.extensions;
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
-import java.util.Set;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
@@ -31,9 +29,9 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 /**
  * Calls hg strip
@@ -71,17 +69,15 @@ public class HgStripClient {
 		}
 		command.addOptions(changeset.getChangeset());
 		String result = command.executeToString();
-		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
-		for (final IProject project : projects) {
-			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
-			job.addJobChangeListener(new JobChangeAdapter(){
-				@Override
-				public void done(IJobChangeEvent event) {
-					new RefreshJob("Refreshing " + project.getName(), project).schedule();
-				}
-			});
-			job.schedule();
-		}
+		final HgRoot hgRoot = command.getHgRoot();
+		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
+		job.addJobChangeListener(new JobChangeAdapter(){
+			@Override
+			public void done(IJobChangeEvent event) {
+				new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot).schedule();
+			}
+		});
+		job.schedule();
 		return result;
 	}
 }
