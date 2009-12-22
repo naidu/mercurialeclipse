@@ -116,18 +116,15 @@ public class HgCommitClient extends AbstractClient {
 	 * Commit given project after the merge and refresh the caches.
 	 * Implementation note: after merge, no files should be specified.
 	 */
-	public static String commitProject(IProject project, String user, String message) throws HgException {
-		HgCommand command = new HgCommand("commit", project, true); //$NON-NLS-1$
+	public static String commit(HgRoot hgRoot, String user, String message) throws HgException {
+		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(quote(user));
 		File messageFile = saveMessage(message);
 		try {
 			addMessage(command, messageFile, message);
 			String result = command.executeToString();
-			Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
-			for (IProject iProject : projects) {
-				new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-			}
+			new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshJob.LOCAL_AND_OUTGOING).schedule();
 			return result;
 		} finally {
 			deleteMessage(messageFile);

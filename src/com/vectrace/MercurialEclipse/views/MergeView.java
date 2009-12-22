@@ -54,10 +54,13 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener, Observer {
 
@@ -73,6 +76,8 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	private Action markResolvedAction;
 
 	private Action markUnresolvedAction;
+
+	private HgRoot hgRoot;
 
 	@Override
 	public void createPartControl(final Composite parent) {
@@ -232,19 +237,16 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			// are found
 			boolean allResolved = areAllResolved();
 			if (allResolved) {
-				statusLabel.setText(currentProject.getName()
-								+ Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
-								+ " " + mergeNode);
-				if (currentProject
-						.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
-					new CommitMergeHandler()
-							.commitMergeWithCommitDialog(
-									currentProject, getSite()
-											.getShell());
-					currentProject
-							.setSessionProperty(
-									ResourceProperties.MERGE_COMMIT_OFFERED,
-									"true"); //$NON-NLS-1$
+				String message = currentProject.getName()
+						+ Messages.getString("MergeView.PleaseCommitMerge") + " " + mergeNode;
+				statusLabel.setText(message);
+				if (currentProject.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
+					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(currentProject);
+					new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getSite().getShell());
+					Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+					for (IProject project : projects) {
+						project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, "true");
+					}
 				}
 			}
 		} catch (Exception e) {
@@ -259,6 +261,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		abortAction.setEnabled(false);
 		markResolvedAction.setEnabled(false);
 		markUnresolvedAction.setEnabled(false);
+		hgRoot = null;
+	}
+
+	public void setCurrentRoot(HgRoot hgRoot) {
+		this.hgRoot = hgRoot;
+		// TODO collect per-project data? and trigger UI refresh
+		// TODO nee to be re-set in the code using project as input
 	}
 
 	public void setCurrentProject(IProject project) {
@@ -321,9 +330,6 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		super.dispose();
 	}
 
-	/**
-	 * @return
-	 */
 	private IFile getSelection() {
 		TableItem[] selection = table.getSelection();
 		if (selection != null && selection.length > 0) {

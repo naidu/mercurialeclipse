@@ -10,6 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import java.util.Set;
+
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -20,7 +22,10 @@ import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.MergeDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class CommitMergeHandler extends SingleResourceHandler {
 
@@ -30,23 +35,30 @@ public class CommitMergeHandler extends SingleResourceHandler {
 	@Override
 	protected void run(IResource resource) throws HgException {
 		Assert.isNotNull(resource);
-		commitMergeWithCommitDialog(resource.getProject(), getShell());
+		commitMergeWithCommitDialog(MercurialTeamProvider.getHgRoot(resource), getShell());
 	}
 
 	/**
 	 * Opens the Commit dialog and commits the merge if ok is pressed.
-	 * @param resource
-	 *            the resource
+	 * @param hgRoot
+	 *            the root to commit
 	 * @return the hg command output
 	 * @throws HgException
 	 */
-	public String commitMergeWithCommitDialog(IProject resource, Shell shell) throws HgException {
-		Assert.isNotNull(resource);
+	public String commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) throws HgException {
+		Assert.isNotNull(hgRoot);
 		String result = ""; //$NON-NLS-1$
 		try {
-			CommitDialog commitDialog = new MergeDialog(shell,  resource,
-					Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
-							+ resource.getProject().getPersistentProperty(ResourceProperties.MERGING));
+			Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+			String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
+			if(!projects.isEmpty()) {
+				changesetMessage += projects.iterator().next().getPersistentProperty(ResourceProperties.MERGING);
+			} else {
+				// TODO get the changeset id from mercurial via command call
+				changesetMessage = "Merging...";
+			}
+
+			CommitDialog commitDialog = new MergeDialog(shell,  hgRoot,	changesetMessage);
 
 			// open dialog and wait for ok
 			commitDialog.open();
@@ -57,39 +69,28 @@ public class CommitMergeHandler extends SingleResourceHandler {
 	}
 
 	/**
-	 * Commits a merge with a default merge message. The commit dialog is not shown.
-	 * @param project a project to be committed.
-	 * @return the output of hg commit
-	 * @throws HgException
-	 * @throws CoreException
-	 */
-	public static String commitMerge(IProject project) throws HgException,
-			CoreException {
-		Assert.isNotNull(project);
-		return commitMerge(project, Messages.getString("CommitMergeHandler.mergeWith") //$NON-NLS-1$
-				+ project.getPersistentProperty(ResourceProperties.MERGING));
-	}
-
-	/**
 	 * Commits a merge with the given message. The commit dialog is not shown.
-	 * @param project a project to be committed, not null
+	 * @param hgRoot the root to be committed, not null
 	 * @return the output of hg commit
 	 * @throws HgException
 	 * @throws CoreException
 	 */
-	public static String commitMerge(IProject project, String message)
+	public static String commitMerge(HgRoot hgRoot, String message)
 			throws HgException, CoreException {
-		Assert.isNotNull(project);
+		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(message);
 
 		// do hg call
-		String result = HgCommitClient.commitProject(project, null, message);
+		String result = HgCommitClient.commit(hgRoot, null, message);
 
-		// clear merge status in Eclipse
-		project.setPersistentProperty(ResourceProperties.MERGING, null);
-		project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-
-		project.touch(null);
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		for (IProject project : projects) {
+			// clear merge status in Eclipse
+			project.setPersistentProperty(ResourceProperties.MERGING, null);
+			project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+			// triggers the decoration update
+			project.touch(null);
+		}
 		return result;
 	}
 

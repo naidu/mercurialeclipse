@@ -126,12 +126,12 @@ public class MergeHandler extends SingleResourceHandler {
 				useExternalMergeTool, forced);
 
 		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		String mergeChangesetId = cs.getChangeset();
 		for (IProject iProject : projects) {
-			iProject.setPersistentProperty(ResourceProperties.MERGING, cs.getChangeset());
+			iProject.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
 		}
 		try {
-			// XXX this should be refactored to use hg root. See also MercurialStatusCache.checkForConflict
-			result += commitMerge(monitor, project, shell, result, showCommitDialog);
+			result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, result, showCommitDialog);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
@@ -145,13 +145,13 @@ public class MergeHandler extends SingleResourceHandler {
 		return result;
 	}
 
-	private static String commitMerge(IProgressMonitor monitor, final IProject project,
-			final Shell shell,  String mergeResult, boolean showCommitDialog) throws CoreException {
+	private static String commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
+			final String mergeChangesetId, final Shell shell,  String mergeResult, boolean showCommitDialog) throws CoreException {
 		boolean commit = true;
 
 		String output = "";
 
-		List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(project);
+		List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(hgRoot);
 		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
 		for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
 			if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
@@ -165,9 +165,9 @@ public class MergeHandler extends SingleResourceHandler {
 			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
 			output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
 			if (!showCommitDialog) {
-				output += CommitMergeHandler.commitMerge(project);
+				output += CommitMergeHandler.commitMerge(hgRoot, "Merge with " + mergeChangesetId);
 			} else {
-				output += new CommitMergeHandler().commitMergeWithCommitDialog(project, shell);
+				output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
 			}
 			monitor.worked(1);
 		} else {
@@ -175,7 +175,7 @@ public class MergeHandler extends SingleResourceHandler {
 			.getActiveWorkbenchWindow().getActivePage().showView(
 					MergeView.ID);
 			view.clearView();
-			view.setCurrentProject(project);
+			view.setCurrentRoot(hgRoot);
 		}
 		return output;
 	}

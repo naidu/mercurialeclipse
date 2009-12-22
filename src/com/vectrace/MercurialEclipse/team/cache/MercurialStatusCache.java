@@ -742,7 +742,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 	/**
 	 * @param folder non null resource
-	 * @return non null set of all child oath entries managed by this cache
+	 * @return non null set of all child entries managed by this cache
 	 */
 	private Set<IPath> getChildrenFromCache(IContainer folder) {
 		IPath parentPath = ResourceUtils.getPath(folder);
@@ -751,7 +751,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 	/**
 	 * @param parentPath
-	 * @return
+	 * @return non null set of all child entries managed by this cache
 	 */
 	private Set<IPath> getPathChildrenFromCache(IPath parentPath) {
 		Set<IPath> children = new HashSet<IPath>();
@@ -1277,24 +1277,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			statusBatchSize = STATUS_BATCH_SIZE;
 			MercurialEclipsePlugin.logWarning(Messages.mercurialStatusCache_BatchSizeForStatusCommandNotCorrect, null);
 		}
-	}
-
-	/**
-	 * This is a copy of {@link ResourceUtils#convertRepoRelPath(HgRoot, IProject, String)}
-	 * and is here for optimization only.
-	 *
-	 * @param hgRootPath non null
-	 * @param projectLocation non null
-	 * @param repoRelPath path <b>relative</b> to the hg root
-	 * @return may return null, if the path is not found in the project
-	 */
-	private static IPath convertRepoRelPath(IPath hgRootPath, IPath projectLocation, String repoRelPath) {
-		// determine absolute path
-		IPath path = hgRootPath.append(repoRelPath);
-
-		// determine project relative path
-		int equalSegments = path.matchingFirstSegments(projectLocation);
-		return path.removeFirstSegments(equalSegments);
 	}
 
 }

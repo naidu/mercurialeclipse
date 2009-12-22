@@ -28,8 +28,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
@@ -140,8 +142,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 *
 	 * @param timeout
 	 *            -1 if no timeout, else the timeout in ms.
-	 * @return
-	 * @throws HgException
 	 */
 	public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
 		ByteArrayOutputStream bos = new ByteArrayOutputStream(BUFFER_SIZE);
@@ -361,6 +361,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	public void addFiles(List<? extends IResource> resources) {
 		for (IResource resource : resources) {
 			files.add(resource.getLocation().toOSString());
+		}
+	}
+
+	public void addFiles(Set<IPath> paths) {
+		for (IPath path : paths) {
+			files.add(path.toOSString());
 		}
 	}
 

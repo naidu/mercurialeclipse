@@ -15,12 +15,15 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgPatchClient extends AbstractClient {
@@ -34,10 +37,9 @@ public class HgPatchClient extends AbstractClient {
 		return command.executeToString();
 	}
 
-	public static boolean exportPatch(File workDir, List<IResource> resources,
+	public static boolean exportPatch(HgRoot hgRoot, Set<IPath> resources,
 			File patchFile, ArrayList<String> options) throws HgException {
-		AbstractShellCommand command = new HgCommand(
-				"diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
 		command.addFiles(resources);
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToFile(patchFile, 0, false);
@@ -47,7 +49,6 @@ public class HgPatchClient extends AbstractClient {
 	 * export diff file to clipboard
 	 *
 	 * @param resources
-	 * @return
 	 * @throws HgException
 	 */
 	public static String exportPatch(File workDir, List<IResource> resources,

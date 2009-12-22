@@ -18,6 +18,8 @@ import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class UpdateHandler extends SingleResourceHandler {
 
@@ -26,26 +28,27 @@ public class UpdateHandler extends SingleResourceHandler {
 
 	@Override
 	public void run(IResource resource) throws Exception {
-		final IProject project = resource.getProject();
-		boolean dirty = HgStatusClient.isDirty(project);
+		IProject project = resource.getProject();
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		boolean dirty = HgStatusClient.isDirty(hgRoot);
 		if (dirty) {
 			final boolean[] result = new boolean[1];
 			if(Display.getCurrent() == null){
 				Display.getDefault().syncExec(new Runnable() {
 					public void run() {
 						result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
-						"Your project has uncommited changes.\nDo you really want to continue?");
+						"Your hg root has uncommited changes.\nDo you really want to continue?");
 					}
 				});
 			} else {
 				result[0] = MessageDialog.openQuestion(getShell(), "Uncommited Changes",
-				"Your project has uncommited changes.\nDo you really want to continue?");
+				"Your hg root has uncommited changes.\nDo you really want to continue?");
 			}
 			if (!result[0]) {
 				return;
 			}
 		}
-		HgUpdateClient.update(project, revision, cleanEnabled);
+		HgUpdateClient.update(hgRoot, revision, cleanEnabled);
 	}
 
 	/**

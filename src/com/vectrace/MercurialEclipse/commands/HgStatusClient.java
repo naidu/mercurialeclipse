@@ -14,13 +14,16 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -78,13 +81,6 @@ public class HgStatusClient extends AbstractClient {
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
 		command.addFiles(resources);
-		return command.executeToBytes().length != 0;
-	}
-
-	public static boolean isDirty(IProject project) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", project, true); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
 		return command.executeToBytes().length != 0;
 	}
 
@@ -154,6 +150,18 @@ public class HgStatusClient extends AbstractClient {
 			status[i] = status[i].substring(2);
 		}
 		return status;
+	}
+
+	public static Set<IPath> getDirtyFilePaths(HgRoot root) throws HgException {
+		String[] dirtyFiles = getDirtyFiles(root);
+		IPath rootPath = new Path(root.getAbsolutePath());
+		Set<IPath> resources = new HashSet<IPath>();
+		for (String rootRelativePath : dirtyFiles) {
+			// determine absolute path
+			IPath path = rootPath.append(rootRelativePath);
+			resources.add(path);
+		}
+		return resources;
 	}
 
 	/**

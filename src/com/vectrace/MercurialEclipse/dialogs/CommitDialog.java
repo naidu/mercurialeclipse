@@ -214,6 +214,11 @@ public class CommitDialog extends TitleAreaDialog {
 		return repoLocation.getUser();
 	}
 
+	protected static String getDefaultCommitName(HgRoot hgRoot) {
+		// XXX [multi-project support] see issue 10150: get the name from project? hg root? properties
+		return null;
+	}
+
 	private void createCommitTextBox(Composite container) {
 		setMessage(Messages.getString("CommitDialog.commitTextLabel.text")); //$NON-NLS-1$
 
