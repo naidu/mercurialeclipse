@@ -47,6 +47,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	// private static final Object executionLock = new Object();
 
+	// XXX should not extend threads directly, should use thread pools or jobs.
+	// In case many threads created at same time, VM can crash or at least get OOM
 	private static class InputStreamConsumer extends Thread {
 		private final InputStream stream;
 		private final OutputStream output;
