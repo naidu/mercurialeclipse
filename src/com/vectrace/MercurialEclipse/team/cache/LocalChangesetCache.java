@@ -155,7 +155,7 @@ public class LocalChangesetCache extends AbstractCache {
 		synchronized(localChangeSets){
 			revisions = localChangeSets.get(location);
 			if (revisions == null) {
-				refreshAllLocalRevisions(hgRoot, true, isGetFileInformationForChangesets());
+				refreshAllLocalRevisions(hgRoot, true);
 				revisions = localChangeSets.get(location);
 			}
 		}
@@ -229,6 +229,10 @@ public class LocalChangesetCache extends AbstractCache {
 			}
 			fetchRevisions(res, limit, versionLimit, -1, withFiles);
 		}
+	}
+
+	public Set<ChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit) throws HgException {
+		return refreshAllLocalRevisions(hgRoot, limit, isGetFileInformationForChangesets());
 	}
 
 	/**
