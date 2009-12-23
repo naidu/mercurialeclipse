@@ -11,18 +11,19 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.wizards.StripWizard;
 
 public class StripHandler extends SingleResourceHandler {
 
 	@Override
 	protected void run(IResource resource) throws Exception {
-		IProject project = resource.getProject();
-		StripWizard stripWizard = new StripWizard(project);
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
+		StripWizard stripWizard = new StripWizard(hgRoot);
 		WizardDialog dialog = new WizardDialog(getShell(), stripWizard);
 		dialog.setBlockOnOpen(true);
 		dialog.open();

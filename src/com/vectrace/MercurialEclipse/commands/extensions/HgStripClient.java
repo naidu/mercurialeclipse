@@ -21,7 +21,6 @@ package com.vectrace.MercurialEclipse.commands.extensions;
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
@@ -37,24 +36,17 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
  * Calls hg strip
  *
  * @author bastian
- *
  */
 public class HgStripClient {
+
 	/**
 	 * strip a revision and all later revs on the same branch
-	 *
-	 * @param proj
-	 * @param backup
-	 * @param changeset
-	 * @return
-	 * @throws HgException
 	 */
-	public static String strip(IProject proj, boolean saveUnrelated,
+	public static String strip(final HgRoot hgRoot, boolean saveUnrelated,
 			boolean backup, boolean stripHeads, ChangeSet changeset)
 			throws HgException {
-		HgCommand command = new HgCommand("strip", proj, true); //$NON-NLS-1$
-		command
-				.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
+		HgCommand command = new HgCommand("strip", hgRoot, true); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -69,7 +61,6 @@ public class HgStripClient {
 		}
 		command.addOptions(changeset.getChangeset());
 		String result = command.executeToString();
-		final HgRoot hgRoot = command.getHgRoot();
 		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
 		job.addJobChangeListener(new JobChangeAdapter(){
 			@Override
