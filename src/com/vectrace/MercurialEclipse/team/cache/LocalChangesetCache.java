@@ -248,7 +248,7 @@ public class LocalChangesetCache extends AbstractCache {
 	 *            true = include file in changeset
 	 * @throws HgException
 	 */
-	public void refreshAllLocalRevisions(HgRoot hgRoot, boolean limit,
+	public Set<ChangeSet> refreshAllLocalRevisions(HgRoot hgRoot, boolean limit,
 			boolean withFiles) throws HgException {
 		Assert.isNotNull(hgRoot);
 		clear(hgRoot, false);
@@ -256,7 +256,7 @@ public class LocalChangesetCache extends AbstractCache {
 		if(withFiles && versionLimit > 1) {
 			versionLimit = 1;
 		}
-		fetchRevisions(hgRoot, limit, versionLimit, -1, withFiles);
+		return fetchRevisions(hgRoot, limit, versionLimit, -1, withFiles);
 	}
 
 	@Override
@@ -432,7 +432,7 @@ public class LocalChangesetCache extends AbstractCache {
 	 *            the revision to start with
 	 * @throws HgException
 	 */
-	public void fetchRevisions(HgRoot hgRoot, boolean limit,
+	public Set<ChangeSet> fetchRevisions(HgRoot hgRoot, boolean limit,
 			int limitNumber, int startRev, boolean withFiles) throws HgException {
 		Assert.isNotNull(hgRoot);
 
@@ -445,12 +445,13 @@ public class LocalChangesetCache extends AbstractCache {
 				revisions = HgLogClient.getCompleteRootLog(hgRoot, withFiles);
 			}
 			if (revisions == null || revisions.size() <= 0) {
-				return;
+				return EMPTY_SET;
 			}
 
 			Set<ChangeSet> changes = revisions.get(hgRoot.getIPath());
 			// TODO should we distribute/remember changesets by project?
 			addChangesToLocalCache(null, hgRoot.getIPath(), changes);
+			return changes;
 		}
 	}
 

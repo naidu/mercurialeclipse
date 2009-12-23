@@ -14,8 +14,8 @@ package com.vectrace.MercurialEclipse.ui;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
@@ -47,13 +48,14 @@ public class TagTable extends Composite {
 
 	private final Table table;
 	private int[] parents;
-	private boolean showTip = true;
+	private boolean showTip;
 
-	private final IProject project;
+	private final HgRoot hgRoot;
 
-	public TagTable(Composite parent, IProject project) {
+	public TagTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
-		this.project = project;
+		showTip = true;
+		this.hgRoot = hgRoot;
 
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
@@ -109,8 +111,17 @@ public class TagTable extends Composite {
 				// this can cause UI hang for big projects. Should be done in a job.
 				// the only reason we need this is to show the changeset comments, so we can complete
 				// this data in background
+				Map<String, ChangeSet> tagged = new HashMap<String, ChangeSet>();
 				try {
-					cache.refreshAllLocalRevisions(project, false, false);
+					Set<ChangeSet> allLocalRevisions = cache.refreshAllLocalRevisions(hgRoot, false, false);
+					for (ChangeSet cs : allLocalRevisions) {
+						if(monitor.isCanceled()) {
+							return Status.CANCEL_STATUS;
+						}
+						if(cs.getTag() != null && cs.getTag().length() > 0) {
+							tagged.put(cs.getTag(), cs);
+						}
+					}
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.logError(e1);
 				}
@@ -120,12 +131,9 @@ public class TagTable extends Composite {
 						return Status.CANCEL_STATUS;
 					}
 					if (showTip || !HgRevision.TIP.getChangeset().equals(tag.getName())) {
-						ChangeSet changeSet;
-						try {
-							changeSet = cache.getOrFetchChangeSetById(project, tag.getRevision() + ":" + tag.getGlobalId());
+						ChangeSet changeSet = tagged.get(tag.getName());
+						if(changeSet != null) {
 							tagToCs.put(tag, changeSet);
-						} catch (HgException e) {
-							MercurialEclipsePlugin.logError(e);
 						}
 					}
 				}

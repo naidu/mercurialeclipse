@@ -9,10 +9,8 @@
  *     Jerome Negre              - implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.dialogs;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -32,17 +30,17 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- *
  */
 public class TagDialog extends Dialog {
 
-	private final IProject project;
+	private final HgRoot hgRoot;
 
 	// main TabItem
 	Text nameText;
@@ -55,10 +53,10 @@ public class TagDialog extends Dialog {
 	boolean forced;
 	boolean local;
 
-	public TagDialog(Shell parentShell, IProject project) {
+	public TagDialog(Shell parentShell, HgRoot hgRoot) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.project = project;
+		this.hgRoot = hgRoot;
 	}
 
 	@Override
@@ -126,7 +124,7 @@ public class TagDialog extends Dialog {
 		label.setText(Messages.getString("TagDialog.existingTags")); //$NON-NLS-1$
 		label.setLayoutData(createGridData(1));
 
-		final TagTable table = new TagTable(composite, project);
+		final TagTable table = new TagTable(composite, hgRoot);
 		table.hideTip();
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.heightHint = 150;
@@ -142,7 +140,7 @@ public class TagDialog extends Dialog {
 		});
 
 		try {
-			table.setTags(HgTagClient.getTags(project));
+			table.setTags(HgTagClient.getTags(hgRoot));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
@@ -196,7 +194,7 @@ public class TagDialog extends Dialog {
 		Button otherButton = new Button(composite, SWT.RADIO);
 		otherButton.setText(Messages.getString("TagDialog.tagAnotherChangeset")); //$NON-NLS-1$
 
-		final ChangesetTable table = new ChangesetTable(composite, project);
+		final ChangesetTable table = new ChangesetTable(composite, hgRoot);
 		table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		table.setEnabled(false);
 		table.addSelectionListener(new SelectionAdapter() {

@@ -10,24 +10,23 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.IDialogConstants;
 
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.dialogs.TagDialog;
-import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 /**
- *
  * @author Jerome Negre <jerome+hg@jnegre.org>
- *
- */public class TagAction extends SingleResourceAction {
+ */
+public class TagAction extends SingleResourceAction {
 
 	@Override
 	protected void run(IResource resource) throws Exception {
-		IProject project = resource.getProject();
-		TagDialog dialog = new TagDialog(getShell(), project);
+		final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
+		TagDialog dialog = new TagDialog(getShell(), hgRoot);
 
 		if(dialog.open() == IDialogConstants.OK_ID) {
 			HgTagClient.addTag(
@@ -38,7 +37,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 					dialog.isLocal(),
 					dialog.isForced());
 
-			new RefreshStatusJob("Refresh hg status", project).schedule();
+			new RefreshRootJob("Refresh hg status", hgRoot, RefreshRootJob.LOCAL).schedule();
 		}
 	}
 

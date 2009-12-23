@@ -11,14 +11,12 @@
 package com.vectrace.MercurialEclipse.team.cache;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -65,9 +63,6 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author <a href="mailto:adam.berkes@intland.com">Adam Berkes</a>
  */
 public abstract class AbstractRemoteCache extends AbstractCache {
-
-	private static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
-
 
 	/**
 	 * Map hg root -> branch -> repo -> projects -> changeset

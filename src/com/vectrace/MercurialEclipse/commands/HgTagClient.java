@@ -18,6 +18,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.compare.TagComparator;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 /**
@@ -29,6 +30,16 @@ public class HgTagClient {
 
 	public static Tag[] getTags(IProject project) throws HgException {
 		AbstractShellCommand command = new HgCommand("tags", project, false); //$NON-NLS-1$
+		command.addOptions("-v"); //$NON-NLS-1$
+		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+
+		Collection<Tag> tags = getTags(lines);
+		Tag[] sortedTags = tags.toArray(new Tag[] {});
+		return sortedTags;
+	}
+
+	public static Tag[] getTags(HgRoot hgRoot) throws HgException {
+		AbstractShellCommand command = new HgCommand("tags", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 

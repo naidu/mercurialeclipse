@@ -47,6 +47,7 @@ import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.FileDataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -273,7 +274,13 @@ public class RevisionChooserDialog extends Dialog {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
-		final TagTable table = new TagTable(folder, dataLoader.getProject());
+		final TagTable table;
+		try {
+			table = new TagTable(folder, MercurialTeamProvider.getHgRoot(dataLoader.getProject()));
+		} catch (HgException e1) {
+			MercurialEclipsePlugin.logError(e1);
+			return item;
+		}
 		table.highlightParents(parents);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
