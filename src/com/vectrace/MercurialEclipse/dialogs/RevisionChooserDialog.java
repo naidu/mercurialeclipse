@@ -230,8 +230,8 @@ public class RevisionChooserDialog extends Dialog {
 		item.setText(Messages.getString("RevisionChooserDialog.revTab.name")); //$NON-NLS-1$
 
 
-		final ChangesetTable table = new ChangesetTable(folder, dataLoader
-				.getResource(), false);
+		final ChangesetTable table = new ChangesetTable(folder, dataLoader.getResource());
+		table.setAutoFetch(false);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.highlightParents(parents);
 

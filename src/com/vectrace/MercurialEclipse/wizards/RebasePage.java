@@ -219,7 +219,7 @@ public class RebasePage extends HgWizardPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
-		destTable = new ChangesetTable(destGroup, resource, true);
+		destTable = new ChangesetTable(destGroup, resource);
 		destTable.setLayoutData(gridData);
 		destTable.setEnabled(false);
 	}
@@ -296,7 +296,7 @@ public class RebasePage extends HgWizardPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
-		srcTable = new ChangesetTable(srcGroup, resource, true);
+		srcTable = new ChangesetTable(srcGroup, resource);
 		srcTable.setLayoutData(gridData);
 		srcTable.setEnabled(false);
 	}

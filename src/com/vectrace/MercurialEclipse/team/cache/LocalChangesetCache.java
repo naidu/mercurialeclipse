@@ -148,6 +148,23 @@ public class LocalChangesetCache extends AbstractCache {
 		return null;
 	}
 
+	public SortedSet<ChangeSet> getOrFetchChangeSets(HgRoot hgRoot) throws HgException {
+		IPath location = hgRoot.getIPath();
+
+		SortedSet<ChangeSet> revisions;
+		synchronized(localChangeSets){
+			revisions = localChangeSets.get(location);
+			if (revisions == null) {
+				refreshAllLocalRevisions(hgRoot, true, isGetFileInformationForChangesets());
+				revisions = localChangeSets.get(location);
+			}
+		}
+		if (revisions != null) {
+			return Collections.unmodifiableSortedSet(revisions);
+		}
+		return null;
+	}
+
 	/**
 	 * Gets changeset for given resource.
 	 *
@@ -214,6 +231,34 @@ public class LocalChangesetCache extends AbstractCache {
 		}
 	}
 
+	/**
+	 * Refreshes all local revisions. If limit is set, it looks up the default
+	 * number of revisions to get and fetches the topmost till limit is reached.
+	 * <p>
+	 * A clear of all existing data for the given resource is triggered.
+	 * <p>
+	 * If withFiles is true and a resource version can't be found in the topmost
+	 * revisions, the last revision of this file is obtained via additional
+	 * calls.
+	 *
+	 * @param hgRoot non null
+	 * @param limit
+	 *            whether to limit or to have full project log
+	 * @param withFiles
+	 *            true = include file in changeset
+	 * @throws HgException
+	 */
+	public void refreshAllLocalRevisions(HgRoot hgRoot, boolean limit,
+			boolean withFiles) throws HgException {
+		Assert.isNotNull(hgRoot);
+		clear(hgRoot, false);
+		int versionLimit = getLogBatchSize();
+		if(withFiles && versionLimit > 1) {
+			versionLimit = 1;
+		}
+		fetchRevisions(hgRoot, limit, versionLimit, -1, withFiles);
+	}
+
 	@Override
 	protected void configureFromPreferences(IPreferenceStore store){
 		logBatchSize = store.getInt(MercurialPreferenceConstants.LOG_BATCH_SIZE);
@@ -228,8 +273,6 @@ public class LocalChangesetCache extends AbstractCache {
 
 	/**
 	 * Gets the configured log batch size.
-	 *
-	 * @return
 	 */
 	public int getLogBatchSize() {
 		return logBatchSize;
@@ -372,6 +415,45 @@ public class LocalChangesetCache extends AbstractCache {
 		}
 	}
 
+	/**
+	 * Fetches local revisions. If limit is set, it looks up the default
+	 * number of revisions to get and fetches the topmost till limit is reached.
+	 *
+	 * If a resource version can't be found in the topmost revisions, the last
+	 * revisions of this file (10% of limit number) are obtained via additional
+	 * calls.
+	 *
+	 * @param hgRoot non null
+	 * @param limit
+	 *            whether to limit or to have full project log
+	 * @param limitNumber
+	 *            if limit is set, how many revisions should be fetched
+	 * @param startRev
+	 *            the revision to start with
+	 * @throws HgException
+	 */
+	public void fetchRevisions(HgRoot hgRoot, boolean limit,
+			int limitNumber, int startRev, boolean withFiles) throws HgException {
+		Assert.isNotNull(hgRoot);
+
+		Map<IPath, Set<ChangeSet>> revisions;
+		// now we may change cache state, so lock
+		synchronized(localChangeSets){
+			if (limit) {
+				revisions = HgLogClient.getRootLog(hgRoot, limitNumber, startRev, withFiles);
+			} else {
+				revisions = HgLogClient.getCompleteRootLog(hgRoot, withFiles);
+			}
+			if (revisions == null || revisions.size() <= 0) {
+				return;
+			}
+
+			Set<ChangeSet> changes = revisions.get(hgRoot.getIPath());
+			// TODO should we distribute/remember changesets by project?
+			addChangesToLocalCache(null, hgRoot.getIPath(), changes);
+		}
+	}
+
 	@Override
 	public synchronized void addObserver(Observer o) {
 		// TODO current implementation was very inefficient: the only listener was
@@ -434,7 +516,9 @@ public class LocalChangesetCache extends AbstractCache {
 				localChangeSets.put(path, existing);
 			}
 			existing.addAll(changes);
-			addChangesets(project, changes);
+			if(project != null) {
+				addChangesets(project, changes);
+			}
 		}
 	}
 

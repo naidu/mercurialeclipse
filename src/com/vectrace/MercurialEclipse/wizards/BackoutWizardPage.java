@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -28,6 +27,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -42,26 +42,22 @@ public class BackoutWizardPage extends HgWizardPage {
 	private Text messageTextField;
 	private Button mergeCheckBox;
 	protected ChangeSet backoutRevision;
-	private final IProject project;
+	private final HgRoot hgRoot;
 	private Text userTextField;
 
-	public BackoutWizardPage(String pageName, String title,
-			ImageDescriptor image, IProject project) {
+	public BackoutWizardPage(String pageName, String title, ImageDescriptor image, HgRoot hgRoot) {
 		super(pageName, title, image);
-		this.project = project;
+		this.hgRoot = hgRoot;
 	}
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
 		// list view of changesets
-		Group changeSetGroup = SWTWidgetHelper
-				.createGroup(
-						composite,
-						Messages
-								.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
+		Group changeSetGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-		changesetTable = new ChangesetTable(changeSetGroup, project);
+		changesetTable = new ChangesetTable(changeSetGroup, hgRoot);
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
@@ -113,7 +109,7 @@ public class BackoutWizardPage extends HgWizardPage {
 		boolean merge = mergeCheckBox.getSelection();
 		backoutRevision = changesetTable.getSelection();
 		try {
-			String result = HgBackoutClient.backout(project, backoutRevision,
+			String result = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());
 			HgClients.getConsole().printMessage(result, null);
 
