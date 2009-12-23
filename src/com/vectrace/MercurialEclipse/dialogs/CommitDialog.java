@@ -101,6 +101,7 @@ public class CommitDialog extends TitleAreaDialog {
 	private Button revertCheckBox;
 	private boolean filesSelectable;
 	private HgRoot hgRoot;
+	private String commitResult;
 
 	public CommitDialog(Shell shell, List<IResource> resources) {
 		super(shell);
@@ -312,7 +313,7 @@ public class CommitDialog extends TitleAreaDialog {
 				user = getInitialCommitUserName();
 			}
 
-			performCommit(messageToCommit);
+			commitResult = performCommit(messageToCommit);
 
 			// revertCheckBox can be null if this is a merge dialog
 			if (revertCheckBox != null && revertCheckBox.getSelection()) {
@@ -325,13 +326,20 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 	}
 
-	protected void performCommit(String messageToCommit) throws CoreException {
+	/**
+	 * @return the result of the commit operation (hg output), if any. If there was no commit
+	 * or commit ouput was null, return empty string
+	 */
+	public String getCommitResult() {
+		return commitResult != null? commitResult : "";
+	}
+
+	protected String performCommit(String messageToCommit) throws CoreException {
 		if(hgRoot != null && !filesSelectable && resourcesToCommit.isEmpty()){
 			// enforce commit anyway
-			HgCommitClient.commitResources(hgRoot, user, messageToCommit, new NullProgressMonitor());
-		} else {
-			HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
+			return HgCommitClient.commitResources(hgRoot, user, messageToCommit, new NullProgressMonitor());
 		}
+		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
 	}
 
 	private void revertResources() {

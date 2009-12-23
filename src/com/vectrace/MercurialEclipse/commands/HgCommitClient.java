@@ -23,9 +23,7 @@ import java.io.Writer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -44,9 +42,10 @@ public class HgCommitClient extends AbstractClient {
 	/**
 	 * Commit given resources and refresh the caches for the associated projects
 	 */
-	public static void commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor) throws HgException {
+	public static String commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
+		String commit = "";
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
 			HgRoot root = mapEntry.getKey();
 			if (monitor != null) {
@@ -56,25 +55,23 @@ public class HgCommitClient extends AbstractClient {
 				monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 			}
 			List<IResource> files = mapEntry.getValue();
-			commit(root, AbstractClient.toFiles(files), user, message);
+			commit += commit(root, AbstractClient.toFiles(files), user, message);
 		}
 		for (HgRoot root : resourcesByRoot.keySet()) {
 			new RefreshRootJob("Refreshing " + root.getName(), root, RefreshJob.LOCAL_AND_OUTGOING).schedule();
 		}
+		return commit;
 	}
 
 	/**
 	 * Commit given hg root with all checked out/added/deleted changes and refresh the caches for the assotiated projects
 	 */
-	public static void commitResources(HgRoot root, String user, String message, IProgressMonitor monitor) throws HgException {
+	public static String commitResources(HgRoot root, String user, String message, IProgressMonitor monitor) throws HgException {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
-		commit(root, emptyList, user, message);
-
-		Set<IProject> projects = ResourceUtils.getProjects(root);
-		for (IProject iProject : projects) {
-			new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-		}
+		String commit = commit(root, emptyList, user, message);
+		new RefreshRootJob("Refreshing " + root.getName(), root, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+		return commit;
 	}
 
 	/**

@@ -10,22 +10,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import java.util.Set;
-
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.MergeDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class CommitMergeHandler extends SingleResourceHandler {
 
@@ -47,25 +43,20 @@ public class CommitMergeHandler extends SingleResourceHandler {
 	 */
 	public String commitMergeWithCommitDialog(HgRoot hgRoot, Shell shell) throws HgException {
 		Assert.isNotNull(hgRoot);
-		String result = ""; //$NON-NLS-1$
-		try {
-			Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-			String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
-			if(!projects.isEmpty()) {
-				changesetMessage += projects.iterator().next().getPersistentProperty(ResourceProperties.MERGING);
-			} else {
-				// TODO get the changeset id from mercurial via command call
-				changesetMessage = "Merging...";
-			}
-
-			CommitDialog commitDialog = new MergeDialog(shell,  hgRoot,	changesetMessage);
-
-			// open dialog and wait for ok
-			commitDialog.open();
-		} catch (CoreException e) {
-			throw new HgException(Messages.getString("CommitMergeHandler.failedToSetMergeStatus"), e); //$NON-NLS-1$
+		String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
+		String mergeChangesetId = HgStatusClient.getMergeChangesetId(hgRoot);
+		if(mergeChangesetId != null) {
+			changesetMessage += mergeChangesetId;
+		} else {
+			// TODO get the changeset id from mercurial via command call
+			changesetMessage = "Merging...";
 		}
-		return result;
+
+		CommitDialog commitDialog = new MergeDialog(shell,  hgRoot,	changesetMessage);
+
+		// open dialog and wait for ok
+		commitDialog.open();
+		return commitDialog.getCommitResult();
 	}
 
 	/**
@@ -82,15 +73,7 @@ public class CommitMergeHandler extends SingleResourceHandler {
 
 		// do hg call
 		String result = HgCommitClient.commit(hgRoot, null, message);
-
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-		for (IProject project : projects) {
-			// clear merge status in Eclipse
-			project.setPersistentProperty(ResourceProperties.MERGING, null);
-			project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
-			// triggers the decoration update
-			project.touch(null);
-		}
+		HgStatusClient.clearMergeStatus(hgRoot);
 		return result;
 	}
 

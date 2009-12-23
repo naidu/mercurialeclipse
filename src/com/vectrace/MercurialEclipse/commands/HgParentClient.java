@@ -22,6 +22,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class HgParentClient extends AbstractClient {
@@ -40,10 +41,9 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
-	public static String[] getParentNodeIds(IResource resource)
+	public static String[] getParentNodeIds(HgRoot hgRoot)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
-				getWorkingDirectory(resource), false);
+		AbstractShellCommand command = new HgCommand("parents", hgRoot, false);
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		String[] parents = new String[lines.length];

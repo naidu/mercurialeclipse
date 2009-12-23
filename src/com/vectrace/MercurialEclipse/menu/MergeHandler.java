@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.text.MessageFormat;
 import java.util.List;
-import java.util.Set;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -43,10 +42,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends SingleResourceHandler {
@@ -118,35 +115,26 @@ public class MergeHandler extends SingleResourceHandler {
 		}
 
 		boolean useExternalMergeTool = Boolean.valueOf(
-				HgClients.getPreference(
-						MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
+				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 				"false")).booleanValue(); //$NON-NLS-1$
-		String result = ""; //$NON-NLS-1$
-		result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
+
+		String result = HgMergeClient.merge(hgRoot, cs.getRevision().getChangeset(),
 				useExternalMergeTool, forced);
 
-		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 		String mergeChangesetId = cs.getChangeset();
-		for (IProject iProject : projects) {
-			iProject.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
-		}
+		HgStatusClient.setMergeStatus(hgRoot, mergeChangesetId);
 		try {
-			result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, result, showCommitDialog);
+			result += commitMerge(monitor, hgRoot, mergeChangesetId, shell, showCommitDialog);
 		} catch (CoreException e) {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
-		}
-
-		for (IProject iProject : projects) {
-			// trigger refresh of project decoration
-			iProject.touch(new NullProgressMonitor());
 		}
 		new RefreshWorkspaceStatusJob(hgRoot, true).schedule();
 		return result;
 	}
 
 	private static String commitMerge(IProgressMonitor monitor, final HgRoot hgRoot,
-			final String mergeChangesetId, final Shell shell,  String mergeResult, boolean showCommitDialog) throws CoreException {
+			final String mergeChangesetId, final Shell shell, boolean showCommitDialog) throws CoreException {
 		boolean commit = true;
 
 		String output = "";
@@ -172,8 +160,7 @@ public class MergeHandler extends SingleResourceHandler {
 			monitor.worked(1);
 		} else {
 			MergeView view = (MergeView) PlatformUI.getWorkbench()
-			.getActiveWorkbenchWindow().getActivePage().showView(
-					MergeView.ID);
+			.getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
 			view.clearView();
 			view.setCurrentRoot(hgRoot);
 		}

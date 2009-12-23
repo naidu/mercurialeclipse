@@ -40,6 +40,7 @@ import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -402,7 +403,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
 			String tags = changeSet.getTag();
-			String merging = project.getPersistentProperty(ResourceProperties.MERGING);
+			String merging = HgStatusClient.getMergeChangesetId(project);
 
 			// rev info
 			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);

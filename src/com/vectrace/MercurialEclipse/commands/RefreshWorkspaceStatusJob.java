@@ -23,7 +23,6 @@ import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
@@ -88,8 +87,7 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 			MercurialTeamProvider.setCurrentBranch(branch, toRefresh);
 
 			// reset merge properties
-			toRefresh.setPersistentProperty(ResourceProperties.MERGING, null);
-			toRefresh.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
+			HgStatusClient.clearMergeStatus(toRefresh);
 		}
 
 		// refresh resources

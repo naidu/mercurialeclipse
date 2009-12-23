@@ -43,6 +43,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -90,14 +91,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 			window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		}
 		List<IResource> resources = new ArrayList<IResource>();
-		boolean mergeIsRunning;
-		try {
-			mergeIsRunning = collectResourcesToRevert(resources);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
-			return;
-		}
+		boolean mergeIsRunning = collectResourcesToRevert(resources);
 		if (resources.size() > 0 && !mergeIsRunning) {
 			openRevertDialog(resources, false);
 		} else {
@@ -162,18 +156,16 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}.schedule();
 	}
 
-	private boolean collectResourcesToRevert(List<IResource> resources) throws CoreException, HgException {
+	private boolean collectResourcesToRevert(List<IResource> resources) {
 		boolean mergeIsRunning = false;
 		for (Object obj : selection.toList()) {
 			if (obj instanceof IResource) {
 				IResource resource = (IResource) obj;
-				boolean merging = resource.getProject()
-						.getPersistentProperty(ResourceProperties.MERGING) != null;
+				boolean merging = HgStatusClient.isMergeInProgress(resource);
 				if(merging){
 					mergeIsRunning = true;
 				}
 				boolean supervised = MercurialUtilities.hgIsTeamProviderFor(resource, false);
-
 				if (supervised) {
 					resources.add(resource);
 				}
