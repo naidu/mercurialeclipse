@@ -16,6 +16,7 @@
 package com.vectrace.MercurialEclipse.annotations;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -32,7 +33,6 @@ import org.eclipse.core.resources.IFile;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -44,10 +44,10 @@ public class AnnotateCommand {
 	private static final DateFormat DATE_FORMAT = new SimpleDateFormat(
 			"EEE MMM dd HH:mm:ss yyyy Z", Locale.ENGLISH); //$NON-NLS-1$
 
-	private final HgFile file;
+	private final File file;
 
-	public AnnotateCommand(HgFile file) {
-		this.file = file;
+	public AnnotateCommand(File remoteFile) {
+		this.file = remoteFile;
 	}
 
 	public AnnotateBlocks execute() throws HgException {

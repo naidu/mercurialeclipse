@@ -2,7 +2,7 @@
 <classpath>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry excluding="com/vectrace/MercurialEclipse/utils/HistoryPainter.java|com/vectrace/MercurialEclipse/utils/HistoryPainterEdge.java|com/vectrace/MercurialEclipse/utils/HistoryPainterRevision.java|com/vectrace/MercurialEclipse/model/Ancestor.java|com/vectrace/MercurialEclipse/team/cache/RefreshLocalChangesetsJob.java|com/vectrace/MercurialEclipse/model/FlagManager.java" kind="src" path="src"/>
+	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
