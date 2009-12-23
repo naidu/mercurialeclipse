@@ -36,10 +36,20 @@ public class HgPatchClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	/**
+	 * @param hgRoot non null hg root
+	 * @param resources non null set of files to export as diff to the latest state. If the set
+	 * 	is empty, a complete diff of the hg root is exported
+	 * @param patchFile non null target file for the diff
+	 * @param options non null list of options, may be empty
+	 * @throws HgException
+	 */
 	public static boolean exportPatch(HgRoot hgRoot, Set<IPath> resources,
 			File patchFile, ArrayList<String> options) throws HgException {
 		AbstractShellCommand command = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
-		command.addFiles(resources);
+		if(resources.size() > 0) {
+			command.addFiles(resources);
+		}
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToFile(patchFile, 0, false);
 	}

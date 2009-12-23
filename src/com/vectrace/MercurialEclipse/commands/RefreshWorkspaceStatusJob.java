@@ -30,18 +30,18 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 	private final boolean refreshOnly;
 	private HgRoot root;
 
+	/**
+	 * @deprecated this method is not multi-project aware
+	 */
+	@Deprecated
 	public RefreshWorkspaceStatusJob(IProject project) {
-		this(project, false);
+		super("Refreshing status for project " + project.getName() + "...");
+		this.project = project;
+		this.refreshOnly = false;
 	}
 
 	public RefreshWorkspaceStatusJob(HgRoot root) {
 		this(root, false);
-	}
-
-	public RefreshWorkspaceStatusJob(IProject project, boolean refreshOnly) {
-		super("Refreshing status for project " + project.getName() + "...");
-		this.project = project;
-		this.refreshOnly = refreshOnly;
 	}
 
 	public RefreshWorkspaceStatusJob(HgRoot root, boolean refreshOnly) {
