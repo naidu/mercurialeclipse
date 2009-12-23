@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
 
@@ -28,10 +27,10 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgPatchClient extends AbstractClient {
 
-	public static String importPatch(IProject project, File patchLocation,
+	public static String importPatch(HgRoot hgRoot, File patchLocation,
 			ArrayList<String> options) throws HgException {
 		assert patchLocation != null && options != null;
-		AbstractShellCommand command = new HgCommand("import", project, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("import", hgRoot, true); //$NON-NLS-1$
 		command.addFiles(patchLocation.getAbsolutePath());
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToString();
