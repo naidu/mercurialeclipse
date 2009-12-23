@@ -11,18 +11,19 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.commands.HgRollbackClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class RollbackHandler extends SingleResourceHandler {
 
 	@Override
 	protected void run(IResource resource) throws Exception {
-		IProject project = resource.getProject();
-		String result = HgRollbackClient.rollback(project);
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
+		String result = HgRollbackClient.rollback(hgRoot);
 		MessageDialog.openInformation(getShell(),Messages.getString("RollbackHandler.output"), result); //$NON-NLS-1$
 	}
 

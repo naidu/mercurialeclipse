@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
@@ -21,11 +20,10 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 public class HgRollbackClient {
 
-	public static String rollback(final IProject project) throws CoreException {
-		HgCommand command = new HgCommand("rollback", project, true);
+	public static String rollback(final HgRoot hgRoot) throws CoreException {
+		HgCommand command = new HgCommand("rollback", hgRoot, true);
 		String result = command.executeToString();
 
-		final HgRoot hgRoot = command.getHgRoot();
 		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
 		job.addJobChangeListener(new JobChangeAdapter(){
 			@Override
