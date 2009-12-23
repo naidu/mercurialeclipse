@@ -25,6 +25,7 @@ import com.vectrace.MercurialEclipse.commands.GpgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
@@ -42,8 +43,8 @@ public class HgSignClient {
 	 * revision is given, the parent of the working directory is used, or tip if
 	 * no revision is checked out.
 	 *
-	 * @param directory
-	 *            the current project (working directory)
+	 * @param hgRoot
+	 *            the current hg root
 	 * @param cs
 	 *            ChangeSet, may be null
 	 * @param key
@@ -62,13 +63,12 @@ public class HgSignClient {
 	 * @param passphrase
 	 *            the passphrase or null
 	 * @author Bastian Doetsch
-	 * @return
 	 *
 	 */
-	public static String sign(File directory, ChangeSet cs, String key,
+	public static String sign(HgRoot hgRoot, ChangeSet cs, String key,
 			String message, String user, boolean local, boolean force,
 			boolean noCommit, String passphrase) throws HgException {
-		AbstractShellCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("sign", hgRoot, true); //$NON-NLS-1$
 		File file = new File("me.gpg.tmp"); //$NON-NLS-1$
 		String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
 				MercurialUtilities.getGpgExecutable(true)).concat(

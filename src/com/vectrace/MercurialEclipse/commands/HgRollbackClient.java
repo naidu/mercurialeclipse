@@ -11,15 +11,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.util.Set;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 public class HgRollbackClient {
 
@@ -27,17 +25,15 @@ public class HgRollbackClient {
 		HgCommand command = new HgCommand("rollback", project, true);
 		String result = command.executeToString();
 
-		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
-		for (final IProject iProject : projects) {
-			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-			job.addJobChangeListener(new JobChangeAdapter(){
+		final HgRoot hgRoot = command.getHgRoot();
+		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
+		job.addJobChangeListener(new JobChangeAdapter(){
 			@Override
-				public void done(IJobChangeEvent event) {
-					new RefreshJob("Refreshing " + iProject.getName(), iProject).schedule();
-				}
-			});
-			job.schedule();
-		}
+			public void done(IJobChangeEvent event) {
+				new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot).schedule();
+			}
+		});
+		job.schedule();
 		return result;
 	}
 
