@@ -71,8 +71,8 @@ public class ShelveOperation extends HgOperation {
 			} else {
 
 				monitor.subTask(Messages.getString("ShelveOperation.determiningChanges")); //$NON-NLS-1$
-				Set<IPath> resources = getDirtyFiles(hgRoot);
-				if (resources.size() == 0) {
+				//
+				if (!HgStatusClient.isDirty(hgRoot)) {
 					throw new HgException(Messages.getString("ShelveOperation.error.nothingToShelve")); //$NON-NLS-1$
 				}
 				monitor.worked(1);
@@ -88,6 +88,8 @@ public class ShelveOperation extends HgOperation {
 				if (shelveFile.exists()) {
 					throw new HgException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
 				}
+				// use empty resources to be able to shelve ALL files, also deleted/added
+				Set<IPath> resources = new HashSet<IPath>();// getDirtyFiles(hgRoot);
 				HgPatchClient.exportPatch(hgRoot, resources, shelveFile, new ArrayList<String>(0));
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ShelveOperation.determiningCurrentChangeset")); //$NON-NLS-1$
@@ -103,18 +105,5 @@ public class ShelveOperation extends HgOperation {
 		}
 
 	}
-
-	private static Set<IPath> getDirtyFiles(HgRoot root) throws HgException {
-		Set<IPath> filePaths = HgStatusClient.getDirtyFilePaths(root);
-		Set<IPath> resources = new HashSet<IPath>();
-		for (IPath path : filePaths) {
-			// XXX we shelve only "changed" files, but we also should handle removed...
-			if (path.toFile().exists()) {
-				resources.add(path);
-			}
-		}
-		return resources;
-	}
-
 
 }
