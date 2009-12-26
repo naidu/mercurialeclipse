@@ -36,6 +36,7 @@ import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.TagTable;
@@ -206,6 +207,7 @@ public class TagDialog extends Dialog {
 					String result = HgTagClient.removeTag(project, tt.getSelection());
 					HgClients.getConsole().printMessage(result, null);
 					tt.setTags(HgTagClient.getTags(project));
+					new RefreshJob(com.vectrace.MercurialEclipse.menu.Messages.getString("TagHandler.refreshing"), project).schedule(); //$NON-NLS-1$
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.showError(e1);
 					MercurialEclipsePlugin.logError(e1);
