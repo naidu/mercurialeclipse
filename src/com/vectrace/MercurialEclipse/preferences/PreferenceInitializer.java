@@ -45,6 +45,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		detectAndSetHgExecutable(store);
 
 		store.setDefault(MERCURIAL_USERNAME, System.getProperty ( "user.name" )); //$NON-NLS-1$
+		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
 
 		// Andrei: not really sure why it was ever set to "modified" as default.
 		// "Highest" importance should be default, like "merge conflict"

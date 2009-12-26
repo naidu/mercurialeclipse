@@ -37,7 +37,7 @@ public class MercurialPreferenceConstants {
 	public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET = "hg.performance.fileShowsChangesetIncoming"; //$NON-NLS-1$
 	public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
-	public static String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
+	public static final String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
 
 	// Timeouts
 	public static final String DEFAULT_TIMEOUT = "hg.timeout.default"; //$NON-NLS-1$
@@ -77,7 +77,7 @@ public class MercurialPreferenceConstants {
 	public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal"; //$NON-NLS-1$
 
 	// history view
-	public static  final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public static final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
 	public static final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
 	public static final String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
 	public static final String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$
