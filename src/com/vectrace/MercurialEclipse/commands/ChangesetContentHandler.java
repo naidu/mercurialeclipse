@@ -28,6 +28,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -51,7 +52,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	private static final Pattern NEWLINE_TAB = Pattern.compile("\n\t");
 	private static final Pattern WORDS =  Pattern.compile(" ");
 
-	private String branches;
+	private String branchStr;
 	private String tags;
 	private int rev;
 	private String nodeShort;
@@ -75,7 +76,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	private Action action;
 	private String prevNodeShort;
 	private int prevRev;
-	private final String branch;
+	private final String expectedBranch;
 	private final IPath repoPath;
 	private final boolean withFiles;
 
@@ -89,7 +90,7 @@ final class ChangesetContentHandler implements ContentHandler {
 		this.repository = repository;
 		this.bundleFile = bundleFile;
 		this.hgRoot = hgRoot;
-		this.branch = branch;
+		this.expectedBranch = branch;
 		repoPath = new Path(hgRoot.getPath());
 		fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 		filesModified = new TreeSet<String>();
@@ -139,35 +140,39 @@ final class ChangesetContentHandler implements ContentHandler {
 		if (name.equals("de")) {
 			description = descriptionChars.toString();
 		} else if (name.equals("cs")) {
-			ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branches, dateIso, unescape(author), hgRoot);
-			csb.tag(tags);
-			csb.nodeShort(nodeShort);
-			csb.ageDate(dateAge);
-			csb.description(untab(unescape(description)));
+			// only collect changesets from requested branch. Null is: collect everything.
+			if(expectedBranch == null || Branch.same(branchStr, expectedBranch)){
+				ChangeSet.Builder csb = new ChangeSet.Builder(rev, nodeLong, branchStr, dateIso, unescape(author), hgRoot);
+				csb.tag(tags);
+				csb.nodeShort(nodeShort);
+				csb.ageDate(dateAge);
+				csb.description(untab(unescape(description)));
 
-			addParentsInfo(csb);
+				addParentsInfo(csb);
 
-			csb.bundleFile(bundleFile);
-			csb.direction(direction);
-			csb.repository(repository);
+				csb.bundleFile(bundleFile);
+				csb.direction(direction);
+				csb.repository(repository);
 
-			List<FileStatus> list = new ArrayList<FileStatus>(
-					filesModified.size() + filesAdded.size() + filesRemoved.size());
-			for (String file : filesModified) {
-				list.add(new FileStatus(FileStatus.Action.MODIFIED, file, hgRoot));
+				List<FileStatus> list = new ArrayList<FileStatus>(
+						filesModified.size() + filesAdded.size() + filesRemoved.size());
+				for (String file : filesModified) {
+					list.add(new FileStatus(FileStatus.Action.MODIFIED, file, hgRoot));
+				}
+				for (String file : filesAdded) {
+					list.add(new FileStatus(FileStatus.Action.ADDED, file, hgRoot));
+				}
+				for (String file : filesRemoved) {
+					list.add(new FileStatus(FileStatus.Action.REMOVED, file, hgRoot));
+				}
+				csb.changedFiles(list.toArray(new FileStatus[list.size()]));
+
+				ChangeSet changeSet = csb.build();
+
+				// changeset to resources & project
+				addChangesetToResourceMap(changeSet);
 			}
-			for (String file : filesAdded) {
-				list.add(new FileStatus(FileStatus.Action.ADDED, file, hgRoot));
-			}
-			for (String file : filesRemoved) {
-				list.add(new FileStatus(FileStatus.Action.REMOVED, file, hgRoot));
-			}
-			csb.changedFiles(list.toArray(new FileStatus[list.size()]));
 
-			ChangeSet changeSet = csb.build();
-
-			// changeset to resources & project
-			addChangesetToResourceMap(changeSet);
 			filesModified.clear();
 			filesAdded.clear();
 			filesRemoved.clear();
@@ -225,7 +230,7 @@ final class ChangesetContentHandler implements ContentHandler {
 		 */
 		readDescription = false;
 		if (name.equals("br")) {
-			branches = atts.getValue(0);
+			branchStr = atts.getValue(0);
 		} else if (name.equals("tg")) {
 			tags = atts.getValue(0);
 		} else if (name.equals("rv")) {
@@ -295,7 +300,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	}
 
 	public RemoteData createRemoteData() {
-		return new RemoteData(repository, hgRoot, branch, direction, fileRevisions);
+		return new RemoteData(repository, hgRoot, expectedBranch, direction, fileRevisions);
 	}
 
 	//####################################################################################
