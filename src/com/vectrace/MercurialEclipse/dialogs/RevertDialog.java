@@ -19,12 +19,16 @@ import java.util.List;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -34,6 +38,8 @@ public class RevertDialog extends TitleAreaDialog {
 	private CommitFilesChooser selectFilesList;
 	private List<IResource> selection;
 	private List<IResource> untrackedSelection;
+	private ChangesetTable csTable;
+	private ChangeSet changeset;
 
 	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
 	public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
@@ -63,6 +69,8 @@ public class RevertDialog extends TitleAreaDialog {
 		container.setLayoutData(gd);
 		super.createDialogArea(parent);
 		createFilesList(container);
+		csTable = new ChangesetTable(container, resources.get(0));
+		csTable.setEnabled(false);
 		setTitle(Messages.getString("RevertDialog.title")); //$NON-NLS-1$
 		setMessage(Messages.getString("RevertDialog.message")); //$NON-NLS-1$
 		return container;
@@ -70,6 +78,19 @@ public class RevertDialog extends TitleAreaDialog {
 
 	private void createFilesList(Composite container) {
 		selectFilesList = new CommitFilesChooser(container, true, resources, true, true);
+		selectFilesList.addSelectionChangedListener(new ISelectionChangedListener() {
+
+			public void selectionChanged(SelectionChangedEvent event) {
+				List<IResource> checkedResources = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+				if (checkedResources.size()!=1) {
+					csTable.setEnabled(false);
+					csTable.clearTable();
+				} else {
+					csTable.setResource(checkedResources.get(0));
+					csTable.setEnabled(true);
+				}
+			}
+		});
 	}
 
 	public void setFiles(List<IResource> resources) {
@@ -81,6 +102,8 @@ public class RevertDialog extends TitleAreaDialog {
 	protected void okPressed() {
 		selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
 		untrackedSelection = selectFilesList.getCheckedResources(FILE_UNTRACKED);
+		changeset = csTable.getSelection();
+
 		if(!untrackedSelection.isEmpty()){
 			boolean confirm = MessageDialog.openConfirm(getShell(), "Please confirm delete",
 					"You have selected to revert untracked files." +
@@ -103,5 +126,19 @@ public class RevertDialog extends TitleAreaDialog {
 
 	public List<IResource> getUntrackedSelection() {
 		return untrackedSelection;
+	}
+
+	/**
+	 * @return the csTable
+	 */
+	public ChangesetTable getCsTable() {
+		return csTable;
+	}
+
+	/**
+	 * @return
+	 */
+	public ChangeSet getChangeset() {
+		return changeset;
 	}
 }
