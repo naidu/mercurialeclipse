@@ -53,16 +53,18 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, 10);
 
 		// blue
-		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR, "0,0,255");
+		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR, "0,0,255"); //$NON-NLS-1$
 		// black
-		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR, "0,0,0");
+		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR, "0,0,0"); //$NON-NLS-1$
 		// red
-		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR, "255,0,0");
+		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR, "255,0,0"); //$NON-NLS-1$
 
 		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, true);
-		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, true);
-		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_PATHS, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, false);
+		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_PATHS, false);
 		store.setDefault(MercurialPreferenceConstants.PREF_AFFECTED_PATHS_LAYOUT, MercurialPreferenceConstants.LAYOUT_HORIZONTAL);
+		store.setDefault(MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY, false);
+		store.setDefault(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, true);
 
 		/*
 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
@@ -74,7 +76,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// Currently only tested on Windows. The binary is expected to be found
 		// at "os\win32\x86\hg.exe" (relative to the plugin/fragment directory)
 		boolean isWindows = File.separatorChar == '\\';
-		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg");
+		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg"); //$NON-NLS-1$ //$NON-NLS-2$
 		URL url = FileLocator.find(MercurialEclipsePlugin.getDefault().getBundle(), path, null);
 		if(url != null){
 			try {
@@ -82,13 +84,13 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, new File(url.toURI()).getAbsolutePath());
 			} catch (IOException e1) {
 				MercurialEclipsePlugin.logError(e1);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 			} catch (URISyntaxException e) {
 				MercurialEclipsePlugin.logError(e);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 			}
 		} else {
-			store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg");
+			store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 		}
 	}
 
