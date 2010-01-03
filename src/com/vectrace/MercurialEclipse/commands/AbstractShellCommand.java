@@ -32,6 +32,11 @@ import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
@@ -49,28 +54,41 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	// private static final Object executionLock = new Object();
 
-	// XXX should not extend threads directly, should use thread pools or jobs.
+	// should not extend threads directly, should use thread pools or jobs.
 	// In case many threads created at same time, VM can crash or at least get OOM
-	private static class InputStreamConsumer extends Thread {
+	private static class InputStreamConsumer extends Job {
+
+		static {
+			PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
+					MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"),
+					InputStreamConsumer.class);
+		}
+
 		private final InputStream stream;
 		private final OutputStream output;
+		volatile IProgressMonitor monitor2;
+		volatile boolean started;
+		private final Process process;
 
-		public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
+		public InputStreamConsumer(String name, Process process, OutputStream output) {
 			super(name);
+			this.process = process;
 			this.output = output;
-			this.stream = stream;
+			this.stream = process.getInputStream();
 		}
 
 		@Override
-		public void run() {
+		protected IStatus run(IProgressMonitor monitor) {
+			started = true;
+			monitor2 = monitor;
 			try {
 				int length;
 				byte[] buffer = new byte[BUFFER_SIZE];
-				while ((length = stream.read(buffer)) != -1) {
+				while ((length = stream.read(buffer)) != -1 && !monitor.isCanceled()) {
 					output.write(buffer, 0, length);
 				}
 			} catch (IOException e) {
-				if (!interrupted()) {
+				if (!monitor.isCanceled()) {
 					HgClients.logError(e);
 				}
 			} finally {
@@ -84,8 +102,24 @@ public abstract class AbstractShellCommand extends AbstractClient {
 				} catch (IOException e) {
 					HgClients.logError(e);
 				}
+				if(monitor.isCanceled()) {
+					process.destroy();
+				}
+				monitor2 = null;
 			}
+			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
 		}
+
+		private boolean isAlive() {
+			// job is either not started yet (is scheduled and waiting), or it is not finished or cancelled yet
+			return (!started && getResult() == null) || (monitor2 != null && !monitor2.isCanceled());
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return InputStreamConsumer.class == family;
+		}
+
 	}
 
 	public static final int MAX_PARAMS = 120;
@@ -201,16 +235,16 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			// not sure if it is worth...
 			//synchronized (executionLock) {
 				process = builder.start();
-				consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
+				consumer = new InputStreamConsumer(commandInvoked, process, output);
 				long startTime;
 				if(debugExecTime) {
 					startTime = System.currentTimeMillis();
 				} else {
 					startTime = 0;
 				}
-				consumer.start();
+				consumer.schedule();
 				logConsoleCommandInvoked(commandInvoked);
-				consumer.join(timeout); // 30 seconds timeout
+				waitForConsumer(timeout); // 30 seconds timeout
 				msg = getMessage(output);
 				if (!consumer.isAlive()) {
 					final int exitCode = process.waitFor();
@@ -247,6 +281,24 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			if (process != null) {
 				process.destroy();
 			}
+		}
+	}
+
+	private void waitForConsumer(int timeout) throws InterruptedException {
+		if (timeout <= 0) {
+			throw new IllegalArgumentException("Illegal timeout: " + timeout);
+		}
+		long start = System.currentTimeMillis();
+		long now = 0;
+		while (consumer.isAlive()) {
+			long delay = timeout - now;
+			if (delay <= 0) {
+				break;
+			}
+			synchronized (this){
+				wait(10);
+			}
+			now = System.currentTimeMillis() - start;
 		}
 	}
 
@@ -376,7 +428,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	public void terminate() {
 		if (consumer != null) {
-			consumer.interrupt();
+			consumer.cancel();
 		}
 		process.destroy();
 	}
