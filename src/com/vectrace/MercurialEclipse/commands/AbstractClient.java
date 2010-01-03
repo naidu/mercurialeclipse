@@ -155,33 +155,35 @@ public abstract class AbstractClient {
 	 */
 	protected static void addProxyToHgCommand(URI repository, AbstractShellCommand command) {
 		IProxyService proxyService = MercurialEclipsePlugin.getDefault().getProxyService();
-		if (proxyService != null) {
-			// check if there is an applicable proxy for the location
-			IProxyData[] proxies = proxyService.getProxyDataForHost(repository.getHost());
+		// Host can be null URI is a local path
+		final String host = repository.getHost();
+		if (proxyService == null || host == null) {
+			return;
+		}
+		// check if there is an applicable proxy for the location
 
-			if (proxies.length > 0) {
-				// there is at least one applicable proxy, use the first
-				IProxyData proxy = proxies[0];
+		// TODO the method we calling is deprecated, but we have to use it
+		// to be compatible with Eclipse 3.4 API...
+		IProxyData proxy = proxyService.getProxyDataForHost(host, repository.getScheme());
+		if (proxy == null || proxy.getHost() == null) {
+			return;
+		}
 
-				if (proxy.getHost() != null) {
-					// set the host incl. port
-					command.addOptions("--config", "http_proxy.host=" + getProxyHost(proxy)); //$NON-NLS-1$ //$NON-NLS-2$
+		// set the host incl. port
+		command.addOptions("--config", "http_proxy.host=" + getProxyHost(proxy)); //$NON-NLS-1$ //$NON-NLS-2$
 
-					// check if authentication is required
-					if (proxy.isRequiresAuthentication()) {
+		// check if authentication is required
+		if (proxy.isRequiresAuthentication()) {
 
-						// set the user name if available
-						if (proxy.getUserId() != null) {
-							command.addOptions("--config", "http_proxy.user=" + proxy.getUserId()); //$NON-NLS-1$ //$NON-NLS-2$
-						}
+			// set the user name if available
+			if (proxy.getUserId() != null) {
+				command.addOptions("--config", "http_proxy.user=" + proxy.getUserId()); //$NON-NLS-1$ //$NON-NLS-2$
+			}
 
-						// set the password if available
-						if (proxy.getPassword() != null) {
-							command.addOptions("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
-									+ proxy.getPassword());
-						}
-					}
-				}
+			// set the password if available
+			if (proxy.getPassword() != null) {
+				command.addOptions("--config", "http_proxy.passwd=" //$NON-NLS-1$ //$NON-NLS-2$
+						+ proxy.getPassword());
 			}
 		}
 	}
