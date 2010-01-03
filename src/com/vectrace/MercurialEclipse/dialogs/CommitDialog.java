@@ -347,7 +347,7 @@ public class CommitDialog extends TitleAreaDialog {
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				ActionRevert action = new ActionRevert();
 				try {
-					action.doRevert(monitor, revertResources, new ArrayList<IResource>(), false);
+					action.doRevert(monitor, revertResources, new ArrayList<IResource>(), false, null);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();

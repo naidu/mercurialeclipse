@@ -46,7 +46,7 @@ public class ChangesetTable extends Composite {
 
 	private final Table table;
 	private int[] parents;
-	private final IResource resource;
+	private IResource resource;
 
 	private ChangeSet[] changesets = new ChangeSet[0];
 	private int logBatchSize;
@@ -257,6 +257,20 @@ public class ChangesetTable extends Composite {
 	 */
 	public boolean isAutoFetch() {
 		return autoFetch;
+	}
+
+	/**
+	 * @return the resource
+	 */
+	public IResource getResource() {
+		return resource;
+	}
+
+	/**
+	 * @param resource the resource to set
+	 */
+	public void setResource(IResource resource) {
+		this.resource = resource;
 	}
 
 }

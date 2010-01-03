@@ -59,7 +59,7 @@ public class AnnotateCommand {
 		HgRoot root = AbstractClient.getHgRoot(resource);
 		String relPath = root.toRelative(resource.getLocation().toFile());
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),
-				"annotate", "--user", "--number", "--changeset", "--date", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+				"annotate", "--follow", "--user", "--number", "--changeset", "--date", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
 				"--", relPath }; //$NON-NLS-1$
 
 		String output = MercurialUtilities.executeCommand(launchCmd, root, true);

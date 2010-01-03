@@ -25,6 +25,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -34,6 +36,8 @@ public class RevertDialog extends TitleAreaDialog {
 	private CommitFilesChooser selectFilesList;
 	private List<IResource> selection;
 	private List<IResource> untrackedSelection;
+	private ChangesetTable csTable;
+	private ChangeSet changeset;
 
 	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
 	public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
@@ -63,6 +67,8 @@ public class RevertDialog extends TitleAreaDialog {
 		container.setLayoutData(gd);
 		super.createDialogArea(parent);
 		createFilesList(container);
+		csTable = new ChangesetTable(container, resources.get(0));
+		csTable.setEnabled(true);
 		setTitle(Messages.getString("RevertDialog.title")); //$NON-NLS-1$
 		setMessage(Messages.getString("RevertDialog.message")); //$NON-NLS-1$
 		return container;
@@ -81,6 +87,8 @@ public class RevertDialog extends TitleAreaDialog {
 	protected void okPressed() {
 		selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
 		untrackedSelection = selectFilesList.getCheckedResources(FILE_UNTRACKED);
+		changeset = csTable.getSelection();
+
 		if(!untrackedSelection.isEmpty()){
 			boolean confirm = MessageDialog.openConfirm(getShell(), "Please confirm delete",
 					"You have selected to revert untracked files." +
@@ -95,6 +103,10 @@ public class RevertDialog extends TitleAreaDialog {
 
 	public void setFiles(IResource[] commitResources) {
 		setFiles(Arrays.asList(commitResources));
+		if (commitResources != null && commitResources.length>0) {
+			csTable.setResource(commitResources[0]);
+			csTable.setEnabled(true);
+		}
 	}
 
 	public List<IResource> getSelectionForHgRevert() {
@@ -103,5 +115,19 @@ public class RevertDialog extends TitleAreaDialog {
 
 	public List<IResource> getUntrackedSelection() {
 		return untrackedSelection;
+	}
+
+	/**
+	 * @return the csTable
+	 */
+	public ChangesetTable getCsTable() {
+		return csTable;
+	}
+
+	/**
+	 * @return
+	 */
+	public ChangeSet getChangeset() {
+		return changeset;
 	}
 }

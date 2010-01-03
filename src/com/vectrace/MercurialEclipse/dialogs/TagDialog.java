@@ -15,6 +15,8 @@ package com.vectrace.MercurialEclipse.dialogs;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -29,11 +31,14 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
@@ -80,6 +85,7 @@ public class TagDialog extends Dialog {
 		createMainTabItem(tabFolder);
 		// TODO createOptionsTabItem(tabFolder);
 		createTargetTabItem(tabFolder);
+		createRemoveTabItem(tabFolder);
 
 		return composite;
 	}
@@ -178,6 +184,46 @@ public class TagDialog extends Dialog {
 
 		// commit message
 
+		item.setControl(composite);
+		return item;
+	}
+
+	protected TabItem createRemoveTabItem(TabFolder folder) {
+		TabItem item = new TabItem(folder, SWT.NONE);
+		item.setText(Messages.getString("TagDialog.removeTag")); //$NON-NLS-1$
+		Composite composite = SWTWidgetHelper.createComposite(folder, 1);
+		final TagTable tt = new TagTable(composite, project);
+		try {
+			tt.setTags(HgTagClient.getTags(project));
+		} catch (HgException e2) {
+			MercurialEclipsePlugin.showError(e2);
+			MercurialEclipsePlugin.logError(e2);
+		}
+		Button removeButton = SWTWidgetHelper.createPushButton(composite, Messages.getString("TagDialog.removeSelectedTag"), 1); //$NON-NLS-1$
+		MouseListener listener = new MouseListener() {
+
+			public void mouseUp(MouseEvent e) {
+				try {
+					String result = HgTagClient.removeTag(project, tt.getSelection());
+					HgClients.getConsole().printMessage(result, null);
+					tt.setTags(HgTagClient.getTags(project));
+					new RefreshJob(com.vectrace.MercurialEclipse.menu.Messages.getString("TagHandler.refreshing"), project).schedule(); //$NON-NLS-1$
+				} catch (HgException e1) {
+					MercurialEclipsePlugin.showError(e1);
+					MercurialEclipsePlugin.logError(e1);
+				}
+
+			}
+
+			public void mouseDown(MouseEvent e) {
+
+			}
+
+			public void mouseDoubleClick(MouseEvent e) {
+
+			}
+		};
+		removeButton.addMouseListener(listener);
 		item.setControl(composite);
 		return item;
 	}

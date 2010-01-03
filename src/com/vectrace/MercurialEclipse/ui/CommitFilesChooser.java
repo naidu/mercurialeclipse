@@ -119,6 +119,10 @@ public class CommitFilesChooser extends Composite {
 		makeActions();
 	}
 
+	public void addSelectionChangedListener(ISelectionChangedListener l) {
+		getViewer().addSelectionChangedListener(l);
+	}
+
 	private void createFileSelectionListener() {
 		getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
