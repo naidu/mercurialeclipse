@@ -146,9 +146,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		try {
 			List<String> cmd = getCommands();
 
-			// Request non-interactivity flag
-			cmd.add(1, "-y");
-
 			final String commandInvoked = getCommandInvoked(cmd);
 
 			// This is totally

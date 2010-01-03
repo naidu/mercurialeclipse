@@ -65,8 +65,11 @@ public class SignWizardPage extends HgWizardPage {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
 		// list view of changesets
-		Group changeSetGroup = SWTWidgetHelper.createGroup(composite,
-				Messages.getString("SignWizardPage.changeSetGroup.title"),GridData.FILL_BOTH); //$NON-NLS-1$
+		Group changeSetGroup = SWTWidgetHelper
+				.createGroup(
+						composite,
+						Messages
+								.getString("SignWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
@@ -77,53 +80,60 @@ public class SignWizardPage extends HgWizardPage {
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent event) {
 				ChangeSet cs = changesetTable.getSelection();
-				messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.text") //$NON-NLS-1$
-						.concat(cs.toString()));
+				messageTextField.setText(Messages.getString(
+						"SignWizardPage.messageTextField.text") //$NON-NLS-1$
+						.concat(" ").concat(cs.toString())); //$NON-NLS-1$
 				if (gotGPGkeys) {
 					setPageComplete(true);
 				}
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
-			widgetSelected(e);
+				widgetSelected(e);
 			}
 		};
 
 		changesetTable.addSelectionListener(listener);
 
 		// now the fields for user data
-		Group userGroup = SWTWidgetHelper.createGroup(composite,
-				Messages.getString("SignWizardPage.userGroup.title")); //$NON-NLS-1$
+		Group userGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("SignWizardPage.userGroup.title")); //$NON-NLS-1$
 
-		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(userGroup, Messages
+				.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
 		userTextField = SWTWidgetHelper.createTextField(userGroup);
 		userTextField.setText(MercurialUtilities.getHGUsername());
 
-		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(userGroup, Messages
+				.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
 		keyCombo = SWTWidgetHelper.createCombo(userGroup);
 
-		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.passphraseLabel.text")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(userGroup, Messages
+				.getString("SignWizardPage.passphraseLabel.text")); //$NON-NLS-1$
 		passTextField = SWTWidgetHelper.createTextField(userGroup);
 		// passTextField.setEchoChar('*');
-		passTextField
-				.setText(Messages.getString("SignWizardPage.passTextField.text")); //$NON-NLS-1$
+		passTextField.setText(Messages
+				.getString("SignWizardPage.passTextField.text")); //$NON-NLS-1$
 		passTextField.setEnabled(false);
 
 		// now the options
-		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("SignWizardPage.optionGroup.title")); //$NON-NLS-1$
+		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("SignWizardPage.optionGroup.title")); //$NON-NLS-1$
 
-		localCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-				Messages.getString("SignWizardPage.localCheckBox.text")); //$NON-NLS-1$
+		localCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages
+				.getString("SignWizardPage.localCheckBox.text")); //$NON-NLS-1$
 
-		forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-				Messages.getString("SignWizardPage.forceCheckBox.text")); //$NON-NLS-1$
+		forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages
+				.getString("SignWizardPage.forceCheckBox.text")); //$NON-NLS-1$
 
-		noCommitCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
-				Messages.getString("SignWizardPage.noCommitCheckBox.text")); //$NON-NLS-1$
+		noCommitCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages
+				.getString("SignWizardPage.noCommitCheckBox.text")); //$NON-NLS-1$
 
-		SWTWidgetHelper.createLabel(optionGroup, Messages.getString("SignWizardPage.commitLabel.text")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(optionGroup, Messages
+				.getString("SignWizardPage.commitLabel.text")); //$NON-NLS-1$
 		messageTextField = SWTWidgetHelper.createTextField(optionGroup);
-		messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.defaultText")); //$NON-NLS-1$
+		messageTextField.setText(Messages
+				.getString("SignWizardPage.messageTextField.defaultText")); //$NON-NLS-1$
 
 		populateKeyCombo(keyCombo);
 		setControl(composite);
@@ -140,7 +150,7 @@ public class SignWizardPage extends HgWizardPage {
 					string = string.trim();
 					if (string.startsWith(KEY_PREFIX)) {
 						string = string.substring(KEY_PREFIX.length()).trim();
-						if(string.length() > 0) {
+						if (string.length() > 0) {
 							combo.add(string);
 						}
 					}
@@ -160,11 +170,11 @@ public class SignWizardPage extends HgWizardPage {
 	public boolean finish(IProgressMonitor monitor) {
 		ChangeSet cs = changesetTable.getSelection();
 		String key = keyCombo.getText();
-		if(cs == null){
+		if (cs == null) {
 			setErrorMessage("Please select one changeset");
 			return false;
 		}
-		if(key.trim().length() == 0 || key.indexOf(" ") < 0){
+		if (key.trim().length() == 0 || key.indexOf(" ") < 0) {
 			setErrorMessage("Please select valid key");
 			return false;
 		}
@@ -177,10 +187,10 @@ public class SignWizardPage extends HgWizardPage {
 		boolean noCommit = noCommitCheckBox.getSelection();
 		try {
 			HgSignClient.sign(project.getLocation().toFile(), cs, key, msg,
-					user, local, force,
-					noCommit, pass);
+					user, local, force, noCommit, pass);
 		} catch (HgException e) {
-			MessageDialog.openInformation(getShell(), Messages.getString("SignWizardPage.errorSigning"), //$NON-NLS-1$
+			MessageDialog.openInformation(getShell(), Messages
+					.getString("SignWizardPage.errorSigning"), //$NON-NLS-1$
 					e.getMessage());
 			MercurialEclipsePlugin.logError(e);
 			return false;
