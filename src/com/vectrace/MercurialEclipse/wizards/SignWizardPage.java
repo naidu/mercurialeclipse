@@ -77,15 +77,16 @@ public class SignWizardPage extends HgWizardPage {
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent event) {
 				ChangeSet cs = changesetTable.getSelection();
-				messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.text") //$NON-NLS-1$
-						.concat(cs.toString()));
+				messageTextField.setText(Messages.getString(
+						"SignWizardPage.messageTextField.text") //$NON-NLS-1$
+						+ " " + cs.toString()); //$NON-NLS-1$
 				if (gotGPGkeys) {
 					setPageComplete(true);
 				}
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
-			widgetSelected(e);
+				widgetSelected(e);
 			}
 		};
 

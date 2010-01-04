@@ -6,8 +6,9 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- *     Jerome Negre			     - implementation
- *     Andrei Loskutov (Intland) - bug fixes
+ * 		Jerome Negre		- 	Initial implementation
+ * 		Bastian Doetsch	-	implemented some safeguards for the ok button
+ *     	Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
@@ -30,15 +31,15 @@ public class TagHandler extends SingleResourceHandler {
 		final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
 		TagDialog dialog = new TagDialog(getShell(), hgRoot);
 
-		if(dialog.open() == IDialogConstants.OK_ID) {
-			HgTagClient.addTag(
-					resource,
-					dialog.getName(),
-					dialog.getTargetRevision(),
-					null, //user
-					dialog.isLocal(),
-					dialog.isForced());
-			new RefreshRootJob(Messages.getString("TagHandler.refreshing"), hgRoot, RefreshRootJob.LOCAL).schedule(); //$NON-NLS-1$
+		if (dialog.open() != IDialogConstants.OK_ID) {
+			return;
+		}
+		String name = dialog.getName();
+		if (name != null && name.trim().length() > 0) {
+			HgTagClient.addTag(resource, name.trim(), dialog.getTargetRevision(), dialog.getUser(), dialog
+					.isLocal(), dialog.isForced());
+			new RefreshRootJob(
+					Messages.getString("TagHandler.refreshing"), hgRoot, RefreshRootJob.LOCAL).schedule(); //$NON-NLS-1$
 		}
 	}
 

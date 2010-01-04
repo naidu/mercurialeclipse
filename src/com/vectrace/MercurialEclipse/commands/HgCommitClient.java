@@ -32,7 +32,6 @@ import com.vectrace.MercurialEclipse.dialogs.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -42,10 +41,10 @@ public class HgCommitClient extends AbstractClient {
 	/**
 	 * Commit given resources and refresh the caches for the associated projects
 	 */
-	public static String commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor) throws HgException {
+	public static String commitResources(List<IResource> resources, String user, String message, IProgressMonitor monitor, boolean closeBranch) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 
-		String commit = "";
+		StringBuilder commit = new StringBuilder();
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
 			HgRoot root = mapEntry.getKey();
 			if (monitor != null) {
@@ -55,35 +54,39 @@ public class HgCommitClient extends AbstractClient {
 				monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 			}
 			List<IResource> files = mapEntry.getValue();
-			commit += commit(root, AbstractClient.toFiles(files), user, message);
+			commit.append(commit(root, AbstractClient.toFiles(files), user, message, closeBranch));
 		}
 		for (HgRoot root : resourcesByRoot.keySet()) {
-			new RefreshRootJob("Refreshing " + root.getName(), root, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+			new RefreshRootJob("Refreshing " + root.getName(), root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		}
-		return commit;
+		return commit.toString();
 	}
 
 	/**
 	 * Commit given hg root with all checked out/added/deleted changes and refresh the caches for the assotiated projects
 	 */
-	public static String commitResources(HgRoot root, String user, String message, IProgressMonitor monitor) throws HgException {
+	public static String commitResources(HgRoot root, boolean closeBranch, String user, String message, IProgressMonitor monitor) throws HgException {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
-		String commit = commit(root, emptyList, user, message);
-		new RefreshRootJob("Refreshing " + root.getName(), root, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+		String commit = commit(root, emptyList, user, message, closeBranch);
+		new RefreshRootJob("Refreshing " + root.getName(), root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		return commit;
 	}
 
 	/**
-	 * Preforms commit. No refresh of any cashes is done afterwards.
+	 * Performs commit. No refresh of any cashes is done afterwards.
 	 *
 	 * <b>Note</b> clients should not use this method directly, it is NOT private
 	 *  for tests only
 	 */
-	protected static String commit(HgRoot root, List<File> files, String user, String message) throws HgException {
+	protected static String commit(HgRoot root, List<File> files, String user, String message,
+			boolean closeBranch) throws HgException {
 		HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(quote(user));
+		if (closeBranch) {
+			command.addOptions("--close-branch");
+		}
 		File messageFile = saveMessage(message);
 		try {
 			addMessage(command, messageFile, message);
@@ -121,7 +124,7 @@ public class HgCommitClient extends AbstractClient {
 		try {
 			addMessage(command, messageFile, message);
 			String result = command.executeToString();
-			new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+			new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 			return result;
 		} finally {
 			deleteMessage(messageFile);

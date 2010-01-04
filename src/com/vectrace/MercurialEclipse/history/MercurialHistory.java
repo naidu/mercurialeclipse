@@ -33,6 +33,7 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
@@ -76,13 +77,14 @@ public class MercurialHistory extends FileHistory {
 	private static final RevisionComparator revComparator = new RevisionComparator();
 
 	private final IResource resource;
-	private SortedSet<MercurialRevision> revisions;
+	private final SortedSet<MercurialRevision> revisions;
 	private Map<Integer, GChangeSet> gChangeSets;
 	private int bottom;
 
 	public MercurialHistory(IResource resource) {
 		super();
 		this.resource = resource;
+		revisions = new TreeSet<MercurialRevision>(revComparator);
 	}
 
 	/**
@@ -136,7 +138,7 @@ public class MercurialHistory extends FileHistory {
 	}
 
 	public IFileRevision getFileRevision(String id) {
-		if (revisions == null || revisions.size() == 0) {
+		if (revisions.isEmpty()) {
 			return null;
 		}
 
@@ -149,24 +151,19 @@ public class MercurialHistory extends FileHistory {
 	}
 
 	public IFileRevision[] getFileRevisions() {
-		if (revisions != null) {
-			return revisions.toArray(new MercurialRevision[revisions.size()]);
-		}
-		return new IFileRevision[0];
+		return revisions.toArray(new MercurialRevision[revisions.size()]);
 	}
 
 	public IFileRevision[] getTargets(IFileRevision revision) {
 		return new IFileRevision[0];
 	}
 
-	public void refresh(IProgressMonitor monitor, int from)
-	throws CoreException {
-		RepositoryProvider provider = RepositoryProvider.getProvider(resource
-				.getProject());
+	public void refresh(IProgressMonitor monitor, int from) throws CoreException {
+		RepositoryProvider provider = RepositoryProvider.getProvider(resource.getProject());
 		if (!(provider instanceof MercurialTeamProvider)) {
 			return;
 		}
-		if (from == Integer.MAX_VALUE && revisions != null) {
+		if (from == Integer.MAX_VALUE) {
 			// We're getting revisions up to the latest one available.
 			// So clear out the cached list, as it may contain revisions
 			// that no longer exist (e.g. after a strip/rollback).
@@ -177,9 +174,8 @@ public class MercurialHistory extends FileHistory {
 
 		SortedSet<ChangeSet> changeSets = new TreeSet<ChangeSet>(csComparator);
 
-		int logBatchSize = Integer.parseInt(MercurialUtilities
-				.getPreference(MercurialPreferenceConstants.LOG_BATCH_SIZE,
-						"500")); //$NON-NLS-1$
+		int logBatchSize = Integer.parseInt(MercurialUtilities.getPreference(
+				MercurialPreferenceConstants.LOG_BATCH_SIZE, "500")); //$NON-NLS-1$
 
 		// check if we have reached the bottom (initially = 0)
 		if (from == this.bottom || from < 0) {
@@ -195,8 +191,7 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		// still changesets there -> process
-		Set<ChangeSet> localChangeSets = map.get(resource
-				.getLocation());
+		Set<ChangeSet> localChangeSets = map.get(resource.getLocation());
 		if (localChangeSets == null) {
 			return;
 		}
@@ -204,30 +199,35 @@ public class MercurialHistory extends FileHistory {
 		// get signatures
 		File file = resource.getLocation().toFile();
 
-		List<Signature> sigs = HgSigsClient.getSigs(file);
+
+		boolean sigcheck = HgClients
+				.getPreference(
+						MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY,
+						"false").equals("true"); //$NON-NLS-1$
+
 		Map<String, Signature> sigMap = new HashMap<String, Signature>();
-		if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
-			for (Signature signature : sigs) {
-				sigMap.put(signature.getNodeId(), signature);
+		if (sigcheck) {
+			if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
+				List<Signature> sigs = HgSigsClient.getSigs(file);
+				for (Signature signature : sigs) {
+					sigMap.put(signature.getNodeId(), signature);
+				}
 			}
 		}
 
 		changeSets.addAll(localChangeSets);
 
-		if (revisions == null || revisions.size() == 0
-				|| revisions.size() < changeSets.size()
+		if (revisions.size() < changeSets.size()
 				|| !(revisions.first().getResource().equals(resource))) {
-			revisions = new TreeSet<MercurialRevision>(revComparator);
+			revisions.clear();
 		}
 
 		// Update graph data also in batch
 		updateGraphData(changeSets, logBatchSize, from);
-
 		for (ChangeSet cs : changeSets) {
-			Signature sig = sigMap.get(cs.getChangeset());
-			revisions.add(new MercurialRevision(cs, gChangeSets
-					.get(Integer.valueOf(cs.getChangesetIndex())),
-					resource, sig));
+			Signature sig = sigcheck ? sigMap.get(cs.getChangeset()) : null;
+			revisions.add(new MercurialRevision(cs, gChangeSets.get(Integer
+					.valueOf(cs.getChangesetIndex())), resource, sig));
 		}
 	}
 

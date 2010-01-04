@@ -66,7 +66,7 @@ import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -102,6 +102,7 @@ public class CommitDialog extends TitleAreaDialog {
 	private boolean filesSelectable;
 	private HgRoot hgRoot;
 	private String commitResult;
+	private Button closeBranchCheckBox;
 
 	public CommitDialog(Shell shell, List<IResource> resources) {
 		super(shell);
@@ -147,8 +148,9 @@ public class CommitDialog extends TitleAreaDialog {
 		createCommitTextBox(container);
 		createOldCommitCombo(container);
 		createUserCommitCombo(container);
-		createFilesList(container);
+		createCloseBranchCheckBox(container);
 		createRevertCheckBox(container);
+		createFilesList(container);
 
 		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade().getCurrentTaskComment(inResources == null ? null : inResources.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
@@ -163,9 +165,13 @@ public class CommitDialog extends TitleAreaDialog {
 		revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
 	}
 
+	protected void createCloseBranchCheckBox(Composite container) {
+		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages.getString("CommitDialog.closeBranch")); //$NON-NLS-1$
+	}
+
 	protected void createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources, true, true);
+		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources, true, true, false);
 
 		IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade().getCurrentTaskResources();
 		if (mylynTaskResources != null) {
@@ -201,23 +207,7 @@ public class CommitDialog extends TitleAreaDialog {
 			return null;
 		}
 		IProject project = inResources.get(0).getProject();
-		return getDefaultCommitName(project);
-	}
-
-	protected static String getDefaultCommitName(IProject project) {
-		// TODO see issue 10150: get the name from project properties, not from repo
-		// but for now it will at least work for projects with one repo
-		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultProjectRepoLocation(project);
-		if(repoLocation == null){
-			return null;
-		}
-		return repoLocation.getUser();
-	}
-
-	protected static String getDefaultCommitName(HgRoot hgRoot) {
-		// XXX [multi-project support] see issue 10150: get the name from project? hg root? properties
-		return null;
+		return HgCommitMessageManager.getDefaultCommitName(project);
 	}
 
 	private void createCommitTextBox(Composite container) {
@@ -313,7 +303,7 @@ public class CommitDialog extends TitleAreaDialog {
 				user = getInitialCommitUserName();
 			}
 
-			commitResult = performCommit(messageToCommit);
+			commitResult = performCommit(messageToCommit, closeBranchCheckBox.getSelection());
 
 			// revertCheckBox can be null if this is a merge dialog
 			if (revertCheckBox != null && revertCheckBox.getSelection()) {
@@ -334,12 +324,12 @@ public class CommitDialog extends TitleAreaDialog {
 		return commitResult != null? commitResult : "";
 	}
 
-	protected String performCommit(String messageToCommit) throws CoreException {
+	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
 		if(hgRoot != null && !filesSelectable && resourcesToCommit.isEmpty()){
 			// enforce commit anyway
-			return HgCommitClient.commitResources(hgRoot, user, messageToCommit, new NullProgressMonitor());
+			return HgCommitClient.commitResources(hgRoot, closeBranch, user, messageToCommit, new NullProgressMonitor());
 		}
-		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor());
+		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, new NullProgressMonitor(), closeBranch);
 	}
 
 	private void revertResources() {
@@ -350,7 +340,7 @@ public class CommitDialog extends TitleAreaDialog {
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				ActionRevert action = new ActionRevert();
 				try {
-					action.doRevert(monitor, revertResources, new ArrayList<IResource>(), false);
+					action.doRevert(monitor, revertResources, new ArrayList<IResource>(), false, null);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();
@@ -386,6 +376,10 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public HgRoot getHgRoot() {
 		return hgRoot;
+	}
+
+	public Button getCloseBranchCheckBox() {
+		return closeBranchCheckBox;
 	}
 
 }

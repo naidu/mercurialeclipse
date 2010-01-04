@@ -17,6 +17,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -36,7 +37,7 @@ public class MergeDialog extends CommitDialog {
 	@Override
 	protected void createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		commitFilesList = new CommitFilesChooser(hgRoot, container, false, true, true);
+		commitFilesList = new CommitFilesChooser(hgRoot, container, false, true, true, false);
 	}
 
 	@Override
@@ -45,12 +46,12 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
-	protected String performCommit(String messageToCommit) throws CoreException {
+	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
 		return CommitMergeHandler.commitMerge(hgRoot, messageToCommit);
 	}
 
 	@Override
 	protected String getInitialCommitUserName() {
-		return getDefaultCommitName(hgRoot);
+		return HgCommitMessageManager.getDefaultCommitName(hgRoot);
 	}
 }

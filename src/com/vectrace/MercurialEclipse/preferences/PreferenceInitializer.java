@@ -46,8 +46,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 		store.setDefault(MERCURIAL_USERNAME, System.getProperty ( "user.name" )); //$NON-NLS-1$
 		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
-
-		// Andrei: not really sure why it was ever set to "modified" as default.
+		
 		// "Highest" importance should be default, like "merge conflict"
 		// when having 2 different statuses in a folder it should have the more important one
 		store.setDefault(LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB);
@@ -74,6 +73,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_SHOW_COMMENTS, true);
 		store.setDefault(PREF_SHOW_PATHS, true);
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
+		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
 		/*
 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");

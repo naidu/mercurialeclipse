@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +62,8 @@ import com.vectrace.MercurialEclipse.dialogs.CommitResourceUtil;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -83,21 +86,23 @@ public class CommitFilesChooser extends Composite {
 	protected Control trayButton;
 	protected boolean trayClosed = true;
 	protected IFile selectedFile;
+	private final boolean showClean;
 
 	public CheckboxTableViewer getViewer() {
 		return viewer;
 	}
 
-	public CommitFilesChooser(HgRoot hgRoot, Composite container, boolean selectable, boolean showUntracked, boolean showMissing) {
-		this(container, selectable, null, showUntracked, showMissing);
+	public CommitFilesChooser(HgRoot hgRoot, Composite container, boolean selectable, boolean showUntracked, boolean showMissing, boolean showClean) {
+		this(container, selectable, null, showUntracked, showMissing, showClean);
 		setResources(hgRoot);
 	}
 
-	public CommitFilesChooser(Composite container, boolean selectable, List<IResource> resources, boolean showUntracked, boolean showMissing) {
+	public CommitFilesChooser(Composite container, boolean selectable, List<IResource> resources, boolean showUntracked, boolean showMissing, boolean showClean) {
 		super(container, container.getStyle());
 		this.selectable = selectable;
 		this.showUntracked = showUntracked;
 		this.missing = showMissing;
+		this.showClean = showClean;
 		this.untrackedFilesFilter = new UntrackedFilesFilter(missing);
 		this.committableFilesFilter = new CommittableFilesFilter();
 
@@ -298,6 +303,22 @@ public class CommitFilesChooser extends Composite {
 		getViewer().setCheckedElements(tracked.toArray());
 		if (!showUntracked) {
 			selectAllButton.setSelection(true);
+		}
+		// show clean file, if we are called on a single, not modified file (revert to any version in the past)
+		if(showClean && resources.size() == 1 && commitResources.size() == 0) {
+			IResource resource = resources.get(0);
+			if(resource.getType() == IResource.FILE){
+				try {
+					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+					File path = new File(hgRoot.toRelative(resource.getLocation().toFile()));
+					CommitResource cr = new CommitResource("" + MercurialStatusCache.CHAR_CLEAN, resource, path);
+					CommitResource[] input = new CommitResource[]{cr};
+					getViewer().setInput(input);
+					getViewer().setCheckedElements(input);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
 		}
 	}
 

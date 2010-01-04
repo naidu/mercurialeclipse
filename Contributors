@@ -89,3 +89,6 @@ Adam Berkes & Zsolt Koppany - Intland Software - http://www.intland.com
 
 	We at Intland Software are very happy with Mercurial and our goal is to enhance and extend this
 	free and open source plugin for enterprise environment.
+
+Philip Graf:
+	Implemented proxy support for remote operations.

@@ -47,6 +47,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -128,8 +129,9 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	private void openRevertDialog(List<IResource> resources, final boolean cleanAfterMerge) {
 		final List<IResource> result;
 		final List<IResource> untracked;
+		RevertDialog chooser = null;
 		if(!cleanAfterMerge){
-			RevertDialog chooser = new RevertDialog(Display.getCurrent().getActiveShell());
+			chooser = new RevertDialog(Display.getCurrent().getActiveShell());
 			chooser.setFiles(resources);
 			if (chooser.open() != Window.OK) {
 				return;
@@ -142,11 +144,13 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 			untracked = new ArrayList<IResource>();
 		}
 
+		final ChangeSet cs = chooser != null ? chooser.getChangeset() : null;
+
 		new SafeWorkspaceJob(Messages.getString("ActionRevert.revertFiles")) { //$NON-NLS-1$
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
-					doRevert(monitor, result, untracked, cleanAfterMerge);
+					doRevert(monitor, result, untracked, cleanAfterMerge, cs);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();
@@ -175,7 +179,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	public void doRevert(IProgressMonitor monitor, List<IResource> resources,
-			List<IResource> untracked, boolean cleanAfterMerge) throws HgException {
+			List<IResource> untracked, boolean cleanAfterMerge, ChangeSet cs) throws HgException {
 
 		monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
 
@@ -203,7 +207,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		} else {
 			Map<HgRoot, List<IResource>> rootToFiles = ResourceUtils.groupByRoot(resources);
 			for (Entry<HgRoot, List<IResource>> entry : rootToFiles.entrySet()) {
-				performRegularRevert(monitor, entry.getKey(), entry.getValue());
+				performRegularRevert(monitor, entry.getKey(), entry.getValue(), cs);
 			}
 		}
 
@@ -328,11 +332,15 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		return resources;
 	}
 
-	private void performRegularRevert(IProgressMonitor monitor, HgRoot root, List<IResource> resources) throws HgException {
+	private void performRegularRevert(IProgressMonitor monitor, HgRoot root,
+			List<IResource> resources, ChangeSet cs) throws HgException {
 		// the last argument will be replaced with a path
 		HgCommand command = new HgCommand("revert", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
 		command.addOptions("--no-backup");
+		if (cs != null) {
+			command.addOptions("--rev", cs.getChangeset());
+		}
 		command.addFiles(resources);
 		monitor.subTask(Messages.getString("ActionRevert.reverting") + root.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
 		command.executeToString();

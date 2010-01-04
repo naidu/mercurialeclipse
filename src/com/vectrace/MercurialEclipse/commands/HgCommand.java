@@ -13,6 +13,7 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.io.OutputStream;
 import java.util.List;
 
 import org.eclipse.core.resources.IContainer;
@@ -60,7 +61,26 @@ public class HgCommand extends AbstractShellCommand {
 
 	protected void addUserName(String user) {
 		this.options.add("-u"); //$NON-NLS-1$
+		// avoid empty user
+		if(user != null) {
+			user = user.trim();
+			if (user.length() == 0) {
+				user = null;
+			}
+		}
 		this.options.add(user != null ? user : getDefaultUserName());
+	}
+
+	@Override
+	public boolean executeToStream(OutputStream output, int timeout,
+			boolean expectPositiveReturnValue) throws HgException {
+
+		// Request non-interactivity flag
+		List<String> cmd = getCommands();
+		cmd.add(1, "-y");
+		commands = cmd;
+		// delegate to superclass
+		return super.executeToStream(output, timeout, expectPositiveReturnValue);
 	}
 
 	@Override

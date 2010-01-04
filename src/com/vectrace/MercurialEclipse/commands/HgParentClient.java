@@ -30,10 +30,12 @@ public class HgParentClient extends AbstractClient {
 	private static final Pattern ANCESTOR_PATTERN = Pattern
 			.compile("^([0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
 
+	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
+
 	public static int[] getParents(IProject project) throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", project, false); //$NON-NLS-1$
 		command.addOptions("--template", "{rev}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+		String[] lines = getLines(command.executeToString());
 		int[] parents = new int[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			parents[i] = Integer.parseInt(lines[i]);
@@ -45,7 +47,7 @@ public class HgParentClient extends AbstractClient {
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", hgRoot, false);
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+		String[] lines = getLines(command.executeToString());
 		String[] parents = new String[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			parents[i] = lines[i].trim();
@@ -60,7 +62,7 @@ public class HgParentClient extends AbstractClient {
 		command
 				.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 						.getChangeset());
-		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+		String[] lines = getLines(command.executeToString());
 		String[] parents = new String[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			parents[i] = lines[i].trim();
@@ -158,7 +160,21 @@ public class HgParentClient extends AbstractClient {
 		AbstractShellCommand command = new HgCommand("parents", rev.getProject(), false); //$NON-NLS-1$
 		command.addOptions("--template", "{rev}:{node|short}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.addOptions("-r", node); //$NON-NLS-1$
-		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+		String[] lines = getLines(command.executeToString());
 		return lines;
+	}
+
+	/**
+	 * Splits an output of a command into lines. Lines are separated by a newline character (\n).
+	 *
+	 * @param output
+	 *            The output of a command.
+	 * @return The lines of the output.
+	 */
+	private static String[] getLines(String output) {
+		if (output == null || output.length() == 0) {
+			return new String[0];
+		}
+		return LINE_SEPERATOR_PATTERN.split(output);
 	}
 }

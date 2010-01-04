@@ -160,6 +160,10 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY,
+				Messages.getString("GeneralPreferencePage.verifyGpgSignaturesInHistoryView"), getFieldEditorParent())); //$NON-NLS-1$		
+		
+		addField(new BooleanFieldEditor(
 				PREF_USE_EXTERNAL_MERGE,
 				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 

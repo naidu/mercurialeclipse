@@ -86,6 +86,7 @@ public class HgSigsClient extends AbstractClient {
 		try {
 			AbstractShellCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
 					false);
+			c.addOptions("--config","extensions.gpg=");
 			c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
 			c.addOptions(nodeId);
 			return c.executeToString();

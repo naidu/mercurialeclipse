@@ -25,6 +25,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -34,12 +36,15 @@ public class RevertDialog extends TitleAreaDialog {
 	private CommitFilesChooser selectFilesList;
 	private List<IResource> selection;
 	private List<IResource> untrackedSelection;
+	private ChangesetTable csTable;
+	private ChangeSet changeset;
 
 	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
 	public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
 	public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
 	public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
 	public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
 
 	/**
 	 * Create the dialog
@@ -63,13 +68,15 @@ public class RevertDialog extends TitleAreaDialog {
 		container.setLayoutData(gd);
 		super.createDialogArea(parent);
 		createFilesList(container);
+		csTable = new ChangesetTable(container, resources.get(0));
+		csTable.setEnabled(true);
 		setTitle(Messages.getString("RevertDialog.title")); //$NON-NLS-1$
 		setMessage(Messages.getString("RevertDialog.message")); //$NON-NLS-1$
 		return container;
 	}
 
 	private void createFilesList(Composite container) {
-		selectFilesList = new CommitFilesChooser(container, true, resources, true, true);
+		selectFilesList = new CommitFilesChooser(container, true, resources, true, true, true);
 	}
 
 	public void setFiles(List<IResource> resources) {
@@ -79,8 +86,14 @@ public class RevertDialog extends TitleAreaDialog {
 
 	@Override
 	protected void okPressed() {
-		selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+		if(resources.size() != 1) {
+			selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+		} else {
+			selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED, FILE_CLEAN);
+		}
 		untrackedSelection = selectFilesList.getCheckedResources(FILE_UNTRACKED);
+		changeset = csTable.getSelection();
+
 		if(!untrackedSelection.isEmpty()){
 			boolean confirm = MessageDialog.openConfirm(getShell(), "Please confirm delete",
 					"You have selected to revert untracked files." +
@@ -95,6 +108,10 @@ public class RevertDialog extends TitleAreaDialog {
 
 	public void setFiles(IResource[] commitResources) {
 		setFiles(Arrays.asList(commitResources));
+		if (commitResources != null && commitResources.length > 0) {
+			csTable.setResource(commitResources[0]);
+			csTable.setEnabled(true);
+		}
 	}
 
 	public List<IResource> getSelectionForHgRevert() {
@@ -103,5 +120,13 @@ public class RevertDialog extends TitleAreaDialog {
 
 	public List<IResource> getUntrackedSelection() {
 		return untrackedSelection;
+	}
+
+	public ChangesetTable getCsTable() {
+		return csTable;
+	}
+
+	public ChangeSet getChangeset() {
+		return changeset;
 	}
 }

@@ -93,7 +93,7 @@ public class HgSignClient {
 				}
 			}
 		}
-		command.addOptions("-k", key, "--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("-k", key, "--config","extensions.gpg=","--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
 		if (local) {
 			command.addOptions("-l"); //$NON-NLS-1$
 		}
