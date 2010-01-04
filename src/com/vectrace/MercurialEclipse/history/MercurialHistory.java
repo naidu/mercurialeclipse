@@ -206,11 +206,10 @@ public class MercurialHistory extends FileHistory {
 						MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY,
 						"false").equals("true"); //$NON-NLS-1$
 
-		Map<String, Signature> sigMap = null;
+		Map<String, Signature> sigMap = new HashMap<String, Signature>();
 		if (sigcheck) {
-			List<Signature> sigs = HgSigsClient.getSigs(file);
-			sigMap = new HashMap<String, Signature>();
 			if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
+				List<Signature> sigs = HgSigsClient.getSigs(file);
 				for (Signature signature : sigs) {
 					sigMap.put(signature.getNodeId(), signature);
 				}
@@ -226,13 +225,10 @@ public class MercurialHistory extends FileHistory {
 
 		// Update graph data also in batch
 		updateGraphData(changeSets, logBatchSize, from);
-
-		if (sigMap != null && sigcheck) {
-			for (ChangeSet cs : changeSets) {
-				Signature sig = sigMap.get(cs.getChangeset());
-				revisions.add(new MercurialRevision(cs, gChangeSets.get(Integer
-						.valueOf(cs.getChangesetIndex())), resource, sig));
-			}
+		for (ChangeSet cs : changeSets) {
+			Signature sig = sigcheck ? sigMap.get(cs.getChangeset()) : null;
+			revisions.add(new MercurialRevision(cs, gChangeSets.get(Integer
+					.valueOf(cs.getChangesetIndex())), resource, sig));
 		}
 	}
 
