@@ -66,7 +66,7 @@ import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -210,18 +210,7 @@ public class CommitDialog extends TitleAreaDialog {
 			return null;
 		}
 		IProject project = inResources.get(0).getProject();
-		return getDefaultCommitName(project);
-	}
-
-	protected static String getDefaultCommitName(IProject project) {
-		// TODO see issue 10150: get the name from project properties, not from repo
-		// but for now it will at least work for projects with one repo
-		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultProjectRepoLocation(project);
-		if(repoLocation == null){
-			return null;
-		}
-		return repoLocation.getUser();
+		return HgCommitMessageManager.getDefaultCommitName(project);
 	}
 
 	private void createCommitTextBox(Composite container) {

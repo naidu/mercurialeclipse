@@ -1,10 +1,13 @@
 /*******************************************************************************
+ * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Bastian Doetsch - implementation of remove
+ * Contributors:
+ * 		Bastian Doetsch - implementation of remove
+ *     	Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -80,12 +83,9 @@ public class HgTagClient extends AbstractClient {
 		command.executeToBytes();
 	}
 
-	/**
-	 * @param selection
-	 * @throws HgException
-	 */
-	public static String removeTag(IResource res, Tag tag) throws HgException {
+	public static String removeTag(IResource res, Tag tag, String user) throws HgException {
 		HgCommand command = new HgCommand("tag", getWorkingDirectory(res), false); //$NON-NLS-1$
+		command.addUserName(user);
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());
 		return command.executeToString();

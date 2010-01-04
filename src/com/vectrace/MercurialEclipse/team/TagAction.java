@@ -34,7 +34,7 @@ import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 					resource,
 					dialog.getName(),
 					dialog.getTargetRevision(),
-					null, //user
+					dialog.getUser(),
 					dialog.isLocal(),
 					dialog.isForced());
 

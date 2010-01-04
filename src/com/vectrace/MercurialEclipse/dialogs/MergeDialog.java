@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -57,6 +58,6 @@ public class MergeDialog extends CommitDialog {
 
 	@Override
 	protected String getInitialCommitUserName() {
-		return getDefaultCommitName(mergeProject);
+		return HgCommitMessageManager.getDefaultCommitName(mergeProject);
 	}
 }
