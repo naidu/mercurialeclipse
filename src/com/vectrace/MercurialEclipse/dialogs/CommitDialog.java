@@ -174,7 +174,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 	protected void createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources, true, true);
+		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources, true, true, false);
 
 		IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade().getCurrentTaskResources();
 		if (mylynTaskResources != null) {

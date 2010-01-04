@@ -42,7 +42,7 @@ public class MergeDialog extends CommitDialog {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
 		List<IResource> resources = new ArrayList<IResource>();
 		resources.add(mergeProject);
-		commitFilesList = new CommitFilesChooser(container, false, resources, true, true);
+		commitFilesList = new CommitFilesChooser(container, false, resources, true, true, false);
 	}
 
 	@Override
