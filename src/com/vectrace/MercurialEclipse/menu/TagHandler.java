@@ -32,10 +32,12 @@ public class TagHandler extends SingleResourceHandler {
 		IProject project = resource.getProject();
 		TagDialog dialog = new TagDialog(getShell(), project);
 
-		if (dialog.open() == IDialogConstants.OK_ID && dialog.getName() != null
-				&& !dialog.getName().equals("") && dialog.getTargetRevision() != null
-				&& !dialog.getTargetRevision().equals("")) {
-			HgTagClient.addTag(resource, dialog.getName(), dialog.getTargetRevision(), dialog.getUser(),
+		if (dialog.open() != IDialogConstants.OK_ID) {
+			return;
+		}
+		String name = dialog.getName();
+		if (name != null && name.trim().length() > 0) {
+			HgTagClient.addTag(resource, name.trim(), dialog.getTargetRevision(), dialog.getUser(),
 					dialog.isLocal(), dialog.isForced());
 			new RefreshJob(Messages.getString("TagHandler.refreshing"), project).schedule(); //$NON-NLS-1$
 		}
