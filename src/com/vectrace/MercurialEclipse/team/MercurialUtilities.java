@@ -17,6 +17,7 @@
 package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.eclipse.core.resources.IProject;
@@ -47,6 +48,7 @@ import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.utils.IniFile;
 
 /**
  * Class that offers Utility methods for working with the plug-in.
@@ -66,8 +68,7 @@ public class MercurialUtilities {
 	/**
 	 * Determines if the configured Mercurial executable can be called.
 	 *
-	 * @return true if no error occurred while calling the executable, false
-	 *         otherwise
+	 * @return true if no error occurred while calling the executable, false otherwise
 	 */
 	public static boolean isHgExecutableCallable() {
 		try {
@@ -79,19 +80,18 @@ public class MercurialUtilities {
 	}
 
 	/**
-	 * Returns the hg executable stored in the plug-in preferences. If it's not
-	 * defined, "hg" is returned as default.
+	 * Returns the hg executable stored in the plug-in preferences. If it's not defined, "hg" is
+	 * returned as default.
 	 *
 	 * @return the path to the executable or, if not defined "hg"
 	 */
 	public static String getHGExecutable() {
-		return HgClients.getPreference(
-				MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
+		return HgClients.getPreference(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 	}
 
 	/**
-	 * Fetches a preference from the plug-in's preference store. If no
-	 * preference could be found in the store, the given default is returned.
+	 * Fetches a preference from the plug-in's preference store. If no preference could be found in
+	 * the store, the given default is returned.
 	 *
 	 * @param preferenceConstant
 	 *            the string identifier for the constant.
@@ -99,10 +99,8 @@ public class MercurialUtilities {
 	 *            the default to return if no preference was found.
 	 * @return the preference or the default
 	 */
-	public static String getPreference(String preferenceConstant,
-			String defaultIfNotSet) {
-		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-		.getPreferenceStore();
+	public static String getPreference(String preferenceConstant, String defaultIfNotSet) {
+		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		// This returns "" if not defined
 		String pref = preferenceStore.getString(preferenceConstant);
 
@@ -116,11 +114,10 @@ public class MercurialUtilities {
 	 * Gets the configured executable if it's callable (@see
 	 * {@link MercurialUtilities#isHgExecutableCallable()}.
 	 *
-	 * If configureIfMissing is set to true, the configuration will be started
-	 * and afterwards the executable stored in the preferences will be checked
-	 * if it is callable. If true, it is returned, else "hg" will be returned.
-	 * If the parameter is set to false, it will returns "hg" if no preference
-	 * is set.
+	 * If configureIfMissing is set to true, the configuration will be started and afterwards the
+	 * executable stored in the preferences will be checked if it is callable. If true, it is
+	 * returned, else "hg" will be returned. If the parameter is set to false, it will returns "hg"
+	 * if no preference is set.
 	 *
 	 * @param configureIfMissing
 	 *            flag if configuration should be started if hg is not callable.
@@ -140,13 +137,12 @@ public class MercurialUtilities {
 	/**
 	 * Checks the GPG Executable is callable and returns it if it is.
 	 *
-	 * Otherwise, if configureIfMissing is set to true, configuration will be
-	 * started and the new command is tested for callability. If there's no
-	 * preference found after configuration, "gpg" will be returned as default.
+	 * Otherwise, if configureIfMissing is set to true, configuration will be started and the new
+	 * command is tested for callability. If there's no preference found after configuration, "gpg"
+	 * will be returned as default.
 	 *
 	 * @param configureIfMissing
-	 *            flag, if configuration should be started if gpg is not
-	 *            callable.
+	 *            flag, if configuration should be started if gpg is not callable.
 	 * @return the gpg executable path
 	 */
 	public static String getGpgExecutable(boolean configureIfMissing) {
@@ -182,8 +178,8 @@ public class MercurialUtilities {
 	 * @return gpg executable path or "gpg", if it's not set.
 	 */
 	public static String getGpgExecutable() {
-		String executable = HgClients.getPreference(
-				MercurialPreferenceConstants.GPG_EXECUTABLE, "gpg"); //$NON-NLS-1$
+		String executable = HgClients.getPreference(MercurialPreferenceConstants.GPG_EXECUTABLE,
+				"gpg"); //$NON-NLS-1$
 		if (executable == null || executable.length() == 0) {
 			return "false"; //$NON-NLS-1$
 		}
@@ -191,8 +187,7 @@ public class MercurialUtilities {
 	}
 
 	/**
-	 * Starts the configuration for Mercurial executable by opening the
-	 * preference page.
+	 * Starts the configuration for Mercurial executable by opening the preference page.
 	 */
 	public static void configureHgExecutable() {
 		final String jobName = Messages
@@ -219,12 +214,12 @@ public class MercurialUtilities {
 		IJobManager jobManager = Job.getJobManager();
 		jobManager.cancel(jobName);
 		Job[] jobs = jobManager.find(jobName);
-		if(jobs.length == 0) {
+		if (jobs.length == 0) {
 			job.schedule(50);
 		}
 	}
 
-	public static boolean isPossiblySupervised(IResource resource){
+	public static boolean isPossiblySupervised(IResource resource) {
 		if (resource == null) {
 			return false;
 		}
@@ -237,17 +232,15 @@ public class MercurialUtilities {
 	}
 
 	/**
-	 * Checks if the given resource is controlled by MercurialEclipse. If the
-	 * given resource is linked, it is not controlled by MercurialEclipse and
-	 * therefore false is returned. A linked file is not followed, so even if
-	 * there might be a hg repository in the linked files original location, we
-	 * won't handle such a resource as supervised.
+	 * Checks if the given resource is controlled by MercurialEclipse. If the given resource is
+	 * linked, it is not controlled by MercurialEclipse and therefore false is returned. A linked
+	 * file is not followed, so even if there might be a hg repository in the linked files original
+	 * location, we won't handle such a resource as supervised.
 	 *
 	 * @param dialog
-	 *            flag to signify that an error message should be displayed if
-	 *            the resource is a linked resource Return true if the resource
-	 * @return true, if MercurialEclipse provides team functions to this
-	 *         resource, false otherwise.
+	 *            flag to signify that an error message should be displayed if the resource is a
+	 *            linked resource Return true if the resource
+	 * @return true, if MercurialEclipse provides team functions to this resource, false otherwise.
 	 */
 	public static boolean hgIsTeamProviderFor(IResource resource, boolean dialog) {
 		// check, if we're team provider
@@ -277,13 +270,9 @@ public class MercurialUtilities {
 				shell = workbench.getActiveWorkbenchWindow().getShell();
 			}
 			if (shell != null) {
-				MessageDialog
-				.openInformation(
-						shell,
-						Messages
+				MessageDialog.openInformation(shell, Messages
 						.getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
-						Messages
-						.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
+						Messages.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
 			}
 		}
 
@@ -293,28 +282,75 @@ public class MercurialUtilities {
 	}
 
 	/**
-	 * Returns the username for hg as configured in preferences. If it's not
-	 * defined in the preference store, null is returned.
+	 * Returns the username for hg as configured in preferences. If it's not defined in the
+	 * preference store, null is returned.
 	 *
 	 * @return hg username or null
 	 */
 	public static String getHGUsername() {
-		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault()
-		.getPreferenceStore();
+		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		// This returns "" if not defined
-		String executable = preferenceStore
-		.getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
-		return executable;
+		String username = preferenceStore
+				.getString(MercurialPreferenceConstants.MERCURIAL_USERNAME);
+
+		// try to read username via hg showconfig
+		if (username == null || username.equals("")) {
+			try {
+				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
+					.getLocation().toFile(), "ui.username");
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+
+		// try to read mercurial hgrc in default locations
+		String home = System.getProperty("user.home");
+		if (username == null || username.equals("")) {
+			username = readUsernameFromIni(home + "/.hgrc");
+		}
+
+		if (username == null || username.equals("")) {
+			username = readUsernameFromIni(home + "/Mercurial.ini");
+		}
+
+		if (username == null || username.equals("")) {
+			username = readUsernameFromIni("C:/Mercurial/Mercurial.ini");
+		}
+
+		if (username == null || username.equals("")) {
+			// use system username
+			System.getProperty("user.name");
+		}
+
+		// never return null!
+		if (username == null) {
+			username = "";
+		}
+		return username;
 	}
 
 	/**
-	 * Gets the username for hg as configured in preferences. If there is no
-	 * preference set and configureIfMissing is true, start configuration of the
-	 * username and afterwards return the new preference. If nothing was
-	 * configured this could still be null!
+	 * @return
+	 */
+	private static String readUsernameFromIni(String filename) {
+		String username;
+		IniFile iniFile;
+		try {
+			iniFile = new IniFile(filename);
+			username = iniFile.getKeyValue("ui", "username");
+		} catch (FileNotFoundException e) {
+			username = null;
+		}
+		return username;
+	}
+
+	/**
+	 * Gets the username for hg as configured in preferences. If there is no preference set and
+	 * configureIfMissing is true, start configuration of the username and afterwards return the new
+	 * preference. If nothing was configured this could still be null!
 	 *
-	 * If configureIfMissing is false and no preference is set, the systems
-	 * property "user.name" is returned (@see {@link System#getProperty(String)}
+	 * If configureIfMissing is false and no preference is set, the systems property "user.name" is
+	 * returned (@see {@link System#getProperty(String)}
 	 *
 	 * @param configureIfMissing
 	 *            true if configuration should be started, otherwise false
@@ -331,11 +367,10 @@ public class MercurialUtilities {
 			return getHGUsername();
 		}
 		try {
-			return HgConfigClient.getHgConfigLine(ResourcesPlugin
-					.getWorkspace().getRoot().getLocation().toFile(),
-			"ui.username"); //$NON-NLS-1$
+			return HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
+					.getLocation().toFile(), "ui.username");
 		} catch (HgException e) {
-			return System.getProperty("user.name"); //$NON-NLS-1$
+			return System.getProperty("user.name");
 		}
 	}
 
@@ -347,39 +382,35 @@ public class MercurialUtilities {
 		String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
 		String[] dsplIds = null;
 		Object data = null;
-		PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell,
-				pageId, dsplIds, data);
+		PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell, pageId, dsplIds,
+				data);
 		dlg.open();
 	}
 
 	/**
-	 * Execute a command via the shell. Can throw HgException if the command
-	 * does not execute correctly. Exception will contain the error stream from
-	 * the command execution.
+	 * Execute a command via the shell. Can throw HgException if the command does not execute
+	 * correctly. Exception will contain the error stream from the command execution.
 	 *
 	 * @returns String containing the successful output
 	 *
-	 *          TODO: Should log failure. TODO: Should not return null for
-	 *          failure.
+	 *          TODO: Should log failure. TODO: Should not return null for failure.
 	 */
-	public static String executeCommand(String cmd[], File workingDir,
-			boolean consoleOutput) throws HgException {
+	public static String executeCommand(String cmd[], File workingDir, boolean consoleOutput)
+			throws HgException {
 		return execute(cmd, workingDir).executeToString();
 	}
 
 	private static LegacyAdaptor execute(String cmd[], File workingDir) {
 		String[] copy = new String[cmd.length - 2];
 		System.arraycopy(cmd, 2, copy, 0, cmd.length - 2);
-		LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir,
-				true);
+		LegacyAdaptor legacyAdaptor = new LegacyAdaptor(cmd[1], workingDir, true);
 		legacyAdaptor.args(copy);
 		return legacyAdaptor;
 	}
 
 	private static class LegacyAdaptor extends HgCommand {
 
-		protected LegacyAdaptor(String command, File workingDir,
-				boolean escapeFiles) {
+		protected LegacyAdaptor(String command, File workingDir, boolean escapeFiles) {
 			super(command, workingDir, escapeFiles);
 		}
 
@@ -399,21 +430,17 @@ public class MercurialUtilities {
 		}
 	}
 
-	public static boolean isCommandAvailable(String command,
-			QualifiedName sessionPropertyName, String extensionEnabler)
-	throws HgException {
+	public static boolean isCommandAvailable(String command, QualifiedName sessionPropertyName,
+			String extensionEnabler) throws HgException {
 		try {
 			boolean returnValue;
-			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace()
-			.getRoot();
+			IWorkspaceRoot workspaceRoot = ResourcesPlugin.getWorkspace().getRoot();
 			Object prop = workspaceRoot.getSessionProperty(sessionPropertyName);
 			if (prop != null) {
 				returnValue = ((Boolean) prop).booleanValue();
 			} else {
-				returnValue = AbstractClient.isCommandAvailable(command,
-						extensionEnabler);
-				workspaceRoot.setSessionProperty(sessionPropertyName, Boolean
-						.valueOf(returnValue));
+				returnValue = AbstractClient.isCommandAvailable(command, extensionEnabler);
+				workspaceRoot.setSessionProperty(sessionPropertyName, Boolean.valueOf(returnValue));
 			}
 			return returnValue;
 		} catch (CoreException e) {
