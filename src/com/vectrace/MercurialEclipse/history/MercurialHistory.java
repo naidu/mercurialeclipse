@@ -51,8 +51,8 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  */
 public class MercurialHistory extends FileHistory {
 
-	private static final class RevisionComparator implements Comparator<MercurialRevision>,
-			Serializable {
+	private static final class RevisionComparator implements
+	Comparator<MercurialRevision>, Serializable {
 
 		private static final long serialVersionUID = 5305190339206751711L;
 
@@ -77,27 +77,28 @@ public class MercurialHistory extends FileHistory {
 	private static final RevisionComparator revComparator = new RevisionComparator();
 
 	private final IResource resource;
-	private SortedSet<MercurialRevision> revisions;
+	private final SortedSet<MercurialRevision> revisions;
 	private Map<Integer, GChangeSet> gChangeSets;
 	private int bottom;
 
 	public MercurialHistory(IResource resource) {
 		super();
 		this.resource = resource;
+		revisions = new TreeSet<MercurialRevision>(revComparator);
 	}
 
 	/**
 	 * @param prev
-	 * @return a next revision int the history: revision wich is the successor of the given one (has
-	 *         higher rev number)
+	 * @return a next revision int the history: revision wich is the successor of the
+	 * given one (has higher rev number)
 	 */
-	public MercurialRevision getNext(MercurialRevision prev) {
+	public MercurialRevision getNext(MercurialRevision prev){
 		// revisions are sorted descending: first has the highest rev number
 		List<MercurialRevision> list = new ArrayList<MercurialRevision>(revisions);
 
 		for (int i = 0; i < list.size(); i++) {
-			if (list.get(i) == prev) {
-				if (i > 0) {
+			if(list.get(i) == prev){
+				if(i > 0){
 					return list.get(i - 1);
 				}
 			}
@@ -107,16 +108,16 @@ public class MercurialHistory extends FileHistory {
 
 	/**
 	 * @param next
-	 * @return a previous revision int the history: revision wich is the ancestor of the given one
-	 *         (has lower rev number)
+	 * @return a previous revision int the history: revision wich is the ancestor of the
+	 * given one (has lower rev number)
 	 */
-	public MercurialRevision getPrev(MercurialRevision next) {
+	public MercurialRevision getPrev(MercurialRevision next){
 		// revisions are sorted descending: first has the highest rev number
 		List<MercurialRevision> list = new ArrayList<MercurialRevision>(revisions);
 
 		for (int i = 0; i < list.size(); i++) {
-			if (list.get(i) == next) {
-				if (i + 1 < list.size()) {
+			if(list.get(i) == next){
+				if(i + 1 < list.size()){
 					return list.get(i + 1);
 				}
 			}
@@ -137,7 +138,7 @@ public class MercurialHistory extends FileHistory {
 	}
 
 	public IFileRevision getFileRevision(String id) {
-		if (revisions == null || revisions.size() == 0) {
+		if (revisions.isEmpty()) {
 			return null;
 		}
 
@@ -150,10 +151,7 @@ public class MercurialHistory extends FileHistory {
 	}
 
 	public IFileRevision[] getFileRevisions() {
-		if (revisions != null) {
-			return revisions.toArray(new MercurialRevision[revisions.size()]);
-		}
-		return new IFileRevision[0];
+		return revisions.toArray(new MercurialRevision[revisions.size()]);
 	}
 
 	public IFileRevision[] getTargets(IFileRevision revision) {
@@ -165,7 +163,7 @@ public class MercurialHistory extends FileHistory {
 		if (!(provider instanceof MercurialTeamProvider)) {
 			return;
 		}
-		if (from == Integer.MAX_VALUE && revisions != null) {
+		if (from == Integer.MAX_VALUE) {
 			// We're getting revisions up to the latest one available.
 			// So clear out the cached list, as it may contain revisions
 			// that no longer exist (e.g. after a strip/rollback).
@@ -183,8 +181,8 @@ public class MercurialHistory extends FileHistory {
 		if (from == this.bottom || from < 0) {
 			return;
 		}
-		Map<IPath, Set<ChangeSet>> map = HgLogClient.getProjectLog(resource, logBatchSize, from,
-				false);
+		Map<IPath, Set<ChangeSet>> map = HgLogClient.getProjectLog(
+				resource, logBatchSize, from, false); // TODO should be true?
 
 		// no result -> bottom reached
 		if (map == null) {
@@ -200,6 +198,7 @@ public class MercurialHistory extends FileHistory {
 
 		// get signatures
 		File file = resource.getLocation().toFile();
+
 
 		boolean sigcheck = HgClients
 				.getPreference(
@@ -218,9 +217,9 @@ public class MercurialHistory extends FileHistory {
 
 		changeSets.addAll(localChangeSets);
 
-		if (revisions == null || revisions.size() == 0 || revisions.size() < changeSets.size()
+		if (revisions.size() < changeSets.size()
 				|| !(revisions.first().getResource().equals(resource))) {
-			revisions = new TreeSet<MercurialRevision>(revComparator);
+			revisions.clear();
 		}
 
 		// Update graph data also in batch
@@ -237,7 +236,7 @@ public class MercurialHistory extends FileHistory {
 		gChangeSets = new HashMap<Integer, GChangeSet>();
 		try {
 			List<GChangeSet> gLogChangeSets = new HgGLogClient(resource, logBatchSize, from)
-					.update(changeSets).getChangeSets();
+				.update(changeSets).getChangeSets();
 			for (GChangeSet gs : gLogChangeSets) {
 				if (gs != null) {
 					gChangeSets.put(Integer.valueOf(gs.getRev()), gs);

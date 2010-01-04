@@ -81,7 +81,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 		int length = lines.length;
 		ChangeSet[] changeSets = new ChangeSet[length];
-		HgRoot root = command.getHgRoot();
+		HgRoot hgRoot = command.getHgRoot();
 		for (int i = 0; i < length; i++) {
 			Matcher m = GET_REVISIONS_PATTERN.matcher(lines[i]);
 			if (m.matches()) {
@@ -91,7 +91,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 						m.group(5), // branch
 						m.group(3), // date
 						m.group(4), // user
-						root).description(m.group(6)).build();
+						hgRoot).description(m.group(6)).build();
 
 				changeSets[i] = changeSet;
 			} else {
@@ -109,6 +109,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	public static Map<IPath, Set<ChangeSet>> getCompleteProjectLog(
 			IResource res, boolean withFiles) throws HgException {
 		return getProjectLog(res, -1, -1, withFiles);
+	}
+
+	/**
+	 * @return map where the key is an absolute file path
+	 */
+	public static Map<IPath, Set<ChangeSet>> getCompleteRootLog(
+			HgRoot hgRoot, boolean withFiles) throws HgException {
+		return getRootLog(hgRoot, -1, -1, withFiles);
 	}
 
 	/**
@@ -138,8 +146,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-					AbstractParseChangesetClient.getStyleFile(withFiles)
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
+			command.addOptions("--style", //$NON-NLS-1$
+					AbstractParseChangesetClient.getStyleFile(style)
 							.getCanonicalPath());
 
 			addRange(command, startRev, limitNumber);
@@ -156,8 +165,36 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			if (result.length() == 0) {
 				return null;
 			}
-			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-					res, result, withFiles, Direction.LOCAL, null, null);
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
+					res, result, Direction.LOCAL, null, null, null);
+			return revisions;
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
+	}
+
+	/**
+	 * @return map where the key is an absolute file path
+	 */
+	public static Map<IPath, Set<ChangeSet>> getRootLog(HgRoot hgRoot,
+			int limitNumber, int startRev, boolean withFiles)
+			throws HgException {
+		try {
+			AbstractShellCommand command = new HgCommand("log", hgRoot, false);
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
+			command.addOptions("--style", //$NON-NLS-1$
+					AbstractParseChangesetClient.getStyleFile(style)
+					.getCanonicalPath());
+
+			addRange(command, startRev, limitNumber);
+
+			String result = command.executeToString();
+			if (result.length() == 0) {
+				return null;
+			}
+			Path path = new Path(hgRoot.getAbsolutePath());
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(path, result, Direction.LOCAL, null, null, null, hgRoot);
 			return revisions;
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
@@ -165,14 +202,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	public static Map<IPath, Set<ChangeSet>> getPathLog(boolean isFile, File path,
-			HgRoot root, int limitNumber, int startRev, boolean withFiles)
+			HgRoot hgRoot, int limitNumber, int startRev, boolean withFiles)
 			throws HgException {
 		try {
-			AbstractShellCommand command = new HgCommand("log", root, //$NON-NLS-1$
-					false);
+			AbstractShellCommand command = new HgCommand("log", hgRoot, false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
-					AbstractParseChangesetClient.getStyleFile(withFiles)
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
+			command.addOptions("--style", //$NON-NLS-1$
+					AbstractParseChangesetClient.getStyleFile(style)
 					.getCanonicalPath());
 
 			addRange(command, startRev, limitNumber);
@@ -181,15 +218,15 @@ public class HgLogClient extends AbstractParseChangesetClient {
 				command.addOptions("-f"); //$NON-NLS-1$
 			}
 
-			command.addOptions(root.toRelative(path));
+			command.addOptions(hgRoot.toRelative(path));
 
 			String result = command.executeToString();
 			if (result.length() == 0) {
 				return null;
 			}
-			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					new Path(path.getAbsolutePath()),
-					result, Direction.LOCAL, null, null, root);
+					result, Direction.LOCAL, null, null, null, hgRoot);
 			return revisions;
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
@@ -311,15 +348,15 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			AbstractShellCommand command = new HgCommand("log", res.getProject().getLocation().toFile(), //$NON-NLS-1$
 					false);
-			command
-					.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-			command.addOptions("--debug", "--style", AbstractParseChangesetClient //$NON-NLS-1$ //$NON-NLS-2$
-					.getStyleFile(withFiles).getCanonicalPath());
+			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+			int style = withFiles ? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_DEFAULT;
+			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
+					.getStyleFile(style).getCanonicalPath());
 			command.addOptions("--rev", nodeId); //$NON-NLS-1$
 			String result = command.executeToString();
 
-			Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-					res, result, withFiles, Direction.LOCAL, null, null);
+			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
+					res, result, Direction.LOCAL, null, null, null);
 			Set<ChangeSet> set = revisions.get(res.getLocation());
 			if (set != null) {
 				return Collections.min(set);
@@ -328,5 +365,29 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
+	}
+
+	public static ChangeSet getChangeset(HgRoot hgRoot, String nodeId) throws HgException {
+		Assert.isNotNull(nodeId);
+		String stylePath;
+		try {
+			stylePath = AbstractParseChangesetClient.getStyleFile(
+					AbstractParseChangesetClient.STYLE_DEFAULT).getCanonicalPath();
+		} catch (IOException e) {
+			throw new HgException(e.getLocalizedMessage(), e);
+		}
+		AbstractShellCommand command = new HgCommand("log", hgRoot, false);
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+		command.addOptions("--style", stylePath);
+		command.addOptions("--rev", nodeId); //$NON-NLS-1$
+		String result = command.executeToString();
+
+		Path path = new Path(hgRoot.getAbsolutePath());
+		Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(path, result, Direction.LOCAL, null, null, null, hgRoot);
+		Set<ChangeSet> set = revisions.get(path);
+		if (set != null) {
+			return Collections.min(set);
+		}
+		return null;
 	}
 }

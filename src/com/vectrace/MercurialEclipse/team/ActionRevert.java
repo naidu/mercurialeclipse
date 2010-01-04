@@ -43,6 +43,7 @@ import org.eclipse.ui.PlatformUI;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
@@ -61,7 +62,8 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * We can use this method to dispose of any system resources we previously allocated.
+	 * We can use this method to dispose of any system resources we previously
+	 * allocated.
 	 *
 	 * @see IWorkbenchWindowActionDelegate#dispose
 	 */
@@ -69,8 +71,8 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * We will cache window object in order to be able to provide parent shell for the message
-	 * dialog.
+	 * We will cache window object in order to be able to provide parent shell
+	 * for the message dialog.
 	 *
 	 * @see IWorkbenchWindowActionDelegate#init
 	 */
@@ -79,39 +81,35 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * The action has been activated. The argument of the method represents the 'real' action
-	 * sitting in the workbench UI.
+	 * The action has been activated. The argument of the method represents the
+	 * 'real' action sitting in the workbench UI.
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 
 	public void run(IAction action) {
-		if (window == null) {
+		if(window == null){
 			window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		}
 		List<IResource> resources = new ArrayList<IResource>();
-		boolean mergeIsRunning;
-		try {
-			// determines if merge is running and fills the resource list
-			mergeIsRunning = collectResourcesToRevert(resources);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
-			return;
-		}
+		boolean mergeIsRunning = collectResourcesToRevert(resources);
 		if (resources.size() > 0 && !mergeIsRunning) {
 			openRevertDialog(resources, false);
 		} else {
-			if (mergeIsRunning) {
-				boolean doRevert = MessageDialog.openConfirm(getShell(), Messages
-						.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
+			if(mergeIsRunning){
+				boolean doRevert = MessageDialog
+					.openConfirm(
+						getShell(),
+						Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
 						Messages.getString("ActionRevert.mergeIsRunning")); //$NON-NLS-1$
-				if (doRevert) {
+				if(doRevert){
 					openRevertDialog(resources, true);
 				}
 			} else {
-				MessageDialog.openInformation(getShell(), Messages
-						.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
+				MessageDialog
+					.openInformation(
+						getShell(),
+						Messages.getString("ActionRevert.HgRevert"), //$NON-NLS-1$
 						Messages.getString("ActionRevert.noFilesToRevert")); //$NON-NLS-1$
 			}
 		}
@@ -132,7 +130,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		final List<IResource> result;
 		final List<IResource> untracked;
 		RevertDialog chooser = null;
-		if (!cleanAfterMerge) {
+		if(!cleanAfterMerge){
 			chooser = new RevertDialog(Display.getCurrent().getActiveShell());
 			chooser.setFiles(resources);
 			if (chooser.open() != Window.OK) {
@@ -162,19 +160,16 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}.schedule();
 	}
 
-	private boolean collectResourcesToRevert(List<IResource> resources) throws CoreException,
-			HgException {
+	private boolean collectResourcesToRevert(List<IResource> resources) {
 		boolean mergeIsRunning = false;
 		for (Object obj : selection.toList()) {
 			if (obj instanceof IResource) {
 				IResource resource = (IResource) obj;
-				boolean merging = resource.getProject().getPersistentProperty(
-						ResourceProperties.MERGING) != null;
-				if (merging) {
+				boolean merging = HgStatusClient.isMergeInProgress(resource);
+				if(merging){
 					mergeIsRunning = true;
 				}
 				boolean supervised = MercurialUtilities.hgIsTeamProviderFor(resource, false);
-
 				if (supervised) {
 					resources.add(resource);
 				}
@@ -186,8 +181,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	public void doRevert(IProgressMonitor monitor, List<IResource> resources,
 			List<IResource> untracked, boolean cleanAfterMerge, ChangeSet cs) throws HgException {
 
-		monitor.beginTask(
-				Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
+		monitor.beginTask(Messages.getString("ActionRevert.revertingResources"), resources.size() * 2); //$NON-NLS-1$
 
 		Map<IProject, List<IResource>> filesToRevert = ResourceUtils.groupByProject(resources);
 		Set<IProject> projects = filesToRevert.keySet();
@@ -198,8 +192,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		// collect removed file state NOW
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 
-		Map<IProject, Set<IResource>> removedFilesBefore = getFiles(
-				MercurialStatusCache.BIT_REMOVED, projects);
+		Map<IProject, Set<IResource>> removedFilesBefore = getFiles(MercurialStatusCache.BIT_REMOVED, projects);
 		Map<IProject, Set<IResource>> addedFilesBefore = getFiles(MercurialStatusCache.BIT_ADDED,
 				removedFilesBefore.keySet());
 
@@ -207,7 +200,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		removedFilesBefore.keySet().retainAll(addedFilesBefore.keySet());
 
 		// perform revert
-		if (cleanAfterMerge) {
+		if(cleanAfterMerge) {
 			for (Entry<IProject, List<IResource>> entry : filesToRevert.entrySet()) {
 				performRevertAfterMerge(monitor, entry.getKey(), entry.getValue());
 			}
@@ -219,17 +212,15 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}
 
 		for (IResource resource : resources) {
-			monitor
-					.subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+			monitor.subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
 			try {
-				if (cache.isAdded(ResourceUtils.getPath(resource))) {
+				if(cache.isAdded(ResourceUtils.getPath(resource))){
 					// added files didn't change content after we un-add them, so we have
 					// give Eclipse a hint to start some extra refresh work.
 					resource.touch(monitor);
 				}
 				// we still need to trigger a refresh to avoid confusing editors opened on
-				// these files. Without refresh, they complain that the files are changed but not
-				// refreshed
+				// these files. Without refresh, they complain that the files are changed but not refreshed
 				resource.refreshLocal(IResource.DEPTH_ONE, monitor);
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
@@ -257,14 +248,14 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 			IProject projBefore = entry.getKey();
 			Set<IResource> removedBefore = entry.getValue();
 			Set<IResource> removedAfter = removedFilesAfter.get(projBefore);
-			if (removedAfter != null && !removedAfter.isEmpty()) {
+			if(removedAfter != null && !removedAfter.isEmpty()) {
 				removedBefore.removeAll(removedAfter);
 			}
 			List<IResource> reverted = filesToRevert.get(projBefore);
-			if (reverted != null && !reverted.isEmpty()) {
+			if(reverted != null && !reverted.isEmpty()) {
 				removedBefore.removeAll(reverted);
 			}
-			if (!removedBefore.isEmpty()) {
+			if(!removedBefore.isEmpty()){
 				filesToUpdate.put(projBefore, removedBefore);
 			}
 		}
@@ -283,16 +274,16 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * Deletes given resources and cleans up the cache state for them
+	 *  Deletes given resources and cleans up the cache state for them
 	 */
 	private void deleteUntrackedFiles(List<IResource> untracked, IProgressMonitor monitor) {
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 		for (IResource resource : untracked) {
 			try {
 				IContainer parent = null;
-				if (resource instanceof IFile) {
+				if(resource instanceof IFile){
 					parent = resource.getParent();
-					if (parent instanceof IProject && ".project".equals(resource.getName())) {
+					if(parent instanceof IProject && ".project".equals(resource.getName())){
 						MercurialEclipsePlugin.logInfo(
 								"Will NOT delete .project file from project " + parent.getName(),
 								null);
@@ -300,7 +291,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 						continue;
 					}
 					resource.delete(IResource.FORCE | IResource.KEEP_HISTORY, monitor);
-				} else if (!(resource instanceof IProject)) {
+				} else if(!(resource instanceof IProject)){
 					resource.delete(IResource.KEEP_HISTORY, monitor);
 				}
 				deleteEmptyDirs(parent, monitor);
@@ -312,7 +303,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * Recursive deletes empty directories, starting with given one
+	 *  Recursive deletes empty directories, starting with given one
 	 */
 	private void deleteEmptyDirs(IContainer dir, IProgressMonitor monitor) throws CoreException {
 		int memberFlags = IContainer.INCLUDE_HIDDEN | IContainer.INCLUDE_TEAM_PRIVATE_MEMBERS;
@@ -325,17 +316,16 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 
 	/**
 	 * @param projects
-	 * @param statusBit
-	 *            one of {@link MercurialStatusCache} status bits
-	 * @return a map where the files with the specified state are grouped by the project. Projects
-	 *         with no files of given state are not included into the map
+	 * @param statusBit one of {@link MercurialStatusCache} status bits
+	 * @return a map where the files with the specified state are grouped by the project.
+	 * Projects with no files of given state are not included into the map
 	 */
 	private Map<IProject, Set<IResource>> getFiles(int statusBit, Set<IProject> projects) {
 		MercurialStatusCache cache = MercurialStatusCache.getInstance();
 		Map<IProject, Set<IResource>> resources = new HashMap<IProject, Set<IResource>>();
 		for (IProject project : projects) {
 			Set<IResource> removed = cache.getResources(statusBit, project);
-			if (!removed.isEmpty()) {
+			if(!removed.isEmpty()) {
 				resources.put(project, removed);
 			}
 		}
@@ -357,10 +347,8 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		monitor.worked(1);
 	}
 
-	private void performRevertAfterMerge(IProgressMonitor monitor, IProject root,
-			List<IResource> resources) {
-		// see
-		// http://mercurial.selenic.com/wiki/FAQ#FAQ.2BAC8-CommonProblems.hg_status_shows_changed_files_but_hg_diff_doesn.27t.21
+	private void performRevertAfterMerge(IProgressMonitor monitor, IProject root, List<IResource> resources) {
+		// see http://mercurial.selenic.com/wiki/FAQ#FAQ.2BAC8-CommonProblems.hg_status_shows_changed_files_but_hg_diff_doesn.27t.21
 		// To completely undo the uncommitted merge and discard all local modifications,
 		// you will need to issue a hg update -C -r . (note the "dot" at the end of the command).
 		try {
@@ -376,13 +364,15 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	/**
-	 * Selection in the workbench has been changed. We can change the state of the 'real' action
-	 * here if we want, but this can only happen after the delegate has been created.
+	 * Selection in the workbench has been changed. We can change the state of
+	 * the 'real' action here if we want, but this can only happen after the
+	 * delegate has been created.
 	 *
 	 * @see IWorkbenchWindowActionDelegate#selectionChanged
 	 */
 	public void selectionChanged(IAction action, ISelection in_selection) {
-		if (in_selection != null && in_selection instanceof IStructuredSelection) {
+		if (in_selection != null
+				&& in_selection instanceof IStructuredSelection) {
 			selection = (IStructuredSelection) in_selection;
 		}
 	}

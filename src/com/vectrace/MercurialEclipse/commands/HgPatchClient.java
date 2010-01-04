@@ -15,30 +15,41 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.compare.patch.IFilePatch;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgPatchClient extends AbstractClient {
 
-	public static String importPatch(IProject project, File patchLocation,
+	public static String importPatch(HgRoot hgRoot, File patchLocation,
 			ArrayList<String> options) throws HgException {
 		assert patchLocation != null && options != null;
-		AbstractShellCommand command = new HgCommand("import", project, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("import", hgRoot, true); //$NON-NLS-1$
 		command.addFiles(patchLocation.getAbsolutePath());
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToString();
 	}
 
-	public static boolean exportPatch(File workDir, List<IResource> resources,
+	/**
+	 * @param hgRoot non null hg root
+	 * @param resources non null set of files to export as diff to the latest state. If the set
+	 * 	is empty, a complete diff of the hg root is exported
+	 * @param patchFile non null target file for the diff
+	 * @param options non null list of options, may be empty
+	 * @throws HgException
+	 */
+	public static boolean exportPatch(HgRoot hgRoot, Set<IPath> resources,
 			File patchFile, ArrayList<String> options) throws HgException {
-		AbstractShellCommand command = new HgCommand(
-				"diff", getWorkingDirectory(workDir), true); //$NON-NLS-1$
-		command.addFiles(resources);
+		AbstractShellCommand command = new HgCommand("diff", hgRoot, true); //$NON-NLS-1$
+		if(resources.size() > 0) {
+			command.addFiles(resources);
+		}
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToFile(patchFile, 0, false);
 	}
@@ -47,7 +58,6 @@ public class HgPatchClient extends AbstractClient {
 	 * export diff file to clipboard
 	 *
 	 * @param resources
-	 * @return
 	 * @throws HgException
 	 */
 	public static String exportPatch(File workDir, List<IResource> resources,

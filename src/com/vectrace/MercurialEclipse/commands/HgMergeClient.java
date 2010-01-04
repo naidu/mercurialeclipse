@@ -11,19 +11,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgMergeClient extends AbstractClient {
 
-	public static String merge(IResource res, String revision, boolean useExternalMergeTool, boolean forced)
+	public static String merge(HgRoot root, String revision, boolean useExternalMergeTool, boolean forced)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("merge", getWorkingDirectory(res), //$NON-NLS-1$
-				false);
-		command
-				.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+		AbstractShellCommand command = new HgCommand("merge", root, false);
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		if (!useExternalMergeTool) {
 			// we use simplemerge, so no tool is started. We
 			// need this option, though, as we still want the Mercurial merge to

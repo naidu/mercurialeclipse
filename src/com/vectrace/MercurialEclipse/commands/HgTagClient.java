@@ -23,6 +23,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.compare.TagComparator;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 /**
@@ -34,6 +35,16 @@ public class HgTagClient extends AbstractClient {
 
 	public static Tag[] getTags(IProject project) throws HgException {
 		AbstractShellCommand command = new HgCommand("tags", project, false); //$NON-NLS-1$
+		command.addOptions("-v"); //$NON-NLS-1$
+		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+
+		Collection<Tag> tags = getTags(lines);
+		Tag[] sortedTags = tags.toArray(new Tag[] {});
+		return sortedTags;
+	}
+
+	public static Tag[] getTags(HgRoot hgRoot) throws HgException {
+		AbstractShellCommand command = new HgCommand("tags", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 
@@ -83,8 +94,8 @@ public class HgTagClient extends AbstractClient {
 		command.executeToBytes();
 	}
 
-	public static String removeTag(IResource res, Tag tag, String user) throws HgException {
-		HgCommand command = new HgCommand("tag", getWorkingDirectory(res), false); //$NON-NLS-1$
+	public static String removeTag(HgRoot hgRoot, Tag tag, String user) throws HgException {
+		HgCommand command = new HgCommand("tag", getWorkingDirectory(hgRoot), false); //$NON-NLS-1$
 		command.addUserName(user);
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());

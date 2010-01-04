@@ -19,7 +19,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -74,7 +73,9 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
@@ -401,17 +402,17 @@ public class MercurialHistoryPage extends HistoryPage {
 			@Override
 			public void run() {
 				try {
-					IProject project = resource.getProject();
-					Assert.isNotNull(project);
-					if (HgStatusClient.isDirty(project)) {
+					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+					Assert.isNotNull(hgRoot);
+					if (HgStatusClient.isDirty(hgRoot)) {
 						if (!MessageDialog
 								.openQuestion(getControl().getShell(),
 										"Uncommited Changes",
-										"Your project has uncommited changes.\nDo you really want to continue?")){
+										"Your hg root has uncommited changes.\nDo you really want to continue?")){
 							return;
 						}
 					}
-					HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
+					HgUpdateClient.update(hgRoot, rev.getChangeSet().getChangeset(), true);
 					refresh();
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);

@@ -108,7 +108,7 @@ public class RevertDialog extends TitleAreaDialog {
 
 	public void setFiles(IResource[] commitResources) {
 		setFiles(Arrays.asList(commitResources));
-		if (commitResources != null && commitResources.length>0) {
+		if (commitResources != null && commitResources.length > 0) {
 			csTable.setResource(commitResources[0]);
 			csTable.setEnabled(true);
 		}
@@ -122,16 +122,10 @@ public class RevertDialog extends TitleAreaDialog {
 		return untrackedSelection;
 	}
 
-	/**
-	 * @return the csTable
-	 */
 	public ChangesetTable getCsTable() {
 		return csTable;
 	}
 
-	/**
-	 * @return
-	 */
 	public ChangeSet getChangeset() {
 		return changeset;
 	}

@@ -9,10 +9,12 @@
  * Bastian Doetsch	implementation (with lots of stuff pulled up from HgCommand)
  *     Andrei Loskutov (Intland) - bug fixes
  *     Adam Berkes (Intland) - bug fixes/restructure
+ *     Zsolt Koppany (Intland) - enhancements
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.BufferedInputStream;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -26,44 +28,67 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
  * @author bastian
- *
  */
 public abstract class AbstractShellCommand extends AbstractClient {
 
 	public static final int DEFAULT_TIMEOUT = 360000;
+
+	private static final int BUFFER_SIZE = 32768;
+
 	// private static final Object executionLock = new Object();
 
-	private static class InputStreamConsumer extends Thread {
+	// should not extend threads directly, should use thread pools or jobs.
+	// In case many threads created at same time, VM can crash or at least get OOM
+	private static class InputStreamConsumer extends Job {
+
+		static {
+			PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
+					MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"),
+					InputStreamConsumer.class);
+		}
+
 		private final InputStream stream;
 		private final OutputStream output;
+		volatile IProgressMonitor monitor2;
+		volatile boolean started;
+		private final Process process;
 
-		public InputStreamConsumer(String name, InputStream stream, OutputStream output) {
+		public InputStreamConsumer(String name, Process process, OutputStream output) {
 			super(name);
+			this.process = process;
 			this.output = output;
-			this.stream = new BufferedInputStream(stream);
+			this.stream = process.getInputStream();
 		}
 
 		@Override
-		public void run() {
+		protected IStatus run(IProgressMonitor monitor) {
+			started = true;
+			monitor2 = monitor;
 			try {
 				int length;
-				byte[] buffer = new byte[8192];
-				while ((length = stream.read(buffer)) != -1) {
+				byte[] buffer = new byte[BUFFER_SIZE];
+				while ((length = stream.read(buffer)) != -1 && !monitor.isCanceled()) {
 					output.write(buffer, 0, length);
 				}
 			} catch (IOException e) {
-				if (!interrupted()) {
+				if (!monitor.isCanceled()) {
 					HgClients.logError(e);
 				}
 			} finally {
@@ -77,27 +102,48 @@ public abstract class AbstractShellCommand extends AbstractClient {
 				} catch (IOException e) {
 					HgClients.logError(e);
 				}
+				if(monitor.isCanceled()) {
+					process.destroy();
+				}
+				monitor2 = null;
 			}
+			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
 		}
+
+		private boolean isAlive() {
+			// job is either not started yet (is scheduled and waiting), or it is not finished or cancelled yet
+			return (!started && getResult() == null) || (monitor2 != null && !monitor2.isCanceled());
+		}
+
+		@Override
+		public boolean belongsTo(Object family) {
+			return InputStreamConsumer.class == family;
+		}
+
 	}
 
 	public static final int MAX_PARAMS = 120;
+
 	protected String command;
 	protected List<String> commands;
 	protected boolean escapeFiles;
 	protected List<String> options;
 	protected File workingDir;
 	protected final List<String> files;
-
 	private String timeoutConstant;
 	private InputStreamConsumer consumer;
 	private Process process;
-	private boolean showOnConsole = true;
+	private boolean showOnConsole;
+	private final boolean debugMode;
+	private final boolean debugExecTime;
 
 	protected AbstractShellCommand() {
 		super();
 		options = new ArrayList<String>();
 		files = new ArrayList<String>();
+		showOnConsole = true;
+		debugMode = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
+		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 	}
 
 	public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
@@ -130,11 +176,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	 *
 	 * @param timeout
 	 *            -1 if no timeout, else the timeout in ms.
-	 * @return
-	 * @throws HgException
 	 */
 	public byte[] executeToBytes(int timeout, boolean expectPositiveReturnValue) throws HgException {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		ByteArrayOutputStream bos = new ByteArrayOutputStream(BUFFER_SIZE);
 		if (executeToStream(bos, timeout, expectPositiveReturnValue)) {
 			return bos.toByteArray();
 		}
@@ -188,27 +232,33 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			// not sure if it is worth...
 			//synchronized (executionLock) {
 				process = builder.start();
-				consumer = new InputStreamConsumer(commandInvoked, process.getInputStream(), output);
-				consumer.start();
-
+				consumer = new InputStreamConsumer(commandInvoked, process, output);
+				long startTime;
+				if(debugExecTime) {
+					startTime = System.currentTimeMillis();
+				} else {
+					startTime = 0;
+				}
+				consumer.schedule();
 				logConsoleCommandInvoked(commandInvoked);
-				consumer.join(timeout); // 30 seconds timeout
+				waitForConsumer(timeout); // 30 seconds timeout
 				msg = getMessage(output);
 				if (!consumer.isAlive()) {
 					final int exitCode = process.waitFor();
 					// everything fine
 					if (exitCode == 0 || !expectPositiveReturnValue) {
-						if (isDebugExecutionTime() || isDebugMode()) {
-							logConsoleCompleted(msg, exitCode, null);
+						if (debugExecTime || debugMode) {
+							long timeInMillis = debugExecTime? System.currentTimeMillis() - startTime : 0;
+							logConsoleCompleted(timeInMillis, msg, exitCode, null);
 						}
 						return true;
 					}
 
 					// exit code > 0
 					final HgException hgex = new HgException(exitCode, getMessage(output));
-
+					long timeInMillis = debugExecTime? System.currentTimeMillis() - startTime : 0;
 					// exit code == 1 usually isn't fatal.
-					logConsoleCompleted(msg, exitCode, hgex);
+					logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
 					throw hgex;
 				}
 			//}
@@ -228,6 +278,24 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			if (process != null) {
 				process.destroy();
 			}
+		}
+	}
+
+	private void waitForConsumer(int timeout) throws InterruptedException {
+		if (timeout <= 0) {
+			throw new IllegalArgumentException("Illegal timeout: " + timeout);
+		}
+		long start = System.currentTimeMillis();
+		long now = 0;
+		while (consumer.isAlive()) {
+			long delay = timeout - now;
+			if (delay <= 0) {
+				break;
+			}
+			synchronized (this){
+				wait(10);
+			}
+			now = System.currentTimeMillis() - start;
 		}
 	}
 
@@ -253,9 +321,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	private void logConsoleCompleted(final String msg, final int exitCode, final HgException hgex) {
+	private void logConsoleCompleted(final long timeInMillis, final String msg, final int exitCode, final HgException hgex) {
 		if (showOnConsole) {
-			getConsole().commandCompleted(exitCode, msg, hgex);
+			getConsole().commandCompleted(exitCode, timeInMillis, msg, hgex);
 		}
 	}
 
@@ -273,16 +341,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			}
 		}
 		return msg;
-	}
-
-	private boolean isDebugMode() {
-		return Boolean
-				.valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG, "false")).booleanValue(); //$NON-NLS-1$
-	}
-
-	private boolean isDebugExecutionTime() {
-		return Boolean
-		.valueOf(HgClients.getPreference(MercurialPreferenceConstants.PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 	}
 
 	public String executeToString() throws HgException {
@@ -355,13 +413,19 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
+	public void addFiles(Set<IPath> paths) {
+		for (IPath path : paths) {
+			files.add(path.toOSString());
+		}
+	}
+
 	public void setUsePreferenceTimeout(String cloneTimeout) {
 		this.timeoutConstant = cloneTimeout;
 	}
 
 	public void terminate() {
 		if (consumer != null) {
-			consumer.interrupt();
+			consumer.cancel();
 		}
 		process.destroy();
 	}

@@ -72,11 +72,6 @@ public class HgCommand extends AbstractShellCommand {
 	}
 
 	@Override
-	protected String getExecutable() {
-		return getHgExecutable();
-	}
-
-	@Override
 	public boolean executeToStream(OutputStream output, int timeout,
 			boolean expectPositiveReturnValue) throws HgException {
 
@@ -86,5 +81,10 @@ public class HgCommand extends AbstractShellCommand {
 		commands = cmd;
 		// delegate to superclass
 		return super.executeToStream(output, timeout, expectPositiveReturnValue);
+	}
+
+	@Override
+	protected String getExecutable() {
+		return getHgExecutable();
 	}
 }

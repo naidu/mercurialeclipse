@@ -22,7 +22,6 @@ import org.eclipse.core.runtime.Assert;
 import org.eclipse.jface.window.Window;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IReusableEditor;
@@ -108,11 +107,12 @@ public class CompareUtils {
 			return;
 		}
 
-		IEditorInput otherInput = editor.getEditorInput();
-		if (!otherInput.equals(compareInput)) {
-			// if editor is currently not open on that input either re-use existing
-			CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
-		}
+		// re-use existing editor enforces Eclipse to re-compare the both sides
+		// even if the compare editor already opened the file. The point is, that the
+		// file may be changed by user after opening the compare editor and so editor
+		// still shows "old" diff state and to be updated. See also issue #10757.
+		CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
+
 		// provide focus to editor
 		workBenchPage.activate(editor);
 	}

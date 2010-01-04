@@ -10,10 +10,9 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.io.IOException;
+import java.io.File;
 
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
@@ -25,7 +24,6 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
 import com.vectrace.MercurialEclipse.menu.Messages;
-import com.vectrace.MercurialEclipse.model.HgFile;
 
 public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	private IStructuredSelection selection;
@@ -59,24 +57,16 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
-
-	@SuppressWarnings("unchecked")
 	public void run(IAction action) {
 		IWorkbenchPart part = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActivePart();
 		if (selection.getFirstElement() instanceof IResource) {
 			IResource firstElement = (IResource)selection.getFirstElement();
+			File file = firstElement.getLocation().toFile();
 			try {
-				HgFile file = new HgFile(firstElement.getLocation().toFile());
-				try {
-					new ShowAnnotationOperation(part, file).run();
-				} catch (Exception e) {
-					MessageDialog.openError(part.getSite().getShell(), Messages.getString("ShowAnnotationHandler.hgSays"), e.getMessage() //$NON-NLS-1$
-							+ Messages.getString("ShowAnnotationHandler.seeErrorLogForMoreDetails")); //$NON-NLS-1$
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (CoreException e) {
-				e.printStackTrace();
+				new ShowAnnotationOperation(part, file).run();
+			} catch (Exception e) {
+				MessageDialog.openError(part.getSite().getShell(), Messages.getString("ShowAnnotationHandler.hgSays"), e.getMessage() //$NON-NLS-1$
+						+ Messages.getString("ShowAnnotationHandler.seeErrorLogForMoreDetails")); //$NON-NLS-1$
 			}
 		}
 	}
