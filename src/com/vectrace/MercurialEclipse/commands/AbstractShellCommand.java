@@ -36,6 +36,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -59,9 +60,15 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	private static class InputStreamConsumer extends Job {
 
 		static {
-			PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
-					MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"),
-					InputStreamConsumer.class);
+			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
+			// we must run this stupid code in the UI thread
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
+							MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"),
+							InputStreamConsumer.class);
+				}
+			});
 		}
 
 		private final InputStream stream;
