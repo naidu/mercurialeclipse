@@ -34,6 +34,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -54,6 +55,8 @@ public class ShelveOperation extends HgOperation {
 	@Override
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
+		File shelveDir = new File(hgRoot, ".hg" + File.separator //$NON-NLS-1$
+				+ "mercurialeclipse-shelve-backups"); //$NON-NLS-1$
 		try {
 			// get modified files
 			monitor.beginTask(Messages.getString("ShelveOperation.shelving"), 5); //$NON-NLS-1$
@@ -78,8 +81,6 @@ public class ShelveOperation extends HgOperation {
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ShelveOperation.shelvingChanges")); //$NON-NLS-1$
 
-				File shelveDir = new File(hgRoot, ".hg" + File.separator //$NON-NLS-1$
-						+ "mercurialeclipse-shelve-backups"); //$NON-NLS-1$
 				boolean mkdir = shelveDir.mkdir();
 				if(!mkdir && !shelveDir.exists()){
 					throw new HgException(Messages.getString("ShelveOperation.error.shelfDirCreateFailed")); //$NON-NLS-1$
@@ -99,6 +100,11 @@ public class ShelveOperation extends HgOperation {
 				HgUpdateClient.update(hgRoot, currRev, true);
 			}
 		} catch (CoreException e) {
+			// cleanup directory which otherwise may contain empty or invalid files and
+			// block next shelve operation to execute
+			if(shelveDir.isDirectory()){
+				ResourceUtils.delete(shelveDir, true);
+			}
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
 		} finally {
 			monitor.done();
