@@ -23,7 +23,11 @@ import java.net.URL;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
@@ -37,7 +41,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 	@Override
 	public void initializeDefaultPreferences() {
-		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 
 		// per default, we use exact the executable we have (if any) on board
 		store.setDefault(USE_BUILT_IN_HG_EXECUTABLE, true);
@@ -45,13 +49,11 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// try to find out, IF we have the built-in hg executable
 		detectAndSetHgExecutable(store);
 
-		store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getHGUsername());
-
 		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
 
 		// "Highest" importance should be default, like "merge conflict"
 		// when having 2 different statuses in a folder it should have the more important one
-		store.setDefault(LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB);
+		store.setDefault(LABELDECORATOR_LOGIC, LABELDECORATOR_LOGIC_HB);
 
 		store.setDefault(RESOURCE_DECORATOR_COMPLETE_STATUS, false);
 		store.setDefault(RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
@@ -77,10 +79,23 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
-		/*
-		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
-		store.setDefault(PreferenceConstants.P_STRING,"Default value");
-		 */
+
+		String defaultUsername = store.getDefaultString(MERCURIAL_USERNAME);
+		if(defaultUsername == null || defaultUsername.length() == 0){
+			// the task below may block UI thread and cause entire system to wait forever
+			// therefore start job execution, with the hope, that the user name is not needed
+			// immediately after startup (usualy it is required by commit/tag/merge etc).
+			Job job = new Job("Detecting hg user name"){
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getHGUsername());
+					return Status.OK_STATUS;
+				}
+			};
+			job.setPriority(Job.INTERACTIVE);
+			job.setSystem(true);
+			job.schedule();
+		}
 	}
 
 	private void detectAndSetHgExecutable(IPreferenceStore store) {
