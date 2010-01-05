@@ -63,7 +63,9 @@ import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -91,6 +93,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private ChangedPathsPage changedPaths;
 	private ChangeSet currentWorkdirChangeset;
 	private OpenMercurialRevisionAction openAction;
+	private Action openEditorAction;
 
 	private final class CompareRevisionAction extends Action {
 
@@ -433,15 +436,27 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 
+		openEditorAction = new Action("Open Version on the Disk") {
+			@Override
+			public void run() {
+				try {
+					IDE.openEditor(getSite().getPage(), (IFile) resource);
+				} catch (PartInitException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		};
+
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
 		Menu menu = menuMgr.createContextMenu(viewer.getTable());
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
 				getOpenAction();
-				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-				menuMgr1.add(openAction);
 				updateOpenActionEnablement();
+				menuMgr1.add(openAction);
+				menuMgr1.add(openEditorAction);
+				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
 				// TODO This is a HACK but I can't get the menu to update on
 				// selection :-(
 				compareAction.setEnabled(compareAction.isEnabled());
@@ -458,7 +473,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		if(openAction != null){
 			return openAction;
 		}
-		openAction = new OpenMercurialRevisionAction("Open");
+		openAction = new OpenMercurialRevisionAction("Open Selected Version");
 		viewer.getTable().addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -540,8 +555,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
 		if (resource == null || resource.getType() != IResource.FILE) {
 			openAction.setEnabled(false);
+			openEditorAction.setEnabled(false);
 		} else {
 			openAction.setEnabled(true);
+			openEditorAction.setEnabled(true);
 		}
 	}
 }

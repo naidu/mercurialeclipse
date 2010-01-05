@@ -319,7 +319,7 @@ public class MercurialUtilities {
 
 		if (username == null || username.equals("")) {
 			// use system username
-			System.getProperty("user.name");
+			username = System.getProperty("user.name");
 		}
 
 		// never return null!
