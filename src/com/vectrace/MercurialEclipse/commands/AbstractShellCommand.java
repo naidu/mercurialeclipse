@@ -290,7 +290,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private void waitForConsumer(int timeout) throws InterruptedException {
 		if (timeout <= 0) {
-			throw new IllegalArgumentException("Illegal timeout: " + timeout);
+			timeout = 1;
 		}
 		long start = System.currentTimeMillis();
 		long now = 0;

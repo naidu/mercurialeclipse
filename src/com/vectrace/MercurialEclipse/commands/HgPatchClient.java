@@ -51,7 +51,7 @@ public class HgPatchClient extends AbstractClient {
 			command.addFiles(resources);
 		}
 		command.addOptions(options.toArray(new String[options.size()]));
-		return command.executeToFile(patchFile, 0, false);
+		return command.executeToFile(patchFile, AbstractShellCommand.DEFAULT_TIMEOUT, false);
 	}
 
 	/**
