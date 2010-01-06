@@ -44,7 +44,6 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// when having 2 different statuses in a folder it should have the more important one
 		store.setDefault(LABELDECORATOR_LOGIC, LABELDECORATOR_LOGIC_HB);
 
-		store.setDefault(RESOURCE_DECORATOR_COMPLETE_STATUS, false);
 		store.setDefault(RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
 		store.setDefault(RESOURCE_DECORATOR_SHOW_CHANGESET, false);
 		store.setDefault(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET, false);
@@ -52,7 +51,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(LOG_BATCH_SIZE, 200);
 		store.setDefault(STATUS_BATCH_SIZE, 10);
 		store.setDefault(COMMIT_MESSAGE_BATCH_SIZE, 10);
-		store.setDefault(ENABLE_FULL_GLOG, false);
+		store.setDefault(ENABLE_FULL_GLOG, true);
 
 		// blue
 		store.setDefault(PREF_CONSOLE_COMMAND_COLOR, "0,0,255"); //$NON-NLS-1$

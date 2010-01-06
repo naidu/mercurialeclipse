@@ -41,7 +41,6 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	private final Map<IProject, Set<IResource>> removed;
 	private final Map<IProject, Set<IResource>> changed;
 	private final Map<IProject, Set<IResource>> added;
-	private final boolean completeStatus;
 	private final boolean autoShare;
 	private final MercurialStatusCache cache;
 	private int resourcesCount;
@@ -52,10 +51,6 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		this.changed = changed;
 		this.added = added;
 		cache = MercurialStatusCache.getInstance();
-		completeStatus = Boolean
-			.valueOf(
-				HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-				"false")).booleanValue(); //$NON-NLS-1$
 		autoShare = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, "false"))
 				.booleanValue();
@@ -143,7 +138,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	}
 
 	private boolean isCompleteStatusRequested() {
-		return completeStatus || resourcesCount > MercurialStatusCache.NUM_CHANGED_FOR_COMPLETE_STATUS;
+		return resourcesCount > MercurialStatusCache.NUM_CHANGED_FOR_COMPLETE_STATUS;
 	}
 
 
