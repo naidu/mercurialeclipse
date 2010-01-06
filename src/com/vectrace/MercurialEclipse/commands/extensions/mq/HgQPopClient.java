@@ -49,7 +49,9 @@ public class HgQPopClient extends AbstractClient {
 			command.addOptions("--force"); //$NON-NLS-1$
 		}
 
-		command.addOptions(patchName);
+		if (patchName != "") {
+			command.addOptions(patchName);
+		}
 		return command.executeToString();
 	}
 }
