@@ -70,6 +70,11 @@ implements IWorkbenchPreferencePage {
 		batchStatusSeditor.setValidRange(1, Integer.MAX_VALUE);
 
 		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.ENABLE_FULL_GLOG,
+				Messages.getString("PerformancePreferencePage.field.enableFullGlog"), //$NON-NLS-1$
+				getFieldEditorParent()));
+
+		addField(new BooleanFieldEditor(
 				MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
 				Messages.getString("PerformancePreferencePage.field.completeStatus"), //$NON-NLS-1$
 				getFieldEditorParent()));

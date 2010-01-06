@@ -15,6 +15,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_SHOW_ALL_TAGS;
+
 import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
@@ -30,11 +32,13 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
 import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -63,6 +67,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
@@ -87,12 +92,12 @@ public class MercurialHistoryPage extends HistoryPage {
 	private IResource resource;
 	private ChangeLogContentProvider changeLogViewContentProvider;
 	private MercurialHistory mercurialHistory;
-	private IFileRevision[] entries;
 	private RefreshMercurialHistory refreshFileHistoryJob;
 	private ChangedPathsPage changedPaths;
 	private ChangeSet currentWorkdirChangeset;
 	private OpenMercurialRevisionAction openAction;
 	private Action openEditorAction;
+	private boolean showTags;
 
 	private final class CompareRevisionAction extends Action {
 
@@ -149,7 +154,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		@Override
 		public boolean isEnabled() {
 			int size = ((IStructuredSelection) viewer.getSelection()).size();
-			return IFile.class.isAssignableFrom(getInput().getClass()) && (size == 1 || size == 2);
+			return size == 1;
 		}
 
 		/**
@@ -173,6 +178,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		public RefreshMercurialHistory(int from) {
 			super("Fetching Mercurial revisions..."); //$NON-NLS-1$
 			this.from = from;
+			setRule(new ExclusiveHistoryRule());
 		}
 
 		@Override
@@ -180,7 +186,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			if (mercurialHistory == null) {
 				return Status.OK_STATUS;
 			}
-
+			mercurialHistory.setEnableExtraTags(showTags);
 			try {
 				mercurialHistory.refresh(monitor, from);
 				currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
@@ -216,13 +222,18 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
-	class ChangeLogContentProvider implements IStructuredContentProvider {
+	static class ChangeLogContentProvider implements IStructuredContentProvider {
+		private IFileRevision[] entries;
+		public ChangeLogContentProvider() {
+			super();
+		}
 
 		public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 			entries = null;
 		}
 
 		public void dispose() {
+			entries = null;
 		}
 
 		public Object[] getElements(Object parent) {
@@ -232,7 +243,6 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			final IFileHistory fileHistory = (IFileHistory) parent;
 			entries = fileHistory.getFileRevisions();
-
 			return entries;
 		}
 	}
@@ -243,19 +253,19 @@ public class MercurialHistoryPage extends HistoryPage {
 		public String getColumnText(Object obj, int index) {
 			String ret;
 
-			if ((obj instanceof MercurialRevision) != true) {
+			if (!(obj instanceof MercurialRevision)) {
 				return "Type Error"; //$NON-NLS-1$
 			}
 
-			MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
-			ChangeSet changeSet = mercurialFileRevision.getChangeSet();
+			MercurialRevision revision = (MercurialRevision) obj;
+			ChangeSet changeSet = revision.getChangeSet();
 
 			switch (index) {
 			case 1:
 				ret = changeSet.toString();
 				break;
 			case 2:
-				ret = changeSet.getTag();
+				ret = revision.getTagsString();
 				break;
 			case 3:
 				ret = changeSet.getBranch();
@@ -281,11 +291,8 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
-	public MercurialHistoryPage(IResource resource) {
+	public MercurialHistoryPage() {
 		super();
-		if (isValidInput(resource)) {
-			this.resource = resource;
-		}
 	}
 
 	public MercurialHistory getMercurialHistory() {
@@ -293,14 +300,52 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	@Override
+	public boolean setInput(Object object) {
+		if (isValidInput(object)) {
+			IResource old = resource;
+			this.resource = (IResource)object;
+			super.setInput(object);
+			if(resource == null || (resource != null && !resource.equals(old))){
+				if(resource != null) {
+					mercurialHistory = new MercurialHistory(resource);
+				} else {
+					mercurialHistory = null;
+				}
+				refresh();
+			}
+			return true;
+		}
+		return false;
+	}
+
+	@Override
 	public boolean inputSet() {
-		mercurialHistory = new MercurialHistory(resource);
-		refresh();
 		return true;
 	}
 
 	@Override
 	public void createControl(Composite parent) {
+		IActionBars actionBars = getHistoryPageSite().getWorkbenchPageSite().getActionBars();
+		IMenuManager actionBarsMenu = actionBars.getMenuManager();
+		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
+		Action toggleShowTags = new Action(Messages.getString("HistoryView.showTags"), //$NON-NLS-1$
+				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) {
+			@Override
+			public void run() {
+				showTags = isChecked();
+				store.setValue(PREF_SHOW_ALL_TAGS, showTags);
+				if(mercurialHistory != null) {
+					refresh();
+				}
+			}
+		};
+		toggleShowTags.setChecked(showTags);
+		actionBarsMenu.add(toggleShowTags);
+		IToolBarManager tbm = actionBars.getToolBarManager();
+		tbm.add(new Separator());
+		tbm.add(toggleShowTags);
+
 		changedPaths = new ChangedPathsPage(this, parent);
 		createTableHistory(changedPaths.getControl());
 		changedPaths.createControl();
@@ -311,6 +356,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				copyToClipboard();
 			}
 		});
+
 	}
 
 	private void createTableHistory(Composite parent) {
@@ -377,22 +423,32 @@ public class MercurialHistoryPage extends HistoryPage {
 		IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
 		Iterator<?> iterator = selection.iterator();
 		StringBuilder text = new StringBuilder();
-		for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
-			text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
+		Table table = viewer.getTable();
+		for(int columnIndex = 1; columnIndex < table.getColumnCount(); columnIndex++) {
+			text.append(table.getColumn(columnIndex).getText()).append('\t');
 		}
 
-		text.append(System.getProperty("line.separator")); //$NON-NLS-1$
+		String crlf = System.getProperty("line.separator");
+		text.append(crlf);
 
 		while(iterator.hasNext()) {
 			Object next = iterator.next();
 			ITableLabelProvider labelProvider = (ITableLabelProvider) viewer.getLabelProvider();
-			for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
+			for(int columnIndex = 1; columnIndex < table.getColumnCount(); columnIndex++) {
 				text.append(labelProvider.getColumnText(next, columnIndex)).append('\t');
 			}
-			text.append(System.getProperty("line.separator")); //$NON-NLS-1$
+			text.append(crlf);
 		}
-		new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()},
-				new Transfer[]{ TextTransfer.getInstance() });
+		Clipboard clipboard = null;
+		try {
+			clipboard = new Clipboard(getSite().getShell().getDisplay());
+			clipboard.setContents(new String[]{text.toString()},
+					new Transfer[]{ TextTransfer.getInstance() });
+		} finally {
+			if(clipboard != null){
+				clipboard.dispose();
+			}
+		}
 	}
 
 	private void contributeActions() {
@@ -507,7 +563,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	public boolean isValidInput(Object object) {
-		return true;
+		return object == null || object instanceof IResource;
 	}
 
 	public ChangeSet getCurrentWorkdirChangeset() {

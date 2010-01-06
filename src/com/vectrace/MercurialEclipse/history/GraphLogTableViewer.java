@@ -71,26 +71,27 @@ public class GraphLogTableViewer extends TableViewer {
 			paint(event, gcs.getAfter(), 2);
 		}
 		final Table table = tableItem.getParent();
-		int from = rev.getChangeSet().getChangesetIndex() - 1;
-		if (tableItem.equals(table.getItems()[table.getItemCount() - 1])
-				&& from != mhp.getMercurialHistory().getBottom() && from >= 0) {
-			MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(from);
-			refreshJob.setRule(new ExclusiveHistoryRule());
-			refreshJob.addJobChangeListener(new JobChangeAdapter(){
-				@Override
-				public void done(IJobChangeEvent event1) {
-					Display.getDefault().asyncExec(new Runnable() {
-						public void run() {
-							if(table.isDisposed()){
-								return;
+		int from = rev.getRevision() - 1;
+		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
+		if (from != lastReqVersion && from >= 0) {
+			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
+				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(from);
+				refreshJob.addJobChangeListener(new JobChangeAdapter(){
+					@Override
+					public void done(IJobChangeEvent event1) {
+						Display.getDefault().asyncExec(new Runnable() {
+							public void run() {
+								if(table.isDisposed()){
+									return;
+								}
+								table.redraw();
+								table.update();
 							}
-							table.redraw();
-							table.update();
-						}
-					});
-				}
-			});
-			mhp.scheduleInPage(refreshJob);
+						});
+					}
+				});
+				mhp.scheduleInPage(refreshJob);
+			}
 		}
 
 		// validate signed changesets
@@ -103,7 +104,7 @@ public class GraphLogTableViewer extends TableViewer {
 			}
 		}
 		if (mhp.getCurrentWorkdirChangeset() != null) {
-			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getRevision().getRevision()) {
+			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getChangesetIndex()) {
 				tableItem.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
 			}
 		}

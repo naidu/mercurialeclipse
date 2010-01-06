@@ -40,6 +40,7 @@ import com.vectrace.MercurialEclipse.utils.StringUtils;
 @SuppressWarnings("restriction")
 public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSet> {
 
+	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private static final IFile[] EMPTY_FILES = new IFile[0];
 	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm Z");
 	public static final Date UNKNOWN_DATE = new Date(0);
@@ -53,7 +54,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private final String branch;
 	private final String user;
 	private final String date;
-	private String tag;
+	private String tagsStr;
 	private FileStatus[] changedFiles;
 	private String description;
 	private String ageDate;
@@ -65,6 +66,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	Direction direction;
 	private final HgRoot hgRoot;
 	Set<IFile> files;
+	private Tag[] tags;
 
 	/**
 	 *  A more or less dummy changeset containing only index and global id. Such
@@ -134,8 +136,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			this.cs = new ChangeSet(revision, changeSet, user, date, branch == null? "" : branch, root);
 		}
 
-		public Builder tag(String tag) {
-			this.cs.tag = tag;
+		public Builder tags(String tags) {
+			this.cs.tagsStr = tags;
 			return this;
 		}
 
@@ -188,13 +190,13 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 	}
 
-	ChangeSet(int changesetIndex, String changeSet, String tag,
+	ChangeSet(int changesetIndex, String changeSet, String tags,
 			String branch, String user, String date, String description,
 			String[] parents, HgRoot root) {
 		this.changesetIndex = changesetIndex;
 		this.changeset = changeSet;
 		this.revision = new HgRevision(changeset, changesetIndex);
-		this.tag = tag;
+		this.tagsStr = tags;
 		this.branch = branch;
 		this.user = user;
 		this.date = date;
@@ -218,12 +220,40 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		return changeset;
 	}
 
-	public String getTag() {
-		if (HgRevision.TIP.getChangeset().equals(tag) && bundleFile != null) {
-			StringBuilder builder = new StringBuilder(tag).append(" [ ").append(repository.toString()).append(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
-			tag = builder.toString();
+	/**
+	 * @return all tags associated with current changeset, separated with spaces. Return value may
+	 *         be an empty string (or even null?)
+	 */
+	public String getTagsString() {
+		if (HgRevision.TIP.getChangeset().equals(tagsStr) && bundleFile != null) {
+			StringBuilder builder = new StringBuilder(tagsStr).append(" [ ").append(repository.toString()).append(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
+			tagsStr = builder.toString();
 		}
-		return tag;
+		return tagsStr;
+	}
+
+	/**
+	 * @return tags array (all tags associated with current changeset). May return empty array, but
+	 *         never null
+	 */
+	public Tag[] getTags(){
+		if(tags == null){
+			if(!StringUtils.isEmpty(tagsStr)) {
+				String[] tagsStrArr = tagsStr.split(" ");
+				List<Tag> tagList = new ArrayList<Tag>();
+				for (String ctag : tagsStrArr) {
+					if(StringUtils.isEmpty(ctag)){
+						continue;
+					}
+					Tag tag = new Tag(ctag, getChangesetIndex(), getChangeset(), false);
+					tagList.add(tag);
+				}
+				if(!tagList.isEmpty()) {
+					tags = tagList.toArray(new Tag[tagList.size()]);
+				}
+			}
+		}
+		return tags != null ? tags : EMPTY_TAGS;
 	}
 
 	public String getBranch() {

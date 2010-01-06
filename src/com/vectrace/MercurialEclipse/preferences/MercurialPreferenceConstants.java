@@ -37,6 +37,9 @@ public class MercurialPreferenceConstants {
 	public static final String RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET = "hg.performance.fileShowsChangesetIncoming"; //$NON-NLS-1$
 	public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
 	public static final String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
+
+	/** do not limit graphical log data to show pretty revision graphs in the history view */
+	public static final String ENABLE_FULL_GLOG = "hg.performance.enableFullGlog"; //$NON-NLS-1$
 	public static final String PREF_SIGCHECK_IN_HISTORY = Messages.getString("MercurialPreferenceConstants.sigcheck.in.history"); //$NON-NLS-1$
 
 	// Timeouts
@@ -78,6 +81,7 @@ public class MercurialPreferenceConstants {
 
 	// history view
 	public static  final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public static  final String PREF_SHOW_ALL_TAGS = "pref_show_alltags"; //$NON-NLS-1$
 	public static final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
 	public static final String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
 	public static final String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$

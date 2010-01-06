@@ -12,13 +12,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
+import org.eclipse.team.core.history.ITag;
+
 import com.vectrace.MercurialEclipse.HgRevision;
 
 /**
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
  * @version $Id$
  */
-public class Tag implements Comparable<Tag> {
+public class Tag implements ITag, Comparable<Tag> {
 	private final static String TIP = HgRevision.TIP.getChangeset();
 
 	/** name of the tag, unique in the repository */
@@ -88,11 +90,11 @@ public class Tag implements Comparable<Tag> {
 
 	public int compareTo(Tag tag) {
 		/* "tip" must be always the first in the collection */
-		if (tag == null || name == null || TIP.equals(name)) {
+		if (tag == null || name == null || isTip()) {
 			return -1;
 		}
 
-		if (TIP.equals(tag.getName())) {
+		if (tag.isTip()) {
 			return 1;
 		}
 
@@ -109,5 +111,9 @@ public class Tag implements Comparable<Tag> {
 			cmp = name.compareTo(tag.getName());
 		}
 		return cmp;
+	}
+
+	public boolean isTip(){
+		return TIP.equals(name);
 	}
 }

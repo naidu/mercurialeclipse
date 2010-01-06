@@ -14,6 +14,8 @@
 
 package com.vectrace.MercurialEclipse.preferences;
 
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -40,39 +42,34 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 
 		// "Highest" importance should be default, like "merge conflict"
 		// when having 2 different statuses in a folder it should have the more important one
-		store.setDefault(MercurialPreferenceConstants.LABELDECORATOR_LOGIC, MercurialPreferenceConstants.LABELDECORATOR_LOGIC_HB);
+		store.setDefault(LABELDECORATOR_LOGIC, LABELDECORATOR_LOGIC_HB);
 
-		store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS, false);
-		store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
-		store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET, false);
-		store.setDefault(MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET, false);
+		store.setDefault(RESOURCE_DECORATOR_COMPLETE_STATUS, false);
+		store.setDefault(RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS, true);
+		store.setDefault(RESOURCE_DECORATOR_SHOW_CHANGESET, false);
+		store.setDefault(RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET, false);
 
-		store.setDefault(MercurialPreferenceConstants.LOG_BATCH_SIZE, 200);
-		store.setDefault(MercurialPreferenceConstants.STATUS_BATCH_SIZE, 10);
-		store.setDefault(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, 10);
+		store.setDefault(LOG_BATCH_SIZE, 200);
+		store.setDefault(STATUS_BATCH_SIZE, 10);
+		store.setDefault(COMMIT_MESSAGE_BATCH_SIZE, 10);
+		store.setDefault(ENABLE_FULL_GLOG, false);
 
 		// blue
-		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR, "0,0,255"); //$NON-NLS-1$
+		store.setDefault(PREF_CONSOLE_COMMAND_COLOR, "0,0,255"); //$NON-NLS-1$
 		// black
-		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR, "0,0,0"); //$NON-NLS-1$
+		store.setDefault(PREF_CONSOLE_MESSAGE_COLOR, "0,0,0"); //$NON-NLS-1$
 		// red
-		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR, "255,0,0"); //$NON-NLS-1$
+		store.setDefault(PREF_CONSOLE_ERROR_COLOR, "255,0,0"); //$NON-NLS-1$
 
-		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, true);
-		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, true);
-		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_PATHS, true);
-		store.setDefault(MercurialPreferenceConstants.PREF_AFFECTED_PATHS_LAYOUT, MercurialPreferenceConstants.LAYOUT_HORIZONTAL);
-		store.setDefault(MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY, false);
-		store.setDefault(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, true);
-
-		/*
-		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");
-		store.setDefault(PreferenceConstants.P_STRING,"Default value");
-		 */
-		store.setDefault(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, 10);
+		store.setDefault(PREF_DECORATE_WITH_COLORS, true);
+		store.setDefault(PREF_SHOW_COMMENTS, true);
+		store.setDefault(PREF_SHOW_PATHS, true);
+		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
+		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
+		store.setDefault(PREF_AUTO_SHARE_PROJECTS, true);
 
 		// must be last entry as it causes some hg activity and so reads from the preferences
-		store.setDefault(MercurialPreferenceConstants.MERCURIAL_USERNAME, MercurialUtilities.getHGUsername());
+		store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getHGUsername());
 	}
 
 	private void detectAndSetHgExecutable(IPreferenceStore store) {
@@ -84,16 +81,16 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		if(url != null){
 			try {
 				url = FileLocator.toFileURL(url);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, new File(url.toURI()).getAbsolutePath());
+				store.setDefault(MERCURIAL_EXECUTABLE, new File(url.toURI()).getAbsolutePath());
 			} catch (IOException e1) {
 				MercurialEclipsePlugin.logError(e1);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
+				store.setDefault(MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 			} catch (URISyntaxException e) {
 				MercurialEclipsePlugin.logError(e);
-				store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
+				store.setDefault(MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 			}
 		} else {
-			store.setDefault(MercurialPreferenceConstants.MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
+			store.setDefault(MERCURIAL_EXECUTABLE, "hg"); //$NON-NLS-1$
 		}
 	}
 
