@@ -139,9 +139,13 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				try {
-					HgQPushClient.push(resource, false, table
-							.getSelection()
-							.getName());
+					Patch patch = table.getSelection();
+					if (patch != null) {
+						HgQPushClient.push(resource, false, patch.getName());
+					} else {
+						HgQPushClient.push(resource, false, "");
+					}
+
 					populateTable();
 					resource.refreshLocal(IResource.DEPTH_INFINITE,
 							new NullProgressMonitor());
@@ -157,9 +161,12 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				try {
-					HgQPopClient.pop(resource, false, table
-							.getSelection()
-							.getName());
+					Patch patch = table.getSelection();
+					if (patch != null) {
+						HgQPopClient.pop(resource, false, patch.getName());
+					} else {
+						HgQPopClient.pop(resource, false, "");
+					}
 					populateTable();
 					resource.refreshLocal(IResource.DEPTH_INFINITE,
 							new NullProgressMonitor());
