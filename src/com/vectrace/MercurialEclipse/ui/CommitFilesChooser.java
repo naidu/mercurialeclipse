@@ -16,11 +16,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.compare.CompareEditorInput;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
@@ -52,6 +54,7 @@ import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.TableColumnSorter;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.dialogs.CommitResource;
 import com.vectrace.MercurialEclipse.dialogs.CommitResourceLabelProvider;
@@ -62,6 +65,7 @@ import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * TODO enable tree/flat view switch
@@ -88,8 +92,12 @@ public class CommitFilesChooser extends Composite {
 		return viewer;
 	}
 
-	public CommitFilesChooser(Composite container, boolean selectable,
-			List<IResource> resources, boolean showUntracked, boolean showMissing, boolean showClean) {
+	public CommitFilesChooser(HgRoot hgRoot, Composite container, boolean selectable, boolean showUntracked, boolean showMissing, boolean showClean) {
+		this(container, selectable, null, showUntracked, showMissing, showClean);
+		setResources(hgRoot);
+	}
+
+	public CommitFilesChooser(Composite container, boolean selectable, List<IResource> resources, boolean showUntracked, boolean showMissing, boolean showClean) {
 		super(container, container.getStyle());
 		this.selectable = selectable;
 		this.showUntracked = showUntracked;
@@ -118,16 +126,14 @@ public class CommitFilesChooser extends Composite {
 			viewer.addFilter(untrackedFilesFilter);
 		}
 
-		setResources(resources);
+		if(resources != null) {
+			setResources(resources);
+		}
 
 		createShowDiffButton(container);
 		createFileSelectionListener();
 
 		makeActions();
-	}
-
-	public void addSelectionChangedListener(ISelectionChangedListener l) {
-		getViewer().addSelectionChangedListener(l);
 	}
 
 	private void createFileSelectionListener() {
@@ -287,7 +293,7 @@ public class CommitFilesChooser extends Composite {
 
 	/**
 	 * Set the resources, and from those select resources, which are tracked by Mercurial
-	 * @param resources
+	 * @param resources non null
 	 */
 	public void setResources(List<IResource> resources) {
 		List<CommitResource> commitResources = createCommitResources(resources);
@@ -317,9 +323,30 @@ public class CommitFilesChooser extends Composite {
 	}
 
 	/**
+	 * Set the all the modified resources from given hg root, and from those select resources, which are tracked by Mercurial
+	 * @param hgRoot non null
+	 */
+	public void setResources(HgRoot hgRoot) {
+		List<IResource> resources = new ArrayList<IResource>();
+		// get the dirty files...
+		try {
+			Set<IPath> dirtyFilePaths = HgStatusClient.getDirtyFilePaths(hgRoot);
+			for (IPath path : dirtyFilePaths) {
+				IFile fileHandle = ResourceUtils.getFileHandle(path);
+				// XXX this would NOT add files which are not under Eclipse control (outside of a project)
+				if(fileHandle != null) {
+					resources.add(fileHandle);
+				}
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		setResources(resources);
+	}
+
+	/**
 	 * Create the Commit-resources' for a set of resources
 	 * @param res
-	 * @return
 	 */
 	private List<CommitResource> createCommitResources(List<IResource> res) {
 		try {

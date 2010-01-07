@@ -15,9 +15,12 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.operation.IRunnableContext;
@@ -117,8 +120,11 @@ public class ExportPatchWizard extends HgWizard {
 			ClipboardUtils.copyToClipboard(HgPatchClient.exportPatch(root,
 					resources, options));
 		} else {
-			HgPatchClient.exportPatch(root, resources, location.getFile(),
-					options);
+			Set<IPath> paths = new HashSet<IPath>();
+			for (IResource resource : resources) {
+				paths.add(resource.getLocation());
+			}
+			HgPatchClient.exportPatch(root, paths, location.getFile(),	options);
 		}
 		if (location.getLocationType() == LocationType.Workspace) {
 			location.getWorkspaceFile().refreshLocal(0, null);

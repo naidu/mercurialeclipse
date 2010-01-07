@@ -105,7 +105,7 @@ public class BookmarkDialog extends TrayDialog {
 		this.bmNameTextBox = SWTWidgetHelper.createTextField(tipGroup);
 		Group revGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.selectRevision")); //$NON-NLS-1$
 		revGroup.setLayoutData(layoutData);
-		this.csTable = new ChangesetTable(revGroup, project, true);
+		this.csTable = new ChangesetTable(revGroup, project);
 		csTable.setLayoutData(layoutData);
 		this.csTable.setEnabled(true);
 

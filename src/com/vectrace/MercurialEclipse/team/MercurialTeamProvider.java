@@ -36,6 +36,7 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -95,9 +96,8 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		HG_ROOTS.put(project, Boolean.FALSE);
 		BRANCH_MAP.remove(project);
 		project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
-		project.setPersistentProperty(ResourceProperties.MERGING, null);
-		project.setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, null);
 		project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
+		HgStatusClient.clearMergeStatus(project);
 	}
 
 	/**

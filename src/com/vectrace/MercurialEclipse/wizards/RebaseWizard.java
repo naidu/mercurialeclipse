@@ -7,38 +7,29 @@
  *
  * Contributors:
  * bastian	implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.RebaseOperation;
 
 /**
  * @author bastian
- *
  */
 public class RebaseWizard extends HgWizard {
 
-	private IResource resource;
+	private final HgRoot hgRoot;
 	private RebasePage rebasePage;
 
-	/**
-	 * @param windowTitle
-	 */
-	public RebaseWizard(IResource res) {
+	public RebaseWizard(HgRoot hgRoot) {
 		super(Messages.getString("RebaseWizard.title")); //$NON-NLS-1$
-		this.resource = res;
+		this.hgRoot = hgRoot;
 		setNeedsProgressMonitor(true);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-	 */
 	@Override
 	public boolean performFinish() {
 		int srcRev = -1;
@@ -60,7 +51,7 @@ public class RebaseWizard extends HgWizard {
 		boolean abort = rebasePage.getAbortRevCheckBox().getSelection();
 		boolean cont = rebasePage.getContinueRevCheckBox().getSelection();
 
-		RebaseOperation op = new RebaseOperation(getContainer(), resource,
+		RebaseOperation op = new RebaseOperation(getContainer(), hgRoot,
 				srcRev, destRev, baseRev, collapse,
 				abort, cont);
 		try {
@@ -77,18 +68,13 @@ public class RebaseWizard extends HgWizard {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.wizard.Wizard#addPages()
-	 */
 	@Override
 	public void addPages() {
 		rebasePage = new RebasePage("RebasePage", Messages.getString("RebaseWizard.rebasePage.title"), //$NON-NLS-1$ //$NON-NLS-2$
 				MercurialEclipsePlugin
 						.getImageDescriptor("wizards/droplets-50.png"), //$NON-NLS-1$
 				Messages.getString("RebaseWizard.rebasePage.description"), //$NON-NLS-1$
-				resource);
+				hgRoot);
 
 		initPage(rebasePage.getDescription(), rebasePage);
 		addPage(rebasePage);

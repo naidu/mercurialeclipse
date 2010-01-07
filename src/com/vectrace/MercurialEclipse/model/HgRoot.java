@@ -61,9 +61,6 @@ public class HgRoot extends File {
 		this.encoding = charset;
 	}
 
-	/**
-	 * @return the encoding
-	 */
 	public Charset getEncoding() {
 		if(encoding == null){
 			setEncoding(Charset.forName(HGENCODING));
@@ -71,9 +68,6 @@ public class HgRoot extends File {
 		return encoding;
 	}
 
-	/**
-	 * @return
-	 */
 	public File getConfig() {
 		if (config == null) {
 			File hgrc = new File(this, ".hg/hgrc");
@@ -97,9 +91,6 @@ public class HgRoot extends File {
 		return null;
 	}
 
-	/**
-	 * @return the fallbackencoding
-	 */
 	public Charset getFallbackencoding() {
 		if(fallbackencoding == null){
 			// set fallbackencoding to windows standard codepage
@@ -135,6 +126,13 @@ public class HgRoot extends File {
 		}
 		// +1 is to remove the file separator / at the start of the relative path
 		return fullPath.substring(getPath().length() + 1);
+	}
+
+	/**
+	 * @return the {@link IPath} object corresponding to this root, never null
+	 */
+	public IPath getIPath() {
+		return path;
 	}
 
 	public IPath toAbsolute(IPath relative){

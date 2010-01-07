@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
+import com.vectrace.MercurialEclipse.menu.PushHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -38,6 +39,7 @@ import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
@@ -185,16 +187,29 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					// pull client does the refresh automatically, no extra job required here
 				} else {
 					HgPushPullClient.push(hgRoot, location, false, changeSet.getChangeset(), Integer.MAX_VALUE);
-					Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-					for (IProject project : projects) {
-						if(opMonitor.isCanceled() || moni.isCanceled()){
-							return Status.CANCEL_STATUS;
-						}
-						new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.OUTGOING).schedule();
-					}
+					new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshJob.OUTGOING).schedule();
 				}
 			} catch (HgException ex) {
 				MercurialEclipsePlugin.logError(ex);
+				if(!isPull){
+					// try to recover: open the default dialog, where user can change some
+					// settings like password/force flag etc (issue #10720)
+					final Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+					MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
+						public void run() {
+							if(projects.isEmpty()){
+								return;
+							}
+							try {
+								// push needs one project, it doesn't matter which one
+								// it must be just from same hg root
+								new PushHandler().run(projects.iterator().next());
+							} catch (Exception e) {
+								MercurialEclipsePlugin.logError(e);
+							}
+						}
+					});
+				}
 				return ex.getStatus();
 			} finally {
 				opMonitor.done();

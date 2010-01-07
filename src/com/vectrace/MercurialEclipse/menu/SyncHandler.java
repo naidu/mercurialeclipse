@@ -11,6 +11,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
+import java.util.List;
+
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -18,12 +20,12 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.wizards.MercurialParticipantSynchronizeWizard;
 
-public class SyncHandler extends SingleResourceHandler {
+public class SyncHandler extends MultipleResourcesHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
+	protected void run(List<IResource> resources) throws Exception {
 		MercurialParticipantSynchronizeWizard wizard = new MercurialParticipantSynchronizeWizard();
-		wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(resource));
+		wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(resources));
 		if(wizard.isComplete()){
 			wizard.performFinish();
 		} else {
