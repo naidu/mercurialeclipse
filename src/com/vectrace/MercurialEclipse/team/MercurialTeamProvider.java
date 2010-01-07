@@ -24,7 +24,9 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IResourceRuleFactory;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
+import org.eclipse.core.resources.team.ResourceRuleFactory;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ListenerList;
@@ -68,6 +70,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	private MercurialHistoryProvider FileHistoryProvider;
 
 	private static final ListenerList branchListeners = new ListenerList(ListenerList.IDENTITY);
+
+	/** @see #getRuleFactory() */
+	private IResourceRuleFactory resourceRuleFactory;
 
 	public MercurialTeamProvider() {
 		super();
@@ -332,4 +337,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	public boolean canHandleLinkedResourceURI() {
 		return canHandleLinkedResources();
 	}
+
+    /**
+     * Overrides the default pessimistic resource rule factory which locks the workspace for all
+     * operations. This causes problems when opening a project. This method returns the default
+     * non-pessimistic resource rule factory which locks on a finer level.
+     */
+    @Override
+    public IResourceRuleFactory getRuleFactory() {
+        if (resourceRuleFactory == null) {
+            resourceRuleFactory = new ResourceRuleFactory() {};
+        }
+        return resourceRuleFactory;
+    }
 }
