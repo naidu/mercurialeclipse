@@ -88,6 +88,7 @@ public class HgTagClient extends AbstractClient {
 		HgCommand command = new HgCommand("tag", getWorkingDirectory(res), false); //$NON-NLS-1$
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());
+		command.addOptions("-u", command.getDefaultUserName());
 		return command.executeToString();
 	}
 }
