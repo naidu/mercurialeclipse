@@ -35,7 +35,6 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
@@ -115,35 +114,35 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		if(context == null){
 			return;
 		}
-				boolean changed = false;
-				MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
-				for (IPath path : paths) {
-					if(path.segmentCount() < 2){
-						continue;
+		boolean changed = false;
+		MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
+		for (IPath path : paths) {
+			if(path.segmentCount() < 2){
+				continue;
+			}
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			IProject project = root.getProject(path.segment(0));
+			if(project == null || !projects.contains(project)){
+				continue;
+			}
+			IResource res = project.findMember(path.removeFirstSegments(1));
+			// only allow to hide files which are dirty
+			if(res instanceof IFile && !statusCache.isClean(res)){
+				IFile file = (IFile) res;
+				synchronized (files) {
+					if(files.contains(file)){
+						context.hide(file);
+						files.remove(file);
+						changed = true;
 					}
-					IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-					IProject project = root.getProject(path.segment(0));
-					if(project == null || !projects.contains(project)){
-						continue;
-					}
-					IResource res = project.findMember(path.removeFirstSegments(1));
-					// only allow to hide files which are dirty
-					if(res instanceof IFile && !statusCache.isClean(res)){
-						IFile file = (IFile) res;
-						synchronized (files) {
-							if(files.contains(file)){
-								context.hide(file);
-								files.remove(file);
-								changed = true;
-							}
-						}
-					}
-				}
-				if(changed){
-					updateRequired = true;
-					endInput(null);
 				}
 			}
+		}
+		if(changed){
+			updateRequired = true;
+			endInput(null);
+		}
+	}
 
 	public void addListener(IPropertyChangeListener listener){
 		if(!listeners.contains(listener)) {
@@ -194,31 +193,23 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		notifyListeners();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object arg) {
-		if(arg == null){
-			update(projects);
-			return;
-		}
-		if (!(arg instanceof Set)) {
-			return;
-		}
-		Set<IResource> changed = (Set<IResource>) arg;
-		update(ResourceUtils.groupByProject(changed).keySet());
+		update(projects);
+		return;
 	}
 
 	private void update(Set<IProject> projectSet){
-				boolean changed = false;
-				try {
-					beginInput();
-					clear();
-					for (IProject project : projectSet) {
-						changed |= update(project);
-					}
-				} finally {
-					updateRequired |= changed;
-					endInput(null);
-				}
+		boolean changed = false;
+		try {
+			beginInput();
+			clear();
+			for (IProject project : projectSet) {
+				changed |= update(project);
+			}
+		} finally {
+			updateRequired |= changed;
+			endInput(null);
+		}
 	}
 
 	private boolean update(IProject project){

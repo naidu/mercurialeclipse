@@ -17,21 +17,10 @@ package com.vectrace.MercurialEclipse.commands;
  */
 public interface IConsole {
 
-	/**
-	 * @param command
-	 */
 	void commandInvoked(String command);
 
-	/**
-	 * @param status
-	 * @param error
-	 */
-	void commandCompleted(int exitCode, String message, Throwable error);
+	void commandCompleted(int exitCode, long timeInMillis, String message, Throwable error);
 
-	/**
-	 * @param string
-	 * @param hgEx
-	 */
 	void printError(String message, Throwable root);
 
 	void printMessage(String message, Throwable root);

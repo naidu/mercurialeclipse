@@ -70,6 +70,7 @@ public class MercurialHistory extends FileHistory {
 				result = o2.getChangeSet().getRealDate().compareTo(
 						o1.getChangeSet().getRealDate());
 			}
+
 			return result;
 		}
 	}
@@ -101,11 +102,11 @@ public class MercurialHistory extends FileHistory {
 	 * @return a next revision int the history: revision wich is the successor of the given one (has
 	 *         higher rev number)
 	 */
-	public MercurialRevision getNext(MercurialRevision prev) {
+	public MercurialRevision getNext(MercurialRevision prev){
 		// revisions are sorted descending: first has the highest rev number
 		for (int i = 0; i < revisions.size(); i++) {
 			if (revisions.get(i) == prev) {
-				if (i > 0) {
+				if(i > 0){
 					return revisions.get(i - 1);
 				}
 			}
@@ -118,7 +119,7 @@ public class MercurialHistory extends FileHistory {
 	 * @return a previous revision int the history: revision wich is the ancestor of the given one
 	 *         (has lower rev number)
 	 */
-	public MercurialRevision getPrev(MercurialRevision next) {
+	public MercurialRevision getPrev(MercurialRevision next){
 		// revisions are sorted descending: first has the highest rev number
 		for (int i = 0; i < revisions.size(); i++) {
 			if (revisions.get(i) == next) {

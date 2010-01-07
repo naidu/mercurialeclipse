@@ -11,8 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import java.util.Set;
-
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
@@ -24,7 +22,7 @@ import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.wizards.TransplantWizard;
 
 public class TransplantHandler extends SingleResourceHandler {
@@ -36,18 +34,16 @@ public class TransplantHandler extends SingleResourceHandler {
 		WizardDialog transplantWizardDialog = new WizardDialog(getShell(), transplantWizard);
 		int result = transplantWizardDialog.open();
 		if (result == Window.OK) {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
-			for (final IProject iProject : projects) {
-				RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-				job.addJobChangeListener(new JobChangeAdapter(){
-				   @Override
-					public void done(IJobChangeEvent event) {
-						new RefreshJob("Refreshing " + iProject.getName(), iProject, RefreshJob.LOCAL_AND_OUTGOING).schedule();
-					}
-				});
-				job.schedule();
-			}
+			final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+
+			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
+			job.addJobChangeListener(new JobChangeAdapter(){
+			@Override
+				public void done(IJobChangeEvent event) {
+					new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshJob.LOCAL_AND_OUTGOING).schedule();
+				}
+			});
+			job.schedule();
 		}
 	}
 

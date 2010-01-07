@@ -14,19 +14,27 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
@@ -57,6 +65,15 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToString();
 	}
 
+	public static String getStatusWithoutIgnored(HgRoot root) throws HgException {
+		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
+
+		// modified, added, removed, deleted, unknown, ignored, clean
+		command.addOptions("-marduc"); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+		return command.executeToString();
+	}
+
 	public static String[] getUntrackedFiles(IContainer root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -69,13 +86,6 @@ public class HgStatusClient extends AbstractClient {
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
 		command.addFiles(resources);
-		return command.executeToBytes().length != 0;
-	}
-
-	public static boolean isDirty(IProject project) throws HgException {
-		AbstractShellCommand command = new HgCommand("status", project, true); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		command.addOptions("-mard");// modified, added, removed, deleted //$NON-NLS-1$
 		return command.executeToBytes().length != 0;
 	}
 
@@ -93,6 +103,23 @@ public class HgStatusClient extends AbstractClient {
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		String versionIds = command.executeToString().trim();
 
+		Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE); //$NON-NLS-1$
+		Matcher m = p.matcher(versionIds);
+		if(m.matches()) {
+			return m.group(1);
+		}
+		return null;
+	}
+
+	public static String getMergeStatus(HgRoot root) throws HgException {
+		AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
+		// Full global IDs
+		command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
+		String versionIds = command.executeToString().trim();
+		// expected output:
+		// b63617c1e3460bd87eb51d2b8841b37fff1834d6+00838f86e1024072e715d31f477262d5162acd09+
+		// match second part (the one we merge with)
 		Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE); //$NON-NLS-1$
 		Matcher m = p.matcher(versionIds);
 		if(m.matches()) {
@@ -130,6 +157,18 @@ public class HgStatusClient extends AbstractClient {
 			status[i] = status[i].substring(2);
 		}
 		return status;
+	}
+
+	public static Set<IPath> getDirtyFilePaths(HgRoot root) throws HgException {
+		String[] dirtyFiles = getDirtyFiles(root);
+		IPath rootPath = new Path(root.getAbsolutePath());
+		Set<IPath> resources = new HashSet<IPath>();
+		for (String rootRelativePath : dirtyFiles) {
+			// determine absolute path
+			IPath path = rootPath.append(rootRelativePath);
+			resources.add(path);
+		}
+		return resources;
 	}
 
 	/**
@@ -212,6 +251,68 @@ public class HgStatusClient extends AbstractClient {
 					}
 				}
 			}
+		}
+		return null;
+	}
+
+	public static void clearMergeStatus(HgRoot hgRoot) throws CoreException {
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		for (IProject project : projects) {
+			clearMergeStatus(project);
+		}
+	}
+
+	public static void clearMergeStatus(IProject project) throws CoreException {
+		// clear merge status in Eclipse
+		project.setPersistentProperty(ResourceProperties.MERGING, null);
+		// triggers the decoration update
+		project.touch(null);
+	}
+
+	public static void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) throws CoreException {
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		for (IProject project : projects) {
+			// clear merge status in Eclipse
+			setMergeStatus(project, mergeChangesetId);
+		}
+	}
+
+	public static void setMergeStatus(IProject project, String mergeChangesetId) throws CoreException {
+		// clear merge status in Eclipse
+		project.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
+		// triggers the decoration update
+		project.touch(null);
+	}
+
+	public static boolean isMergeInProgress(IResource res) {
+		return getMergeChangesetId(res.getProject()) != null;
+	}
+
+	public static boolean isMergeInProgress(HgRoot hgRoot) {
+		return getMergeChangesetId(hgRoot) != null;
+	}
+
+	/**
+	 * @param project non null
+	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
+	 */
+	public static String getMergeChangesetId(IProject project) {
+		try {
+			return project.getPersistentProperty(ResourceProperties.MERGING);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		return null;
+	}
+
+	/**
+	 * @param hgRoot non null
+	 * @return the version:short_changeset_id OR full_changeset_id string if the root is being merged, otherwise null
+	 */
+	public static String getMergeChangesetId(HgRoot hgRoot) {
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		if(!projects.isEmpty()) {
+			return getMergeChangesetId(projects.iterator().next());
 		}
 		return null;
 	}

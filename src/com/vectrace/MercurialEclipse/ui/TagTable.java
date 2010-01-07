@@ -12,7 +12,14 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
-import org.eclipse.core.resources.IProject;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -25,27 +32,30 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
  * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
  */
 public class TagTable extends Composite {
 	private final static Font PARENT_FONT = JFaceResources.getFontRegistry().getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;
 	private int[] parents;
-	private boolean showTip = true;
+	private boolean showTip;
 
-	private final IProject project;
+	private final HgRoot hgRoot;
 
-	public TagTable(Composite parent, IProject project) {
+	public TagTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
-		this.project = project;
+		showTip = true;
+		this.hgRoot = hgRoot;
 
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
@@ -75,7 +85,7 @@ public class TagTable extends Composite {
 
 	public void setTags(Tag[] tags) {
 		table.removeAll();
-		LocalChangesetCache cache = LocalChangesetCache.getInstance();
+
 		for (Tag tag : tags) {
 			if (showTip || !HgRevision.TIP.getChangeset().equals(tag.getName())) {
 				TableItem row = new TableItem(table, SWT.NONE);
@@ -87,13 +97,69 @@ public class TagTable extends Composite {
 				row.setText(2, tag.getName());
 				row.setText(3, tag.isLocal() ? Messages.getString("TagTable.stateLocal")  //$NON-NLS-1$
 						: Messages.getString("TagTable.stateGlobal")); //$NON-NLS-1$
-				ChangeSet changeSet = cache.getChangesetById(project, tag.getRevision() + ":" + tag.getGlobalId());
-				if(changeSet != null){
-					row.setText(4, changeSet.getSummary());
-				}
 				row.setData(tag);
 			}
 		}
+		fetchChangesetInfo(tags);
+	}
+
+	void fetchChangesetInfo(final Tag[] tags) {
+		final LocalChangesetCache cache = LocalChangesetCache.getInstance();
+		Job fetchJob = new Job("Fetching hg changesets info") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				// this can cause UI hang for big projects. Should be done in a job.
+				// the only reason we need this is to show the changeset comments, so we can complete
+				// this data in background
+				Map<String, ChangeSet> tagged = new HashMap<String, ChangeSet>();
+				try {
+					Set<ChangeSet> allLocalRevisions = cache.refreshAllLocalRevisions(hgRoot, false, false);
+					for (ChangeSet cs : allLocalRevisions) {
+						if(monitor.isCanceled()) {
+							return Status.CANCEL_STATUS;
+						}
+						if(cs.getTagsString() != null && cs.getTagsString().length() > 0) {
+							Tag[] csTags = cs.getTags();
+							for (Tag tag : csTags) {
+								tagged.put(tag.getName(), cs);
+							}
+						}
+					}
+				} catch (HgException e1) {
+					MercurialEclipsePlugin.logError(e1);
+				}
+				final Map<Tag, ChangeSet> tagToCs = new HashMap<Tag, ChangeSet>();
+				for (Tag tag : tags) {
+					if(monitor.isCanceled()) {
+						return Status.CANCEL_STATUS;
+					}
+					if (showTip || !tag.isTip()) {
+						ChangeSet changeSet = tagged.get(tag.getName());
+						if(changeSet != null) {
+							tagToCs.put(tag, changeSet);
+						}
+					}
+				}
+
+				Runnable updateTable = new Runnable() {
+					public void run() {
+						if(table.isDisposed()) {
+							return;
+						}
+						TableItem[] items = table.getItems();
+						for (TableItem item : items) {
+							Object tag = item.getData();
+							if (tag instanceof Tag && tagToCs.get(tag) != null) {
+								item.setText(4, tagToCs.get(tag).getSummary());
+							}
+						}
+					}
+				};
+				MercurialEclipsePlugin.getStandardDisplay().asyncExec(updateTable);
+				return Status.OK_STATUS;
+			}
+		};
+		fetchJob.schedule();
 	}
 
 	public Tag getSelection() {

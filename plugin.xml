@@ -413,7 +413,7 @@
                  class="com.vectrace.MercurialEclipse.menu.SyncHandler">
             <enabledWhen>
                 <and>
-                    <count value="1"/>
+                    <count value="+"/>
                 </and>
             </enabledWhen>
         </handler>

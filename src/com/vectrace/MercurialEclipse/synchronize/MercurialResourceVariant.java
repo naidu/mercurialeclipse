@@ -30,7 +30,7 @@ public class MercurialResourceVariant implements IResourceVariant {
 	}
 
 	public String getContentIdentifier() {
-		return rev.getGlobal();
+		return rev.getRevision() + ":" + rev.getGlobal();
 	}
 
 	public String getName() {

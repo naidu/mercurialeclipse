@@ -11,9 +11,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Observable;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -32,6 +35,7 @@ import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -53,6 +57,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class AbstractCache extends Observable {
 
+	protected static final SortedSet<ChangeSet> EMPTY_SET = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 
 	protected final boolean debug;
 
@@ -95,7 +100,7 @@ public abstract class AbstractCache extends Observable {
 			IProject project = (IProject) res;
 			if(delta.getKind() == IResourceDelta.REMOVED ||
 					((delta.getFlags() & IResourceDelta.OPEN) != 0 && !project.isOpen())){
-				clearProjectCache(project);
+				projectDeletedOrClosed(project);
 			}
 			return false;
 		}
@@ -105,7 +110,7 @@ public abstract class AbstractCache extends Observable {
 	/**
 	 * Clients has cleanup all caches related to given project.
 	 */
-	abstract protected void clearProjectCache(IProject project);
+	abstract protected void projectDeletedOrClosed(IProject project);
 
 	/**
 	 * does nothing, clients has to override and update preferences

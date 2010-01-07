@@ -185,7 +185,7 @@ public class QImportWizardPage extends HgWizardPage {
 		gridData.minimumHeight = 50;
 		this.changesetTable = new ChangesetTable(revGroup,
 				SWT.MULTI | SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-						| SWT.H_SCROLL, resource);
+						| SWT.H_SCROLL, resource, true);
 		this.changesetTable.setLayoutData(gridData);
 		this.changesetTable.setEnabled(false);
 

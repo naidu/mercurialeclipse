@@ -44,6 +44,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -265,5 +266,10 @@ public class HgCommitMessageManager extends DefaultHandler {
 			return HgClients.getDefaultUserName();
 		}
 		return repoLocation.getUser();
+	}
+
+	public static String getDefaultCommitName(HgRoot root) {
+		// TODO see issue 10150: get the name from project/root properties, not from repo
+		return HgClients.getDefaultUserName();
 	}
 }

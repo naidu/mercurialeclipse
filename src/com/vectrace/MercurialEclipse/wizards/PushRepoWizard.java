@@ -39,7 +39,6 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -207,19 +206,23 @@ public class PushRepoWizard extends HgWizard {
 
 		// It appears good. Stash the repo location.
 		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
-		Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 		if(isForest){
 			IncomingChangesetCache.getInstance().clear(repo);
 			OutgoingChangesetCache.getInstance().clear(repo);
 		} else {
+			IncomingChangesetCache.getInstance().clear(hgRoot, true);
+			OutgoingChangesetCache.getInstance().clear(hgRoot, true);
 			for (IProject iProject : projects) {
-				IncomingChangesetCache.getInstance().clear(repo, iProject, true);
-				OutgoingChangesetCache.getInstance().clear(repo, iProject, true);
+//				IncomingChangesetCache.getInstance().clear(repo, iProject, true);
+//				OutgoingChangesetCache.getInstance().clear(repo, iProject, true);
 			}
 		}
-		for (IProject iProject : projects) {
-			MercurialStatusCache.getInstance().refreshStatus(iProject, null);
-		}
+		// XXX why do we need a local status update if we only push here????
+//		for (IProject iProject : projects) {
+//			MercurialStatusCache.getInstance().refreshStatus(iProject, null);
+//		}
 	}
 
 }

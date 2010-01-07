@@ -13,13 +13,16 @@ package com.vectrace.MercurialEclipse.menu;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.wizards.RebaseWizard;
 
 public class RebaseHandler extends SingleResourceHandler {
 
 	@Override
 	protected void run(IResource resource) throws Exception {
-		RebaseWizard wizard = new RebaseWizard(resource);
+		final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
+		RebaseWizard wizard = new RebaseWizard(hgRoot);
 		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 		wizardDialog.open();
 	}

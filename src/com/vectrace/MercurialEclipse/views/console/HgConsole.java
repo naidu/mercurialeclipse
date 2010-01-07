@@ -13,9 +13,6 @@ package com.vectrace.MercurialEclipse.views.console;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.runtime.CoreException;
@@ -56,19 +53,12 @@ public class HgConsole extends MessageConsole {
 	private final static Pattern SSH_PATTERN = Pattern.compile(SSH_PATTERN_STRING);
 	private final static Pattern SVN_PATTERN = Pattern.compile(SVN_PATTERN_STRING);
 
-	/** used to time the commands*/
-	private long commandStarted = 0;
-
 	/** streams for each command type - each stream has its own color */
 	private MessageConsoleStream commandStream;
 	private MessageConsoleStream messageStream;
 	private MessageConsoleStream errorStream;
 
 	private final ConsoleDocument document;
-
-	/** format for timings printed to console. Not static to avoid thread issues*/
-	private final DateFormat TIME_FORMAT = new SimpleDateFormat("m:ss.SSS"); //$NON-NLS-1$
-
 
 	/** Indicates whether the console is visible in the Console view */
 	private boolean visible;
@@ -226,7 +216,6 @@ public class HgConsole extends MessageConsole {
 	}
 
 	public void commandInvoked(String line) {
-		commandStarted = System.currentTimeMillis();
 		appendLine(ConsoleDocument.COMMAND, line);
 	}
 
@@ -242,8 +231,8 @@ public class HgConsole extends MessageConsole {
 		return debugTimeEnabled;
 	}
 
-	public void commandCompleted(IStatus status, Throwable exception) {
-		String time = getTimeString();
+	public void commandCompleted(long timeInMillis, IStatus status, Throwable exception) {
+		String time = getTimeString(timeInMillis);
 		if (status != null) {
 			if(status.getSeverity() == IStatus.ERROR) {
 				printStatus(status, time, false);
@@ -281,20 +270,19 @@ public class HgConsole extends MessageConsole {
 
 	/**
 	 *
+	 * @param timeInMillis
 	 * @return empty string if time measurement was not enabled or we are failed to measure it
 	 */
-	private String getTimeString() {
+	private String getTimeString(long timeInMillis) {
 		if(!isDebugTimeEnabled()){
 			return "";
 		}
 		String time;
-		long commandRuntime = System.currentTimeMillis() - commandStarted;
 		try {
-			time = Messages.getString("HgConsole.doneIn") + TIME_FORMAT.format(new Date(commandRuntime)) //$NON-NLS-1$
-					+ Messages.getString("HgConsole.minutes"); //$NON-NLS-1$
+			time = String.format("Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
 		} catch (RuntimeException e) {
 			MercurialEclipsePlugin.logError(e);
-			time = ""; // Messages.getString("HgConsole.unknown"); //$NON-NLS-1$
+			time = "";
 		}
 		return time;
 	}
