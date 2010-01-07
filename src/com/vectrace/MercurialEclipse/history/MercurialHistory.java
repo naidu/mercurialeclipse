@@ -143,7 +143,7 @@ public class MercurialHistory extends FileHistory {
 	}
 
 	public IFileRevision getFileRevision(String id) {
-		if (revisions.size() == 0) {
+		if (revisions.isEmpty()) {
 			return null;
 		}
 
@@ -280,8 +280,11 @@ public class MercurialHistory extends FileHistory {
 		int start = 0;
 		// sorted ascending by revision
 		for (Tag tag : tags) {
-			start = getFirstMatchingRevision(tag, start);
-			revisions.get(start).addTag(tag);
+			int matchingRevision = getFirstMatchingRevision(tag, start);
+			if(matchingRevision >= 0){
+				start = matchingRevision;
+				revisions.get(start).addTag(tag);
+			}
 		}
 	}
 
@@ -290,7 +293,7 @@ public class MercurialHistory extends FileHistory {
 	 *            tag to serach for
 	 * @param start
 	 *            start index in the revisions array
-	 * @return first matching revision index in the revisions array, or start index if no one
+	 * @return first matching revision index in the revisions array, or -1 if no one
 	 *         revision matches given tag
 	 */
 	private int getFirstMatchingRevision(Tag tag, int start) {
@@ -303,9 +306,10 @@ public class MercurialHistory extends FileHistory {
 			if(revision == tagRev){
 				return i;
 			}
-			// if tag rev is greater as greatest (first) revision, return
+			// if tag rev is greater as greatest (first) revision, return -1 because
+			// there can be no other version which match given tags
 			if(i == 0 && tagRev > revision){
-				return 0;
+				return -1;
 			}
 			// if tag rev is smaller as smallest (last) revision, return
 			if(i == lastRev && tagRev < revision){
@@ -316,12 +320,12 @@ public class MercurialHistory extends FileHistory {
 				return i - 1;
 			}
 		}
-		return start;
+		return -1;
 	}
 
 	private void updateGraphData(SortedSet<ChangeSet> changeSets, int logBatchSize, int from,
 			boolean enableFullLog) {
-		if(enableFullLog && !gChangeSets.isEmpty()){
+		if(enableFullLog && !gChangeSets.isEmpty() || resource.getType() == IResource.FOLDER){
 			return;
 		}
 		logBatchSize = enableFullLog? 0 : logBatchSize;

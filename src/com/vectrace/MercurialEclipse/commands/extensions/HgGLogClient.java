@@ -50,13 +50,17 @@ public class HgGLogClient extends HgCommand {
 			addOptions(startRev + ":" + 0);
 		}
 
-		if (resource.getType() != IResource.PROJECT) {
+		if (resource.getType() == IResource.FILE) {
 			addOptions(fileHandle.getAbsolutePath());
 		} else {
+			if (resource.getType() != IResource.PROJECT){
+				// glog doesn't follow directories
+				return;
+			}
 			HgRoot hgRoot = getHgRoot();
 			if(!hgRoot.equals(fileHandle)){
-				// for multiple projects under same hg root we should return only current project history
-				addOptions(fileHandle.getAbsolutePath());
+				// multiple projects under same hg root handled by glog as directories
+				return;
 			}
 		}
 		setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
