@@ -46,7 +46,7 @@ public class MercurialHistoryPageSource extends HistoryPageSource {
 	}
 
 	public Page createPage(Object object) {
-		return new MercurialHistoryPage(ResourceUtils.getResource(object));
+		return new MercurialHistoryPage();
 	}
 
 

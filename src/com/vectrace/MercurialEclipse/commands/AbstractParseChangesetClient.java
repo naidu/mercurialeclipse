@@ -144,7 +144,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 
 
 				ChangeSet.Builder csb = new ChangeSet.Builder(rv, nl, br, di, unescape(au), hgRoot);
-				csb.tag(tg);
+				csb.tags(tg);
 				csb.nodeShort(ns);
 				csb.ageDate(da);
 				csb.description(untab(unescape(de)));

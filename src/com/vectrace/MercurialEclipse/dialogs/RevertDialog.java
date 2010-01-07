@@ -44,6 +44,7 @@ public class RevertDialog extends TitleAreaDialog {
 	public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
 	public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
 	public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
 
 	/**
 	 * Create the dialog
@@ -75,7 +76,7 @@ public class RevertDialog extends TitleAreaDialog {
 	}
 
 	private void createFilesList(Composite container) {
-		selectFilesList = new CommitFilesChooser(container, true, resources, true, true);
+		selectFilesList = new CommitFilesChooser(container, true, resources, true, true, true);
 	}
 
 	public void setFiles(List<IResource> resources) {
@@ -85,7 +86,11 @@ public class RevertDialog extends TitleAreaDialog {
 
 	@Override
 	protected void okPressed() {
-		selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+		if(resources.size() != 1) {
+			selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+		} else {
+			selection = selectFilesList.getCheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED, FILE_REMOVED, FILE_CLEAN);
+		}
 		untrackedSelection = selectFilesList.getCheckedResources(FILE_UNTRACKED);
 		changeset = csTable.getSelection();
 

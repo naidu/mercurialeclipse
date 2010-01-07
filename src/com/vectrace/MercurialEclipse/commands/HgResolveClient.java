@@ -70,7 +70,7 @@ public class HgResolveClient extends AbstractClient {
 	 * Mark a resource as resolved ("R")
 	 */
 	public static String markResolved(IFile ifile) throws HgException {
-		File file = ifile.getLocation().toFile();
+		File file = ResourceUtils.getFileHandle(ifile);
 		try {
 			AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
 					getWorkingDirectory(file), false);
@@ -78,6 +78,21 @@ public class HgResolveClient extends AbstractClient {
 					.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 			command.addOptions("-m", file.getCanonicalPath()); //$NON-NLS-1$
 			String result = command.executeToString();
+			// cleanup .orig files left after merge
+			File orig_file = new File(file.getAbsolutePath() + ".orig");
+			if(orig_file.isFile()){
+				IResource file_to_delete = ResourceUtils.convert(orig_file);
+				boolean deleted = orig_file.delete();
+				if(!deleted){
+					MercurialEclipsePlugin.logInfo("Failed to cleanup " + orig_file + " file after merge", null);
+				} else {
+					try {
+						file_to_delete.refreshLocal(IResource.DEPTH_ZERO, null);
+					} catch (CoreException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			}
 			refreshStatus(ifile);
 			return result;
 		} catch (IOException e) {

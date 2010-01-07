@@ -60,6 +60,10 @@ public class TagDialog extends Dialog {
 	boolean forced;
 	boolean local;
 
+	private Text userTextField;
+
+	private String user;
+
 	public TagDialog(Shell parentShell, IProject project) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
@@ -104,6 +108,21 @@ public class TagDialog extends Dialog {
 		return data;
 	}
 
+	private void createUserCommitText(Composite container) {
+		Composite comp = SWTWidgetHelper.createComposite(container, 2);
+		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
+		this.userTextField = SWTWidgetHelper.createTextField(comp);
+		// TODO provide an option to either use default commit name OR project specific one
+		// See issue #10240: Wrong author is used in synchronization commit message
+//        if (user == null || user.length() == 0) {
+//            user = HgCommitMessageManager.getDefaultCommitName(project);
+//        }
+		if (user == null || user.length() == 0) {
+			user = HgClients.getDefaultUserName();
+		}
+		this.userTextField.setText(user);
+	}
+
 	protected TabItem createMainTabItem(TabFolder folder) {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.mainTab.name")); //$NON-NLS-1$
@@ -118,6 +137,9 @@ public class TagDialog extends Dialog {
 
 		nameText = new Text(composite, SWT.BORDER);
 		nameText.setLayoutData(createGridData(1));
+
+		createUserCommitText(composite);
+
 
 		forceButton = new Button(composite, SWT.CHECK);
 		forceButton.setText(Messages.getString("TagDialog.moveTag")); //$NON-NLS-1$
@@ -204,7 +226,7 @@ public class TagDialog extends Dialog {
 
 			public void mouseUp(MouseEvent e) {
 				try {
-					String result = HgTagClient.removeTag(project, tt.getSelection());
+					String result = HgTagClient.removeTag(project, tt.getSelection(), userTextField.getText());
 					HgClients.getConsole().printMessage(result, null);
 					tt.setTags(HgTagClient.getTags(project));
 					new RefreshJob(com.vectrace.MercurialEclipse.menu.Messages.getString("TagHandler.refreshing"), project).schedule(); //$NON-NLS-1$
@@ -282,6 +304,7 @@ public class TagDialog extends Dialog {
 		name = nameText.getText();
 		forced = forceButton.getSelection();
 		local = localButton.getSelection();
+		user = userTextField.getText();
 		super.okPressed();
 	}
 
@@ -299,5 +322,9 @@ public class TagDialog extends Dialog {
 
 	public boolean isLocal() {
 		return local;
+	}
+
+	public String getUser() {
+		return user;
 	}
 }

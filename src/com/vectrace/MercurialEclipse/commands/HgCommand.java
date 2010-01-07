@@ -60,8 +60,18 @@ public class HgCommand extends AbstractShellCommand {
 	}
 
 	protected void addUserName(String user) {
-		this.options.add("-u"); //$NON-NLS-1$
-		this.options.add(user != null ? user : getDefaultUserName());
+		// avoid empty user
+		user = user != null ? user : getDefaultUserName();
+		if(user != null) {
+			user = user.trim();
+			if (user.length() == 0) {
+				user = null;
+			}
+		}
+		if(user != null){
+			options.add("-u"); //$NON-NLS-1$
+			options.add(user);
+		}
 	}
 
 	@Override

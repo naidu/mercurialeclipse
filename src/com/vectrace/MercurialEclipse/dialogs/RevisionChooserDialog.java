@@ -550,7 +550,7 @@ public class RevisionChooserDialog extends Dialog {
 					if (changeSet.getName().toLowerCase().startsWith(filter)
 							|| changeSet.getChangeset().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.REVISION));
-					} else if (changeSet.getTag().toLowerCase().startsWith(filter)) {
+					} else if (changeSet.getTagsString().toLowerCase().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.TAG));
 					} else if (changeSet.getBranch().toLowerCase().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.BRANCH));
@@ -620,7 +620,7 @@ public class RevisionChooserDialog extends Dialog {
 				}
 
 				// tag (optional)
-				String tag = changeSet.getTag();
+				String tag = changeSet.getTagsString();
 				if(tag != null && tag.length() > 0) {
 					builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.tag")); //$NON-NLS-1$
 					builder.append(": ").append(tag).append('\n'); //$NON-NLS-1$
@@ -655,7 +655,7 @@ public class RevisionChooserDialog extends Dialog {
 				String text;
 				switch(type) {
 					case TAG:
-						text = "[" + changeSet.getTag() + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
+						text = "[" + changeSet.getTagsString() + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
 						break;
 
 					case BRANCH:

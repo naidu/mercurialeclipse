@@ -11,9 +11,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -21,8 +20,8 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.GChangeSet.RowCount;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -30,37 +29,45 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public class HgGLogClient extends HgCommand {
 	private final List<GChangeSet> sets = new ArrayList<GChangeSet>();
 
-	public HgGLogClient(IResource resource) throws HgException {
-		this(resource, -1, -1);
-	}
-
 	public HgGLogClient(IResource resource, int batchSize, int startRev) throws HgException {
-		super("glog", ResourceUtils.getFirstExistingDirectory(ResourceUtils.getFileHandle(resource)), false);
+		super("glog", false);
+		File fileHandle = ResourceUtils.getFileHandle(resource);
+		workingDir = ResourceUtils.getFirstExistingDirectory(fileHandle);
 		addOptions("--config", "extensions.graphlog="); //$NON-NLS-1$ //$NON-NLS-2$
 		addOptions("--template", "*{rev}\\n"); // Removes everything //$NON-NLS-1$ //$NON-NLS-2$
-		// Do not limit for files: glog limit is counted based on repository revision.
-		if (resource.getType() == IResource.PROJECT) {
-			addOptions("--limit", (batchSize > 0) ? String.valueOf(batchSize) + "" : HgLogClient.NOLIMIT); //$NON-NLS-1$
-		}
-		if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
-			int last = Math.max(startRev - batchSize, 0);
-			addOptions("-r");
-			addOptions(startRev + ":" + last);
+
+		if(batchSize > 0) {
+			addOptions("--limit", String.valueOf(batchSize)); //$NON-NLS-1$
+		} else {
+			// set very high limit for log/glog when no limit is wanted to override limits set in user's .hgrc
+			addOptions("--limit", HgLogClient.NOLIMIT); //$NON-NLS-1$
 		}
 
-		if (resource.getType() != IResource.PROJECT) {
-		addOptions(ResourceUtils.getFileHandle(resource).getAbsolutePath());
+		if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
+			// always advise to follow until 0 revision: the reason is that log limit
+			// might be bigger then the difference of two consequent revisions on a specific resource
+			addOptions("-r");
+			addOptions(startRev + ":" + 0);
+		}
+
+		if (resource.getType() == IResource.FILE) {
+			addOptions(fileHandle.getAbsolutePath());
+		} else {
+			if (resource.getType() != IResource.PROJECT){
+				// glog doesn't follow directories
+				return;
+			}
+			HgRoot hgRoot = getHgRoot();
+			if(!hgRoot.equals(fileHandle)){
+				// multiple projects under same hg root handled by glog as directories
+				return;
+			}
 		}
 		setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 		load(executeToString());
 	}
 
-	protected HgGLogClient(String text) {
-		super("", true); //$NON-NLS-1$
-		load(text);
-	}
-
-	public void load(String s) {
+	private void load(String s) {
 		String[] split = s.split("\n"); //$NON-NLS-1$
 		// real changeset count as glog inserts a line between two changesets
 		int length = split.length / 2;
@@ -70,9 +77,12 @@ public class HgGLogClient extends HgCommand {
 		for (int i = 0; i < lengthp1; i++) {
 			// adjust index for spacing
 			int changeset = i * 2;
+			String afterS = i != length ? split[changeset + 1] : "";
 			// add current changeset and next line
-			sets.add(last = new GChangeSet(rowCount, i, split[changeset],
-					i != length ? split[changeset + 1] : "").clean(last)); //$NON-NLS-1$
+			GChangeSet newOne = new GChangeSet(rowCount, i, split[changeset], afterS);
+			newOne.clean(last);
+			last = newOne;
+			sets.add(last);
 		}
 	}
 
@@ -80,12 +90,4 @@ public class HgGLogClient extends HgCommand {
 		return sets;
 	}
 
-	// TODO This is a (very) temporary fix to ensure we have enough elements
-	public HgGLogClient update(Collection<ChangeSet> changeSets) {
-		int diff = changeSets.size() - sets.size();
-		if (diff > 0) {
-			sets.addAll(Collections.nCopies(diff, (GChangeSet) null));
-		}
-		return this;
-	}
 }

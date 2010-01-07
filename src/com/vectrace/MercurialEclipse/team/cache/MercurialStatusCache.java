@@ -266,7 +266,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	private final ConcurrentHashMap<IProject, HgRoot> knownStatus = new ConcurrentHashMap<IProject, HgRoot>();
 
 	private boolean computeDeepStatus;
-	private boolean completeStatus;
 	private int statusBatchSize;
 	private static final Set<IResource> EMPTY_SET = new HashSet<IResource>();
 
@@ -807,7 +806,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	private Set<IResource> setStatusToAncestors(IResource resource, Integer resourceBitSet) {
 		Set<IResource> ancestors = new HashSet<IResource>();
 		boolean computeDeep = isComputeDeepStatus();
-		boolean complete = isCompleteStatus();
 		IContainer parent = resource.getParent();
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		for (; parent != null && parent != root; parent = parent.getParent()) {
@@ -831,7 +829,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				cloneBitSet |= BIT_CLEAN;
 			}
 
-			if (!complete && computeDeep && resource.getType() != IResource.PROJECT) {
+			if (computeDeep && resource.getType() != IResource.PROJECT) {
 				if (!Bits.contains(cloneBitSet, BIT_MODIFIED) &&
 						parent.isAccessible() && !parent.isTeamPrivateMember() && !parent.isDerived()) {
 					MemberStatusVisitor visitor = new MemberStatusVisitor(location, cloneBitSet);
@@ -876,10 +874,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 	private boolean isComputeDeepStatus() {
 		return computeDeepStatus;
-	}
-
-	private boolean isCompleteStatus() {
-		return completeStatus;
 	}
 
 	private int getBit(char status) {
@@ -1144,7 +1138,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	@Override
 	protected void configureFromPreferences(IPreferenceStore store){
 		computeDeepStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS);
-		completeStatus = store.getBoolean(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS);
 		// TODO: group batches by repo root
 
 		statusBatchSize = store.getInt(MercurialPreferenceConstants.STATUS_BATCH_SIZE);// STATUS_BATCH_SIZE;

@@ -135,10 +135,10 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			int limitNumber, int startRev, boolean withFiles)
 			throws HgException {
 		try {
-			AbstractShellCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
+			HgCommand command = new HgCommand("log", getWorkingDirectory(res), //$NON-NLS-1$
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--style", //$NON-NLS-1$
 					AbstractParseChangesetClient.getStyleFile(withFiles)
 							.getCanonicalPath());
 
@@ -150,6 +150,13 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			if (res.getType() != IResource.PROJECT) {
 				command.addOptions(res.getLocation().toOSString());
+			} else {
+				HgRoot hgRoot = command.getHgRoot();
+				File fileHandle = ResourceUtils.getFileHandle(res);
+				if(!hgRoot.equals(fileHandle)){
+					// for multiple projects under same hg root we should return only current project history
+					command.addOptions(fileHandle.getAbsolutePath());
+				}
 			}
 
 			String result = command.executeToString();
@@ -171,7 +178,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			AbstractShellCommand command = new HgCommand("log", root, //$NON-NLS-1$
 					false);
 			command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-			command.addOptions("--debug", "--style", //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--style", //$NON-NLS-1$
 					AbstractParseChangesetClient.getStyleFile(withFiles)
 					.getCanonicalPath());
 
@@ -196,11 +203,12 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 	}
 
-	public static void addRange(AbstractShellCommand command, int startRev, int limitNumber) {
+	private static void addRange(AbstractShellCommand command, int startRev, int limitNumber) {
 		if (startRev >= 0 && startRev != Integer.MAX_VALUE) {
-			int last = Math.max(startRev - limitNumber, 0);
+			// always advise to follow until 0 revision: the reason is that log limit
+			// might be bigger then the difference of two consequent revisions on a specific resource
 			command.addOptions("-r"); //$NON-NLS-1$
-			command.addOptions(startRev + ":" + last); //$NON-NLS-1$
+			command.addOptions(startRev + ":" + 0); //$NON-NLS-1$
 		}
 		setLimit(command, limitNumber);
 	}
@@ -313,7 +321,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					false);
 			command
 					.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
-			command.addOptions("--debug", "--style", AbstractParseChangesetClient //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
 					.getStyleFile(withFiles).getCanonicalPath());
 			command.addOptions("--rev", nodeId); //$NON-NLS-1$
 			String result = command.executeToString();
