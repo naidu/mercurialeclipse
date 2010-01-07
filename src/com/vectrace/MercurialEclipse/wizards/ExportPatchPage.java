@@ -71,7 +71,7 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
 		locationChooser.setLayoutData(data);
 
 		// TODO no diff for untracked files, bug?
-		commitFiles = new CommitFilesChooser(composite, true, resources, false, false);
+		commitFiles = new CommitFilesChooser(composite, true, resources, false, false, false);
 		commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
 		commitFiles.addStateListener(this);
 

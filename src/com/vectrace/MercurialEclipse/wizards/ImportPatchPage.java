@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
@@ -20,6 +19,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.LocationChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.LocationChooser.Location;
@@ -33,17 +33,17 @@ public class ImportPatchPage extends HgWizardPage implements Listener {
 
 	private Text txtProject;
 
-	private final IProject project;
+	private final HgRoot hgRoot;
 
-	public ImportPatchPage(IProject project) {
+	public ImportPatchPage(HgRoot hgRoot) {
 		super(Messages.getString("ImportPatchWizard.pageName"), Messages //$NON-NLS-1$
 				.getString("ImportPatchWizard.pageTitle"), null); // TODO icon //$NON-NLS-1$
-		this.project = project;
+		this.hgRoot = hgRoot;
 	}
 
 	protected boolean validatePage() {
 		String msg = locationChooser.validate();
-		if (msg == null && project == null) {
+		if (msg == null && hgRoot == null) {
 			msg = Messages.getString("ImportPatchPage.InvalidProject"); // possible? //$NON-NLS-1$
 		}
 		if (msg == null) {
@@ -69,8 +69,8 @@ public class ImportPatchPage extends HgWizardPage implements Listener {
 				.getString("ImportPatchPage.ProjectName")); //$NON-NLS-1$
 		txtProject = SWTWidgetHelper.createTextField(composite);
 		txtProject.setEditable(false);
-		if (project != null) {
-			txtProject.setText(project.getName());
+		if (hgRoot != null) {
+			txtProject.setText(hgRoot.getName());
 		}
 
 		setControl(composite);
@@ -85,13 +85,6 @@ public class ImportPatchPage extends HgWizardPage implements Listener {
 		return locationChooser.getCheckedLocation();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * com.vectrace.MercurialEclipse.wizards.HgWizardPage#finish(org.eclipse
-	 * .core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
 		locationChooser.saveSettings();

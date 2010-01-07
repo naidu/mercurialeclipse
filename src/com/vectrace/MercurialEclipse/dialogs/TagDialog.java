@@ -9,10 +9,8 @@
  *     Jerome Negre              - implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
-
 package com.vectrace.MercurialEclipse.dialogs;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseEvent;
@@ -35,35 +33,39 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.ui.TagTable;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
- *
  */
 public class TagDialog extends Dialog {
 
-	private final IProject project;
+	private final HgRoot hgRoot;
 
 	// main TabItem
-	Text nameText;
-	Button forceButton;
-	Button localButton;
+	private Text nameText;
+	private Button forceButton;
+	private Button localButton;
 
 	// output
-	String name;
-	String targetRevision;
-	boolean forced;
-	boolean local;
+	private String name;
+	private String targetRevision;
+	private boolean forced;
+	private boolean local;
 
-	public TagDialog(Shell parentShell, IProject project) {
+	private Text userTextField;
+
+	private String user;
+
+	public TagDialog(Shell parentShell, HgRoot hgRoot) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.project = project;
+		this.hgRoot = hgRoot;
 	}
 
 	@Override
@@ -104,6 +106,21 @@ public class TagDialog extends Dialog {
 		return data;
 	}
 
+	private void createUserCommitText(Composite container) {
+		Composite comp = SWTWidgetHelper.createComposite(container, 2);
+		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
+		this.userTextField = SWTWidgetHelper.createTextField(comp);
+		// TODO provide an option to either use default commit name OR project specific one
+		// See issue #10240: Wrong author is used in synchronization commit message
+//        if (user == null || user.length() == 0) {
+//            user = HgCommitMessageManager.getDefaultCommitName(project);
+//        }
+		if (user == null || user.length() == 0) {
+			user = HgClients.getDefaultUserName();
+		}
+		this.userTextField.setText(user);
+	}
+
 	protected TabItem createMainTabItem(TabFolder folder) {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.mainTab.name")); //$NON-NLS-1$
@@ -119,6 +136,9 @@ public class TagDialog extends Dialog {
 		nameText = new Text(composite, SWT.BORDER);
 		nameText.setLayoutData(createGridData(1));
 
+		createUserCommitText(composite);
+
+
 		forceButton = new Button(composite, SWT.CHECK);
 		forceButton.setText(Messages.getString("TagDialog.moveTag")); //$NON-NLS-1$
 		forceButton.setLayoutData(createGridData(1));
@@ -132,7 +152,7 @@ public class TagDialog extends Dialog {
 		label.setText(Messages.getString("TagDialog.existingTags")); //$NON-NLS-1$
 		label.setLayoutData(createGridData(1));
 
-		final TagTable table = new TagTable(composite, project);
+		final TagTable table = new TagTable(composite, hgRoot);
 		table.hideTip();
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.heightHint = 150;
@@ -148,7 +168,7 @@ public class TagDialog extends Dialog {
 		});
 
 		try {
-			table.setTags(HgTagClient.getTags(project));
+			table.setTags(HgTagClient.getTags(hgRoot));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
@@ -192,35 +212,33 @@ public class TagDialog extends Dialog {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("TagDialog.removeTag")); //$NON-NLS-1$
 		Composite composite = SWTWidgetHelper.createComposite(folder, 1);
-		final TagTable tt = new TagTable(composite, project);
+		final TagTable tt = new TagTable(composite, hgRoot);
 		try {
-			tt.setTags(HgTagClient.getTags(project));
+			tt.setTags(HgTagClient.getTags(hgRoot));
 		} catch (HgException e2) {
 			MercurialEclipsePlugin.showError(e2);
 			MercurialEclipsePlugin.logError(e2);
 		}
-		Button removeButton = SWTWidgetHelper.createPushButton(composite, Messages.getString("TagDialog.removeSelectedTag"), 1); //$NON-NLS-1$
+		Button removeButton = SWTWidgetHelper.createPushButton(composite,
+				Messages.getString("TagDialog.removeSelectedTag"), 1); //$NON-NLS-1$
 		MouseListener listener = new MouseListener() {
-
 			public void mouseUp(MouseEvent e) {
 				try {
-					String result = HgTagClient.removeTag(project, tt.getSelection());
+					String result = HgTagClient.removeTag(hgRoot, tt.getSelection(), userTextField.getText());
 					HgClients.getConsole().printMessage(result, null);
-					tt.setTags(HgTagClient.getTags(project));
-					new RefreshJob(com.vectrace.MercurialEclipse.menu.Messages.getString("TagHandler.refreshing"), project).schedule(); //$NON-NLS-1$
+					tt.setTags(HgTagClient.getTags(hgRoot));
+					new RefreshRootJob(com.vectrace.MercurialEclipse.menu.Messages.getString(
+							"TagHandler.refreshing"), hgRoot).schedule(); //$NON-NLS-1$
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.showError(e1);
 					MercurialEclipsePlugin.logError(e1);
 				}
-
 			}
 
 			public void mouseDown(MouseEvent e) {
-
 			}
 
 			public void mouseDoubleClick(MouseEvent e) {
-
 			}
 		};
 		removeButton.addMouseListener(listener);
@@ -242,7 +260,7 @@ public class TagDialog extends Dialog {
 		Button otherButton = new Button(composite, SWT.RADIO);
 		otherButton.setText(Messages.getString("TagDialog.tagAnotherChangeset")); //$NON-NLS-1$
 
-		final ChangesetTable table = new ChangesetTable(composite, project);
+		final ChangesetTable table = new ChangesetTable(composite, hgRoot);
 		table.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		table.setEnabled(false);
 		table.addSelectionListener(new SelectionAdapter() {
@@ -282,6 +300,7 @@ public class TagDialog extends Dialog {
 		name = nameText.getText();
 		forced = forceButton.getSelection();
 		local = localButton.getSelection();
+		user = userTextField.getText();
 		super.okPressed();
 	}
 
@@ -299,5 +318,9 @@ public class TagDialog extends Dialog {
 
 	public boolean isLocal() {
 		return local;
+	}
+
+	public String getUser() {
+		return user;
 	}
 }

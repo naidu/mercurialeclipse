@@ -15,6 +15,7 @@ import java.io.InputStream;
 import org.eclipse.compare.IStreamContentAccessor;
 import org.eclipse.compare.ITypedElement;
 import org.eclipse.compare.ResourceNode;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -57,7 +58,19 @@ public class RevisionNode extends ResourceNode implements IStreamContentAccessor
 	// to avoid FindBugs warnings
 	@Override
 	public boolean equals(Object other) {
-		return super.equals(other);
+		boolean superResult = super.equals(other);
+		if(!superResult){
+			return false;
+		}
+		// ResourceNode has a bug/feature, that it only compares names, NOT full resource path
+		// it means, two index.htm files from different folders are considered equal...
+		// See also issue #10757.
+		if(!(other instanceof ResourceNode)){
+			return false;
+		}
+		IResource resource1 = getResource();
+		IResource resource2 = ((ResourceNode) other).getResource();
+		return resource1.equals(resource2);
 	}
 
 	// to avoid FindBugs warnings

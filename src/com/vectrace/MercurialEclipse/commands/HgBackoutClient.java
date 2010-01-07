@@ -12,17 +12,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.util.Set;
-
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -33,7 +27,7 @@ public class HgBackoutClient {
 	/**
 	 * Backout of a changeset
 	 *
-	 * @param project
+	 * @param hgRoot
 	 *            the project
 	 * @param backoutRevision
 	 *            revision to backout
@@ -42,10 +36,10 @@ public class HgBackoutClient {
 	 * @param msg
 	 *            commit message
 	 */
-	public static String backout(final IProject project, ChangeSet backoutRevision,
+	public static String backout(final HgRoot hgRoot, ChangeSet backoutRevision,
 			boolean merge, String msg, String user) throws CoreException {
 
-		HgCommand command = new HgCommand("backout", project, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("backout", hgRoot, true); //$NON-NLS-1$
 		boolean useExternalMergeTool = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 						"false")).booleanValue(); //$NON-NLS-1$
@@ -60,18 +54,6 @@ public class HgBackoutClient {
 		}
 
 		String result = command.executeToString();
-
-		Set<IProject> projects = ResourceUtils.getProjects(command.getHgRoot());
-		for (final IProject iProject : projects) {
-			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(iProject);
-			job.addJobChangeListener(new JobChangeAdapter(){
-			@Override
-				public void done(IJobChangeEvent event) {
-					new RefreshJob("Refreshing " + iProject.getName(), iProject).schedule();
-				}
-			});
-			job.schedule();
-		}
 		return result;
 	}
 

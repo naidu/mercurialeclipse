@@ -88,8 +88,9 @@ public class Branch {
 	/**
 	 * @param name may be null
 	 * @return true if the given name matches the hg default branch name
+	 * (this is also the case if given name is null)
 	 */
 	public static boolean isDefault(String name){
-		return name != null && (name.length() == 0 || name.equals(DEFAULT));
+		return name == null || (name.length() == 0 || name.equals(DEFAULT));
 	}
 }

@@ -319,7 +319,7 @@ public class MercurialUtilities {
 
 		if (username == null || username.equals("")) {
 			// use system username
-			System.getProperty("user.name");
+			username = System.getProperty("user.name");
 		}
 
 		// never return null!
@@ -329,14 +329,10 @@ public class MercurialUtilities {
 		return username;
 	}
 
-	/**
-	 * @return
-	 */
 	private static String readUsernameFromIni(String filename) {
 		String username;
-		IniFile iniFile;
 		try {
-			iniFile = new IniFile(filename);
+			IniFile iniFile = new IniFile(filename);
 			username = iniFile.getKeyValue("ui", "username");
 		} catch (FileNotFoundException e) {
 			username = null;

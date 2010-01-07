@@ -34,8 +34,9 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * in constructor.
  *
  * @author Bastian Doetsch
- *
+ * @deprecated this class is not multi-project aware, please use {@link RefreshRootJob} instead
  */
+@Deprecated
 public final class RefreshJob extends SafeWorkspaceJob {
 	public static final int LOCAL = 1;
 	public static final int INCOMING = 2;
@@ -56,10 +57,6 @@ public final class RefreshJob extends SafeWorkspaceJob {
 		this.project = project;
 		this.withFiles = getWithFilesProperty();
 		this.type = type;
-	}
-
-	public RefreshJob(String name, IProject project) {
-		this(name, project, ALL);
 	}
 
 	private static boolean getWithFilesProperty() {

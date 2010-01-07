@@ -18,6 +18,7 @@ import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
@@ -28,17 +29,29 @@ public class RefreshStatusJob extends SafeWorkspaceJob {
 	private static final MercurialStatusCache mercurialStatusCache = MercurialStatusCache
 			.getInstance();
 	private final IProject project;
+	private final HgRoot root;
 
 	public RefreshStatusJob(String name, IProject project) {
 		super(name);
 		this.project = project;
+		this.root = null;
+	}
+
+	public RefreshStatusJob(String name, HgRoot root) {
+		super(name);
+		this.root = root;
+		this.project = null;
 	}
 
 	@Override
 	protected IStatus runSafe(IProgressMonitor monitor) {
 		try {
 			monitor.beginTask(Messages.refreshStatusJob_OptainingMercurialStatusInformation, 5);
-			mercurialStatusCache.refreshStatus(project, monitor);
+			if(project != null) {
+				mercurialStatusCache.refreshStatus(project, monitor);
+			} else {
+				mercurialStatusCache.refreshStatus(root, monitor);
+			}
 		} catch (TeamException e) {
 			MercurialEclipsePlugin.logError(e);
 		} finally {

@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.annotations;
 
 import java.io.BufferedReader;
 import java.io.CharArrayWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -28,7 +29,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
-import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.editors.text.IStorageDocumentProvider;
@@ -37,9 +37,7 @@ import org.eclipse.ui.texteditor.IElementStateListener;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.quickdiff.IQuickDiffReferenceProvider;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
@@ -98,7 +96,7 @@ public class HgPristineCopyQuickDiffProvider implements
 	/**
 	 * Updates the document if the document is changed (e.g. replace with)
 	 */
-	private IElementStateListener documentListener = new IElementStateListener() {
+	private final IElementStateListener documentListener = new IElementStateListener() {
 		public void elementDirtyStateChanged(Object element, boolean isDirty) {
 		}
 
@@ -206,8 +204,7 @@ public class HgPristineCopyQuickDiffProvider implements
 	 * with respect to it's remote state. Return true if the remote contents
 	 * should be refreshed, and false if not.
 	 */
-	private boolean computeChange(IProgressMonitor monitor)
-			throws TeamException {
+	private boolean computeChange(IProgressMonitor monitor) {
 		boolean needToUpdateReferenceDocument = false;
 		if (isReferenceInitialized) {
 			needToUpdateReferenceDocument = getFileFromEditor().isSynchronized(
@@ -311,21 +308,14 @@ public class HgPristineCopyQuickDiffProvider implements
 	 * @throws CoreException
 	 * @throws IOException
 	 */
-	private HgFile getManagedHgFile() {
+	private File getManagedHgFile() {
 		if (editor != null) {
 			IFile file = getFileFromEditor();
 			if (file != null
 					&& MercurialUtilities.hgIsTeamProviderFor(file, false)) {
-				HgFile hgFile;
-				try {
-					hgFile = new HgFile(file.getLocation().toFile());
-					if (hgFile.exists()) {
-						return hgFile;
-					}
-				} catch (IOException e) {
-					MercurialEclipsePlugin.logError(e);
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
+				File hgFile = file.getLocation().toFile();
+				if (hgFile.exists()) {
+					return hgFile;
 				}
 				return null;
 			}

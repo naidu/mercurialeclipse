@@ -10,8 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
@@ -28,7 +28,9 @@ public class ChangesetGroup {
 	public ChangesetGroup(String name, Direction direction) {
 		this.name = name;
 		this.direction = direction;
-		this.changesets = new HashSet<ChangeSet>();
+		// CopyOnWriteArraySet to prevent ConcurrentModificationException.
+		// TODO this one is not really fast for add/remove operations...
+		this.changesets = new CopyOnWriteArraySet<ChangeSet>();
 	}
 
 	public Direction getDirection() {

@@ -1,10 +1,13 @@
 /*******************************************************************************
+ * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
- * Bastian Doetsch - implementation of remove
+ * Contributors:
+ * 		Bastian Doetsch - implementation of remove
+ *     	Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -20,6 +23,7 @@ import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.compare.TagComparator;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 
 /**
@@ -31,6 +35,16 @@ public class HgTagClient extends AbstractClient {
 
 	public static Tag[] getTags(IProject project) throws HgException {
 		AbstractShellCommand command = new HgCommand("tags", project, false); //$NON-NLS-1$
+		command.addOptions("-v"); //$NON-NLS-1$
+		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
+
+		Collection<Tag> tags = getTags(lines);
+		Tag[] sortedTags = tags.toArray(new Tag[] {});
+		return sortedTags;
+	}
+
+	public static Tag[] getTags(HgRoot hgRoot) throws HgException {
+		AbstractShellCommand command = new HgCommand("tags", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 
@@ -80,12 +94,9 @@ public class HgTagClient extends AbstractClient {
 		command.executeToBytes();
 	}
 
-	/**
-	 * @param selection
-	 * @throws HgException
-	 */
-	public static String removeTag(IResource res, Tag tag) throws HgException {
-		HgCommand command = new HgCommand("tag", getWorkingDirectory(res), false); //$NON-NLS-1$
+	public static String removeTag(HgRoot hgRoot, Tag tag, String user) throws HgException {
+		HgCommand command = new HgCommand("tag", getWorkingDirectory(hgRoot), false); //$NON-NLS-1$
+		command.addUserName(user);
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());
 		return command.executeToString();

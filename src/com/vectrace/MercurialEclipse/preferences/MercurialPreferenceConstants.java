@@ -20,6 +20,7 @@ package com.vectrace.MercurialEclipse.preferences;
 public class MercurialPreferenceConstants {
 	// executables
 	public static final String MERCURIAL_EXECUTABLE = "hg"; //$NON-NLS-1$
+	public static final String USE_BUILT_IN_HG_EXECUTABLE = "hg.useBuiltInHgExecutable"; //$NON-NLS-1$
 	public static final String GPG_EXECUTABLE = "hg.gpg.executable"; //$NON-NLS-1$
 
 	// user name should be per project in the future, different repositories
@@ -31,12 +32,14 @@ public class MercurialPreferenceConstants {
 	public static final String LABELDECORATOR_LOGIC = "hg.labeldecorator.logic"; //$NON-NLS-1$
 	public static final String LABELDECORATOR_LOGIC_2MM = "2-means-modified"; //$NON-NLS-1$
 	public static final String LABELDECORATOR_LOGIC_HB = "high-bit"; //$NON-NLS-1$
-	public static final String RESOURCE_DECORATOR_COMPLETE_STATUS = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET = "hg.performance.fileShowsChangesetIncoming"; //$NON-NLS-1$
 	public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
 	public static final String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
+
+	/** do not limit graphical log data to show pretty revision graphs in the history view */
+	public static final String ENABLE_FULL_GLOG = "hg.performance.enableFullGlog"; //$NON-NLS-1$
 	public static final String PREF_SIGCHECK_IN_HISTORY = Messages.getString("MercurialPreferenceConstants.sigcheck.in.history"); //$NON-NLS-1$
 
 	// Timeouts
@@ -57,8 +60,8 @@ public class MercurialPreferenceConstants {
 	public static final String STATUS_BATCH_SIZE = "hg.batchsize.status"; //$NON-NLS-1$
 	public static final String COMMIT_MESSAGE_BATCH_SIZE = "hg.batchsize.commitmessage"; //$NON-NLS-1$
 
-	// synchronize
-	public static final String SYNCHRONIZE_FILES = "hg.synchronize.synchronizeOnFileLevel"; //$NON-NLS-1$
+	// remote performance: for incoming/outgoing, compute add/remove/modified status on changeset files
+	public static final String SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS = "hg.computeFullRemoteFileStatus"; //$NON-NLS-1$
 
 	// console
 	public static final String PREF_CONSOLE_SHOW_ON_MESSAGE = "hg.console.showOnMessage"; //$NON-NLS-1$
@@ -77,7 +80,8 @@ public class MercurialPreferenceConstants {
 	public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal"; //$NON-NLS-1$
 
 	// history view
-	public static  final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public static final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public static  final String PREF_SHOW_ALL_TAGS = "pref_show_alltags"; //$NON-NLS-1$
 	public static final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
 	public static final String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
 	public static final String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$

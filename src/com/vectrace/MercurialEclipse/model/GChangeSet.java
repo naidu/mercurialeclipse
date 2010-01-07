@@ -11,6 +11,7 @@
 package com.vectrace.MercurialEclipse.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,8 +24,6 @@ import com.vectrace.MercurialEclipse.model.GChangeSet.Edge.EdgeType;
  * Seriously. Turn back now.
  */
 public class GChangeSet {
-
-
 	private final EdgeList middle;
 	private final EdgeList after;
 	private final int index;
@@ -93,7 +92,7 @@ public class GChangeSet {
 				}
 			}
 			rowCount.endRow();
-			if (string.contains("+")) { //$NON-NLS-1$
+			if (string.indexOf('+') >= 0) {
 				rowCount.jump = string.indexOf('o');
 				jumps = new int[] { string.indexOf('+') / 2, rowCount.jump / 2, };
 			}
@@ -116,7 +115,7 @@ public class GChangeSet {
 			if (straight) {
 				edge.straighten();
 			}
-			above.add(edge.bottom);
+			above.add(Integer.valueOf(edge.bottom));
 			edges.add(edge);
 		}
 
@@ -127,9 +126,35 @@ public class GChangeSet {
 		public void clean(GChangeSet last) {
 			for (Edge e : edges) {
 				e.setFinish(e.isDot()
-						&& (last == null || !last.after.above.contains(e.top)));
+						&& (last == null || !last.after.above.contains(Integer.valueOf(e.top))));
 			}
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("EdgeList [");
+			if (above != null) {
+				builder.append("above=");
+				builder.append(above);
+				builder.append(", ");
+			}
+			if (edges != null) {
+				builder.append("edges=");
+				builder.append(edges);
+				builder.append(", ");
+			}
+			if (jumps != null) {
+				builder.append("jumps=");
+				builder.append(Arrays.toString(jumps));
+				builder.append(", ");
+			}
+			builder.append("straight=");
+			builder.append(straight);
+			builder.append("]");
+			return builder.toString();
+		}
+
 	}
 
 	public static class RowCount {
@@ -140,7 +165,7 @@ public class GChangeSet {
 		private int dec = -1;
 
 		public RowCount() {
-			cols.add(0);
+			cols.add(Integer.valueOf(0));
 		}
 
 		public int space(int i, int count) {
@@ -159,7 +184,7 @@ public class GChangeSet {
 			int count = 1;
 			if (edge.type == EdgeType.backslash && lastLine) {
 				unique++;
-				cols.add(edge.col, col = unique);
+				cols.add(edge.col, col = Integer.valueOf(unique));
 			} else if (edge.type == EdgeType.slash && lastLine) {
 				dec = edge.col;
 				col = cols.get(edge.col);
@@ -181,11 +206,11 @@ public class GChangeSet {
 				return 0;
 			} else if (edge.col >= cols.size()) {
 				unique++;
-				cols.add(col = unique);
+				cols.add(col = Integer.valueOf(unique));
 			} else {
 				col = cols.get(edge.col);
 			}
-			edge.lane = col;
+			edge.lane = col.intValue();
 			if (edge.type == EdgeType.dash) {
 				lastEdge = null;
 			} else {
@@ -203,6 +228,33 @@ public class GChangeSet {
 			}
 			jump = -1;
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("RowCount [");
+			if (cols != null) {
+				builder.append("cols=");
+				builder.append(cols);
+				builder.append(", ");
+			}
+			builder.append("dec=");
+			builder.append(dec);
+			builder.append(", jump=");
+			builder.append(jump);
+			builder.append(", ");
+			if (lastEdge != null) {
+				builder.append("lastEdge=");
+				builder.append(lastEdge);
+				builder.append(", ");
+			}
+			builder.append("unique=");
+			builder.append(unique);
+			builder.append("]");
+			return builder.toString();
+		}
+
+
 	}
 
 	public static class Edge {
@@ -277,6 +329,28 @@ public class GChangeSet {
 
 		public boolean isPlus() {
 			return type == EdgeType.plus;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append("Edge [bottom=");
+			builder.append(bottom);
+			builder.append(", col=");
+			builder.append(col);
+			builder.append(", finish=");
+			builder.append(finish);
+			builder.append(", lane=");
+			builder.append(lane);
+			builder.append(", top=");
+			builder.append(top);
+			builder.append(", ");
+			if (type != null) {
+				builder.append("type=");
+				builder.append(type);
+			}
+			builder.append("]");
+			return builder.toString();
 		}
 	}
 
