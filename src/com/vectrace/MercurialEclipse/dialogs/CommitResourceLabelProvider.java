@@ -11,15 +11,22 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.swt.graphics.Image;
+import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 public final class CommitResourceLabelProvider extends LabelProvider implements
 		ITableLabelProvider {
 
+    private final WorkbenchLabelProvider workbenchLabelProvider = new WorkbenchLabelProvider();
+
 	public Image getColumnImage(Object element, int columnIndex) {
-		// No images. Otherwise the first column with status has an ugly padding
+        if (columnIndex == 1) {
+            IResource res = ((CommitResource) element).getResource();
+            return workbenchLabelProvider.getImage(res);
+        }
 		return null;
 	}
 
