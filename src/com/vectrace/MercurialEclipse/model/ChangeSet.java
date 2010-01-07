@@ -239,7 +239,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public Tag[] getTags(){
 		if(tags == null){
 			if(!StringUtils.isEmpty(tagsStr)) {
-				String[] tagsStrArr = tagsStr.split(" ");
+				String[] tagsStrArr = tagsStr.split("_,_");
 				List<Tag> tagList = new ArrayList<Tag>();
 				for (String ctag : tagsStrArr) {
 					if(StringUtils.isEmpty(ctag)){
