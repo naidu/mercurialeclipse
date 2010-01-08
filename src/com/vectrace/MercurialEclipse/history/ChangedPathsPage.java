@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.history;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -24,11 +25,13 @@ import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.ITextOperationTarget;
 import org.eclipse.jface.text.TextViewer;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.jface.viewers.DoubleClickEvent;
+import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.StructuredViewer;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.SashForm;
 import org.eclipse.swt.custom.StyledText;
@@ -37,10 +40,14 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.team.ui.history.IHistoryPageSite;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.part.IPageSite;
 import org.eclipse.ui.texteditor.ITextEditorActionConstants;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangedPathsPage {
@@ -55,7 +62,7 @@ public class ChangedPathsPage {
 	private boolean showAffectedPaths;
 	private boolean wrapCommentsText;
 
-	private StructuredViewer changePathsViewer;
+	private ChangePathsTableProvider changePathsViewer;
 	private TextViewer textViewer;
 
 	private final IPreferenceStore store = MercurialEclipsePlugin.getDefault()
@@ -149,7 +156,7 @@ public class ChangedPathsPage {
 	}
 
 	private void updatePanels(ISelection selection) {
-		if (selection == null || !(selection instanceof IStructuredSelection)) {
+		if (!(selection instanceof IStructuredSelection)) {
 			textViewer.setDocument(new Document("")); //$NON-NLS-1$
 			changePathsViewer.setInput(null);
 			return;
@@ -164,6 +171,13 @@ public class ChangedPathsPage {
 		textViewer.setDocument(new Document(entry.getChangeSet()
 				.getComment()));
 		changePathsViewer.setInput(entry);
+	}
+
+	/**
+	 * @return may return null
+	 */
+	MercurialRevision getCurrentRevision() {
+		return (MercurialRevision) changePathsViewer.getInput();
 	}
 
 	/**
@@ -283,6 +297,49 @@ public class ChangedPathsPage {
 		tbm.update(false);
 
 		actionBars.updateActionBars();
+
+		final BaseSelectionListenerAction openAction = page.getOpenAction();
+		final BaseSelectionListenerAction openEditorAction = page.getOpenEditorAction();
+		final BaseSelectionListenerAction compareWithCurrent = page.getCompareWithCurrentAction();
+		final BaseSelectionListenerAction compareWithPrevious = page.getCompareWithPreviousAction();
+
+		changePathsViewer.addDoubleClickListener(new IDoubleClickListener() {
+			public void doubleClick(DoubleClickEvent event) {
+				FileStatus fileStatus = (FileStatus) ((IStructuredSelection) event.getSelection()).getFirstElement();
+				MercurialRevision derived = getDerivedRevision(fileStatus, getCurrentRevision());
+				StructuredSelection selection = new StructuredSelection(new Object[]{derived, fileStatus});
+				compareWithPrevious.selectionChanged(selection);
+				compareWithPrevious.run();
+			}
+		});
+
+		// Contribute actions to popup menu
+		final MenuManager menuMgr = new MenuManager();
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				IStructuredSelection selection = (IStructuredSelection) changePathsViewer.getSelection();
+				if(selection.isEmpty()){
+					return;
+				}
+				FileStatus fileStatus = (FileStatus) selection.getFirstElement();
+				MercurialRevision base = getCurrentRevision();
+				MercurialRevision derived = getDerivedRevision(fileStatus, base);
+				selection = new StructuredSelection(derived);
+				openAction.selectionChanged(selection);
+				openEditorAction.selectionChanged(selection);
+				compareWithCurrent.selectionChanged(selection);
+				selection = new StructuredSelection(new Object[]{derived, fileStatus});
+				compareWithPrevious.selectionChanged(selection);
+				menuMgr1.add(openAction);
+				menuMgr1.add(openEditorAction);
+				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+				menuMgr1.add(compareWithPrevious);
+				menuMgr1.add(compareWithCurrent);
+			}
+
+		});
+		menuMgr.setRemoveAllWhenShown(true);
+		changePathsViewer.getTable().setMenu(menuMgr.createContextMenu(changePathsViewer.getTable()));
 	}
 
 	private void setViewerVisibility() {
@@ -347,5 +404,12 @@ public class ChangedPathsPage {
 
 	public MercurialHistory getMercurialHistory() {
 		return page.getMercurialHistory();
+	}
+
+	private MercurialRevision getDerivedRevision(FileStatus fileStatus, MercurialRevision base) {
+		IFile file = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
+		MercurialRevision derived = new MercurialRevision(base.getChangeSet(), base
+				.getGChangeSet(), file, null);
+		return derived;
 	}
 }
