@@ -168,10 +168,9 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	}
 
 	private void createAllCheckBox(Group branchGroup) {
-		this.allCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
-				.getString("TransplantPage.allCheckBox.title.1") //$NON-NLS-1$
-				+ Messages.getString("TransplantPage.allCheckBox.title.2")); //$NON-NLS-1$
-		this.allCheckBox.setEnabled(false);
+		allCheckBox = SWTWidgetHelper.createCheckBox(branchGroup, Messages
+				.getString("TransplantPage.allCheckBox.title")); //$NON-NLS-1$
+		allCheckBox.setEnabled(false);
 
 		SelectionListener allCheckBoxListener = new SelectionListener() {
 
@@ -185,7 +184,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 			}
 		};
 
-		this.allCheckBox.addSelectionListener(allCheckBoxListener);
+		allCheckBox.addSelectionListener(allCheckBoxListener);
 	}
 
 	private void createBranchCheckBox(Group branchGroup) {

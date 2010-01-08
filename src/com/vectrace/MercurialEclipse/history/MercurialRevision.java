@@ -119,6 +119,11 @@ public class MercurialRevision extends FileRevision {
 	}
 
 	@Override
+	public boolean exists() {
+		return true;
+	}
+
+	@Override
 	public String getContentIdentifier() {
 		return changeSet.getChangeset();
 	}
@@ -260,6 +265,14 @@ public class MercurialRevision extends FileRevision {
 	 */
 	public void setParent(File parent) {
 		this.parent = parent;
+	}
+
+	/**
+	 *
+	 * @return true, if the resource represented by this revision is file
+	 */
+	public boolean isFile(){
+		return resource instanceof IFile;
 	}
 
 	@Override

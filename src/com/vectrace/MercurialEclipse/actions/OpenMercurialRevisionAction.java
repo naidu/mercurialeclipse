@@ -50,6 +50,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
@@ -252,22 +253,17 @@ public class OpenMercurialRevisionAction extends BaseSelectionListenerAction {
 	}
 
 	private boolean shouldShow() {
-		IStructuredSelection structSel = selection;
-		Object[] objArray = structSel.toArray();
-
-		if (objArray.length == 0) {
+		if (selection.isEmpty()) {
 			return false;
 		}
-
+		Object[] objArray = selection.toArray();
 		for (int i = 0; i < objArray.length; i++) {
-			IFileRevision revision = (IFileRevision) objArray[i];
-			// check to see if any of the selected revisions are deleted
-			// revisions
-			if (revision != null && !revision.exists()) {
+			MercurialRevision revision = (MercurialRevision) objArray[i];
+			// check to see if any of the selected revisions are deleted revisions
+			if (revision != null && (!revision.isFile() || !revision.exists())) {
 				return false;
 			}
 		}
-
 		return true;
 	}
 

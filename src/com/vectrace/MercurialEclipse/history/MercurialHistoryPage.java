@@ -17,7 +17,6 @@ package com.vectrace.MercurialEclipse.history;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_SHOW_ALL_TAGS;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.Iterator;
 
 import org.eclipse.core.resources.IFile;
@@ -35,8 +34,6 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
@@ -53,14 +50,11 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.history.IFileHistory;
@@ -70,21 +64,19 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
@@ -97,81 +89,11 @@ public class MercurialHistoryPage extends HistoryPage {
 	private ChangedPathsPage changedPaths;
 	private ChangeSet currentWorkdirChangeset;
 	private OpenMercurialRevisionAction openAction;
-	private Action openEditorAction;
+	private BaseSelectionListenerAction openEditorAction;
 	private boolean showTags;
-
-	private final class CompareRevisionAction extends Action {
-
-		private CompareRevisionAction(String text) {
-			super(text);
-			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
-		}
-
-		@Override
-		public void run() {
-			IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
-			final Object[] revs = selection.toArray();
-
-			final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
-			final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
-			final IRunnableWithProgress runnable = new IRunnableWithProgress() {
-
-				public void run(IProgressMonitor monitor) throws InvocationTargetException,
-						InterruptedException {
-					try {
-						if(revs.length > 0 && !monitor.isCanceled()){
-							left[0] = getStorage((MercurialRevision) revs[0], monitor);
-							if(revs.length > 1 && !monitor.isCanceled()){
-								right[0] = getStorage((MercurialRevision) revs[1], monitor);
-							}
-						}
-					} catch (CoreException e) {
-						MercurialEclipsePlugin.logError(e);
-						throw new InvocationTargetException(e);
-					}
-					if(monitor.isCanceled()){
-						throw new InterruptedException("Cancelled by user");
-					}
-				}
-			};
-			ProgressMonitorDialog progress = new ProgressMonitorDialog(viewer.getControl().getShell());
-			try {
-				progress.run(true, true, runnable);
-			} catch (InvocationTargetException e) {
-				MercurialEclipsePlugin.logError(e.getCause());
-				return;
-			} catch (InterruptedException e) {
-				// user cancel
-				return;
-			}
-
-			if(left[0] == null){
-				return;
-			}
-			boolean localEditable = right[0] == null;
-			CompareUtils.openEditor(left[0], right[0], false, localEditable);
-		}
-
-		@Override
-		public boolean isEnabled() {
-			int size = ((IStructuredSelection) viewer.getSelection()).size();
-			return size == 1;
-		}
-
-		/**
-		 * this can take a lot of time, and UI must take care that it will not be frozen until
-		 * the info is fetched...
-		 * @param monitor
-		 */
-		private MercurialRevisionStorage getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
-			if(rev.getParent() == null){
-				// see issue #10302: this is a dirty trick to make sure to get content even
-				// if the file was renamed/copied.
-				HgLogClient.getLogWithBranchInfo(rev, mercurialHistory, monitor);
-			}
-			return (MercurialRevisionStorage) rev.getStorage(monitor);
-		}
-	}
+	private CompareRevisionAction compareWithCurrAction;
+	private CompareRevisionAction compareWithPrevAction;
+	private CompareRevisionAction compareTwo;
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -410,10 +332,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		viewer.setContentProvider(changeLogViewContentProvider);
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
-				getOpenAction();
-				updateOpenActionEnablement();
-				if(openAction.isEnabled()) {
-					openAction.run();
+				getCompareWithPreviousAction();
+				updateActionEnablement();
+				if(compareWithPrevAction.isEnabled()) {
+					compareWithPrevAction.run();
 				}
 			}
 		});
@@ -421,8 +343,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	private void copyToClipboard() {
-		IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
-		Iterator<?> iterator = selection.iterator();
+		Iterator<?> iterator = getSelection().iterator();
 		StringBuilder text = new StringBuilder();
 		Table table = viewer.getTable();
 		for(int columnIndex = 1; columnIndex < table.getColumnCount(); columnIndex++) {
@@ -452,14 +373,20 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
+	private IStructuredSelection getSelection() {
+		return (IStructuredSelection) viewer.getSelection();
+	}
+
 	private void contributeActions() {
-		final Action compareAction = getCompareAction();
 
 		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
 			private MercurialRevision rev;
 
 			@Override
 			public void run() {
+				if(rev == null){
+					return;
+				}
 				try {
 					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 					Assert.isNotNull(hgRoot);
@@ -480,69 +407,132 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			@Override
 			public boolean isEnabled() {
-				IStructuredSelection selection = (IStructuredSelection) viewer
-						.getSelection();
-				Object[] revs = selection.toArray();
-				if (revs != null && revs.length == 1) {
+				Object[] revs = getSelection().toArray();
+				if (revs.length == 1) {
 					rev = (MercurialRevision) revs[0];
 					return true;
 				}
+				rev = null;
 				return false;
 			}
 		};
 		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
 
-		openEditorAction = new Action("Open Version on the Disk") {
-			@Override
-			public void run() {
-				try {
-					IDE.openEditor(getSite().getPage(), (IFile) resource);
-				} catch (PartInitException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-			}
-		};
-
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
-		Menu menu = menuMgr.createContextMenu(viewer.getTable());
 		menuMgr.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
-				getOpenAction();
-				updateOpenActionEnablement();
+				if(resource instanceof IFile){
+					IStructuredSelection sel = updateActionEnablement();
 				menuMgr1.add(openAction);
 				menuMgr1.add(openEditorAction);
 				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-				// TODO This is a HACK but I can't get the menu to update on
-				// selection :-(
-				compareAction.setEnabled(compareAction.isEnabled());
-				menuMgr1.add(compareAction);
+					if(sel.size() == 2){
+						menuMgr1.add(compareTwo);
+					} else {
+						menuMgr1.add(compareWithPrevAction);
+						menuMgr1.add(compareWithCurrAction);
+					}
+				}
 				updateAction.setEnabled(updateAction.isEnabled());
 				menuMgr1.add(updateAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
-		viewer.getTable().setMenu(menu);
+		viewer.getTable().setMenu(menuMgr.createContextMenu(viewer.getTable()));
 	}
 
-	private OpenMercurialRevisionAction getOpenAction() {
+	private void createActions() {
+		getOpenAction();
+		getOpenEditorAction();
+		getCompareWithCurrentAction();
+		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){
+			@Override
+			protected boolean updateSelection(IStructuredSelection selection) {
+				if(selection.size() != 2){
+					return false;
+				}
+				return super.updateSelection(selection);
+			}
+		};
+	}
+
+	OpenMercurialRevisionAction getOpenAction() {
 		if(openAction != null){
 			return openAction;
 		}
 		openAction = new OpenMercurialRevisionAction("Open Selected Version");
-		viewer.getTable().addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				openAction.selectionChanged((IStructuredSelection) viewer
-						.getSelection());
-			}
-		});
 		openAction.setPage(this);
 		return openAction;
 	}
 
-	private Action getCompareAction() {
-		return new CompareRevisionAction(Messages.getString("CompareAction.label"));
+	BaseSelectionListenerAction getOpenEditorAction() {
+		if(openEditorAction != null){
+			return openEditorAction;
+		}
+
+		openEditorAction = new BaseSelectionListenerAction("Open Current Version") {
+			private IFile file;
+
+			@Override
+			public void run() {
+				if(file == null){
+					return;
+				}
+				try {
+					IDE.openEditor(getSite().getPage(), file);
+				} catch (PartInitException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+
+			@Override
+			protected boolean updateSelection(IStructuredSelection selection) {
+				Object element = selection.getFirstElement();
+				if(element instanceof MercurialHistory){
+					MercurialHistory history = (MercurialHistory) element;
+					IFileRevision[] revisions = history.getFileRevisions();
+					if(revisions.length != 1 || !(revisions[0] instanceof MercurialRevision)){
+						file = null;
+						return false;
+					}
+					MercurialRevision rev = (MercurialRevision) revisions[0];
+					if(rev.getResource() instanceof IFile){
+						file = (IFile) rev.getResource();
+						return file.exists();
+					}
+				} else if (element instanceof MercurialRevision){
+					MercurialRevision rev = (MercurialRevision) element;
+					if(rev.getResource() instanceof IFile){
+						file = (IFile) rev.getResource();
+						return file.exists();
+					}
+				}
+				if(resource instanceof IFile){
+					file = (IFile) resource;
+					return file.exists();
+				}
+				file = null;
+				return false;
+			}
+		};
+		return openEditorAction;
+	}
+
+	CompareRevisionAction getCompareWithCurrentAction() {
+		if(compareWithCurrAction == null) {
+			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this);
+			}
+		return compareWithCurrAction;
+	}
+
+	CompareRevisionAction getCompareWithPreviousAction() {
+		if(compareWithPrevAction == null) {
+			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this);
+			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
+			compareWithPrevAction.setCompareWithPrevousEnabled(true);
+		}
+		return compareWithPrevAction;
 	}
 
 	@Override
@@ -564,7 +554,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	public boolean isValidInput(Object object) {
-		return object == null || object instanceof IResource;
+		return object == null || object instanceof IResource || getAdapter(IResource.class) != null;
 	}
 
 	public ChangeSet getCurrentWorkdirChangeset() {
@@ -607,14 +597,14 @@ public class MercurialHistoryPage extends HistoryPage {
 		return viewer;
 	}
 
-	private void updateOpenActionEnablement() {
-		openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
-		if (resource == null || resource.getType() != IResource.FILE) {
-			openAction.setEnabled(false);
-			openEditorAction.setEnabled(false);
-		} else {
-			openAction.setEnabled(true);
-			openEditorAction.setEnabled(true);
+	private IStructuredSelection updateActionEnablement() {
+		createActions();
+		IStructuredSelection selection = getSelection();
+		openAction.selectionChanged(selection);
+		openEditorAction.selectionChanged(selection);
+		compareWithCurrAction.selectionChanged(selection);
+		compareWithPrevAction.selectionChanged(selection);
+		compareTwo.selectionChanged(selection);
+		return selection;
 		}
 	}
-}

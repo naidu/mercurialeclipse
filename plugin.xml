@@ -80,6 +80,24 @@
                <objectClass name="org.eclipse.core.resources.IResource"/>
              </enablement>
         </decorator>
+        <decorator
+              adaptable="false"
+              class="com.vectrace.MercurialEclipse.history.FileStatusDecorator"
+              icon="icons/history.gif"
+              id="com.vectrace.MercurialEclipse.history.FileStatusDecorator"
+              label="Mercurial History"
+              lightweight="true"
+              location="BOTTOM_RIGHT"
+              state="true">
+           <description>
+              Decorates file elements in the Mercurial History view
+           </description>
+           <enablement>
+              <objectClass
+                    name="com.vectrace.MercurialEclipse.model.FileStatus">
+              </objectClass>
+           </enablement>
+        </decorator>
     </extension>
 
     <!-- propertyTesters -->
