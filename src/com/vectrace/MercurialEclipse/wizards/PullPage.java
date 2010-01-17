@@ -74,7 +74,7 @@ public class PullPage extends PushPullPage {
 				incomingPage.setLocation(loc);
 				incomingPage.setSvn(getSvnCheckBox() != null
 						&& getSvnCheckBox().getSelection());
-				setErrorMessage(null);
+
 				return isPageComplete()
 						&& (getWizard().getNextPage(this) != null);
 			}
@@ -131,8 +131,8 @@ public class PullPage extends PushPullPage {
 
 					public void widgetSelected(SelectionEvent e) {
 						if (rebaseCheckBox.getSelection()) {
-							updateCheckBox.setSelection(!rebaseCheckBox
-									.getSelection());
+							updateCheckBox.setSelection(false);
+							mergeCheckBox.setSelection(false);
 						}
 					}
 				};
@@ -142,8 +142,7 @@ public class PullPage extends PushPullPage {
 					}
 					public void widgetSelected(SelectionEvent e) {
 						if (updateCheckBox.getSelection()) {
-							rebaseCheckBox.setSelection(!updateCheckBox
-									.getSelection());
+							rebaseCheckBox.setSelection(false);
 						}
 					}
 				};
@@ -188,6 +187,8 @@ public class PullPage extends PushPullPage {
 						} else {
 							setErrorMessage(null);
 							setPageComplete(true);
+							// you can only rebase OR merge, not both
+							rebaseCheckBox.setSelection(false);
 						}
 					} catch (HgException e1) {
 						setErrorMessage(Messages.getString("PullPage.error.noStatus")); //$NON-NLS-1$
