@@ -371,8 +371,9 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			if (date != null && date.equals(other.getDateString())) {
 				return true;
 			}
-			// TODO move this line up to improve performance
-			// if (getChangesetIndex() != other.getChangesetIndex()) return false;
+
+			// changeset indices are not equal in different repos, e.g. incoming
+			// so we can't do a check solely based on indexes.
 			return getChangesetIndex() == other.getChangesetIndex();
 		}
 		return false;
