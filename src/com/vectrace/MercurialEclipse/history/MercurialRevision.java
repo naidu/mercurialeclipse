@@ -162,8 +162,11 @@ public class MercurialRevision extends FileRevision {
 	public String getTagsString(){
 		StringBuilder sb = new StringBuilder();
 		Tag[] allTags = getTags();
-		for (Tag tag : allTags) {
-			sb.append(tag.getName()).append(' ');
+		for (int i = 0; i < allTags.length; i++) {
+			sb.append(allTags[i].getName());
+			if(i < allTags.length - 1) {
+				sb.append(", ");
+			}
 		}
 		return sb.toString();
 	}
