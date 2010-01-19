@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
@@ -46,6 +47,20 @@ public class HgParentClient extends AbstractClient {
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				getWorkingDirectory(resource), false);
+		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
+		String[] lines = getLines(command.executeToString());
+		String[] parents = new String[lines.length];
+		for (int i = 0; i < lines.length; i++) {
+			parents[i] = lines[i].trim();
+		}
+		return parents;
+	}
+
+	public static String[] getParentNodeIds(IFile file)
+	throws HgException {
+		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
+				getWorkingDirectory(file), false);
+		command.addFiles(file);
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = getLines(command.executeToString());
 		String[] parents = new String[lines.length];

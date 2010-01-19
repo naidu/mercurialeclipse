@@ -15,7 +15,11 @@ import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 
 /**
@@ -37,12 +41,37 @@ public class CompareAction extends SingleFileAction {
 
 	@Override
 	protected void run(IFile file) throws TeamException {
-		// workspace version
-		ResourceNode leftNode = new ResourceNode(file);
 
+		boolean clean = MercurialStatusCache.getInstance().isClean(file);
+		if(!clean) {
+			compareToLocal(file);
+			return;
+		}
+		// get the predecessor version and compare current version with it
+		String[] parents = HgParentClient.getParentNodeIds(file);
+		ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(file, parents[0]);
+		if(cs != null && cs.getChangesetIndex() != 0) {
+			parents = cs.getParents();
+			if (parents == null || parents.length == 0) {
+				parents = HgParentClient.getParentNodeIds(file, cs);
+			}
+			if (parents != null && parents.length > 0) {
+				ChangeSet cs2 = LocalChangesetCache.getInstance().getOrFetchChangeSetById(file, parents[0]);
+				if(cs2 != null) {
+					CompareUtils.openEditor(file, cs2, true);
+					return;
+				}
+			}
+		}
+		// something went wrong. So compare to local
+		compareToLocal(file);
+	}
+
+	private void compareToLocal(IFile file) {
+		// local workspace version
+		ResourceNode leftNode = new ResourceNode(file);
 		// mercurial version
-		RevisionNode rightNode = new RevisionNode(
-				new MercurialRevisionStorage(file));
+		RevisionNode rightNode = new RevisionNode(new MercurialRevisionStorage(file));
 		CompareUtils.openEditor(leftNode, rightNode, false, true);
 	}
 
