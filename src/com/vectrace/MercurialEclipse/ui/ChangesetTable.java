@@ -78,6 +78,11 @@ public class ChangesetTable extends Composite {
 	public ChangesetTable(Composite parent, int tableStyle, IResource resource) {
 		super(parent, SWT.NONE);
 		this.logBatchSize = LocalChangesetCache.getInstance().getLogBatchSize();
+		// limit log to allow "smooth" scrolling (not too small and not too big)
+		// - but only if not set in preferences
+		if (logBatchSize <= 0) {
+			logBatchSize = 200;
+		}
 		this.resource = resource;
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
@@ -106,8 +111,7 @@ public class ChangesetTable extends Composite {
 				if (table.isEnabled()
 						&& tableItem.equals(table.getItems()[table.getItemCount() - 1])
 						&& cs.getChangesetIndex() > 0) {
-					// limit log to allow "smooth" scrolling (not too small and not too big)
-					logBatchSize = 200;
+
 					try {
 						int startRev = cs.getChangesetIndex() - 1;
 						updateTable(startRev);
@@ -149,6 +153,12 @@ public class ChangesetTable extends Composite {
 					return;
 				}
 			}
+
+			/*
+			 * TODO filter changesets to only display the so far requested revs.
+			 * else, if the cache is already filled, we display all, which is a huge
+			 * UI performance bottleneck.
+			 */
 
 			SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(
 					Collections.reverseOrder());

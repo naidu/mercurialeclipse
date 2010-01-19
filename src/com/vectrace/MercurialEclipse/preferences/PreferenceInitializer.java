@@ -59,12 +59,12 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// red
 		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR, "255,0,0"); //$NON-NLS-1$
 
-		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, false);
 		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, false);
 		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_PATHS, false);
 		store.setDefault(MercurialPreferenceConstants.PREF_AFFECTED_PATHS_LAYOUT, MercurialPreferenceConstants.LAYOUT_HORIZONTAL);
 		store.setDefault(MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY, false);
-		store.setDefault(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, false);
 
 		/*
 		store.setDefault(PreferenceConstants.P_CHOICE, "choice2");

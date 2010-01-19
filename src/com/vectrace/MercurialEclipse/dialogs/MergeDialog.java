@@ -51,6 +51,11 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
+	protected void createCloseBranchCheckBox(Composite container) {
+		// don't create it as we don't want it in merge dialog
+	}
+
+	@Override
 	protected void performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
 		CommitMergeHandler.commitMerge(mergeProject.getProject(), messageToCommit);
 	}

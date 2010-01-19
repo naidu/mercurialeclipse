@@ -135,7 +135,7 @@ public abstract class AbstractClient {
 	protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) throws HgException {
 		URI uri = repo.getUri();
 		String location;
-		if (uri != null) {
+		if (uri != null && uri.getHost() != null) {
 			location = uri.toASCIIString();
 			addProxyToHgCommand(uri, cmd);
 		} else {
