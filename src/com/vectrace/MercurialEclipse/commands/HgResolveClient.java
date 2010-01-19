@@ -58,9 +58,10 @@ public class HgResolveClient extends AbstractClient {
 				// which has different project root (always deeper than hg root)
 				// hg root relative path must be converted
 				IResource iFile = ResourceUtils.convertRepoRelPath(hgRoot, project, line.substring(2));
-				FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line
-						.charAt(0));
-				result.add(fa);
+				if(iFile != null){
+					FlaggedAdaptable fa = new FlaggedAdaptable(iFile, line.charAt(0));
+					result.add(fa);
+				}
 			}
 		}
 		return result;

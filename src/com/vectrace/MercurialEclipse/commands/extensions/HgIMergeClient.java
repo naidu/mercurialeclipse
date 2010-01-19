@@ -15,6 +15,7 @@ package com.vectrace.MercurialEclipse.commands.extensions;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
@@ -69,10 +70,11 @@ public class HgIMergeClient extends AbstractClient {
 		ArrayList<FlaggedAdaptable> result = new ArrayList<FlaggedAdaptable>();
 		if (lines.length != 1 || !"all conflicts resolved".equals(lines[0])) { //$NON-NLS-1$
 			for (String line : lines) {
-				FlaggedAdaptable flagged = new FlaggedAdaptable(res
-						.getProject().getFile(line.substring(2)), line
-						.charAt(0));
-				result.add(flagged);
+				IFile adaptable = res.getProject().getFile(line.substring(2));
+				if(adaptable != null){
+					FlaggedAdaptable flagged = new FlaggedAdaptable(adaptable, line.charAt(0));
+					result.add(flagged);
+				}
 			}
 		}
 		return result;
