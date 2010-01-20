@@ -12,6 +12,7 @@
 package com.vectrace.MercurialEclipse.synchronize.actions;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collections;
 import java.util.Set;
 
 import org.eclipse.compare.structuremergeviewer.IDiffElement;
@@ -28,6 +29,7 @@ import org.eclipse.ui.statushandlers.StatusManager;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
@@ -74,10 +76,15 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 			if(monitor.isCanceled()){
 				return;
 			}
-			// see issue #10802: if we run "pull" on the changesets group, pull latest
-			// version, which mean: do NOT specify the range for pull
-			changeSet = null;
-			hgRoot = group.getChangesets().iterator().next().getHgRoot();
+			if(isPull){
+				// see issue #10802: if we run "pull" on the changesets group, pull latest
+				// version, which mean: do NOT specify the range for pull
+				changeSet = null;
+				hgRoot = group.getChangesets().iterator().next().getHgRoot();
+			} else {
+				changeSet = Collections.min(group.getChangesets(),	new ChangeSetComparator());
+				hgRoot = changeSet.getHgRoot();
+			}
 		}
 
 		if(hgRoot == null){
