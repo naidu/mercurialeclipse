@@ -315,9 +315,9 @@ public class MercurialHistory extends FileHistory {
 			if(i == lastRev && tagRev < revision){
 				return lastRev;
 			}
-			// if tag rev is greater as current rev, return previous one
+			// if tag rev is greater as current rev, return the version
 			if(tagRev > revision){
-				return i - 1;
+				return i;
 			}
 		}
 		return -1;
