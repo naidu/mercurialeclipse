@@ -263,7 +263,7 @@ public class LocalChangesetCache extends AbstractCache {
 	public ChangeSet getChangesetByRootId(IResource res) throws HgException {
 		HgRoot root = HgClients.getHgRoot(res);
 		String nodeId = HgIdentClient.getCurrentChangesetId(root);
-		if (!"0000000000000000000000000000000000000000".equals(nodeId)) { //$NON-NLS-1$
+		if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
 			return getOrFetchChangeSetById(res, nodeId);
 		}
 		return null;
