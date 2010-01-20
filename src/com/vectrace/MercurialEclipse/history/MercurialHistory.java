@@ -306,10 +306,11 @@ public class MercurialHistory extends FileHistory {
 			if(revision == tagRev){
 				return i;
 			}
-			// if tag rev is greater as greatest (first) revision, return -1 because
-			// there can be no other version which match given tags
+			// if tag rev is greater as greatest (first) revision, return the version,
+			// because the last file version was created before the tag => so it
+			// was the current one at the time the tag was created
 			if(i == 0 && tagRev > revision){
-				return -1;
+				return i;
 			}
 			// if tag rev is smaller as smallest (last) revision, return
 			if(i == lastRev && tagRev < revision){
