@@ -19,14 +19,16 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class SwitchHandler extends SingleResourceHandler {
 
 	@Override
 	protected void run(IResource resource) throws Exception {
 		IProject project = resource.getProject();
-		// better safe than sorry => do not trust the FlagManager
-		if (HgStatusClient.isDirty(project)) {
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		if (HgStatusClient.isDirty(hgRoot)) {
 			if (!MessageDialog
 					.openQuestion(getShell(),
 							Messages.getString("SwitchHandler.pendingChangesConfirmation.1"), //$NON-NLS-1$
@@ -38,7 +40,7 @@ public class SwitchHandler extends SingleResourceHandler {
 				Messages.getString("SwitchHandler.switchTo"), project); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			HgUpdateClient.update(project, dialog.getRevision(), true);
+			HgUpdateClient.update(hgRoot, dialog.getRevision(), true);
 		}
 	}
 

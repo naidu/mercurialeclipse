@@ -22,8 +22,9 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Refreshes status, local changesets, incoming changesets and outgoing
@@ -34,10 +35,9 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * in constructor.
  *
  * @author Bastian Doetsch
- * @deprecated this class is not multi-project aware, please use {@link RefreshRootJob} instead
+ *
  */
-@Deprecated
-public final class RefreshJob extends SafeWorkspaceJob {
+public final class RefreshRootJob extends SafeWorkspaceJob {
 	public static final int LOCAL = 1;
 	public static final int INCOMING = 2;
 	public static final int OUTGOING = 4;
@@ -48,15 +48,19 @@ public final class RefreshJob extends SafeWorkspaceJob {
 	private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
 			.getInstance();
 
-	private final IProject project;
+	private final HgRoot root;
 	private final boolean withFiles;
 	private final int type;
 
-	public RefreshJob(String name, IProject project, int type) {
+	public RefreshRootJob(String name, HgRoot root, int type) {
 		super(name);
-		this.project = project;
+		this.root = root;
 		this.withFiles = getWithFilesProperty();
 		this.type = type;
+	}
+
+	public RefreshRootJob(String name, HgRoot root) {
+		this(name, root, ALL);
 	}
 
 	private static boolean getWithFilesProperty() {
@@ -73,35 +77,37 @@ public final class RefreshJob extends SafeWorkspaceJob {
 		}
 
 		if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-			System.out.println("Refresh Job for: " + project);
+			System.out.println("Refresh Job for: " + root.getName());
 		}
 
 		try {
 			if((type & LOCAL) != 0){
 				monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-				LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
+				Set<IProject> projects = ResourceUtils.getProjects(root);
+				LocalChangesetCache.getInstance().clear(root, true);
+				for (IProject project : projects) {
+					// TODO fetch log info ?
+					// LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
+				}
 				monitor.worked(1);
 
 				monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
-				mercurialStatusCache.clear(project, false);
-				mercurialStatusCache.refreshStatus(project, monitor);
+				mercurialStatusCache.clear(root, false);
+				mercurialStatusCache.refreshStatus(root, monitor);
 				monitor.worked(1);
 			}
 			if((type & OUTGOING) == 0 && (type & INCOMING) == 0){
 				return super.runSafe(monitor);
 			}
-			Set<HgRepositoryLocation> repoLocations = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
-			for (HgRepositoryLocation repositoryLocation : repoLocations) {
-				if((type & INCOMING) != 0){
-					monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + repositoryLocation);
-					IncomingChangesetCache.getInstance().clear(repositoryLocation, project, true);
-					monitor.worked(1);
-				}
-				if((type & OUTGOING) != 0){
-					monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + repositoryLocation);
-					OutgoingChangesetCache.getInstance().clear(repositoryLocation, project, true);
-					monitor.worked(1);
-				}
+			if((type & INCOMING) != 0){
+				monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + root.getName());
+				IncomingChangesetCache.getInstance().clear(root, true);
+				monitor.worked(1);
+			}
+			if((type & OUTGOING) != 0){
+				monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + root.getName());
+				OutgoingChangesetCache.getInstance().clear(root, true);
+				monitor.worked(1);
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);

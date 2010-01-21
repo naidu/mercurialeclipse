@@ -23,9 +23,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -34,6 +36,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -41,11 +44,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
 import com.vectrace.MercurialEclipse.repository.RepositoryResourcesManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A manager for all Mercurial repository locations.
@@ -204,9 +209,10 @@ public class HgRepositoryLocationManager {
 			throws IOException, HgException {
 		if (!initialized) {
 			initialized = true;
-			Set<IProject> hgProjects = loadProjectRepos();
-			for (IProject project : hgProjects) {
-				new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule();
+			List<IResource> hgProjects = new ArrayList<IResource>(loadProjectRepos());
+			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(hgProjects);
+			for (HgRoot root : byRoot.keySet()) {
+				new RefreshStatusJob("Init hg cache for " + root.getName(), root).schedule();
 			}
 		}
 		return projectRepos;
@@ -233,13 +239,16 @@ public class HgRepositoryLocationManager {
 			Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
 			for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
 				// if not existent, add to repository browser
-				HgRepositoryLocation loc = updateRepoLocation(project,
-						entry.getValue(),
-						entry.getKey(),
-						null, null);
-				internalAddRepoLocation(project, loc);
+				try {
+					HgRepositoryLocation loc = updateRepoLocation(project,
+							entry.getValue(),
+							entry.getKey(),
+							null, null);
+					internalAddRepoLocation(project, loc);
+				} catch (HgException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
-
 			Set<HgRepositoryLocation> locations = loadRepositoriesFromFile(getProjectLocationFile(project));
 			for(HgRepositoryLocation loc : locations) {
 				internalAddRepoLocation(project, loc);
@@ -276,7 +285,9 @@ public class HgRepositoryLocationManager {
 				while ((line = reader.readLine()) != null) {
 					try {
 						HgRepositoryLocation loc = delegator.delegateParse(line);
-						locations.add(loc);
+						if(loc != null) {
+							locations.add(loc);
+						}
 					} catch (Exception e) {
 						// log exception, but don't bother the user with it.
 						MercurialEclipsePlugin.logError(e);

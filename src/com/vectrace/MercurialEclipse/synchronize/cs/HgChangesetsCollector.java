@@ -19,6 +19,7 @@ import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.diff.IDiffChangeEvent;
 import org.eclipse.team.core.mapping.ISynchronizationContext;
@@ -31,6 +32,7 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
@@ -50,6 +52,95 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	private final IPropertyListener branchListener;
 	private final static Set<ChangeSet> EMPTY_SET = Collections.unmodifiableSet(new HashSet<ChangeSet>());
 
+	private final class ChangesetsCollectorJob extends Job {
+
+		private ChangesetsCollectorJob(String name) {
+			super(name);
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			monitor.beginTask("Get remote hg data", 2);
+			Set<ChangeSet> oldSets = getChangeSets();
+			Set<ChangeSet> newSets;
+			AbstractRemoteCache in = IncomingChangesetCache.getInstance();
+			AbstractRemoteCache out = OutgoingChangesetCache.getInstance();
+			int mode = getConfiguration().getMode();
+			switch (mode) {
+			case ISynchronizePageConfiguration.INCOMING_MODE:
+				monitor.subTask("Collecting incoming changesets");
+				newSets = initRemote(in);
+				updateChangesets(oldSets, newSets, null);
+				monitor.internalWorked(2);
+				break;
+			case ISynchronizePageConfiguration.OUTGOING_MODE:
+				monitor.subTask("Collecting outgoing changesets");
+				newSets = initRemote(out);
+				updateChangesets(oldSets, newSets, null);
+				monitor.internalWorked(2);
+				break;
+			case ISynchronizePageConfiguration.BOTH_MODE:
+				monitor.subTask("Collecting outgoing changesets");
+				newSets = initRemote(out);
+				updateChangesets(oldSets, newSets, Direction.OUTGOING);
+				monitor.internalWorked(1);
+
+				monitor.subTask("Collecting incoming changesets");
+				newSets = initRemote(in);
+				updateChangesets(oldSets, newSets, Direction.INCOMING);
+				monitor.internalWorked(1);
+				break;
+			case ISynchronizePageConfiguration.CONFLICTING_MODE:
+				monitor.subTask("Collecting outgoing changesets");
+				newSets = initRemote(out);
+				monitor.internalWorked(1);
+
+				monitor.subTask("Collecting incoming changesets");
+				newSets.addAll(initRemote(in));
+				monitor.internalWorked(1);
+
+				newSets = retainConflicts(newSets);
+				updateChangesets(oldSets, newSets, null);
+				break;
+			default:
+				break;
+			}
+
+			monitor.done();
+			return Status.OK_STATUS;
+		}
+	}
+
+	private void updateChangesets(Set<ChangeSet> oldSets, Set<ChangeSet> newSets, Direction direction){
+		Set<ChangeSet> removed = new HashSet<ChangeSet>();
+		for (ChangeSet changeSet : oldSets) {
+			if(direction != null && direction != changeSet.getDirection()){
+				continue;
+			}
+			if(!newSets.contains(changeSet)){
+				remove(changeSet);
+				removed.add(changeSet);
+			}
+		}
+
+		for (ChangeSet changeSet : newSets) {
+			if(!oldSets.contains(changeSet)){
+				add(changeSet);
+			}
+		}
+
+		oldSets.removeAll(removed);
+	}
+
+	private static class ExclusiveRule implements ISchedulingRule {
+		public boolean isConflicting(ISchedulingRule rule) {
+			return contains(rule);
+		}
+		public boolean contains(ISchedulingRule rule) {
+			return rule instanceof ExclusiveRule;
+		}
+	}
+
 	public HgChangesetsCollector(ISynchronizePageConfiguration configuration) {
 		super(configuration);
 		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();
@@ -68,18 +159,15 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	protected void branchChanged(IProject source) {
 		MercurialSynchronizeSubscriber subscriber = getSubscriber();
 		IProject[] projects = subscriber.getProjects();
+		boolean needUpdate = false;
 		for (IProject project : projects) {
 			if(project.equals(source)){
-				Job job = new Job("Updating branch info for " + project.getName()){
-					@Override
-					protected IStatus run(IProgressMonitor monitor) {
-						initializeSets();
-						return Status.OK_STATUS;
-					}
-				};
-				job.schedule(100);
-				return;
+				needUpdate = true;
+				break;
 			}
+		}
+		if(needUpdate){
+			initializeSets();
 		}
 	}
 
@@ -90,47 +178,9 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	@Override
 	protected void initializeSets() {
-		Set<ChangeSet> oldSets = getChangeSets();
-		Set<ChangeSet> newSets = new HashSet<ChangeSet>();
-
-
-		AbstractRemoteCache in = IncomingChangesetCache.getInstance();
-		AbstractRemoteCache out = OutgoingChangesetCache.getInstance();
-		int mode = getConfiguration().getMode();
-		switch (mode) {
-		case ISynchronizePageConfiguration.INCOMING_MODE:
-			newSets.addAll(initRemote(in));
-			break;
-		case ISynchronizePageConfiguration.OUTGOING_MODE:
-			newSets.addAll(initRemote(out));
-			break;
-		case ISynchronizePageConfiguration.BOTH_MODE:
-			newSets.addAll(initRemote(in));
-			newSets.addAll(initRemote(out));
-			break;
-		case ISynchronizePageConfiguration.CONFLICTING_MODE:
-			newSets.addAll(initRemote(in));
-			newSets.addAll(initRemote(out));
-			break;
-		default:
-			break;
-		}
-
-		if(mode == ISynchronizePageConfiguration.CONFLICTING_MODE){
-			newSets = retainConflicts(newSets);
-		}
-
-		for (ChangeSet changeSet : oldSets) {
-			if(!newSets.contains(changeSet)){
-				remove(changeSet);
-			}
-		}
-
-		for (ChangeSet changeSet : newSets) {
-			if(!oldSets.contains(changeSet)){
-				add(changeSet);
-			}
-		}
+		Job job = new ChangesetsCollectorJob("Initializing changesets");
+		job.setRule(new ExclusiveRule());
+		job.schedule(100);
 	}
 
 	private Set<ChangeSet> retainConflicts(Set<ChangeSet> newSets) {
@@ -138,22 +188,33 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		return newSets;
 	}
 
-	private Set<ChangeSet> initRemote(AbstractRemoteCache cache) {
+	private Set<ChangeSet> initRemote(final AbstractRemoteCache cache) {
 		MercurialSynchronizeSubscriber subscriber = getSubscriber();
-		IProject[] projects = subscriber.getProjects();
+		final IProject[] projects = subscriber.getProjects();
 		if(projects.length == 0){
 			return EMPTY_SET;
 		}
 
-		String currentBranch = MercurialTeamProvider.getCurrentBranch(projects[0]);
-		HgRepositoryLocation repo = participant.getRepositoryLocation();
-		Set<ChangeSet> result = new HashSet<ChangeSet>();
-		for (IProject project : projects) {
-			try {
-				result.addAll(cache.getChangeSets(project, repo, currentBranch));
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
+		final String currentBranch = MercurialTeamProvider.getCurrentBranch(projects[0]);
+		final HgRepositoryLocation repo = participant.getRepositoryLocation();
+		final Set<ChangeSet> result = new HashSet<ChangeSet>();
+
+		Runnable runnable = new Runnable() {
+			public void run() {
+				for (IProject project : projects) {
+					try {
+						result.addAll(cache.getChangeSets(project, repo, currentBranch));
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
 			}
+		};
+		try {
+			MercurialSynchronizeSubscriber.executeLockedCacheTask(runnable);
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+			return EMPTY_SET;
 		}
 		return result;
 	}

@@ -398,7 +398,7 @@ public class MercurialHistoryPage extends HistoryPage {
 							return;
 						}
 					}
-					HgUpdateClient.update(resource.getProject(), rev.getChangeSet().getChangeset(), true);
+					HgUpdateClient.update(hgRoot, rev.getChangeSet().getChangeset(), true);
 					refresh();
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
@@ -424,9 +424,9 @@ public class MercurialHistoryPage extends HistoryPage {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
 				if(resource instanceof IFile){
 					IStructuredSelection sel = updateActionEnablement();
-					menuMgr1.add(openAction);
-					menuMgr1.add(openEditorAction);
-					menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+				menuMgr1.add(openAction);
+				menuMgr1.add(openEditorAction);
+				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
 					if(sel.size() == 2){
 						menuMgr1.add(compareTwo);
 					} else {
@@ -437,7 +437,6 @@ public class MercurialHistoryPage extends HistoryPage {
 				updateAction.setEnabled(updateAction.isEnabled());
 				menuMgr1.add(updateAction);
 			}
-
 		});
 		menuMgr.setRemoveAllWhenShown(true);
 		viewer.getTable().setMenu(menuMgr.createContextMenu(viewer.getTable()));
@@ -523,7 +522,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	CompareRevisionAction getCompareWithCurrentAction() {
 		if(compareWithCurrAction == null) {
 			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this);
-		}
+			}
 		return compareWithCurrAction;
 	}
 
@@ -607,6 +606,5 @@ public class MercurialHistoryPage extends HistoryPage {
 		compareWithPrevAction.selectionChanged(selection);
 		compareTwo.selectionChanged(selection);
 		return selection;
+		}
 	}
-
-}

@@ -34,8 +34,10 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
@@ -72,8 +74,9 @@ public class OutgoingPage extends IncomingPage {
 			}
 			HgRepositoryLocation remote = getLocation();
 			try {
-				Set<ChangeSet> changesets = OutgoingChangesetCache
-						.getInstance().getChangeSets(getProject(), remote, null);
+				HgRoot root = MercurialTeamProvider.getHgRoot(getProject());
+				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
+						root, remote, null);
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(changesets);
 				return revertedSet;

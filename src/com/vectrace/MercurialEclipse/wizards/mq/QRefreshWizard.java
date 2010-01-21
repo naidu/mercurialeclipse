@@ -29,39 +29,21 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
  * @author bastian
- *
  */
 public class QRefreshWizard extends HgWizard {
 	private QNewWizardPage page = null;
 
 	private class RefreshOperation extends HgOperation {
 
-		/**
-		 * @param context
-		 */
 		public RefreshOperation(IRunnableContext context) {
 			super(context);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see
-		 * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
-		 * ()
-		 */
 		@Override
 		protected String getActionDescription() {
 			return Messages.getString("QRefreshWizard.actionDescription"); //$NON-NLS-1$
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see
-		 * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
-		 * .core.runtime.IProgressMonitor)
-		 */
 		@Override
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
@@ -95,9 +77,6 @@ public class QRefreshWizard extends HgWizard {
 
 	private final IResource resource;
 
-	/**
-	 * @param windowTitle
-	 */
 	public QRefreshWizard(IResource resource) {
 		super(Messages.getString("QRefreshWizard.title")); //$NON-NLS-1$
 		this.resource = resource;
@@ -115,11 +94,6 @@ public class QRefreshWizard extends HgWizard {
 		addPage(page);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-	 */
 	@Override
 	public boolean performFinish() {
 		RefreshOperation refreshOperation = new RefreshOperation(getContainer());

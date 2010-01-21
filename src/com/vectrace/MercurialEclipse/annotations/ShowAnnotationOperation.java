@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -53,7 +54,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -105,10 +105,10 @@ public class ShowAnnotationOperation extends TeamOperation {
 	}
 
 	private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
-	private final HgFile remoteFile;
+	private final File remoteFile;
 	private final IResource res;
 
-	public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
+	public ShowAnnotationOperation(IWorkbenchPart part, File remoteFile)
 			throws HgException {
 		super(part);
 		this.remoteFile = remoteFile;

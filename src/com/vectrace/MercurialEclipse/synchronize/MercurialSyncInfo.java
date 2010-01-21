@@ -23,7 +23,7 @@ import org.eclipse.team.core.variants.IResourceVariantComparator;
  */
 public class MercurialSyncInfo extends SyncInfo {
 
-	private final int description;
+	protected final int description;
 
 	public MercurialSyncInfo(IResource local, IResourceVariant base,
 			IResourceVariant remote, IResourceVariantComparator comparator, int description) {

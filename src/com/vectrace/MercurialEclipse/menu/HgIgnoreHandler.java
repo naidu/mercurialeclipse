@@ -25,6 +25,8 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgIgnoreClient;
 import com.vectrace.MercurialEclipse.dialogs.IgnoreDialog;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -78,10 +80,10 @@ public class HgIgnoreHandler extends SingleResourceHandler {
 
 					hgIgnoreFile.refreshLocal(IResource.DEPTH_ZERO, monitor);
 					if(!hgIgnoreFile.exists()){
-						// refresh status of newly ignored resource, but only if .hgignore
-						// is not in the project, because if .hgignore is inside the project,
-						// the status would be updated automatically
-						MercurialStatusCache.getInstance().refreshStatus(resource, monitor);
+						// If .hgignore is NOT inside the project, we have a multi-project setup in the same root
+						// Refresh status of newly ignored resource for ALL projects in the same hg root.
+						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+						MercurialStatusCache.getInstance().refreshStatus(hgRoot, monitor);
 					} else {
 						MercurialStatusCache.getInstance().clearStatusCache(resource, true);
 					}

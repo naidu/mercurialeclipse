@@ -169,9 +169,9 @@ public class ChangePathsTableProvider extends TableViewer {
 			if(basePath.equals(currentPath) && tableProvider.getElementsCount() > 1) {
 				// highlight current file in the changeset, if there are more files
 				return JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);
-			}
-			return JFaceResources.getFontRegistry().get(JFaceResources.DEFAULT_FONT);
 		}
+			return JFaceResources.getFontRegistry().get(JFaceResources.DEFAULT_FONT);
+	}
 
 	}
 
