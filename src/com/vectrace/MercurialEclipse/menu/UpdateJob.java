@@ -24,7 +24,7 @@ import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
  * @author Bastian
  *
  */
-final class UpdateJob extends SafeWorkspaceJob {
+public class UpdateJob extends SafeWorkspaceJob {
 	private final IProject project;
 	private final boolean cleanEnabled;
 	private final String revision;
@@ -50,8 +50,9 @@ final class UpdateJob extends SafeWorkspaceJob {
 		if (cleanEnabled) {
 			jobName.concat(" discarding all local changes (-C option).");
 		}
-		monitor.beginTask(jobName, 1);
+		monitor.beginTask(jobName, 2);
 		monitor.subTask("Calling Mercurial...");
+		monitor.worked(1);
 		HgUpdateClient.update(project, revision, cleanEnabled);
 		monitor.worked(1);
 		monitor.done();
