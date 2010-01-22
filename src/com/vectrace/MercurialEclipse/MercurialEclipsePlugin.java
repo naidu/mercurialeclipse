@@ -93,7 +93,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	private static final Version LOWEST_WORKING_VERSION = new Version(1, 3, 1);
 
-	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE);
+	private static final Pattern VERSION_PATTERN = Pattern.compile(".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
 
 	public MercurialEclipsePlugin() {
 		// should NOT do anything until started by OSGI
@@ -109,24 +109,24 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		proxyServiceTracker = new ServiceTracker(context, IProxyService.class.getName(), null);
 		proxyServiceTracker.open();
 
-		Job job = new Job("Starting MercurialEclipse") {
+		Job job = new Job(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse")) { //$NON-NLS-1$
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					monitor.beginTask("Starting MercurialEclipse", 3);
-					monitor.subTask("Checking Mercurial installation.");
+					monitor.beginTask(Messages.getString("MercurialEclipsePlugin.startingMercurialEclipse"), 3); //$NON-NLS-1$
+					monitor.subTask(Messages.getString("MercurialEclipsePlugin.checkingMercurialInstallation")); //$NON-NLS-1$
 					checkHgInstallation();
 					monitor.worked(1);
 					// read known repositories
-					monitor.subTask("Loading known Mercurial repositories.");
+					monitor.subTask(Messages.getString("MercurialEclipsePlugin.loadingKnownMercurialRepositories")); //$NON-NLS-1$
 					repoManager.start();
 					monitor.worked(1);
 					// read in commit messages from disk
-					monitor.subTask("Starting Commit Message manager.");
+					monitor.subTask(Messages.getString("MercurialEclipsePlugin.startingCommitMessageManager")); //$NON-NLS-1$
 					commitMessageManager.start();
 					monitor.worked(1);
 					monitor.done();
-					return new Status(IStatus.OK, ID, "MercurialEclipse started successfully.");
+					return new Status(IStatus.OK, ID, Messages.getString("MercurialEclipsePlugin.startedSuccessfully")); //$NON-NLS-1$
 				} catch (Exception e) {
 					hgUsable = false;
 					logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
@@ -140,7 +140,14 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			@Override
 			public void done(IJobChangeEvent event) {
 				super.done(event);
-				HgConsoleHolder.getInstance().showConsole(true);
+				// open in SWT GUI Thread
+				new SafeUiJob(Messages.getString("MercurialEclipsePlugin.openingMercurialConsole")) { //$NON-NLS-1$
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						HgConsoleHolder.getInstance().showConsole(true);
+						return super.runSafe(monitor);
+					}
+				}.schedule();
 			}
 		});
 		job.schedule();
@@ -169,19 +176,19 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	private void checkHgVersion() throws HgException {
-		AbstractShellCommand command = new HgCommand("version", (File) null, true);
+		AbstractShellCommand command = new HgCommand("version", (File) null, true); //$NON-NLS-1$
 		command.setShowOnConsole(false);
 		String version = new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
-		String[] split = version.split("\\n");
-		version = split.length > 0? split[0] : "";
+		String[] split = version.split("\\n"); //$NON-NLS-1$
+		version = split.length > 0? split[0] : ""; //$NON-NLS-1$
 		Matcher matcher = VERSION_PATTERN.matcher(version);
 		if(matcher.matches()){
 			version = matcher.group(1);
 			if(version != null && LOWEST_WORKING_VERSION.compareTo(new Version(version)) <= 0){
 				return;
 			}
-			throw new HgException("Unsupported hg version: " + version + ". Expected is at least "
-					+ LOWEST_WORKING_VERSION + ".");
+			throw new HgException(Messages.getString("MercurialEclipsePlugin.unsupportedHgVersion") + version + Messages.getString("MercurialEclipsePlugin.expectedAtLeast") //$NON-NLS-1$ //$NON-NLS-2$
+					+ LOWEST_WORKING_VERSION + "."); //$NON-NLS-1$
 		}
 	}
 
@@ -231,7 +238,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	public static ImageDescriptor getImageDescriptor(String path) {
 		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
 		if(descriptor == null) {
-			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path);
+			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
 			getDefault().getImageRegistry().put(path, descriptor);
 		}
 		return descriptor;
@@ -247,7 +254,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	public static Image getImage(String path) {
 		ImageDescriptor descriptor = getDefault().getImageRegistry().getDescriptor(path);
 		if(descriptor == null) {
-			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path);
+			descriptor = AbstractUIPlugin.imageDescriptorFromPlugin(ID, "icons/" + path); //$NON-NLS-1$
 			getDefault().getImageRegistry().put(path, descriptor);
 		}
 		return getDefault().getImageRegistry().get(path);
@@ -411,7 +418,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		final IStatus status;
 
 		private ErrorJob(Throwable error) {
-			super(Messages.getString("MercurialEclipsePlugin.showError"));
+			super(Messages.getString("MercurialEclipsePlugin.showError")); //$NON-NLS-1$
 			if(error instanceof CoreException){
 				status = ((CoreException) error).getStatus();
 			} else {
@@ -431,8 +438,8 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 				errStatus = status;
 			} else {
 				// o-ho, we have multiple errors waiting to be displayed...
-				title = Messages.getString("MercurialEclipsePlugin.unexpectedErrors");
-				String message = Messages.getString("MercurialEclipsePlugin.unexpectedErrorsOccured");
+				title = Messages.getString("MercurialEclipsePlugin.unexpectedErrors"); //$NON-NLS-1$
+				String message = Messages.getString("MercurialEclipsePlugin.unexpectedErrorsOccured"); //$NON-NLS-1$
 				// get the latest state
 				Job[] jobs = jobManager.find(plugin);
 				// discard all waiting now (we are not affected)
