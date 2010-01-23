@@ -206,7 +206,12 @@ public class HgRepositoryLocationManager {
 			initialized = true;
 			Set<IProject> hgProjects = loadProjectRepos();
 			for (IProject project : hgProjects) {
-				new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule();
+				try {
+					new RefreshStatusJob("Init hg cache for " + project.getName(), project).schedule();
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+					MercurialEclipsePlugin.showError(e);
+				}
 			}
 		}
 		return projectRepos;
