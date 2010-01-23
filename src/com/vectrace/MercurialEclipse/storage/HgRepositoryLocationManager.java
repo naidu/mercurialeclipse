@@ -83,13 +83,6 @@ public class HgRepositoryLocationManager {
 				REPO_LOCATION_FILE).toFile();
 	}
 
-	public boolean cleanup(IProject project) {
-		Set<HgRepositoryLocation> locations = getAllProjectRepoLocations(project);
-		repoHistory.addAll(locations);
-		removeRepoLocation(project);
-		return getProjectLocationFile(project).delete();
-	}
-
 	/**
 	 * Load all saved repository locations from the plug-in's default area.
 	 *
@@ -185,13 +178,6 @@ public class HgRepositoryLocationManager {
 		}
 
 		return true;
-	}
-
-	private boolean removeRepoLocation(IProject project) {
-		if (project == null) {
-			return false;
-		}
-		return projectRepos.remove(project) != null;
 	}
 
 	/**
@@ -415,10 +401,6 @@ public class HgRepositoryLocationManager {
 		if (user == null) {
 			password = null;
 		}
-		String rootUrl = props.getProperty("rootUrl"); //$NON-NLS-1$
-		if ((rootUrl == null) || (rootUrl.length() == 0)) {
-			rootUrl = null;
-		}
 		String url = props.getProperty("url"); //$NON-NLS-1$
 		if (url == null) {
 			throw new HgException(Messages
@@ -516,7 +498,7 @@ public class HgRepositoryLocationManager {
 	 * Create a repository location instance from the given properties. The
 	 * supported properties are: user The username for the connection (optional)
 	 * password The password used for the connection (optional) url The url
-	 * where the repository resides rootUrl The repository root url
+	 * where the repository resides
 	 */
 	public HgRepositoryLocation fromProperties(IProject project, Properties configuration)
 			throws HgException {
@@ -528,10 +510,6 @@ public class HgRepositoryLocationManager {
 		String password = configuration.getProperty("password"); //$NON-NLS-1$
 		if (user == null) {
 			password = null;
-		}
-		String rootUrl = configuration.getProperty("rootUrl"); //$NON-NLS-1$
-		if ((rootUrl == null) || (rootUrl.length() == 0)) {
-			rootUrl = null;
 		}
 		String url = configuration.getProperty("url"); //$NON-NLS-1$
 		if (url == null) {

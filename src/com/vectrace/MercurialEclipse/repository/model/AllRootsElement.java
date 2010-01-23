@@ -8,16 +8,14 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.model;
 
-
 import java.util.Arrays;
 
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.repository.RepositoryComparator;
@@ -30,15 +28,16 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
  * Because we extend IAdaptable, we don't need to register this adapter
  * as we need for RemoteFileElement, RemoteFolderElement ...
  */
-public class AllRootsElement extends HgModelElement  implements IAdaptable  {
+public class AllRootsElement extends HgModelElement {
+
 	public ImageDescriptor getImageDescriptor(Object object) {
 		return MercurialEclipsePlugin.getImageDescriptor("cview16/repository_rep.gif");
 	}
 
 	@Override
 	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
-		HgRepositoryLocation[] locations =
-			MercurialEclipsePlugin.getRepoManager().getAllRepoLocations().toArray(new HgRepositoryLocation[0]);
+		HgRepositoryLocation[] locations = MercurialEclipsePlugin.getRepoManager()
+				.getAllRepoLocations().toArray(new HgRepositoryLocation[0]);
 		Arrays.sort(locations, new RepositoryComparator());
 		return locations;
 	}
@@ -47,12 +46,6 @@ public class AllRootsElement extends HgModelElement  implements IAdaptable  {
 		return o.toString();
 	}
 
-	@SuppressWarnings("unchecked")
-	@Override
-	public Object getAdapter(Class adapter) {
-		if (adapter == IWorkbenchAdapter.class) return this;
-		return null;
-	}
 	public Object getParent(Object o) {
 		return null;
 	}

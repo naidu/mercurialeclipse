@@ -20,7 +20,6 @@ import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.ui.model.IWorkbenchAdapter;
-import org.eclipse.ui.progress.IDeferredWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
@@ -32,10 +31,6 @@ public abstract class HgModelElement implements IWorkbenchAdapter, IAdaptable {
 	@SuppressWarnings("unchecked")
 	public Object getAdapter(Class adapter) {
 		if (adapter == IWorkbenchAdapter.class) {
-			return this;
-		}
-		if ((adapter == IDeferredWorkbenchAdapter.class)
-				&& this instanceof IDeferredWorkbenchAdapter) {
 			return this;
 		}
 		return null;

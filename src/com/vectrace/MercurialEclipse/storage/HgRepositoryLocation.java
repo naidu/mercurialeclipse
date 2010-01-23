@@ -35,10 +35,10 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	private static final String PASSWORD_MASK = "***";
 
-	private final String logicalName;
+	private String logicalName;
 	protected String location;
-	private final String user;
-	private final String password;
+	private String user;
+	private String password;
 	private final boolean isPush;
 	private Date lastUsage;
 
@@ -258,5 +258,26 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	public boolean isEmpty() {
 		return (getLocation() == null || getLocation().length() == 0);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Object getAdapter(Class adapter) {
+		if(adapter == HgRepositoryLocation.class){
+			return this;
+		}
+		return super.getAdapter(adapter);
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public void setUser(String user) {
+		this.user = user;
+	}
+
+	public void setLogicalName(String logicalName) {
+		this.logicalName = logicalName;
 	}
 }

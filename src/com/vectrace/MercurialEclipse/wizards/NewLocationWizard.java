@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Subclipse project committers - initial API and implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -20,7 +21,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * Wizard to add a new location. Uses ConfigurationWizardMainPage for entering
- * informations about SVN repository location
+ * informations about Hg repository location
  */
 public class NewLocationWizard extends HgWizard {
 
@@ -66,7 +67,7 @@ public class NewLocationWizard extends HgWizard {
 			String iconPath, String description) {
 		ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
 				MercurialEclipsePlugin.getImageDescriptor(iconPath));
-
+		mainPage.setShowCredentials(true);
 		mainPage.setShowBundleButton(false);
 		page = mainPage;
 		initPage(description, page);

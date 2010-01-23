@@ -28,7 +28,7 @@
          class="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
          typeClass="com.vectrace.MercurialEclipse.team.MercurialTeamProviderType"
          id="com.vectrace.MercurialEclipse.team.MercurialTeamProvider"
-          metaFilePaths=".hg/">
+          metaFilePaths=".hg">
        </repository>
    </extension>
 
@@ -1377,6 +1377,14 @@
             id="com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage"
             name="%mercurial"
             objectClass="org.eclipse.core.resources.IProject">
+      </page>
+      <page
+            adaptable="true"
+            class="com.vectrace.MercurialEclipse.repository.RepoPropertiesPage"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.MercurialEclipse.repositoryProperties"
+            name="Hg Repository"
+            objectClass="com.vectrace.MercurialEclipse.storage.HgRepositoryLocation">
       </page>
    </extension>
    

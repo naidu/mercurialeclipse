@@ -8,12 +8,14 @@
  * Contributors:
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.actions;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.actions.SelectionListenerAction;
@@ -28,7 +30,8 @@ public class RemoveRootAction extends SelectionListenerAction {
 	private IStructuredSelection selection;
 
 	public RemoveRootAction(Shell shell) {
-		super("Remove repository");
+		super("Remove Repository");
+		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("rem_co.gif"));
 	}
 
 	/**
@@ -65,6 +68,11 @@ public class RemoveRootAction extends SelectionListenerAction {
 	public void run() {
 		HgRepositoryLocation[] roots = getSelectedRemoteRoots();
 		if (roots.length == 0) {
+			return;
+		}
+		boolean confirm = MessageDialog.openConfirm(null, "Mercurial Repositories",
+				"Remove repository (all authentication data will be lost)?");
+		if(!confirm){
 			return;
 		}
 		for (int i = 0; i < roots.length; i++) {
