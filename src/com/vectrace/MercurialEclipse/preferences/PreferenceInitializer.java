@@ -58,6 +58,9 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR, "0,0,0"); //$NON-NLS-1$
 		// red
 		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR, "255,0,0"); //$NON-NLS-1$
+		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_STARTUP, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_LIMIT_OUTPUT, true);
+		store.setDefault(MercurialPreferenceConstants.PREF_CONSOLE_HIGH_WATER_MARK, 100000);
 
 		store.setDefault(MercurialPreferenceConstants.PREF_DECORATE_WITH_COLORS, false);
 		store.setDefault(MercurialPreferenceConstants.PREF_SHOW_COMMENTS, false);
