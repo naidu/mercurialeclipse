@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * 		bastian	implementation
+ * 		Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
@@ -20,7 +21,6 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 
 /**
  * @author bastian
- *
  */
 public class HgQPopClient extends AbstractClient {
 	public static String popAll(IResource resource, boolean force)
@@ -49,7 +49,7 @@ public class HgQPopClient extends AbstractClient {
 			command.addOptions("--force"); //$NON-NLS-1$
 		}
 
-		if (patchName != "") {
+		if (!"".equals(patchName)) {
 			command.addOptions(patchName);
 		}
 		return command.executeToString();

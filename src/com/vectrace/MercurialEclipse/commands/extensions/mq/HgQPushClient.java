@@ -46,7 +46,7 @@ public class HgQPushClient extends AbstractClient {
 		if (force) {
 			command.addOptions("--force"); //$NON-NLS-1$
 		}
-		if (patchName != "") {
+		if (!"".equals(patchName)) {
 			command.addOptions(patchName);
 		}
 		return command.executeToString();
