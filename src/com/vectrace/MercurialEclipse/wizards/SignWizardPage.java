@@ -154,7 +154,9 @@ public class SignWizardPage extends HgWizardPage {
 			setPageComplete(false);
 			MercurialEclipsePlugin.logError(e);
 		}
-		combo.setText(combo.getItem(0));
+		if(combo.getItemCount() > 0) {
+			combo.setText(combo.getItem(0));
+		}
 	}
 
 	@Override
