@@ -138,17 +138,25 @@ public class MergeHandler extends SingleResourceHandler {
 		boolean commit = true;
 
 		String output = "";
-
+		// check if auto-commit is possible
 		List<FlaggedAdaptable> mergeAdaptables = HgResolveClient.list(hgRoot);
 		monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.mergeStatus")); //$NON-NLS-1$
 		for (FlaggedAdaptable flaggedAdaptable : mergeAdaptables) {
 			if (flaggedAdaptable.getFlag() == MercurialStatusCache.CHAR_UNRESOLVED) {
+				// unresolved files, no auto-commit
 				commit = false;
 				break;
 			}
 		}
 		monitor.worked(1);
-
+		
+		// always show Merge view, as it offers to abort a merge and revise the automatically merged files
+		MergeView view = (MergeView) PlatformUI.getWorkbench()
+			.getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
+		view.clearView();
+		view.setCurrentRoot(hgRoot);
+		
+		// auto-commit if desired
 		if (commit) {
 			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
 			output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
@@ -158,11 +166,6 @@ public class MergeHandler extends SingleResourceHandler {
 				output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
 			}
 			monitor.worked(1);
-		} else {
-			MergeView view = (MergeView) PlatformUI.getWorkbench()
-			.getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
-			view.clearView();
-			view.setCurrentRoot(hgRoot);
 		}
 		return output;
 	}

@@ -26,7 +26,9 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -71,8 +73,8 @@ import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -398,8 +400,15 @@ public class MercurialHistoryPage extends HistoryPage {
 							return;
 						}
 					}
-					HgUpdateClient.update(hgRoot, rev.getChangeSet().getChangeset(), true);
-					refresh();
+					UpdateJob job = new UpdateJob(rev.getHash(), true, hgRoot);
+					JobChangeAdapter adap = new JobChangeAdapter() {
+						@Override
+						public void done(IJobChangeEvent event) {
+							refresh();
+						}
+					};
+					job.addJobChangeListener(adap);
+					job.schedule();
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 				}

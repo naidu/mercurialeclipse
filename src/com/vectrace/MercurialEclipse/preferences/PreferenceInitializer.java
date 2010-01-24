@@ -73,6 +73,10 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		// red
 		store.setDefault(PREF_CONSOLE_ERROR_COLOR, "255,0,0");
 
+		store.setDefault(PREF_CONSOLE_SHOW_ON_STARTUP, false);
+		store.setDefault(PREF_CONSOLE_LIMIT_OUTPUT, true);
+		store.setDefault(PREF_CONSOLE_HIGH_WATER_MARK, 100000);
+
 		store.setDefault(PREF_DECORATE_WITH_COLORS, true);
 		store.setDefault(PREF_SHOW_COMMENTS, true);
 		store.setDefault(PREF_SHOW_PATHS, true);
@@ -80,6 +84,22 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
+		// default is 6 minutes. Don't ask why 6... Because it is 7 times smaller as 42?
+		int defaultTimeout = 6 * 60 * 1000;
+		store.setDefault(DEFAULT_TIMEOUT, defaultTimeout);
+
+		// remote operations are always longer then local
+		store.setDefault(CLONE_TIMEOUT, defaultTimeout * 10);
+		store.setDefault(PUSH_TIMEOUT, defaultTimeout * 10);
+		store.setDefault(PULL_TIMEOUT, defaultTimeout * 10);
+
+		store.setDefault(UPDATE_TIMEOUT, defaultTimeout);
+		store.setDefault(COMMIT_TIMEOUT, defaultTimeout);
+		store.setDefault(IMERGE_TIMEOUT, defaultTimeout);
+		store.setDefault(LOG_TIMEOUT, defaultTimeout);
+		store.setDefault(STATUS_TIMEOUT, defaultTimeout);
+		store.setDefault(ADD_TIMEOUT, defaultTimeout);
+		store.setDefault(REMOVE_TIMEOUT, defaultTimeout);
 
 		String defaultUsername = store.getDefaultString(MERCURIAL_USERNAME);
 		if(defaultUsername == null || defaultUsername.length() == 0){

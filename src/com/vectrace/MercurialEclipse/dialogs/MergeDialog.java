@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.dialogs;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
@@ -35,6 +36,16 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
+	protected Control createDialogArea(Composite parent) {
+		Control control = super.createDialogArea(parent);
+
+		getShell().setText(Messages.getString("MergeDialog.window.title")); //$NON-NLS-1$
+		setTitle(Messages.getString("MergeDialog.title")); //$NON-NLS-1$";
+		setMessage(Messages.getString("MergeDialog.message")); //$NON-NLS-1$";
+		return control;
+	}
+
+	@Override
 	protected void createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
 		commitFilesList = new CommitFilesChooser(hgRoot, container, false, true, true, false);
@@ -43,6 +54,11 @@ public class MergeDialog extends CommitDialog {
 	@Override
 	protected void createRevertCheckBox(Composite container) {
 		// does nothing
+	}
+
+	@Override
+	protected void createCloseBranchCheckBox(Composite container) {
+		// don't create it as we don't want it in merge dialog
 	}
 
 	@Override

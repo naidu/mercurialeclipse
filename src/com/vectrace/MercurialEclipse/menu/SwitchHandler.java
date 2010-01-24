@@ -17,7 +17,6 @@ import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -40,7 +39,7 @@ public class SwitchHandler extends SingleResourceHandler {
 				Messages.getString("SwitchHandler.switchTo"), project); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			HgUpdateClient.update(hgRoot, dialog.getRevision(), true);
+			new UpdateJob(dialog.getRevision(), true, hgRoot).schedule();
 		}
 	}
 

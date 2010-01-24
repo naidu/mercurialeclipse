@@ -46,6 +46,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 	private IntegerFieldEditor width;
 	private BooleanFieldEditor debug;
 	private BooleanFieldEditor debugTime;
+	private BooleanFieldEditor showOnStartup;
 
 	@Override
 	protected void createFieldEditors() {
@@ -81,6 +82,12 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 				MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE,
 				Messages.getString("ConsolePreferencesPage.showConsoleOnMsg"), composite); //$NON-NLS-1$
 		addField(showOnMessage);
+
+		// ** show on startup
+		showOnStartup = new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_STARTUP,
+				"Show console on start-up", composite); //$NON-NLS-1$
+		addField(showOnStartup);
 
 		// ** SHOW DEBUG
 		debug = new BooleanFieldEditor(
@@ -137,7 +144,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 		int currWatermark = highWaterMark.getIntValue();
 		if (currWatermark < 1000) {
 			highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
-			highWaterMark.setStringValue("1000");             //$NON-NLS-1$
+			highWaterMark.setStringValue("100000");             //$NON-NLS-1$
 		}
 		int currWidth = width.getIntValue();
 		if (currWidth < 80) {

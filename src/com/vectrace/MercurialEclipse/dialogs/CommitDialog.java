@@ -18,7 +18,6 @@ package com.vectrace.MercurialEclipse.dialogs;
 
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -72,10 +71,8 @@ import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
- *
  * A commit dialog box allowing choosing of what files to commit and a commit message for those files. Untracked files
  * may also be chosen.
- *
  */
 public class CommitDialog extends TitleAreaDialog {
 	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
@@ -152,12 +149,15 @@ public class CommitDialog extends TitleAreaDialog {
 		createRevertCheckBox(container);
 		createFilesList(container);
 
-		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade().getCurrentTaskComment(inResources == null ? null : inResources.toArray(new IResource[0]));
+		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
+				.getCurrentTaskComment(
+						inResources == null ? null : inResources.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
 
 		commitTextBox.getTextWidget().setFocus();
-		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$");
-		setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$");
+		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
+		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
+		setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
 		return container;
 	}
 
@@ -303,7 +303,10 @@ public class CommitDialog extends TitleAreaDialog {
 				user = getInitialCommitUserName();
 			}
 
-			commitResult = performCommit(messageToCommit, closeBranchCheckBox.getSelection());
+			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox
+					.getSelection() : false;
+
+			commitResult = performCommit(messageToCommit, closeBranch);
 
 			// revertCheckBox can be null if this is a merge dialog
 			if (revertCheckBox != null && revertCheckBox.getSelection()) {
@@ -335,12 +338,13 @@ public class CommitDialog extends TitleAreaDialog {
 	private void revertResources() {
 		final List<IResource> revertResources = commitFilesList.getUncheckedResources(FILE_ADDED, FILE_DELETED,
 				FILE_MODIFIED, FILE_REMOVED);
+		final List<IResource> untrackedResources = commitFilesList.getUncheckedResources(FILE_UNTRACKED);
 		new SafeWorkspaceJob(Messages.getString("CommitDialog.revertJob.RevertingFiles")) { //$NON-NLS-1$
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				ActionRevert action = new ActionRevert();
 				try {
-					action.doRevert(monitor, revertResources, new ArrayList<IResource>(), false, null);
+					action.doRevert(monitor, revertResources, untrackedResources, false, null);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();

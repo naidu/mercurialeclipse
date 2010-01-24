@@ -37,7 +37,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 
 /**
- *
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
 public class ChangesetTable extends Composite {
@@ -86,6 +85,11 @@ public class ChangesetTable extends Composite {
 		changesets = new ChangeSet[0];
 		bottomNotFetched = true;
 		this.logBatchSize = LocalChangesetCache.getInstance().getLogBatchSize();
+		// limit log to allow "smooth" scrolling (not too small and not too big)
+		// - but only if not set in preferences
+		if (logBatchSize <= 0) {
+			logBatchSize = 200;
+		}
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
 
@@ -167,6 +171,11 @@ public class ChangesetTable extends Composite {
 			}
 		}
 
+		/*
+		 * TODO filter changesets to only display the so far requested revs.
+		 * else, if the cache is already filled, we display all, which is a huge
+		 * UI performance bottleneck.
+		 */
 		SortedSet<ChangeSet> reverseOrderSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 		reverseOrderSet.addAll(set);
 		setChangesets(reverseOrderSet.toArray(new ChangeSet[reverseOrderSet.size()]));

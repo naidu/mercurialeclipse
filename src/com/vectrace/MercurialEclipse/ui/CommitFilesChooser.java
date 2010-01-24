@@ -30,10 +30,12 @@ import org.eclipse.jface.viewers.CheckboxTableViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.IDoubleClickListener;
+import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
+import org.eclipse.jface.viewers.LabelProviderChangedEvent;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -116,11 +118,20 @@ public class CommitFilesChooser extends Composite {
 		setLayoutData(SWTWidgetHelper.getFillGD(200));
 
 		Table table = createTable();
-		createOptionCheckbox();
 
 		viewer = new CheckboxTableViewer(table);
 		viewer.setContentProvider(new ArrayContentProvider());
-		viewer.setLabelProvider(new CommitResourceLabelProvider());
+		CommitResourceLabelProvider labelProvider = new CommitResourceLabelProvider();
+		labelProvider.addListener(new ILabelProviderListener() {
+			public void labelProviderChanged(LabelProviderChangedEvent event) {
+				int count = viewer.getTable().getItemCount();
+				for (int i = 0; i < count; i++) {
+					CommitResource commitResource = (CommitResource) viewer.getElementAt(i);
+					viewer.update(commitResource, null);
+				}
+			}
+		});
+		viewer.setLabelProvider(labelProvider);
 		viewer.addFilter(committableFilesFilter);
 		if (!showUntracked) {
 			viewer.addFilter(untrackedFilesFilter);
@@ -130,6 +141,7 @@ public class CommitFilesChooser extends Composite {
 			setResources(resources);
 		}
 
+		createOptionCheckbox();
 		createShowDiffButton(container);
 		createFileSelectionListener();
 
@@ -178,28 +190,11 @@ public class CommitFilesChooser extends Composite {
 		} else {
 			flags |= SWT.READ_ONLY | SWT.HIDE_SELECTION;
 		}
-
 		Table table = new Table(this, flags);
-		table.setHeaderVisible(true);
+		table.setHeaderVisible(false);
 		table.setLinesVisible(true);
 		GridData data = new GridData(SWT.FILL, SWT.FILL, true, true);
 		table.setLayoutData(data);
-
-		TableColumn col;
-
-		// File status
-		col = new TableColumn(table, SWT.LEFT);
-		col.setResizable(true);
-		col.setText(Messages.getString("Common.ColumnStatus")); //$NON-NLS-1$
-		col.setWidth(95);
-		col.setMoveable(true);
-
-		// File name
-		col = new TableColumn(table, SWT.LEFT);
-		col.setResizable(true);
-		col.setText(Messages.getString("Common.ColumnFile")); //$NON-NLS-1$
-		col.setWidth(400);
-		col.setMoveable(true);
 		return table;
 	}
 
@@ -285,7 +280,10 @@ public class CommitFilesChooser extends Composite {
 					ITableLabelProvider lp = ((ITableLabelProvider) v1.getLabelProvider());
 					String t1 = lp.getColumnText(e1, colIdx);
 					String t2 = lp.getColumnText(e2, colIdx);
-					return t1.compareTo(t2);
+					if(t1 != null) {
+						return t1.compareTo(t2);
+					}
+					return 0;
 				}
 			};
 		}
@@ -296,8 +294,8 @@ public class CommitFilesChooser extends Composite {
 	 * @param resources non null
 	 */
 	public void setResources(List<IResource> resources) {
-		List<CommitResource> commitResources = createCommitResources(resources);
-		getViewer().setInput(commitResources.toArray());
+		CommitResource[] commitResources = createCommitResources(resources);
+		getViewer().setInput(commitResources);
 
 		List<CommitResource> tracked = new CommitResourceUtil().filterForTracked(commitResources);
 		getViewer().setCheckedElements(tracked.toArray());
@@ -305,7 +303,7 @@ public class CommitFilesChooser extends Composite {
 			selectAllButton.setSelection(true);
 		}
 		// show clean file, if we are called on a single, not modified file (revert to any version in the past)
-		if(showClean && resources.size() == 1 && commitResources.size() == 0) {
+		if(showClean && resources.size() == 1 && commitResources.length == 0) {
 			IResource resource = resources.get(0);
 			if(resource.getType() == IResource.FILE){
 				try {
@@ -348,14 +346,13 @@ public class CommitFilesChooser extends Composite {
 	 * Create the Commit-resources' for a set of resources
 	 * @param res
 	 */
-	private List<CommitResource> createCommitResources(List<IResource> res) {
+	private CommitResource[] createCommitResources(List<IResource> res) {
 		try {
-			CommitResource[] result = new CommitResourceUtil().getCommitResources(res.toArray(new IResource[0]));
-			return Arrays.asList(result);
+			return new CommitResourceUtil().getCommitResources(res.toArray(new IResource[0]));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
-		return new ArrayList<CommitResource>(0);
+		return new CommitResource[0];
 	}
 
 	/**

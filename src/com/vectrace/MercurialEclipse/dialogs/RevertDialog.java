@@ -20,9 +20,13 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -68,11 +72,34 @@ public class RevertDialog extends TitleAreaDialog {
 		container.setLayoutData(gd);
 		super.createDialogArea(parent);
 		createFilesList(container);
-		csTable = new ChangesetTable(container, resources.get(0));
-		csTable.setEnabled(true);
+		createRevertToChangesetWidgets(container);
+		getShell().setText(Messages.getString("RevertDialog.window.title")); //$NON-NLS-1$
 		setTitle(Messages.getString("RevertDialog.title")); //$NON-NLS-1$
 		setMessage(Messages.getString("RevertDialog.message")); //$NON-NLS-1$
 		return container;
+	}
+
+	/**
+	 * @param container
+	 */
+	private void createRevertToChangesetWidgets(Composite container) {
+		Group g = SWTWidgetHelper.createGroup(container, Messages.getString("RevertDialog.revision")); //$NON-NLS-1$
+		final Button b = SWTWidgetHelper.createCheckBox(g, Messages.getString("RevertDialog.revertToADifferentChangeset")); //$NON-NLS-1$
+		b.addSelectionListener(new SelectionListener() {
+
+			public void widgetSelected(SelectionEvent e) {
+				csTable.setAutoFetch(b.getSelection());
+				csTable.setEnabled(b.getSelection());
+			}
+
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
+		});
+
+		csTable = new ChangesetTable(g, resources.get(0));
+		csTable.setAutoFetch(false);
+		csTable.setEnabled(false);
 	}
 
 	private void createFilesList(Composite container) {
@@ -95,9 +122,9 @@ public class RevertDialog extends TitleAreaDialog {
 		changeset = csTable.getSelection();
 
 		if(!untrackedSelection.isEmpty()){
-			boolean confirm = MessageDialog.openConfirm(getShell(), "Please confirm delete",
-					"You have selected to revert untracked files." +
-					"\nThis files will be now deleted.\n\nContinue?");
+			boolean confirm = MessageDialog.openConfirm(getShell(), Messages.getString("RevertDialog.pleaseConfirmDelete"), //$NON-NLS-1$
+					Messages.getString("RevertDialog.youHaveSelectedToRevertUntracked") + //$NON-NLS-1$
+					Messages.getString("RevertDialog.thisFilesWillNowBeDeleted")); //$NON-NLS-1$
 			if(!confirm){
 				return;
 			}

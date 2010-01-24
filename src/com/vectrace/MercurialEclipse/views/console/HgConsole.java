@@ -279,7 +279,7 @@ public class HgConsole extends MessageConsole {
 		}
 		String time;
 		try {
-			time = String.format("Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
+			time = String.format("  Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
 		} catch (RuntimeException e) {
 			MercurialEclipsePlugin.logError(e);
 			time = "";

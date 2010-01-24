@@ -866,7 +866,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			for (int i = 0; i < states.length; i++) {
 				states[i] = MercurialEclipsePlugin.createStatus(strangeStates.get(i), IStatus.OK, IStatus.INFO, null);
 			}
-			String message = "Strange status received form hg";
+			String message = "Strange status received from hg";
 			MultiStatus st = new MultiStatus(MercurialEclipsePlugin.ID, IStatus.OK, states,
 					message, new Exception(message));
 			MercurialEclipsePlugin.getDefault().getLog().log(st);

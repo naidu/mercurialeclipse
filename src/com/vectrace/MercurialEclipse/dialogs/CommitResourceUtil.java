@@ -39,7 +39,13 @@ public final class CommitResourceUtil {
 	public CommitResourceUtil() {
 	}
 
+	/**
+	 * @return never null
+	 */
 	public CommitResource[] getCommitResources(IResource[] inResources) throws HgException {
+		if(inResources.length == 0){
+			return new CommitResource[0];
+		}
 		StatusContainerAction statusAction = new StatusContainerAction(null, inResources);
 		root = statusAction.getHgWorkingDir();
 		try {
@@ -50,7 +56,7 @@ public final class CommitResourceUtil {
 			String msg = "HgRoot: " + root.getAbsolutePath() //$NON-NLS-1$
 					+ Messages.getString("CommitResourceUtil.error.unableToGetStatus") + e.getMessage(); //$NON-NLS-1$
 			MercurialEclipsePlugin.logError(msg, e);
-			return null;
+			return new CommitResource[0];
 		}
 	}
 
@@ -89,7 +95,7 @@ public final class CommitResourceUtil {
 	/**
 	 * Filter a list of commit-resources to contain only tracked ones (which are already tracked by Mercurial).
 	 */
-	public List<CommitResource> filterForTracked(List<CommitResource> commitResources) {
+	public List<CommitResource> filterForTracked(CommitResource[] commitResources) {
 		List<CommitResource> tracked = new ArrayList<CommitResource>();
 		for (CommitResource commitResource : commitResources) {
 			if (MercurialStatusCache.CHAR_UNKNOWN != commitResource.getStatus()) {

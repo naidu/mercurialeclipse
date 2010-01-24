@@ -16,7 +16,6 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -55,7 +54,7 @@ public class UpdateHandler extends SingleResourceHandler {
 				return;
 			}
 		}
-		HgUpdateClient.update(hgRoot, revision, cleanEnabled);
+		new UpdateJob(revision, cleanEnabled, hgRoot).schedule();
 	}
 
 	/**
