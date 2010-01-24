@@ -21,12 +21,10 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.resource.JFaceResources;
-import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
@@ -36,7 +34,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
@@ -46,13 +43,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
-import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class ChangePathsTableProvider extends TableViewer {
-
-	// column constants
-	private static final int COL_ACTION = 0;
-	private static final int COL_PATH = 1;
 
 	private static final FileStatus[] EMPTY_CHANGE_PATHS = new FileStatus[0];
 	private final ChangedPathsPage page;
@@ -66,31 +58,12 @@ public class ChangePathsTableProvider extends TableViewer {
 
 		setLabelProvider(new ChangePathLabelProvider(page, this));
 
-		TableLayout layout = new TableLayout();
 		GridData data = new GridData(GridData.FILL_BOTH);
 
 		final Table table = (Table) getControl();
 		table.setHeaderVisible(false);
 		table.setLinesVisible(true);
 		table.setLayoutData(data);
-		table.setLayout(layout);
-
-		createColumns(table, layout);
-	}
-
-	private void createColumns(Table table, TableLayout layout) {
-		// action
-		TableColumn col = new TableColumn(table, SWT.NONE);
-		col.setResizable(true);
-		col.setToolTipText(Messages.getString("ChangePathsTableProvider.action")); //$NON-NLS-1$
-		layout.addColumnData(new ColumnWeightData(5, true));
-
-		// path
-		col = new TableColumn(table, SWT.NONE);
-		col.setResizable(true);
-		col.setToolTipText(Messages.getString("ChangePathsTableProvider.path")); //$NON-NLS-1$
-		layout.addColumnData(new ColumnWeightData(95, true));
-		table.setSortColumn(col);
 	}
 
 	public int getElementsCount(){
@@ -119,7 +92,7 @@ public class ChangePathsTableProvider extends TableViewer {
 			if (!(element instanceof FileStatus)) {
 				return null;
 			}
-			return ((FileStatus) element).getRootRelativePath().toOSString();
+			return " " + ((FileStatus) element).getRootRelativePath().toOSString();
 		}
 	}
 
@@ -136,23 +109,17 @@ public class ChangePathsTableProvider extends TableViewer {
 		}
 
 		public Image getColumnImage(Object element, int columnIndex) {
-			if(columnIndex == COL_ACTION){
-				return getImage(element);
+			if (!(element instanceof FileStatus)) {
+				return null;
 			}
-			return null;
+			return getImage(element);
 		}
 
 		public String getColumnText(Object element, int columnIndex) {
 			if (!(element instanceof FileStatus)) {
 				return null;
 			}
-			switch (columnIndex) {
-			case COL_ACTION:
-				return null;
-			case COL_PATH:
-				return getText(element);
-			}
-			return null;
+			return getText(element);
 		}
 
 		@Override
@@ -169,9 +136,9 @@ public class ChangePathsTableProvider extends TableViewer {
 			if(basePath.equals(currentPath) && tableProvider.getElementsCount() > 1) {
 				// highlight current file in the changeset, if there are more files
 				return JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT);
-		}
+			}
 			return JFaceResources.getFontRegistry().get(JFaceResources.DEFAULT_FONT);
-	}
+		}
 
 	}
 
