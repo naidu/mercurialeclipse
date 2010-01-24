@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.eclipse.core.resources.IResource;
 
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -26,7 +27,11 @@ public class CommitHandler extends MultipleResourcesHandler {
 
 	@Override
 	public void run(final List<IResource> resources) throws HgException {
-		ensureSameRoot(resources);
+		HgRoot hgRoot = ensureSameRoot(resources);
+		if(HgStatusClient.isMergeInProgress(hgRoot)){
+			new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
+			return;
+		}
 		CommitDialog commitDialog = new CommitDialog(getShell(), resources);
 		if(message != null){
 			commitDialog.setDefaultCommitMessage(message);
