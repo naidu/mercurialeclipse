@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -40,6 +41,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
@@ -222,9 +225,10 @@ public class IncomingPage extends HgWizardPage {
 				Messages.getString("IncomingPage.columnHeader.date"), //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.author"), //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.branch"), //$NON-NLS-1$
+				"Tags", //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.summary") };  //$NON-NLS-1$
 		final int WIDTH = 11;
-		int[] widths = {6 * WIDTH, 7 * WIDTH, 15 * WIDTH, 14 * WIDTH, 10 * WIDTH, 30 * WIDTH};
+		int[] widths = {6 * WIDTH, 7 * WIDTH, 15 * WIDTH, 14 * WIDTH, 5 * WIDTH, 5 * WIDTH, 30 * WIDTH};
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
@@ -241,17 +245,8 @@ public class IncomingPage extends HgWizardPage {
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
 		table.setLayoutData(gridData);
-		table.setHeaderVisible(true);
+		table.setHeaderVisible(false);
 		table.setLinesVisible(true);
-		titles = new String[] {
-				Messages.getString("IncomingPage.fileStatusTable.columnTitle.status"), //$NON-NLS-1$
-				Messages.getString("IncomingPage.fileStatusTable.columnTitle.path") }; //$NON-NLS-1$
-		widths = new int[] { 80, 400 };
-		for (int i = 0; i < titles.length; i++) {
-			TableColumn column = new TableColumn(table, SWT.NONE);
-			column.setText(titles[i]);
-			column.setWidth(widths[i]);
-		}
 
 		Group group = SWTWidgetHelper.createGroup(container, Messages
 				.getString("IncomingPage.group.title")); //$NON-NLS-1$
@@ -287,25 +282,47 @@ public class IncomingPage extends HgWizardPage {
 		fileStatusViewer.addDoubleClickListener(getDoubleClickListener());
 	}
 
-	static class FileStatusLabelProvider extends LabelProvider implements
-			ITableLabelProvider {
+	private static final class SimpleLabelImageProvider extends LabelProvider {
+
+		private final Image fileImg;
+
+		public SimpleLabelImageProvider() {
+			fileImg = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
+		}
+
+		@Override
+		public Image getImage(Object element) {
+			return fileImg;
+		}
+
+		@Override
+		public String getText(Object element) {
+			if (!(element instanceof FileStatus)) {
+				return null;
+			}
+			return " " + ((FileStatus) element).getRootRelativePath().toOSString();
+		}
+	}
+
+	private static final class FileStatusLabelProvider extends DecoratingLabelProvider implements
+		ITableLabelProvider  {
+
+		public FileStatusLabelProvider() {
+			super(new SimpleLabelImageProvider(), PlatformUI.getWorkbench().getDecoratorManager().getLabelDecorator());
+		}
 
 		public Image getColumnImage(Object element, int columnIndex) {
-			return null;
+			if (!(element instanceof FileStatus)) {
+				return null;
+			}
+			return getImage(element);
 		}
 
 		public String getColumnText(Object element, int columnIndex) {
 			if (!(element instanceof FileStatus)) {
-				return Messages.getString("IncomingPage.unknownElement") + element; //$NON-NLS-1$
+				return null;
 			}
-			FileStatus status = (FileStatus) element;
-			switch (columnIndex) {
-			case 0:
-				return status.getAction().name();
-			case 1:
-				return status.getRootRelativePath().toOSString();
-			}
-			return Messages.getString("IncomingPage.notApplicable"); //$NON-NLS-1$
+			return getText(element);
 		}
 	}
 

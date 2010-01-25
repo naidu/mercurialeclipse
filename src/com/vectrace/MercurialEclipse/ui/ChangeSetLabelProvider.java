@@ -28,6 +28,8 @@ public class ChangeSetLabelProvider
 			case 4:
 				return rev.getBranch();
 			case 5:
+				return rev.getTagsString();
+			case 6:
 				return rev.getSummary();
 		}
 		return null;
