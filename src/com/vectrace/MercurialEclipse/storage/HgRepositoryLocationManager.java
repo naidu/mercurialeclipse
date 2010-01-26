@@ -237,12 +237,14 @@ public class HgRepositoryLocationManager {
 			// Load .hg/hgrc paths first; plugin settings will override these
 			Map<String, String> hgrcRepos = HgPathsClient.getPaths(project);
 			for (Map.Entry<String, String> entry : hgrcRepos.entrySet()) {
-				// if not existent, add to repository browser
-				HgRepositoryLocation loc = updateRepoLocation(project,
-						entry.getValue(),
-						entry.getKey(),
-						null, null);
-				internalAddRepoLocation(project, loc);
+				try {
+					// if not existent, add to repository browser
+					HgRepositoryLocation loc = updateRepoLocation(project, entry.getValue(), entry
+							.getKey(), null, null);
+					internalAddRepoLocation(project, loc);
+				} catch (Exception e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
 
 			Set<HgRepositoryLocation> locations = loadRepositoriesFromFile(getProjectLocationFile(project));
