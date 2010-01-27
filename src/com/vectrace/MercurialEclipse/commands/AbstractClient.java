@@ -17,6 +17,7 @@ import java.io.File;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import org.eclipse.core.net.proxy.IProxyData;
 import org.eclipse.core.net.proxy.IProxyService;
@@ -37,8 +38,33 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public abstract class AbstractClient {
 
+	private final static String HTTP_PATTERN_STRING = "[hH][tT][tT][pP]:.*[@]"; //$NON-NLS-1$
+	private final static String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS]:.*[@]"; //$NON-NLS-1$
+	private final static String SSH_PATTERN_STRING = "[sS][sS][hH]:.*[@]"; //$NON-NLS-1$
+	private final static String SVN_PATTERN_STRING = "[sS][vV][nN]:.*[@]"; //$NON-NLS-1$
+
+	private final static Pattern HTTP_PATTERN = Pattern.compile(HTTP_PATTERN_STRING);
+	private final static Pattern HTTPS_PATTERN = Pattern.compile(HTTPS_PATTERN_STRING);
+	private final static Pattern SSH_PATTERN = Pattern.compile(SSH_PATTERN_STRING);
+	private final static Pattern SVN_PATTERN = Pattern.compile(SVN_PATTERN_STRING);
+
 	public AbstractClient() {
 		super();
+	}
+
+	public static String obfuscateLoginData(String line) {
+		String myLine = line == null? "" : line;
+		myLine = HTTP_PATTERN.matcher(myLine).replaceAll("http://***@"); //$NON-NLS-1$
+		if (myLine.equals(line)) {
+			myLine = HTTPS_PATTERN.matcher(line).replaceAll("https://***@"); //$NON-NLS-1$
+		}
+		if (myLine.equals(line)) {
+			myLine = SSH_PATTERN.matcher(line).replaceAll("ssh://***@"); //$NON-NLS-1$
+		}
+		if (myLine.equals(line)) {
+			myLine = SVN_PATTERN.matcher(line).replaceAll("svn://***@"); //$NON-NLS-1$
+		}
+		return myLine;
 	}
 
 	protected static File getWorkingDirectory(IResource resource) {

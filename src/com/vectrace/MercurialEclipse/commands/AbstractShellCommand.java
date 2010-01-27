@@ -238,8 +238,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			// locking here would serialize all hg access from plugin.
 			// not sure if it is worth...
 			//synchronized (executionLock) {
+				String jobName = obfuscateLoginData(commandInvoked);
 				process = builder.start();
-				consumer = new InputStreamConsumer(commandInvoked, process, output);
+				consumer = new InputStreamConsumer(jobName, process, output);
 				long startTime;
 				if(debugExecTime) {
 					startTime = System.currentTimeMillis();
@@ -247,7 +248,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 					startTime = 0;
 				}
 				consumer.schedule();
-				logConsoleCommandInvoked(commandInvoked);
+				logConsoleCommandInvoked(jobName);
 				waitForConsumer(timeout); // 30 seconds timeout
 				msg = getMessage(output);
 				if (!consumer.isAlive()) {
