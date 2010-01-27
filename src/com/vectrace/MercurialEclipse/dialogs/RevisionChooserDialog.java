@@ -557,7 +557,7 @@ public class RevisionChooserDialog extends Dialog {
 					if (changeSet.getName().toLowerCase().startsWith(filter)
 							|| changeSet.getChangeset().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.REVISION));
-					} else if (changeSet.getTagsString().toLowerCase().startsWith(filter)) {
+					} else if (changeSet.getTagsString()!= null && changeSet.getTagsString().toLowerCase().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.TAG));
 					} else if (changeSet.getBranch().toLowerCase().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.BRANCH));

@@ -207,7 +207,8 @@ public class ChangesetTable extends Composite {
 			row.setText(2, rev.getDateString());
 			row.setText(3, rev.getUser());
 			row.setText(4, rev.getBranch());
-			row.setText(5, rev.getTagsString());
+			String tagsString = rev.getTagsString();
+			row.setText(5, tagsString == null? "" : tagsString);
 			row.setText(6, rev.getSummary());
 			row.setData(rev);
 		}
