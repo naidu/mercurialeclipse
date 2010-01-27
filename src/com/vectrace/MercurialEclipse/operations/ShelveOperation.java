@@ -30,7 +30,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgAtticClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -76,18 +76,18 @@ public class ShelveOperation extends HgOperation {
 				monitor.subTask(Messages.getString("ShelveOperation.determiningChanges")); //$NON-NLS-1$
 				//
 				if (!HgStatusClient.isDirty(hgRoot)) {
-					throw new HgException(Messages.getString("ShelveOperation.error.nothingToShelve")); //$NON-NLS-1$
+					throw new HgCoreException(Messages.getString("ShelveOperation.error.nothingToShelve")); //$NON-NLS-1$
 				}
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ShelveOperation.shelvingChanges")); //$NON-NLS-1$
 
 				boolean mkdir = shelveDir.mkdir();
 				if(!mkdir && !shelveDir.exists()){
-					throw new HgException(Messages.getString("ShelveOperation.error.shelfDirCreateFailed")); //$NON-NLS-1$
+					throw new HgCoreException(Messages.getString("ShelveOperation.error.shelfDirCreateFailed")); //$NON-NLS-1$
 				}
 				File shelveFile = new File(shelveDir, hgRoot.getName() + "-patchfile.patch"); //$NON-NLS-1$
 				if (shelveFile.exists()) {
-					throw new HgException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
+					throw new HgCoreException(Messages.getString("ShelveOperation.error.shelfNotEmpty")); //$NON-NLS-1$
 				}
 				// use empty resources to be able to shelve ALL files, also deleted/added
 				Set<IPath> resources = new HashSet<IPath>();// getDirtyFiles(hgRoot);
@@ -99,6 +99,8 @@ public class ShelveOperation extends HgOperation {
 				monitor.subTask(Messages.getString("ShelveOperation.cleaningDirtyFiles")); //$NON-NLS-1$
 				HgUpdateClient.update(hgRoot, currRev, true);
 			}
+		} catch (HgCoreException e) {
+			throw new InvocationTargetException(e, e.getLocalizedMessage());
 		} catch (CoreException e) {
 			// cleanup directory which otherwise may contain empty or invalid files and
 			// block next shelve operation to execute
