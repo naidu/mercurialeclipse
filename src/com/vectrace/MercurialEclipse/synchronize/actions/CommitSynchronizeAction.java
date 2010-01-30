@@ -108,6 +108,6 @@ public class CommitSynchronizeAction extends SynchronizeModelAction {
 				return true;
 			}
 		}
-		return false;
+		return !MercurialStatusCache.getInstance().isClean(resource);
 	}
 }
