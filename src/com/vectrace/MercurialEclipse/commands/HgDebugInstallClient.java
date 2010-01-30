@@ -14,7 +14,7 @@ import java.io.File;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-public class HgDebugInstallClient {
+public class HgDebugInstallClient extends AbstractClient {
 
 	public static String debugInstall() throws HgException {
 		// we don't really need a working dir...

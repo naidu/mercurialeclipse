@@ -56,11 +56,13 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
-	public static String[] getParentNodeIds(IFile file)
+	public static String[] getParentNodeIds(IResource file)
 	throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				getWorkingDirectory(file), false);
-		command.addFiles(file);
+		if(file instanceof IFile) {
+			command.addFiles(file);
+		}
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = getLines(command.executeToString());
 		String[] parents = new String[lines.length];

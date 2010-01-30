@@ -18,10 +18,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
-public class HgUpdateClient {
+public class HgUpdateClient extends AbstractClient {
 
 	public static void update(final HgRoot hgRoot, String revision, boolean clean)
 			throws HgException {
@@ -48,9 +47,9 @@ public class HgUpdateClient {
 				}
 				int refreshFlags;
 				if(Branch.same(oldBranch, newBranch)){
-					refreshFlags = RefreshJob.LOCAL;
+					refreshFlags = RefreshRootJob.LOCAL;
 				} else {
-					refreshFlags = RefreshJob.ALL;
+					refreshFlags = RefreshRootJob.ALL;
 				}
 				new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, refreshFlags).schedule();
 			}

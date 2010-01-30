@@ -27,7 +27,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  * @author bastian
  *
  */
-public class HgServeClient {
+public class HgServeClient extends AbstractClient {
 
 	static class HgServeJob extends SafeWorkspaceJob {
 		private final HgRoot hgRoot;

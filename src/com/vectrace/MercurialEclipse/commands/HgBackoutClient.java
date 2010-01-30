@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  * @author bastian
  *
  */
-public class HgBackoutClient {
+public class HgBackoutClient extends AbstractClient {
 
 	/**
 	 * Backout of a changeset

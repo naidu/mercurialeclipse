@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
  * @author Stefan Chyssler
  *
  */
-public final class HgBisectClient {
+public final class HgBisectClient extends AbstractClient {
 
 	public enum Status { GOOD, BAD }
 
@@ -35,7 +35,7 @@ public final class HgBisectClient {
 	 * bisect will use the "current" changeset.
 	 *
 	 * @param repository the repository to bisect
-	 * @param the changeset to mark as good, or null for current
+	 * @param good the changeset to mark as good, or null for current
 	 * @return a message from the command
 	 * @throws HgException
 	 */

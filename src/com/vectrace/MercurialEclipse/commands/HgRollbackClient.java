@@ -18,7 +18,7 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
-public class HgRollbackClient {
+public class HgRollbackClient  extends AbstractClient {
 
 	public static String rollback(final HgRoot hgRoot) throws CoreException {
 		HgCommand command = new HgCommand("rollback", hgRoot, true);
