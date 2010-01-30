@@ -1056,6 +1056,31 @@
                  enablesFor="1">
            </action>
       </objectContribution>
+      <objectContribution
+            adaptable="true"
+            id="com.vectrace.MercurialEclipse.IFileContributions2"
+            objectClass="org.eclipse.core.resources.IFile">
+         <filter
+               name="projectPersistentProperty"
+               value="org.eclipse.team.core.repository=com.vectrace.MercurialEclipse.team.MercurialTeamProvider">
+         </filter>
+         <action
+               class="com.vectrace.MercurialEclipse.team.ActionRevert"
+               enablesFor="1"
+               icon="icons/compare_view.gif"
+               id="com.vectrace.MercurialEclipse.team.ReplaceWithAction"
+               label="%actionLabel.compare.anotherChangeset"
+               menubarPath="replaceWithMenu/replaceWithGroup">
+         </action>
+         <action
+               class="com.vectrace.MercurialEclipse.team.ActionRevert"
+               enablesFor="1"
+               icon="icons/compare_view.gif"
+               id="com.vectrace.MercurialEclipse.team.ReplaceWithParentAction"
+               label="%actionLabel.compare.parentChangeset"
+               menubarPath="replaceWithMenu/replaceWithGroup">
+         </action>
+      </objectContribution>
    </extension>
 
    <extension point="org.eclipse.ui.preferencePages">

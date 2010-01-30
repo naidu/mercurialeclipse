@@ -28,7 +28,9 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
@@ -38,24 +40,25 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
-import com.vectrace.MercurialEclipse.commands.HgCommand;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgRevertClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevertDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	private IWorkbenchWindow window;
 	private IStructuredSelection selection;
+	private ChangeSet changesetToRevert;
 
 	public ActionRevert() {
 		super();
@@ -86,11 +89,26 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
-
 	public void run(IAction action) {
 		if(window == null){
-			window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+			window = MercurialEclipsePlugin.getActiveWindow();
 		}
+		IResource singleSelection = getSingleSelection();
+		if(singleSelection != null) {
+			if (changesetToRevert != null) {
+				try {
+					revertToGivenVersion(singleSelection, changesetToRevert, new NullProgressMonitor());
+				} catch (final HgException e) {
+					handleWithDialog(e);
+				}
+				return;
+			}
+			if (action != null && "com.vectrace.MercurialEclipse.team.ReplaceWithParentAction".equals(action.getId())) {
+				revertToParentVersion(singleSelection);
+				return;
+			}
+		}
+
 		List<IResource> resources = new ArrayList<IResource>();
 		boolean mergeIsRunning = collectResourcesToRevert(resources);
 		if (resources.size() > 0 && !mergeIsRunning) {
@@ -115,13 +133,77 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		}
 	}
 
+	private void handleWithDialog(final HgException e) {
+		MercurialEclipsePlugin.logError(e);
+		// TODO use statushandler???
+		if(Display.getCurrent() != null) {
+			MercurialEclipsePlugin.showError(e);
+		} else {
+			MercurialEclipsePlugin.getStandardDisplay().asyncExec(new Runnable() {
+				public void run() {
+					MercurialEclipsePlugin.showError(e);
+				}
+			});
+		}
+	}
+
+	private IResource getSingleSelection(){
+		if(selection == null || selection.size() != 1){
+			return null;
+		}
+		return ResourceUtils.getResource(selection.getFirstElement());
+	}
+
+	private ChangeSet getParentChangeset(IResource resource) throws HgException {
+		String[] parents = HgParentClient.getParentNodeIds(resource);
+		ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(resource, parents[0]);
+		if(cs != null && cs.getChangesetIndex() != 0) {
+			parents = cs.getParents();
+			if (parents == null || parents.length == 0) {
+				if(MercurialStatusCache.getInstance().isClean(resource)){
+					parents = HgParentClient.getParentNodeIds(resource, cs);
+				}
+			}
+			if (parents != null && parents.length > 0) {
+				return LocalChangesetCache.getInstance().getOrFetchChangeSetById(resource, parents[0]);
+			}
+		}
+		return null;
+	}
+
+	private void revertToParentVersion(final IResource resource){
+		Job job = new Job("Reverting to parent revision: " + resource.getLocation()){
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				ChangeSet cs;
+				try {
+					cs = getParentChangeset(resource);
+					revertToGivenVersion(resource, cs, monitor);
+				} catch (HgException e) {
+					handleWithDialog(e);
+					return e.getStatus();
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
+	}
+
+	private void revertToGivenVersion(IResource resource, ChangeSet cs, IProgressMonitor monitor) throws HgException {
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		List<IResource> list = new ArrayList<IResource>();
+		list.add(resource);
+		HgRevertClient.performRevert(monitor, hgRoot, list, cs);
+		refreshResource(monitor, MercurialStatusCache.getInstance(), resource);
+	}
+
 	private Shell getShell() {
 		Shell shell;
 		// Get shell
 		if (window != null && window.getShell() != null) {
 			shell = window.getShell();
 		} else {
-			shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+			shell = MercurialEclipsePlugin.getActiveWindow().getShell();
 		}
 		return shell;
 	}
@@ -131,8 +213,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		final List<IResource> untracked;
 		RevertDialog chooser = null;
 		if(!cleanAfterMerge){
-			chooser = new RevertDialog(Display.getCurrent().getActiveShell());
-			chooser.setFiles(resources);
+			chooser = new RevertDialog(Display.getCurrent().getActiveShell(), resources);
 			if (chooser.open() != Window.OK) {
 				return;
 			}
@@ -207,24 +288,13 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		} else {
 			Map<HgRoot, List<IResource>> rootToFiles = ResourceUtils.groupByRoot(resources);
 			for (Entry<HgRoot, List<IResource>> entry : rootToFiles.entrySet()) {
-				performRegularRevert(monitor, entry.getKey(), entry.getValue(), cs);
+				HgRevertClient.performRevert(monitor, entry.getKey(), entry.getValue(), cs);
 			}
 		}
 
 		for (IResource resource : resources) {
 			monitor.subTask(Messages.getString("ActionRevert.refreshing") + resource.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-			try {
-				if(cache.isAdded(ResourceUtils.getPath(resource))){
-					// added files didn't change content after we un-add them, so we have
-					// give Eclipse a hint to start some extra refresh work.
-					resource.touch(monitor);
-				}
-				// we still need to trigger a refresh to avoid confusing editors opened on
-				// these files. Without refresh, they complain that the files are changed but not refreshed
-				resource.refreshLocal(IResource.DEPTH_ONE, monitor);
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+			refreshResource(monitor, cache, resource);
 			monitor.worked(1);
 		}
 
@@ -263,14 +333,26 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		for (Entry<IProject, Set<IResource>> entry : filesToUpdate.entrySet()) {
 			Set<IResource> removed = entry.getValue();
 			for (IResource resource : removed) {
-				try {
-					resource.refreshLocal(IResource.DEPTH_ONE, monitor);
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+				refreshResource(monitor, cache, resource);
 			}
 		}
 		monitor.done();
+	}
+
+	private void refreshResource(IProgressMonitor monitor, MercurialStatusCache cache,
+			IResource resource) {
+		try {
+			if(cache.isAdded(ResourceUtils.getPath(resource))){
+				// added files didn't change content after we un-add them, so we have
+				// give Eclipse a hint to start some extra refresh work.
+				resource.touch(monitor);
+			}
+			// we still need to trigger a refresh to avoid confusing editors opened on
+			// these files. Without refresh, they complain that the files are changed but not refreshed
+			resource.refreshLocal(IResource.DEPTH_ONE, monitor);
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 	}
 
 	/**
@@ -332,21 +414,6 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		return resources;
 	}
 
-	private void performRegularRevert(IProgressMonitor monitor, HgRoot root,
-			List<IResource> resources, ChangeSet cs) throws HgException {
-		// the last argument will be replaced with a path
-		HgCommand command = new HgCommand("revert", root, true); //$NON-NLS-1$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
-		command.addOptions("--no-backup");
-		if (cs != null) {
-			command.addOptions("--rev", cs.getChangeset());
-		}
-		command.addFiles(resources);
-		monitor.subTask(Messages.getString("ActionRevert.reverting") + root.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
-		command.executeToString();
-		monitor.worked(1);
-	}
-
 	private void performRevertAfterMerge(IProgressMonitor monitor, IProject root, List<IResource> resources) {
 		// see http://mercurial.selenic.com/wiki/FAQ#FAQ.2BAC8-CommonProblems.hg_status_shows_changed_files_but_hg_diff_doesn.27t.21
 		// To completely undo the uncommitted merge and discard all local modifications,
@@ -375,6 +442,10 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 				&& in_selection instanceof IStructuredSelection) {
 			selection = (IStructuredSelection) in_selection;
 		}
+	}
+
+	public void setChangesetToRevert(ChangeSet changesetToRevert) {
+		this.changesetToRevert = changesetToRevert;
 	}
 
 }

@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.dialogs;
 
 import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 
-import java.util.Arrays;
 import java.util.List;
 
 import org.eclipse.core.resources.IResource;
@@ -30,13 +29,14 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 public class RevertDialog extends TitleAreaDialog {
 
-	private List<IResource> resources;
+	private final List<IResource> resources;
 	private CommitFilesChooser selectFilesList;
 	private List<IResource> selection;
 	private List<IResource> untrackedSelection;
@@ -51,13 +51,13 @@ public class RevertDialog extends TitleAreaDialog {
 	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
 
 	/**
-	 * Create the dialog
-	 *
 	 * @param parentShell
+	 * @param resources non null
 	 */
-	public RevertDialog(Shell parentShell) {
+	public RevertDialog(Shell parentShell, List<IResource> resources) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
+		this.resources = resources;
 	}
 
 	/**
@@ -79,36 +79,32 @@ public class RevertDialog extends TitleAreaDialog {
 		return container;
 	}
 
-	/**
-	 * @param container
-	 */
 	private void createRevertToChangesetWidgets(Composite container) {
 		Group g = SWTWidgetHelper.createGroup(container, Messages.getString("RevertDialog.revision")); //$NON-NLS-1$
 		final Button b = SWTWidgetHelper.createCheckBox(g, Messages.getString("RevertDialog.revertToADifferentChangeset")); //$NON-NLS-1$
-		b.addSelectionListener(new SelectionListener() {
 
+		b.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				csTable.setAutoFetch(b.getSelection());
 				csTable.setEnabled(b.getSelection());
 			}
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
 		});
 
 		csTable = new ChangesetTable(g, resources.get(0));
-		csTable.setAutoFetch(false);
-		csTable.setEnabled(false);
+		boolean enableChangesetTable = false;
+		if(resources.size() == 1){
+			enableChangesetTable = MercurialStatusCache.getInstance().isClean(resources.get(0));
+		}
+		csTable.setAutoFetch(enableChangesetTable);
+		csTable.setEnabled(enableChangesetTable);
+		b.setSelection(enableChangesetTable);
 	}
 
 	private void createFilesList(Composite container) {
 		selectFilesList = new CommitFilesChooser(container, true, resources, true, true, true);
-	}
-
-	public void setFiles(List<IResource> resources) {
-		this.resources = resources;
-
 	}
 
 	@Override
@@ -130,15 +126,6 @@ public class RevertDialog extends TitleAreaDialog {
 			}
 		}
 		super.okPressed();
-
-	}
-
-	public void setFiles(IResource[] commitResources) {
-		setFiles(Arrays.asList(commitResources));
-		if (commitResources != null && commitResources.length > 0) {
-			csTable.setResource(commitResources[0]);
-			csTable.setEnabled(true);
-		}
 	}
 
 	public List<IResource> getSelectionForHgRevert() {
