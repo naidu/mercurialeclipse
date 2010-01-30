@@ -44,6 +44,7 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -77,8 +78,10 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
@@ -96,6 +99,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private CompareRevisionAction compareWithCurrAction;
 	private CompareRevisionAction compareWithPrevAction;
 	private CompareRevisionAction compareTwo;
+	private BaseSelectionListenerAction revertAction;
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -433,17 +437,20 @@ public class MercurialHistoryPage extends HistoryPage {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
 				if(resource instanceof IFile){
 					IStructuredSelection sel = updateActionEnablement();
-				menuMgr1.add(openAction);
-				menuMgr1.add(openEditorAction);
-				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+					menuMgr1.add(openAction);
+					menuMgr1.add(openEditorAction);
+					menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
 					if(sel.size() == 2){
 						menuMgr1.add(compareTwo);
 					} else {
 						menuMgr1.add(compareWithPrevAction);
 						menuMgr1.add(compareWithCurrAction);
+						menuMgr1.add(new Separator());
+						menuMgr1.add(revertAction);
 					}
 				}
 				updateAction.setEnabled(updateAction.isEnabled());
+				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
 			}
 		});
@@ -455,6 +462,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		getOpenAction();
 		getOpenEditorAction();
 		getCompareWithCurrentAction();
+		getRevertAction();
 		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){
 			@Override
 			protected boolean updateSelection(IStructuredSelection selection) {
@@ -614,6 +622,54 @@ public class MercurialHistoryPage extends HistoryPage {
 		compareWithCurrAction.selectionChanged(selection);
 		compareWithPrevAction.selectionChanged(selection);
 		compareTwo.selectionChanged(selection);
+		revertAction.selectionChanged(selection);
 		return selection;
-		}
 	}
+
+	public BaseSelectionListenerAction getRevertAction() {
+		if (revertAction == null) {
+			revertAction = new BaseSelectionListenerAction("Replace Current With Selected") {
+				@Override
+				public void run() {
+					IStructuredSelection selection = getStructuredSelection();
+					if (selection.isEmpty()) {
+						return;
+					}
+					ActionRevert revert = new ActionRevert();
+					MercurialRevision revision = (MercurialRevision) selection.getFirstElement();
+					IResource selectedElement = revision.getResource();
+					if (!MercurialStatusCache.getInstance().isClean(selectedElement) &&
+							!MessageDialog.openQuestion(getControl().getShell(), "Uncommited Changes",
+							"File '" + selectedElement.getName()
+									+ "' has uncommited changes.\nDo you really want to revert?")) {
+						return;
+					}
+					selection = new StructuredSelection(selectedElement);
+					revert.setChangesetToRevert(revision.getChangeSet());
+					revert.selectionChanged(this, selection);
+					revert.run(this);
+				}
+
+				@Override
+				protected boolean updateSelection(IStructuredSelection sSelection) {
+					if(sSelection.size() != 1 ){
+						return false;
+					}
+					if(sSelection.size() == 1){
+						Object element = sSelection.getFirstElement();
+						if(element instanceof MercurialRevision){
+							MercurialRevision rev = (MercurialRevision) element;
+							if(rev.getResource() instanceof IFile){
+								return true;
+							}
+						}
+					}
+					return false;
+				}
+			};
+			revertAction.setImageDescriptor(MercurialEclipsePlugin
+					.getImageDescriptor("actions/revert.gif"));
+		}
+		return revertAction;
+	}
+}

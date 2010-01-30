@@ -302,6 +302,7 @@ public class ChangedPathsPage {
 		final BaseSelectionListenerAction openEditorAction = page.getOpenEditorAction();
 		final BaseSelectionListenerAction compareWithCurrent = page.getCompareWithCurrentAction();
 		final BaseSelectionListenerAction compareWithPrevious = page.getCompareWithPreviousAction();
+		final BaseSelectionListenerAction actionRevert = page.getRevertAction();
 
 		changePathsViewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
@@ -333,8 +334,12 @@ public class ChangedPathsPage {
 				menuMgr1.add(openAction);
 				menuMgr1.add(openEditorAction);
 				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-				menuMgr1.add(compareWithPrevious);
 				menuMgr1.add(compareWithCurrent);
+				menuMgr1.add(compareWithPrevious);
+				menuMgr1.add(new Separator());
+				selection = new StructuredSelection(new Object[]{derived});
+				actionRevert.selectionChanged(selection);
+				menuMgr1.add(actionRevert);
 			}
 
 		});
