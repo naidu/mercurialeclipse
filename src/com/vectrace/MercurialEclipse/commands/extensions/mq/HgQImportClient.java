@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
+ * Bastian Doetsch   implementation
+ * Philip Graf       Fix for importing from a patch file
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
@@ -50,7 +51,7 @@ public class HgQImportClient extends AbstractClient {
 			if (existing) {
 				command.addOptions("--existing"); //$NON-NLS-1$
 			} else {
-				command.addOptions("--name", patchFile.toOSString()); //$NON-NLS-1$
+				command.addOptions(patchFile.toOSString());
 			}
 		}
 
