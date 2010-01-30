@@ -191,7 +191,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		private boolean isAlive() {
 			// job is either not started yet (is scheduled and waiting), or it is not finished or cancelled yet
-			return (!started && getResult() == null) || (monitor2 != null && !monitor2.isCanceled());
+			return (!started && getResult() == null) || (monitor2 != null);
 		}
 
 		@Override
