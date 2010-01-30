@@ -42,7 +42,7 @@ import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
 public class AddHandler extends MultipleResourcesHandler {
 
 	@Override
-	protected void run(final List<IResource> resources) throws HgException {
+	public void run(final List<IResource> resources) throws HgException {
 
 		Set<IProject> roots = getRoots(resources);
 

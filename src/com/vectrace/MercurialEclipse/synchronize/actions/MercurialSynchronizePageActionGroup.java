@@ -78,6 +78,11 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				HG_COMMIT_GROUP,
+				new AddAction("Add...",
+						configuration, getVisibleRootsSelectionProvider()));
+
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				HG_COMMIT_GROUP,
 				new CommitSynchronizeAction("Commit...",
 						configuration, getVisibleRootsSelectionProvider()));
 
