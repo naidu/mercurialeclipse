@@ -32,6 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -54,6 +55,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private static final int BUFFER_SIZE = 32768;
 
+	public static final int MAX_PARAMS = 120;
+
 	static {
 		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
 		// we must run this stupid code in the UI thread
@@ -61,19 +64,20 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			public void run() {
 				PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
 						getImageDescriptor("mercurialeclipse.png"),
-						ProzessWrapper.class);
+						AbstractShellCommand.class);
 			}
 		});
 	}
 
 	/**
-	 *	This rule disallows hg commands run in parallel on the same hg root (if any).
+	 * This rule disallows hg commands run in parallel if the hg root is specified.
+	 * If the hg root is not set, then this rule allows parallel job execution.
 	 */
-	private final static class ExclusiveHgRootRule implements ISchedulingRule {
-		private volatile HgRoot hgRoot;
+	public static class DefaultExecutionRule implements ISchedulingRule {
+		protected volatile HgRoot hgRoot;
 
-		public ExclusiveHgRootRule(HgRoot hgRoot) {
-			this.hgRoot = hgRoot;
+		public DefaultExecutionRule() {
+			super();
 		}
 
 		public boolean isConflicting(ISchedulingRule rule) {
@@ -84,20 +88,35 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			if(this == rule){
 				return true;
 			}
-			if(!(rule instanceof ExclusiveHgRootRule) || hgRoot == null){
+			if(!(rule instanceof DefaultExecutionRule)){
 				return false;
 			}
-			return hgRoot.equals(((ExclusiveHgRootRule) rule).hgRoot);
+			DefaultExecutionRule rule2 = (DefaultExecutionRule) rule;
+			return hgRoot != null && hgRoot.equals(rule2.hgRoot);
+		}
+	}
+
+	/**
+	 * This rule disallows hg commands run in parallel on the same hg root
+	 */
+	public static class ExclusiveExecutionRule extends DefaultExecutionRule {
+		/**
+		 * @param hgRoot must be not null
+		 */
+		public ExclusiveExecutionRule(HgRoot hgRoot) {
+			super();
+			Assert.isNotNull(hgRoot);
+			this.hgRoot = hgRoot;
 		}
 	}
 
 	// should not extend threads directly, should use thread pools or jobs.
 	// In case many threads created at same time, VM can crash or at least get OOM
-	private class ProzessWrapper extends Job {
+	class ProzessWrapper extends Job {
 
 		private final OutputStream output;
 		private final ProcessBuilder builder;
-		private final ExclusiveHgRootRule rootRule;
+		private final DefaultExecutionRule execRule;
 		volatile IProgressMonitor monitor2;
 		volatile boolean started;
 		private Process process;
@@ -107,8 +126,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		public ProzessWrapper(String name, ProcessBuilder builder, OutputStream output) {
 			super(name);
-			rootRule = new ExclusiveHgRootRule(hgRoot);
-			setRule(rootRule);
+			execRule = getExecutionRule();
+			setRule(execRule);
 			this.builder = builder;
 			this.output = output;
 		}
@@ -177,7 +196,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		@Override
 		public boolean belongsTo(Object family) {
-			return ProzessWrapper.class == family;
+			return AbstractShellCommand.class == family;
 		}
 
 		@Override
@@ -187,11 +206,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 				process.destroy();
 			}
 			// remove exclusive lock on the hg root
-			rootRule.hgRoot = null;
+			execRule.hgRoot = null;
 		}
 	}
-
-	public static final int MAX_PARAMS = 120;
 
 	protected String command;
 	protected List<String> commands;
@@ -207,6 +224,8 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private HgRoot hgRoot;
 
+	private DefaultExecutionRule executionRule;
+
 	protected AbstractShellCommand() {
 		super();
 		options = new ArrayList<String>();
@@ -216,11 +235,26 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		debugExecTime = Boolean.valueOf(HgClients.getPreference(PREF_CONSOLE_DEBUG_TIME, "false")).booleanValue(); //$NON-NLS-1$
 	}
 
-	public AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
+	protected AbstractShellCommand(List<String> commands, File workingDir, boolean escapeFiles) {
 		this();
 		this.escapeFiles = escapeFiles;
 		this.workingDir = workingDir;
 		this.commands = commands;
+	}
+
+	/**
+	 * Per default, a non-exclusive rule is created
+	 * @return rule for hg job execution, never null
+	 */
+	protected DefaultExecutionRule getExecutionRule() {
+		if(executionRule == null) {
+			executionRule = new DefaultExecutionRule();
+		}
+		return executionRule;
+	}
+
+	public void setExecutionRule(DefaultExecutionRule rule){
+		executionRule = rule;
 	}
 
 	public void addOptions(String... optionsToAdd) {
@@ -268,7 +302,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		// I see sometimes that hg has errors if it runs in parallel
 		// using a job with exclusive rule here serializes all hg access from plugin.
-		processWrapper = new ProzessWrapper(jobName, builder, output);
+		processWrapper = createProcessWrapper(output, jobName, builder);
 
 		logConsoleCommandInvoked(jobName);
 
@@ -317,6 +351,10 @@ public abstract class AbstractShellCommand extends AbstractClient {
 			logConsoleCompleted(timeInMillis, msg, exitCode, null);
 		}
 		return true;
+	}
+
+	protected ProzessWrapper createProcessWrapper(OutputStream output, String jobName, ProcessBuilder builder) {
+		return new ProzessWrapper(jobName, builder, output);
 	}
 
 	private ProcessBuilder setupProcess(List<String> cmd) {
@@ -393,16 +431,6 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	protected void logConsoleMessage(final String msg, final Throwable t) {
 		if (showOnConsole) {
 			getConsole().printMessage(msg, t);
-		}
-	}
-
-	protected void logConsoleError(final String msg, final HgException hgEx) {
-		if (showOnConsole) {
-			if (msg != null) {
-				getConsole().printError(msg, hgEx);
-			} else {
-				getConsole().printError(hgEx.getMessage(), hgEx);
-			}
 		}
 	}
 
@@ -587,7 +615,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		builder.append(escapeFiles);
 		builder.append(", ");
 		if (processWrapper != null) {
-			builder.append("consumer=");
+			builder.append("processWrapper=");
 			builder.append(processWrapper);
 			builder.append(", ");
 		}

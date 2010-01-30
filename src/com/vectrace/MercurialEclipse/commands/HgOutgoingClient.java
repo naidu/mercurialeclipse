@@ -31,7 +31,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 	public static RemoteData getOutgoing(RemoteKey key) throws HgException {
 		AbstractShellCommand command = getCommand(key.getRoot(), key.getBranch());
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
-		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;		
+		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 		try {
 			command.addOptions("--style", AbstractParseChangesetClient //$NON-NLS-1$
 					.getStyleFile(style).getCanonicalPath());
@@ -65,9 +65,10 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		}
 	}
 
-	private static AbstractShellCommand getCommand(HgRoot res, String branch) {
-		AbstractShellCommand command = new HgCommand("outgoing", res, //$NON-NLS-1$
+	private static AbstractShellCommand getCommand(HgRoot hgRoot, String branch) {
+		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, //$NON-NLS-1$
 				false);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {

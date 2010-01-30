@@ -59,7 +59,8 @@ public class HgBranchClient extends AbstractClient {
 	 */
 	public static String addBranch(IResource resource, String name,
 			String user, boolean force) throws HgException {
-		AbstractShellCommand command = new HgCommand("branch", getWorkingDirectory(resource), false); //$NON-NLS-1$
+		HgCommand command = new HgCommand("branch", getWorkingDirectory(resource), false); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
 		if (force) {
 			command.addOptions("-f"); //$NON-NLS-1$
 		}

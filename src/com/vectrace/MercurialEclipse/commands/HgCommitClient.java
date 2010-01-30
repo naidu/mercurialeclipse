@@ -79,9 +79,10 @@ public class HgCommitClient extends AbstractClient {
 	 * <b>Note</b> clients should not use this method directly, it is NOT private
 	 *  for tests only
 	 */
-	protected static String commit(HgRoot root, List<File> files, String user, String message,
+	protected static String commit(HgRoot hgRoot, List<File> files, String user, String message,
 			boolean closeBranch) throws HgException {
-		HgCommand command = new HgCommand("commit", root, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(quote(user));
 		if (closeBranch) {
@@ -118,6 +119,7 @@ public class HgCommitClient extends AbstractClient {
 	 */
 	public static String commit(HgRoot hgRoot, String user, String message) throws HgException {
 		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addUserName(quote(user));
 		File messageFile = saveMessage(message);

@@ -17,9 +17,10 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgMergeClient extends AbstractClient {
 
-	public static String merge(HgRoot root, String revision, boolean useExternalMergeTool, boolean forced)
+	public static String merge(HgRoot hgRoot, String revision, boolean useExternalMergeTool, boolean forced)
 			throws HgException {
-		AbstractShellCommand command = new HgCommand("merge", root, false);
+		HgCommand command = new HgCommand("merge", hgRoot, false);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		if (!useExternalMergeTool) {
 			// we use simplemerge, so no tool is started. We

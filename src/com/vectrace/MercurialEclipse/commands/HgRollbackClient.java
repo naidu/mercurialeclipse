@@ -22,6 +22,7 @@ public class HgRollbackClient  extends AbstractClient {
 
 	public static String rollback(final HgRoot hgRoot) throws CoreException {
 		HgCommand command = new HgCommand("rollback", hgRoot, true);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		String result = command.executeToString();
 
 		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);

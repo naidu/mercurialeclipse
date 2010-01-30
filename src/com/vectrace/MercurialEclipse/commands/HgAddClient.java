@@ -27,16 +27,17 @@ public class HgAddClient extends AbstractClient {
 			IProgressMonitor monitor) throws HgException {
 		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(resources);
 		for (Map.Entry<HgRoot, List<IResource>> mapEntry : resourcesByRoot.entrySet()) {
-			HgRoot root = mapEntry.getKey();
+			HgRoot hgRoot = mapEntry.getKey();
 			if (monitor != null) {
-				monitor.subTask(Messages.getString("HgAddClient.addingResourcesFrom") + root.getName()); //$NON-NLS-1$
+				monitor.subTask(Messages.getString("HgAddClient.addingResourcesFrom") + hgRoot.getName()); //$NON-NLS-1$
 			}
 			// if there are too many resources, do several calls
 			int size = resources.size();
 			int delta = AbstractShellCommand.MAX_PARAMS - 1;
 			for (int i = 0; i < size; i += delta) {
-				AbstractShellCommand command = new HgCommand("add", root, //$NON-NLS-1$
+				AbstractShellCommand command = new HgCommand("add", hgRoot, //$NON-NLS-1$
 						true);
+				command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 				command.setUsePreferenceTimeout(MercurialPreferenceConstants.ADD_TIMEOUT);
 				command.addFiles(mapEntry.getValue().subList(i,
 						Math.min(i + delta, size)));

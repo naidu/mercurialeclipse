@@ -31,6 +31,7 @@ public class HgPatchClient extends AbstractClient {
 			ArrayList<String> options) throws HgException {
 		assert patchLocation != null && options != null;
 		AbstractShellCommand command = new HgCommand("import", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.addFiles(patchLocation.getAbsolutePath());
 		command.addOptions(options.toArray(new String[options.size()]));
 		return command.executeToString();

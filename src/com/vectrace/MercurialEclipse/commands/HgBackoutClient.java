@@ -40,6 +40,7 @@ public class HgBackoutClient extends AbstractClient {
 			boolean merge, String msg, String user) throws CoreException {
 
 		HgCommand command = new HgCommand("backout", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		boolean useExternalMergeTool = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 						"false")).booleanValue(); //$NON-NLS-1$

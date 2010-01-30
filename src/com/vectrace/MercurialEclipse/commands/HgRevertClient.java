@@ -28,22 +28,23 @@ public class HgRevertClient extends AbstractClient {
 
 	/**
 	 * @param monitor non null
-	 * @param root
+	 * @param hgRoot
 	 * @param resources resources to revert
 	 * @param cs might be null
 	 * @throws HgException
 	 */
-	public static void performRevert(IProgressMonitor monitor, HgRoot root,
+	public static void performRevert(IProgressMonitor monitor, HgRoot hgRoot,
 			List<IResource> resources, ChangeSet cs) throws HgException {
 		// the last argument will be replaced with a path
-		HgCommand command = new HgCommand("revert", root, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("revert", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
 		command.addOptions("--no-backup");
 		if (cs != null) {
 			command.addOptions("--rev", cs.getChangeset());
 		}
 		command.addFiles(resources);
-		monitor.subTask(Messages.getString("ActionRevert.reverting") + root.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+		monitor.subTask(Messages.getString("ActionRevert.reverting") + hgRoot.getName() + "..."); //$NON-NLS-1$ //$NON-NLS-2$
 		command.executeToString();
 		monitor.worked(1);
 	}

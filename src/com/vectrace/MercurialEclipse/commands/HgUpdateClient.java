@@ -26,6 +26,7 @@ public class HgUpdateClient extends AbstractClient {
 			throws HgException {
 		final String oldBranch = HgBranchClient.getActiveBranch(hgRoot);
 		HgCommand command = new HgCommand("update", hgRoot, false); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
 		if (revision != null) {
 			command.addOptions("-r", revision); //$NON-NLS-1$

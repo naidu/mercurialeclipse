@@ -89,11 +89,12 @@ public class HgResolveClient extends AbstractClient {
 	 */
 	public static String markResolved(IFile ifile) throws HgException {
 		File file = ResourceUtils.getFileHandle(ifile);
-		try {
-			AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
-					getWorkingDirectory(file), false);
-			command
-					.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
+				getWorkingDirectory(file), false);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command
+				.getHgRoot()));
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
+			try {
 			command.addOptions("-m", file.getCanonicalPath()); //$NON-NLS-1$
 			String result = command.executeToString();
 			// cleanup .orig files left after merge
@@ -123,9 +124,9 @@ public class HgResolveClient extends AbstractClient {
 	 */
 	public static String resolveAll(IResource res) throws HgException {
 		File file = res.getLocation().toFile();
-		AbstractShellCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
+		HgCommand command = new HgCommand("resolve", getWorkingDirectory(file), //$NON-NLS-1$
 				false);
-
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
 		boolean useExternalMergeTool = Boolean.valueOf(
 				HgClients.getPreference(
 						MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
@@ -149,11 +150,12 @@ public class HgResolveClient extends AbstractClient {
 	 */
 	public static String markUnresolved(IFile ifile) throws HgException {
 		File file = ifile.getLocation().toFile();
+		HgCommand command = new HgCommand("resolve", //$NON-NLS-1$
+				getWorkingDirectory(file), false);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command
+				.getHgRoot()));
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 		try {
-			AbstractShellCommand command = new HgCommand("resolve", //$NON-NLS-1$
-					getWorkingDirectory(file), false);
-			command
-					.setUsePreferenceTimeout(MercurialPreferenceConstants.IMERGE_TIMEOUT);
 			command.addOptions("-u", file.getCanonicalPath()); //$NON-NLS-1$
 			String result = command.executeToString();
 			refreshStatus(ifile);

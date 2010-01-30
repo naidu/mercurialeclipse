@@ -20,7 +20,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 public class HgPushPullClient extends AbstractClient {
@@ -28,6 +27,7 @@ public class HgPushPullClient extends AbstractClient {
 	public static String push(HgRoot hgRoot, HgRepositoryLocation repo,
 			boolean force, String revision, int timeout) throws HgException {
 		AbstractShellCommand command = new HgCommand("push", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
 		if (force) {
@@ -47,6 +47,7 @@ public class HgPushPullClient extends AbstractClient {
 			boolean force, boolean timeout) throws HgException {
 
 		HgCommand command = new HgCommand("pull", hgRoot, true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 
 		if (update) {
 			command.addOptions("--update"); //$NON-NLS-1$
@@ -86,7 +87,7 @@ public class HgPushPullClient extends AbstractClient {
 		// The reason to use "all" instead of only "local + incoming", is that we can pull
 		// from another repo as the sync clients for given project may use
 		// in this case, we also need to update "outgoing" changesets
-		final int flags = RefreshJob.ALL;
+		final int flags = RefreshRootJob.ALL;
 		if(update) {
 			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
 			job.addJobChangeListener(new JobChangeAdapter(){

@@ -38,14 +38,15 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 	 * @throws HgException
 	 */
 	public static RemoteData getHgIncoming(RemoteKey key) throws HgException {
-		HgCommand command = new HgCommand("incoming", key.getRoot(), //$NON-NLS-1$
+		HgRoot hgRoot = key.getRoot();
+		HgCommand command = new HgCommand("incoming", hgRoot, //$NON-NLS-1$
 				false);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		String branch = key.getBranch();
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {
-				HgRoot root = key.getRoot();
-				if(HgBranchClient.isKnownRemote(root, key.getRepo(), branch)) {
+				if(HgBranchClient.isKnownRemote(hgRoot, key.getRepo(), branch)) {
 					command.addOptions("-r", branch);
 				} else {
 					// this branch is not known remote, so there can be NO incoming changes
@@ -60,7 +61,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 		try {
 			try {
 				bundleFile = File.createTempFile("bundleFile-" + //$NON-NLS-1$
-						key.getRoot().getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
+						hgRoot.getName() + "-", ".tmp", null); //$NON-NLS-1$ //$NON-NLS-2$
 				bundleFile.deleteOnExit();
 
 				boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
