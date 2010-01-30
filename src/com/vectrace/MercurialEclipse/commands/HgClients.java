@@ -12,11 +12,11 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
-import java.io.IOException;
 
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -61,7 +61,7 @@ public final class HgClients {
 		return console;
 	}
 
-	public static void logError(IOException e) {
+	public static void logError(Throwable e) {
 		error.logError(e);
 	}
 
@@ -79,7 +79,7 @@ public final class HgClients {
 		return config.getPreference(preferenceConstant, defaultIfNotSet);
 	}
 
-	public static HgRoot getHgRoot(File file) {
+	public static HgRoot getHgRoot(File file) throws HgCoreException {
 		return config.getHgRoot(file);
 	}
 

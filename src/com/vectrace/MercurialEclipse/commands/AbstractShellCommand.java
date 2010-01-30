@@ -13,6 +13,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
+import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.*;
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
 import java.io.ByteArrayOutputStream;
@@ -35,11 +36,11 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PlatformUI;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -53,66 +54,118 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 	private static final int BUFFER_SIZE = 32768;
 
-	// private static final Object executionLock = new Object();
+	static {
+		// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
+		// we must run this stupid code in the UI thread
+		Display.getDefault().asyncExec(new Runnable() {
+			public void run() {
+				PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
+						getImageDescriptor("mercurialeclipse.png"),
+						ProzessWrapper.class);
+			}
+		});
+	}
+
+	/**
+	 *	This rule disallows hg commands run in parallel on the same hg root (if any).
+	 */
+	private final static class ExclusiveHgRootRule implements ISchedulingRule {
+		private volatile HgRoot hgRoot;
+
+		public ExclusiveHgRootRule(HgRoot hgRoot) {
+			this.hgRoot = hgRoot;
+		}
+
+		public boolean isConflicting(ISchedulingRule rule) {
+			return contains(rule);
+		}
+
+		public boolean contains(ISchedulingRule rule) {
+			if(this == rule){
+				return true;
+			}
+			if(!(rule instanceof ExclusiveHgRootRule) || hgRoot == null){
+				return false;
+			}
+			return hgRoot.equals(((ExclusiveHgRootRule) rule).hgRoot);
+		}
+	}
 
 	// should not extend threads directly, should use thread pools or jobs.
 	// In case many threads created at same time, VM can crash or at least get OOM
-	private static class InputStreamConsumer extends Job {
+	private class ProzessWrapper extends Job {
 
-		static {
-			// see bug https://bugs.eclipse.org/bugs/show_bug.cgi?id=298795
-			// we must run this stupid code in the UI thread
-			Display.getDefault().asyncExec(new Runnable() {
-				public void run() {
-					PlatformUI.getWorkbench().getProgressService().registerIconForFamily(
-							MercurialEclipsePlugin.getImageDescriptor("mercurialeclipse.png"),
-							InputStreamConsumer.class);
-				}
-			});
-		}
-
-		private final InputStream stream;
 		private final OutputStream output;
+		private final ProcessBuilder builder;
+		private final ExclusiveHgRootRule rootRule;
 		volatile IProgressMonitor monitor2;
 		volatile boolean started;
-		private final Process process;
+		private Process process;
+		long startTime;
+		int exitCode = -1;
+		Throwable error;
 
-		public InputStreamConsumer(String name, Process process, OutputStream output) {
+		public ProzessWrapper(String name, ProcessBuilder builder, OutputStream output) {
 			super(name);
-			this.process = process;
+			rootRule = new ExclusiveHgRootRule(hgRoot);
+			setRule(rootRule);
+			this.builder = builder;
 			this.output = output;
-			this.stream = process.getInputStream();
 		}
 
 		@Override
 		protected IStatus run(IProgressMonitor monitor) {
+			if (monitor.isCanceled()) {
+				return Status.CANCEL_STATUS;
+			}
+			if(debugExecTime) {
+				startTime = System.currentTimeMillis();
+			} else {
+				startTime = 0;
+			}
 			started = true;
 			monitor2 = monitor;
+			InputStream stream = null;
 			try {
+				process = builder.start();
+				stream = process.getInputStream();
 				int length;
 				byte[] buffer = new byte[BUFFER_SIZE];
-				while ((length = stream.read(buffer)) != -1 && !monitor.isCanceled()) {
+				while ((length = stream.read(buffer)) != -1) {
 					output.write(buffer, 0, length);
+					if(monitor.isCanceled()){
+						break;
+					}
 				}
+				exitCode = process.waitFor();
 			} catch (IOException e) {
 				if (!monitor.isCanceled()) {
-					HgClients.logError(e);
+					error = e;
 				}
+				return Status.CANCEL_STATUS;
+			} catch (InterruptedException e) {
+				if (!monitor.isCanceled()) {
+					error = e;
+				}
+				return Status.CANCEL_STATUS;
 			} finally {
-				try {
-					stream.close();
-				} catch (IOException e) {
-					HgClients.logError(e);
+				if(stream != null) {
+					try {
+						stream.close();
+					} catch (IOException e) {
+						HgClients.logError(e);
+					}
 				}
 				try {
 					output.close();
 				} catch (IOException e) {
 					HgClients.logError(e);
 				}
-				if(monitor.isCanceled()) {
+				monitor.done();
+				monitor2 = null;
+				if(process != null) {
 					process.destroy();
 				}
-				monitor2 = null;
 			}
 			return monitor.isCanceled()? Status.CANCEL_STATUS : Status.OK_STATUS;
 		}
@@ -124,9 +177,18 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		@Override
 		public boolean belongsTo(Object family) {
-			return InputStreamConsumer.class == family;
+			return ProzessWrapper.class == family;
 		}
 
+		@Override
+		protected void canceling() {
+			super.canceling();
+			if(process != null) {
+				process.destroy();
+			}
+			// remove exclusive lock on the hg root
+			rootRule.hgRoot = null;
+		}
 	}
 
 	public static final int MAX_PARAMS = 120;
@@ -138,11 +200,12 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	protected File workingDir;
 	protected final List<String> files;
 	private String timeoutConstant;
-	private InputStreamConsumer consumer;
-	private Process process;
+	private ProzessWrapper processWrapper;
 	private boolean showOnConsole;
 	private final boolean debugMode;
 	private final boolean debugExecTime;
+
+	private HgRoot hgRoot;
 
 	protected AbstractShellCommand() {
 		super();
@@ -192,100 +255,114 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return null;
 	}
 
-	public boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
+	protected boolean executeToStream(OutputStream output, int timeout, boolean expectPositiveReturnValue)
 			throws HgException {
+
+		hgRoot = setupHgRoot();
+
+		List<String> cmd = getCommands();
+
+		String jobName = obfuscateLoginData(getCommandInvoked(cmd));
+
+		ProcessBuilder builder = setupProcess(cmd);
+
+		// I see sometimes that hg has errors if it runs in parallel
+		// using a job with exclusive rule here serializes all hg access from plugin.
+		processWrapper = new ProzessWrapper(jobName, builder, output);
+
+		logConsoleCommandInvoked(jobName);
+
+		// will start hg command as soon as job manager allows us to do it
+		processWrapper.schedule();
+
 		try {
-			List<String> cmd = getCommands();
-
-			final String commandInvoked = getCommandInvoked(cmd);
-
-			// This is totally
-			Charset charset = null;
-			if (workingDir != null) {
-				HgRoot hgRoot;
-				try {
-					hgRoot = HgClients.getHgRoot(workingDir);
-					charset = hgRoot.getEncoding();
-					// Enforce strict command line encoding
-					cmd.add(1, charset.name());
-					cmd.add(1, "--encoding");
-					// Enforce fallback encoding for UI (command output)
-					// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
-					// if actual platfrom don't support it.
-					cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
-					cmd.add(1, "--config"); //$NON-NLS-1$
-				} catch (HgCoreException e) {
-					// no hg root found
-				}
-			}
-
-			ProcessBuilder builder = new ProcessBuilder(cmd);
-
-			// set locale to english have deterministic output
-			Map<String, String> env = builder.environment();
-			env.put("LANG", "C"); //$NON-NLS-1$ //$NON-NLS-2$
-			env.put("LANGUAGE", "C"); //$NON-NLS-1$ //$NON-NLS-2$
-			if (charset != null) {
-				env.put("HGENCODING", charset.name()); //$NON-NLS-1$
-			}
-
-			builder.redirectErrorStream(true); // makes my life easier
-			if (workingDir != null) {
-				builder.directory(workingDir);
-			}
-			final String msg;
-			// TODO Andrei: I see sometimes that hg has errors if it runs in parallel
-			// locking here would serialize all hg access from plugin.
-			// not sure if it is worth...
-			//synchronized (executionLock) {
-				String jobName = obfuscateLoginData(commandInvoked);
-				process = builder.start();
-				consumer = new InputStreamConsumer(jobName, process, output);
-				long startTime;
-				if(debugExecTime) {
-					startTime = System.currentTimeMillis();
-				} else {
-					startTime = 0;
-				}
-				consumer.schedule();
-				logConsoleCommandInvoked(jobName);
-				waitForConsumer(timeout); // 30 seconds timeout
-				msg = getMessage(output);
-				if (!consumer.isAlive()) {
-					final int exitCode = process.waitFor();
-					// everything fine
-					if (exitCode == 0 || !expectPositiveReturnValue) {
-						if (debugExecTime || debugMode) {
-							long timeInMillis = debugExecTime? System.currentTimeMillis() - startTime : 0;
-							logConsoleCompleted(timeInMillis, msg, exitCode, null);
-						}
-						return true;
-					}
-
-					// exit code > 0
-					final HgException hgex = new HgException(exitCode, getMessage(output));
-					long timeInMillis = debugExecTime? System.currentTimeMillis() - startTime : 0;
-					// exit code == 1 usually isn't fatal.
-					logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
-					throw hgex;
-				}
-			//}
-			// command timeout
-			final HgException hgEx = new HgException("Process timeout"); //$NON-NLS-1$
-			logConsoleError(msg, hgEx);
-			throw hgEx;
-		} catch (IOException e) {
-			throw new HgException(e.getMessage(), e);
+			waitForConsumer(timeout);
 		} catch (InterruptedException e) {
-			String message = e.getMessage();
-			if(message == null || message.length() == 0){
-				message = "Operation cancelled";
+			processWrapper.cancel();
+			throw new HgException("Process cancelled: " + jobName, e);
+		}
+
+		if (processWrapper.isAlive()) {
+			// command timeout
+			processWrapper.cancel();
+			throw new HgException("Process timeout: " + jobName);
+		}
+
+		IStatus result = processWrapper.getResult();
+		if (processWrapper.process == null) {
+			// process is either not started or we failed to create it
+			if(result == null){
+				// was not started at all => timeout?
+				throw new HgException("Process timeout: " + jobName);
 			}
-			throw new HgException(message, e);
-		} finally {
-			if (process != null) {
-				process.destroy();
+			if(processWrapper.error == null && result == Status.CANCEL_STATUS) {
+				throw new HgException(HgException.OPERATION_CANCELLED,
+						"Process cancelled: " + jobName, null);
 			}
+			throw new HgException("Process start failed: " + jobName, processWrapper.error);
+		}
+
+		final String msg = getMessage(output);
+		final int exitCode = processWrapper.exitCode;
+		long timeInMillis = debugExecTime? System.currentTimeMillis() - processWrapper.startTime : 0;
+		// everything fine
+		if (exitCode != 0 && expectPositiveReturnValue) {
+			Throwable rootCause = result != null ? result.getException() : null;
+			final HgException hgex = new HgException(exitCode,
+					msg + ". Command line: " + jobName, rootCause);
+			logConsoleCompleted(timeInMillis, msg, exitCode, hgex);
+			throw hgex;
+		}
+		if (debugExecTime || debugMode) {
+			logConsoleCompleted(timeInMillis, msg, exitCode, null);
+		}
+		return true;
+	}
+
+	private ProcessBuilder setupProcess(List<String> cmd) {
+		ProcessBuilder builder = new ProcessBuilder(cmd);
+
+		// set locale to english have deterministic output
+		Map<String, String> env = builder.environment();
+		env.put("LANG", "C"); //$NON-NLS-1$ //$NON-NLS-2$
+		env.put("LANGUAGE", "C"); //$NON-NLS-1$ //$NON-NLS-2$
+		Charset charset = setupEncoding(cmd);
+		if (charset != null) {
+			env.put("HGENCODING", charset.name()); //$NON-NLS-1$
+		}
+
+		builder.redirectErrorStream(true); // makes my life easier
+		if (workingDir != null) {
+			builder.directory(workingDir);
+		}
+		return builder;
+	}
+
+	private Charset setupEncoding(List<String> cmd) {
+		if(hgRoot == null){
+			return null;
+		}
+		Charset charset = hgRoot.getEncoding();
+		// Enforce strict command line encoding
+		cmd.add(1, charset.name());
+		cmd.add(1, "--encoding");
+		// Enforce fallback encoding for UI (command output)
+		// Note: base encoding is UTF-8 for mercurial, fallback is only take into account
+		// if actual platfrom don't support it.
+		cmd.add(1, "ui.fallbackencoding=" + hgRoot.getFallbackencoding().name()); //$NON-NLS-1$
+		cmd.add(1, "--config"); //$NON-NLS-1$
+		return charset;
+	}
+
+	private HgRoot setupHgRoot() {
+		if (workingDir == null) {
+			return null;
+		}
+		try {
+			return HgClients.getHgRoot(workingDir);
+		} catch (HgCoreException e) {
+			// no hg root found
+			return null;
 		}
 	}
 
@@ -295,7 +372,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 		long start = System.currentTimeMillis();
 		long now = 0;
-		while (consumer.isAlive()) {
+		while (processWrapper.isAlive()) {
 			long delay = timeout - now;
 			if (delay <= 0) {
 				break;
@@ -342,10 +419,13 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		} else if (output instanceof ByteArrayOutputStream) {
 			ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
 			try {
-				msg = baos.toString(MercurialEclipsePlugin.getDefaultEncoding());
+				msg = baos.toString(getDefaultEncoding());
 			} catch (UnsupportedEncodingException e) {
-				MercurialEclipsePlugin.logError(e);
+				logError(e);
 				msg = baos.toString();
+			}
+			if(msg != null){
+				msg = msg.trim();
 			}
 		}
 		return msg;
@@ -355,7 +435,7 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		byte[] bytes = executeToBytes();
 		if (bytes != null && bytes.length > 0) {
 			try {
-				return new String(bytes, MercurialEclipsePlugin.getDefaultEncoding());
+				return new String(bytes, getDefaultEncoding());
 			} catch (UnsupportedEncodingException e) {
 				throw new HgException(e.getLocalizedMessage(), e);
 			}
@@ -432,10 +512,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	public void terminate() {
-		if (consumer != null) {
-			consumer.cancel();
+		if (processWrapper != null) {
+			processWrapper.cancel();
 		}
-		process.destroy();
 	}
 
 	private IConsole getConsole() {
@@ -507,14 +586,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		builder.append("escapeFiles=");
 		builder.append(escapeFiles);
 		builder.append(", ");
-		if (consumer != null) {
+		if (processWrapper != null) {
 			builder.append("consumer=");
-			builder.append(consumer);
-			builder.append(", ");
-		}
-		if (process != null) {
-			builder.append("process=");
-			builder.append(process);
+			builder.append(processWrapper);
 			builder.append(", ");
 		}
 		builder.append("showOnConsole=");

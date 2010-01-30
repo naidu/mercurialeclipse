@@ -220,7 +220,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 						}
 					});
 				}
-				return ex.getStatus();
+				return Status.CANCEL_STATUS;
 			} finally {
 				opMonitor.done();
 			}

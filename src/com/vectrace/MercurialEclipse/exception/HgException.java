@@ -22,6 +22,7 @@ public class HgException extends TeamException {
 	private static final long serialVersionUID = 1L; // Get rid of warning
 
 	public static final int OPERATION_FAILED = -100;
+	public static final int OPERATION_CANCELLED = -200;
 	public static final String OPERATION_FAILED_STRING = Messages.getString("HgException.operationFailed"); //$NON-NLS-1$
 
 	public HgException(IStatus status) {
@@ -42,17 +43,23 @@ public class HgException extends TeamException {
 				OPERATION_FAILED, message, e));
 	}
 
-	public HgException(int code, String message) {
+	public HgException(int code, String message, Throwable e) {
 		super(new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, code,
-				message, null));
+				message, e));
 	}
 
 	@Override
 	public String getMessage() {
 		IStatus status = getStatus();
 		StringBuilder sb = new StringBuilder(status.getMessage());
-		if(status.getCode() != OPERATION_FAILED) {
+		switch (status.getCode()) {
+		case OPERATION_CANCELLED:
+			break;
+		case OPERATION_FAILED:
+			break;
+		default:
 			sb.append(", error code: ").append(status.getCode());
+			break;
 		}
 		return sb.toString();
 	}

@@ -80,7 +80,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 		return timeout;
 	}
 
-	public HgRoot getHgRoot(File file) {
+	public HgRoot getHgRoot(File file) throws HgCoreException {
 		try {
 			return MercurialTeamProvider.getHgRoot(file);
 		} catch (CoreException e) {

@@ -75,7 +75,7 @@ public class HgCommand extends AbstractShellCommand {
 	}
 
 	@Override
-	public boolean executeToStream(OutputStream output, int timeout,
+	protected boolean executeToStream(OutputStream output, int timeout,
 			boolean expectPositiveReturnValue) throws HgException {
 
 		// Request non-interactivity flag
