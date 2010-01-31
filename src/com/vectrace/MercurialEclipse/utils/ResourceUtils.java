@@ -123,7 +123,8 @@ public class ResourceUtils {
 
 	/**
 	 * @param path a path to possibly non-existing or not mapped resource
-	 * @return a (file) representing given resource
+	 * @return a (file) representing given resource, may return null if the resource is
+	 * not in the workspace
 	 */
 	public static IFile getFileHandle(IPath path){
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
