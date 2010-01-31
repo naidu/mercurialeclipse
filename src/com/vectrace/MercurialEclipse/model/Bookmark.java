@@ -1,4 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Andrei Loskutov (Intland) - bug fixes
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
+
+import org.eclipse.core.runtime.Assert;
 
 public class Bookmark {
 
@@ -17,8 +29,8 @@ public class Bookmark {
 	}
 
 	public Bookmark(String line) {
-		assert (line != null && line.length() > 0);
-		assert (!line.startsWith("no bookmarks set"));         //$NON-NLS-1$
+		Assert.isTrue(line.length() > 0);
+		Assert.isTrue(!line.startsWith("no bookmarks set"));         //$NON-NLS-1$
 		active = line.startsWith(" *"); //$NON-NLS-1$
 		int lastSpace = line.lastIndexOf(" "); //$NON-NLS-1$
 		name = line.substring(3, lastSpace).trim();
