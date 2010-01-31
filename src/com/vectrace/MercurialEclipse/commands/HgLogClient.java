@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.history.MercurialHistory;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -267,8 +268,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		ChangeSet changeSet = rev.getChangeSet();
 		IResource resource = rev.getResource();
 		int limitNumber = 1;
-		Map<IPath, Set<ChangeSet>> map = getProjectLog(resource, limitNumber, changeSet
-				.getChangesetIndex(), true);
+		Map<IPath, Set<ChangeSet>> map;
+		if(resource instanceof HgRootContainer) {
+			map = getRootLog(((HgRootContainer) resource).getHgRoot(), limitNumber, changeSet
+					.getChangesetIndex(), true);
+		} else {
+			map = getProjectLog(resource, limitNumber, changeSet.getChangesetIndex(), true);
+		}
+
 		IPath location = ResourceUtils.getPath(resource);
 		if(map != null) {
 			return Collections.min(map.get(location));

@@ -27,9 +27,14 @@ import com.vectrace.MercurialEclipse.utils.PatchUtils;
 
 public class HgPatchClient extends AbstractClient {
 
+	/**
+	 *
+	 * @param hgRoot non null
+	 * @param patchLocation non null
+	 * @param options non null
+	 */
 	public static String importPatch(HgRoot hgRoot, File patchLocation,
 			ArrayList<String> options) throws HgException {
-		assert patchLocation != null && options != null;
 		AbstractShellCommand command = new HgCommand("import", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.addFiles(patchLocation.getAbsolutePath());

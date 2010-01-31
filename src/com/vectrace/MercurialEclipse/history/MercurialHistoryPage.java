@@ -19,7 +19,10 @@ import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConst
 
 import java.util.Iterator;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
@@ -64,8 +67,10 @@ import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
 import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 import org.eclipse.ui.ide.IDE;
@@ -88,6 +93,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	private GraphLogTableViewer viewer;
 	private IResource resource;
+	private HgRoot hgRoot;
 	private ChangeLogContentProvider changeLogViewContentProvider;
 	private MercurialHistory mercurialHistory;
 	private RefreshMercurialHistory refreshFileHistoryJob;
@@ -100,6 +106,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private CompareRevisionAction compareWithPrevAction;
 	private CompareRevisionAction compareTwo;
 	private BaseSelectionListenerAction revertAction;
+	private Action actionShowParentHistory;
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -118,7 +125,11 @@ public class MercurialHistoryPage extends HistoryPage {
 			mercurialHistory.setEnableExtraTags(showTags);
 			try {
 				mercurialHistory.refresh(monitor, from);
-				currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+				if(resource != null) {
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+				} else {
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 				return e.getStatus();
@@ -230,13 +241,17 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	@Override
 	public boolean setInput(Object object) {
-		if (isValidInput(object)) {
-			IResource old = resource;
-			this.resource = (IResource)object;
+		if (!isValidInput(object)) {
+			return false;
+		}
+		if(object instanceof HgRoot){
+			actionShowParentHistory.setEnabled(false);
+			HgRoot old = hgRoot;
+			this.hgRoot = (HgRoot)object;
 			super.setInput(object);
-			if(resource == null || (resource != null && !resource.equals(old))){
-				if(resource != null) {
-					mercurialHistory = new MercurialHistory(resource);
+			if(hgRoot == null || (hgRoot != null && !hgRoot.equals(old))){
+				if(hgRoot != null) {
+					mercurialHistory = new MercurialHistory(hgRoot);
 				} else {
 					mercurialHistory = null;
 				}
@@ -244,7 +259,19 @@ public class MercurialHistoryPage extends HistoryPage {
 			}
 			return true;
 		}
-		return false;
+		IResource old = resource;
+		this.resource = (IResource)object;
+		super.setInput(object);
+		if(resource == null || (resource != null && !resource.equals(old))){
+			if(resource != null) {
+				mercurialHistory = new MercurialHistory(resource);
+				actionShowParentHistory.setEnabled(true);
+			} else {
+				mercurialHistory = null;
+			}
+			refresh();
+		}
+		return true;
 	}
 
 	@Override
@@ -258,6 +285,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		IMenuManager actionBarsMenu = actionBars.getMenuManager();
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
+
 		Action toggleShowTags = new Action(Messages.getString("HistoryView.showTags"), //$NON-NLS-1$
 				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) {
 			@Override
@@ -271,9 +299,42 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		toggleShowTags.setChecked(showTags);
 		actionBarsMenu.add(toggleShowTags);
+
+		actionShowParentHistory = new Action("Show Parent History", //$NON-NLS-1$
+				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_UP)) {
+			@Override
+			public void run() {
+				if(mercurialHistory == null || hgRoot != null || resource == null) {
+					setEnabled(false);
+					return;
+				}
+				if(resource instanceof IProject){
+					try {
+						HgRoot root = MercurialTeamProvider.getHgRoot(resource);
+						if(root != null){
+							getHistoryView().showHistoryFor(root, true);
+						} else {
+							setEnabled(false);
+						}
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+						setEnabled(false);
+					}
+				} else {
+					IContainer parentRes = resource.getParent();
+					if (parentRes instanceof IFolder || parentRes instanceof IProject) {
+						getHistoryView().showHistoryFor(parentRes, true);
+					} else {
+						setEnabled(false);
+					}
+				}
+			}
+		};
+
 		IToolBarManager tbm = actionBars.getToolBarManager();
 		tbm.add(new Separator());
 		tbm.add(toggleShowTags);
+		tbm.add(actionShowParentHistory);
 
 		changedPaths = new ChangedPathsPage(this, parent);
 		createTableHistory(changedPaths.getControl());
@@ -394,9 +455,9 @@ public class MercurialHistoryPage extends HistoryPage {
 					return;
 				}
 				try {
-					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-					Assert.isNotNull(hgRoot);
-					if (HgStatusClient.isDirty(hgRoot)) {
+					HgRoot root = resource != null ? MercurialTeamProvider.getHgRoot(resource) : hgRoot;
+					Assert.isNotNull(root);
+					if (HgStatusClient.isDirty(root)) {
 						if (!MessageDialog
 								.openQuestion(getControl().getShell(),
 										"Uncommited Changes",
@@ -404,7 +465,7 @@ public class MercurialHistoryPage extends HistoryPage {
 							return;
 						}
 					}
-					UpdateJob job = new UpdateJob(rev.getHash(), true, hgRoot);
+					UpdateJob job = new UpdateJob(rev.getHash(), true, root);
 					JobChangeAdapter adap = new JobChangeAdapter() {
 						@Override
 						public void done(IJobChangeEvent event) {
@@ -563,15 +624,16 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	public String getDescription() {
-		return resource.getFullPath().toOSString();
+		return resource != null? resource.getLocation().toOSString() : hgRoot.getAbsolutePath();
 	}
 
 	public String getName() {
-		return resource.getFullPath().toOSString();
+		return getDescription();
 	}
 
 	public boolean isValidInput(Object object) {
-		return object == null || object instanceof IResource || getAdapter(IResource.class) != null;
+		return object == null || object instanceof IResource || object instanceof HgRoot
+			|| getAdapter(IResource.class) != null;
 	}
 
 	public ChangeSet getCurrentWorkdirChangeset() {

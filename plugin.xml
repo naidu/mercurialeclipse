@@ -107,7 +107,7 @@
              class="com.vectrace.MercurialEclipse.menu.FlagPropertyTester"
              id="com.vectrace.MercurialEclipse.propertyTester"
              namespace="com.vectrace.MercurialEclipse.propertyTester"
-             properties="status"
+             properties="status, root"
              type="org.eclipse.core.resources.IResource">
           </propertyTester>
     </extension>
@@ -156,6 +156,20 @@
                 </adapt>
             </iterate>
         </definition>
+        
+        <!-- project is NOT hg root -->
+        <definition id="com.vectrace.MercurialEclipse.def.notRoot">
+            <iterate>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <adapt type="org.eclipse.core.resources.IProject">
+                           <test
+                              property="com.vectrace.MercurialEclipse.propertyTester.root"
+                              args="false">
+                        </test>                    
+                    </adapt>
+                </adapt>
+            </iterate>
+        </definition>
 
         <!-- hgUnknown -->
         <definition id="com.vectrace.MercurialEclipse.def.hgUnknown">
@@ -163,10 +177,6 @@
                 <adapt type="org.eclipse.core.resources.IResource">
                            <test property="com.vectrace.MercurialEclipse.propertyTester.status"
                               args="unknown"/>
-                        <not>
-                            <test property="com.vectrace.MercurialEclipse.propertyTester.status"
-                              args="added,clean,modified"/>
-                        </not>
                 </adapt>
             </iterate>
         </definition>
@@ -221,6 +231,9 @@
         <command id="com.vectrace.MercurialEclipse.menu.UpdateHandler"
                 categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%update"/>
+        <command id="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
+                categoryId="com.vectrace.MercurialEclipse.commandCategory"
+                 name="%rootHistory"/>
         <command id="com.vectrace.MercurialEclipse.menu.TagHandler"
                  categoryId="com.vectrace.MercurialEclipse.commandCategory"
                  name="%tags"/>
@@ -385,6 +398,18 @@
                     <count value="1"/>
                     <reference definitionId="com.vectrace.MercurialEclipse.def.notMerging"/>
                     <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                </and>
+            </enabledWhen>
+        </handler>
+        
+        <!-- RootHistoryHandler -->
+        <handler commandId="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
+                 class="com.vectrace.MercurialEclipse.menu.RootHistoryHandler">
+            <enabledWhen>
+                <and>
+                    <count value="1"/>
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                    <reference definitionId="com.vectrace.MercurialEclipse.def.notRoot"/>
                 </and>
             </enabledWhen>
         </handler>
@@ -618,6 +643,7 @@
                 </visibleWhen>
                 -->
 
+
                 <separator name="group1" visible="false"/>
 
                 <command
@@ -680,10 +706,20 @@
                       </and>
                    </visibleWhen>
                 </command>
-                <separator
-                      name="group4"
-                      visible="true">
-                </separator>
+                
+                <separator name="group4" visible="true"/>
+
+                <command
+                  commandId="com.vectrace.MercurialEclipse.menu.RootHistoryHandler"
+                  icon="icons/history.gif">
+                    <visibleWhen>
+                        <and>
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.notRoot" />
+                            <reference definitionId="com.vectrace.MercurialEclipse.def.project" />
+                       </and>
+                    </visibleWhen>
+                </command>
+                
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.RefreshStatusHandler"
                       icon="icons/clcl16/refresh.gif">
@@ -694,11 +730,8 @@
                    </visibleWhen>
                 </command>
 
-
-
-
-
                 <separator name="group3" visible="true"/>
+                
                 <command
                       commandId="com.vectrace.MercurialEclipse.menu.SwitchHandler"
                       icon="icons/actions/switch.gif">
@@ -896,18 +929,6 @@
                 <separator name="group7" visible="true"/>
                 <separator name="group8" visible="true"/>
                 <separator name="group9" visible="true"/>
-                <separator name="group10" visible="true"/>
-
-                <command
-                  commandId="com.vectrace.MercurialEclipse.menu.AddHandler"
-                  icon="icons/add.gif">
-                    <visibleWhen>
-                        <and>
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
-                            <reference definitionId="com.vectrace.MercurialEclipse.def.hgUnknown"/>
-                        </and>
-                    </visibleWhen>
-                </command>
 
                 <command
                   commandId="com.vectrace.MercurialEclipse.menu.HgIgnoreHandler">
@@ -915,6 +936,7 @@
                        <reference definitionId="com.vectrace.MercurialEclipse.def.mercurial" />
                     </visibleWhen>
                 </command>
+                <separator name="group10" visible="true"/>
 
                 <command
                   commandId="com.vectrace.MercurialEclipse.menu.ServeHandler"
@@ -1015,6 +1037,15 @@
               icon="icons/actions/commit.gif"
               menubarPath="team.main/group1"
               label="%actionLabel.commit">
+           </action>
+           <action
+                 class="com.vectrace.MercurialEclipse.team.ActionAdd"
+                 definitionId="com.vectrace.MercurialEclipse.menu.AddHandler"
+                 enablesFor="+"
+                 icon="icons/add.gif"
+                 id="com.vectrace.MercurialEclipse.team.ActionAdd"
+                 label="%add"
+                 menubarPath="team.main/group1">
            </action>
       </objectContribution>
 
@@ -1153,6 +1184,13 @@
        adaptableType="org.eclipse.team.core.history.provider.FileHistoryProvider"
        class="com.vectrace.MercurialEclipse.AdapterFactory">
        <adapter type="org.eclipse.team.ui.history.IHistoryPageSource"/>
+     </factory>
+     <factory
+           adaptableType="com.vectrace.MercurialEclipse.model.HgRoot"
+           class="com.vectrace.MercurialEclipse.AdapterFactory">
+        <adapter
+              type="org.eclipse.team.ui.history.IHistoryPageSource">
+        </adapter>
      </factory>
    <!-- Adapt IResource to itself does not make sense at all and can only generates troubles
    <factory

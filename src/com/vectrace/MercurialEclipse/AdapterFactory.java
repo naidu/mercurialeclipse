@@ -8,7 +8,8 @@
  * Contributors:
  *     VecTrace (Zingo Andersen) - implementation
  *     Stefan Groschupf          - logError
- *     Zsolt Koppany (Intland)
+ *     Zsolt Koppany (Intland)   - bug fixes
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse;
 
@@ -17,27 +18,23 @@ import org.eclipse.team.ui.history.IHistoryPageSource;
 
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPageSource;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class AdapterFactory implements IAdapterFactory {
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdapterFactory#getAdapter(java.lang.Object, java.lang.Class)
-	 */
+
 	@SuppressWarnings("unchecked")
 	public MercurialHistoryPageSource getAdapter(Object adaptableObject, Class adapterType) {
-		// System.out.println("AdapterFactory::getAdapter()");
 		if((adaptableObject instanceof MercurialHistoryProvider) && adapterType == IHistoryPageSource.class) {
-			//System.out.println("AdapterFactory::getAdapter() MercurialHistoryPageSource");
 			return new MercurialHistoryPageSource((MercurialHistoryProvider)adaptableObject);
+		}
+		if((adaptableObject instanceof HgRoot) && adapterType == IHistoryPageSource.class) {
+			return new MercurialHistoryPageSource(null);
 		}
 		return null;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.eclipse.core.runtime.IAdapterFactory#getAdapterList()
-	 */
 	@SuppressWarnings("unchecked")
 	public Class<IHistoryPageSource>[] getAdapterList() {
-		//System.out.println("AdapterFactory::getAdapterList()");
 		return new Class[] { IHistoryPageSource.class };
 	}
 }

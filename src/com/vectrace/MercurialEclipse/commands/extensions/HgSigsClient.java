@@ -28,11 +28,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- *
  */
 public class HgSigsClient extends AbstractClient {
 
@@ -41,26 +39,25 @@ public class HgSigsClient extends AbstractClient {
 	/**
 	 * Gets signed changesets
 	 *
-	 * @param repoFile
+	 * @param hgRoot
 	 * @return the identifiers of signed changesets (rev:node)
 	 * @throws HgException
 	 */
-	public static List<Signature> getSigs(File repoFile) throws CoreException {
+	public static List<Signature> getSigs(HgRoot hgRoot) throws CoreException {
 		try {
-			HgRoot root = MercurialTeamProvider.getHgRoot(repoFile);
 			List<Signature> nodes = new ArrayList<Signature>();
-			File sigFile = new File(root, ".hgsigs"); //$NON-NLS-1$
+			File sigFile = new File(hgRoot, ".hgsigs"); //$NON-NLS-1$
 			if (sigFile.exists()) {
 				LineNumberReader reader = null;
 				try {
-				reader = new LineNumberReader(new FileReader(sigFile));
-				String line = reader.readLine();
-				while (line != null) {
-					String nodeId = line.substring(0,line.indexOf(" 0 ")); //$NON-NLS-1$
-					Signature sig = new Signature(null,nodeId,root);
-					nodes.add(sig);
-					line = reader.readLine();
-				}
+					reader = new LineNumberReader(new FileReader(sigFile));
+					String line = reader.readLine();
+					while (line != null) {
+						String nodeId = line.substring(0,line.indexOf(" 0 ")); //$NON-NLS-1$
+						Signature sig = new Signature(null, nodeId, hgRoot);
+						nodes.add(sig);
+						line = reader.readLine();
+					}
 				} catch (IOException e) {
 					throw new HgException(e.getLocalizedMessage(), e);
 				} finally {
@@ -79,12 +76,12 @@ public class HgSigsClient extends AbstractClient {
 	 * @return may return null, if "sigcheck" command is not available
 	 * @throws HgException if command failed
 	 */
-	public static String checkSig(File file, String nodeId) throws HgException {
+	public static String checkSig(HgRoot hgRoot, String nodeId) throws HgException {
 		if(notAvailable != null){
 			return null;
 		}
 		try {
-			AbstractShellCommand c = new HgCommand("sigcheck", getWorkingDirectory(file), //$NON-NLS-1$
+			AbstractShellCommand c = new HgCommand("sigcheck", hgRoot, //$NON-NLS-1$
 					false);
 			c.addOptions("--config","extensions.gpg=");
 			c.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);

@@ -66,7 +66,9 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 								ChangeSet cs = left[0].getChangeSet();
 								IPath fileAbsPath = cs.getHgRoot().toAbsolute(clickedFileStatus.getRootRelativePath());
 								IFile file = ResourceUtils.getFileHandle(fileAbsPath);
-								right[0] = getParentRevision(cs, file);
+								if(file != null) {
+									right[0] = getParentRevision(cs, file);
+								}
 							} else if(selection[1] instanceof MercurialRevision) {
 								right[0] = getStorage((MercurialRevision) selection[1], monitor);
 							}

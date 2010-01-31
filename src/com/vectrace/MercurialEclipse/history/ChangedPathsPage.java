@@ -308,6 +308,9 @@ public class ChangedPathsPage {
 			public void doubleClick(DoubleClickEvent event) {
 				FileStatus fileStatus = (FileStatus) ((IStructuredSelection) event.getSelection()).getFirstElement();
 				MercurialRevision derived = getDerivedRevision(fileStatus, getCurrentRevision());
+				if(derived == null){
+					return;
+				}
 				StructuredSelection selection = new StructuredSelection(new Object[]{derived, fileStatus});
 				compareWithPrevious.selectionChanged(selection);
 				compareWithPrevious.run();
@@ -325,6 +328,10 @@ public class ChangedPathsPage {
 				FileStatus fileStatus = (FileStatus) selection.getFirstElement();
 				MercurialRevision base = getCurrentRevision();
 				MercurialRevision derived = getDerivedRevision(fileStatus, base);
+				if(derived == null){
+					// XXX currently files outside workspace are not supported...
+					return;
+				}
 				selection = new StructuredSelection(derived);
 				openAction.selectionChanged(selection);
 				openEditorAction.selectionChanged(selection);
@@ -411,8 +418,14 @@ public class ChangedPathsPage {
 		return page.getMercurialHistory();
 	}
 
+	/**
+	 * @return might return null, if the file is outside Eclipse workspace
+	 */
 	private MercurialRevision getDerivedRevision(FileStatus fileStatus, MercurialRevision base) {
 		IFile file = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
+		if(file == null){
+			return null;
+		}
 		MercurialRevision derived = new MercurialRevision(base.getChangeSet(), base
 				.getGChangeSet(), file, null);
 		return derived;

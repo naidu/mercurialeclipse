@@ -43,6 +43,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryProvider;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.HgRootContainer;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -96,7 +97,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
 	public void deconfigure() throws CoreException {
 		IProject project = getProject();
-		assert (project != null);
+		Assert.isNotNull(project);
 		// cleanup
 		HG_ROOTS.put(project, Boolean.FALSE);
 		BRANCH_MAP.remove(project);
@@ -140,12 +141,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * This property can be used to create a {@link java.io.File}.
 	 *
 	 * @param resource
-	 *            the resource to get the hg root for
+	 *            the resource to get the hg root for, not null
 	 * @return the canonical file path of the HgRoot
 	 * @throws HgException
 	 */
 	private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
-		assert (resource != null);
 		IProject project = resource.getProject();
 		if (project == null || !resource.exists()) {
 			return AbstractClient.getHgRoot(resource);
@@ -177,7 +177,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	private static HgRoot getHgRootFile(File file) throws HgException {
-		assert (file != null);
 		return HgRootClient.getHgRoot(file);
 	}
 
@@ -189,14 +188,13 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * This property can be used to create a {@link java.io.File}.
 	 *
 	 * @param file
-	 *            the {@link java.io.File} to get the hg root for
+	 *            the {@link java.io.File} to get the hg root for, non null
 	 * @return the canonical file path of the HgRoot or null if no resource could be found in workspace that matches the
 	 *         file
 	 * @throws HgException
 	 *             if no hg root was found or a critical error occurred.
 	 */
 	private static HgRoot getAndStoreHgRoot(File file) throws CoreException {
-		assert (file != null);
 		IResource resource = ResourceUtils.convert(file);
 		if (resource != null) {
 			return getAndStoreHgRoot(resource);
@@ -208,13 +206,12 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * Gets the resource hgrc as a {@link java.io.File}.
 	 *
 	 * @param resource
-	 *            the resource to get the hgrc for
+	 *            the resource to get the hgrc for, not null
 	 * @return the {@link java.io.File} referencing the hgrc file, <code>null</code> if it doesn't exist.
 	 * @throws HgException
 	 *             if an error occured (e.g., no root could be found).
 	 */
 	public static File getHgRootConfig(IResource resource) throws HgException {
-		assert (resource != null);
 		HgRoot hgRoot = getHgRoot(resource);
 		return hgRoot.getConfig();
 	}
@@ -223,13 +220,16 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * Gets the hg root of a resource as {@link java.io.File}.
 	 *
 	 * @param resource
-	 *            the resource to get the hg root for
+	 *            the resource to get the hg root for, not null
 	 * @return the {@link java.io.File} referencing the hg root directory
 	 * @throws HgException
 	 *             if an error occurred (e.g. no root could be found)
 	 */
 	public static HgRoot getHgRoot(IResource resource) throws HgException {
-		assert (resource != null);
+		if(resource instanceof HgRootContainer){
+			HgRootContainer rootContainer = (HgRootContainer) resource;
+			return rootContainer.getHgRoot();
+		}
 		try {
 			return getAndStoreHgRoot(resource);
 		} catch (CoreException e) {
@@ -256,12 +256,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * Gets the hg root of a resource as {@link java.io.File}.
 	 *
 	 * @param file
-	 *            a {@link java.io.File}
+	 *            a {@link java.io.File}, not null
 	 * @return the file object of the root.
 	 * @throws CoreException
 	 */
 	public static HgRoot getHgRoot(File file) throws CoreException {
-		assert (file != null);
 		return getAndStoreHgRoot(file);
 	}
 
@@ -338,16 +337,16 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		return canHandleLinkedResources();
 	}
 
-    /**
-     * Overrides the default pessimistic resource rule factory which locks the workspace for all
-     * operations. This causes problems when opening a project. This method returns the default
-     * non-pessimistic resource rule factory which locks on a finer level.
-     */
-    @Override
-    public IResourceRuleFactory getRuleFactory() {
-        if (resourceRuleFactory == null) {
-            resourceRuleFactory = new ResourceRuleFactory() {};
-        }
-        return resourceRuleFactory;
-    }
+	/**
+	 * Overrides the default pessimistic resource rule factory which locks the workspace for all
+	 * operations. This causes problems when opening a project. This method returns the default
+	 * non-pessimistic resource rule factory which locks on a finer level.
+	 */
+	@Override
+	public IResourceRuleFactory getRuleFactory() {
+		if (resourceRuleFactory == null) {
+			resourceRuleFactory = new ResourceRuleFactory() {};
+		}
+		return resourceRuleFactory;
+	}
 }

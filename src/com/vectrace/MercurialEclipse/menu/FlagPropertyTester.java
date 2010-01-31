@@ -14,19 +14,25 @@ package com.vectrace.MercurialEclipse.menu;
 
 import static com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache.*;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
 
 public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTester {
 
 	public final static String PROPERTY_STATUS = "status"; //$NON-NLS-1$
+	public final static String PROPERTY_ROOT = "root"; //$NON-NLS-1$
 
 	@SuppressWarnings({ "serial", "boxing" })
 	private final static Map<Object, Integer> BIT_MAP = new HashMap<Object, Integer>() {
@@ -69,6 +75,23 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 			} catch (Exception e) {
 				MercurialEclipsePlugin.logWarning("Could not test status " + property + " on " + receiver, e); //$NON-NLS-1$ //$NON-NLS-2$
 				return false;
+			}
+		} else if(PROPERTY_ROOT.equals(property) && args[0] != null) {
+			IResource res = (IResource)receiver;
+			IPath location = res.getLocation();
+			if(location == null ){
+				return false;
+			}
+			try {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+				File file = location.toFile();
+				boolean bool = Boolean.valueOf(args[0].toString()).booleanValue();
+				if(bool) {
+					return hgRoot.equals(file);
+				}
+				return !hgRoot.equals(file);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
 			}
 		}
 		return false;

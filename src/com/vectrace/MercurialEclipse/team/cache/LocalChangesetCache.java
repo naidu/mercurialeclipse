@@ -330,6 +330,13 @@ public class LocalChangesetCache extends AbstractCache {
 	 */
 	public ChangeSet getChangesetByRootId(IResource res) throws HgException {
 		HgRoot root = HgClients.getHgRoot(res);
+		return getChangesetForRoot(root);
+	}
+
+	/**
+	 * @return may return null
+	 */
+	public ChangeSet getChangesetForRoot(HgRoot root) throws HgException {
 		// for projects in the same root try to use root cache
 		synchronized (latestChangesets) {
 			ChangeSet changeSet = latestChangesets.get(root);

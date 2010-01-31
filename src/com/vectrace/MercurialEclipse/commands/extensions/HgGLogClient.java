@@ -33,6 +33,25 @@ public class HgGLogClient extends HgCommand {
 		super("glog", false);
 		File fileHandle = ResourceUtils.getFileHandle(resource);
 		workingDir = ResourceUtils.getFirstExistingDirectory(fileHandle);
+
+		if (resource.getType() == IResource.FILE) {
+			addOptions(fileHandle.getAbsolutePath());
+		} else {
+			if (resource.getType() != IResource.PROJECT){
+				// glog doesn't follow directories
+				return;
+			}
+			HgRoot hgRoot = getHgRoot();
+			if(!hgRoot.equals(fileHandle)){
+				// multiple projects under same hg root handled by glog as directories
+				return;
+			}
+		}
+		configureOptions(batchSize, startRev);
+		load(executeToString());
+	}
+
+	private void configureOptions(int batchSize, int startRev) {
 		addOptions("--config", "extensions.graphlog="); //$NON-NLS-1$ //$NON-NLS-2$
 		addOptions("--template", "*{rev}\\n"); // Removes everything //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -49,21 +68,13 @@ public class HgGLogClient extends HgCommand {
 			addOptions("-r");
 			addOptions(startRev + ":" + 0);
 		}
-
-		if (resource.getType() == IResource.FILE) {
-			addOptions(fileHandle.getAbsolutePath());
-		} else {
-			if (resource.getType() != IResource.PROJECT){
-				// glog doesn't follow directories
-				return;
-			}
-			HgRoot hgRoot = getHgRoot();
-			if(!hgRoot.equals(fileHandle)){
-				// multiple projects under same hg root handled by glog as directories
-				return;
-			}
-		}
 		setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
+	}
+
+	public HgGLogClient(HgRoot hgRoot, int batchSize, int startRev) throws HgException {
+		super("glog", false);
+		workingDir = hgRoot;
+		configureOptions(batchSize, startRev);
 		load(executeToString());
 	}
 
