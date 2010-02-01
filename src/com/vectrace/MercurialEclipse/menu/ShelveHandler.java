@@ -13,7 +13,6 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -21,24 +20,21 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.ShelveOperation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
  */
-public class ShelveHandler extends SingleResourceHandler {
+public class ShelveHandler extends RootHandler {
 
 	@Override
-	protected void run(final IResource resource) throws Exception {
+	protected void run(final HgRoot hgRoot) {
 		new SafeWorkspaceJob(Messages.getString("ShelveHandler.Shelving")) { //$NON-NLS-1$
 
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
-					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 					ShelveOperation op = new ShelveOperation((IWorkbenchPart) null,	hgRoot);
 					op.run(monitor);
 					return super.runSafe(monitor);
@@ -48,8 +44,6 @@ public class ShelveHandler extends SingleResourceHandler {
 				} catch (InterruptedException e) {
 					return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
 							0, e.getLocalizedMessage(), e);
-				} catch (HgException e) {
-					return e.getStatus();
 				}
 			}
 		}.schedule();

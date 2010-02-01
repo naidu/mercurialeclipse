@@ -281,12 +281,12 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		removedFilesBefore.keySet().retainAll(addedFilesBefore.keySet());
 
 		// perform revert
+		Map<HgRoot, List<IResource>> rootToFiles = ResourceUtils.groupByRoot(resources);
 		if(cleanAfterMerge) {
-			for (Entry<IProject, List<IResource>> entry : filesToRevert.entrySet()) {
+			for (Entry<HgRoot, List<IResource>> entry : rootToFiles.entrySet()) {
 				performRevertAfterMerge(monitor, entry.getKey(), entry.getValue());
 			}
 		} else {
-			Map<HgRoot, List<IResource>> rootToFiles = ResourceUtils.groupByRoot(resources);
 			for (Entry<HgRoot, List<IResource>> entry : rootToFiles.entrySet()) {
 				HgRevertClient.performRevert(monitor, entry.getKey(), entry.getValue(), cs);
 			}
@@ -414,7 +414,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 		return resources;
 	}
 
-	private void performRevertAfterMerge(IProgressMonitor monitor, IProject root, List<IResource> resources) {
+	private void performRevertAfterMerge(IProgressMonitor monitor, HgRoot hgRoot, List<IResource> resources) {
 		// see http://mercurial.selenic.com/wiki/FAQ#FAQ.2BAC8-CommonProblems.hg_status_shows_changed_files_but_hg_diff_doesn.27t.21
 		// To completely undo the uncommitted merge and discard all local modifications,
 		// you will need to issue a hg update -C -r . (note the "dot" at the end of the command).
@@ -423,7 +423,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 			update.setCleanEnabled(true);
 			update.setRevision(".");
 			update.setShell(getShell());
-			update.run(root);
+			update.run(hgRoot);
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
 		}

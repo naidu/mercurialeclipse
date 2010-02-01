@@ -15,7 +15,6 @@ package com.vectrace.MercurialEclipse.ui;
 
 import java.util.List;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionListener;
@@ -31,6 +30,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  *
@@ -42,11 +42,11 @@ public class BookmarkTable extends Composite {
 			.getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;
-	private final IResource res;
+	private final HgRoot hgRoot;
 
-	public BookmarkTable(Composite parent, IResource res) {
+	public BookmarkTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
-		this.res = res;
+		this.hgRoot = hgRoot;
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
 
@@ -74,8 +74,7 @@ public class BookmarkTable extends Composite {
 	 */
 	private void updateTable() {
 		try {
-			List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(res
-					.getLocation().toFile());
+			List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(hgRoot);
 			setBookmarks(bookmarks.toArray(new Bookmark[bookmarks.size()]));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);

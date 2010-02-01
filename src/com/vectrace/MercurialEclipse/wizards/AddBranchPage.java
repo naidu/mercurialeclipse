@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IMessageProvider;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -30,6 +29,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -41,13 +41,13 @@ public class AddBranchPage extends HgWizardPage {
 	private Button forceCheckBox;
 	private Text branchNameTextField;
 	private Button commitCheckBox;
-	private final IResource resource;
+	private final HgRoot hgRoot;
 	private final Set<String> branchNames;
 
-	public AddBranchPage(IResource resource, String pageName, String title,
+	public AddBranchPage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage, String description) {
 		super(pageName, title, titleImage, description);
-		this.resource = resource;
+		this.hgRoot = hgRoot;
 		branchNames = new HashSet<String>();
 	}
 
@@ -55,7 +55,7 @@ public class AddBranchPage extends HgWizardPage {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 		SWTWidgetHelper.createLabel(composite, Messages.getString("AddBranchPage.branchNameTextField.title")); //$NON-NLS-1$
 		try {
-			Branch[] branches = HgBranchClient.getBranches(resource.getProject());
+			Branch[] branches = HgBranchClient.getBranches(hgRoot);
 			for (Branch branch : branches) {
 				branchNames.add(branch.getName());
 			}

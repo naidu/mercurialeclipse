@@ -18,10 +18,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
@@ -49,6 +47,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
@@ -57,28 +56,15 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class IncomingPage extends HgWizardPage {
 
-	public IProject getProject() {
-		return project;
-	}
 
-	public HgRepositoryLocation getLocation() {
-		return location;
-	}
-
-	public void setRevision(ChangeSet revision) {
-		this.revision = revision;
-	}
-
-	public void setChangesets(SortedSet<ChangeSet> changesets) {
-		this.changesets = changesets;
-	}
 
 	TableViewer changeSetViewer;
 	private TableViewer fileStatusViewer;
-	private IProject project;
+	private HgRoot hgRoot;
 	private HgRepositoryLocation location;
 	private Button revisionCheckBox;
 	private ChangeSet revision;
@@ -112,8 +98,8 @@ public class IncomingPage extends HgWizardPage {
 			}
 			IncomingChangesetCache cache = IncomingChangesetCache.getInstance();
 			try {
-				cache.clear(location, project, false);
-				Set<ChangeSet> set = cache.getChangeSets(project, location, null);
+				cache.clear(hgRoot, false);
+				Set<ChangeSet> set = cache.getChangeSets(hgRoot, location, null);
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(set);
 				return revertedSet;
@@ -132,11 +118,9 @@ public class IncomingPage extends HgWizardPage {
 			FileStatus clickedFileStatus = (FileStatus) sel
 					.getFirstElement();
 			if (cs != null && clickedFileStatus != null) {
-				IPath hgRoot = new Path(cs.getHgRoot().getPath());
 				IPath fileRelPath = clickedFileStatus.getRootRelativePath();
-				IPath fileAbsPath = hgRoot.append(fileRelPath);
-				IFile file = getProject().getWorkspace().getRoot()
-						.getFileForLocation(fileAbsPath);
+				IPath fileAbsPath = hgRoot.toAbsolute(fileRelPath);
+				IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 				if (file != null) {
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
 							file, cs.getChangesetIndex(), cs.getChangeset(), cs);
@@ -177,6 +161,18 @@ public class IncomingPage extends HgWizardPage {
 		super(pageName);
 		setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
 		setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
+	}
+
+	public HgRepositoryLocation getLocation() {
+		return location;
+	}
+
+	public void setRevision(ChangeSet revision) {
+		this.revision = revision;
+	}
+
+	public void setChangesets(SortedSet<ChangeSet> changesets) {
+		this.changesets = changesets;
 	}
 
 	@Override
@@ -326,8 +322,12 @@ public class IncomingPage extends HgWizardPage {
 		}
 	}
 
-	public void setProject(IProject project) {
-		this.project = project;
+	public void setHgRoot(HgRoot hgRoot) {
+		this.hgRoot = hgRoot;
+	}
+
+	public HgRoot getHgRoot() {
+		return hgRoot;
 	}
 
 	public void setLocation(HgRepositoryLocation repo) {

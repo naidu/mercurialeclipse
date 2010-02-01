@@ -70,6 +70,10 @@ public class ChangesetTable extends Composite {
 		this(parent, tableStyle, resource, null, autoFetch);
 	}
 
+	public ChangesetTable(Composite parent, int tableStyle, HgRoot hgRoot, boolean autoFetch) {
+		this(parent, tableStyle, null, hgRoot, autoFetch);
+	}
+
 	/**
 	 * @param parent non null swt parent widget
 	 * @param tableStyle SWT style bits

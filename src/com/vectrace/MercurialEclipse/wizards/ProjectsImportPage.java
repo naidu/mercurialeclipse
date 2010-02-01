@@ -84,6 +84,7 @@ import org.eclipse.ui.dialogs.WorkingSetGroup;
 import org.eclipse.ui.statushandlers.StatusManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
@@ -245,6 +246,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	private String destinationDirectory;
 
 	private File repositoryRoot;
+
+	private HgRoot hgRoot;
 
 	/**
 	 * Creates a new project creation wizard page.
@@ -774,7 +777,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				.getString("CloneRepoWizard.subTask.addingRepository.1") + " " + repo //$NON-NLS-1$
 				+ Messages
 				.getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
-		MercurialEclipsePlugin.getRepoManager().addRepoLocation(p, repo);
+		MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot, repo);
 		monitor.worked(1);
 	}
 
@@ -909,6 +912,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 
 	public void setInitialSelection(File destinationDirectory) {
+		hgRoot = (HgRoot)destinationDirectory;
 		this.destinationDirectory = destinationDirectory.getAbsolutePath();
 		updateProjectsList(this.destinationDirectory);
 	}

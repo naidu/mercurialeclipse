@@ -12,19 +12,15 @@
 package com.vectrace.MercurialEclipse.commands.extensions;
 
 import java.io.File;
-import java.util.Set;
-
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 /**
  * @author bastian
@@ -32,19 +28,15 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class HgSvnClient extends AbstractClient {
 
-	public static String pull(IResource resource) throws HgException {
-		HgCommand cmd = new HgCommand("svn", //$NON-NLS-1$
-				getWorkingDirectory(resource.getLocation().toFile()), false);
+	public static String pull(HgRoot hgRoot) throws HgException {
+		HgCommand cmd = new HgCommand("svn", hgRoot, false);
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		cmd.addOptions("pull"); //$NON-NLS-1$
 		String result = cmd.executeToString();
-		Set<IProject> projects = ResourceUtils.getProjects(cmd.getHgRoot());
-		for (final IProject project : projects) {
-			// The reason to use "all" instead of only "local + incoming", is that we can pull
-			// from another repo as the sync clients for given project may use
-			// in this case, we also need to update "outgoing" changesets
-			new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.ALL).schedule();
-		}
+		// The reason to use "all" instead of only "local + incoming", is that we can pull
+		// from another repo as the sync clients for given project may use
+		// in this case, we also need to update "outgoing" changesets
+		new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.ALL).schedule();
 		return result;
 	}
 
@@ -56,18 +48,14 @@ public class HgSvnClient extends AbstractClient {
 		return cmd.executeToString();
 	}
 
-	public static String rebase(IResource resource)
+	public static String rebase(HgRoot hgRoot)
 			throws HgException {
-		HgCommand cmd = new HgCommand("svn", //$NON-NLS-1$
-				getWorkingDirectory(resource.getLocation().toFile()), false);
+		HgCommand cmd = new HgCommand("svn", hgRoot, false);
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		cmd.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 		cmd.addOptions("rebase"); //$NON-NLS-1$
 		String result = cmd.executeToString();
-		Set<IProject> projects = ResourceUtils.getProjects(cmd.getHgRoot());
-		for (final IProject project : projects) {
-			new RefreshJob("Refreshing " + project.getName(), project, RefreshJob.LOCAL).schedule();
-		}
+		new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.LOCAL).schedule();
 		return result;
 	}
 

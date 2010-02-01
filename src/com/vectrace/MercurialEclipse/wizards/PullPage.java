@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.SelectionEvent;
@@ -24,6 +23,7 @@ import org.eclipse.swt.widgets.Group;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -35,27 +35,27 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class PullPage extends PushPullPage {
 
-	public Button getRebaseCheckBox() {
-		return rebaseCheckBox;
-	}
-
 	private Button updateCheckBox;
 	private Button mergeCheckBox;
 	private Button commitDialogCheckBox;
 	private Button rebaseCheckBox;
 	private Button cleanUpdateCheckBox;
 
-	public Button getCommitDialogCheckBox() {
-		return commitDialogCheckBox;
-	}
-
 	public PullPage(String pageName, String title, String description,
-			IResource resource, ImageDescriptor titleImage) {
-		super(resource, pageName, title, titleImage);
+			HgRoot hgRoot, ImageDescriptor titleImage) {
+		super(hgRoot, pageName, title, titleImage);
 		setDescription(description);
 		setShowCredentials(true);
 		setShowBundleButton(true);
 		setShowRevisionTable(false);
+	}
+
+	public Button getRebaseCheckBox() {
+		return rebaseCheckBox;
+	}
+
+	public Button getCommitDialogCheckBox() {
+		return commitDialogCheckBox;
 	}
 
 	@Override
@@ -64,7 +64,7 @@ public class PullPage extends PushPullPage {
 			if (getUrlCombo().getText() != null
 					&& getUrlCombo().getText().length() != 0) {
 				IncomingPage incomingPage = (IncomingPage) getNextPage();
-				incomingPage.setProject(resource.getProject());
+				incomingPage.setHgRoot(getHgRoot());
 				HgRepositoryLocation loc =
 					MercurialEclipsePlugin
 						.getRepoManager().getRepoLocation(
@@ -179,8 +179,7 @@ public class PullPage extends PushPullPage {
 				if (mergeCheckBox.getSelection()) {
 					String status;
 					try {
-						status = HgStatusClient
-								.getStatus(resource.getProject());
+						status = HgStatusClient.getStatus(hgRoot);
 						if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
 							setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
 							setPageComplete(false);

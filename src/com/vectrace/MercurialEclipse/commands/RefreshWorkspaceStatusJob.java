@@ -26,19 +26,8 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
-	private final IProject project;
 	private final boolean refreshOnly;
-	private HgRoot root;
-
-	/**
-	 * @deprecated this method is not multi-project aware
-	 */
-	@Deprecated
-	public RefreshWorkspaceStatusJob(IProject project) {
-		super("Refreshing status for project " + project.getName() + "...");
-		this.project = project;
-		this.refreshOnly = false;
-	}
+	private final HgRoot root;
 
 	public RefreshWorkspaceStatusJob(HgRoot root) {
 		this(root, false);
@@ -46,7 +35,6 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 
 	public RefreshWorkspaceStatusJob(HgRoot root, boolean refreshOnly) {
 		super("Refreshing status for " + root.getName() + "...");
-		this.project = null;
 		this.root = root;
 		this.refreshOnly = refreshOnly;
 	}
@@ -55,19 +43,12 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 	protected IStatus runSafe(IProgressMonitor monitor) {
 		try {
 			String branch = null;
-			if(project != null) {
-				if(!refreshOnly) {
-					branch = HgBranchClient.getActiveBranch(project.getLocation().toFile());
-				}
-				refreshProject(monitor, project, branch);
-			} else {
-				if(!refreshOnly) {
-					branch = HgBranchClient.getActiveBranch(root);
-				}
-				Set<IProject> projects = ResourceUtils.getProjects(root);
-				for (IProject project1 : projects) {
-					refreshProject(monitor, project1, branch);
-				}
+			if(!refreshOnly) {
+				branch = HgBranchClient.getActiveBranch(root);
+			}
+			Set<IProject> projects = ResourceUtils.getProjects(root);
+			for (IProject project1 : projects) {
+				refreshProject(monitor, project1, branch);
 			}
 			return super.runSafe(monitor);
 		} catch (CoreException e) {

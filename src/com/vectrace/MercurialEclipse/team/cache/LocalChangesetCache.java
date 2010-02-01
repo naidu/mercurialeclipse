@@ -288,16 +288,28 @@ public class LocalChangesetCache extends AbstractCache {
 	 * @param changesetId
 	 *            string in format rev:nodeshort or rev:node
 	 * @return may return null, if changeset is not known
-	 * @deprecated this method should be private, please use {@link #getOrFetchChangeSets(IResource)}
 	 */
-	@Deprecated
-	public ChangeSet getChangesetById(IProject project, String changesetId) {
+	private ChangeSet getChangesetById(IProject project, String changesetId) {
 		Map<String, ChangeSet> map;
 		synchronized (changesets) {
 			map = changesets.get(project);
 		}
 		if(map != null) {
 			return map.get(changesetId);
+		}
+		return null;
+	}
+
+	public ChangeSet getOrFetchChangeSetById(HgRoot hgRoot, String nodeId) throws HgException {
+		Assert.isNotNull(hgRoot);
+		Assert.isNotNull(nodeId);
+		SortedSet<ChangeSet> sets = getOrFetchChangeSets(hgRoot);
+		for (ChangeSet changeSet : sets) {
+			if(nodeId.equals(changeSet.getChangeset())
+					|| nodeId.equals(changeSet.toString())
+					|| nodeId.equals(changeSet.getName())){
+				return changeSet;
+			}
 		}
 		return null;
 	}
@@ -534,10 +546,10 @@ public class LocalChangesetCache extends AbstractCache {
 		}
 	}
 
-	public Set<ChangeSet> getOrFetchChangeSetsByBranch(IProject project, String branchName)
+	public Set<ChangeSet> getOrFetchChangeSetsByBranch(HgRoot hgRoot, String branchName)
 			throws HgException {
 
-		SortedSet<ChangeSet> changes = getOrFetchChangeSets(project);
+		SortedSet<ChangeSet> changes = getOrFetchChangeSets(hgRoot);
 		Set<ChangeSet> branchChangeSets = new HashSet<ChangeSet>();
 		for (ChangeSet changeSet : changes) {
 			String changesetBranch = changeSet.getBranch();

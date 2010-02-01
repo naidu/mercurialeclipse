@@ -7,10 +7,10 @@
  *
  * Contributors:
  *     Jerome Negre - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -33,8 +32,8 @@ public class HgParentClient extends AbstractClient {
 
 	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
 
-	public static int[] getParents(IProject project) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", project, false); //$NON-NLS-1$
+	public static int[] getParents(HgRoot hgRoot) throws HgException {
+		AbstractShellCommand command = new HgCommand("parents", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("--template", "{rev}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = getLines(command.executeToString());
 		int[] parents = new int[lines.length];
@@ -87,22 +86,10 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
-	public static int findCommonAncestor(IProject project, int r1, int r2)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("debugancestor", project, false); //$NON-NLS-1$
-		command.addOptions(Integer.toString(r1), Integer.toString(r2));
-		String result = command.executeToString().trim();
-		Matcher m = ANCESTOR_PATTERN.matcher(result);
-		if (m.matches()) {
-			return Integer.parseInt(m.group(1));
-		}
-		throw new HgException("Parse exception: '" + result + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	public static int findCommonAncestor(File file, String node1, String node2)
+	public static int findCommonAncestor(HgRoot hgRoot, String node1, String node2)
 			throws HgException {
 		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
-				getWorkingDirectory(file), false);
+				hgRoot, false);
 		command.addOptions(node1, node2);
 		String result = command.executeToString().trim();
 		Matcher m = ANCESTOR_PATTERN.matcher(result);
@@ -117,8 +104,8 @@ public class HgParentClient extends AbstractClient {
 	 * overlays for using incoming changesets. Only one changeset may be
 	 * incoming.
 	 *
-	 * @param file
-	 *            workingDirectory
+	 * @param hgRoot
+	 *            hg root
 	 * @param cs1
 	 *            first changeset
 	 * @param cs2
@@ -126,7 +113,7 @@ public class HgParentClient extends AbstractClient {
 	 * @return the id of the ancestor
 	 * @throws HgException
 	 */
-	public static int findCommonAncestor(File file, ChangeSet cs1, ChangeSet cs2)
+	public static int findCommonAncestor(HgRoot hgRoot, ChangeSet cs1, ChangeSet cs2)
 			throws HgException {
 		String result;
 		try {
@@ -144,8 +131,7 @@ public class HgParentClient extends AbstractClient {
 			commands.add(cs1.getChangeset());
 			commands.add(cs2.getChangeset());
 
-			AbstractShellCommand command = new HgCommand(commands, getWorkingDirectory(file),
-					false);
+			AbstractShellCommand command = new HgCommand(commands, hgRoot, false);
 			result = command.executeToString().trim();
 			Matcher m = ANCESTOR_PATTERN.matcher(result);
 			if (m.matches()) {
@@ -157,28 +143,6 @@ public class HgParentClient extends AbstractClient {
 		} catch (IOException e) {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
-	}
-
-	public static String findCommonAncestorNodeId(IResource resource,
-			String node1, String node2) throws HgException {
-		AbstractShellCommand command = new HgCommand("debugancestor", //$NON-NLS-1$
-				getWorkingDirectory(resource), false);
-		command.addOptions(node1, node2);
-		String result = command.executeToString().trim();
-		Matcher m = ANCESTOR_PATTERN.matcher(result);
-		if (m.matches()) {
-			return m.group(2);
-		}
-		throw new HgException("Parse exception: '" + result + "'"); //$NON-NLS-1$ //$NON-NLS-2$
-	}
-
-	public static String[] getParents(IResource rev, String node)
-			throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", rev.getProject(), false); //$NON-NLS-1$
-		command.addOptions("--template", "{rev}:{node|short}\n"); //$NON-NLS-1$ //$NON-NLS-2$
-		command.addOptions("-r", node); //$NON-NLS-1$
-		String[] lines = getLines(command.executeToString());
-		return lines;
 	}
 
 	/**

@@ -17,14 +17,15 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.io.File;
 import java.util.SortedSet;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Button;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class PullRepoWizard extends HgWizard {
@@ -32,13 +33,13 @@ public class PullRepoWizard extends HgWizard {
 	private boolean doUpdate;
 	private PullPage pullPage;
 	private IncomingPage incomingPage;
-	private final IProject resource;
+	private final HgRoot hgRoot;
 	private HgRepositoryLocation repo;
 	private boolean doCleanUpdate;
 
-	public PullRepoWizard(IProject resource) {
+	public PullRepoWizard(HgRoot hgRoot) {
 		super(Messages.getString("PullRepoWizard.title")); //$NON-NLS-1$
-		this.resource = resource;
+		this.hgRoot = hgRoot;
 		setNeedsProgressMonitor(true);
 	}
 
@@ -48,7 +49,7 @@ public class PullRepoWizard extends HgWizard {
 				.getString("PullRepoWizard.pullPage.name"), //$NON-NLS-1$
 				Messages.getString("PullRepoWizard.pullPage.title"), //$NON-NLS-1$
 				Messages.getString("PullRepoWizard.pullPage.description"), //$NON-NLS-1$
-				resource.getProject(), null);
+				hgRoot, null);
 
 		initPage(pullPage.getDescription(), pullPage);
 		addPage(pullPage);
@@ -61,11 +62,6 @@ public class PullRepoWizard extends HgWizard {
 
 	@Override
 	public boolean performFinish() {
-
-		// If there is no project set the wizard can't finish
-		if (resource.getProject().getLocation() == null) {
-			return false;
-		}
 
 		pullPage.finish(new NullProgressMonitor());
 		incomingPage.finish(new NullProgressMonitor());
@@ -108,11 +104,12 @@ public class PullRepoWizard extends HgWizard {
 			bundleFile = changesets.first().getBundleFile();
 		}
 
-		PullOperation pullOperation = new PullOperation(getContainer(),
-				doUpdate, doCleanUpdate, resource, force, repo, cs, timeout, merge,
-				showCommitDialog, bundleFile, forest, snapFile, rebase, svn);
 
 		try {
+			PullOperation pullOperation = new PullOperation(getContainer(),
+					doUpdate, doCleanUpdate, hgRoot, force, repo, cs, timeout, merge,
+					showCommitDialog, bundleFile, forest, snapFile, rebase, svn);
+
 			getContainer().run(true, false, pullOperation);
 
 			String output = pullOperation.getOutput();
@@ -134,8 +131,8 @@ public class PullRepoWizard extends HgWizard {
 	private HgRepositoryLocation getLocation() {
 		try {
 			return MercurialEclipsePlugin.getRepoManager()
-					.fromProperties(resource.getProject(), pullPage.getProperties());
-		} catch (Exception e) {
+					.fromProperties(hgRoot, pullPage.getProperties());
+		} catch (HgException e) {
 			MessageDialog.openInformation(getShell(), Messages
 					.getString("PullRepoWizard.malformedURL"), e.getMessage()); //$NON-NLS-1$
 			MercurialEclipsePlugin.logInfo(e.getMessage(), e);

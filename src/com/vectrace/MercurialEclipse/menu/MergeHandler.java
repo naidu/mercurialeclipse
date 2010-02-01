@@ -14,8 +14,6 @@ package com.vectrace.MercurialEclipse.menu;
 import java.text.MessageFormat;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -28,6 +26,7 @@ import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
@@ -39,30 +38,25 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.DataLoader;
-import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
-public class MergeHandler extends SingleResourceHandler {
+public class MergeHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		merge(resource.getProject(), getShell(), new NullProgressMonitor(), false, true);
+	protected void run(HgRoot hgRoot) throws CoreException {
+		merge(hgRoot, getShell(), new NullProgressMonitor(), false, true);
 	}
 
-	public static String merge(IProject project, Shell shell, IProgressMonitor monitor,
-			boolean autoPickOtherHead, boolean showCommitDialog) throws HgException, CoreException {
-		DataLoader loader = new ProjectDataLoader(project);
+	public static String merge(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+			boolean autoPickOtherHead, boolean showCommitDialog) throws CoreException {
 
 		// can we do the equivalent of plain "hg merge"?
-		ChangeSet cs = getOtherHeadInCurrentBranch(project, loader);
+		ChangeSet cs = getOtherHeadInCurrentBranch(hgRoot);
 		boolean forced = false;
 
 		String forceMessage = "Forced merge (this will discard all uncommitted changes!)";
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 		boolean hasDirtyFiles = HgStatusClient.isDirty(hgRoot);
 		if (cs != null) {
 			if (!autoPickOtherHead) {
@@ -93,14 +87,13 @@ public class MergeHandler extends SingleResourceHandler {
 						cs = null;
 					}
 				}
-
 			}
 		}
 
 		// have to open the dialog until we get a valid changeset
 		while (cs == null) {
 			RevisionChooserDialog dialog = new RevisionChooserDialog(shell,
-					Messages.getString("MergeHandler.mergeWith"), loader); //$NON-NLS-1$
+					Messages.getString("MergeHandler.mergeWith"), hgRoot); //$NON-NLS-1$
 			dialog.setDefaultShowingHeads(true);
 			dialog.setDisallowSelectingParents(true);
 			dialog.showForceButton(hasDirtyFiles);
@@ -149,13 +142,13 @@ public class MergeHandler extends SingleResourceHandler {
 			}
 		}
 		monitor.worked(1);
-		
+
 		// always show Merge view, as it offers to abort a merge and revise the automatically merged files
 		MergeView view = (MergeView) PlatformUI.getWorkbench()
 			.getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
 		view.clearView();
 		view.setCurrentRoot(hgRoot);
-		
+
 		// auto-commit if desired
 		if (commit) {
 			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
@@ -170,14 +163,14 @@ public class MergeHandler extends SingleResourceHandler {
 		return output;
 	}
 
-	private static ChangeSet getOtherHeadInCurrentBranch(IProject project, DataLoader loader) throws HgException {
-		ChangeSet[] heads = loader.getHeads();
+	private static ChangeSet getOtherHeadInCurrentBranch(HgRoot hgRoot) throws HgException {
+		ChangeSet[] heads = HgLogClient.getHeads(hgRoot);
 		// have to be at least two heads total to do easy merge
 		if (heads.length < 2) {
 			return null;
 		}
 
-		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetByRootId(project);
+		ChangeSet currentRevision = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
 		if(currentRevision == null){
 			return null;
 		}

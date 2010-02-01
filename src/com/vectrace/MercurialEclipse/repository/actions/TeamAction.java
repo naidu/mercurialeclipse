@@ -10,6 +10,7 @@
  * Contributors:
  *     IBM Corporation - initial API and implementation
  *     Bastian Doetsch - adaptation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.actions;
 
@@ -26,7 +27,6 @@ import org.eclipse.core.resources.IResourceStatus;
 import org.eclipse.core.resources.mapping.ResourceMapping;
 import org.eclipse.core.resources.mapping.ResourceTraversal;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.dialogs.ProgressMonitorDialog;
@@ -94,7 +94,7 @@ public abstract class TeamAction extends ActionDelegate implements
 			result = new ArrayList();
 			Iterator elements = ((IStructuredSelection) selection).iterator();
 			while (elements.hasNext()) {
-				Object adapter = getAdapter(elements.next(), c);
+				Object adapter = MercurialEclipsePlugin.getAdapter(elements.next(), c);
 				if (c.isInstance(adapter)) {
 					result.add(adapter);
 				}
@@ -108,38 +108,15 @@ public abstract class TeamAction extends ActionDelegate implements
 	}
 
 	/**
-	 * Find the object associated with the given object when it is adapted to
-	 * the provided class. Null is returned if the given object does not adapt
-	 * to the given class
-	 *
-	 * @param selection
-	 * @param c
-	 * @return Object
-	 */
-	@SuppressWarnings("unchecked")
-	public static Object getAdapter(Object adaptable, Class c) {
-		if (c.isInstance(adaptable)) {
-			return adaptable;
-		}
-		if (adaptable instanceof IAdaptable) {
-			IAdaptable a = (IAdaptable) adaptable;
-			Object adapter = a.getAdapter(c);
-			if (c.isInstance(adapter)) {
-				return adapter;
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Returns the selected projects.
 	 *
 	 * @return the selected projects
 	 */
 	protected IProject[] getSelectedProjects() {
 		IResource[] selectedResources = getSelectedResources();
-		if (selectedResources.length == 0)
+		if (selectedResources.length == 0) {
 			return new IProject[0];
+		}
 		List<IResource> projects = new ArrayList<IResource>();
 		for (int i = 0; i < selectedResources.length; i++) {
 			IResource resource = selectedResources[i];
@@ -171,8 +148,9 @@ public abstract class TeamAction extends ActionDelegate implements
 	protected IResource[] getSelectedResources() {
 		ArrayList<IResource> resourceArray = new ArrayList<IResource>();
 		IResource[] resources = (IResource[]) getSelectedResources(IResource.class);
-		for (int i = 0; i < resources.length; i++)
+		for (int i = 0; i < resources.length; i++) {
 			resourceArray.add(resources[i]);
+		}
 		ResourceMapping[] resourceMappings = (ResourceMapping[]) getSelectedAdaptables(
 				selection, ResourceMapping.class);
 		for (int i = 0; i < resourceMappings.length; i++) {
@@ -184,8 +162,9 @@ public abstract class TeamAction extends ActionDelegate implements
 					IResource[] traversalResources = traversals[j]
 							.getResources();
 					for (int k = 0; k < traversalResources.length; k++) {
-						if (!resourceArray.contains(traversalResources[k]))
+						if (!resourceArray.contains(traversalResources[k])) {
 							resourceArray.add(traversalResources[k]);
+						}
 					}
 				}
 			} catch (CoreException e) {
@@ -207,11 +186,13 @@ public abstract class TeamAction extends ActionDelegate implements
 			return shell;
 		}
 		IWorkbench workbench = PlatformUI.getWorkbench();
-		if (workbench == null)
+		if (workbench == null) {
 			return null;
+		}
 		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-		if (window == null)
+		if (window == null) {
 			return null;
+		}
 		return window.getShell();
 
 	}
@@ -329,14 +310,10 @@ public abstract class TeamAction extends ActionDelegate implements
 	/**
 	 * Shows the given errors to the user.
 	 *
-	 * @param status
-	 *            the status containing the error
 	 * @param title
 	 *            the title of the error dialog
 	 * @param message
 	 *            the message for the error dialog
-	 * @param shell
-	 *            the shell to open the error dialog in
 	 */
 	protected void handle(Exception exception, String title, String message) {
 		MercurialEclipsePlugin.logError(exception);
@@ -397,8 +374,9 @@ public abstract class TeamAction extends ActionDelegate implements
 	 * @return IWorkbenchPage
 	 */
 	protected IWorkbenchPage getTargetPage() {
-		if (getTargetPart() == null)
+		if (getTargetPart() == null) {
 			return MercurialEclipsePlugin.getActivePage();
+		}
 		return getTargetPart().getSite().getPage();
 	}
 

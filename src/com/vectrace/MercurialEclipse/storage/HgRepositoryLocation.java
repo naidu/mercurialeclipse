@@ -18,7 +18,6 @@ package com.vectrace.MercurialEclipse.storage;
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Date;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -40,7 +39,6 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	private String user;
 	private String password;
 	private final boolean isPush;
-	private Date lastUsage;
 
 	/**
 	 * hg repository which is represented by a bundle file (on local disk)
@@ -123,28 +121,13 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	}
 
 	public int compareTo(HgRepositoryLocation loc) {
-		if(getLastUsage() == null){
-			return compareToLocation(loc);
-		}
-		if(loc.getLastUsage() == null){
-			return compareToLocation(loc);
-		}
-		int compareTo = getLastUsage().compareTo(loc.getLastUsage());
-		if (compareTo == 0) {
-			return compareToLocation(loc);
-		}
-		return compareTo;
-	}
-
-	private int compareToLocation(HgRepositoryLocation loc) {
 		if(getLocation() == null) {
 			return -1;
 		}
 		if(loc.getLocation() == null){
 			return 1;
 		}
-		int compareTo = getLocation().compareTo(loc.getLocation());
-		return compareTo;
+		return getLocation().compareTo(loc.getLocation());
 	}
 
 	@Override
@@ -242,14 +225,6 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	public String getLogicalName() {
 		return logicalName;
-	}
-
-	public Date getLastUsage() {
-		return lastUsage;
-	}
-
-	public void setLastUsage(Date lastUsage) {
-		this.lastUsage = lastUsage;
 	}
 
 	public boolean isPush() {

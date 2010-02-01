@@ -26,6 +26,7 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 public class HgCompareEditorInput extends CompareEditorInput {
 	private static final Differencer DIFFERENCER = new Differencer();
@@ -66,7 +67,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			if(lNode.getChangeSet() != null && rNode.getChangeSet() != null){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							resource.getProject().getLocation().toFile(),
+							MercurialTeamProvider.getHgRoot(resource),
 							lNode.getChangeSet(), rNode.getChangeSet());
 				} catch (HgException e) {
 					// continue
@@ -79,7 +80,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			if(commonAncestor == -1){
 				try {
 					commonAncestor = HgParentClient.findCommonAncestor(
-							resource.getProject().getLocation().toFile(),
+							MercurialTeamProvider.getHgRoot(resource),
 							Integer.toString(lId), Integer.toString(rId));
 				} catch (HgException e) {
 					// continue: no changeset in the local repo, se issue #10616
@@ -92,7 +93,7 @@ public class HgCompareEditorInput extends CompareEditorInput {
 			if (commonAncestor == rId) {
 				return null;
 			}
-			ChangeSet tip = HgLogClient.getTip(resource.getProject());
+			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(resource));
 			boolean localKnown = tip.getChangesetIndex() >= commonAncestor;
 			if(!localKnown){
 				// no common ancestor

@@ -44,7 +44,7 @@ public class RemoveRootAction extends SelectionListenerAction {
 			resources = new ArrayList<HgRepositoryLocation>();
 			Iterator<HgRepositoryLocation> elements = selection.iterator();
 			while (elements.hasNext()) {
-				Object next = HgAction.getAdapter(elements.next(),
+				Object next = MercurialEclipsePlugin.getAdapter(elements.next(),
 						HgRepositoryLocation.class);
 				if (next instanceof HgRepositoryLocation) {
 					resources.add((HgRepositoryLocation) next);

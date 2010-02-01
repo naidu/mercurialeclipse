@@ -8,20 +8,28 @@
  * Contributors:
  *     Andrei Loskutov (Intland) - implementation
  *******************************************************************************/
-package com.vectrace.MercurialEclipse.menu;
+package com.vectrace.MercurialEclipse.storage;
 
-import org.eclipse.team.ui.TeamUI;
+import org.eclipse.core.resources.IResource;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
-/**
- * @author Andrei
- */
-public class RootHistoryHandler extends RootHandler {
+public class RootDataLoader extends DataLoader {
+
+	private final HgRoot hgRoot;
+
+	public RootDataLoader(HgRoot hgRoot) {
+		this.hgRoot = hgRoot;
+	}
 
 	@Override
-	protected void run(HgRoot hgRoot) {
-		TeamUI.getHistoryView().showHistoryFor(hgRoot);
+	public IResource getResource() {
+		return null;
+	}
+
+	@Override
+	public HgRoot getHgRoot() {
+		return hgRoot;
 	}
 
 }

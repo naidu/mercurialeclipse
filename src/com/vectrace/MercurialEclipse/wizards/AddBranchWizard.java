@@ -36,11 +36,10 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
- *
  */
 public class AddBranchWizard extends HgWizard {
 	private final AddBranchPage branchPage;
-	private final IResource resource;
+	private final HgRoot hgRoot;
 
 	private class AddBranchOperation extends HgOperation {
 
@@ -61,7 +60,6 @@ public class AddBranchWizard extends HgWizard {
 			int workSize = commitEnabled ? 3 : 2;
 			monitor.beginTask(Messages.getString("AddBranchWizard.AddBranchOperation.taskName"), workSize); //$NON-NLS-1$
 			try {
-				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 				String[] dirtyFiles = HgStatusClient.getDirtyFiles(hgRoot);
 				if(dirtyFiles.length > 0){
 					String message = "There are uncommitted changes in the repository.\n";
@@ -73,7 +71,7 @@ public class AddBranchWizard extends HgWizard {
 					}
 				}
 
-				HgBranchClient.addBranch(resource, branchPage
+				HgBranchClient.addBranch(hgRoot, branchPage
 						.getBranchName(), MercurialUtilities
 						.getHGUsername(), branchPage.isForceEnabled());
 				monitor.worked(1);
@@ -106,11 +104,11 @@ public class AddBranchWizard extends HgWizard {
 		}
 	}
 
-	public AddBranchWizard(IResource resource) {
+	public AddBranchWizard(HgRoot hgRoot) {
 		super(Messages.getString("AddBranchWizard.windowTitle")); //$NON-NLS-1$
-		this.resource = resource;
+		this.hgRoot = hgRoot;
 		setNeedsProgressMonitor(true);
-		branchPage = new AddBranchPage(resource, Messages.getString("AddBranchWizard.branchPage.name"), //$NON-NLS-1$
+		branchPage = new AddBranchPage(hgRoot, Messages.getString("AddBranchWizard.branchPage.name"), //$NON-NLS-1$
 				Messages.getString("AddBranchWizard.branchPage.title"), MercurialEclipsePlugin.getImageDescriptor("wizards/newstream_wizban.gif"), //$NON-NLS-1$ //$NON-NLS-2$
 				Messages.getString("AddBranchWizard.branchPage.description")); //$NON-NLS-1$
 		addPage(branchPage);

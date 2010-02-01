@@ -18,7 +18,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
@@ -43,14 +42,14 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 	public static final String NOLIMIT = "999999999999";
 
-	public static ChangeSet[] getHeads(IProject project) throws HgException {
-		HgCommand command = new HgCommand("heads", project, true); //$NON-NLS-1$
+	public static ChangeSet[] getHeads(HgRoot hgRoot) throws HgException {
+		HgCommand command = new HgCommand("heads", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 		return getRevisions(command);
 	}
 
-	public static ChangeSet getTip(IProject project) throws HgException {
-		HgCommand command = new HgCommand("log", project, true); //$NON-NLS-1$
+	public static ChangeSet getTip(HgRoot hgRoot) throws HgException {
+		HgCommand command = new HgCommand("log", hgRoot, true); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 		command.addOptions("-r", "tip");
 		ChangeSet[] sets = getRevisions(command);

@@ -10,6 +10,7 @@
  *     Bastian Doetsch           - changes
  *     Brian Wallis              - getMergeStatus
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Zsolt Koppany (Intland)	 - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -36,14 +37,7 @@ import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
-/**
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
- */
 public class HgStatusClient extends AbstractClient {
-	public static String getStatus(IContainer root) throws HgException {
-		return getStatus(root.getLocation().toFile());
-	}
 
 	public static String getStatus(File root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$

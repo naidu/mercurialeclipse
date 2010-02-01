@@ -11,22 +11,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
-public class SwitchHandler extends SingleResourceHandler {
+public class SwitchHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		IProject project = resource.getProject();
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+	protected void run(HgRoot hgRoot) throws CoreException {
 		if (HgStatusClient.isDirty(hgRoot)) {
 			if (!MessageDialog
 					.openQuestion(getShell(),
@@ -36,7 +32,7 @@ public class SwitchHandler extends SingleResourceHandler {
 			}
 		}
 		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
-				Messages.getString("SwitchHandler.switchTo"), project); //$NON-NLS-1$
+				Messages.getString("SwitchHandler.switchTo"), hgRoot); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
 			new UpdateJob(dialog.getRevision(), true, hgRoot).schedule();

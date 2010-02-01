@@ -12,7 +12,6 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository;
 
-import java.io.IOException;
 import java.util.Iterator;
 
 import org.eclipse.jface.action.Action;
@@ -371,11 +370,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		}
 		if (refreshRepositoriesFolders) {
 			try {
-				MercurialEclipsePlugin.getRepoManager().refreshRepositories(
-						null);
+				MercurialEclipsePlugin.getRepoManager().refreshRepositories(null);
 			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			} catch (IOException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}

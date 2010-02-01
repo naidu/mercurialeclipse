@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Shell;
@@ -21,17 +20,15 @@ import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.dialogs.MergeDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
-public class CommitMergeHandler extends SingleResourceHandler {
+public class CommitMergeHandler extends RootHandler {
 
 	/**
 	 * run the commit merge handler
 	 */
 	@Override
-	protected void run(IResource resource) throws HgException {
-		Assert.isNotNull(resource);
-		commitMergeWithCommitDialog(MercurialTeamProvider.getHgRoot(resource), getShell());
+	protected void run(HgRoot hgRoot) throws HgException {
+		commitMergeWithCommitDialog(hgRoot, getShell());
 	}
 
 	/**

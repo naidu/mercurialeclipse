@@ -15,9 +15,6 @@ import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -30,8 +27,8 @@ public class HgBranchClient extends AbstractClient {
 	private static final Pattern GET_BRANCHES_PATTERN = Pattern
 			.compile("^(.+[^ ]) +([0-9]+):([a-f0-9]+)( +(.+))?$"); //$NON-NLS-1$
 
-	public static Branch[] getBranches(IProject project) throws HgException {
-		AbstractShellCommand command = new HgCommand("branches", project, false); //$NON-NLS-1$
+	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
+		AbstractShellCommand command = new HgCommand("branches", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
 		int length = lines.length;
@@ -50,17 +47,14 @@ public class HgBranchClient extends AbstractClient {
 	}
 
 	/**
-	 *
-	 * @param resource
-	 * @param name
 	 * @param user
 	 *            if null, uses the default user
 	 * @throws HgException
 	 */
-	public static String addBranch(IResource resource, String name,
+	public static String addBranch(HgRoot hgRoot, String name,
 			String user, boolean force) throws HgException {
-		HgCommand command = new HgCommand("branch", getWorkingDirectory(resource), false); //$NON-NLS-1$
-		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
+		HgCommand command = new HgCommand("branch", hgRoot, false); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		if (force) {
 			command.addOptions("-f"); //$NON-NLS-1$
 		}

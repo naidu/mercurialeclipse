@@ -19,7 +19,6 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
@@ -38,6 +37,7 @@ import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -50,8 +50,8 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class TransplantPage extends ConfigurationWizardMainPage {
 
-	private IProject project;
-	private final List<String> nodeIds = new ArrayList<String>();
+	private final HgRoot hgRoot;
+	private final List<String> nodeIds;
 	private boolean branch;
 	private String branchName;
 	private boolean all;
@@ -59,13 +59,14 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	private Button branchCheckBox;
 	private Combo branchNameCombo;
 	private Button allCheckBox;
-	private final SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(
-			Collections.reverseOrder());
+	private final SortedSet<ChangeSet> changesets;
 
 	public TransplantPage(String pageName, String title,
-			ImageDescriptor titleImage, IProject project) {
+			ImageDescriptor titleImage, HgRoot hgRoot) {
 		super(pageName, title, titleImage);
-		this.project = project;
+		this.hgRoot = hgRoot;
+		nodeIds = new ArrayList<String>();
+		changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
 	}
 
 	@Override
@@ -87,7 +88,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 				setErrorMessage(null);
 				try {
 					Set<ChangeSet> changes = IncomingChangesetCache
-							.getInstance().getChangeSets(project, repoLocation, null);
+							.getInstance().getChangeSets(hgRoot, repoLocation, null);
 					changesets.clear();
 					changesets.addAll(changes);
 					populateChangesetTable();
@@ -148,7 +149,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 				try {
 					changesets.clear();
 					changesets.addAll(LocalChangesetCache.getInstance()
-							.getOrFetchChangeSetsByBranch(project, branchName));
+							.getOrFetchChangeSetsByBranch(hgRoot, branchName));
 					populateChangesetTable();
 				} catch (HgException e1) {
 					setErrorMessage(Messages
@@ -231,11 +232,11 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
-		this.changesetTable = new ChangesetTable(changeSetGroup, SWT.MULTI
+		changesetTable = new ChangesetTable(changeSetGroup, SWT.MULTI
 				| SWT.BORDER | SWT.FULL_SELECTION | SWT.V_SCROLL
-						| SWT.H_SCROLL, project, false);
-		this.changesetTable.setLayoutData(gridData);
-		this.changesetTable.setEnabled(true);
+						| SWT.H_SCROLL, hgRoot, false);
+		changesetTable.setLayoutData(gridData);
+		changesetTable.setEnabled(true);
 
 		SelectionListener changeSetTableListener = new SelectionListener() {
 
@@ -275,7 +276,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 	private void populateBranchNameCombo() {
 		try {
-			Branch[] branches = HgBranchClient.getBranches(project);
+			Branch[] branches = HgBranchClient.getBranches(hgRoot);
 			for (Branch myBranch : branches) {
 				this.branchNameCombo.add(myBranch.getName());
 			}
@@ -297,12 +298,8 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	}
 
 	@Override
-	public IProject getProject() {
-		return project;
-	}
-
-	public void setProject(IProject project) {
-		this.project = project;
+	public HgRoot getHgRoot() {
+		return hgRoot;
 	}
 
 	public boolean isBranch() {

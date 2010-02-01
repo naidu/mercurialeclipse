@@ -23,9 +23,9 @@ import org.eclipse.team.ui.synchronize.SynchronizeModelOperation;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.WorkingChangeSet;
-import com.vectrace.MercurialEclipse.repository.actions.HgAction;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -82,7 +82,7 @@ public class AddAction extends SynchronizeModelAction {
 	}
 
 	private boolean isSupported(Object object) {
-		IResource adapter = HgAction.getAdapter(object,	IResource.class);
+		IResource adapter = MercurialEclipsePlugin.getAdapter(object,	IResource.class);
 		if (adapter != null) {
 			return MercurialStatusCache.getInstance().isUnknown(adapter);
 		}

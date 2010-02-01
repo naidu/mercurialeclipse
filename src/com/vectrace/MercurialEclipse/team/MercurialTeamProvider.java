@@ -18,13 +18,19 @@ package com.vectrace.MercurialEclipse.team;
 
 import java.io.File;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.resources.team.ResourceRuleFactory;
 import org.eclipse.core.runtime.Assert;
@@ -64,7 +70,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	public static final QualifiedName QUALIFIED_NAME_DEFAULT_REVISION_LIMIT = new QualifiedName(ID
 			+ ".defaultRevisionLimit", "defaultRevisionLimit"); //$NON-NLS-1$ //$NON-NLS-2$
 
-	private static final Map<IProject, Boolean> HG_ROOTS = new HashMap<IProject, Boolean>();
+	/**
+	 * The value is one element array, which single element is NON null if the project has
+	 * a hg root
+	 */
+	private static final Map<IProject, HgRoot[]> HG_ROOTS = new HashMap<IProject, HgRoot[]>();
 
 	/** key is project, value is the *current* branch */
 	private static final Map<IProject, String> BRANCH_MAP = new ConcurrentHashMap<IProject, String>();
@@ -80,12 +90,40 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		super();
 	}
 
+	public static List<IProject> getKnownHgProjects(){
+		List<IProject> projects = new ArrayList<IProject>();
+		IProject[] iProjects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
+		for (IProject project : iProjects) {
+			HgRoot hgRoot = hasHgRoot(project);
+			if(hgRoot != null){
+				projects.add(project);
+			}
+		}
+		return projects;
+	}
+
+	public static Set<IProject> getKnownHgProjects(HgRoot hgRoot){
+		getKnownHgProjects();
+		Set<IProject> projects = new HashSet<IProject>();
+		Map<IProject, HgRoot[]> rootMap = new HashMap<IProject, HgRoot[]>(HG_ROOTS);
+		Set<Entry<IProject,HgRoot[]>> entrySet = rootMap.entrySet();
+		for (Entry<IProject, HgRoot[]> entry : entrySet) {
+			if(entry.getValue()[0] == hgRoot){
+				IProject project = entry.getKey();
+				if(project.exists()) {
+					projects.add(project);
+				}
+			}
+		}
+		return projects;
+	}
+
 	@Override
 	public void configureProject() throws CoreException {
 		IProject project = getProject();
-		HG_ROOTS.put(project, Boolean.TRUE);
-		getHgRoot(project);
-		project.refreshLocal(IResource.DEPTH_INFINITE, null);
+		HgRoot hgRoot = getHgRoot(project);
+		HG_ROOTS.put(project, new HgRoot[]{hgRoot});
+		project.refreshLocal(IResource.DEPTH_ONE, null);
 
 		// try to find .hg directory to set it as private member
 		IResource hgDir = project.findMember(".hg"); //$NON-NLS-1$
@@ -99,9 +137,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		IProject project = getProject();
 		Assert.isNotNull(project);
 		// cleanup
-		HG_ROOTS.put(project, Boolean.FALSE);
+		HG_ROOTS.put(project, new HgRoot[]{null});
 		BRANCH_MAP.remove(project);
-		project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
+//		project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
 		project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
 		HgStatusClient.clearMergeStatus(project);
 	}
@@ -117,12 +155,11 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		if(!project.isOpen()){
 			return false;
 		}
-		Boolean result = HG_ROOTS.get(project);
-		if(result == null){
-			result = Boolean.valueOf(RepositoryProvider.getProvider(project, ID) != null);
-			HG_ROOTS.put(project, result);
+		HgRoot[] result = HG_ROOTS.get(project);
+		if(result == null || result[0] == null){
+			return hasHgRoot(project) != null;
 		}
-		return result.booleanValue();
+		return true;
 	}
 
 	public static void addBranchListener(IPropertyListener listener){
@@ -152,11 +189,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		}
 		HgRoot hgRoot;
 		try {
-			hgRoot = (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
+			HgRoot[] rootElt = HG_ROOTS.get(project);
+			if(rootElt == null){
+				rootElt = new HgRoot[1];
+				HG_ROOTS.put(project, rootElt);
+			}
+			hgRoot = rootElt[0]; // (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
 			if (hgRoot == null) {
 				hgRoot = AbstractClient.getHgRoot(resource);
+				rootElt[0] = hgRoot;
 				setRepositoryEncoding(project, hgRoot);
-				project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
+				// project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
 			}
 		} catch (CoreException e) {
 			throw new HgException(e);
@@ -164,12 +207,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		return hgRoot;
 	}
 
-	/**
-	 * @param project
-	 * @param hgRoot
-	 * @throws CoreException
-	 * @throws HgException
-	 */
 	private static void setRepositoryEncoding(IProject project, HgRoot hgRoot) throws CoreException {
 		if (project != null) {
 			hgRoot.setEncoding(Charset.forName(MercurialEclipsePlugin.getDefaultEncoding(project)));
@@ -249,7 +286,16 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		if(resource == null){
 			return null;
 		}
-		return HgRootClient.hasHgRoot(ResourceUtils.getFileHandle(resource));
+		IProject project = resource.getProject();
+		HgRoot[] result = HG_ROOTS.get(project);
+		if(result != null && result[0] != null){
+			return result[0];
+		}
+		HgRoot hgRoot = HgRootClient.hasHgRoot(ResourceUtils.getFileHandle(resource));
+		if(hgRoot != null && (RepositoryProvider.getProvider(project, ID) != null)) {
+			HG_ROOTS.put(project, new HgRoot[]{hgRoot});
+		}
+		return hgRoot;
 	}
 
 	/**

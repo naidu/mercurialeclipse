@@ -321,7 +321,7 @@ public class MercurialRevisionStorage implements IStorage {
 			return;
 		}
 		try {
-			ChangeSet tip = HgLogClient.getTip(res.getProject());
+			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(res));
 			boolean localKnown = tip.getChangesetIndex() >= rev;
 			if(!localKnown){
 				return;

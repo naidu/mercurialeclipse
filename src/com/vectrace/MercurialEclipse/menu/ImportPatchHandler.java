@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.window.Window;
@@ -20,19 +19,17 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.wizards.ImportPatchWizard;
 
-public class ImportPatchHandler extends SingleResourceHandler {
+public class ImportPatchHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		openWizard(resource, getShell());
+	protected void run(HgRoot hgRoot) {
+		openWizard(hgRoot, getShell());
 	}
 
-	public void openWizard(IResource resource, Shell shell) throws Exception {
-		final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
+	public void openWizard(final HgRoot hgRoot, Shell shell) {
 		ImportPatchWizard wizard = new ImportPatchWizard(hgRoot);
 		WizardDialog dialog = new WizardDialog(shell, wizard);
 		dialog.setBlockOnOpen(true);

@@ -52,7 +52,7 @@ public class NewLocationWizard extends HgWizard {
 		Properties props = page.getProperties();
 		HgRepositoryLocationManager manager = MercurialEclipsePlugin.getRepoManager();
 		try {
-			manager.createRepository(null, props);
+			manager.createRepository(props);
 		} catch (HgException ex) {
 			MercurialEclipsePlugin.logError(ex);
 			return false;

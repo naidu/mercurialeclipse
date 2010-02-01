@@ -134,7 +134,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					update.setCleanEnabled(true);
 					update.setRevision(".");
 					update.setShell(table.getShell());
-					update.runWithRoot(hgRoot);
+					update.run(hgRoot);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());

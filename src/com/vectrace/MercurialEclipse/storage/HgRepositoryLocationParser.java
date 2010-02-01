@@ -15,7 +15,6 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -44,9 +43,6 @@ public class HgRepositoryLocationParser {
 		String direction = repositoryLine.substring(0,1);
 		repositoryLine = repositoryLine.substring(1);
 		try {
-			//get date
-			Date lastUsage = new Date(Long.valueOf(repositoryLine.substring(0, repositoryLine.indexOf(PART_SEPARATOR))).longValue());
-			repositoryLine = repositoryLine.substring(repositoryLine.indexOf(PART_SEPARATOR) + 1);
 			List<String> parts = new ArrayList<String>(5);
 			while (repositoryLine != null && repositoryLine.length() > 0) {
 				int len = Integer.valueOf(repositoryLine.substring(0, repositoryLine.indexOf(PART_SEPARATOR))).intValue();
@@ -74,7 +70,6 @@ public class HgRepositoryLocationParser {
 				location = new HgRepositoryLocation(parts.get(3),
 						PUSH_PREFIX.equals(direction), parts.get(0), "", "");
 			}
-			location.setLastUsage(lastUsage);
 			return location;
 		} catch(Throwable th) {
 			MercurialEclipsePlugin.logError(th);
@@ -84,8 +79,6 @@ public class HgRepositoryLocationParser {
 
 	protected static String createLine(final HgRepositoryLocation location) {
 		StringBuilder line = new StringBuilder(location.isPush() ? PUSH_PREFIX : PULL_PREFIX);
-		line.append(location.getLastUsage() != null ? location.getLastUsage().getTime() : new Date().getTime());
-		line.append(PART_SEPARATOR);
 		// remove authentication from location
 		line.append(String.valueOf(location.getLocation().length()));
 		line.append(PART_SEPARATOR);

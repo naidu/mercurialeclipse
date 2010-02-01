@@ -11,7 +11,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.window.Window;
@@ -19,15 +19,13 @@ import org.eclipse.jface.wizard.WizardDialog;
 
 import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 
-public class BackoutHandler extends SingleResourceHandler {
+public class BackoutHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		final HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
+	protected void run(final HgRoot hgRoot) throws CoreException {
 		BackoutWizard backoutWizard = new BackoutWizard(hgRoot);
 		WizardDialog dialog = new WizardDialog(getShell(), backoutWizard);
 		dialog.setBlockOnOpen(true);

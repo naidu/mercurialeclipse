@@ -46,6 +46,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
@@ -227,9 +228,7 @@ public class HgCommitMessageManager extends DefaultHandler {
 	 * the list of all Attributes declared for the Current Element in the XML File.
 	 */
 	@Override
-	public void startElement(String uri, String localName, String qname,
-			Attributes attr)
-	{
+	public void startElement(String uri, String localName, String qname, Attributes attr) {
 		/* Clear char string */
 		tmpMessage = ""; //$NON-NLS-1$
 	}
@@ -260,9 +259,14 @@ public class HgCommitMessageManager extends DefaultHandler {
 	public static String getDefaultCommitName(IProject project) {
 		// TODO see issue 10150: get the name from project properties, not from repo
 		// but for now it will at least work for projects with one repo
-		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultProjectRepoLocation(project);
-		if(repoLocation == null){
+		HgRepositoryLocation repoLocation = null;
+		try {
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		if(repoLocation == null || repoLocation.getUser() == null){
 			return HgClients.getDefaultUserName();
 		}
 		return repoLocation.getUser();

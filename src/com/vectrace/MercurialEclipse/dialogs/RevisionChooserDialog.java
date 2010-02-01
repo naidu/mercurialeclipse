@@ -15,6 +15,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.logError;
+
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -28,7 +30,7 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -57,18 +59,17 @@ import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Bookmark;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
 import com.vectrace.MercurialEclipse.storage.FileDataLoader;
-import com.vectrace.MercurialEclipse.storage.ProjectDataLoader;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.storage.RootDataLoader;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -103,11 +104,11 @@ public class RevisionChooserDialog extends Dialog {
 		this(parentShell, title, new FileDataLoader(file));
 	}
 
-	public RevisionChooserDialog(Shell parentShell, String title, IProject project) {
-		this(parentShell, title, new ProjectDataLoader(project));
+	public RevisionChooserDialog(Shell parentShell, String title, HgRoot hgRoot) {
+		this(parentShell, title, new RootDataLoader(hgRoot));
 	}
 
-	public RevisionChooserDialog(Shell parentShell, String title, DataLoader loader) {
+	private RevisionChooserDialog(Shell parentShell, String title, DataLoader loader) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
 		this.title = title;
@@ -116,10 +117,11 @@ public class RevisionChooserDialog extends Dialog {
 		try {
 			p = loader.getParents();
 		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+			logError(e);
 		}
 		parents = p;
 	}
+
 
 	@Override
 	protected void configureShell(Shell newShell) {
@@ -160,7 +162,7 @@ public class RevisionChooserDialog extends Dialog {
 				createBookmarkTabItem(tabFolder);
 			}
 		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+			logError(e);
 		}
 		createOptions(composite);
 		return composite;
@@ -187,12 +189,12 @@ public class RevisionChooserDialog extends Dialog {
 				String changeSetId = proposal.getContent().split(" ", 2)[0]; //$NON-NLS-1$
 				try {
 					changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(
-							dataLoader.getProject(), changeSetId);
+							dataLoader.getHgRoot(), changeSetId);
 				} catch (HgException e) {
 					changeSet = null;
 					String message = Messages.getString(
 							"RevisionChooserDialog.error.loadChangeset1", changeSetId); //$NON-NLS-1$
-					MercurialEclipsePlugin.logError(message, e);
+					logError(message, e);
 				}
 			}
 		});
@@ -241,25 +243,32 @@ public class RevisionChooserDialog extends Dialog {
 		String[] split = text.getText().split(":"); //$NON-NLS-1$
 		revision = split[0].trim();
 		if (changeSet == null) {
-			IProject project = dataLoader.getProject();
+			HgRoot hgRoot = dataLoader.getHgRoot();
 			LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
 				try {
-					changeSet = localCache.getOrFetchChangeSetById(project, tag.getRevision() + ":" + tag.getGlobalId()); //$NON-NLS-1$
+					changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getRevision()
+							+ ":" + tag.getGlobalId()); //$NON-NLS-1$
 				} catch (HgException ex) {
-					MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2", tag.getRevision(), tag.getGlobalId()), ex); //$NON-NLS-1$
+					logError(
+							Messages.getString("RevisionChooserDialog.error.loadChangeset2",
+									tag.getRevision(), tag.getGlobalId()), ex);
 				}
 			} else if(branch != null) {
 				try {
-					changeSet = localCache.getOrFetchChangeSetById(project, branch.getRevision() + ":" + branch.getGlobalId()); //$NON-NLS-1$
+					changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getRevision()
+							+ ":" + branch.getGlobalId()); //$NON-NLS-1$
 				} catch (HgException ex) {
-					MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2", branch.getRevision(), branch.getGlobalId()), ex); //$NON-NLS-1$
+					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
+							branch.getRevision(), branch.getGlobalId()), ex);
 				}
 			} else if (bookmark != null) {
 				try {
-					changeSet = localCache.getOrFetchChangeSetById(project, bookmark.getRevision() + ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
+					changeSet = localCache.getOrFetchChangeSetById(hgRoot, bookmark.getRevision()
+							+ ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
 				} catch (HgException ex) {
-					MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2", bookmark.getRevision(), bookmark.getShortNodeId()), ex); //$NON-NLS-1$
+					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
+							bookmark.getRevision(), bookmark.getShortNodeId()), ex);
 				}
 			}
 		}
@@ -295,7 +304,12 @@ public class RevisionChooserDialog extends Dialog {
 		item.setText(Messages.getString("RevisionChooserDialog.revTab.name")); //$NON-NLS-1$
 
 
-		final ChangesetTable table = new ChangesetTable(folder, dataLoader.getResource());
+		final ChangesetTable table;
+		if(dataLoader.getResource() != null) {
+			table = new ChangesetTable(folder, dataLoader.getResource());
+		} else {
+			table = new ChangesetTable(folder, dataLoader.getHgRoot());
+		}
 		table.setAutoFetch(false);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.highlightParents(parents);
@@ -338,13 +352,7 @@ public class RevisionChooserDialog extends Dialog {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.tagTab.name")); //$NON-NLS-1$
 
-		final TagTable table;
-		try {
-			table = new TagTable(folder, MercurialTeamProvider.getHgRoot(dataLoader.getProject()));
-		} catch (HgException e1) {
-			MercurialEclipsePlugin.logError(e1);
-			return item;
-		}
+		final TagTable table = new TagTable(folder, dataLoader.getHgRoot());
 		table.highlightParents(parents);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
@@ -371,7 +379,7 @@ public class RevisionChooserDialog extends Dialog {
 							table.setTags(tags);
 							return Status.OK_STATUS;
 						} catch (HgException e) {
-							MercurialEclipsePlugin.logError(e);
+							logError(e);
 							return Status.CANCEL_STATUS;
 						}
 					}
@@ -414,7 +422,7 @@ public class RevisionChooserDialog extends Dialog {
 							table.setBranches(branches);
 							return Status.OK_STATUS;
 						} catch (HgException e) {
-							MercurialEclipsePlugin.logError(e);
+							logError(e);
 							return Status.CANCEL_STATUS;
 						}
 					}
@@ -430,8 +438,7 @@ public class RevisionChooserDialog extends Dialog {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.bookmarkTab.name")); //$NON-NLS-1$
 
-		final BookmarkTable table = new BookmarkTable(folder, dataLoader
-				.getProject());
+		final BookmarkTable table = new BookmarkTable(folder, dataLoader.getHgRoot());
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		table.addSelectionListener(new SelectionAdapter() {
@@ -454,8 +461,7 @@ public class RevisionChooserDialog extends Dialog {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
 
-		final ChangesetTable table = new ChangesetTable(folder, dataLoader
-				.getProject());
+		final ChangesetTable table = new ChangesetTable(folder, dataLoader.getHgRoot());
 		new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
@@ -469,7 +475,7 @@ public class RevisionChooserDialog extends Dialog {
 					table.setEnabled(true);
 					return Status.OK_STATUS;
 				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
+					logError(e);
 					return Status.CANCEL_STATUS;
 				}
 			}
@@ -518,17 +524,21 @@ public class RevisionChooserDialog extends Dialog {
 
 			changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
 				public SortedSet<ChangeSet> call() throws Exception {
-					SortedSet<ChangeSet> result = LocalChangesetCache.getInstance().getOrFetchChangeSets(dataLoader.getResource());
+					IResource resource = dataLoader.getResource();
+					HgRoot hgRoot = dataLoader.getHgRoot();
+					SortedSet<ChangeSet> result;
+					if(resource != null) {
+						result = LocalChangesetCache.getInstance().getOrFetchChangeSets(resource);
+					} else {
+						result = LocalChangesetCache.getInstance().getOrFetchChangeSets(hgRoot);
+					}
 					if(result == null || result.isEmpty() || result.first().getChangesetIndex() != 0) {
-						LocalChangesetCache.getInstance().fetchRevisions(dataLoader.getResource(), false, 0, 0, false);
-						result = LocalChangesetCache.getInstance().getOrFetchChangeSets(dataLoader.getResource());
-
-						for (int x = 0; result == null && x < 10; x++) {
-							// this might happen at startup of eclipse when the caches are not yet
-							// completely initialised
-							Thread.sleep(1000);
-							LocalChangesetCache.getInstance().fetchRevisions(dataLoader.getResource(), false, 0, 0, false);
-							result = LocalChangesetCache.getInstance().getOrFetchChangeSets(dataLoader.getResource());
+						if(resource != null) {
+							LocalChangesetCache.getInstance().fetchRevisions(resource, false, 0, 0, false);
+							result = LocalChangesetCache.getInstance().getOrFetchChangeSets(resource);
+						} else {
+							LocalChangesetCache.getInstance().fetchRevisions(hgRoot, false, 0, 0, false);
+							result = LocalChangesetCache.getInstance().getOrFetchChangeSets(hgRoot);
 						}
 
 						if(result == null) {
@@ -542,7 +552,7 @@ public class RevisionChooserDialog extends Dialog {
 
 			bookmarks = executor.submit(new Callable<List<Bookmark>>() {
 				public List<Bookmark> call() throws Exception {
-					return HgBookmarkClient.getBookmarks(dataLoader.getResource().getLocation().toFile());
+					return HgBookmarkClient.getBookmarks(dataLoader.getHgRoot());
 				}
 			});
 
@@ -564,9 +574,9 @@ public class RevisionChooserDialog extends Dialog {
 					}
 				}
 			} catch (InterruptedException e) {
-				MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadChangesets"), e); //$NON-NLS-1$
+				logError(Messages.getString("RevisionChooserDialog.error.loadChangesets"), e); //$NON-NLS-1$
 			} catch (ExecutionException e) {
-				MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadChangesets"), e); //$NON-NLS-1$
+				logError(Messages.getString("RevisionChooserDialog.error.loadChangesets"), e); //$NON-NLS-1$
 			}
 			try {
 				for (Bookmark bookmark : bookmarks.get()) {
@@ -575,9 +585,9 @@ public class RevisionChooserDialog extends Dialog {
 					}
 				}
 			} catch (InterruptedException e) {
-				MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadBookmarks"), e); //$NON-NLS-1$
+				logError(Messages.getString("RevisionChooserDialog.error.loadBookmarks"), e); //$NON-NLS-1$
 			} catch (ExecutionException e) {
-				MercurialEclipsePlugin.logError(Messages.getString("RevisionChooserDialog.error.loadBookmarks"), e); //$NON-NLS-1$
+				logError(Messages.getString("RevisionChooserDialog.error.loadBookmarks"), e); //$NON-NLS-1$
 			}
 			return result.toArray(new IContentProposal[result.size()]);
 		}

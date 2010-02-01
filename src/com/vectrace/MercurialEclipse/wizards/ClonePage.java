@@ -12,13 +12,13 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IPageChangingListener;
@@ -40,6 +40,7 @@ import org.eclipse.swt.widgets.Text;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.CloneOperation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -58,7 +59,7 @@ public class ClonePage extends PushPullPage {
 	private Button pullCheckBox;
 	private Button uncompressedCheckBox;
 	private Text revisionTextField;
-	private final Map<HgRepositoryLocation, File> destDirectories = new HashMap<HgRepositoryLocation, File>();
+	private final Map<HgRepositoryLocation, File> destDirectories;
 	private HgRepositoryLocation lastRepo;
 	private Text directoryTextField;
 	private Button directoryButton;
@@ -66,10 +67,10 @@ public class ClonePage extends PushPullPage {
 	private Text cloneNameTextField;
 	static private File lastUsedDir;
 
-	public ClonePage(IResource resource, String pageName, String title,
+	public ClonePage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
-		super(resource, pageName, title, titleImage);
-		this.resource = resource;
+		super(hgRoot, pageName, title, titleImage);
+		destDirectories = new HashMap<HgRepositoryLocation, File>();
 		setShowBundleButton(false);
 		setShowRevisionTable(false);
 		setShowCredentials(true);
@@ -218,7 +219,12 @@ public class ClonePage extends PushPullPage {
 	public File getDestinationDirectory() {
 		String root = getRootName();
 		File dest = new File(root, getCloneName());
-		return dest;
+		try {
+			return new HgRoot(dest);
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+			return dest;
+		}
 	}
 
 

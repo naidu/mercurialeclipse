@@ -11,31 +11,24 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
-public class UpdateHandler extends SingleResourceHandler {
+public class UpdateHandler extends RootHandler {
 
 	private String revision;
 	private boolean cleanEnabled;
-
-	@Override
-	public void run(IResource resource) throws Exception {
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource.getProject());
-		runWithRoot(hgRoot);
-	}
 
 	/**
 	 * @param hgRoot non null
 	 * @throws HgException
 	 */
-	public void runWithRoot(HgRoot hgRoot) throws HgException {
+	@Override
+	public void run(HgRoot hgRoot) throws HgException {
 		boolean dirty = HgStatusClient.isDirty(hgRoot);
 		if (dirty) {
 			final boolean[] result = new boolean[1];

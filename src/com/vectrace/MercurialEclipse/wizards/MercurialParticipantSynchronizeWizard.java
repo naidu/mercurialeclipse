@@ -11,7 +11,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -35,6 +38,7 @@ import org.eclipse.ui.IWorkbenchWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
@@ -42,7 +46,9 @@ import com.vectrace.MercurialEclipse.synchronize.HgSubscriberScopeManager;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -159,7 +165,15 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
 		Properties properties = new Properties();
 		if(rootResources.length == 1){
 			HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-			HgRepositoryLocation repoLocation = repoManager.getDefaultProjectRepoLocation((IProject) rootResources[0]);
+			HgRepositoryLocation repoLocation = null;
+			try {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(rootResources[0]);
+				if(hgRoot != null) {
+					repoLocation = repoManager.getDefaultRepoLocation(hgRoot);
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 			if(repoLocation != null){
 				if(repoLocation.getLocation() != null) {
 					properties.setProperty(PROP_URL, repoLocation.getLocation());
@@ -215,21 +229,6 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
 			return null;
 		}
 
-		HgRepositoryLocation repo;
-		try {
-			repo = repoManager.getRepoLocation(url, user, pass);
-			if(pass != null && user != null){
-				if(!pass.equals(repo.getPassword())){
-					// At least 1 project exists, update location for that project
-					repo = repoManager.updateRepoLocation(selectedProjects.iterator().next(), url, null, user, pass);
-				}
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			page.setErrorMessage(e.getLocalizedMessage());
-			return null;
-		}
-
 		// this is a hack to get only selected entries. I can't find the setting which
 		// says to the selection page to provide really only things which are *selected*
 		// so if it reports that user has selected MORE then we initially given to it,
@@ -239,22 +238,39 @@ public class MercurialParticipantSynchronizeWizard extends ModelParticipantWizar
 			array = selectedProjects.toArray(new IResource[0]);
 		}
 
-		Set<IProject> repoProjects = repoManager.getAllRepoLocationProjects(repo);
-		for (IResource resource : array) {
-			IProject project = resource.getProject();
-			if(repoProjects.contains(project)){
-				continue;
-			}
-			try {
-				repoManager.addRepoLocation(project, repo);
-				// TODO is it required?
-				HgRepositoryLocation repoLocation = repoManager.getDefaultProjectRepoLocation(project);
-				if(repoLocation == null){
-					repoManager.setDefaultProjectRepository(project, repo);
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(array));
+		Set<HgRoot> roots = byRoot.keySet();
+
+		// XXX what if there are zero or more then one root???
+		if(roots.size() != 1){
+			MercurialEclipsePlugin.logWarning("Unexpected number of roots (must be 1): ", new Exception(
+					roots.size() + " hg roots for input: " + selectedProjects.toString()));
+		}
+
+		HgRoot hgRoot = roots.iterator().next();
+		HgRepositoryLocation repo;
+		try {
+			repo = repoManager.getRepoLocation(url, user, pass);
+			if(pass != null && user != null){
+				if(!pass.equals(repo.getPassword())){
+					// At least 1 project exists, update location for that project
+					repo = repoManager.updateRepoLocation(hgRoot, url, null, user, pass);
 				}
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
 			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			page.setErrorMessage(e.getLocalizedMessage());
+			return null;
+		}
+
+		try {
+			repoManager.addRepoLocation(hgRoot, repo);
+			HgRepositoryLocation repoLocation = repoManager.getDefaultRepoLocation(hgRoot);
+			if(repoLocation == null){
+				repoManager.setDefaultRepository(hgRoot, repo);
+			}
+		} catch (CoreException e) {
+			MercurialEclipsePlugin.logError(e);
 		}
 
 		ISynchronizeParticipantReference participant = TeamUI.getSynchronizeManager().get(

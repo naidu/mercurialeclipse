@@ -29,6 +29,7 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  * @author bastian
  */
 public class HgRoot extends File {
+	private static final String HG_HGRC = ".hg/hgrc";
 	private static final String HGENCODING;
 	static {
 		// next in line is HGENCODING in environment
@@ -70,13 +71,13 @@ public class HgRoot extends File {
 
 	public File getConfig() {
 		if (config == null) {
-			File hgrc = new File(this, ".hg/hgrc");
-			if (hgrc.exists()) {
+			File hgrc = new File(this, HG_HGRC);
+			if (hgrc.isFile()) {
 				config = hgrc;
 				return hgrc;
 			}
 		}
-		return null;
+		return config;
 	}
 
 	public String getConfigItem(String section, String key) {

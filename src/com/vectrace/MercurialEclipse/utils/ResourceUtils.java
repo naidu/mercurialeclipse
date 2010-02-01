@@ -101,7 +101,7 @@ public class ResourceUtils {
 	/**
 	 * Checks which editor is active an determines the IResource that is edited.
 	 */
-	public static IResource getActiveResourceFromEditor() {
+	public static IFile getActiveResourceFromEditor() {
 		IEditorPart editorPart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
 
 		if (editorPart != null) {
@@ -254,10 +254,13 @@ public class ResourceUtils {
 	 * @param resources non null
 	 * @return never null
 	 */
-	public static Map<HgRoot, List<IResource>> groupByRoot(List<IResource> resources) throws HgException {
+	public static Map<HgRoot, List<IResource>> groupByRoot(Collection<? extends IResource> resources) {
 		Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
 		for (IResource resource : resources) {
-			HgRoot root = MercurialTeamProvider.getHgRoot(resource);
+			HgRoot root = MercurialTeamProvider.hasHgRoot(resource);
+			if(root == null){
+				continue;
+			}
 			List<IResource> list = result.get(root);
 			if (list == null) {
 				list = new ArrayList<IResource>();

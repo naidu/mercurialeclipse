@@ -68,7 +68,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -101,20 +100,6 @@ public class IniFile {
 	public IniFile(String filename) throws FileNotFoundException {
 		this();
 		load(filename);
-	}
-
-	/**
-	 * Constructor for the IniFile object
-	 *
-	 * @param url
-	 *            Description of Parameter
-	 * @exception IOException
-	 *                Description of Exception
-	 */
-	public IniFile(URL url) throws IOException {
-		this();
-		InputStream in = url.openStream();
-		load(in);
 	}
 
 	/**

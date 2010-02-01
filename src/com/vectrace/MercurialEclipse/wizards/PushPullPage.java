@@ -12,8 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -31,6 +29,7 @@ import org.eclipse.swt.widgets.Listener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -42,7 +41,7 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class PushPullPage extends ConfigurationWizardMainPage {
 
-	protected IResource resource;
+	protected HgRoot hgRoot;
 	protected Button forceCheckBox;
 	protected boolean force;
 	protected ChangesetTable changesetTable;
@@ -61,10 +60,10 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 	protected boolean showSvn = false;
 	protected Button svnCheckBox;
 
-	public PushPullPage(IResource resource, String pageName, String title,
+	public PushPullPage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
-		this.resource = resource;
+		this.hgRoot = hgRoot;
 		try {
 			setShowForest(true);
 			setShowSvn(true);
@@ -167,7 +166,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
-		this.changesetTable = new ChangesetTable(revGroup, resource);
+		this.changesetTable = new ChangesetTable(revGroup, hgRoot);
 		this.changesetTable.setLayoutData(gridData);
 		this.changesetTable.setEnabled(false);
 
@@ -210,14 +209,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 	public boolean isTimeout() {
 		return timeout;
-	}
-
-	public IResource getResource() {
-		return resource;
-	}
-
-	public void setResource(IResource resource) {
-		this.resource = resource;
 	}
 
 	public Button getForceCheckBox() {
@@ -305,8 +296,8 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 	}
 
 	@Override
-	protected IProject getProject() {
-		return resource != null ? resource.getProject() : null;
+	protected HgRoot getHgRoot() {
+		return hgRoot;
 	}
 
 }

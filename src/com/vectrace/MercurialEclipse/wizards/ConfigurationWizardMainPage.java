@@ -9,7 +9,8 @@
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptions&additions
  *     Adam Berkes (Intland)        - repository location handling
- *     Zsolt Koppany - zsolt.koppany@intland.com
+ *     Zsolt Koppany (Intland)		- bug fixes
+ *     Andrei Loskutov (Intland)	- bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -20,7 +21,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -44,7 +44,9 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -55,29 +57,23 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	protected boolean showCredentials = false;
 	protected boolean showBundleButton = false;
 
-	// Widgets
-
-	// User
 	protected Combo userCombo;
-	// Password
 	protected Text passwordText;
 
-	// url of the repository we want to add
+	/** url of the repository we want to add */
 	protected Combo urlCombo;
 
-	// local repositories button
+	/** local repositories button */
 	protected Button browseButton;
 
-	// bundles
 	protected Button browseFileButton;
 
 	private static final int COMBO_HISTORY_LENGTH = 10;
 
-	// Dialog store id constants
+	/**  Dialog store id constant */
 	private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
+
 	/**
-	 * ConfigurationWizardMainPage constructor.
-	 *
 	 * @param pageName
 	 *            the name of the page
 	 * @param title
@@ -300,7 +296,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		// Set remembered values
 		IDialogSettings setts = getDialogSettings();
 		if (setts != null) {
-			String[] hostNames = updateHostNames(getProject());
+			String[] hostNames = updateHostNames(getHgRoot());
 			if (hostNames != null) {
 				for (String hn : hostNames) {
 					urlCombo.add(hn);
@@ -361,11 +357,11 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		return urlCombo.getText().trim();
 	}
 
-	private String[] updateHostNames(IProject project) {
+	private String[] updateHostNames(HgRoot hgRoot) {
 		String[] newHostNames = new String[0];
 		Set<HgRepositoryLocation> repositories = null;
-		if (project != null) {
-			repositories = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
+		if (hgRoot != null) {
+			repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(hgRoot);
 		} else {
 			repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
 		}
@@ -502,27 +498,25 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		return ok;
 	}
 
-	protected IProject getProject() {
+	protected HgRoot getHgRoot() {
 		return null;
 	}
 
 	protected Set<HgRepositoryLocation> setDefaultLocation() {
-		if (getProject() == null) {
+		if (getHgRoot() == null) {
 			return null;
 		}
-		HgRepositoryLocation defaultLocation = null;
-
-		Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(getProject());
-
-		for (HgRepositoryLocation repo : repos) {
-			if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName()) || HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
-				defaultLocation = repo;
-				break;
-			}
-		}
-
+		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
+		HgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
+		Set<HgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
 		if (defaultLocation == null) {
-			defaultLocation = MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(getProject());
+			for (HgRepositoryLocation repo : repos) {
+				if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName())
+						|| HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+					defaultLocation = repo;
+					break;
+				}
+			}
 		}
 
 		if (defaultLocation != null) {

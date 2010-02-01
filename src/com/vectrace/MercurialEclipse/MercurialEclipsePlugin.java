@@ -29,6 +29,7 @@ import java.util.regex.Pattern;
 import org.eclipse.core.net.proxy.IProxyService;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -473,6 +474,25 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		public boolean belongsTo(Object family) {
 			return plugin == family;
 		}
+	}
+
+	/**
+	 * Find the object associated with the given object that is adapted to
+	 * the provided class.
+	 *
+	 * @param anyObject might be null
+	 * @param clazz class to get the adapter for
+	 * @return adapted object or null if no adapter provided or the given object is null
+	 */
+	public static <V> V getAdapter(Object anyObject, Class<V> clazz) {
+		if (clazz.isInstance(anyObject)) {
+			return clazz.cast(anyObject);
+		}
+		if (anyObject instanceof IAdaptable) {
+			IAdaptable a = (IAdaptable) anyObject;
+			return clazz.cast(a.getAdapter(clazz));
+		}
+		return null;
 	}
 
 }

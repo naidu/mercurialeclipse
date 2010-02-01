@@ -16,7 +16,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
@@ -253,29 +252,6 @@ abstract public class HgAction extends ReplaceableIconAction {
 	protected boolean needsToSaveDirtyEditors() {
 		return false;
 	}
-
-	/**
-	 * Find the object associated with the selected object that is adapted to
-	 * the provided class.
-	 *
-	 * @param selection
-	 * @param c
-	 * @return adapted object or null if no adapter provided
-	 */
-	public static <V> V getAdapter(Object selection, Class<V> c) {
-		if (c.isInstance(selection)) {
-			return c.cast(selection);
-		}
-		if (selection instanceof IAdaptable) {
-			IAdaptable a = (IAdaptable) selection;
-			Object adapter = a.getAdapter(c);
-			if (c.isInstance(adapter)) {
-				return c.cast(adapter);
-			}
-		}
-		return null;
-	}
-
 
 	@Override
 	protected void handle(Exception exception, String title, String message) {

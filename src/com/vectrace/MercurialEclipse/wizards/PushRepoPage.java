@@ -14,7 +14,6 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Set;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Composite;
@@ -22,6 +21,7 @@ import org.eclipse.swt.widgets.Composite;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
@@ -31,8 +31,8 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class PushRepoPage extends PushPullPage {
 
 	public PushRepoPage(String pageName, String title,
-			ImageDescriptor titleImage, IResource resource) {
-		super(resource, pageName, title, titleImage);
+			ImageDescriptor titleImage, HgRoot hgRoot) {
+		super(hgRoot, pageName, title, titleImage);
 		showRevisionTable = false;
 	}
 
@@ -55,7 +55,7 @@ public class PushRepoPage extends PushPullPage {
 			if (getUrlCombo().getText() != null
 					&& getUrlCombo().getText() != null) {
 				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
-				outgoingPage.setProject(resource.getProject());
+				outgoingPage.setHgRoot(hgRoot);
 				HgRepositoryLocation loc = MercurialEclipsePlugin
 						.getRepoManager().getRepoLocation(urlCombo.getText(),
 								getUserCombo().getText(),
@@ -76,24 +76,20 @@ public class PushRepoPage extends PushPullPage {
 
 	@Override
 	protected Set<HgRepositoryLocation> setDefaultLocation() {
-		HgRepositoryLocation defaultLocation = null;
 		Set<HgRepositoryLocation> repos = super.setDefaultLocation();
 		if (repos == null) {
 			return null;
 		}
-		for (HgRepositoryLocation repo : repos)
-		{
-			if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName()) ||
-					HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
-				defaultLocation = repo;
-				break;
-			}
-		}
-
+		HgRepositoryLocation defaultLocation = MercurialEclipsePlugin.getRepoManager()
+				.getDefaultRepoLocation(hgRoot);
 		if (defaultLocation == null) {
-			defaultLocation = MercurialEclipsePlugin
-				.getRepoManager().getDefaultProjectRepoLocation(
-						resource.getProject());
+			for (HgRepositoryLocation repo : repos) {
+				if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName())
+						|| HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+					defaultLocation = repo;
+					break;
+				}
+			}
 		}
 
 		if (defaultLocation != null) {

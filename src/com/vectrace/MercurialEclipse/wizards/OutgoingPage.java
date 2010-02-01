@@ -34,13 +34,12 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -74,9 +73,8 @@ public class OutgoingPage extends IncomingPage {
 			}
 			HgRepositoryLocation remote = getLocation();
 			try {
-				HgRoot root = MercurialTeamProvider.getHgRoot(getProject());
 				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
-						root, remote, null);
+						getHgRoot(), remote, null);
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(changesets);
 				return revertedSet;
@@ -102,7 +100,7 @@ public class OutgoingPage extends IncomingPage {
 			IPath hgRoot = new Path(cs.getHgRoot().getPath());
 			IPath fileRelPath = clickedFileStatus.getRootRelativePath();
 			IPath fileAbsPath = hgRoot.append(fileRelPath);
-			IFile file = getProject().getWorkspace().getRoot().getFileForLocation(fileAbsPath);
+			IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 
 			if (file != null) {
 				// See issue #10249: Push/Pull diff problem on outgoing/incoming stage
