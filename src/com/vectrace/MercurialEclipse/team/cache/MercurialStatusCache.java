@@ -55,7 +55,6 @@ import org.eclipse.team.core.Team;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.HgBranchClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -595,8 +594,10 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		synchronized (statusUpdateLock) {
 			// get status and branch for hg root
 			String output = HgStatusClient.getStatusWithoutIgnored(root);
-			String branch = HgBranchClient.getActiveBranch(root);
-			String mergeNode = HgStatusClient.getMergeStatus(root);
+			String[] mergeStatus = HgStatusClient.getMergeStatus(root);
+			String mergeNode = mergeStatus[0];
+			String branch = mergeStatus[1];
+
 			String[] lines = NEWLINE.split(output);
 			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
 			Iterator<IProject> iterator = projects.iterator();
@@ -697,9 +698,10 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 		if(res instanceof IProject){
 			try {
-				String mergeNode = HgStatusClient.getMergeStatus(project);
+				String[] mergeStatus = HgStatusClient.getMergeStatus(root);
+				String mergeNode = mergeStatus[0];
+				String branch = mergeStatus[1];
 				HgStatusClient.setMergeStatus(project, mergeNode);
-				String branch = HgBranchClient.getActiveBranch(projectLocation.toFile());
 				// TODO use branch map
 				MercurialTeamProvider.setCurrentBranch(branch, project);
 			} catch (CoreException e) {

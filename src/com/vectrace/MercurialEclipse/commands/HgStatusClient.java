@@ -31,6 +31,7 @@ import org.eclipse.core.runtime.Path;
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -38,6 +39,18 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgStatusClient extends AbstractClient {
+
+	// expected output for merge:
+	// b63617c1e3460bd87eb51d2b8841b37fff1834d6+00838f86e1024072e715d31f477262d5162acd09+ default
+	// match second part (the one we merge with)
+	// output for "usual" state:
+	// b63617c1e3460bd87eb51d2b8841b37fff1834d6+ default
+	// OR b63617c1e3460bd87eb51d2b8841b37fff1834d6 hallo branch
+	// + after the id is the "dirty" flag - if some files are not committed yet
+
+	//             group 1                         group 2                             group 3
+	// (first parent, optional dirty flag)(merge parent, optional dirty flag) space (branch name)
+	private static final Pattern MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$", Pattern.MULTILINE); //$NON-NLS-1$
 
 	public static String getStatus(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
@@ -90,36 +103,21 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToBytes().length != 0;
 	}
 
-	public static String getMergeStatus(IResource res) throws HgException {
-		AbstractShellCommand command = new HgCommand("identify", getWorkingDirectory(res), true); //$NON-NLS-1$
-		// Full global IDs
-		command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
-		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
-		String versionIds = command.executeToString().trim();
-
-		Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE); //$NON-NLS-1$
-		Matcher m = p.matcher(versionIds);
-		if(m.matches()) {
-			return m.group(1);
-		}
-		return null;
-	}
-
-	public static String getMergeStatus(HgRoot root) throws HgException {
+	public static String[] getMergeStatus(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
-		// Full global IDs
-		command.addOptions("-i","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
+		// Full global IDs + branch name
+		command.addOptions("-ib","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		String versionIds = command.executeToString().trim();
-		// expected output:
-		// b63617c1e3460bd87eb51d2b8841b37fff1834d6+00838f86e1024072e715d31f477262d5162acd09+
-		// match second part (the one we merge with)
-		Pattern p = Pattern.compile("^[0-9a-z]+\\+([0-9a-z]+)\\+$", Pattern.MULTILINE); //$NON-NLS-1$
-		Matcher m = p.matcher(versionIds);
-		if(m.matches()) {
-			return m.group(1);
+
+		Matcher m = MERGE_AND_BRANCH_PATTERN.matcher(versionIds);
+		String mergeId = null;
+		String branch = Branch.DEFAULT;
+		if (m.matches() && m.groupCount() > 2) {
+			mergeId = m.group(2);
+			branch = m.group(3);
 		}
-		return null;
+		return new String[]{mergeId, branch};
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, List<IResource> files) throws HgException {
