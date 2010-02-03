@@ -39,7 +39,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgStatusClient extends AbstractClient {
 
-	public static String getStatus(File root) throws HgException {
+	public static String getStatus(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
 		// modified, added, removed, deleted, unknown, ignored, clean
 		command.addOptions("-marduic"); //$NON-NLS-1$
@@ -260,7 +260,7 @@ public class HgStatusClient extends AbstractClient {
 		// clear merge status in Eclipse
 		project.setPersistentProperty(ResourceProperties.MERGING, null);
 		// triggers the decoration update
-		project.touch(null);
+		ResourceUtils.touch(project);
 	}
 
 	public static void setMergeStatus(HgRoot hgRoot, String mergeChangesetId) throws CoreException {
@@ -275,7 +275,7 @@ public class HgStatusClient extends AbstractClient {
 		// clear merge status in Eclipse
 		project.setPersistentProperty(ResourceProperties.MERGING, mergeChangesetId);
 		// triggers the decoration update
-		project.touch(null);
+		ResourceUtils.touch(project);
 	}
 
 	public static boolean isMergeInProgress(IResource res) {

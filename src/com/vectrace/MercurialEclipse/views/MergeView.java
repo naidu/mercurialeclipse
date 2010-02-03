@@ -337,12 +337,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				IResource resource = (IResource) ((IAdaptable) structured
 						.getFirstElement()).getAdapter(IResource.class);
 				if (resource != null) {
-					try {
-						setCurrentRoot(MercurialTeamProvider.getHgRoot(resource.getProject()));
-					} catch (HgException e) {
-						// ignore, as it may be just non hg project
-						setCurrentRoot(null);
-					}
+					setCurrentRoot(MercurialTeamProvider.getHgRoot(resource.getProject()));
 					return;
 				}
 			}

@@ -13,12 +13,9 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 
-import org.eclipse.core.resources.IResource;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Stefan
@@ -81,9 +78,5 @@ public final class HgClients {
 
 	public static HgRoot getHgRoot(File file) throws HgCoreException {
 		return config.getHgRoot(file);
-	}
-
-	public static HgRoot getHgRoot(IResource resource) {
-		return config.getHgRoot(ResourceUtils.getFileHandle(resource));
 	}
 }

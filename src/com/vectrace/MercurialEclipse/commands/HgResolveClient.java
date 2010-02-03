@@ -167,11 +167,7 @@ public class HgResolveClient extends AbstractClient {
 
 	private static void refreshStatus(IResource res) throws HgException {
 		MercurialStatusCache.getInstance().refreshStatus(res, null);
-		try {
-			res.touch(null);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		ResourceUtils.touch(res);
 	}
 
 }

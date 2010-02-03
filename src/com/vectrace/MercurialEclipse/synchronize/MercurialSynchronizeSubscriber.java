@@ -696,11 +696,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		Job job = new Job("Updating branch info for " + project.getName()){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				try {
-					currentCsMap.remove(MercurialTeamProvider.getHgRoot(project));
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
+				currentCsMap.remove(MercurialTeamProvider.getHgRoot(project));
 				if(lastEvents != null) {
 					fireTeamResourceChange(lastEvents);
 				}

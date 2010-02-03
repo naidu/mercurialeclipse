@@ -39,7 +39,6 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
 import com.vectrace.MercurialEclipse.repository.RepositoryResourcesManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -206,14 +205,7 @@ public class HgRepositoryLocationManager {
 	private void getProjectRepos() throws HgException {
 		if (!initialized) {
 			initialized = true;
-			Map<HgRoot, List<IResource>> roots = loadRepos();
-			for (Entry<HgRoot, List<IResource>> entry : roots.entrySet()) {
-				if(entry.getValue().isEmpty()){
-					continue;
-				}
-				HgRoot root = entry.getKey();
-				new RefreshStatusJob("Init hg cache for " + root.getName(), root).schedule();
-			}
+			loadRepos();
 		}
 	}
 

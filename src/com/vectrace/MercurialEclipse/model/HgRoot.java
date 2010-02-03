@@ -69,6 +69,11 @@ public class HgRoot extends File {
 		return encoding;
 	}
 
+	/**
+	 * Gets the resource hgrc as a {@link java.io.File}.
+	 *
+	 * @return the {@link java.io.File} referencing the hgrc file, <code>null</code> if it doesn't exist.
+	 */
 	public File getConfig() {
 		if (config == null) {
 			File hgrc = new File(this, HG_HGRC);

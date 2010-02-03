@@ -47,7 +47,6 @@ import org.eclipse.team.ui.IConfigurationWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.InitOperation;
 
@@ -172,11 +171,7 @@ public class MercurialConfigurationWizard extends Wizard implements
 	//
 	@Override
 	public void addPages() {
-		try {
-			foundhgPath = MercurialTeamProvider.getHgRoot(project);
-		} catch (HgException e) {
-			// do nothing
-		}
+		foundhgPath = MercurialTeamProvider.hasHgRoot(project);
 		if (foundhgPath == null) {
 			hgPath = project.getLocation().toString();
 			hgPathOriginal = hgPath;

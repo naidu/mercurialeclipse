@@ -11,20 +11,14 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
-import java.util.Set;
-
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * Refreshes status, local changesets, incoming changesets and outgoing
@@ -37,7 +31,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author Bastian Doetsch
  *
  */
-public final class RefreshRootJob extends SafeWorkspaceJob {
+public final class RefreshRootJob extends Job {
 	public static final int LOCAL = 1;
 	public static final int INCOMING = 2;
 	public static final int OUTGOING = 4;
@@ -48,70 +42,91 @@ public final class RefreshRootJob extends SafeWorkspaceJob {
 	private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
 			.getInstance();
 
-	private final HgRoot root;
-	private final boolean withFiles;
+	private final HgRoot hgRoot;
+	//private final boolean withFiles;
 	private final int type;
 
-	public RefreshRootJob(String name, HgRoot root, int type) {
+	public RefreshRootJob(String name, HgRoot hgRoot, int type) {
 		super(name);
-		this.root = root;
-		this.withFiles = getWithFilesProperty();
+		this.hgRoot = hgRoot;
+		//this.withFiles = getWithFilesProperty();
 		this.type = type;
+		if(hgRoot != null) {
+			setRule(new HgRootRule(hgRoot));
+		}
 	}
 
 	public RefreshRootJob(String name, HgRoot root) {
 		this(name, root, ALL);
 	}
 
-	private static boolean getWithFilesProperty() {
-		return Boolean.valueOf(
-				HgClients.getPreference(
-						MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-						"false")).booleanValue();
-	}
+//	private static boolean getWithFilesProperty() {
+//		return Boolean.valueOf(
+//				HgClients.getPreference(
+//						MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
+//						"false")).booleanValue();
+//	}
 
 	@Override
-	protected IStatus runSafe(IProgressMonitor monitor) {
-		if(monitor == null){
-			monitor = new NullProgressMonitor();
+	protected IStatus run(IProgressMonitor monitor) {
+		if(monitor.isCanceled()){
+			return Status.CANCEL_STATUS;
 		}
 
 		if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-			System.out.println("Refresh Job for: " + root.getName());
+			System.out.println("Refresh Job for: " + hgRoot.getName());
 		}
 
 		try {
 			if((type & LOCAL) != 0){
 				monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-				Set<IProject> projects = ResourceUtils.getProjects(root);
-				LocalChangesetCache.getInstance().clear(root, true);
-				for (IProject project : projects) {
+				//Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+				LocalChangesetCache.getInstance().clear(hgRoot, true);
+				//for (IProject project : projects) {
 					// TODO fetch log info ?
 					// LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
-				}
+				//}
 				monitor.worked(1);
 
 				monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
-				mercurialStatusCache.clear(root, false);
-				mercurialStatusCache.refreshStatus(root, monitor);
+				mercurialStatusCache.clear(hgRoot, false);
+				mercurialStatusCache.refreshStatus(hgRoot, monitor);
 				monitor.worked(1);
 			}
 			if((type & OUTGOING) == 0 && (type & INCOMING) == 0){
-				return super.runSafe(monitor);
+				return Status.OK_STATUS;
 			}
 			if((type & INCOMING) != 0){
-				monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + root.getName());
-				IncomingChangesetCache.getInstance().clear(root, true);
+				monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + hgRoot.getName());
+				IncomingChangesetCache.getInstance().clear(hgRoot, true);
 				monitor.worked(1);
 			}
 			if((type & OUTGOING) != 0){
-				monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + root.getName());
-				OutgoingChangesetCache.getInstance().clear(root, true);
+				monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + hgRoot.getName());
+				OutgoingChangesetCache.getInstance().clear(hgRoot, true);
 				monitor.worked(1);
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
+		} finally {
+			monitor.done();
 		}
-		return super.runSafe(monitor);
+		return Status.OK_STATUS;
+	}
+
+	@Override
+	public boolean belongsTo(Object family) {
+		return RefreshRootJob.class == family;
+	}
+
+	@Override
+	public boolean shouldSchedule() {
+		Job[] jobs = Job.getJobManager().find(RefreshRootJob.class);
+		for (Job job : jobs) {
+			if(job.getState() == WAITING){
+				return false;
+			}
+		}
+		return true;
 	}
 }

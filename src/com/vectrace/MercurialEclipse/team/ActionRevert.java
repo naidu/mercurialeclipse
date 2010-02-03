@@ -345,7 +345,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 			if(cache.isAdded(ResourceUtils.getPath(resource))){
 				// added files didn't change content after we un-add them, so we have
 				// give Eclipse a hint to start some extra refresh work.
-				resource.touch(monitor);
+				ResourceUtils.touch(resource);
 			}
 			// we still need to trigger a refresh to avoid confusing editors opened on
 			// these files. Without refresh, they complain that the files are changed but not refreshed

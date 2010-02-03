@@ -16,6 +16,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.team.ResourceDecorator;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
@@ -28,6 +29,7 @@ public class DisconnectHandler extends SingleResourceHandler {
 		RepositoryProvider.unmap(project);
 		MercurialStatusCache.getInstance().clear(project, false);
 		LocalChangesetCache.getInstance().clear(project, false);
+		ResourceDecorator.updateClientDecorations();
 	}
 
 }

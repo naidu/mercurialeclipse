@@ -62,12 +62,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 		HgRoot hgRoot = null;
 		ChangeSet changeSet = null;
 		if (target instanceof IProject) {
-			IProject project = (IProject) target;
-			try {
-				hgRoot = MercurialTeamProvider.getHgRoot(project);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+			hgRoot = MercurialTeamProvider.getHgRoot((IProject) target);
 		} else if (target instanceof ChangeSet) {
 			changeSet = (ChangeSet)target;
 			hgRoot = changeSet.getHgRoot();

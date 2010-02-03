@@ -21,7 +21,6 @@ import org.eclipse.team.core.RepositoryProvider;
 
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgInitClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
@@ -32,9 +31,6 @@ public class InitOperation extends HgOperation {
 	private final String hgPath;
 	private final HgRoot foundHgPath;
 
-	/**
-	 *
-	 */
 	public InitOperation(IRunnableContext ctx, IProject project,
 			HgRoot foundHgRoot, String hgPath) {
 		super(ctx);
@@ -43,25 +39,11 @@ public class InitOperation extends HgOperation {
 		this.foundHgPath = foundHgRoot;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
-	 * ()
-	 */
 	@Override
 	protected String getActionDescription() {
 		return Messages.getString("InitOperation.creatingRepo"); //$NON-NLS-1$
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
-	 * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
-	 * .core.runtime.IProgressMonitor)
-	 */
 	@Override
 	public void run(IProgressMonitor monitor)
 			throws InvocationTargetException, InterruptedException {
@@ -74,7 +56,7 @@ public class InitOperation extends HgOperation {
 				HgInitClient.init(project, hgPath);
 				monitor.worked(1);
 			}
-			monitor.subTask(Messages.getString("InitOperation.mapping.1") + project.getName() //$NON-NLS-1$
+			monitor.subTask(Messages.getString("InitOperation.mapping.1") + " " + project.getName() //$NON-NLS-1$
 					+ Messages.getString("InitOperation.mapping.2")); //$NON-NLS-1$
 			RepositoryProvider.map(project, MercurialTeamProvider.class
 					.getName());
@@ -82,12 +64,10 @@ public class InitOperation extends HgOperation {
 			project.touch(monitor);
 			monitor
 					.subTask(Messages.getString("InitOperation.schedulingRefresh")); //$NON-NLS-1$
-			new RefreshStatusJob(Messages.getString("InitOperation.refresh.1") + project //$NON-NLS-1$
+			new RefreshStatusJob(Messages.getString("InitOperation.refresh.1") + " " + project //$NON-NLS-1$
 					+ Messages.getString("InitOperation.refresh.2"), project) //$NON-NLS-1$
 					.schedule();
 			monitor.worked(1);
-		} catch (HgException e) {
-			throw new InvocationTargetException(e);
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);
 		}

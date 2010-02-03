@@ -28,7 +28,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.PropertyPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
@@ -59,10 +58,8 @@ public class HgProjectPropertyPage extends PropertyPage {
 			setMessage("This project doesn't use MercurialEclipse as Team provider.");
 			return comp;
 		}
-		try {
-			hgRoot = MercurialTeamProvider.getHgRoot(project);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
+		hgRoot = MercurialTeamProvider.getHgRoot(project);
+		if(hgRoot == null) {
 			setMessage("Failed to find hg root for project.");
 			return comp;
 		}

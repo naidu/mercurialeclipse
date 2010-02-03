@@ -84,6 +84,9 @@ public class FlagPropertyTester extends org.eclipse.core.expressions.PropertyTes
 			}
 			try {
 				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+				if(hgRoot == null){
+					return false;
+				}
 				File file = location.toFile();
 				boolean bool = Boolean.valueOf(args[0].toString()).booleanValue();
 				if(bool) {

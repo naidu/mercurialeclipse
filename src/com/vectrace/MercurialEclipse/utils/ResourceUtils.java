@@ -32,7 +32,11 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 import org.eclipse.ui.PlatformUI;
@@ -360,5 +364,22 @@ public class ResourceUtils {
 			}
 		}
 		return null;
+	}
+
+	public static void touch(final IResource res){
+		Job job = new Job("Refresh for: " + res.getName()) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				// triggers the decoration update
+				try {
+					res.touch(monitor);
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 }

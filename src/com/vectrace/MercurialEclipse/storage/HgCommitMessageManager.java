@@ -259,13 +259,9 @@ public class HgCommitMessageManager extends DefaultHandler {
 	public static String getDefaultCommitName(IProject project) {
 		// TODO see issue 10150: get the name from project properties, not from repo
 		// but for now it will at least work for projects with one repo
-		HgRepositoryLocation repoLocation = null;
-		try {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			repoLocation = MercurialEclipsePlugin.getRepoManager().getDefaultRepoLocation(hgRoot);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+				.getDefaultRepoLocation(hgRoot);
 		if(repoLocation == null || repoLocation.getUser() == null){
 			return HgClients.getDefaultUserName();
 		}

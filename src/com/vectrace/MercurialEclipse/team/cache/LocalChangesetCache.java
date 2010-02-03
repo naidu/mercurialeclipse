@@ -29,7 +29,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -341,7 +340,7 @@ public class LocalChangesetCache extends AbstractCache {
 	 * @return may return null
 	 */
 	public ChangeSet getChangesetByRootId(IResource res) throws HgException {
-		HgRoot root = HgClients.getHgRoot(res);
+		HgRoot root = MercurialTeamProvider.getHgRoot(res);
 		return getChangesetForRoot(root);
 	}
 

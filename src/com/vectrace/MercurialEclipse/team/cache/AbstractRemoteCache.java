@@ -133,22 +133,18 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
 		synchronized (repoDatas) {
-			try {
-				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-				Set<RemoteData> set = repoDatas.get(hgRoot);
-				if(set == null){
-					return;
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			Set<RemoteData> set = repoDatas.get(hgRoot);
+			if(set == null){
+				return;
+			}
+			Iterator<RemoteData> iterator = set.iterator();
+			while(iterator.hasNext()) {
+				RemoteData data = iterator.next();
+				if(repo.equals(data.getRepo())){
+					iterator.remove();
+					fastRepoMap.remove(data.getKey());
 				}
-				Iterator<RemoteData> iterator = set.iterator();
-				while(iterator.hasNext()) {
-					RemoteData data = iterator.next();
-					if(repo.equals(data.getRepo())){
-						iterator.remove();
-						fastRepoMap.remove(data.getKey());
-					}
-				}
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
 			}
 		}
 		if(notify) {
