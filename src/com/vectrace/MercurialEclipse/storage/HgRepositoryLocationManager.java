@@ -177,13 +177,11 @@ public class HgRepositoryLocationManager {
 			}
 			repoSet.add(loc);
 			rootRepos.put(hgRoot, repoSet);
-			REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
-		} else {
-			synchronized (repoHistory) {
-				repoHistory.add(loc);
-			}
-			REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
 		}
+		synchronized (repoHistory) {
+			repoHistory.add(loc);
+		}
+		REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
 
 		return true;
 	}
@@ -267,10 +265,10 @@ public class HgRepositoryLocationManager {
 					usedByProject = true;
 				}
 			}
+			synchronized (repoHistory) {
+				repoHistory.add(loc);
+			}
 			if (!usedByProject) {
-				synchronized (repoHistory) {
-					repoHistory.add(loc);
-				}
 				REPOSITORY_RESOURCES_MANAGER.repositoryAdded(loc);
 			}
 		}
@@ -285,6 +283,9 @@ public class HgRepositoryLocationManager {
 		}
 		String[] repoLine = allReposLine.split("\\|");
 		for (String line : repoLine) {
+			if(line == null || line.isEmpty()){
+				continue;
+			}
 			try {
 				HgRepositoryLocation loc = delegator.delegateParse(line);
 				if(loc != null) {
@@ -360,15 +361,15 @@ public class HgRepositoryLocationManager {
 			return;
 		}
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		StringBuilder sb = new StringBuilder();
 		for (HgRepositoryLocation repo : locations) {
 			String line = delegator.delegateCreate(repo);
-			StringBuilder sb = new StringBuilder();
 			if(line != null){
 				sb.append(line);
 				sb.append('|');
 			}
-			store.setValue(key, sb.toString());
 		}
+		store.setValue(key, sb.toString());
 	}
 
 	/**
