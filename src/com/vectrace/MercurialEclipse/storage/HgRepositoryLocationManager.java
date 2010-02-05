@@ -283,7 +283,7 @@ public class HgRepositoryLocationManager {
 		}
 		String[] repoLine = allReposLine.split("\\|");
 		for (String line : repoLine) {
-			if(line == null || line.isEmpty()){
+			if(line == null || line.length() == 0){
 				continue;
 			}
 			try {
