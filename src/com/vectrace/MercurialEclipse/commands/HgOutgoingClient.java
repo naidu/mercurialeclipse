@@ -29,7 +29,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 	 * @return never return null
 	 */
 	public static RemoteData getOutgoing(RemoteKey key) throws HgException {
-		AbstractShellCommand command = getCommand(key.getRoot(), key.getBranch());
+		AbstractShellCommand command = getCommand(key);
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 		try {
@@ -65,14 +65,18 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		}
 	}
 
-	private static AbstractShellCommand getCommand(HgRoot hgRoot, String branch) {
+	private static AbstractShellCommand getCommand(RemoteKey key) {
+		HgRoot hgRoot = key.getRoot();
+		String branch = key.getBranch();
 		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, //$NON-NLS-1$
 				false);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {
-				command.addOptions("-r", branch);
+				if(HgBranchClient.isKnownRemote(hgRoot, key.getRepo(), branch)) {
+					command.addOptions("-r", branch);
+				}
 			} else {
 				// see issue 10495: there can be many "default" heads, so show all of them
 				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any
