@@ -137,15 +137,15 @@ public class CommitFilesChooser extends Composite {
 			viewer.addFilter(untrackedFilesFilter);
 		}
 
-		if(resources != null) {
-			setResources(resources);
-		}
 
 		createOptionCheckbox();
 		createShowDiffButton(container);
 		createFileSelectionListener();
 
 		makeActions();
+		if(resources != null) {
+			setResources(resources);
+		}
 	}
 
 	private void createFileSelectionListener() {
@@ -299,7 +299,7 @@ public class CommitFilesChooser extends Composite {
 
 		List<CommitResource> tracked = new CommitResourceUtil().filterForTracked(commitResources);
 		getViewer().setCheckedElements(tracked.toArray());
-		if (!showUntracked) {
+		if (selectable && !showUntracked) {
 			selectAllButton.setSelection(true);
 		}
 		// show clean file, if we are called on a single, not modified file (revert to any version in the past)
