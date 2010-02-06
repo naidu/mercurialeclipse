@@ -27,9 +27,12 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextListener;
+import org.eclipse.jface.text.TextEvent;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
@@ -38,8 +41,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -69,6 +70,7 @@ import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * A commit dialog box allowing choosing of what files to commit and a commit message for those files. Untracked files
@@ -81,8 +83,9 @@ public class CommitDialog extends TitleAreaDialog {
 	public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
 	public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
 	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
+	private static final String DEFAULT_COMMIT_MESSAGE = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
-	protected String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
+	protected String defaultCommitMessage;
 	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
 	protected CommitFilesChooser commitFilesList;
@@ -104,6 +107,7 @@ public class CommitDialog extends TitleAreaDialog {
 	public CommitDialog(Shell shell, List<IResource> resources) {
 		super(shell);
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
+		defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
 		setBlockOnOpen(false);
 		inResources = resources;
 		commitTextDocument = new Document();
@@ -149,16 +153,33 @@ public class CommitDialog extends TitleAreaDialog {
 		createRevertCheckBox(container);
 		createFilesList(container);
 
+		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
+		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
+		return container;
+	}
+
+	@Override
+	protected Control createContents(Composite parent) {
+		Control control = super.createContents(parent);
 		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskComment(
 						inResources == null ? null : inResources.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
 
 		commitTextBox.getTextWidget().setFocus();
-		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
-		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
-		setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
-		return container;
+		commitTextBox.getTextWidget().selectAll();
+		return control;
+	}
+
+	private void validateCommitMessage(final String message) {
+		if(StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message)) {
+			setErrorMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
+			getButton(IDialogConstants.OK_ID).setEnabled(false);
+		} else {
+			setErrorMessage(null); //";
+			setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
+			getButton(IDialogConstants.OK_ID).setEnabled(true);
+		}
 	}
 
 	protected void createRevertCheckBox(Composite container) {
@@ -231,19 +252,14 @@ public class CommitDialog extends TitleAreaDialog {
 		AnnotationModel annotationModel = new AnnotationModel();
 		commitTextBox.setDocument(commitTextDocument, annotationModel);
 		commitTextBox.getTextWidget().addDisposeListener(new DisposeListener() {
-
 			public void widgetDisposed(DisposeEvent e) {
 				decorationSupport.uninstall();
 			}
-
 		});
 
-		commitTextBox.getTextWidget().addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseUp(MouseEvent e) {
-				if (commitTextDocument.get().equals(defaultCommitMessage)) {
-					commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
-				}
+		commitTextBox.addTextListener(new ITextListener() {
+			public void textChanged(TextEvent event) {
+				validateCommitMessage(commitTextBox.getDocument().get());
 			}
 		});
 	}
