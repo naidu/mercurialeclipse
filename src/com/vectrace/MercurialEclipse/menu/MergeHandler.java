@@ -22,7 +22,6 @@ import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
@@ -145,8 +144,7 @@ public class MergeHandler extends RootHandler {
 		monitor.worked(1);
 
 		// always show Merge view, as it offers to abort a merge and revise the automatically merged files
-		MergeView view = (MergeView) PlatformUI.getWorkbench()
-			.getActiveWorkbenchWindow().getActivePage().showView(MergeView.ID);
+		MergeView view = (MergeView) MercurialEclipsePlugin.getActivePage().showView(MergeView.ID);
 		view.clearView();
 		view.setCurrentRoot(hgRoot);
 

@@ -39,7 +39,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.ResourceUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -106,7 +105,7 @@ public class ResourceUtils {
 	 * Checks which editor is active an determines the IResource that is edited.
 	 */
 	public static IFile getActiveResourceFromEditor() {
-		IEditorPart editorPart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+		IEditorPart editorPart = MercurialEclipsePlugin.getActivePage().getActiveEditor();
 
 		if (editorPart != null) {
 			IFileEditorInput input = (IFileEditorInput) editorPart.getEditorInput();

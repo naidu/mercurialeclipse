@@ -39,12 +39,9 @@ import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
@@ -164,9 +161,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 	}
 
 	private AbstractDecoratedTextEditor getEditor() {
-		final IWorkbench workbench = PlatformUI.getWorkbench();
-		final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-		IEditorReference[] references = window.getActivePage()
+		IEditorReference[] references = MercurialEclipsePlugin.getActivePage()
 				.getEditorReferences();
 		IResource resource = res;
 		if (resource == null) {

@@ -20,8 +20,8 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.annotations.ShowAnnotationOperation;
 import com.vectrace.MercurialEclipse.menu.Messages;
 
@@ -58,7 +58,7 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
 	public void run(IAction action) {
-		IWorkbenchPart part = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActivePart();
+		IWorkbenchPart part = MercurialEclipsePlugin.getActivePage().getActivePart();
 		if (selection.getFirstElement() instanceof IResource) {
 			IResource firstElement = (IResource)selection.getFirstElement();
 			File file = firstElement.getLocation().toFile();
@@ -79,8 +79,7 @@ public class ActionAnnotate implements IWorkbenchWindowActionDelegate {
 	 * @see IWorkbenchWindowActionDelegate#selectionChanged
 	 */
 	public void selectionChanged(IAction action, ISelection in_selection) {
-		if (in_selection != null
-				&& in_selection instanceof IStructuredSelection) {
+		if (in_selection instanceof IStructuredSelection) {
 			selection = (IStructuredSelection) in_selection;
 		}
 	}

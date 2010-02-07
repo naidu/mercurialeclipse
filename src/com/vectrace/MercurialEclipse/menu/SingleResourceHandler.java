@@ -21,8 +21,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -36,7 +36,7 @@ public abstract class SingleResourceHandler extends AbstractHandler {
 	private Shell shell;
 
 	protected Shell getShell() {
-		return shell != null? shell : PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+		return shell != null? shell : MercurialEclipsePlugin.getActiveShell();
 	}
 
 	protected IResource getSelectedResource() {

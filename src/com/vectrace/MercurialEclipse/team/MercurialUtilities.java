@@ -35,8 +35,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.Team;
-import org.eclipse.ui.IWorkbench;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -268,18 +266,10 @@ public class MercurialUtilities {
 
 		// open dialog if resource is linked and flag is set to true
 		if (dialog && isLinked) {
-			Shell shell = null;
-			IWorkbench workbench = null;
-
-			workbench = PlatformUI.getWorkbench();
-			if (workbench != null && workbench.getActiveWorkbenchWindow() != null) {
-				shell = workbench.getActiveWorkbenchWindow().getShell();
-			}
-			if (shell != null) {
-				MessageDialog.openInformation(shell, Messages
-						.getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
-						Messages.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
-			}
+			Shell shell = MercurialEclipsePlugin.getActiveShell();
+			MessageDialog.openInformation(shell, Messages
+					.getString("MercurialUtilities.linkWarningShort"), //$NON-NLS-1$
+					Messages.getString("MercurialUtilities.linkWarningLong")); //$NON-NLS-1$
 		}
 
 		// TODO Follow links and see if they point to another reposetory

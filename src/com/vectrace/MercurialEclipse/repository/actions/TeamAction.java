@@ -45,12 +45,9 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IViewActionDelegate;
 import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionDelegate;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -185,15 +182,7 @@ public abstract class TeamAction extends ActionDelegate implements
 		if (shell != null) {
 			return shell;
 		}
-		IWorkbench workbench = PlatformUI.getWorkbench();
-		if (workbench == null) {
-			return null;
-		}
-		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-		if (window == null) {
-			return null;
-		}
-		return window.getShell();
+		return MercurialEclipsePlugin.getActiveShell();
 
 	}
 

@@ -24,7 +24,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -163,7 +162,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		}
 		MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
 				+ ". Detected repository location: " + hgRoot, null);
-		final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		final IWorkbenchWindow activeWorkbenchWindow = MercurialEclipsePlugin.getActiveWindow();
 
 		new SafeWorkspaceJob(NLS.bind(Messages.mercurialStatusCache_autoshare, project.getName())) {
 			@Override

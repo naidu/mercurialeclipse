@@ -328,8 +328,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	}
 
 	public static PatchQueueView getView() {
-		PatchQueueView view = (PatchQueueView) PlatformUI.getWorkbench()
-				.getActiveWorkbenchWindow().getActivePage().findView(ID);
+		PatchQueueView view = (PatchQueueView)MercurialEclipsePlugin.getActivePage().findView(ID);
 		if (view == null) {
 			try {
 				view = (PatchQueueView) PlatformUI.getWorkbench()

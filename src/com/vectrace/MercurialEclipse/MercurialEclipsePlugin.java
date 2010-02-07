@@ -370,9 +370,23 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 		return getActiveWindow().getActivePage();
 	}
 
+	/**
+	 * Convenience method to get the currently active shell.
+	 *
+	 * @return the active workbench shell. Never null, if there is at least one window open.
+	 */
+	public static Shell getActiveShell() {
+		return getActiveWindow().getShell();
+	}
+
+	/**
+	 * Convenience method to get the currently active workbench window.
+	 *
+	 * @return the active workbench window. Never null, if there is at least one window open.
+	 */
 	public static IWorkbenchWindow getActiveWindow() {
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		if(window != null){
+		if (window != null) {
 			return window;
 		}
 		return PlatformUI.getWorkbench().getWorkbenchWindows()[0];

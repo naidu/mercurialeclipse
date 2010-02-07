@@ -198,14 +198,7 @@ public class ActionRevert implements IWorkbenchWindowActionDelegate {
 	}
 
 	private Shell getShell() {
-		Shell shell;
-		// Get shell
-		if (window != null && window.getShell() != null) {
-			shell = window.getShell();
-		} else {
-			shell = MercurialEclipsePlugin.getActiveWindow().getShell();
-		}
-		return shell;
+		return window != null ? window.getShell() : MercurialEclipsePlugin.getActiveShell();
 	}
 
 	private void openRevertDialog(List<IResource> resources, final boolean cleanAfterMerge) {

@@ -38,7 +38,7 @@ public abstract class RootHandler extends AbstractHandler {
 	private Shell shell;
 
 	protected Shell getShell() {
-		return shell != null? shell : MercurialEclipsePlugin.getActiveWindow().getShell();
+		return shell != null? shell : MercurialEclipsePlugin.getActiveShell();
 	}
 
 	protected HgRoot getSelectedRoot() {
