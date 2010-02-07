@@ -17,6 +17,7 @@ import org.eclipse.jface.wizard.IWizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
@@ -24,6 +25,8 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
  * informations about Hg repository location
  */
 public class NewLocationWizard extends HgWizard {
+
+	private HgRepositoryLocation repository;
 
 	public NewLocationWizard() {
 		super(Messages.getString("NewLocationWizard.name")); //$NON-NLS-1$
@@ -52,7 +55,7 @@ public class NewLocationWizard extends HgWizard {
 		Properties props = page.getProperties();
 		HgRepositoryLocationManager manager = MercurialEclipsePlugin.getRepoManager();
 		try {
-			manager.createRepository(props);
+			repository = manager.createRepository(props);
 		} catch (HgException ex) {
 			MercurialEclipsePlugin.logError(ex);
 			return false;
@@ -72,5 +75,9 @@ public class NewLocationWizard extends HgWizard {
 		page = mainPage;
 		initPage(description, page);
 		return page;
+	}
+
+	public HgRepositoryLocation getRepository() {
+		return repository;
 	}
 }

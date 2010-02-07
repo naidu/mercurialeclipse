@@ -32,11 +32,11 @@ import com.vectrace.MercurialEclipse.dialogs.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class HgCommitClient extends AbstractClient {
-	private final static boolean isWindows = File.separatorChar == '\\';
 
 	/**
 	 * Commit given resources and refresh the caches for the associated projects
@@ -84,7 +84,7 @@ public class HgCommitClient extends AbstractClient {
 		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-		command.addUserName(quote(user));
+		command.addUserName(user);
 		if (closeBranch) {
 			command.addOptions("--close-branch");
 		}
@@ -93,6 +93,7 @@ public class HgCommitClient extends AbstractClient {
 			addMessage(command, messageFile, message);
 			command.addFiles(AbstractClient.toPaths(files));
 			String result = command.executeToString();
+			command.rememberUserName();
 			return result;
 		} finally {
 			deleteMessage(messageFile);
@@ -121,11 +122,12 @@ public class HgCommitClient extends AbstractClient {
 		HgCommand command = new HgCommand("commit", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.COMMIT_TIMEOUT);
-		command.addUserName(quote(user));
+		command.addUserName(user);
 		File messageFile = saveMessage(message);
 		try {
 			addMessage(command, messageFile, message);
 			String result = command.executeToString();
+			command.rememberUserName();
 			new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 			return result;
 		} finally {
@@ -137,7 +139,7 @@ public class HgCommitClient extends AbstractClient {
 		if (str != null) {
 			str = str.trim();
 		}
-		if (str == null || str.length() == 0 || !isWindows) {
+		if (str == null || str.length() == 0 || !MercurialUtilities.isWindows()) {
 			return str;
 		}
 		// escape quotes, otherwise commit will fail at least on windows

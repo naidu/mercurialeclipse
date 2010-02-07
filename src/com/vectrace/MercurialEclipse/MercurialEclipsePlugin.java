@@ -134,7 +134,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 					monitor.done();
 					return new Status(IStatus.OK, ID, Messages
 							.getString("MercurialEclipsePlugin.startedSuccessfully")); //$NON-NLS-1$
-				} catch (Exception e) {
+				} catch (HgException e) {
 					hgUsable = false;
 					logError(Messages.getString("MercurialEclipsePlugin.unableToStart"), e); //$NON-NLS-1$
 					return new Status(IStatus.ERROR, ID, e.getLocalizedMessage(), e);

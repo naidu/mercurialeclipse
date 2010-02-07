@@ -21,7 +21,6 @@ import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -60,7 +59,6 @@ import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -100,12 +98,19 @@ public class CommitDialog extends TitleAreaDialog {
 	private String user;
 	private Button revertCheckBox;
 	private boolean filesSelectable;
-	private HgRoot hgRoot;
+	private final HgRoot hgRoot;
 	private String commitResult;
 	private Button closeBranchCheckBox;
 
-	public CommitDialog(Shell shell, List<IResource> resources) {
+	/**
+	 *
+	 * @param shell
+	 * @param hgRoot non null
+	 * @param resources might be null
+	 */
+	public CommitDialog(Shell shell, HgRoot hgRoot, List<IResource> resources) {
 		super(shell);
+		this.hgRoot = hgRoot;
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
 		defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
 		setBlockOnOpen(false);
@@ -211,24 +216,13 @@ public class CommitDialog extends TitleAreaDialog {
 	private void createUserCommitCombo(Composite container) {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
 		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
-		this.userTextField = SWTWidgetHelper.createTextField(comp);
-		// TODO provide an option to either use default commit name OR project specific one
-		// See issue #10240: Wrong author is used in synchronization commit message
-//        if (user == null || user.length() == 0) {
-//            user = getInitialCommitUserName();
-//        }
-		if (user == null || user.length() == 0) {
-			user = HgClients.getDefaultUserName();
-		}
-		this.userTextField.setText(user);
+		userTextField = SWTWidgetHelper.createTextField(comp);
+		user = getInitialCommitUserName();
+		userTextField.setText(user);
 	}
 
 	protected String getInitialCommitUserName() {
-		if(inResources.isEmpty()){
-			return null;
-		}
-		IProject project = inResources.get(0).getProject();
-		return HgCommitMessageManager.getDefaultCommitName(project);
+		return HgCommitMessageManager.getDefaultCommitName(hgRoot);
 	}
 
 	private void createCommitTextBox(Composite container) {
@@ -305,7 +299,10 @@ public class CommitDialog extends TitleAreaDialog {
 			if (!commitMessage.equals(defaultCommitMessage)) {
 				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
 			}
-			this.user = userTextField.getText();
+			user = userTextField.getText();
+			if (user == null || user.length() == 0) {
+				user = getInitialCommitUserName();
+			}
 
 			// add new resources
 			HgAddClient.addResources(resourcesToAdd, null);
@@ -315,9 +312,6 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// commit all
 			String messageToCommit = getCommitMessage();
-			if (user == null || user.length() == 0) {
-				user = getInitialCommitUserName();
-			}
 
 			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox
 					.getSelection() : false;
@@ -344,7 +338,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
-		if(hgRoot != null && !filesSelectable && resourcesToCommit.isEmpty()){
+		if(!filesSelectable && resourcesToCommit.isEmpty()){
 			// enforce commit anyway
 			return HgCommitClient.commitResources(hgRoot, closeBranch, user, messageToCommit, new NullProgressMonitor());
 		}
@@ -388,14 +382,6 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public void setDefaultCommitMessage(String defaultCommitMessage) {
 		this.defaultCommitMessage = defaultCommitMessage;
-	}
-
-	public void setHgRoot(HgRoot hgRoot) {
-		this.hgRoot = hgRoot;
-	}
-
-	public HgRoot getHgRoot() {
-		return hgRoot;
 	}
 
 	public Button getCloseBranchCheckBox() {

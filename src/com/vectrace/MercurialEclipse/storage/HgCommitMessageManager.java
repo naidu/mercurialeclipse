@@ -34,7 +34,7 @@ import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 
-import org.eclipse.core.resources.IProject;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -42,11 +42,9 @@ import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
@@ -54,23 +52,31 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * The commit messages are save to a xml file when closing down and then re-read when the plugin is started.
  *
  */
-public class HgCommitMessageManager extends DefaultHandler {
+public class HgCommitMessageManager {
 
-	/*
+	/**
 	 * commit messages database (keep it simple)
 	 */
 	private static List<String> commitMessages = new ArrayList<String>();
 
-	final static private String COMMIT_MESSAGE_FILE = "commit_messages.xml"; //$NON-NLS-1$
-	final static private String XML_TAG_COMMIT_MESSAGE  = "commitmessage";   //$NON-NLS-1$
-	final static private String XML_TAG_COMMIT_MESSAGES = "commitmessages";  //$NON-NLS-1$
+	/**
+	 * Prefix for the pref store for the hg root default commit name
+	 */
+	public final static String KEY_PREFIX_COMMIT_NAME = "commitName_"; //$NON-NLS-1$
 
-	String tmpMessage;
+	private final static String COMMIT_MESSAGE_FILE = "commit_messages.xml"; //$NON-NLS-1$
+	private final static String XML_TAG_COMMIT_MESSAGE  = "commitmessage";   //$NON-NLS-1$
+	private final static String XML_TAG_COMMIT_MESSAGES = "commitmessages";  //$NON-NLS-1$
+
+	private final XmlHandler xmlHandler;
+
+	public HgCommitMessageManager() {
+		xmlHandler = new XmlHandler(this);
+	}
 
 	/**
 	 *  Save message in in-memory database
 	 */
-
 	public void saveCommitMessage(String message) {
 		if (commitMessages.contains(message)) {
 			// remove it, and put it in front
@@ -100,7 +106,6 @@ public class HgCommitMessageManager extends DefaultHandler {
 	/**
 	 *  Save message in in-memory database new data last (used when loading from file)
 	 */
-
 	private void addCommitMessage(String message) {
 		commitMessages.add(message);
 		restrictSavedCommitMessages();
@@ -129,31 +134,33 @@ public class HgCommitMessageManager extends DefaultHandler {
 	 *
 	 * @throws HgException
 	 */
-	public void start() throws IOException, HgException {
+	public void start() throws HgException {
 		File file = getLocationFile();
-
-		if (file.exists()) {
-			/* String line; */
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					new FileInputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
+		if(!file.isFile()){
+			return;
+		}
+		BufferedReader reader = null;
+		try {
+			reader = new BufferedReader(new InputStreamReader(new FileInputStream(file),
+					MercurialEclipsePlugin.getDefaultEncoding()));
 			SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 			parserFactory.setValidating(false);
-/*
-			spf.setValidating(true);
-*/
-			try {
-				SAXParser parser = parserFactory.newSAXParser();
-				parser.parse(new InputSource(reader), this);
+			SAXParser parser = parserFactory.newSAXParser();
+			parser.parse(new InputSource(reader), xmlHandler);
+		} catch (SAXException e) {
+			throw new HgException("Failed to open commit database file: " + file, e);
+		} catch (ParserConfigurationException e) {
+			throw new HgException("Failed to open commit database file: " + file, e);
+		} catch (IOException e) {
+			throw new HgException("Failed to open commit database file: " + file, e);
+		} finally {
+			if(reader != null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
 			}
-			catch(SAXException e) {
-				/* we don't want to load it - it will be cleaned when saving */
-				MercurialEclipsePlugin.logError(e);
-			}
-			catch(ParserConfigurationException e) {
-				/* we don't want to load it - it will be cleaned when saving */
-				MercurialEclipsePlugin.logError(e);
-			}
-			reader.close();
 		}
 	}
 
@@ -190,18 +197,15 @@ public class HgCommitMessageManager extends DefaultHandler {
 							"10")); //$NON-NLS-1$
 
 			/* Do not save more then the prefs size */
-			if(size > prefs_commit_message_size_max)
-			{
+			if (size > prefs_commit_message_size_max) {
 				size = prefs_commit_message_size_max;
 			}
 
-
-			for (int i = 0; i < size; i++)
-			{
+			for (int i = 0; i < size; i++) {
 				String msg = commitMessages.get(i);
-				transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGE,atts); //$NON-NLS-1$
+				transformerHandler.startElement("", "", XML_TAG_COMMIT_MESSAGE, atts); //$NON-NLS-1$
 				transformerHandler.characters(msg.toCharArray(), 0, msg.length());
-				transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGE); //$NON-NLS-1$
+				transformerHandler.endElement("", "", XML_TAG_COMMIT_MESSAGE); //$NON-NLS-1$
 			}
 			transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGES); //$NON-NLS-1$
 			transformerHandler.endDocument();
@@ -216,60 +220,86 @@ public class HgCommitMessageManager extends DefaultHandler {
 		writer.close();
 	}
 
+	/**
+	 * Get the commit name for given root
+	 * @param hgRoot non null
+	 * @return never null, but might be empty
+	 */
+	public static String getDefaultCommitName(HgRoot hgRoot) {
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		String commitName = store.getString(getKey(hgRoot));
+		if(commitName != null && commitName.length() != 0){
+			return commitName;
+		}
 
-	/*
+		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+			.getDefaultRepoLocation(hgRoot);
+		if(repoLocation != null) {
+			String user = repoLocation.getUser();
+			if (user != null && user.trim().length() > 0) {
+				return user;
+			}
+		}
+		return MercurialUtilities.getDefaultUserName();
+	}
+
+	public static void setDefaultCommitName(HgRoot hgRoot, String name){
+		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		store.setValue(getKey(hgRoot), name);
+	}
+
+	private static String getKey(HgRoot root) {
+		return HgCommitMessageManager.KEY_PREFIX_COMMIT_NAME + root.getAbsolutePath();
+	}
+
+
+	/**
 	 *  SAX Handler methods class to handle XML parsing
 	 */
+	private static class XmlHandler extends DefaultHandler {
 
-	/**
-	 * Called when the starting of the Element is reached. For Example if we have Tag
-	 * called <Title> ... </Title>, then this method is called when <Title> tag is
-	 * Encountered while parsing the Current XML File. The AttributeList Parameter has
-	 * the list of all Attributes declared for the Current Element in the XML File.
-	 */
-	@Override
-	public void startElement(String uri, String localName, String qname, Attributes attr) {
-		/* Clear char string */
-		tmpMessage = ""; //$NON-NLS-1$
-	}
+		private final HgCommitMessageManager mgr;
+		private String tmpMessage;
 
-	/**
-	 * Called when the Ending of the current Element is reached. For example in the
-	 * above explanation, this method is called when </Title> tag is reached
-	 */
-	@Override
-	public void endElement(String uri, String localName, String qname) {
-		/* If it was a commit message save the char string in the database */
-		if (qname.equalsIgnoreCase(XML_TAG_COMMIT_MESSAGE)) {
-			addCommitMessage(tmpMessage);
+		private XmlHandler(HgCommitMessageManager mgr) {
+			this.mgr = mgr;
+		}
+
+		/**
+		 * Called when the starting of the Element is reached. For Example if we have Tag
+		 * called <Title> ... </Title>, then this method is called when <Title> tag is
+		 * Encountered while parsing the Current XML File. The AttributeList Parameter has
+		 * the list of all Attributes declared for the Current Element in the XML File.
+		 */
+		@Override
+		public void startElement(String uri, String localName, String qname, Attributes attr) {
+			/* Clear char string */
+			tmpMessage = ""; //$NON-NLS-1$
+		}
+
+		/**
+		 * Called when the Ending of the current Element is reached. For example in the
+		 * above explanation, this method is called when </Title> tag is reached
+		 */
+		@Override
+		public void endElement(String uri, String localName, String qname) {
+			/* If it was a commit message save the char string in the database */
+			if (qname.equalsIgnoreCase(XML_TAG_COMMIT_MESSAGE)) {
+				mgr.addCommitMessage(tmpMessage);
+			}
+		}
+
+		/**
+		 * While Parsing the XML file, if extra characters like space or enter Character
+		 * are encountered then this method is called. If you don't want to do anything
+		 * special with these characters, then you can normally leave this method blank.
+		 */
+		@Override
+		public void characters(char[] ch, int start, int length) {
+			/* Collect the char string together this will be called for every special char */
+			tmpMessage = tmpMessage + new String(ch, start, length);
 		}
 	}
 
-	/**
-	 * While Parsing the XML file, if extra characters like space or enter Character
-	 * are encountered then this method is called. If you don't want to do anything
-	 * special with these characters, then you can normally leave this method blank.
-	 */
-	@Override
-	public void characters(char[] ch, int start, int length) {
-		/* Collect the char string together this will be called for every special char */
-		tmpMessage = tmpMessage + new String(ch, start, length);
-	}
 
-	public static String getDefaultCommitName(IProject project) {
-		// TODO see issue 10150: get the name from project properties, not from repo
-		// but for now it will at least work for projects with one repo
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultRepoLocation(hgRoot);
-		if(repoLocation == null || repoLocation.getUser() == null){
-			return HgClients.getDefaultUserName();
-		}
-		return repoLocation.getUser();
-	}
-
-	public static String getDefaultCommitName(HgRoot root) {
-		// TODO see issue 10150: get the name from project/root properties, not from repo
-		return HgClients.getDefaultUserName();
-	}
 }

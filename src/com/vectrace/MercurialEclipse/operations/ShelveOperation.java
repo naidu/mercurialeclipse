@@ -32,6 +32,7 @@ import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgAtticClient;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -65,7 +66,7 @@ public class ShelveOperation extends HgOperation {
 							ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
 				String output = HgAtticClient.shelve(hgRoot,
 						"MercurialEclipse shelve operation", // $NON-NLS-1$
-						true, MercurialUtilities.getHGUsername(),
+						true, HgCommitMessageManager.getDefaultCommitName(hgRoot),
 						hgRoot.getName());
 				monitor.worked(1);
 				new RefreshWorkspaceStatusJob(hgRoot, true).schedule();

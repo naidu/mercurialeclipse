@@ -10,12 +10,11 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
-import java.io.File;
-
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
@@ -23,10 +22,9 @@ import com.vectrace.MercurialEclipse.exception.HgException;
  */
 public class HgAtticClient extends AbstractClient {
 
-	public static String shelve(File repoFile, String commitMessage,
+	public static String shelve(HgRoot hgRoot, String commitMessage,
 			boolean git, String user, String name) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("attic-shelve",// $NON-NLS-1$
-				getWorkingDirectory(repoFile), false);
+		HgCommand cmd = new HgCommand("attic-shelve", hgRoot, false);
 
 		if (commitMessage != null && commitMessage.length() > 0) {
 			cmd.addOptions("-m", commitMessage);// $NON-NLS-1$
@@ -35,18 +33,18 @@ public class HgAtticClient extends AbstractClient {
 		if (git) {
 			cmd.addOptions("--git");// $NON-NLS-1$
 		}
-		if (user != null && user.length() > 0) {
-			cmd.addOptions("-u", user);// $NON-NLS-1$
-		}
+
+		cmd.addUserName(user);
 
 		cmd.addOptions("--currentdate", name);// $NON-NLS-1$
-		return cmd.executeToString();
+		String result = cmd.executeToString();
+		cmd.rememberUserName();
+		return result;
 	}
 
-	public static String unshelve(File repoFile, boolean guessRenamedFiles,
+	public static String unshelve(HgRoot hgRoot, boolean guessRenamedFiles,
 			boolean delete, String name) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("attic-unshelve",// $NON-NLS-1$
-				getWorkingDirectory(repoFile), false);
+		AbstractShellCommand cmd = new HgCommand("attic-unshelve", hgRoot, false);
 
 		if (guessRenamedFiles) {
 			cmd.addOptions("--similarity");// $NON-NLS-1$
@@ -57,14 +55,6 @@ public class HgAtticClient extends AbstractClient {
 		}
 
 		cmd.addOptions(name);
-		return cmd.executeToString();
-	}
-
-	public static String refresh(File repoFile, String name) throws HgException {
-		AbstractShellCommand cmd = new HgCommand("shelve",// $NON-NLS-1$
-				getWorkingDirectory(repoFile), false);
-
-		cmd.addOptions("--refresh", name);// $NON-NLS-1$
 		return cmd.executeToString();
 	}
 

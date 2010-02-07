@@ -87,17 +87,17 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		SWTWidgetHelper.createLabel(optionGroup, Messages
 				.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
-		this.userTextField = SWTWidgetHelper.createTextField(optionGroup);
-		this.userTextField.setText(MercurialUtilities.getHGUsername());
+		userTextField = SWTWidgetHelper.createTextField(optionGroup);
+		userTextField.setText(MercurialUtilities.getDefaultUserName());
 
 		SWTWidgetHelper.createLabel(optionGroup, Messages
 				.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
-		this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
+		messageTextField = SWTWidgetHelper.createTextField(optionGroup);
 
 		// --merge merge with old dirstate parent after backout
-		this.mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
-		this.mergeCheckBox.setSelection(true);
+		mergeCheckBox.setSelection(true);
 
 
 		setControl(composite);

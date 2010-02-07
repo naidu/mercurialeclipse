@@ -73,6 +73,7 @@ public class HgTagClient extends AbstractClient {
 		command.addUserName(user);
 		command.addOptions(name);
 		command.executeToBytes();
+		command.rememberUserName();
 	}
 
 	public static String removeTag(HgRoot hgRoot, Tag tag, String user) throws HgException {
@@ -80,6 +81,8 @@ public class HgTagClient extends AbstractClient {
 		command.addUserName(user);
 		command.addOptions("--remove");
 		command.addOptions(tag.getName());
-		return command.executeToString();
+		String result = command.executeToString();
+		command.rememberUserName();
+		return result;
 	}
 }

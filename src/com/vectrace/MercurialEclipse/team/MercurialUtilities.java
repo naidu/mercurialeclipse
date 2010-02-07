@@ -33,7 +33,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceDialog;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.Team;
 import org.eclipse.ui.IWorkbench;
@@ -47,7 +46,9 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgConfigClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
 /**
@@ -57,12 +58,17 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  *
  */
 public class MercurialUtilities {
+	private final static boolean isWindows = File.separatorChar == '\\';
 
 	/**
 	 * This class is full of utilities metods, useful allover the place
 	 */
 	private MercurialUtilities() {
 		// don't call me
+	}
+
+	public static boolean isWindows() {
+		return isWindows;
 	}
 
 	/**
@@ -284,10 +290,13 @@ public class MercurialUtilities {
 	/**
 	 * Returns the username for hg as configured in preferences. If it's not defined in the
 	 * preference store, null is returned.
+	 * <p>
+	 * <b>Note:</b> Preferred way to access user commit name is to use
+	 * {@link HgCommitMessageManager#getDefaultCommitName(HgRoot)}
 	 *
-	 * @return hg username or null
+	 * @return hg username or empty string, never null
 	 */
-	public static String getHGUsername() {
+	public static String getDefaultUserName() {
 		IPreferenceStore preferenceStore = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		// This returns "" if not defined
 		String username = preferenceStore
@@ -309,12 +318,14 @@ public class MercurialUtilities {
 			username = readUsernameFromIni(home + "/.hgrc");
 		}
 
-		if (username == null || username.equals("")) {
-			username = readUsernameFromIni(home + "/Mercurial.ini");
-		}
+		if(isWindows()){
+			if (username == null || username.equals("")) {
+				username = readUsernameFromIni(home + "/Mercurial.ini");
+			}
 
-		if (username == null || username.equals("")) {
-			username = readUsernameFromIni("C:/Mercurial/Mercurial.ini");
+			if (username == null || username.equals("")) {
+				username = readUsernameFromIni("C:/Mercurial/Mercurial.ini");
+			}
 		}
 
 		if (username == null || username.equals("")) {
@@ -338,49 +349,6 @@ public class MercurialUtilities {
 			username = null;
 		}
 		return username;
-	}
-
-	/**
-	 * Gets the username for hg as configured in preferences. If there is no preference set and
-	 * configureIfMissing is true, start configuration of the username and afterwards return the new
-	 * preference. If nothing was configured this could still be null!
-	 *
-	 * If configureIfMissing is false and no preference is set, the systems property "user.name" is
-	 * returned (@see {@link System#getProperty(String)}
-	 *
-	 * @param configureIfMissing
-	 *            true if configuration should be started, otherwise false
-	 * @return the username
-	 */
-	public static String getHGUsername(boolean configureIfMissing) {
-		String uname = getHGUsername();
-
-		if (uname != null && uname.length() != 0) {
-			return uname;
-		}
-		if (configureIfMissing) {
-			configureUsername();
-			return getHGUsername();
-		}
-		try {
-			return HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
-					.getLocation().toFile(), "ui.username");
-		} catch (HgException e) {
-			return System.getProperty("user.name");
-		}
-	}
-
-	/**
-	 * Starts configuration of the hg username by opening preference page.
-	 */
-	public static void configureUsername() {
-		Shell shell = Display.getCurrent().getActiveShell();
-		String pageId = "com.vectrace.MercurialEclipse.prefspage"; //$NON-NLS-1$
-		String[] dsplIds = null;
-		Object data = null;
-		PreferenceDialog dlg = PreferencesUtil.createPreferenceDialogOn(shell, pageId, dsplIds,
-				data);
-		dlg.open();
 	}
 
 	/**

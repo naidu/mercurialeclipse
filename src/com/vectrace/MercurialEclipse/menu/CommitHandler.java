@@ -11,6 +11,9 @@
 package com.vectrace.MercurialEclipse.menu;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import org.eclipse.core.resources.IResource;
 
@@ -18,28 +21,32 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.dialogs.CommitDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class CommitHandler extends MultipleResourcesHandler {
 
 	private String message;
 	private boolean filesSelectable = true;
-	private HgRoot root;
 
 	@Override
-	public void run(final List<IResource> resources) throws HgException {
-		HgRoot hgRoot = ensureSameRoot(resources);
-		if(HgStatusClient.isMergeInProgress(hgRoot)){
-			new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
-			return;
+	public void run(List<IResource> resources) throws HgException {
+		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(resources);
+		Set<Entry<HgRoot,List<IResource>>> entrySet = byRoot.entrySet();
+
+		for (Entry<HgRoot, List<IResource>> entry : entrySet) {
+			HgRoot hgRoot = entry.getKey();
+			if(HgStatusClient.isMergeInProgress(hgRoot)){
+				new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getShell());
+				return;
+			}
+			CommitDialog commitDialog = new CommitDialog(getShell(), hgRoot, entry.getValue());
+			if(message != null){
+				commitDialog.setDefaultCommitMessage(message);
+			}
+			commitDialog.setFilesSelectable(filesSelectable);
+			commitDialog.setBlockOnOpen(true);
+			commitDialog.open();
 		}
-		CommitDialog commitDialog = new CommitDialog(getShell(), resources);
-		if(message != null){
-			commitDialog.setDefaultCommitMessage(message);
-		}
-		commitDialog.setFilesSelectable(filesSelectable);
-		commitDialog.setHgRoot(root);
-		commitDialog.setBlockOnOpen(true);
-		commitDialog.open();
 	}
 
 	public void setCommitMessage(String message){
@@ -48,7 +55,5 @@ public class CommitHandler extends MultipleResourcesHandler {
 	public void setFilesSelectable(boolean on){
 		this.filesSelectable = on;
 	}
-	public void setRoot(HgRoot root){
-		this.root = root;
-	}
+
 }
