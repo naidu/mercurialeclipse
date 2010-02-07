@@ -1021,6 +1021,15 @@
                enablesFor="1"
                id="com.vectrace.MercurialEclipse.team.ActionChangeLog">
            </action>
+           <action
+                 class="com.vectrace.MercurialEclipse.team.ActionAdd"
+                 definitionId="com.vectrace.MercurialEclipse.menu.AddHandler"
+                 enablesFor="+"
+                 icon="icons/add.gif"
+                 id="com.vectrace.MercurialEclipse.team.ActionAdd"
+                 label="%add"
+                 menubarPath="team.main/group5">
+           </action>
 
            <action
                label="%actionLabel.revert"
@@ -1037,15 +1046,6 @@
               icon="icons/actions/commit.gif"
               menubarPath="team.main/group1"
               label="%actionLabel.commit">
-           </action>
-           <action
-                 class="com.vectrace.MercurialEclipse.team.ActionAdd"
-                 definitionId="com.vectrace.MercurialEclipse.menu.AddHandler"
-                 enablesFor="+"
-                 icon="icons/add.gif"
-                 id="com.vectrace.MercurialEclipse.team.ActionAdd"
-                 label="%add"
-                 menubarPath="team.main/group1">
            </action>
       </objectContribution>
 
