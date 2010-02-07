@@ -13,6 +13,7 @@ package com.vectrace.MercurialEclipse.menu;
 
 import java.util.List;
 
+import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -26,12 +27,23 @@ public class SyncHandler extends MultipleResourcesHandler {
 	protected void run(List<IResource> resources) throws Exception {
 		MercurialParticipantSynchronizeWizard wizard = new MercurialParticipantSynchronizeWizard();
 		wizard.init(PlatformUI.getWorkbench(), new StructuredSelection(resources));
-		if(wizard.isComplete()){
-			wizard.performFinish();
-		} else {
+		if(shouldShowWizard(wizard)) {
 			WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 			wizardDialog.open();
+		} else {
+			wizard.performFinish();
 		}
 	}
 
+	private boolean shouldShowWizard(MercurialParticipantSynchronizeWizard wizard){
+		if(!wizard.isComplete()){
+			return true;
+		}
+		ExecutionEvent executionEvent = getEvent();
+		String id = executionEvent.getCommand().getId();
+		if(id != null && id.equals("com.vectrace.MercurialEclipse.menu.SyncHandler2")){
+			return true;
+		}
+		return false;
+	}
 }
