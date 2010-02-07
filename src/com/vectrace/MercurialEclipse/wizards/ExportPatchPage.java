@@ -48,7 +48,7 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
 	protected boolean validatePage() {
 		String msg = locationChooser.validate();
 		if (msg == null && getCheckedResources().size() == 0) {
-			msg = Messages.getString("ExportPatchWizard.InvalidPathFile"); //$NON-NLS-1$
+			msg = "Please select at least one file to export"; //$NON-NLS-1$
 		}
 		if (msg == null) {
 			setMessage(null);
