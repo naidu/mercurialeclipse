@@ -43,7 +43,7 @@ public class CommitMergeHandler extends RootHandler {
 		String changesetMessage = Messages.getString("CommitMergeHandler.mergeWith");
 		String mergeChangesetId = HgStatusClient.getMergeChangesetId(hgRoot);
 		if(mergeChangesetId != null) {
-			changesetMessage += mergeChangesetId;
+			changesetMessage += " " + mergeChangesetId;
 		} else {
 			// TODO get the changeset id from mercurial via command call
 			changesetMessage = "Merging...";
