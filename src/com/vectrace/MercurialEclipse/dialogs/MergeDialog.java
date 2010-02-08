@@ -18,7 +18,6 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -29,7 +28,7 @@ public class MergeDialog extends CommitDialog {
 	private final HgRoot hgRoot;
 
 	public MergeDialog(Shell shell, HgRoot hgRoot, String defaultCommitMessage) {
-		super(shell, null);
+		super(shell, hgRoot, null);
 		Assert.isNotNull(hgRoot);
 		this.hgRoot = hgRoot;
 		setDefaultCommitMessage(defaultCommitMessage);
@@ -63,11 +62,7 @@ public class MergeDialog extends CommitDialog {
 
 	@Override
 	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
-		return CommitMergeHandler.commitMerge(hgRoot, messageToCommit);
+		return CommitMergeHandler.commitMerge(hgRoot, getUser(), messageToCommit);
 	}
 
-	@Override
-	protected String getInitialCommitUserName() {
-		return HgCommitMessageManager.getDefaultCommitName(hgRoot);
-	}
 }

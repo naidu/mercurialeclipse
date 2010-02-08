@@ -35,6 +35,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -109,16 +110,9 @@ public class TagDialog extends Dialog {
 	private void createUserCommitText(Composite container) {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
 		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
-		this.userTextField = SWTWidgetHelper.createTextField(comp);
-		// TODO provide an option to either use default commit name OR project specific one
-		// See issue #10240: Wrong author is used in synchronization commit message
-//        if (user == null || user.length() == 0) {
-//            user = HgCommitMessageManager.getDefaultCommitName(project);
-//        }
-		if (user == null || user.length() == 0) {
-			user = HgClients.getDefaultUserName();
-		}
-		this.userTextField.setText(user);
+		userTextField = SWTWidgetHelper.createTextField(comp);
+		user = HgCommitMessageManager.getDefaultCommitName(hgRoot);
+		userTextField.setText(user);
 	}
 
 	protected TabItem createMainTabItem(TabFolder folder) {

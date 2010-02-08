@@ -10,11 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.createCheckBox;
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.createComposite;
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.createGroup;
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.createLabel;
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.createTextField;
+import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.*;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -46,7 +42,7 @@ import com.vectrace.MercurialEclipse.wizards.HgWizardPage;
  */
 public class QNewWizardPage extends HgWizardPage {
 
-	private IResource resource;
+	private final IResource resource;
 	private Text patchNameTextField;
 	private Text userTextField;
 	private Text date;
@@ -54,7 +50,7 @@ public class QNewWizardPage extends HgWizardPage {
 	private Button gitCheckBox;
 	private Text includeTextField;
 	private Text excludeTextField;
-	private boolean showPatchName;
+	private final boolean showPatchName;
 	private SourceViewer commitTextBox;
 	private SourceViewerDecorationSupport decorationSupport;
 	private IDocument commitTextDocument;
@@ -91,11 +87,11 @@ public class QNewWizardPage extends HgWizardPage {
 		}
 
 		createLabel(g, Messages.getString("QNewWizardPage.userNameLabel.title")); //$NON-NLS-1$
-		this.userTextField = createTextField(g);
-		this.userTextField.setText(MercurialUtilities.getHGUsername());
+		userTextField = createTextField(g);
+		userTextField.setText(MercurialUtilities.getDefaultUserName());
 
 		createLabel(g, Messages.getString("QNewWizardPage.dateLabel.title")); //$NON-NLS-1$
-		this.date = createTextField(g);
+		date = createTextField(g);
 
 		createLabel(g, Messages
 				.getString("QNewWizardPage.commitMessageLabel.title")); //$NON-NLS-1$

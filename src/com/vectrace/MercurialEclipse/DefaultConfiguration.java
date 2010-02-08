@@ -36,10 +36,6 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 	public DefaultConfiguration() {
 	}
 
-	public String getDefaultUserName() {
-		return MercurialUtilities.getHGUsername(false);
-	}
-
 	public String getExecutable() {
 		if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
 			MercurialUtilities.configureHgExecutable();

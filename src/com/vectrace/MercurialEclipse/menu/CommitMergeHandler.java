@@ -63,13 +63,13 @@ public class CommitMergeHandler extends RootHandler {
 	 * @throws HgException
 	 * @throws CoreException
 	 */
-	public static String commitMerge(HgRoot hgRoot, String message)
+	public static String commitMerge(HgRoot hgRoot, String commitName, String message)
 			throws HgException, CoreException {
 		Assert.isNotNull(hgRoot);
 		Assert.isNotNull(message);
 
 		// do hg call
-		String result = HgCommitClient.commit(hgRoot, null, message);
+		String result = HgCommitClient.commit(hgRoot, commitName, message);
 		HgStatusClient.clearMergeStatus(hgRoot);
 		return result;
 	}

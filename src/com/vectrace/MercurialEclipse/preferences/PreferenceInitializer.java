@@ -109,7 +109,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			Job job = new Job("Detecting hg user name"){
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-					store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getHGUsername());
+					store.setDefault(MERCURIAL_USERNAME, MercurialUtilities.getDefaultUserName());
 					return Status.OK_STATUS;
 				}
 			};
@@ -146,7 +146,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 	 * if the file cann ot be found, does not exists or is not a file at all.
 	 */
 	public static File getIntegratedHgExecutable(){
-		boolean isWindows = File.separatorChar == '\\';
+		boolean isWindows = MercurialUtilities.isWindows();
 		IPath path = isWindows ? new Path("$os$/hg.exe") : new Path("$os$/hg");
 		URL url = FileLocator.find(MercurialEclipsePlugin.getDefault().getBundle(), path, null);
 		if(url == null){

@@ -28,7 +28,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.HgSignClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -98,7 +98,7 @@ public class SignWizardPage extends HgWizardPage {
 
 		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
 		userTextField = SWTWidgetHelper.createTextField(userGroup);
-		userTextField.setText(MercurialUtilities.getHGUsername());
+		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(hgRoot));
 
 		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
 		keyCombo = SWTWidgetHelper.createCombo(userGroup);

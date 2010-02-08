@@ -43,6 +43,27 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A manager for all Mercurial repository locations.
+ * <p>
+ * Initially, all the data was stored in the file system and was project based. One file per project
+ * plus one file for all repositories. This lead to unneeded overhead/complexity for the case where
+ * 100 projects under the same root was managed with 100 files with redundant or partly different
+ * information.
+ * <p>
+ * Right now the data stored in the plugin preferences and is hg root based. The repo data is stored
+ * twice: once the default repo for each hg root (if any) and secondly as a list of all available
+ * repositories.
+ * <p>
+ * Repositories are considered unique by comparing their URL's (without the login info). Hg roots
+ * are considered unique by their absolut hg root paths. Projects are not tracked here anymore, as
+ * they always inherit hg root account/repo information.
+ * <p>
+ * Additionally, we store default commit names for each hg root, which may be different to the hg
+ * push/pull user names. The reason is that commit name (like 'Andrei@Loskutov.com') may be same for
+ * different repositories, but the 'push' user name must be different due the different account
+ * names which may exist for different repositories (like 'hgeclipse' or 'iloveeclipse' for
+ * bitbucket or javaforge). See {@link HgCommitMessageManager}.
+ * <p>
+ *
  */
 public class HgRepositoryLocationManager {
 

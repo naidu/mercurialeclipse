@@ -42,14 +42,6 @@ public final class HgClients {
 		return config.getExecutable();
 	}
 
-	public static String getDefaultUserName() {
-		if (config == null) {
-			throw new IllegalStateException(
-					Messages.getString("HgClients.error.notInitializedWithConfig")); //$NON-NLS-1$
-		}
-		return config.getDefaultUserName();
-	}
-
 	public static IConsole getConsole() {
 		if (console == null) {
 			throw new IllegalStateException(

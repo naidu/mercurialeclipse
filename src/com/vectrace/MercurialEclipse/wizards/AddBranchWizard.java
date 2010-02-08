@@ -73,7 +73,7 @@ public class AddBranchWizard extends HgWizard {
 
 				HgBranchClient.addBranch(hgRoot, branchPage
 						.getBranchName(), MercurialUtilities
-						.getHGUsername(), branchPage.isForceEnabled());
+						.getDefaultUserName(), branchPage.isForceEnabled());
 				monitor.worked(1);
 
 				HgClients.getConsole().printMessage(result, null);
@@ -88,7 +88,6 @@ public class AddBranchWizard extends HgWizard {
 				if(commitEnabled){
 					CommitHandler commitHandler = new CommitHandler();
 					commitHandler.setCommitMessage("Starting '" + branch + "' branch");
-					commitHandler.setRoot(hgRoot);
 					commitHandler.setFilesSelectable(false);
 					commitHandler.run(projectList);
 					monitor.worked(1);

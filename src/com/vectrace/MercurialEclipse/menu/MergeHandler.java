@@ -38,6 +38,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.views.MergeView;
@@ -154,7 +155,8 @@ public class MergeHandler extends RootHandler {
 			monitor.subTask(com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit")); //$NON-NLS-1$
 			output += com.vectrace.MercurialEclipse.wizards.Messages.getString("PullRepoWizard.pullOperation.commit.header"); //$NON-NLS-1$
 			if (!showCommitDialog) {
-				output += CommitMergeHandler.commitMerge(hgRoot, "Merge with " + mergeChangesetId);
+				output += CommitMergeHandler.commitMerge(hgRoot, HgCommitMessageManager
+						.getDefaultCommitName(hgRoot), "Merge with " + mergeChangesetId);
 			} else {
 				output += new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, shell);
 			}

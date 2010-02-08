@@ -91,6 +91,9 @@ public class LocalChangesetCache extends AbstractCache {
 		synchronized (latestChangesets) {
 			latestChangesets.remove(root);
 		}
+		synchronized (localChangeSets) {
+			localChangeSets.remove(root.getIPath());
+		}
 		Set<IProject> projects = ResourceUtils.getProjects(root);
 		for (IProject project : projects) {
 			clear(project, notify);

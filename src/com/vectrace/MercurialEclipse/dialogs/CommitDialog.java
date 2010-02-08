@@ -21,15 +21,17 @@ import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.IDocument;
+import org.eclipse.jface.text.ITextListener;
+import org.eclipse.jface.text.TextEvent;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
@@ -38,8 +40,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
-import org.eclipse.swt.events.MouseAdapter;
-import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -59,7 +59,6 @@ import org.eclipse.ui.texteditor.spelling.SpellingAnnotation;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommitClient;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -69,6 +68,7 @@ import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * A commit dialog box allowing choosing of what files to commit and a commit message for those files. Untracked files
@@ -81,8 +81,9 @@ public class CommitDialog extends TitleAreaDialog {
 	public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
 	public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
 	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
+	private static final String DEFAULT_COMMIT_MESSAGE = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
-	protected String defaultCommitMessage = Messages.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
+	protected String defaultCommitMessage;
 	private Combo oldCommitComboBox;
 	private ISourceViewer commitTextBox;
 	protected CommitFilesChooser commitFilesList;
@@ -97,13 +98,21 @@ public class CommitDialog extends TitleAreaDialog {
 	private String user;
 	private Button revertCheckBox;
 	private boolean filesSelectable;
-	private HgRoot hgRoot;
+	private final HgRoot hgRoot;
 	private String commitResult;
 	private Button closeBranchCheckBox;
 
-	public CommitDialog(Shell shell, List<IResource> resources) {
+	/**
+	 *
+	 * @param shell
+	 * @param hgRoot non null
+	 * @param resources might be null
+	 */
+	public CommitDialog(Shell shell, HgRoot hgRoot, List<IResource> resources) {
 		super(shell);
+		this.hgRoot = hgRoot;
 		setShellStyle(getShellStyle() | SWT.RESIZE | SWT.TITLE);
+		defaultCommitMessage = DEFAULT_COMMIT_MESSAGE;
 		setBlockOnOpen(false);
 		inResources = resources;
 		commitTextDocument = new Document();
@@ -149,16 +158,33 @@ public class CommitDialog extends TitleAreaDialog {
 		createRevertCheckBox(container);
 		createFilesList(container);
 
+		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
+		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
+		return container;
+	}
+
+	@Override
+	protected Control createContents(Composite parent) {
+		Control control = super.createContents(parent);
 		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskComment(
 						inResources == null ? null : inResources.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
 
 		commitTextBox.getTextWidget().setFocus();
-		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
-		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
-		setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
-		return container;
+		commitTextBox.getTextWidget().selectAll();
+		return control;
+	}
+
+	private void validateCommitMessage(final String message) {
+		if(StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message)) {
+			setErrorMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
+			getButton(IDialogConstants.OK_ID).setEnabled(false);
+		} else {
+			setErrorMessage(null); //";
+			setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
+			getButton(IDialogConstants.OK_ID).setEnabled(true);
+		}
 	}
 
 	protected void createRevertCheckBox(Composite container) {
@@ -190,24 +216,13 @@ public class CommitDialog extends TitleAreaDialog {
 	private void createUserCommitCombo(Composite container) {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
 		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
-		this.userTextField = SWTWidgetHelper.createTextField(comp);
-		// TODO provide an option to either use default commit name OR project specific one
-		// See issue #10240: Wrong author is used in synchronization commit message
-//        if (user == null || user.length() == 0) {
-//            user = getInitialCommitUserName();
-//        }
-		if (user == null || user.length() == 0) {
-			user = HgClients.getDefaultUserName();
-		}
-		this.userTextField.setText(user);
+		userTextField = SWTWidgetHelper.createTextField(comp);
+		user = getInitialCommitUserName();
+		userTextField.setText(user);
 	}
 
 	protected String getInitialCommitUserName() {
-		if(inResources.isEmpty()){
-			return null;
-		}
-		IProject project = inResources.get(0).getProject();
-		return HgCommitMessageManager.getDefaultCommitName(project);
+		return HgCommitMessageManager.getDefaultCommitName(hgRoot);
 	}
 
 	private void createCommitTextBox(Composite container) {
@@ -231,19 +246,14 @@ public class CommitDialog extends TitleAreaDialog {
 		AnnotationModel annotationModel = new AnnotationModel();
 		commitTextBox.setDocument(commitTextDocument, annotationModel);
 		commitTextBox.getTextWidget().addDisposeListener(new DisposeListener() {
-
 			public void widgetDisposed(DisposeEvent e) {
 				decorationSupport.uninstall();
 			}
-
 		});
 
-		commitTextBox.getTextWidget().addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseUp(MouseEvent e) {
-				if (commitTextDocument.get().equals(defaultCommitMessage)) {
-					commitTextBox.setSelectedRange(0, defaultCommitMessage.length());
-				}
+		commitTextBox.addTextListener(new ITextListener() {
+			public void textChanged(TextEvent event) {
+				validateCommitMessage(commitTextBox.getDocument().get());
 			}
 		});
 	}
@@ -289,7 +299,10 @@ public class CommitDialog extends TitleAreaDialog {
 			if (!commitMessage.equals(defaultCommitMessage)) {
 				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
 			}
-			this.user = userTextField.getText();
+			user = userTextField.getText();
+			if (user == null || user.length() == 0) {
+				user = getInitialCommitUserName();
+			}
 
 			// add new resources
 			HgAddClient.addResources(resourcesToAdd, null);
@@ -299,9 +312,6 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// commit all
 			String messageToCommit = getCommitMessage();
-			if (user == null || user.length() == 0) {
-				user = getInitialCommitUserName();
-			}
 
 			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox
 					.getSelection() : false;
@@ -328,7 +338,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
-		if(hgRoot != null && !filesSelectable && resourcesToCommit.isEmpty()){
+		if(!filesSelectable && resourcesToCommit.isEmpty()){
 			// enforce commit anyway
 			return HgCommitClient.commitResources(hgRoot, closeBranch, user, messageToCommit, new NullProgressMonitor());
 		}
@@ -372,14 +382,6 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public void setDefaultCommitMessage(String defaultCommitMessage) {
 		this.defaultCommitMessage = defaultCommitMessage;
-	}
-
-	public void setHgRoot(HgRoot hgRoot) {
-		this.hgRoot = hgRoot;
-	}
-
-	public HgRoot getHgRoot() {
-		return hgRoot;
 	}
 
 	public Button getCloseBranchCheckBox() {
