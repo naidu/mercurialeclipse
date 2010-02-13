@@ -92,7 +92,6 @@ public class HgRepositoryLocationManager {
 	 */
 	public void start() throws HgException {
 		getProjectRepos();
-		loadRepositoryHistory();
 	}
 
 	/**
@@ -224,6 +223,7 @@ public class HgRepositoryLocationManager {
 	private void getProjectRepos() throws HgException {
 		if (!initialized) {
 			initialized = true;
+			loadRepositoryHistory();
 			loadRepos();
 		}
 	}
@@ -254,15 +254,18 @@ public class HgRepositoryLocationManager {
 			// Load .hg/hgrc paths first; plugin settings will override these
 			Map<String, String> hgrcRepos = HgPathsClient.getPaths(hgRoot);
 			for (Map.Entry<String, String> nameAndUrl : hgrcRepos.entrySet()) {
-				// if not existent, add to repository browser
-				try {
-					HgRepositoryLocation loc = updateRepoLocation(hgRoot,
-							nameAndUrl.getValue(),
-							nameAndUrl.getKey(),
-							null, null);
-					internalAddRepoLocation(hgRoot, loc);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
+				String url = nameAndUrl.getValue();
+				HgRepositoryLocation repoLocation = matchRepoLocation(url);
+				if(repoLocation == null) {
+					// if not existent, add to repository browser
+					try {
+						String logicalName = nameAndUrl.getKey();
+						HgRepositoryLocation loc = updateRepoLocation(hgRoot, url, logicalName,
+								null, null);
+						internalAddRepoLocation(hgRoot, loc);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
 				}
 			}
 			SortedSet<HgRepositoryLocation> locations = loadRepositories(getRootKey(hgRoot));
