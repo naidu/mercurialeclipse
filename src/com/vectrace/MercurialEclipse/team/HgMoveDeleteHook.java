@@ -14,6 +14,9 @@
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
+import java.io.File;
+
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -148,7 +151,18 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		if(resource.getType() == IResource.FOLDER) {
 			tree.deletedFolder((IFolder) resource);
 		} else {
+			// hg deletes the parent folder too if the deleted file was the only one in the folder
+			// we have to tell Eclipse that the folder (and probably all subsequent parents)
+			// are deleted too...
+			File dir = resource.getLocation().toFile().getParentFile();
+			IContainer parent = resource.getParent();
 			tree.deletedFile((IFile) resource);
+			while(parent instanceof IFolder && !dir.exists()){
+				IContainer backup = parent.getParent();
+				tree.deletedFolder((IFolder) parent);
+				parent = backup;
+				dir = dir.getParentFile();
+			}
 		}
 
 		// Returning true indicates that this method has removed resource in both

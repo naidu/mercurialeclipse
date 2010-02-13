@@ -70,6 +70,9 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		if(context != null && context.isHidden(file)){
 			return false;
 		}
+		if(cache.isDirectory(file.getLocation())){
+			return false;
+		}
 		boolean added;
 		synchronized (files){
 			added = files.add(file);

@@ -199,6 +199,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	public final static int BIT_MODIFIED = 1 << 7;
 	public final static int BIT_IMPOSSIBLE = 1 << 8;
 	public final static int BIT_CONFLICT = 1 << 9;
+	/** directory bit */
+	public final static int BIT_DIR = 1 << 10;
 
 	private final static Integer _IGNORE = Integer.valueOf(BIT_IGNORE);
 	private final static Integer _CLEAN = Integer.valueOf(BIT_CLEAN);
@@ -276,11 +278,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		private final Set<IPath> ADDED_SET = new HashSet<IPath>();
 		private final Set<IPath> MODIFIED_SET = new HashSet<IPath>();
 		private final Set<IPath> CONFLICT_SET = new HashSet<IPath>();
+		/** directories */
+		private final Set<IPath> DIR_SET = new HashSet<IPath>();
 		// we do not cache impossible values
 		// private final Set<IPath> MAP_IMPOSSIBLE = new HashSet<IPath>();
 
 		public BitMap() {
-
+			super();
 		}
 
 		synchronized void put(IPath path, Integer set){
@@ -307,6 +311,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			if((mask & BIT_IGNORE) != 0){
 				IGNORE_SET.add(path);
 			}
+			if((mask & BIT_DIR) != 0){
+				DIR_SET.add(path);
+			}
 		}
 
 		synchronized Set<IPath> get(int bit){
@@ -325,6 +332,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				return CONFLICT_SET;
 			case BIT_IGNORE:
 				return IGNORE_SET;
+			case BIT_DIR:
+				return DIR_SET;
 			default:
 				return null;
 			}
@@ -338,6 +347,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			remove(path, MODIFIED_SET);
 			remove(path, CONFLICT_SET);
 			remove(path, IGNORE_SET);
+			remove(path, DIR_SET);
 		}
 
 		void remove(IPath path, Set<IPath> set) {
@@ -431,6 +441,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			return true;
 		}
 		return false;
+	}
+
+	public boolean isDirectory(IPath location) {
+		if(location == null){
+			return false;
+		}
+		return bitMap.get(BIT_DIR).contains(location);
 	}
 
 	public boolean isRemoved(IResource resource) {
@@ -859,7 +876,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				bitSet = Integer.valueOf(bit);
 				changed.add(member);
 			}
-			setStatus(member.getLocation(), bitSet);
+			setStatus(member.getLocation(), bitSet, member.getType() == IResource.FOLDER);
 
 			changed.addAll(setStatusToAncestors(member, bitSet));
 		}
@@ -896,9 +913,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		return null;
 	}
 
-	private void setStatus(IPath location, Integer status) {
+	private void setStatus(IPath location, Integer status, boolean isDir) {
 		statusMap.put(location, status);
 		bitMap.put(location, status);
+		if(isDir){
+			bitMap.put(location, Integer.valueOf(BIT_DIR));
+		}
 	}
 
 	private Set<IResource> setStatusToAncestors(IResource resource, Integer resourceBitSet) {
@@ -950,7 +970,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			} else {
 				cloneBitSet |= parentBitSet;
 			}
-			setStatus(location, Integer.valueOf(cloneBitSet));
+			setStatus(location, Integer.valueOf(cloneBitSet), parent.getType() == IResource.FOLDER);
 			ancestors.add(parent);
 		}
 		return ancestors;
@@ -1082,7 +1102,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 					for (IResource curr : currentBatch) {
 						boolean unknown = (curr instanceof IContainer) || isUnknown(curr);
 						clearStatusCache(curr, false);
-						if(unknown && !curr.exists()){
+						if (unknown && !curr.exists()) {
 							// remember parents of deleted files: we must update their state
 							IContainer directory = ResourceUtils.getFirstExistingDirectory(curr);
 							while(directory != null) {
@@ -1205,12 +1225,13 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	private Set<IResource> addConflict(IResource local) {
 		IPath location = local.getLocation();
 		Integer status = statusMap.get(location);
+		boolean isDir = local.getType() == IResource.FOLDER;
 		if(status == null){
 			status = _CONFLICT;
-			setStatus(location, _CONFLICT);
+			setStatus(location, _CONFLICT, isDir);
 		} else {
 			status = Integer.valueOf(status.intValue() | BIT_CONFLICT);
-			setStatus(location, status);
+			setStatus(location, status, isDir);
 		}
 		Set<IResource> changed = setStatusToAncestors(local, status);
 		changed.add(local);
@@ -1231,7 +1252,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		int status = statusInt.intValue();
 		if(Bits.contains(status, BIT_CONFLICT)) {
 			status = Bits.clear(status, BIT_CONFLICT);
-			setStatus(local, Integer.valueOf(status));
+			setStatus(local, Integer.valueOf(status), false);
 			return true;
 		}
 		return false;
