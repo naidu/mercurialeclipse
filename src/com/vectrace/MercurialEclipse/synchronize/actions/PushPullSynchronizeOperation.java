@@ -179,6 +179,13 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 			if(location == null){
 				return Status.OK_STATUS;
 			}
+			// re-validate the location as it might have changed credentials...
+			try {
+				location = MercurialEclipsePlugin.getRepoManager().getRepoLocation(location.getLocation());
+			} catch (HgException e1) {
+				MercurialEclipsePlugin.logError(e1);
+				return Status.OK_STATUS;
+			}
 			if(opMonitor.isCanceled() || moni.isCanceled()){
 				return Status.CANCEL_STATUS;
 			}
