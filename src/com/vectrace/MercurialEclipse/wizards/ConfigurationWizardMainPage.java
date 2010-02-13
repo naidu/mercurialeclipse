@@ -54,8 +54,18 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * wizard can be initialized using setProperties or using setDialogSettings
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
-	protected boolean showCredentials = false;
-	protected boolean showBundleButton = false;
+
+	static final String PROP_PASSWORD = "password";
+	static final String PROP_USER = "user";
+	static final String PROP_URL = "url";
+
+	private static final int COMBO_HISTORY_LENGTH = 10;
+
+	/**  Dialog store id constant */
+	private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
+
+	protected boolean showCredentials;
+	protected boolean showBundleButton;
 
 	protected Combo userCombo;
 	protected Text passwordText;
@@ -67,11 +77,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	protected Button browseButton;
 
 	protected Button browseFileButton;
-
-	private static final int COMBO_HISTORY_LENGTH = 10;
-
-	/**  Dialog store id constant */
-	private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
 
 	/**
 	 * @param pageName
@@ -282,10 +287,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	protected Properties createProperties() {
 		Properties result = new Properties();
 		if (showCredentials) {
-			result.setProperty("user", getUserText()); //$NON-NLS-1$
-			result.setProperty("password", passwordText.getText()); //$NON-NLS-1$
+			result.setProperty(PROP_USER, getUserText());
+			result.setProperty(PROP_PASSWORD, passwordText.getText());
 		}
-		result.setProperty("url", getUrlText()); //$NON-NLS-1$
+		result.setProperty(PROP_URL, getUrlText());
 		return result;
 	}
 
@@ -314,17 +319,17 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
 		if (properties != null) {
 			if (showCredentials) {
-				String user = properties.getProperty("user"); //$NON-NLS-1$
+				String user = properties.getProperty(PROP_USER);
 				if (user != null) {
 					userCombo.setText(user);
 				}
 
-				String password = properties.getProperty("password"); //$NON-NLS-1$
+				String password = properties.getProperty(PROP_PASSWORD);
 				if (password != null) {
 					passwordText.setText(password);
 				}
 			}
-			String host = properties.getProperty("url"); //$NON-NLS-1$
+			String host = properties.getProperty(PROP_URL);
 			if (host != null) {
 				urlCombo.setText(host);
 			}
@@ -532,5 +537,42 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 			}
 		}
 		return repos;
+	}
+
+	@Override
+	public void setProperties(Properties properties) {
+		super.setProperties(properties);
+		if(urlCombo != null && isValid(properties, PROP_URL)){
+			String[] items = urlCombo.getItems();
+			if(items != null){
+				String url = properties.getProperty(PROP_URL);
+				for (int i = 0; i < items.length; i++) {
+					if(url.equals(items[i])){
+						urlCombo.select(i);
+						break;
+					}
+				}
+			}
+		}
+		if(userCombo != null && isValid(properties, PROP_USER)){
+			String[] items = userCombo.getItems();
+			if(items != null){
+				String user = properties.getProperty(PROP_USER);
+				for (int i = 0; i < items.length; i++) {
+					if(user.equals(items[i])){
+						userCombo.select(i);
+						break;
+					}
+				}
+			}
+		}
+		if(passwordText != null && isValid(properties, PROP_PASSWORD)){
+			passwordText.setText(properties.getProperty(PROP_PASSWORD));
+		}
+	}
+
+	private static boolean isValid(Properties properties, String key){
+		String value = properties.getProperty(key);
+		return value != null && value.trim().length() > 0;
 	}
 }

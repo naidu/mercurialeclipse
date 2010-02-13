@@ -995,15 +995,6 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		}
 	}
 
-	/**
-	 * Gets all Projects managed by Mercurial whose status is known.
-	 *
-	 * @return an IProject[] of the projects
-	 */
-	public IProject[] getAllManagedProjects() {
-		return knownStatus.keySet().toArray(new IProject[knownStatus.size()]);
-	}
-
 	public void resourceChanged(IResourceChangeEvent event) {
 		if (event.getType() != IResourceChangeEvent.POST_CHANGE) {
 			return;

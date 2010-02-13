@@ -36,7 +36,7 @@ public class SyncHandler extends MultipleResourcesHandler {
 	}
 
 	private boolean shouldShowWizard(MercurialParticipantSynchronizeWizard wizard){
-		if(!wizard.isComplete()){
+		if(wizard.prepareSettings() == null){
 			return true;
 		}
 		ExecutionEvent executionEvent = getEvent();
