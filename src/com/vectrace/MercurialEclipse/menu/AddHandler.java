@@ -35,6 +35,7 @@ import org.eclipse.ui.views.navigator.ResourceComparator;
 import com.vectrace.MercurialEclipse.commands.HgAddClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshStatusJob;
 import com.vectrace.MercurialEclipse.ui.ResourcesTreeContentProvider;
 import com.vectrace.MercurialEclipse.ui.UntrackedResourcesFilter;
@@ -43,6 +44,18 @@ public class AddHandler extends MultipleResourcesHandler {
 
 	@Override
 	public void run(final List<IResource> resources) throws HgException {
+
+		if(resources.size() == 1 && resources.get(0) instanceof IFile){
+			// shortcut for the single file "add..." operation.
+			// we do not need any dialogs here.
+			IResource resource = resources.get(0);
+			if(MercurialStatusCache.getInstance().isUnknown(resource)) {
+				HgAddClient.addResources(resources, null);
+				new RefreshStatusJob(Messages.getString("AddHandler.refreshStatus"), resource
+						.getProject()).schedule();
+			}
+			return;
+		}
 
 		Set<IProject> roots = getRoots(resources);
 
