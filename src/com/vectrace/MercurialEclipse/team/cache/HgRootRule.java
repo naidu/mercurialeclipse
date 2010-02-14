@@ -10,9 +10,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import org.eclipse.core.resources.IResource;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author Andrei
@@ -31,6 +34,13 @@ public class HgRootRule implements ISchedulingRule {
 
 	public boolean isConflicting(ISchedulingRule rule) {
 		if(!(rule instanceof HgRootRule)){
+			if(rule instanceof IWorkspaceRoot){
+				return false;
+			}
+			if(rule instanceof IResource){
+				IResource resource = (IResource) rule;
+				return getHgRoot().equals(MercurialTeamProvider.getHgRoot(resource.getProject()));
+			}
 			return false;
 		}
 		HgRootRule rootRule = (HgRootRule) rule;
