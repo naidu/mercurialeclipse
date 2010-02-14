@@ -13,8 +13,13 @@ package com.vectrace.MercurialEclipse.team;
 
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.team.core.TeamException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -40,31 +45,45 @@ public class CompareAction extends SingleFileAction {
 	}
 
 	@Override
-	protected void run(IFile file) throws TeamException {
+	protected void run(final IFile file) throws TeamException {
+		Job job = new Job("Diff for " + file.getName()) {
 
-		boolean clean = MercurialStatusCache.getInstance().isClean(file);
-		if(!clean) {
-			compareToLocal(file);
-			return;
-		}
-		// get the predecessor version and compare current version with it
-		String[] parents = HgParentClient.getParentNodeIds(file);
-		ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(file, parents[0]);
-		if(cs != null && cs.getChangesetIndex() != 0) {
-			parents = cs.getParents();
-			if (parents == null || parents.length == 0) {
-				parents = HgParentClient.getParentNodeIds(file, cs);
-			}
-			if (parents != null && parents.length > 0) {
-				ChangeSet cs2 = LocalChangesetCache.getInstance().getOrFetchChangeSetById(file, parents[0]);
-				if(cs2 != null) {
-					CompareUtils.openEditor(file, cs2, true);
-					return;
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				boolean clean = MercurialStatusCache.getInstance().isClean(file);
+				if (!clean) {
+					compareToLocal(file);
+					return Status.OK_STATUS;
 				}
+				try {
+					// get the predecessor version and compare current version with it
+					String[] parents = HgParentClient.getParentNodeIds(file);
+					ChangeSet cs = LocalChangesetCache.getInstance().getOrFetchChangeSetById(file,
+							parents[0]);
+					if (cs != null && cs.getChangesetIndex() != 0) {
+						parents = cs.getParents();
+						if (parents == null || parents.length == 0) {
+							parents = HgParentClient.getParentNodeIds(file, cs);
+						}
+						if (parents != null && parents.length > 0) {
+							ChangeSet cs2 = LocalChangesetCache.getInstance()
+									.getOrFetchChangeSetById(file, parents[0]);
+							if (cs2 != null) {
+								CompareUtils.openEditor(file, cs2, true);
+								return Status.OK_STATUS;
+							}
+						}
+					}
+				} catch (TeamException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+				// something went wrong. So compare to local
+				compareToLocal(file);
+				return Status.OK_STATUS;
 			}
-		}
-		// something went wrong. So compare to local
-		compareToLocal(file);
+
+		};
+		job.schedule();
 	}
 
 	private void compareToLocal(IFile file) {

@@ -10,16 +10,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.actions.BaseSelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -53,10 +53,10 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 	public void run() {
 		final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
 		final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
-		final IRunnableWithProgress runnable = new IRunnableWithProgress() {
+		final Job job = new Job("Retrieving hg diff data...") {
 
-			public void run(IProgressMonitor monitor) throws InvocationTargetException,
-					InterruptedException {
+			@Override
+			public IStatus run(IProgressMonitor monitor) {
 				try {
 					if(selection.length > 0 && !monitor.isCanceled()){
 						left[0] = getStorage((MercurialRevision) selection[0], monitor);
@@ -80,31 +80,27 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 					}
 				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(e);
-					throw new InvocationTargetException(e);
+					return e.getStatus();
 				}
 				if(monitor.isCanceled()){
-					throw new InterruptedException("Cancelled by user");
+					return Status.CANCEL_STATUS;
 				}
+				return Status.OK_STATUS;
 			}
 		};
 
-		ProgressMonitorDialog progress = new ProgressMonitorDialog(Display.getDefault().getActiveShell());
-		try {
-			progress.run(true, true, runnable);
-		} catch (InvocationTargetException e) {
-			MercurialEclipsePlugin.logError(e.getCause());
-			return;
-		} catch (InterruptedException e) {
-			// user cancel
-			return;
-		}
+		job.addJobChangeListener(new JobChangeAdapter(){
+			@Override
+			public void done(IJobChangeEvent event) {
+				if(left[0] == null || !event.getResult().isOK()){
+					return;
+				}
 
-		if(left[0] == null){
-			return;
-		}
-
-		boolean localEditable = right[0] == null;
-		CompareUtils.openEditor(left[0], right[0], false, localEditable);
+				boolean localEditable = right[0] == null;
+				CompareUtils.openEditor(left[0], right[0], false, localEditable);
+			}
+		});
+		job.schedule();
 	}
 
 	@Override
