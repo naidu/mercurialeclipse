@@ -41,8 +41,8 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.operations.CloneOperation;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -59,8 +59,8 @@ public class ClonePage extends PushPullPage {
 	private Button pullCheckBox;
 	private Button uncompressedCheckBox;
 	private Text revisionTextField;
-	private final Map<HgRepositoryLocation, File> destDirectories;
-	private HgRepositoryLocation lastRepo;
+	private final Map<IHgRepositoryLocation, File> destDirectories;
+	private IHgRepositoryLocation lastRepo;
 	private Text directoryTextField;
 	private Button directoryButton;
 	private Button useWorkspace;
@@ -70,7 +70,7 @@ public class ClonePage extends PushPullPage {
 	public ClonePage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
 		super(hgRoot, pageName, title, titleImage);
-		destDirectories = new HashMap<HgRepositoryLocation, File>();
+		destDirectories = new HashMap<IHgRepositoryLocation, File>();
 		setShowBundleButton(false);
 		setShowRevisionTable(false);
 		setShowCredentials(true);
@@ -180,7 +180,7 @@ public class ClonePage extends PushPullPage {
 		cloneNameTextField.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				validateFields();
-				HgRepositoryLocation repo = getRepository();
+				IHgRepositoryLocation repo = getRepository();
 				File destinationDirectory = getDestinationDirectory();
 				cloneNameTextField.setToolTipText(String.format(TOOLTIP, destinationDirectory.getAbsolutePath()));
 				if(repo != null && hasDataLocally(repo)){
@@ -238,7 +238,7 @@ public class ClonePage extends PushPullPage {
 	@Override
 	protected boolean urlChanged() {
 		boolean dataFetched = false;
-		HgRepositoryLocation repository = null;
+		IHgRepositoryLocation repository = null;
 		if(super.validateFields()){
 			repository = getRepository();
 			dataFetched = hasDataLocally(repository);
@@ -286,7 +286,7 @@ public class ClonePage extends PushPullPage {
 		return guess;
 	}
 
-	private boolean hasDataLocally(HgRepositoryLocation repo){
+	private boolean hasDataLocally(IHgRepositoryLocation repo){
 		if(repo == null){
 			return false;
 		}
@@ -319,7 +319,7 @@ public class ClonePage extends PushPullPage {
 			setPageComplete(false);
 			return false;
 		}
-		HgRepositoryLocation repository = getRepository();
+		IHgRepositoryLocation repository = getRepository();
 		if(repository == null) {
 			setErrorMessage("Clone repository URL is invalid!");
 			setPageComplete(false);
@@ -440,11 +440,11 @@ public class ClonePage extends PushPullPage {
 		return true;
 	}
 
-	public HgRepositoryLocation getLastUsedRepository(){
+	public IHgRepositoryLocation getLastUsedRepository(){
 		return lastRepo;
 	}
 
-	private HgRepositoryLocation getRepository() {
+	private IHgRepositoryLocation getRepository() {
 		if(getUrlText().length() == 0){
 			return null;
 		}
@@ -468,7 +468,7 @@ public class ClonePage extends PushPullPage {
 	}
 
 	private boolean nextButtonPressed() {
-		HgRepositoryLocation repository = getRepository();
+		IHgRepositoryLocation repository = getRepository();
 		if (hasDataLocally(repository)
 				&& getDestinationDirectory().equals(destDirectories.get(repository))) {
 			// simply forward to the next page

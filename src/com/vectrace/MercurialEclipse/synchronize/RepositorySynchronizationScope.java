@@ -30,7 +30,7 @@ import org.eclipse.team.internal.core.mapping.AbstractResourceMappingScope;
 import org.eclipse.team.internal.ui.Utils;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
 
 /**
@@ -40,10 +40,10 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 
 	private final IProject[] roots;
 	private final ListenerList listeners;
-	private final HgRepositoryLocation repo;
+	private final IHgRepositoryLocation repo;
 	private MercurialSynchronizeSubscriber subscriber;
 
-	public RepositorySynchronizationScope(HgRepositoryLocation repo, IProject[] roots) {
+	public RepositorySynchronizationScope(IHgRepositoryLocation repo, IProject[] roots) {
 		Assert.isNotNull(repo);
 		this.repo = repo;
 		this.roots = roots != null ? roots :
@@ -189,7 +189,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		listeners.remove(listener);
 	}
 
-	public HgRepositoryLocation getRepositoryLocation() {
+	public IHgRepositoryLocation getRepositoryLocation() {
 		return repo;
 	}
 

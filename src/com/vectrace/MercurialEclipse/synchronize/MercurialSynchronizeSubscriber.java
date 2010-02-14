@@ -53,7 +53,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangesetsCollector;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -133,14 +133,14 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 		String currentBranch = getCurrentBranch(file, root);
 
-		HgRepositoryLocation repo = getRepo();
+		IHgRepositoryLocation repo = getRepo();
 		if(computeFullState) {
 			return getSyncInfo(file, root, currentBranch, repo);
 		}
 		return getFastSyncInfo(file, root, currentBranch, repo);
 	}
 
-	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, HgRepositoryLocation repo) {
+	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
 		ChangeSet csOutgoing;
 		try {
 			csOutgoing = getNewestOutgoing(file, currentBranch, repo);
@@ -304,7 +304,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	private static ChangeSet getNewestOutgoing(IFile file, String currentBranch,
-			HgRepositoryLocation repo) throws InterruptedException {
+			IHgRepositoryLocation repo) throws InterruptedException {
 		ChangeSet csOutgoing = null;
 		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
 			// waiting didn't worked for us...
@@ -326,7 +326,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	private static ChangeSet getNewestIncoming(IFile file, String currentBranch,
-			HgRepositoryLocation repo) throws InterruptedException {
+			IHgRepositoryLocation repo) throws InterruptedException {
 		ChangeSet csIncoming = null;
 		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
 			// waiting didn't worked for us...
@@ -355,7 +355,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	 * @return a simplified sync info object, which doesn't know if it was added or removed.
 	 */
 	// TODO calculation of the status flags need to be reviewed. Right now it has a prototype quality
-	private static SyncInfo getFastSyncInfo(IFile file, HgRoot root, String currentBranch, HgRepositoryLocation repo) {
+	private static SyncInfo getFastSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
 		Integer status = STATUS_CACHE.getStatus(file);
 		int sMask = status != null? status.intValue() : 0;
 		boolean changedLocal = !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN);
@@ -515,7 +515,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			resourcesToRefresh = null;
 		}
 
-		HgRepositoryLocation repositoryLocation = getRepo();
+		IHgRepositoryLocation repositoryLocation = getRepo();
 		Set<IProject> repoLocationProjects = MercurialEclipsePlugin.getRepoManager()
 				.getAllRepoLocationProjects(repositoryLocation);
 
@@ -630,7 +630,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	private void refreshIncoming(int flag, Set<IResource> resourcesToRefresh, IProject project,
-			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
+			IHgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
 
 		if(forceRefresh && flag != HgSubscriberScopeManager.OUTGOING){
 			if(debug) {
@@ -648,7 +648,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	private void refreshOutgoing(int flag, Set<IResource> resourcesToRefresh, IProject project,
-			HgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
+			IHgRepositoryLocation repositoryLocation, boolean forceRefresh, String branch) throws HgException {
 
 		if(forceRefresh && flag != HgSubscriberScopeManager.INCOMING){
 			if(debug) {
@@ -668,7 +668,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return scope;
 	}
 
-	protected HgRepositoryLocation getRepo(){
+	protected IHgRepositoryLocation getRepo(){
 		return scope.getRepositoryLocation();
 	}
 

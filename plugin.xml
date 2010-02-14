@@ -720,7 +720,8 @@
                 </command>
                 
                 <command
-                      commandId="com.vectrace.MercurialEclipse.menu.SyncHandler2">
+                      commandId="com.vectrace.MercurialEclipse.menu.SyncHandler2"
+                      icon="icons/actions/synch.gif">
                    <visibleWhen>
                       <and>
                          <reference
@@ -1473,7 +1474,7 @@
             icon="icons/mercury_Hg.png"
             id="com.vectrace.MercurialEclipse.repositoryProperties"
             name="Hg Repository"
-            objectClass="com.vectrace.MercurialEclipse.storage.HgRepositoryLocation">
+            objectClass="com.vectrace.MercurialEclipse.model.IHgRepositoryLocation">
       </page>
    </extension>
    

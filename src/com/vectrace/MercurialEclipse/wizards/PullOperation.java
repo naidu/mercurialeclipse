@@ -33,14 +33,14 @@ import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation.BundleRepository;
 
 class PullOperation extends HgOperation {
 	private final boolean doUpdate;
 
 	private final HgRoot hgRoot;
-	private final HgRepositoryLocation repo;
+	private final IHgRepositoryLocation repo;
 	private final boolean force;
 	private final ChangeSet pullRevision;
 	private final boolean timeout;
@@ -55,7 +55,7 @@ class PullOperation extends HgOperation {
 	private final boolean doCleanUpdate;
 
 	public PullOperation(IRunnableContext context, boolean doUpdate,
-			boolean doCleanUpdate, HgRoot hgRoot, boolean force, HgRepositoryLocation repo,
+			boolean doCleanUpdate, HgRoot hgRoot, boolean force, IHgRepositoryLocation repo,
 			ChangeSet pullRevision, boolean timeout, boolean merge,
 			boolean showCommitDialog, File bundleFile, boolean forest,
 			File snapFile, boolean rebase, boolean svn) {
@@ -111,7 +111,7 @@ class PullOperation extends HgOperation {
 		return r;
 	}
 
-	private String performPull(final HgRepositoryLocation repository,
+	private String performPull(final IHgRepositoryLocation repository,
 			IProgressMonitor monitor) throws CoreException {
 		monitor.worked(1);
 		monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.incoming")); //$NON-NLS-1$

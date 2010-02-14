@@ -38,7 +38,7 @@ import org.eclipse.ui.IWorkbenchWizard;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberScopeManager;
@@ -159,7 +159,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	 * root (may be empty)
 	 */
 	static Properties initProperties(HgRoot hgRoot) {
-		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
 				.getDefaultRepoLocation(hgRoot);
 		Properties properties = new Properties();
 		if(repoLocation != null){
@@ -222,7 +222,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		}
 
 		HgRoot hgRoot = roots.iterator().next();
-		HgRepositoryLocation repo;
+		IHgRepositoryLocation repo;
 		try {
 			repo = repoManager.getRepoLocation(url, user, pass);
 			if(pass != null && user != null){
@@ -239,7 +239,7 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 		try {
 			repoManager.addRepoLocation(hgRoot, repo);
-			HgRepositoryLocation repoLocation = repoManager.getDefaultRepoLocation(hgRoot);
+			IHgRepositoryLocation repoLocation = repoManager.getDefaultRepoLocation(hgRoot);
 			if(repoLocation == null){
 				repoManager.setDefaultRepository(hgRoot, repo);
 			}

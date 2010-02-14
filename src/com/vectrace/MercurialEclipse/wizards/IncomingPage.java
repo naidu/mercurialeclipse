@@ -48,8 +48,8 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
@@ -65,7 +65,7 @@ public class IncomingPage extends HgWizardPage {
 	TableViewer changeSetViewer;
 	private TableViewer fileStatusViewer;
 	private HgRoot hgRoot;
-	private HgRepositoryLocation location;
+	private IHgRepositoryLocation location;
 	private Button revisionCheckBox;
 	private ChangeSet revision;
 	private SortedSet<ChangeSet> changesets;
@@ -163,7 +163,7 @@ public class IncomingPage extends HgWizardPage {
 		setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
 	}
 
-	public HgRepositoryLocation getLocation() {
+	public IHgRepositoryLocation getLocation() {
 		return location;
 	}
 
@@ -330,7 +330,7 @@ public class IncomingPage extends HgWizardPage {
 		return hgRoot;
 	}
 
-	public void setLocation(HgRepositoryLocation repo) {
+	public void setLocation(IHgRepositoryLocation repo) {
 		this.location = repo;
 	}
 

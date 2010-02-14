@@ -21,6 +21,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbenchPropertyPage;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 /**
@@ -51,11 +53,12 @@ public class RepoPropertiesPage extends FieldEditorPreferencePage implements IWo
 		if (adaptable == null) {
 			return;
 		}
-		HgRepositoryLocation repo = (HgRepositoryLocation) adaptable
-				.getAdapter(HgRepositoryLocation.class);
-		if (repo == null) {
+		IHgRepositoryLocation adapter = (IHgRepositoryLocation) adaptable
+				.getAdapter(IHgRepositoryLocation.class);
+		if (!(adapter instanceof HgRepositoryLocation)) {
 			return;
 		}
+		HgRepositoryLocation repo = (HgRepositoryLocation) adapter;
 		IPreferenceStore store = getPreferenceStore();
 		String user = store.getString(KEY_LOGIN_NAME);
 		repo.setUser(user);
@@ -72,19 +75,27 @@ public class RepoPropertiesPage extends FieldEditorPreferencePage implements IWo
 
 	@Override
 	protected void createFieldEditors() {
+		boolean editable = !(getElement() instanceof HgRoot);
+
 		StringFieldEditor locationEditor = new StringFieldEditor(KEY_LOCATION, "Location",
 				getFieldEditorParent());
 		addField(locationEditor);
+		locationEditor.getTextControl(getFieldEditorParent()).setEditable(false);
+
 		StringFieldEditor logicalNameEditor = new StringFieldEditor(KEY_LNAME, "Logical Name",
 				getFieldEditorParent());
 		addField(logicalNameEditor);
-		locationEditor.getTextControl(getFieldEditorParent()).setEditable(false);
+		logicalNameEditor.getTextControl(getFieldEditorParent()).setEditable(editable);
+
 		StringFieldEditor nameEditor = new StringFieldEditor(KEY_LOGIN_NAME, "Login",
 				getFieldEditorParent());
 		addField(nameEditor);
+		nameEditor.getTextControl(getFieldEditorParent()).setEditable(editable);
+
 		StringFieldEditor pwdEditor = new StringFieldEditor(KEY_LOGIN_PWD, "Password",
 				getFieldEditorParent());
 		pwdEditor.getTextControl(getFieldEditorParent()).setEchoChar('*');
+		pwdEditor.getTextControl(getFieldEditorParent()).setEditable(editable);
 		addField(pwdEditor);
 	}
 
@@ -97,8 +108,8 @@ public class RepoPropertiesPage extends FieldEditorPreferencePage implements IWo
 		if (adaptable == null) {
 			return;
 		}
-		HgRepositoryLocation repo = (HgRepositoryLocation) adaptable
-				.getAdapter(HgRepositoryLocation.class);
+		IHgRepositoryLocation repo = (IHgRepositoryLocation) adaptable
+				.getAdapter(IHgRepositoryLocation.class);
 		if (repo == null) {
 			return;
 		}

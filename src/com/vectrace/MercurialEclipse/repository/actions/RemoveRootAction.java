@@ -21,7 +21,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.actions.SelectionListenerAction;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 /**
  * RemoveRootAction removes a repository
@@ -30,7 +30,7 @@ public class RemoveRootAction extends SelectionListenerAction {
 	private IStructuredSelection selection;
 
 	public RemoveRootAction(Shell shell) {
-		super("Remove Repository");
+		super("Remove");
 		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("rem_co.gif"));
 	}
 
@@ -38,35 +38,24 @@ public class RemoveRootAction extends SelectionListenerAction {
 	 * Returns the selected remote files
 	 */
 	@SuppressWarnings("unchecked")
-	protected HgRepositoryLocation[] getSelectedRemoteRoots() {
-		ArrayList<HgRepositoryLocation> resources = null;
+	protected IHgRepositoryLocation[] getSelectedRemoteRoots() {
+		ArrayList<IHgRepositoryLocation> resources = new ArrayList<IHgRepositoryLocation>();
 		if (selection != null && !selection.isEmpty()) {
-			resources = new ArrayList<HgRepositoryLocation>();
-			Iterator<HgRepositoryLocation> elements = selection.iterator();
+			Iterator<IHgRepositoryLocation> elements = selection.iterator();
 			while (elements.hasNext()) {
 				Object next = MercurialEclipsePlugin.getAdapter(elements.next(),
-						HgRepositoryLocation.class);
-				if (next instanceof HgRepositoryLocation) {
-					resources.add((HgRepositoryLocation) next);
+						IHgRepositoryLocation.class);
+				if (next instanceof IHgRepositoryLocation) {
+					resources.add((IHgRepositoryLocation) next);
 				}
 			}
 		}
-		if (resources != null && !resources.isEmpty()) {
-			HgRepositoryLocation[] result = new HgRepositoryLocation[resources
-					.size()];
-			resources.toArray(result);
-			return result;
-		}
-		return new HgRepositoryLocation[0];
-	}
-
-	protected String getErrorTitle() {
-		return "Error";
+		return resources.toArray(new IHgRepositoryLocation[resources.size()]);
 	}
 
 	@Override
 	public void run() {
-		HgRepositoryLocation[] roots = getSelectedRemoteRoots();
+		IHgRepositoryLocation[] roots = getSelectedRemoteRoots();
 		if (roots.length == 0) {
 			return;
 		}
@@ -75,9 +64,8 @@ public class RemoveRootAction extends SelectionListenerAction {
 		if(!confirm){
 			return;
 		}
-		for (int i = 0; i < roots.length; i++) {
-			MercurialEclipsePlugin.getRepoManager().disposeRepository(
-						roots[i]);
+		for (IHgRepositoryLocation repo : roots) {
+			MercurialEclipsePlugin.getRepoManager().disposeRepository(repo);
 		}
 	}
 
@@ -89,7 +77,7 @@ public class RemoveRootAction extends SelectionListenerAction {
 	protected boolean updateSelection(IStructuredSelection sel) {
 		this.selection = sel;
 
-		HgRepositoryLocation[] roots = getSelectedRemoteRoots();
+		IHgRepositoryLocation[] roots = getSelectedRemoteRoots();
 		return roots.length > 0;
 	}
 

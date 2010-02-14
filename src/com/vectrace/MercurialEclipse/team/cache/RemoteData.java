@@ -25,8 +25,8 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -42,7 +42,7 @@ public class RemoteData {
 	private static final SortedSet<ChangeSet> EMPTY_SETS = Collections
 			.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 	private final HgRoot root;
-	private final HgRepositoryLocation repo;
+	private final IHgRepositoryLocation repo;
 	private final String branch;
 	private final Map<IProject, ProjectCache> projectMap;
 	private final Direction direction;
@@ -53,7 +53,7 @@ public class RemoteData {
 		this(key.getRepo(), key.getRoot(), key.getBranch(), direction, new HashMap<IPath, Set<ChangeSet>>());
 	}
 
-	public RemoteData(HgRepositoryLocation repo, HgRoot root, String branch, Direction direction) {
+	public RemoteData(IHgRepositoryLocation repo, HgRoot root, String branch, Direction direction) {
 		this(repo, root, branch, direction, new HashMap<IPath, Set<ChangeSet>>());
 	}
 
@@ -62,7 +62,7 @@ public class RemoteData {
 	 * this data, and may also contain additional keys for one or more projects under
 	 * the given hgroot.
 	 */
-	public RemoteData(HgRepositoryLocation repo, HgRoot root, String branch, Direction direction,
+	public RemoteData(IHgRepositoryLocation repo, HgRoot root, String branch, Direction direction,
 			Map<IPath, Set<ChangeSet>> changesets) {
 		super();
 		this.repo = repo;
@@ -109,7 +109,7 @@ public class RemoteData {
 		if(set == null || set.isEmpty()) {
 			return EMPTY_SETS;
 		}
-		if(set instanceof SortedSet) {
+		if(set instanceof SortedSet<?>) {
 			return Collections.unmodifiableSortedSet((SortedSet) set);
 		}
 		TreeSet<ChangeSet> sorted = new TreeSet<ChangeSet>(set);
@@ -175,7 +175,7 @@ public class RemoteData {
 		return ResourceUtils.getProjects(root);
 	}
 
-	public HgRepositoryLocation getRepo() {
+	public IHgRepositoryLocation getRepo() {
 		return repo;
 	}
 

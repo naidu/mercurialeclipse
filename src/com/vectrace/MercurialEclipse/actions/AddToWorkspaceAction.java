@@ -27,7 +27,7 @@ import org.eclipse.ui.actions.WorkspaceModifyOperation;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialProjectSetCapability;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -98,7 +98,7 @@ public class AddToWorkspaceAction extends WorkspaceModifyOperation {
 
 				// Repository-URL is stored in part 2
 				HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
-				HgRepositoryLocation location = repoManager.getRepoLocation(psc
+				IHgRepositoryLocation location = repoManager.getRepoLocation(psc
 						.getPullRepo(reference), null, null);
 
 				HgCloneClient.clone(wsRoot.getLocation().toFile(), location, false, false, false,

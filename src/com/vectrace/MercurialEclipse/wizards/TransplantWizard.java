@@ -24,7 +24,7 @@ import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 /**
  * @author bastian
@@ -63,7 +63,7 @@ public class TransplantWizard extends HgWizard {
 		try {
 			page.finish(new NullProgressMonitor());
 			Properties props = page.getProperties();
-			HgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
+			IHgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
 					.fromProperties(hgRoot, props);
 
 			TransplantPage transplantPage = (TransplantPage) page;

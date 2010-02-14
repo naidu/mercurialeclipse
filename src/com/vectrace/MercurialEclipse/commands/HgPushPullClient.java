@@ -18,13 +18,13 @@ import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 public class HgPushPullClient extends AbstractClient {
 
-	public static String push(HgRoot hgRoot, HgRepositoryLocation repo,
+	public static String push(HgRoot hgRoot, IHgRepositoryLocation repo,
 			boolean force, String revision, int timeout) throws HgException {
 		AbstractShellCommand command = new HgCommand("push", hgRoot, true); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
@@ -43,7 +43,7 @@ public class HgPushPullClient extends AbstractClient {
 	}
 
 	public static String pull(HgRoot hgRoot, ChangeSet changeset,
-			HgRepositoryLocation repo, boolean update, boolean rebase,
+			IHgRepositoryLocation repo, boolean update, boolean rebase,
 			boolean force, boolean timeout) throws HgException {
 
 		HgCommand command = new HgCommand("pull", hgRoot, true); //$NON-NLS-1$

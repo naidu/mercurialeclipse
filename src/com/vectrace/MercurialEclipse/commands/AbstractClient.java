@@ -28,7 +28,7 @@ import org.eclipse.core.runtime.IPath;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -158,7 +158,7 @@ public abstract class AbstractClient {
 	 * @param cmd  not null
 	 * @throws HgException
 	 */
-	protected static void addRepoToHgCommand(HgRepositoryLocation repo, AbstractShellCommand cmd) throws HgException {
+	protected static void addRepoToHgCommand(IHgRepositoryLocation repo, AbstractShellCommand cmd) throws HgException {
 		URI uri = repo.getUri();
 		String location;
 		if (uri != null && uri.getHost() != null) {

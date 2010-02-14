@@ -19,8 +19,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgBranchClient extends AbstractClient {
 
@@ -83,7 +83,7 @@ public class HgBranchClient extends AbstractClient {
 	 * @return true if the given branch is known at remote repository
 	 */
 	public static boolean isKnownRemote(HgRoot root,
-			HgRepositoryLocation repository, String branch) {
+			IHgRepositoryLocation repository, String branch) {
 		if(branch == null || Branch.isDefault(branch)){
 			return true;
 		}

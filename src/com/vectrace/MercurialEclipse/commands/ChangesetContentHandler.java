@@ -32,9 +32,9 @@ import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 
 /**
@@ -66,7 +66,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	private boolean readDescription;
 	private final IPath res;
 	private final Direction direction;
-	private final HgRepositoryLocation repository;
+	private final IHgRepositoryLocation repository;
 	private final File bundleFile;
 	private final HgRoot hgRoot;
 	private final Map<IPath, Set<ChangeSet>> fileRevisions;
@@ -81,7 +81,7 @@ final class ChangesetContentHandler implements ContentHandler {
 	private final boolean withFiles;
 
 
-	ChangesetContentHandler(IPath res, boolean withFiles, Direction direction, HgRepositoryLocation repository,
+	ChangesetContentHandler(IPath res, boolean withFiles, Direction direction, IHgRepositoryLocation repository,
 			File bundleFile, String branch, HgRoot hgRoot) {
 
 		this.res = res;

@@ -21,8 +21,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -51,10 +51,10 @@ public class IncomingChangesetCache extends AbstractRemoteCache {
 	 */
 	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-		Set<HgRepositoryLocation> locs = MercurialEclipsePlugin.getRepoManager()
+		Set<IHgRepositoryLocation> locs = MercurialEclipsePlugin.getRepoManager()
 				.getAllRepoLocations(hgRoot);
 		SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
-		for (HgRepositoryLocation repository : locs) {
+		for (IHgRepositoryLocation repository : locs) {
 			ChangeSet candidate = getNewestChangeSet(resource, repository, null);
 			if (candidate != null) {
 				changeSets1.add(candidate);

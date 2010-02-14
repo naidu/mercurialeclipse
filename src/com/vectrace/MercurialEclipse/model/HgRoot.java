@@ -14,12 +14,17 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
 /**
@@ -28,7 +33,7 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  *
  * @author bastian
  */
-public class HgRoot extends File {
+public class HgRoot extends File implements IHgRepositoryLocation {
 	private static final String HG_HGRC = ".hg/hgrc";
 	private static final String HGENCODING;
 	static {
@@ -153,5 +158,66 @@ public class HgRoot extends File {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	public int compareTo(IHgRepositoryLocation loc) {
+		if(getLocation() == null) {
+			return -1;
+		}
+		if(loc.getLocation() == null){
+			return 1;
+		}
+		return getLocation().compareToIgnoreCase(loc.getLocation());
+	}
+
+	public String getLocation() {
+		return getAbsolutePath();
+	}
+
+	public URI getUri() throws HgException {
+		return toURI();
+	}
+
+	public String getLogicalName() {
+		return null;
+	}
+
+	public String getPassword() {
+		return null;
+	}
+
+	public String getUser() {
+		return null;
+	}
+
+	public Object[] getChildren(Object o) {
+		return MercurialTeamProvider.getKnownHgProjects(this).toArray();
+	}
+
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return MercurialEclipsePlugin.getImageDescriptor("root.gif");
+	}
+
+	public String getLabel(Object o) {
+		return getAbsolutePath();
+	}
+
+	public Object getParent(Object o) {
+		return getParentFile();
+	}
+
+	@SuppressWarnings("unchecked")
+	public Object getAdapter(Class adapter) {
+		if (adapter == IWorkbenchAdapter.class) {
+			return this;
+		}
+		if(adapter == IHgRepositoryLocation.class){
+			return this;
+		}
+		return null;
+	}
+
+	public boolean isLocal() {
+		return true;
 	}
 }

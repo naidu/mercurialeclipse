@@ -12,38 +12,83 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.repository.model;
 
-import java.util.Arrays;
+import java.util.Iterator;
+import java.util.SortedSet;
 
-import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.repository.RepositoryComparator;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * AllRootsElement is the model element for the repositories view.
  * Its children are the array of all known repository roots.
  *
  * Because we extend IAdaptable, we don't need to register this adapter
- * as we need for RemoteFileElement, RemoteFolderElement ...
  */
-public class AllRootsElement extends HgModelElement {
+public class AllRootsElement implements IWorkbenchAdapter, IAdaptable {
 
-	public ImageDescriptor getImageDescriptor(Object object) {
-		return MercurialEclipsePlugin.getImageDescriptor("cview16/repository_rep.gif");
+	public AllRootsElement() {
+		super();
 	}
 
-	@Override
-	public Object[] internalGetChildren(Object o, IProgressMonitor monitor) {
-		HgRepositoryLocation[] locations = MercurialEclipsePlugin.getRepoManager()
-				.getAllRepoLocations().toArray(new HgRepositoryLocation[0]);
-		Arrays.sort(locations, new RepositoryComparator());
-		return locations;
+	@SuppressWarnings("unchecked")
+	public Object getAdapter(Class adapter) {
+		if (adapter == IWorkbenchAdapter.class) {
+			return this;
+		}
+		return null;
+	}
+
+	/**
+	 * Return non null array with all known local and remote repositories
+	 * @param o ignored
+	 */
+	public IHgRepositoryLocation[] getChildren(Object o) {
+		HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+		SortedSet<IHgRepositoryLocation> repoLocations = repoManager.getAllRepoLocations();
+
+		SortedSet<HgRoot> hgRoots = MercurialTeamProvider.getKnownHgRoots();
+
+		// remove local repos which are known as hg roots
+		for (IHgRepositoryLocation hgRoot : hgRoots) {
+			Iterator<IHgRepositoryLocation> iterator = repoLocations.iterator();
+			while (iterator.hasNext()) {
+				IHgRepositoryLocation repoLoc = iterator.next();
+				if(repoLoc.equals(hgRoot)){
+					iterator.remove();
+				}
+			}
+		}
+
+		// remove roots which have default repos set
+		for (IHgRepositoryLocation repo : repoLocations) {
+			Iterator<HgRoot> iterator = hgRoots.iterator();
+			while (iterator.hasNext()) {
+				HgRoot hgRoot = iterator.next();
+				if(repo.equals(repoManager.getDefaultRepoLocation(hgRoot))){
+					iterator.remove();
+				}
+			}
+		}
+
+		IHgRepositoryLocation [] result = new IHgRepositoryLocation[repoLocations.size() + hgRoots.size()];
+		System.arraycopy(repoLocations.toArray(), 0, result, 0, repoLocations.size());
+		System.arraycopy(hgRoots.toArray(), 0, result, repoLocations.size(), hgRoots.size());
+		return result;
+	}
+
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return null;
 	}
 
 	public String getLabel(Object o) {
-		return o.toString();
+		return null;
 	}
 
 	public Object getParent(Object o) {

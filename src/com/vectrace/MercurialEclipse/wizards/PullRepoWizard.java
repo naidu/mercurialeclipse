@@ -26,7 +26,7 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 public class PullRepoWizard extends HgWizard {
 
@@ -34,7 +34,7 @@ public class PullRepoWizard extends HgWizard {
 	private PullPage pullPage;
 	private IncomingPage incomingPage;
 	private final HgRoot hgRoot;
-	private HgRepositoryLocation repo;
+	private IHgRepositoryLocation repo;
 	private boolean doCleanUpdate;
 
 	public PullRepoWizard(HgRoot hgRoot) {
@@ -128,7 +128,7 @@ public class PullRepoWizard extends HgWizard {
 		return true;
 	}
 
-	private HgRepositoryLocation getLocation() {
+	private IHgRepositoryLocation getLocation() {
 		try {
 			return MercurialEclipsePlugin.getRepoManager()
 					.fromProperties(hgRoot, pullPage.getProperties());

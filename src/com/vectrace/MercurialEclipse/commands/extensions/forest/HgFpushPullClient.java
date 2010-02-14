@@ -28,13 +28,13 @@ import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 public class HgFpushPullClient extends HgPushPullClient {
 
-	public static String fpush(File forestRoot, HgRepositoryLocation repo,
+	public static String fpush(File forestRoot, IHgRepositoryLocation repo,
 			String revision, int timeout, File snapFile) throws CoreException {
 
 		AbstractShellCommand command = new HgCommand("fpush", forestRoot, true);
@@ -61,7 +61,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 		return new String(command.executeToBytes(timeout));
 	}
 
-	public static String fpull(File forestRoot, HgRepositoryLocation repo,
+	public static String fpull(File forestRoot, IHgRepositoryLocation repo,
 			boolean update, boolean timeout, ChangeSet changeset,
 			boolean walkHg, File snapFile, boolean partial) throws HgException {
 

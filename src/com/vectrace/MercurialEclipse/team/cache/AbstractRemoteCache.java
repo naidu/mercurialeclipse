@@ -28,8 +28,8 @@ import com.vectrace.MercurialEclipse.commands.HgOutgoingClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -89,7 +89,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		// does nothing
 	}
 
-	public void clear(HgRepositoryLocation repo) {
+	public void clear(IHgRepositoryLocation repo) {
 		synchronized (repoDatas) {
 			Collection<Set<RemoteData>> values = repoDatas.values();
 			for (Set<RemoteData> set : values) {
@@ -131,7 +131,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param notify true to send a notification if the cache state changes after this operation,
 	 * false to supress the event notification
 	 */
-	public void clear(HgRepositoryLocation repo, IProject project, boolean notify) {
+	public void clear(IHgRepositoryLocation repo, IProject project, boolean notify) {
 		synchronized (repoDatas) {
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 			Set<RemoteData> set = repoDatas.get(hgRoot);
@@ -152,7 +152,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 		}
 	}
 
-	protected void notifyChanged(HgRepositoryLocation repo, boolean expandMembers){
+	protected void notifyChanged(IHgRepositoryLocation repo, boolean expandMembers){
 		Set<?> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
 		notifyChanged((Set<IResource>)projects, expandMembers);
 	}
@@ -174,7 +174,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @return never null
 	 */
 	public SortedSet<ChangeSet> getChangeSets(IResource resource,
-			HgRepositoryLocation repository, String branch) throws HgException {
+			IHgRepositoryLocation repository, String branch) throws HgException {
 		synchronized (repoDatas){
 			IProject project = resource.getProject();
 			// check if mercurial is team provider and if we're working on an open project
@@ -211,7 +211,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @return never null
 	 */
 	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot,
-			HgRepositoryLocation repository, String branch) throws HgException {
+			IHgRepositoryLocation repository, String branch) throws HgException {
 		synchronized (repoDatas){
 			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 			RemoteData data = fastRepoMap.get(key);
@@ -242,7 +242,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @return never null
 	 */
 	public Set<IResource> getMembers(IResource resource,
-			HgRepositoryLocation repository, String branch) throws HgException {
+			IHgRepositoryLocation repository, String branch) throws HgException {
 		SortedSet<ChangeSet> changeSets;
 		synchronized (repoDatas){
 			// make sure data is there: will refresh (in or out) changesets if needed
@@ -297,7 +297,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
 	 */
 	public ChangeSet getNewestChangeSet(IResource resource,
-			HgRepositoryLocation repository, String branch) throws HgException {
+			IHgRepositoryLocation repository, String branch) throws HgException {
 
 		if (MercurialStatusCache.getInstance().isSupervised(resource) || !resource.exists()) {
 			synchronized (repoDatas){

@@ -33,7 +33,7 @@ import com.vectrace.MercurialEclipse.history.ChangeSetComparator;
 import com.vectrace.MercurialEclipse.menu.PushHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.Messages;
 import com.vectrace.MercurialEclipse.synchronize.cs.ChangesetGroup;
@@ -175,7 +175,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 
 		@Override
 		protected IStatus run(IProgressMonitor moni) {
-			HgRepositoryLocation location = participant.getRepositoryLocation();
+			IHgRepositoryLocation location = participant.getRepositoryLocation();
 			if(location == null){
 				return Status.OK_STATUS;
 			}

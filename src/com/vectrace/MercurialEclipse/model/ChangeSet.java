@@ -33,7 +33,6 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -62,7 +61,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private String[] parents;
 	private Date realDate;
 	File bundleFile;
-	private HgRepositoryLocation repository;
+	private IHgRepositoryLocation repository;
 	Direction direction;
 	private final HgRoot hgRoot;
 	Set<IFile> files;
@@ -166,7 +165,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			return this;
 		}
 
-		public Builder repository(HgRepositoryLocation repository) {
+		public Builder repository(IHgRepositoryLocation repository) {
 			this.cs.repository = repository;
 			return this;
 		}
@@ -479,7 +478,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	/**
 	 * @return the repository
 	 */
-	public HgRepositoryLocation getRepository() {
+	public IHgRepositoryLocation getRepository() {
 		return repository;
 	}
 

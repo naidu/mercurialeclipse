@@ -37,8 +37,8 @@ import org.eclipse.ui.dialogs.PropertyPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -48,6 +48,8 @@ import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
  * @author bastian
  */
 public class HgProjectPropertyPage extends PropertyPage {
+
+	public static final String ID = "com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage";
 	private IProject project;
 	private Group reposGroup;
 	private Text defTextField;
@@ -76,8 +78,8 @@ public class HgProjectPropertyPage extends PropertyPage {
 		}
 
 		final HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
-		Set<HgRepositoryLocation> allRepos = mgr.getAllRepoLocations();
-		HgRepositoryLocation defLoc = mgr.getDefaultRepoLocation(hgRoot);
+		Set<IHgRepositoryLocation> allRepos = mgr.getAllRepoLocations();
+		IHgRepositoryLocation defLoc = mgr.getDefaultRepoLocation(hgRoot);
 
 		createCommitGroup(comp);
 
@@ -87,6 +89,13 @@ public class HgProjectPropertyPage extends PropertyPage {
 
 		updateSelection(allRepos, defLoc);
 
+		allReposCombo.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				updateDefaultRepo();
+			}
+		});
+
+		updateApplyButton();
 		commitText.setFocus();
 		return comp;
 	}
@@ -100,12 +109,6 @@ public class HgProjectPropertyPage extends PropertyPage {
 
 		createLabel(reposGroup, "Set as default:");
 		allReposCombo = createCombo(reposGroup);
-
-		allReposCombo.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent e) {
-				updateDefaultRepo();
-			}
-		});
 	}
 
 	private void createCommitGroup(Composite comp) {
@@ -155,7 +158,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 		final Button deleteRepo = createPushButton(buttonComposite, "Delete...", 1);
 		deleteRepo.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				HgRepositoryLocation repo = (HgRepositoryLocation) defTextField.getData();
+				IHgRepositoryLocation repo = (IHgRepositoryLocation) defTextField.getData();
 				if (repo != null) {
 					Set<HgRoot> locationRoots = mgr.getAllRepoLocationRoots(repo);
 					String message;
@@ -179,13 +182,13 @@ public class HgProjectPropertyPage extends PropertyPage {
 		});
 	}
 
-	private void updateSelection(final Set<HgRepositoryLocation> allRepos,
-			HgRepositoryLocation defLoc) {
+	private void updateSelection(final Set<IHgRepositoryLocation> allRepos,
+			IHgRepositoryLocation defLoc) {
 		allReposCombo.removeAll();
 
 		int idx = -1;
 		int defIndex = idx;
-		for (final HgRepositoryLocation repo : allRepos) {
+		for (final IHgRepositoryLocation repo : allRepos) {
 			idx ++;
 			allReposCombo.add(repo.getLocation());
 			if(defLoc != null && defLoc.equals(repo)){
@@ -197,6 +200,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 		} else if(idx >= 0){
 			allReposCombo.select(idx);
 		}
+		setSelectedRepo(defLoc);
 	}
 
 	@Override
@@ -205,8 +209,8 @@ public class HgProjectPropertyPage extends PropertyPage {
 			return super.performOk();
 		}
 		final HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
-		HgRepositoryLocation defLoc = mgr.getDefaultRepoLocation(hgRoot);
-		HgRepositoryLocation data = (HgRepositoryLocation) defTextField.getData();
+		IHgRepositoryLocation defLoc = mgr.getDefaultRepoLocation(hgRoot);
+		IHgRepositoryLocation data = (IHgRepositoryLocation) defTextField.getData();
 		if (data != null
 				&& (defLoc == null || !defTextField.getText().equals(defLoc.getLocation()))) {
 			mgr.setDefaultRepository(hgRoot, data);
@@ -229,7 +233,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 		if (hgRoot == null) {
 			return false;
 		}
-		HgRepositoryLocation data = (HgRepositoryLocation) defTextField.getData();
+		IHgRepositoryLocation data = (IHgRepositoryLocation) defTextField.getData();
 		if (data == null) {
 			return false;
 		}
@@ -246,7 +250,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 			return;
 		}
 		final HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
-		HgRepositoryLocation defLoc = mgr.getDefaultRepoLocation(hgRoot);
+		IHgRepositoryLocation defLoc = mgr.getDefaultRepoLocation(hgRoot);
 		if(defLoc != null){
 			defTextField.setText(defLoc.getLocation());
 			defTextField.setData(defLoc);
@@ -254,7 +258,7 @@ public class HgProjectPropertyPage extends PropertyPage {
 			defTextField.setText("");
 			defTextField.setData(null);
 		}
-		Set<HgRepositoryLocation> allRepos = mgr.getAllRepoLocations();
+		Set<IHgRepositoryLocation> allRepos = mgr.getAllRepoLocations();
 		updateSelection(allRepos, defLoc);
 		commitText.setText(HgCommitMessageManager.getDefaultCommitName(hgRoot));
 		super.performDefaults();
@@ -262,13 +266,21 @@ public class HgProjectPropertyPage extends PropertyPage {
 
 	private void updateDefaultRepo() {
 		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
-		final Set<HgRepositoryLocation> repos = mgr.getAllRepoLocations();
-		for (HgRepositoryLocation repo : repos) {
+		final Set<IHgRepositoryLocation> repos = mgr.getAllRepoLocations();
+		for (IHgRepositoryLocation repo : repos) {
 			if(repo.getLocation().equals(allReposCombo.getText())){
-				defTextField.setData(repo);
-				defTextField.setText(repo.getLocation());
-				updateApplyButton();
+				setSelectedRepo(repo);
 			}
 		}
+	}
+
+	private void setSelectedRepo(IHgRepositoryLocation repo) {
+		defTextField.setData(repo);
+		if(repo != null) {
+			defTextField.setText(repo.getLocation());
+		} else {
+			defTextField.setText("");
+		}
+		updateApplyButton();
 	}
 }

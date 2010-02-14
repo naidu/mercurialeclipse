@@ -32,8 +32,8 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
@@ -196,7 +196,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		}
 
 		final String currentBranch = MercurialTeamProvider.getCurrentBranch(projects[0]);
-		final HgRepositoryLocation repo = participant.getRepositoryLocation();
+		final IHgRepositoryLocation repo = participant.getRepositoryLocation();
 		final Set<ChangeSet> result = new HashSet<ChangeSet>();
 
 		Runnable runnable = new Runnable() {

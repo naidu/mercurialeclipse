@@ -85,7 +85,7 @@ import org.eclipse.ui.statushandlers.StatusManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -760,7 +760,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		if(!(wizard instanceof CloneRepoWizard)){
 			return;
 		}
-		HgRepositoryLocation repo = ((CloneRepoWizard) wizard).getRepository();
+		IHgRepositoryLocation repo = ((CloneRepoWizard) wizard).getRepository();
 		// Register the project with Team. This will bring all the
 		// files that we cloned into the project.
 		monitor

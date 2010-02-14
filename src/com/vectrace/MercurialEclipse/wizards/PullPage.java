@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -65,7 +66,7 @@ public class PullPage extends PushPullPage {
 					&& getUrlCombo().getText().length() != 0) {
 				IncomingPage incomingPage = (IncomingPage) getNextPage();
 				incomingPage.setHgRoot(getHgRoot());
-				HgRepositoryLocation loc =
+				IHgRepositoryLocation loc =
 					MercurialEclipsePlugin
 						.getRepoManager().getRepoLocation(
 								getUrlCombo().getText(),

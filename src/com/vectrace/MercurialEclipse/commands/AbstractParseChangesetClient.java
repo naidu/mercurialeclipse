@@ -32,8 +32,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.RemoteData;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
@@ -156,7 +156,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 */
 	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(
 			IResource res, String input,
-			Direction direction, HgRepositoryLocation repository,
+			Direction direction, IHgRepositoryLocation repository,
 			File bundleFile, String branch) throws HgException {
 
 		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
@@ -186,7 +186,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(IPath path, String input,
-			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
+			Direction direction, IHgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
 			throws HgException {
 		Map<IPath, Set<ChangeSet>> fileRevisions = new HashMap<IPath, Set<ChangeSet>>();
 
@@ -199,7 +199,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	}
 
 	private static ChangesetContentHandler parseInput(IPath path, boolean withFiles, String input,
-			Direction direction, HgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
+			Direction direction, IHgRepositoryLocation repository, File bundleFile, String branch, HgRoot hgRoot)
 			throws HgException {
 		StringBuilder sb = new StringBuilder(input.length() + OPEN_CLOSE_TAG_SIZE);
 		sb.append(OPEN_TAG);

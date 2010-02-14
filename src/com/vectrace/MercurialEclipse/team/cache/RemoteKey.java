@@ -16,7 +16,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
@@ -27,18 +27,18 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 public class RemoteKey {
 
 	private final HgRoot root;
-	private final HgRepositoryLocation repo;
+	private final IHgRepositoryLocation repo;
 
 	/** never null */
 	private final String branch;
 
-	public RemoteKey(HgRoot root, HgRepositoryLocation repo, String branch) {
+	public RemoteKey(HgRoot root, IHgRepositoryLocation repo, String branch) {
 		this.root = root;
 		this.repo = repo;
 		this.branch = Branch.isDefault(branch)? Branch.DEFAULT : branch;
 	}
 
-	public static RemoteKey create(IResource res, HgRepositoryLocation repo, String branch){
+	public static RemoteKey create(IResource res, IHgRepositoryLocation repo, String branch){
 		try {
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
 			return new RemoteKey(hgRoot, repo, branch);
@@ -48,7 +48,7 @@ public class RemoteKey {
 		return new RemoteKey(null, repo, Branch.DEFAULT);
 	}
 
-	public HgRepositoryLocation getRepo() {
+	public IHgRepositoryLocation getRepo() {
 		return repo;
 	}
 

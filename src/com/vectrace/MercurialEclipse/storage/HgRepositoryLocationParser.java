@@ -19,6 +19,7 @@ import java.util.List;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 /**
  * Repository location line format:
@@ -34,7 +35,7 @@ public class HgRepositoryLocationParser {
 	protected static final String PULL_PREFIX = "d";
 	protected static final String ENCRYPTED_PREFIX = "e";
 
-	protected static HgRepositoryLocation parseLine(final String line) {
+	protected static IHgRepositoryLocation parseLine(final String line) {
 		if (line == null || line.length() < 1) {
 			return null;
 		}
@@ -62,7 +63,7 @@ public class HgRepositoryLocationParser {
 				password = crypter.decrypt(password.substring(2));
 			}
 			URI uri = parseLocationToURI(parts.get(0), username, password);
-			HgRepositoryLocation location;
+			IHgRepositoryLocation location;
 			if(uri != null) {
 				location = new HgRepositoryLocation(parts.get(3), uri);
 			} else {
@@ -75,7 +76,7 @@ public class HgRepositoryLocationParser {
 		}
 	}
 
-	protected static String createLine(final HgRepositoryLocation location) {
+	protected static String createLine(final IHgRepositoryLocation location) {
 		StringBuilder line = new StringBuilder(PULL_PREFIX);
 		// remove authentication from location
 		line.append(String.valueOf(location.getLocation().length()));
@@ -106,19 +107,15 @@ public class HgRepositoryLocationParser {
 		return line.toString();
 	}
 
-	protected static HgRepositoryLocation parseLocation(String logicalName, String location, String user, String password) throws HgException {
+	protected static IHgRepositoryLocation parseLocation(String logicalName, String location, String user, String password) throws HgException {
 		return parseLine(logicalName, location, user, password);
 	}
 
-	protected static HgRepositoryLocation parseLocation(String location, String user, String password) throws HgException {
+	protected static IHgRepositoryLocation parseLocation(String location, String user, String password) throws HgException {
 		return parseLocation(null, location, user, password);
 	}
 
-	protected static HgRepositoryLocation parseLocation(String location) throws HgException {
-		return parseLocation(null, location, null, null);
-	}
-
-	protected static HgRepositoryLocation parseLine(String logicalName, String location, String user, String password) throws HgException {
+	protected static IHgRepositoryLocation parseLine(String logicalName, String location, String user, String password) throws HgException {
 		String[] repoInfo = location.split(SPLIT_TOKEN);
 
 		if ((user == null || user.length() == 0)
@@ -242,7 +239,7 @@ public class HgRepositoryLocationParser {
 	}
 
 	@Deprecated
-	public static String createSaveString(HgRepositoryLocation location) {
+	public static String createSaveString(IHgRepositoryLocation location) {
 		StringBuilder line = new StringBuilder(location.getLocation());
 		if (location.getUser() != null ) {
 			line.append(SPLIT_TOKEN);

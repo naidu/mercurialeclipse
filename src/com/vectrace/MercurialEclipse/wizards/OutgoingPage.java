@@ -34,7 +34,7 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
@@ -71,7 +71,7 @@ public class OutgoingPage extends IncomingPage {
 			if (isSvn()) {
 				return new TreeSet<ChangeSet>();
 			}
-			HgRepositoryLocation remote = getLocation();
+			IHgRepositoryLocation remote = getLocation();
 			try {
 				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
 						getHgRoot(), remote, null);

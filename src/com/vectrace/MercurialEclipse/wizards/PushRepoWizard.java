@@ -34,8 +34,8 @@ import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClien
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -80,7 +80,7 @@ public class PushRepoWizard extends HgWizard {
 	public boolean performFinish() {
 		super.performFinish();
 		Properties props = page.getProperties();
-		final HgRepositoryLocation repo;
+		final IHgRepositoryLocation repo;
 		try {
 			repo = MercurialEclipsePlugin.getRepoManager().fromProperties(hgRoot, props);
 		} catch (HgException e){
@@ -187,7 +187,7 @@ public class PushRepoWizard extends HgWizard {
 		return pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection();
 	}
 
-	private static void updateAfterPush(String result, HgRoot hgRoot, HgRepositoryLocation repo, boolean isForest) throws HgException {
+	private static void updateAfterPush(String result, HgRoot hgRoot, IHgRepositoryLocation repo, boolean isForest) throws HgException {
 		if (result.length() != 0) {
 			HgClients.getConsole().printMessage(result, null);
 		}

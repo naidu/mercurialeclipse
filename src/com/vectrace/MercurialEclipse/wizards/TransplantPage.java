@@ -38,7 +38,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -76,7 +76,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 		ModifyListener urlModifyListener = new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
-				HgRepositoryLocation repoLocation;
+				IHgRepositoryLocation repoLocation;
 				try {
 					repoLocation = MercurialEclipsePlugin.getRepoManager()
 							.getRepoLocation(getUrlCombo().getText());

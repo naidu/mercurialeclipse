@@ -18,8 +18,8 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgTransplantClient {
 
@@ -27,7 +27,7 @@ public class HgTransplantClient {
 	 * Cherrypicks given ChangeSets from repository or branch.
 	 */
 	public static String transplant(HgRoot hgRoot, List<String> nodeIds,
-			HgRepositoryLocation repo, boolean branch, String branchName,
+			IHgRepositoryLocation repo, boolean branch, String branchName,
 			boolean all, boolean merge, String mergeNodeId, boolean prune,
 			String pruneNodeId, boolean continueLastTransplant,
 			boolean filterChangesets, String filter) throws HgException {

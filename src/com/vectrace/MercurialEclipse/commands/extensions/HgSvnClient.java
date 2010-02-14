@@ -18,8 +18,8 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 
 /**
@@ -60,7 +60,7 @@ public class HgSvnClient extends AbstractClient {
 	}
 
 	public static void clone(File currentWorkingDirectory,
-			HgRepositoryLocation repo, boolean timeout, String cloneName)
+			IHgRepositoryLocation repo, boolean timeout, String cloneName)
 			throws HgException {
 		AbstractShellCommand cmd = new HgCommand("svnclone", //$NON-NLS-1$
 				getWorkingDirectory(currentWorkingDirectory), false);

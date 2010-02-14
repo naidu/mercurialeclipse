@@ -44,6 +44,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
@@ -232,7 +233,7 @@ public class HgCommitMessageManager {
 			return commitName;
 		}
 
-		HgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
+		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
 			.getDefaultRepoLocation(hgRoot);
 		if(repoLocation != null) {
 			String user = repoLocation.getUser();

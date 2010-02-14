@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
@@ -57,7 +57,7 @@ public class PushRepoPage extends PushPullPage {
 					&& getUrlCombo().getText() != null) {
 				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
 				outgoingPage.setHgRoot(hgRoot);
-				HgRepositoryLocation loc = MercurialEclipsePlugin
+				IHgRepositoryLocation loc = MercurialEclipsePlugin
 						.getRepoManager().getRepoLocation(urlCombo.getText(),
 								getUserCombo().getText(),
 								getPasswordText()
@@ -76,12 +76,12 @@ public class PushRepoPage extends PushPullPage {
 	}
 
 	@Override
-	protected HgRepositoryLocation getRepoFromRoot(){
+	protected IHgRepositoryLocation getRepoFromRoot(){
 		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
-		HgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
-		Set<HgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
+		IHgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
+		Set<IHgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
 		if (defaultLocation == null) {
-			for (HgRepositoryLocation repo : repos) {
+			for (IHgRepositoryLocation repo : repos) {
 				if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName())
 						|| HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
 					defaultLocation = repo;

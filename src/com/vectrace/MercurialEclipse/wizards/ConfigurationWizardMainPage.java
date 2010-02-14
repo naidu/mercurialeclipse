@@ -45,7 +45,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -78,7 +78,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
 	protected Button browseFileButton;
 
-	private HgRepositoryLocation initialRepo;
+	private IHgRepositoryLocation initialRepo;
 
 	/**
 	 * @param pageName
@@ -202,7 +202,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		urlCombo.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 
-				HgRepositoryLocation repo;
+				IHgRepositoryLocation repo;
 				try {
 					// note that repo will not be null, will be blank
 					// repo if no existing one was found
@@ -366,14 +366,14 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
 	private String[] updateHostNames(HgRoot hgRoot) {
 		String[] newHostNames = new String[0];
-		Set<HgRepositoryLocation> repositories = null;
+		Set<IHgRepositoryLocation> repositories = null;
 		if (hgRoot != null) {
 			repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(hgRoot);
 		} else {
 			repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
 		}
 		if (repositories != null) {
-			for (HgRepositoryLocation hgRepositoryLocation : repositories) {
+			for (IHgRepositoryLocation hgRepositoryLocation : repositories) {
 				if(hgRepositoryLocation.getLocation() != null) {
 					newHostNames = addToHistory(newHostNames, hgRepositoryLocation.getLocation(), -1);
 				}
@@ -510,7 +510,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	}
 
 	protected void initDefaultLocation() {
-		HgRepositoryLocation defaultLocation = null;
+		IHgRepositoryLocation defaultLocation = null;
 		if (getHgRoot() != null) {
 			defaultLocation = getRepoFromRoot();
 		}
@@ -520,12 +520,12 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		setRepository(defaultLocation);
 	}
 
-	protected HgRepositoryLocation getRepoFromRoot(){
+	protected IHgRepositoryLocation getRepoFromRoot(){
 		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
-		HgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
-		Set<HgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
+		IHgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
+		Set<IHgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
 		if (defaultLocation == null) {
-			for (HgRepositoryLocation repo : repos) {
+			for (IHgRepositoryLocation repo : repos) {
 				if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName())
 						|| HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
 					defaultLocation = repo;
@@ -536,7 +536,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		return defaultLocation;
 	}
 
-	public void setRepository(HgRepositoryLocation repo) {
+	public void setRepository(IHgRepositoryLocation repo) {
 		if (repo == null) {
 			return;
 		}
@@ -589,11 +589,11 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		return value != null && value.trim().length() > 0;
 	}
 
-	public void setInitialRepo(HgRepositoryLocation initialRepo) {
+	public void setInitialRepo(IHgRepositoryLocation initialRepo) {
 		this.initialRepo = initialRepo;
 	}
 
-	public HgRepositoryLocation getInitialRepo() {
+	public IHgRepositoryLocation getInitialRepo() {
 		return initialRepo;
 	}
 }

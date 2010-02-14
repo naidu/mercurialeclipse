@@ -18,13 +18,17 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceRuleFactory;
+import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.resources.team.IMoveDeleteHook;
 import org.eclipse.core.resources.team.ResourceRuleFactory;
@@ -74,6 +78,17 @@ public class MercurialTeamProvider extends RepositoryProvider {
 
 	public MercurialTeamProvider() {
 		super();
+	}
+
+	public static SortedSet<HgRoot> getKnownHgRoots(){
+		SortedSet<HgRoot> roots = new TreeSet<HgRoot>();
+		Collection<HgRoot[]> values = HG_ROOTS.values();
+		for (HgRoot[] hgRoots : values) {
+			for (HgRoot hgRoot : hgRoots) {
+				roots.add(hgRoot);
+			}
+		}
+		return roots;
 	}
 
 	public static List<IProject> getKnownHgProjects(){
@@ -219,6 +234,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 *             if an error occurred (e.g. no root could be found)
 	 */
 	public static HgRoot getHgRoot(IResource resource) throws HgException {
+		if(resource == null || resource instanceof IWorkspaceRoot){
+			return null;
+		}
 		if(resource instanceof HgRootContainer){
 			HgRootContainer rootContainer = (HgRootContainer) resource;
 			return rootContainer.getHgRoot();
@@ -256,7 +274,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 * hg root can't be found
 	 */
 	public static HgRoot hasHgRoot(IResource resource) {
-		if(resource == null){
+		if(resource == null || resource instanceof IWorkspaceRoot){
 			return null;
 		}
 		IProject project = resource.getProject();
