@@ -23,6 +23,7 @@ import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * @author bastian
@@ -75,13 +76,10 @@ public class PushRepoPage extends PushPullPage {
 	}
 
 	@Override
-	protected Set<HgRepositoryLocation> setDefaultLocation() {
-		Set<HgRepositoryLocation> repos = super.setDefaultLocation();
-		if (repos == null) {
-			return null;
-		}
-		HgRepositoryLocation defaultLocation = MercurialEclipsePlugin.getRepoManager()
-				.getDefaultRepoLocation(hgRoot);
+	protected HgRepositoryLocation getRepoFromRoot(){
+		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
+		HgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
+		Set<HgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
 		if (defaultLocation == null) {
 			for (HgRepositoryLocation repo : repos) {
 				if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName())
@@ -91,20 +89,6 @@ public class PushRepoPage extends PushPullPage {
 				}
 			}
 		}
-
-		if (defaultLocation != null) {
-			getUrlCombo().setText(defaultLocation.getLocation());
-
-			String user = defaultLocation.getUser();
-			if (user != null && user.length() != 0) {
-				getUserCombo().setText(user);
-			}
-			String password = defaultLocation.getPassword();
-			if (password != null && password.length() != 0) {
-				getPasswordText().setText(password);
-			}
-		}
-		return repos;
+		return defaultLocation;
 	}
-
 }

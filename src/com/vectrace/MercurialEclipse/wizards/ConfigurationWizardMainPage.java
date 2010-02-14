@@ -78,6 +78,8 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
 	protected Button browseFileButton;
 
+	private HgRepositoryLocation initialRepo;
+
 	/**
 	 * @param pageName
 	 *            the name of the page
@@ -507,10 +509,18 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		return null;
 	}
 
-	protected Set<HgRepositoryLocation> setDefaultLocation() {
-		if (getHgRoot() == null) {
-			return null;
+	protected void initDefaultLocation() {
+		HgRepositoryLocation defaultLocation = null;
+		if (getHgRoot() != null) {
+			defaultLocation = getRepoFromRoot();
 		}
+		if(defaultLocation == null){
+			defaultLocation = getInitialRepo();
+		}
+		setRepository(defaultLocation);
+	}
+
+	protected HgRepositoryLocation getRepoFromRoot(){
 		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
 		HgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
 		Set<HgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
@@ -523,20 +533,23 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 				}
 			}
 		}
+		return defaultLocation;
+	}
 
-		if (defaultLocation != null) {
-			getUrlCombo().setText(defaultLocation.getLocation());
-
-			String user = defaultLocation.getUser();
-			if (user != null && user.length() != 0) {
-				getUserCombo().setText(user);
-			}
-			String password = defaultLocation.getPassword();
-			if (password != null && password.length() != 0) {
-				getPasswordText().setText(password);
-			}
+	public void setRepository(HgRepositoryLocation repo) {
+		if (repo == null) {
+			return;
 		}
-		return repos;
+		getUrlCombo().setText(repo.getLocation());
+
+		String user = repo.getUser();
+		if (user != null && user.length() != 0) {
+			getUserCombo().setText(user);
+		}
+		String password = repo.getPassword();
+		if (password != null && password.length() != 0) {
+			getPasswordText().setText(password);
+		}
 	}
 
 	@Override
@@ -574,5 +587,13 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	private static boolean isValid(Properties properties, String key){
 		String value = properties.getProperty(key);
 		return value != null && value.trim().length() > 0;
+	}
+
+	public void setInitialRepo(HgRepositoryLocation initialRepo) {
+		this.initialRepo = initialRepo;
+	}
+
+	public HgRepositoryLocation getInitialRepo() {
+		return initialRepo;
 	}
 }

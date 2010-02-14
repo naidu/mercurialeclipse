@@ -94,10 +94,10 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 		createExtensionControls();
 
-		setDefaultLocation();
+		initDefaultLocation();
 	}
 
-	private void createExtensionControls() {
+	protected void createExtensionControls() {
 		if (showForest) {
 			this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					Messages.getString("PushPullPage.option.forest")); //$NON-NLS-1$
@@ -257,10 +257,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		return snapFileCombo != null? snapFileCombo.getText() : null;
 	}
 
-	public void setSnapFileCombo(Combo snapFileCombo) {
-		this.snapFileCombo = snapFileCombo;
-	}
-
 	public boolean isShowSnapFile() {
 		return showSnapFile;
 	}
@@ -271,10 +267,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 	public Button getForestCheckBox() {
 		return forestCheckBox;
-	}
-
-	public void setForestCheckBox(Button forestCheckBox) {
-		this.forestCheckBox = forestCheckBox;
 	}
 
 	public boolean isShowSvn() {
@@ -289,10 +281,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 	public Button getSvnCheckBox() {
 		return svnCheckBox;
-	}
-
-	public void setSvnCheckBox(Button svnCheckBox) {
-		this.svnCheckBox = svnCheckBox;
 	}
 
 	@Override

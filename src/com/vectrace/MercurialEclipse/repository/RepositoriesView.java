@@ -43,6 +43,7 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.dialogs.PropertyDialogAction;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
@@ -55,6 +56,7 @@ import com.vectrace.MercurialEclipse.repository.actions.RemoveRootAction;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 import com.vectrace.MercurialEclipse.repository.model.RemoteContentProvider;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.wizards.CloneRepoWizard;
 import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
 
 /**
@@ -80,6 +82,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	private Action refreshPopupAction;
 	private Action collapseAllAction;
 	private Action propertiesAction;
+	private Action cloneAction;
 
 	private RemoteContentProvider contentProvider;
 
@@ -136,6 +139,19 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				NewLocationWizard wizard = new NewLocationWizard();
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				dialog.open();
+			}
+		};
+
+		// Clone Repository (popup)
+		cloneAction = new Action(Messages.getString("RepositoriesView.cloneRepo"), MercurialEclipsePlugin //$NON-NLS-1$
+				.getImageDescriptor("clone_repo.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
+				CloneRepoWizard wizard = new CloneRepoWizard();
+				wizard.init(PlatformUI.getWorkbench(), selection);
 				WizardDialog dialog = new WizardDialog(shell, wizard);
 				dialog.open();
 			}
@@ -250,6 +266,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 
 		MenuManager sub = new MenuManager(Messages.getString("RepositoriesView.new"), //$NON-NLS-1$
 				IWorkbenchActionConstants.GROUP_ADD);
+		sub.add(newAction);
 		sub.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 		manager.add(sub);
 
@@ -261,23 +278,28 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		manager.add(new Separator("exportImportGroup")); //$NON-NLS-1$
 		manager.add(new Separator("miscGroup")); //$NON-NLS-1$
 
-		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
-
-		manager.add(refreshPopupAction);
 
 		IStructuredSelection selection = (IStructuredSelection) getViewer()
 				.getSelection();
+		boolean singleRepoSelected = selection.size() == 1
+			&& selection.getFirstElement() instanceof HgRepositoryLocation;
+
+		if(singleRepoSelected){
+			manager.add(cloneAction);
+			manager.add(refreshPopupAction);
+		}
+
 		removeRootAction.selectionChanged(selection);
 		if (removeRootAction.isEnabled()) {
 			manager.add(removeRootAction);
 		}
 
-		if (selection.size() == 1
-				&& selection.getFirstElement() instanceof HgRepositoryLocation) {
+		manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+
+		if (singleRepoSelected) {
 			manager.add(new Separator());
 			manager.add(propertiesAction);
 		}
-		sub.add(newAction);
 	}
 
 	@Override

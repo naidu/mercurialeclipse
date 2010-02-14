@@ -30,6 +30,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWizard {
 	private ClonePage clonePage;
 	private ProjectsImportPage importPage;
+	private HgRepositoryLocation defaultLocation;
 
 
 	public CloneRepoWizard() {
@@ -61,6 +62,16 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 		clonePage.setDescription(Messages
 				.getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
 		initPage(clonePage.getDescription(), clonePage);
+		if(!selection.isEmpty()){
+			Object firstElement = selection.getFirstElement();
+			if(firstElement instanceof HgRepositoryLocation){
+				HgRepositoryLocation repo = (HgRepositoryLocation) firstElement;
+				setDefaultLocation(repo);
+			}
+		}
+		if(getDefaultLocation() != null) {
+			clonePage.setInitialRepo(getDefaultLocation());
+		}
 
 		importPage = new ProjectsImportPage("ProjectsImportPage");
 
@@ -72,5 +83,13 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 	@Override
 	public boolean canFinish() {
 		return getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
+	}
+
+	public void setDefaultLocation(HgRepositoryLocation defaultLocation) {
+		this.defaultLocation = defaultLocation;
+	}
+
+	public HgRepositoryLocation getDefaultLocation() {
+		return defaultLocation;
 	}
 }

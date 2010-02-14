@@ -81,11 +81,18 @@ public class ClonePage extends PushPullPage {
 	@Override
 	public void createControl(Composite parent) {
 		super.createControl(parent);
+		if(getInitialRepo() == null) {
+			setPageComplete(false);
+		}
+	}
+
+	@Override
+	protected void createExtensionControls() {
+		super.createExtensionControls();
 		Composite composite = (Composite) getControl();
 		createDestGroup(composite);
 		createOptionsGroup(composite);
 		hookNextButtonListener(composite);
-		setPageComplete(false);
 	}
 
 	private boolean isEmpty(String s){
