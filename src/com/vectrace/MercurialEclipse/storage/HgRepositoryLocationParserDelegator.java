@@ -27,7 +27,7 @@ public class HgRepositoryLocationParserDelegator {
 				return HgRepositoryLocationParser.parseLine(line);
 			}
 			try {
-				return HgRepositoryLocationParser.parseLine(null, false, line, null, null);
+				return HgRepositoryLocationParser.parseLine(null, line, null, null);
 			} catch (HgException ex) {
 				MercurialEclipsePlugin.logError("Unable to parse repository line <" + line + ">", ex);
 			}

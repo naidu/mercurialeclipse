@@ -139,7 +139,7 @@ class PullOperation extends HgOperation {
 				updateSeparately = true;
 			}
 			File canonicalBundle = toCanonicalBundle();
-			BundleRepository bundleRepo = new BundleRepository(canonicalBundle, false);
+			BundleRepository bundleRepo = new BundleRepository(canonicalBundle);
 			r += HgPushPullClient.pull(hgRoot, pullRevision, bundleRepo, false, rebase, force, timeout);
 		}
 

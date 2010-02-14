@@ -419,7 +419,7 @@ public class HgRepositoryLocationManager {
 		}
 
 		// make a new location if no matches exist or it's a different user
-		return HgRepositoryLocationParser.parseLocation(false, url, user, pass);
+		return HgRepositoryLocationParser.parseLocation(url, user, pass);
 	}
 
 	/**
@@ -450,7 +450,7 @@ public class HgRepositoryLocationManager {
 		}
 
 		// make a new location if no matches exist or it's a different user
-		return HgRepositoryLocationParser.parseLocation(false, url, user, password);
+		return HgRepositoryLocationParser.parseLocation(url, user, password);
 	}
 
 	/**
@@ -479,7 +479,7 @@ public class HgRepositoryLocationManager {
 
 		if (loc == null) {
 			// in some cases url may be a repository database line
-			loc = HgRepositoryLocationParser.parseLocation(logicalName, false, url, user, pass);
+			loc = HgRepositoryLocationParser.parseLocation(logicalName, url, user, pass);
 			addRepoLocation(loc);
 			return loc;
 		}
@@ -508,7 +508,7 @@ public class HgRepositoryLocationManager {
 
 		if (update) {
 			HgRepositoryLocation updated = HgRepositoryLocationParser.parseLocation(myLogicalName,
-					false, loc.getLocation(), myUser, myPass);
+					loc.getLocation(), myUser, myPass);
 			if (hgRoot != null) {
 				for (SortedSet<HgRepositoryLocation> locs : rootRepos.values()) {
 					if (locs.remove(updated)) {

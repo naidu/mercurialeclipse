@@ -38,7 +38,6 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 	protected String location;
 	private String user;
 	private String password;
-	private final boolean isPush;
 
 	/**
 	 * hg repository which is represented by a bundle file (on local disk)
@@ -47,10 +46,9 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 		/**
 		 * @param location canonical representation of a bundle file path, never null
-		 * @param isPush
 		 */
-		public BundleRepository(File location, boolean isPush) {
-			super(null, isPush, null, null);
+		public BundleRepository(File location) {
+			super(null, null, null);
 			this.location = location.getAbsolutePath();
 		}
 
@@ -60,15 +58,14 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 		}
 	}
 
-	HgRepositoryLocation(String logicalName, boolean isPush, String user, String password){
+	HgRepositoryLocation(String logicalName, String user, String password){
 		this.logicalName = logicalName;
-		this.isPush = isPush;
 		this.user = user;
 		this.password = password;
 	}
 
-	HgRepositoryLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
-		this(logicalName, isPush, user, password);
+	HgRepositoryLocation(String logicalName, String location, String user, String password) throws HgException {
+		this(logicalName, user, password);
 		URI uri = HgRepositoryLocationParser.parseLocationToURI(location, user, password);
 		if(uri != null) {
 			try {
@@ -87,8 +84,8 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 		}
 	}
 
-	HgRepositoryLocation(String logicalName, boolean isPush, URI uri) throws HgException {
-		this(logicalName, isPush, HgRepositoryLocationParser.getUserNameFromURI(uri),
+	HgRepositoryLocation(String logicalName, URI uri) throws HgException {
+		this(logicalName, HgRepositoryLocationParser.getUserNameFromURI(uri),
 				HgRepositoryLocationParser.getPasswordFromURI(uri));
 		if (uri == null) {
 			throw new HgException("Given URI cannot be null");
@@ -108,7 +105,7 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	static public boolean validateLocation(String validate) {
 		try {
-			HgRepositoryLocation location2 = HgRepositoryLocationParser.parseLocation(false, validate, null, null);
+			HgRepositoryLocation location2 = HgRepositoryLocationParser.parseLocation(validate, null, null);
 			if(location2 == null){
 				return false;
 			}
@@ -225,10 +222,6 @@ public class HgRepositoryLocation extends AllRootsElement implements Comparable<
 
 	public String getLogicalName() {
 		return logicalName;
-	}
-
-	public boolean isPush() {
-		return isPush;
 	}
 
 	public boolean isEmpty() {
