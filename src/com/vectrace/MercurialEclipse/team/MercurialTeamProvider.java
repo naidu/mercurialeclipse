@@ -31,6 +31,7 @@ import org.eclipse.core.resources.team.ResourceRuleFactory;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.ListenerList;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 import org.eclipse.ui.IPropertyListener;
@@ -117,10 +118,15 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		HgRoot hgRoot = getAndStoreHgRoot(project);
 		HG_ROOTS.put(project, new HgRoot[] { hgRoot });
 		// try to find .hg directory to set it as private member
-		IResource hgDir = project.findMember(".hg"); //$NON-NLS-1$
-		if (hgDir != null && hgDir.exists()) {
-			hgDir.setTeamPrivateMember(true);
-			hgDir.setDerived(true);
+		IResource hgDir = project.getFolder(".hg"); //$NON-NLS-1$
+		if (hgDir != null) {
+			if(!hgDir.exists()){
+				hgDir.refreshLocal(IResource.DEPTH_ZERO, new NullProgressMonitor());
+			}
+			if(hgDir.exists()) {
+				hgDir.setTeamPrivateMember(true);
+				hgDir.setDerived(true);
+			}
 		}
 		if(!MercurialStatusCache.getInstance().isStatusKnown(project)) {
 			new RefreshStatusJob("Initializing hg cache for: " + hgRoot.getName(),  hgRoot).schedule(200);
