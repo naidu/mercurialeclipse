@@ -372,7 +372,9 @@ public class ResourceUtils {
 			protected IStatus run(IProgressMonitor monitor) {
 				// triggers the decoration update
 				try {
-					res.touch(monitor);
+					if(res.isAccessible()) {
+						res.touch(monitor);
+					}
 				} catch (CoreException e) {
 					MercurialEclipsePlugin.logError(e);
 				}
