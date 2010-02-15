@@ -11,10 +11,12 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team.cache;
 
+import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.osgi.util.NLS;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -25,11 +27,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
  * changesets. If you only want to refresh the status use
  * {@link RefreshStatusJob}.
  *
- * For big repositories this can be quite slow when "withFiles" is set to true
- * in constructor.
- *
  * @author Bastian Doetsch
- *
  */
 public final class RefreshRootJob extends Job {
 	public static final int LOCAL = 1;
@@ -43,29 +41,29 @@ public final class RefreshRootJob extends Job {
 			.getInstance();
 
 	private final HgRoot hgRoot;
-	//private final boolean withFiles;
 	private final int type;
 
+	/**
+	 * @param name non null job name, shown to user
+	 * @param hgRoot non null
+	 * @param type one of RefreshRootJob flags
+	 */
 	public RefreshRootJob(String name, HgRoot hgRoot, int type) {
 		super(name);
+		Assert.isNotNull(hgRoot);
 		this.hgRoot = hgRoot;
-		//this.withFiles = getWithFilesProperty();
 		this.type = type;
-		if(hgRoot != null) {
-			setRule(new HgRootRule(hgRoot));
-		}
+		setRule(new HgRootRule(hgRoot));
 	}
 
-	public RefreshRootJob(String name, HgRoot root) {
-		this(name, root, ALL);
+	/**
+	 * Refreshes local, incoming and outgoing data
+	 * @param name non null job name, shown to user
+	 * @param hgRoot non null
+	 */
+	public RefreshRootJob(String name, HgRoot hgRoot) {
+		this(name, hgRoot, ALL);
 	}
-
-//	private static boolean getWithFilesProperty() {
-//		return Boolean.valueOf(
-//				HgClients.getPreference(
-//						MercurialPreferenceConstants.RESOURCE_DECORATOR_SHOW_CHANGESET,
-//						"false")).booleanValue();
-//	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
@@ -80,12 +78,7 @@ public final class RefreshRootJob extends Job {
 		try {
 			if((type & LOCAL) != 0){
 				monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-				//Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 				LocalChangesetCache.getInstance().clear(hgRoot, true);
-				//for (IProject project : projects) {
-					// TODO fetch log info ?
-					// LocalChangesetCache.getInstance().refreshAllLocalRevisions(project, true, withFiles);
-				//}
 				monitor.worked(1);
 
 				monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
@@ -97,12 +90,12 @@ public final class RefreshRootJob extends Job {
 				return Status.OK_STATUS;
 			}
 			if((type & INCOMING) != 0){
-				monitor.subTask(Messages.refreshJob_LoadingIncomingRevisions + hgRoot.getName());
+				monitor.subTask(NLS.bind(Messages.refreshJob_LoadingIncomingRevisions, hgRoot.getName()));
 				IncomingChangesetCache.getInstance().clear(hgRoot, true);
 				monitor.worked(1);
 			}
 			if((type & OUTGOING) != 0){
-				monitor.subTask(Messages.refreshJob_LoadingOutgoingRevisionsFor + hgRoot.getName());
+				monitor.subTask(NLS.bind(Messages.refreshJob_LoadingOutgoingRevisionsFor, hgRoot.getName()));
 				OutgoingChangesetCache.getInstance().clear(hgRoot, true);
 				monitor.worked(1);
 			}
@@ -123,10 +116,21 @@ public final class RefreshRootJob extends Job {
 	public boolean shouldSchedule() {
 		Job[] jobs = Job.getJobManager().find(RefreshRootJob.class);
 		for (Job job : jobs) {
-			if(job.getState() == WAITING){
+			if(isSimilar(job)){
+				// do not schedule me because exactly the same job is waiting to be started!
 				return false;
 			}
 		}
 		return true;
+	}
+
+	private boolean isSimilar(Job job) {
+		if(!(job instanceof RefreshRootJob)){
+			return false;
+		}
+		RefreshRootJob rootJob = (RefreshRootJob) job;
+		int state = rootJob.getState();
+		return type == rootJob.type && (state == WAITING || state == SLEEPING)
+				&& hgRoot.equals(rootJob.hgRoot);
 	}
 }
