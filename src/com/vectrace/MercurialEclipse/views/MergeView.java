@@ -24,7 +24,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -331,34 +330,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 		// TODO do not react on any changes if the view is hidden...
 
-		if (selection instanceof IStructuredSelection) {
+		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
 			IStructuredSelection structured = (IStructuredSelection) selection;
-			if (structured.getFirstElement() instanceof IAdaptable) {
-				IResource resource = (IResource) ((IAdaptable) structured
-						.getFirstElement()).getAdapter(IResource.class);
-				if (resource != null) {
-					setCurrentRoot(MercurialTeamProvider.getHgRoot(resource.getProject()));
-					return;
-				}
+			IResource resource = MercurialEclipsePlugin.getAdapter(structured.getFirstElement(), IResource.class);
+			if (resource != null) {
+				setCurrentRoot(MercurialTeamProvider.getHgRoot(resource.getProject()));
 			}
 		}
-		// XXX this causes typing delays, if the merge view is opened at same time
-		// the feature is questionable: why we should change merge view content by selecting another editor???
-		// instead, we should track part activation but ONLY if we are visible
-		/*
-		if (part instanceof IEditorPart) {
-			IEditorInput input = ((IEditorPart) part).getEditorInput();
-			IFile file = (IFile) input.getAdapter(IFile.class);
-			if (file != null) {
-				try {
-					setCurrentRoot(MercurialTeamProvider.getHgRoot(file.getProject()));
-				} catch (HgException e) {
-					// ignore, as it may be just non hg project
-					setCurrentRoot(null);
-				}
-				return;
-			}
-		}*/
 	}
 
 	@Override
