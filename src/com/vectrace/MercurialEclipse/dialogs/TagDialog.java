@@ -86,7 +86,6 @@ public class TagDialog extends Dialog {
 				| GridData.FILL_VERTICAL));
 
 		createMainTabItem(tabFolder);
-		// TODO createOptionsTabItem(tabFolder);
 		createTargetTabItem(tabFolder);
 		createRemoveTabItem(tabFolder);
 
@@ -178,8 +177,7 @@ public class TagDialog extends Dialog {
 		Composite composite = new Composite(folder, SWT.NONE);
 		composite.setLayout(new GridLayout(1, true));
 
-		// commit date
-		// TODO
+		// TODO commit date
 
 		// user name
 		final Button customUserButton = new Button(composite, SWT.CHECK);

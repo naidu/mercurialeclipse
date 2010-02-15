@@ -185,7 +185,6 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 			RemoteData data = fastRepoMap.get(key);
 
-			// XXX new code
 			if(data == null){
 				// lazy loading: refresh cache on demand only.
 				// lock the cache till update is complete
@@ -216,7 +215,6 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 			RemoteData data = fastRepoMap.get(key);
 
-			// XXX new code
 			if(data == null){
 				// lazy loading: refresh cache on demand only.
 				// lock the cache till update is complete

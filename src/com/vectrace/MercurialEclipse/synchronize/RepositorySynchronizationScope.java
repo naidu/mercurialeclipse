@@ -161,12 +161,6 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 		}
 	}
 
-	@Override
-	public ResourceTraversal[] getTraversals(String modelProviderId) {
-		// TODO Auto-generated method stub
-		return super.getTraversals(modelProviderId);
-	}
-
 	public boolean hasAdditionalMappings() {
 		return false;
 	}

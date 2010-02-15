@@ -173,7 +173,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 
 	@Override
 	protected void add(SyncInfo[] infos) {
-		// TODO Auto-generated method stub
+		// noop
 	}
 
 	@Override

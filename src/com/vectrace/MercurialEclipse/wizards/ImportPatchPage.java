@@ -56,8 +56,6 @@ public class ImportPatchPage extends HgWizardPage implements Listener {
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
-		// TODO help
-
 		Group group = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("ExportPatchWizard.PathLocation"),2,GridData.FILL_HORIZONTAL); //$NON-NLS-1$
 

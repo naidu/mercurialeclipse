@@ -326,6 +326,10 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		return branch;
 	}
 
+	/**
+	 * @deprecated XXX should use hg root as keys for branch info, not projects!!!
+	 */
+	@Deprecated
 	public static void setCurrentBranch(String branch, IProject project){
 		String oldBranch = null;
 		if(branch != null){

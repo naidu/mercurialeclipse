@@ -29,7 +29,6 @@ public class ChangesetGroup {
 		this.name = name;
 		this.direction = direction;
 		// CopyOnWriteArraySet to prevent ConcurrentModificationException.
-		// TODO this one is not really fast for add/remove operations...
 		this.changesets = new CopyOnWriteArraySet<ChangeSet>();
 	}
 

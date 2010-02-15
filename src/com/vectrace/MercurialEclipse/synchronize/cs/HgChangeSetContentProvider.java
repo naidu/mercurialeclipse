@@ -320,7 +320,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private boolean hasConflicts(ChangeSet cs) {
-		// XXX
+		// XXX implement conflicts display
 //		if (cs instanceof DiffChangeSet) {
 //			DiffChangeSet dcs = (DiffChangeSet) cs;
 //			return dcs.getDiffTree().countFor(IThreeWayDiff.CONFLICTING, IThreeWayDiff.DIRECTION_MASK) > 0;
@@ -329,7 +329,7 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 	}
 
 	private boolean containsConflicts(ChangeSet cs) {
-		// XXX
+		// XXX implement conflicts display
 //		if (cs instanceof DiffChangeSet) {
 //			DiffChangeSet dcs = (DiffChangeSet) cs;
 //			return dcs.getDiffTree().hasMatchingDiffs(ResourcesPlugin.getWorkspace().getRoot().getFullPath(), ResourceModelLabelProvider.CONFLICT_FILTER);

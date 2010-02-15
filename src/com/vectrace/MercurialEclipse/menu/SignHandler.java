@@ -24,7 +24,7 @@ public class SignHandler extends RootHandler {
 		WizardDialog dialog = new WizardDialog(getShell(), signWizard);
 		dialog.open();
 //		if(result == Window.OK) {
-			// TODO Andrei: I do not see any reason to update anything after the sign operation.
+			// Andrei: I do not see any reason to update anything after the sign operation.
 			// the only change is the changeset info, which is not shown anywhere in Eclipse except
 			// the history view, and the history view has a "refresh" button
 			// new RefreshJob(Messages.getString("SignHandler.refreshingStatusAndChangesetCache"), project).schedule(); //$NON-NLS-1$

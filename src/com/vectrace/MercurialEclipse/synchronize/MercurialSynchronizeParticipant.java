@@ -275,7 +275,6 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	public ResourceMapping[] handleContextChange(ISynchronizationScope scope,
 			IResource[] resources, IProject[] projects) {
-		// TODO Auto-generated method stub
 		return new ResourceMapping[0];
 	}
 }

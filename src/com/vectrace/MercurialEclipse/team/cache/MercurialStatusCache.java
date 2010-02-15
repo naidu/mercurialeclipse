@@ -823,9 +823,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	Pattern NEWLINE = Pattern.compile("\n");
 
 	/**
-	 * TODO allow to use multiple projects (from this hg root) as input
 	 * @param lines must contain file paths as paths relative to the hg root
-	 * @param pathMap
+	 * @param pathMap multiple projects (from this hg root) as input
 	 * @return set with resources to refresh
 	 */
 	private Set<IResource> parseStatus(HgRoot root, Map<IProject, IPath> pathMap, String[] lines) {
@@ -860,7 +859,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 					IPath path = hgRootPath.append(localName);
 					// creates a handle to non-existent file. This is ok.
 					member = workspaceRoot.getFileForLocation(path);
-					if(member == null/* TODO? || !member.getProject().equals(project)*/) {
+					if(member == null) {
 						continue;
 					}
 				} else {

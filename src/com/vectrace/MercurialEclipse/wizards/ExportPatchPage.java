@@ -60,8 +60,6 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 1);
-		// TODO help
-
 		Group group = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("ExportPatchWizard.PathLocation")); //$NON-NLS-1$
 		locationChooser = new LocationChooser(group, true, getDialogSettings());

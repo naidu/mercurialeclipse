@@ -474,7 +474,7 @@ public class LocalChangesetCache extends AbstractCache {
 			}
 
 			Set<ChangeSet> changes = revisions.get(hgRoot.getIPath());
-			// TODO should we distribute/remember changesets by project?
+			// XXX should we distribute/remember changesets by project?
 			addChangesToLocalCache(null, hgRoot.getIPath(), changes);
 			return changes;
 		}
@@ -482,7 +482,7 @@ public class LocalChangesetCache extends AbstractCache {
 
 	@Override
 	public synchronized void addObserver(Observer o) {
-		// TODO current implementation was very inefficient: the only listener was
+		// last implementation was very inefficient: the only listener was
 		// the decorator, and this one has generated NEW cache updates each time
 		// he was notified about changes, so it is an endless loop.
 		// So temporary do not allow to observe this cache, until the code is improved

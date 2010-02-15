@@ -77,7 +77,8 @@ public class RefreshStatusJob extends Job {
 	@Override
 	public boolean shouldSchedule() {
 		if(hgRoot == null){
-			// TODO this is very strange...
+			// probably should never happen except if we are running on a project
+			// which was just created or just removed
 			return true;
 		}
 		Job[] jobs = Job.getJobManager().find(RefreshStatusJob.class);
