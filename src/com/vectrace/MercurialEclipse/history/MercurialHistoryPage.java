@@ -444,9 +444,23 @@ public class MercurialHistoryPage extends HistoryPage {
 		return (IStructuredSelection) viewer.getSelection();
 	}
 
+	private MercurialRevision[] getSelectedRevisions() {
+		Object[] obj = getSelection().toArray();
+		if (obj != null && obj.length > 0) {
+			MercurialRevision[] revs = new MercurialRevision[obj.length];
+			int i = 0;
+			for (Object o : obj) {
+				MercurialRevision mr = (MercurialRevision) o;
+				revs[i++] = mr;
+			}
+			return revs;
+		}
+		return null;
+	}
+
 	private void contributeActions() {
 
-		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
+		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) {
 			private MercurialRevision rev;
 
 			@Override
@@ -481,9 +495,9 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			@Override
 			public boolean isEnabled() {
-				Object[] revs = getSelection().toArray();
+				MercurialRevision[] revs = getSelectedRevisions();
 				if (revs.length == 1) {
-					rev = (MercurialRevision) revs[0];
+					rev = revs[0];
 					return true;
 				}
 				rev = null;
