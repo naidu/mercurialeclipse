@@ -19,6 +19,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.widgets.Composite;
@@ -32,6 +33,8 @@ import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
 import com.vectrace.MercurialEclipse.model.GChangeSet.EdgeList;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class GraphLogTableViewer extends TableViewer {
 	private final List<Color> colours = new ArrayList<Color>();
@@ -56,6 +59,9 @@ public class GraphLogTableViewer extends TableViewer {
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_MAGENTA));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+		colours.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+		colours.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
+		colours.add(display.getSystemColor(SWT.COLOR_DARK_RED));
 	}
 
 	protected void paint(Event event) {
@@ -75,13 +81,14 @@ public class GraphLogTableViewer extends TableViewer {
 		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
 		if (from != lastReqVersion && from >= 0) {
 			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
-				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(from);
-				refreshJob.addJobChangeListener(new JobChangeAdapter(){
+				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
+						from);
+				refreshJob.addJobChangeListener(new JobChangeAdapter() {
 					@Override
 					public void done(IJobChangeEvent event1) {
 						Display.getDefault().asyncExec(new Runnable() {
 							public void run() {
-								if(table.isDisposed()){
+								if (table.isDisposed()) {
 									return;
 								}
 								table.redraw();
@@ -103,11 +110,39 @@ public class GraphLogTableViewer extends TableViewer {
 				tableItem.setBackground(colours.get(2));
 			}
 		}
+
 		if (mhp.getCurrentWorkdirChangeset() != null) {
 			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getChangesetIndex()) {
-				tableItem.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
+				tableItem.setFont(JFaceResources.getFontRegistry().getBold(
+						JFaceResources.DEFAULT_FONT));
 			}
 		}
+
+		// use italic dark grey font for merge changesets
+
+		if (rev.getChangeSet().getParents().length == 2) {
+			decorateMergeChangesets(tableItem);
+		}
+	}
+
+	/**
+	 * @param tableItem
+	 * @param defaultFont
+	 */
+	private void decorateMergeChangesets(TableItem tableItem) {
+		String fontName = MercurialUtilities.getPreference(
+				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT,
+				JFaceResources.DEFAULT_FONT);
+		Font font = MercurialUtilities.getFontPreference(fontName);
+		tableItem.setFont(font);
+
+		Color back = MercurialUtilities
+				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND);
+		tableItem.setBackground(back);
+
+		Color fore = MercurialUtilities
+				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FOREGROUND);
+		tableItem.setForeground(fore);
 	}
 
 	private void paint(Event event, EdgeList edges, int i) {
@@ -118,8 +153,7 @@ public class GraphLogTableViewer extends TableViewer {
 		int y = event.y + div3 * i;
 		int middle = event.y + (event.height / 2);
 		for (Edge e : edges.getEdges()) {
-			drawLine(event, g, div3, e.isFinish() ? middle : y, e, e.getTop(),
-					e.getBottom());
+			drawLine(event, g, div3, e.isFinish() ? middle : y, e, e.getTop(), e.getBottom());
 			if (e.isDot()) {
 				fillOval(event, e);
 			}
@@ -128,13 +162,11 @@ public class GraphLogTableViewer extends TableViewer {
 		if (jump != null) {
 			g.setLineStyle(SWT.LINE_DOT);
 			g.setForeground(g.getDevice().getSystemColor(SWT.COLOR_BLACK));
-			g.drawLine(getX(event, jump[0]), middle, getX(event, jump[1]),
-					middle);
+			g.drawLine(getX(event, jump[0]), middle, getX(event, jump[1]), middle);
 		}
 	}
 
-	private void drawLine(Event event, GC g, int div3, int y, Edge e, int top,
-			int bottom) {
+	private void drawLine(Event event, GC g, int div3, int y, Edge e, int top, int bottom) {
 		g.setForeground(getColor(event, e));
 		g.drawLine(getX(event, top), y, getX(event, bottom), y + div3);
 	}
@@ -145,11 +177,11 @@ public class GraphLogTableViewer extends TableViewer {
 		int halfSize = size / 2;
 		int i = e.getTop();
 		if (e.isPlus()) {
-			event.gc.drawOval(getX(event, i) - halfSize, event.y
-					+ (event.height / 2) - halfSize, size, size);
+			event.gc.drawOval(getX(event, i) - halfSize, event.y + (event.height / 2) - halfSize,
+					size, size);
 		} else {
-			event.gc.fillOval(getX(event, i) - halfSize, event.y
-					+ (event.height / 2) - halfSize, size, size);
+			event.gc.fillOval(getX(event, i) - halfSize, event.y + (event.height / 2) - halfSize,
+					size, size);
 		}
 	}
 

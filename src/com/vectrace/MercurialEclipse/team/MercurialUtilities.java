@@ -32,7 +32,12 @@ import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.preference.PreferenceDialog;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.Team;
 import org.eclipse.ui.dialogs.PreferencesUtil;
@@ -296,7 +301,7 @@ public class MercurialUtilities {
 		if (username == null || username.equals("")) {
 			try {
 				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
-					.getLocation().toFile(), "ui.username");
+						.getLocation().toFile(), "ui.username");
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -308,7 +313,7 @@ public class MercurialUtilities {
 			username = readUsernameFromIni(home + "/.hgrc");
 		}
 
-		if(isWindows()){
+		if (isWindows()) {
 			if (username == null || username.equals("")) {
 				username = readUsernameFromIni(home + "/Mercurial.ini");
 			}
@@ -401,6 +406,24 @@ public class MercurialUtilities {
 			throw new HgException(e);
 		}
 
+	}
+
+	/**
+	 * @param prefHistoryMergeChangesetBackground
+	 * @return
+	 */
+	public static Color getColorPreference(String pref) {
+		RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin.getDefault().getPreferenceStore(), pref);
+		return new Color(MercurialEclipsePlugin.getStandardDisplay(), rgb);
+	}
+
+	/**
+	 * @param prefHistoryMergeChangesetBackground
+	 * @return
+	 */
+	public static Font getFontPreference(String pref) {
+		FontData data = PreferenceConverter.getFontData(MercurialEclipsePlugin.getDefault().getPreferenceStore(), pref);
+		return new Font(MercurialEclipsePlugin.getStandardDisplay(), data);
 	}
 
 }
