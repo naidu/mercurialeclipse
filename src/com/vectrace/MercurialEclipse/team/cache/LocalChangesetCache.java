@@ -358,13 +358,22 @@ public class LocalChangesetCache extends AbstractCache {
 				return changeSet;
 			}
 			String nodeId = HgIdentClient.getCurrentChangesetId(root);
-			if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
-				ChangeSet lastSet = HgLogClient.getChangeset(root, nodeId);
-				if(lastSet != null) {
-					latestChangesets.put(root, lastSet);
-				}
-				return lastSet;
+			return updateLatestChangeset(root, nodeId);
+		}
+	}
+
+	/**
+	 * @param root
+	 * @param nodeId
+	 * @throws HgException
+	 */
+	public ChangeSet updateLatestChangeset(HgRoot root, String nodeId) throws HgException {
+		if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
+			ChangeSet lastSet = HgLogClient.getChangeset(root, nodeId);
+			if(lastSet != null) {
+				latestChangesets.put(root, lastSet);
 			}
+			return lastSet;
 		}
 		return null;
 	}

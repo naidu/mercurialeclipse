@@ -92,7 +92,7 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 public class MercurialHistoryPage extends HistoryPage {
 
 	private GraphLogTableViewer viewer;
-	private IResource resource;
+	IResource resource;
 	private HgRoot hgRoot;
 	private ChangeLogContentProvider changeLogViewContentProvider;
 	private MercurialHistory mercurialHistory;
@@ -107,6 +107,8 @@ public class MercurialHistoryPage extends HistoryPage {
 	private CompareRevisionAction compareTwo;
 	private BaseSelectionListenerAction revertAction;
 	private Action actionShowParentHistory;
+	private final Action bisectMarkGoodAction = new BisectMarkGoodAction(this);
+	private final Action bisectMarkBadAction = new BisectMarkBadAction(this);
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -299,6 +301,9 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		toggleShowTags.setChecked(showTags);
 		actionBarsMenu.add(toggleShowTags);
+		actionBarsMenu.add(new Separator());
+		actionBarsMenu.add(bisectMarkBadAction);
+		actionBarsMenu.add(bisectMarkGoodAction);
 
 		actionShowParentHistory = new Action("Show Parent History", //$NON-NLS-1$
 				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_UP)) {
@@ -444,7 +449,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		return (IStructuredSelection) viewer.getSelection();
 	}
 
-	private MercurialRevision[] getSelectedRevisions() {
+	MercurialRevision[] getSelectedRevisions() {
 		Object[] obj = getSelection().toArray();
 		if (obj != null && obj.length > 0) {
 			MercurialRevision[] revs = new MercurialRevision[obj.length];
@@ -525,8 +530,13 @@ public class MercurialHistoryPage extends HistoryPage {
 					}
 				}
 				updateAction.setEnabled(updateAction.isEnabled());
+				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
+				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
 				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(bisectMarkBadAction);
+				menuMgr1.add(bisectMarkGoodAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);

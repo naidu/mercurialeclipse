@@ -612,8 +612,10 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			// get status and branch for hg root
 			String output = HgStatusClient.getStatusWithoutIgnored(root);
 			String[] mergeStatus = HgStatusClient.getMergeStatus(root);
-			String mergeNode = mergeStatus[0];
-			String branch = mergeStatus[1];
+			String currentChangeSetId = mergeStatus[0];
+			LocalChangesetCache.getInstance().updateLatestChangeset(root, currentChangeSetId);
+			String mergeNode = mergeStatus[1];
+			String branch = mergeStatus[2];
 
 			String[] lines = NEWLINE.split(output);
 			Map<IProject, IPath> pathMap = new HashMap<IProject, IPath>();
@@ -716,8 +718,10 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		if(res instanceof IProject){
 			try {
 				String[] mergeStatus = HgStatusClient.getMergeStatus(root);
-				String mergeNode = mergeStatus[0];
-				String branch = mergeStatus[1];
+				String id = mergeStatus[0];
+				LocalChangesetCache.getInstance().updateLatestChangeset(root, id);
+				String mergeNode = mergeStatus[1];
+				String branch = mergeStatus[2];
 				HgStatusClient.setMergeStatus(project, mergeNode);
 				// TODO use branch map
 				MercurialTeamProvider.setCurrentBranch(branch, project);
