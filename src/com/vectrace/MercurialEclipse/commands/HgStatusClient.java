@@ -104,7 +104,7 @@ public class HgStatusClient extends AbstractClient {
 	}
 
 	public static String[] getMergeStatus(HgRoot root) throws HgException {
-		AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
+		AbstractShellCommand command = new HgCommand("id", root, true); //$NON-NLS-1$
 		// Full global IDs + branch name
 		command.addOptions("-ib","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
@@ -113,11 +113,16 @@ public class HgStatusClient extends AbstractClient {
 		Matcher m = MERGE_AND_BRANCH_PATTERN.matcher(versionIds);
 		String mergeId = null;
 		String branch = Branch.DEFAULT;
+		// current working directory id
+		String id = versionIds.split(" ")[0];
+		if (id.endsWith("+")) {
+			id = id.substring(0, id.length()-1);
+		}
 		if (m.matches() && m.groupCount() > 2) {
 			mergeId = m.group(2);
 			branch = m.group(3);
 		}
-		return new String[]{mergeId, branch};
+		return new String[]{id, mergeId, branch};
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, List<IResource> files) throws HgException {

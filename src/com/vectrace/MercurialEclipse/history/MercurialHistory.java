@@ -36,9 +36,11 @@ import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileHistory;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgTagClient;
+import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.commands.extensions.HgGLogClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSigsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -256,10 +258,12 @@ public class MercurialHistory extends FileHistory {
 			revisionResource = new HgRootContainer(hgRoot);
 		}
 		Map<String, Signature> sigMap = getSignatures();
+		Map<String, Status> bisectMap = HgBisectClient.getBisectStatus(hgRoot);
 		for (ChangeSet cs : changeSets) {
 			Signature sig = !sigMap.isEmpty() ? sigMap.get(cs.getChangeset()) : null;
+			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getChangeset()) : null;
 			GChangeSet set = gChangeSets.get(Integer.valueOf(cs.getChangesetIndex()));
-			revisions.add(new MercurialRevision(cs, set, revisionResource, sig));
+			revisions.add(new MercurialRevision(cs, set, revisionResource, sig, bisectStatus));
 		}
 		Collections.sort(revisions, revComparator);
 		lastReqRevision = from;

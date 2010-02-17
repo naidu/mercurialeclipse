@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -92,7 +93,7 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 public class MercurialHistoryPage extends HistoryPage {
 
 	private GraphLogTableViewer viewer;
-	private IResource resource;
+	IResource resource;
 	private HgRoot hgRoot;
 	private ChangeLogContentProvider changeLogViewContentProvider;
 	private MercurialHistory mercurialHistory;
@@ -107,6 +108,9 @@ public class MercurialHistoryPage extends HistoryPage {
 	private CompareRevisionAction compareTwo;
 	private BaseSelectionListenerAction revertAction;
 	private Action actionShowParentHistory;
+	private final IAction bisectMarkGoodAction = new BisectMarkGoodAction(this);
+	private final IAction bisectMarkBadAction = new BisectMarkBadAction(this);
+	private final IAction bisectResetAction = new BisectResetAction(this);
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -137,6 +141,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			final Runnable runnable = new Runnable() {
 				public void run() {
+					clearSelection();
 					viewer.setInput(mercurialHistory);
 					viewer.refresh();
 				}
@@ -283,6 +288,14 @@ public class MercurialHistoryPage extends HistoryPage {
 	public void createControl(Composite parent) {
 		IActionBars actionBars = getHistoryPageSite().getWorkbenchPageSite().getActionBars();
 		IMenuManager actionBarsMenu = actionBars.getMenuManager();
+
+		// bisect actions
+		actionBarsMenu.add(new Separator());
+		actionBarsMenu.add(bisectMarkBadAction);
+		actionBarsMenu.add(bisectMarkGoodAction);
+		actionBarsMenu.add(bisectResetAction);
+		actionBarsMenu.add(new Separator());
+
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
 
@@ -299,7 +312,6 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		toggleShowTags.setChecked(showTags);
 		actionBarsMenu.add(toggleShowTags);
-
 		actionShowParentHistory = new Action("Show Parent History", //$NON-NLS-1$
 				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_UP)) {
 			@Override
@@ -444,9 +456,27 @@ public class MercurialHistoryPage extends HistoryPage {
 		return (IStructuredSelection) viewer.getSelection();
 	}
 
+	void clearSelection() {
+		viewer.setSelection(StructuredSelection.EMPTY);
+	}
+
+	MercurialRevision[] getSelectedRevisions() {
+		Object[] obj = getSelection().toArray();
+		if (obj != null && obj.length > 0) {
+			MercurialRevision[] revs = new MercurialRevision[obj.length];
+			int i = 0;
+			for (Object o : obj) {
+				MercurialRevision mr = (MercurialRevision) o;
+				revs[i++] = mr;
+			}
+			return revs;
+		}
+		return null;
+	}
+
 	private void contributeActions() {
 
-		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
+		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) {
 			private MercurialRevision rev;
 
 			@Override
@@ -481,9 +511,9 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			@Override
 			public boolean isEnabled() {
-				Object[] revs = getSelection().toArray();
+				MercurialRevision[] revs = getSelectedRevisions();
 				if (revs.length == 1) {
-					rev = (MercurialRevision) revs[0];
+					rev = revs[0];
 					return true;
 				}
 				rev = null;
@@ -511,8 +541,15 @@ public class MercurialHistoryPage extends HistoryPage {
 					}
 				}
 				updateAction.setEnabled(updateAction.isEnabled());
+				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
+				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
+				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
 				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(bisectMarkBadAction);
+				menuMgr1.add(bisectMarkGoodAction);
+				menuMgr1.add(bisectResetAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
@@ -733,5 +770,12 @@ public class MercurialHistoryPage extends HistoryPage {
 					.getImageDescriptor("actions/revert.gif"));
 		}
 		return revertAction;
+	}
+
+	/**
+	 * @param currentWorkdirChangeset the currentWorkdirChangeset to set
+	 */
+	public void setCurrentWorkdirChangeset(ChangeSet currentWorkdirChangeset) {
+		this.currentWorkdirChangeset = currentWorkdirChangeset;
 	}
 }
