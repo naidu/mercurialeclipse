@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.team.DecoratorImages;
 
 public class FileStatusDecorator extends LabelProvider implements ILightweightLabelDecorator {
 
-	public static String ID = "com.vectrace.MercurialEclipse.history.FileStatusDecorator";
+	public static String ID = "com.vectrace.MercurialEclipse.history.FileStatusDecorator"; //$NON-NLS-1$
 
 	@Override
 	public void addListener(ILabelProviderListener listener) {

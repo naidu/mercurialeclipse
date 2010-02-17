@@ -88,24 +88,24 @@ public abstract class BisectAbstractAction extends Action {
 			final HgRoot root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
 			final MercurialRevision rev = getRevision();
 			final ChangeSet cs = rev.getChangeSet();
-			new SafeWorkspaceJob("Bisecting...") {
+			new SafeWorkspaceJob(Messages.BisectAbstractAction_bisecting) {
 				@Override
 				protected IStatus runSafe(IProgressMonitor monitor) {
 					try {
 						final String result = callBisect(root, cs);
 
-						if (result.startsWith("The first bad revision is:")) {
+						if (result.startsWith(Messages.BisectAbstractAction_successString)) {
 							HgBisectClient.reset(root);
 						}
 
 						MercurialStatusCache.getInstance().refreshStatus(root, monitor);
 
-						new SafeUiJob("Show Bisection result") {
+						new SafeUiJob(Messages.BisectAbstractAction_showBisectionResult) {
 							@Override
 							protected IStatus runSafe(IProgressMonitor m) {
 								if (result.length() > 0) {
 									MessageDialog.openInformation(getDisplay().getActiveShell(),
-											"Bisection result", result);
+											Messages.BisectAbstractAction_BisectionResult, result);
 								}
 								updateHistory(rev, root);
 								return super.runSafe(m);

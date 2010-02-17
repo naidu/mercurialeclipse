@@ -26,9 +26,9 @@ final class BisectMarkBadAction extends BisectAbstractAction {
 	 * @param mercurialHistoryPage
 	 */
 	BisectMarkBadAction(MercurialHistoryPage mercurialHistoryPage) {
-		super("Bisect: Mark selection or working directory as bad");
-		this.setDescription("Bisect:Marks the selected changeset as erroneous."
-				+ "\nIf bisect hadn't been started before, starts bisect.");
+		super(Messages.BisectMarkBadAction_name);
+		this.setDescription(Messages.BisectMarkBadAction_description1
+				+ Messages.BisectMarkBadAction_description2);
 		super.mercurialHistoryPage = mercurialHistoryPage;
 	}
 

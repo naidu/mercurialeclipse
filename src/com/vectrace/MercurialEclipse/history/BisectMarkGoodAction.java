@@ -27,9 +27,9 @@ final class BisectMarkGoodAction extends BisectAbstractAction {
 	 * @param mercurialHistoryPage
 	 */
 	BisectMarkGoodAction(MercurialHistoryPage mercurialHistoryPage) {
-		super("Bisect: Mark selection or working directory as good");
-		this.setDescription("Bisect: Marks the selected changeset as good."
-				+ "\nIf nothing is selected, stops bisect as the working directory is good");
+		super(Messages.BisectMarkGoodAction_markSelectionAsGood);
+		this.setDescription(Messages.BisectMarkGoodAction_markSelectionDescription
+				+ Messages.BisectMarkGoodAction_markSelectionDescription2);
 		this.mercurialHistoryPage = mercurialHistoryPage;
 	}
 

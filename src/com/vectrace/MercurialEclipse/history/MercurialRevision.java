@@ -168,7 +168,7 @@ public class MercurialRevision extends FileRevision {
 		for (int i = 0; i < allTags.length; i++) {
 			sb.append(allTags[i].getName());
 			if(i < allTags.length - 1) {
-				sb.append(", ");
+				sb.append(", "); //$NON-NLS-1$
 			}
 		}
 		return sb.toString();
@@ -284,34 +284,34 @@ public class MercurialRevision extends FileRevision {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("hg rev [");
-		builder.append("revision=");
+		builder.append("hg rev ["); //$NON-NLS-1$
+		builder.append("revision="); //$NON-NLS-1$
 		builder.append(revision);
-		builder.append(", ");
-		builder.append("changeSet=");
+		builder.append(", "); //$NON-NLS-1$
+		builder.append("changeSet="); //$NON-NLS-1$
 		builder.append(changeSet);
-		builder.append(", ");
-		builder.append("resource=");
+		builder.append(", "); //$NON-NLS-1$
+		builder.append("resource="); //$NON-NLS-1$
 		builder.append(resource);
-		builder.append(", ");
+		builder.append(", "); //$NON-NLS-1$
 		if (signature != null) {
-			builder.append("signature=");
+			builder.append("signature="); //$NON-NLS-1$
 			builder.append(signature);
-			builder.append(", ");
+			builder.append(", "); //$NON-NLS-1$
 		}
 		if (gChangeSet != null) {
-			builder.append("gChangeSet=");
+			builder.append("gChangeSet="); //$NON-NLS-1$
 			builder.append(gChangeSet);
 		}
 		if (parent != null) {
-			builder.append("parent=");
+			builder.append("parent="); //$NON-NLS-1$
 			builder.append(parent);
 		}
 		if (tags != null) {
-			builder.append("tags=");
+			builder.append("tags="); //$NON-NLS-1$
 			builder.append(Arrays.asList(tags));
 		}
-		builder.append("]");
+		builder.append("]"); //$NON-NLS-1$
 		return builder.toString();
 	}
 

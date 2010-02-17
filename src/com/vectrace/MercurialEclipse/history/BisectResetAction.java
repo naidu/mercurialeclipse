@@ -26,9 +26,9 @@ final class BisectResetAction extends BisectAbstractAction {
 	 * @param mercurialHistoryPage
 	 */
 	BisectResetAction(MercurialHistoryPage mercurialHistoryPage) {
-		super("Bisect: Reset and stop bisecting");
-		this.setDescription("Bisect: Resets the working directory."
-				+ "\nBisection stops therefore and can be started anew.");
+		super(Messages.BisectResetAction_name);
+		this.setDescription(Messages.BisectResetAction_description
+				+ Messages.BisectResetAction_description2);
 		this.mercurialHistoryPage = mercurialHistoryPage;
 	}
 

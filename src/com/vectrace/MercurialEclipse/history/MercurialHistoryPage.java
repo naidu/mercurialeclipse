@@ -300,7 +300,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
 
 		Action toggleShowTags = new Action(Messages.getString("HistoryView.showTags"), //$NON-NLS-1$
-				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) {
+				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				showTags = isChecked();
@@ -429,7 +429,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			text.append(table.getColumn(columnIndex).getText()).append('\t');
 		}
 
-		String crlf = System.getProperty("line.separator");
+		String crlf = System.getProperty("line.separator"); //$NON-NLS-1$
 		text.append(crlf);
 
 		while(iterator.hasNext()) {
@@ -476,7 +476,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	private void contributeActions() {
 
-		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) {
+		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
 			private MercurialRevision rev;
 
 			@Override
@@ -490,8 +490,8 @@ public class MercurialHistoryPage extends HistoryPage {
 					if (HgStatusClient.isDirty(root)) {
 						if (!MessageDialog
 								.openQuestion(getControl().getShell(),
-										"Uncommited Changes",
-										"Your hg root has uncommited changes.\nDo you really want to continue?")){
+										Messages.getString("MercurialHistoryPage.uncommittedChanges1"), //$NON-NLS-1$
+										Messages.getString("MercurialHistoryPage.uncommittedChanges2"))){ //$NON-NLS-1$
 							return;
 						}
 					}
@@ -520,7 +520,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				return false;
 			}
 		};
-		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
+		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif")); //$NON-NLS-1$
 
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
@@ -561,7 +561,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		getOpenEditorAction();
 		getCompareWithCurrentAction();
 		getRevertAction();
-		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){
+		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){ //$NON-NLS-1$
 			@Override
 			protected boolean updateSelection(IStructuredSelection selection) {
 				if(selection.size() != 2){
@@ -576,7 +576,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		if(openAction != null){
 			return openAction;
 		}
-		openAction = new OpenMercurialRevisionAction("Open Selected Version");
+		openAction = new OpenMercurialRevisionAction(Messages.getString("MercurialHistoryPage.openSelectedVersion")); //$NON-NLS-1$
 		openAction.setPage(this);
 		return openAction;
 	}
@@ -586,7 +586,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			return openEditorAction;
 		}
 
-		openEditorAction = new BaseSelectionListenerAction("Open Current Version") {
+		openEditorAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.openCurrentVersion")) { //$NON-NLS-1$
 			private IFile file;
 
 			@Override
@@ -636,15 +636,15 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	CompareRevisionAction getCompareWithCurrentAction() {
 		if(compareWithCurrAction == null) {
-			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this);
+			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this); //$NON-NLS-1$
 			}
 		return compareWithCurrAction;
 	}
 
 	CompareRevisionAction getCompareWithPreviousAction() {
 		if(compareWithPrevAction == null) {
-			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this);
-			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
+			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this); //$NON-NLS-1$
+			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif")); //$NON-NLS-1$
 			compareWithPrevAction.setCompareWithPrevousEnabled(true);
 		}
 		return compareWithPrevAction;
@@ -727,7 +727,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	public BaseSelectionListenerAction getRevertAction() {
 		if (revertAction == null) {
-			revertAction = new BaseSelectionListenerAction("Replace Current With Selected") {
+			revertAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.replaceCurrentWithSelected")) { //$NON-NLS-1$
 				@Override
 				public void run() {
 					IStructuredSelection selection = getStructuredSelection();
@@ -738,9 +738,9 @@ public class MercurialHistoryPage extends HistoryPage {
 					MercurialRevision revision = (MercurialRevision) selection.getFirstElement();
 					IResource selectedElement = revision.getResource();
 					if (!MercurialStatusCache.getInstance().isClean(selectedElement) &&
-							!MessageDialog.openQuestion(getControl().getShell(), "Uncommited Changes",
-							"File '" + selectedElement.getName()
-									+ "' has uncommited changes.\nDo you really want to revert?")) {
+							!MessageDialog.openQuestion(getControl().getShell(), Messages.getString("MercurialHistoryPage.UncommittedChanges"), //$NON-NLS-1$
+							Messages.getString("MercurialHistoryPage.file") + selectedElement.getName() //$NON-NLS-1$
+									+ Messages.getString("MercurialHistoryPage.hasUncommittedChanges"))) { //$NON-NLS-1$
 						return;
 					}
 					selection = new StructuredSelection(selectedElement);
@@ -767,7 +767,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				}
 			};
 			revertAction.setImageDescriptor(MercurialEclipsePlugin
-					.getImageDescriptor("actions/revert.gif"));
+					.getImageDescriptor("actions/revert.gif")); //$NON-NLS-1$
 		}
 		return revertAction;
 	}

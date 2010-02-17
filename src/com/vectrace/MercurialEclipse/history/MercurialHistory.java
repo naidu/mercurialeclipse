@@ -281,7 +281,7 @@ public class MercurialHistory extends FileHistory {
 		Map<String, Signature> sigMap = new HashMap<String, Signature>();
 
 		boolean sigcheck = HgClients.getPreference(
-				PREF_SIGCHECK_IN_HISTORY, "false").equals("true"); //$NON-NLS-1$
+				PREF_SIGCHECK_IN_HISTORY, "false").equals("true"); //$NON-NLS-1$ //$NON-NLS-2$
 
 		if (sigcheck) {
 			if (!MercurialUtilities.getGpgExecutable().equals("false")) { //$NON-NLS-1$
