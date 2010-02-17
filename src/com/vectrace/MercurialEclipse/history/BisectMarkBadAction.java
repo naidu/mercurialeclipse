@@ -11,14 +11,11 @@
 package com.vectrace.MercurialEclipse.history;
 
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
@@ -51,20 +48,5 @@ final class BisectMarkBadAction extends BisectAbstractAction {
 	String callBisect(final HgRoot root, final ChangeSet changeSet) throws HgException {
 		final String result = HgBisectClient.markBad(root, changeSet);
 		return result;
-	}
-
-	@Override
-	public boolean isEnabled() {
-		try {
-			final HgRoot root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
-			// no selection or dirty working dir -> disable
-			if (HgStatusClient.isDirty(root)) {
-				return false;
-			}
-			return true;
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-		return false;
 	}
 }

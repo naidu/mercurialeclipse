@@ -10,11 +10,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.util.Map;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -46,17 +43,10 @@ final class BisectMarkGoodAction extends BisectAbstractAction {
 	public boolean isEnabled() {
 		try {
 			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
-			// no selection or dirty working dir -> disable
-			if (HgStatusClient.isDirty(root)) {
-				return false;
+			// bisect has started -> enable (bisect always start with bad revision)
+			if (HgBisectClient.isBisecting(root)) {
+				return true;
 			}
-
-			// bisect not started -> disable (bisect always start with bad revision)
-			Map<String, HgBisectClient.Status> bMap = HgBisectClient.getBisectStatus(root);
-			if (bMap.size() == 0) {
-				return false;
-			}
-			return true;
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
