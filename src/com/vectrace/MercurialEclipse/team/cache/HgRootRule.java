@@ -51,4 +51,16 @@ public class HgRootRule implements ISchedulingRule {
 		return hgRoot;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("HgRootRule [");
+		if (hgRoot != null) {
+			builder.append("hgRoot=");
+			builder.append(hgRoot);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
+
 }
