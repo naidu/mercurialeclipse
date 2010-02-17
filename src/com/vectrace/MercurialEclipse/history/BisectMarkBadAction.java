@@ -84,8 +84,9 @@ final class BisectMarkBadAction extends Action {
 										result);
 								Display.getDefault().syncExec(new Runnable() {
 									public void run() {
+										mercurialHistoryPage.clearSelection();
 										MessageDialog.openInformation(Display.getDefault()
-												.getActiveShell(), "Bisecting result", result);
+												.getActiveShell(), "Bisection result", result);
 									}
 								});
 							}

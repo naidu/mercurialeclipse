@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.core.history.provider.FileRevision;
 
+import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
@@ -52,6 +53,7 @@ public class MercurialRevision extends FileRevision {
 	private final Signature signature;
 	private File parent;
 	private Tag [] tags;
+	private Status bisectStatus;
 
 	/**
 	 * @param changeSet must be non null
@@ -60,7 +62,7 @@ public class MercurialRevision extends FileRevision {
 	 * @param sig may be null
 	 */
 	public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet,
-			IResource resource, Signature sig) {
+			IResource resource, Signature sig, Status status) {
 		super();
 		Assert.isNotNull(changeSet);
 		Assert.isNotNull(resource);
@@ -70,6 +72,7 @@ public class MercurialRevision extends FileRevision {
 		this.hash = changeSet.getChangeset();
 		this.resource = resource;
 		this.signature = sig;
+		this.bisectStatus = status;
 	}
 
 	public Signature getSignature() {
@@ -310,6 +313,20 @@ public class MercurialRevision extends FileRevision {
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	/**
+	 * @return the bisectStatus
+	 */
+	public Status getBisectStatus() {
+		return bisectStatus;
+	}
+
+	/**
+	 * @param bisectStatus the bisectStatus to set
+	 */
+	public void setBisectStatus(Status bisectStatus) {
+		this.bisectStatus = bisectStatus;
 	}
 
 }

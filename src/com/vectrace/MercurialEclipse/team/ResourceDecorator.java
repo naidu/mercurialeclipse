@@ -435,7 +435,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 			// bisect information
 			if (bisecting != null && bisecting.length() > 0) {
-				suffix.append("BISECTING");
+				suffix.append(bisecting);
 			}
 			suffix.append(']');
 		}

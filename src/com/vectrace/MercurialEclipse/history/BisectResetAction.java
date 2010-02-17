@@ -10,8 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.util.Map;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.Action;
@@ -21,9 +19,7 @@ import org.eclipse.swt.widgets.Display;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
-import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -33,7 +29,7 @@ import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
  * @author bastian
  *
  */
-final class BisectMarkGoodAction extends Action {
+final class BisectResetAction extends Action {
 	/**
 	 *
 	 */
@@ -42,10 +38,10 @@ final class BisectMarkGoodAction extends Action {
 	/**
 	 * @param mercurialHistoryPage
 	 */
-	BisectMarkGoodAction(MercurialHistoryPage mercurialHistoryPage) {
-		super("Bisect: Mark selection or working directory as good");
-		this.setDescription("Bisect: Marks the selected changeset as good."
-				+ "\nIf nothing is selected, stops bisect as the working directory is good");
+	BisectResetAction(MercurialHistoryPage mercurialHistoryPage) {
+		super("Bisect: Reset and stop bisecting");
+		this.setDescription("Bisect: Resets the working directory."
+				+ "\nBisection stops therefore and can be started anew.");
 		this.mercurialHistoryPage = mercurialHistoryPage;
 	}
 
@@ -56,28 +52,13 @@ final class BisectMarkGoodAction extends Action {
 				final HgRoot root = MercurialTeamProvider
 						.getHgRoot(this.mercurialHistoryPage.resource);
 
-				MercurialRevision[] selectedRevisions = this.mercurialHistoryPage
-						.getSelectedRevisions();
-
-				// the changeset can be a selected revision or the working directory
-				final ChangeSet changeSet;
-				if (selectedRevisions != null && selectedRevisions.length == 1) {
-					changeSet = selectedRevisions[0].getChangeSet();
-				} else {
-					changeSet = mercurialHistoryPage.getCurrentWorkdirChangeset();
-				}
-
 				// mark the chosen changeset as good
-				new SafeWorkspaceJob("Bisect: Marking Changeset " + changeSet.toString()
-						+ " as good.") {
+				new SafeWorkspaceJob("Bisect: Resetting repository " + root) {
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
 						monitor.beginTask("Calling Mercurial Bisect...", 2);
 						try {
-							final String result = HgBisectClient.markGood(root, changeSet);
-							if (result.startsWith("The first bad revision is:")) {
-								HgBisectClient.reset(root);
-							}
+							final String result = HgBisectClient.reset(root);
 							monitor.worked(1);
 							MercurialStatusCache.getInstance().refreshStatus(root, monitor);
 							mercurialHistoryPage.refresh();
@@ -113,16 +94,10 @@ final class BisectMarkGoodAction extends Action {
 		try {
 			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
 			// no selection or dirty working dir -> disable
-			if (HgStatusClient.isDirty(root)) {
-				return false;
+			if (HgBisectClient.isBisecting(root)) {
+				return true;
 			}
-
-			// bisect not started -> disable (bisect always start with bad revision)
-			Map<String, HgBisectClient.Status> bMap = HgBisectClient.getBisectStatus(root);
-			if (bMap.size() == 0) {
-				return false;
-			}
-			return true;
+			return false;
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}

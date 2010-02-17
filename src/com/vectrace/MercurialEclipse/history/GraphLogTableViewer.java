@@ -28,6 +28,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
@@ -107,6 +108,17 @@ public class GraphLogTableViewer extends TableViewer {
 			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getChangesetIndex()) {
 				tableItem.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
 			}
+		}
+
+		// bisect colorization
+		Status bisectStatus = rev.getBisectStatus();
+		Display display = Display.getDefault();
+		if (bisectStatus != null && bisectStatus == Status.BAD) {
+			tableItem.setBackground(display.getSystemColor(SWT.COLOR_DARK_RED));
+			tableItem.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+		} else if (bisectStatus != null) {
+			tableItem.setBackground(display.getSystemColor(SWT.COLOR_DARK_GREEN));
+			tableItem.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
 		}
 	}
 
