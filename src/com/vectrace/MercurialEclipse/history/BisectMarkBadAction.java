@@ -10,33 +10,20 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
  * @author bastian
  *
  */
-final class BisectMarkBadAction extends Action {
-	/**
-	 *
-	 */
-	private final MercurialHistoryPage mercurialHistoryPage;
-
+final class BisectMarkBadAction extends BisectAbstractAction {
 	/**
 	 * @param mercurialHistoryPage
 	 */
@@ -44,72 +31,25 @@ final class BisectMarkBadAction extends Action {
 		super("Bisect: Mark selection or working directory as bad");
 		this.setDescription("Bisect:Marks the selected changeset as erroneous."
 				+ "\nIf bisect hadn't been started before, starts bisect.");
-		this.mercurialHistoryPage = mercurialHistoryPage;
+		super.mercurialHistoryPage = mercurialHistoryPage;
 	}
 
+	/**
+	 * @param root
+	 * @param changeSet
+	 * @return
+	 * @throws HgException
+	 */
 	@Override
-	public void run() {
-		if (isEnabled()) {
-			try {
-				final HgRoot root = MercurialTeamProvider
-						.getHgRoot(this.mercurialHistoryPage.resource);
-
-				MercurialRevision[] selectedRevisions = this.mercurialHistoryPage
-						.getSelectedRevisions();
-
-				// the changeset can be a selected revision or the working directory
-				final ChangeSet changeSet;
-				if (selectedRevisions != null && selectedRevisions.length == 1) {
-					changeSet = selectedRevisions[0].getChangeSet();
-				} else {
-					changeSet = mercurialHistoryPage.getCurrentWorkdirChangeset();
-				}
-
-				// mark the chosen changeset as good
-				new SafeWorkspaceJob("Bisect: Marking Changeset " + changeSet.toString()
-						+ " as bad.") {
-					@Override
-					protected IStatus runSafe(IProgressMonitor monitor) {
-						monitor.beginTask("Calling Mercurial Bisect...", 2);
-						try {
-							final String result = HgBisectClient.markBad(root, changeSet);
-							if (result.startsWith("The first bad revision is:")) {
-								HgBisectClient.reset(root);
-							}
-							monitor.worked(1);
-							MercurialStatusCache.getInstance().refreshStatus(root, monitor);
-							mercurialHistoryPage.refresh();
-							if (result.length() > 0) {
-								HgConsoleHolder.getInstance().getConsole().messageLineReceived(
-										result);
-								Display.getDefault().syncExec(new Runnable() {
-									public void run() {
-										mercurialHistoryPage.clearSelection();
-										MessageDialog.openInformation(Display.getDefault()
-												.getActiveShell(), "Bisection result", result);
-									}
-								});
-							}
-						} catch (HgException e) {
-							MercurialEclipsePlugin.showError(e);
-							MercurialEclipsePlugin.logError(e);
-						}
-						monitor.worked(1);
-						monitor.done();
-						return super.runSafe(monitor);
-					}
-				}.schedule();
-			} catch (HgException e) {
-				MercurialEclipsePlugin.showError(e);
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
+	String callBisect(final HgRoot root, final ChangeSet changeSet) throws HgException {
+		final String result = HgBisectClient.markBad(root, changeSet);
+		return result;
 	}
 
 	@Override
 	public boolean isEnabled() {
 		try {
-			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
+			final HgRoot root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
 			// no selection or dirty working dir -> disable
 			if (HgStatusClient.isDirty(root)) {
 				return false;

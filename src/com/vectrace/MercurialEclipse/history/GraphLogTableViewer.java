@@ -112,7 +112,7 @@ public class GraphLogTableViewer extends TableViewer {
 
 		// bisect colorization
 		Status bisectStatus = rev.getBisectStatus();
-		Display display = Display.getDefault();
+		Display display = mhp.getControl().getDisplay();
 		if (bisectStatus != null && bisectStatus == Status.BAD) {
 			tableItem.setBackground(display.getSystemColor(SWT.COLOR_DARK_RED));
 			tableItem.setBackground(display.getSystemColor(SWT.COLOR_WHITE));

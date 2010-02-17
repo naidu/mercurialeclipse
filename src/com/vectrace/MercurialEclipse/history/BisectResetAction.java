@@ -10,31 +10,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.jface.action.Action;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
  * @author bastian
  *
  */
-final class BisectResetAction extends Action {
-	/**
-	 *
-	 */
-	private final MercurialHistoryPage mercurialHistoryPage;
-
+final class BisectResetAction extends BisectAbstractAction {
 	/**
 	 * @param mercurialHistoryPage
 	 */
@@ -43,50 +30,6 @@ final class BisectResetAction extends Action {
 		this.setDescription("Bisect: Resets the working directory."
 				+ "\nBisection stops therefore and can be started anew.");
 		this.mercurialHistoryPage = mercurialHistoryPage;
-	}
-
-	@Override
-	public void run() {
-		if (isEnabled()) {
-			try {
-				final HgRoot root = MercurialTeamProvider
-						.getHgRoot(this.mercurialHistoryPage.resource);
-
-				// mark the chosen changeset as good
-				new SafeWorkspaceJob("Bisect: Resetting repository " + root) {
-					@Override
-					protected IStatus runSafe(IProgressMonitor monitor) {
-						monitor.beginTask("Calling Mercurial Bisect...", 2);
-						try {
-							final String result = HgBisectClient.reset(root);
-							monitor.worked(1);
-							MercurialStatusCache.getInstance().refreshStatus(root, monitor);
-							mercurialHistoryPage.refresh();
-							if (result.length() > 0) {
-								HgConsoleHolder.getInstance().getConsole().messageLineReceived(
-										result);
-								Display.getDefault().syncExec(new Runnable() {
-									public void run() {
-										mercurialHistoryPage.clearSelection();
-										MessageDialog.openInformation(Display.getDefault()
-												.getActiveShell(), "Bisection result", result);
-									}
-								});
-							}
-						} catch (HgException e) {
-							MercurialEclipsePlugin.showError(e);
-							MercurialEclipsePlugin.logError(e);
-						}
-						monitor.worked(1);
-						monitor.done();
-						return super.runSafe(monitor);
-					}
-				}.schedule();
-			} catch (HgException e) {
-				MercurialEclipsePlugin.showError(e);
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
 	}
 
 	@Override
@@ -102,5 +45,11 @@ final class BisectResetAction extends Action {
 			MercurialEclipsePlugin.logError(e);
 		}
 		return false;
+	}
+
+	@Override
+	String callBisect(HgRoot root, ChangeSet cs) throws HgException {
+		String result = HgBisectClient.reset(root);
+		return result;
 	}
 }

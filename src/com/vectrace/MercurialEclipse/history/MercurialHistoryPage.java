@@ -141,6 +141,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			final Runnable runnable = new Runnable() {
 				public void run() {
+					clearSelection();
 					viewer.setInput(mercurialHistory);
 					viewer.refresh();
 				}
@@ -769,5 +770,12 @@ public class MercurialHistoryPage extends HistoryPage {
 					.getImageDescriptor("actions/revert.gif"));
 		}
 		return revertAction;
+	}
+
+	/**
+	 * @param currentWorkdirChangeset the currentWorkdirChangeset to set
+	 */
+	public void setCurrentWorkdirChangeset(ChangeSet currentWorkdirChangeset) {
+		this.currentWorkdirChangeset = currentWorkdirChangeset;
 	}
 }
