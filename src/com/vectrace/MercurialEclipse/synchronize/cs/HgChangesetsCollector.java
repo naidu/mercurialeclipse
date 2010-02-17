@@ -146,7 +146,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		this.participant = (MercurialSynchronizeParticipant) configuration.getParticipant();
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
-				if(HgChangeSetModelProvider.getProvider().isParticipantCreated()) {
+				if(getScope().getChangesetProvider().isParticipantCreated()) {
 					branchChanged((IProject) source);
 				}
 			}
@@ -225,6 +225,11 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		return scope.getSubscriber();
 	}
 
+	public RepositorySynchronizationScope getScope() {
+		ISynchronizationContext context = participant.getContext();
+		return (RepositorySynchronizationScope) context.getScope();
+	}
+
 	public void handleChange(IDiffChangeEvent event) {
 		initializeSets();
 	}
@@ -252,5 +257,18 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	public void refresh(ResourceMapping[] roots) {
 		// user has requested a manual refresh
 		fireDefaultChangedEvent(null, null);
+	}
+
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("HgChangesetsCollector [");
+		if (participant != null) {
+			builder.append("participant=");
+			builder.append(participant);
+		}
+		builder.append("]");
+		return builder.toString();
 	}
 }

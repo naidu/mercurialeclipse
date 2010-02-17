@@ -89,7 +89,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	private void notifyListeners() {
-		Job job = new Job("Uncommitted changeset update"){
+		Job updateJob = new Job("Uncommitted changeset update"){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				for (IPropertyChangeListener listener : listeners) {
@@ -102,10 +102,22 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			public boolean belongsTo(Object family) {
 				return family == ExclusiveRule.class;
 			}
+
+			@Override
+			public boolean shouldSchedule() {
+				Job[] jobs = Job.getJobManager().find(ExclusiveRule.class);
+				for (Job job : jobs) {
+					ExclusiveRule rule = (ExclusiveRule) job.getRule();
+					if(WorkingChangeSet.this.equals(rule.cs)){
+						// do not schedule me because exactly the same job is waiting to be started!
+						return false;
+					}
+				}
+				return true;
+			}
 		};
-		Job.getJobManager().cancel(ExclusiveRule.class);
-		job.setRule(new ExclusiveRule());
-		job.schedule(50);
+		updateJob.setRule(new ExclusiveRule(this));
+		updateJob.schedule(50);
 	}
 
 	@Override
@@ -264,12 +276,18 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	private final class ExclusiveRule implements ISchedulingRule {
+		private final WorkingChangeSet cs;
+
+		public ExclusiveRule(WorkingChangeSet cs) {
+			this.cs = cs;
+		}
+
 		public boolean isConflicting(ISchedulingRule rule) {
 			return contains(rule);
 		}
 
 		public boolean contains(ISchedulingRule rule) {
-			return rule instanceof ExclusiveRule;
+			return rule instanceof ExclusiveRule && cs.equals(((ExclusiveRule)rule).cs);
 		}
 	}
 }

@@ -10,6 +10,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.synchronize;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -42,6 +43,7 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	private final ListenerList listeners;
 	private final IHgRepositoryLocation repo;
 	private MercurialSynchronizeSubscriber subscriber;
+	private HgChangeSetModelProvider provider;
 
 	public RepositorySynchronizationScope(IHgRepositoryLocation repo, IProject[] roots) {
 		Assert.isNotNull(repo);
@@ -130,8 +132,20 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 				result.add(modelProvider);
 			}
 		}
-		result.add(HgChangeSetModelProvider.getProvider());
+		result.add(getChangesetProvider());
 		return result.toArray(new ModelProvider[result.size()]);
+	}
+
+	public HgChangeSetModelProvider getChangesetProvider() {
+		if (provider == null) {
+			try {
+				provider = (HgChangeSetModelProvider) ModelProvider.getModelProviderDescriptor(HgChangeSetModelProvider.ID)
+						.getModelProvider();
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		return provider;
 	}
 
 	public IProject[] getProjects() {
@@ -194,5 +208,23 @@ public class RepositorySynchronizationScope extends AbstractResourceMappingScope
 	public MercurialSynchronizeSubscriber getSubscriber() {
 		return subscriber;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("RepositorySynchronizationScope [");
+		if (repo != null) {
+			builder.append("repo=");
+			builder.append(repo);
+			builder.append(", ");
+		}
+		if (roots != null) {
+			builder.append("roots=");
+			builder.append(Arrays.toString(roots));
+		}
+		builder.append("]");
+		return builder.toString();
+	}
+
 
 }
