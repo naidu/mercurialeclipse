@@ -11,13 +11,11 @@
 package com.vectrace.MercurialEclipse.synchronize.cs;
 
 import org.eclipse.core.resources.mapping.ModelProvider;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdapterFactory;
 import org.eclipse.team.core.mapping.ISynchronizationScope;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipant;
 import org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeSubscriber;
 import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
 
@@ -28,24 +26,11 @@ import com.vectrace.MercurialEclipse.synchronize.RepositorySynchronizationScope;
 public class HgChangeSetModelProvider extends ModelProvider {
 
 	public final static String ID = "com.vectrace.MercurialEclipse.changeSetModel";
-	private static HgChangeSetModelProvider provider;
 	private boolean participantCreated;
 	private MercurialSynchronizeSubscriber subscriber;
 
 	public HgChangeSetModelProvider() {
 		super();
-	}
-
-	public static HgChangeSetModelProvider getProvider() {
-		if (provider == null) {
-			try {
-				provider = (HgChangeSetModelProvider) ModelProvider.getModelProviderDescriptor(ID)
-						.getModelProvider();
-			} catch (CoreException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-		}
-		return provider;
 	}
 
 	public boolean isParticipantCreated() {

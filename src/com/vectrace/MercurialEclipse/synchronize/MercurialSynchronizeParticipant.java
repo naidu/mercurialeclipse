@@ -277,4 +277,26 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 			IResource[] resources, IProject[] projects) {
 		return new ResourceMapping[0];
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("MercurialSynchronizeParticipant [");
+		if (repositoryLocation != null) {
+			builder.append("repositoryLocation=");
+			builder.append(repositoryLocation);
+			builder.append(", ");
+		}
+		if (restoredProjects != null) {
+			builder.append("restoredProjects=");
+			builder.append(restoredProjects);
+			builder.append(", ");
+		}
+		if (secondaryId != null) {
+			builder.append("secondaryId=");
+			builder.append(secondaryId);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
 }

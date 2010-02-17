@@ -730,4 +730,26 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	public HgChangesetsCollector getCollector() {
 		return collector;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("MercurialSynchronizeSubscriber [");
+		if (collector != null) {
+			builder.append("collector=");
+			builder.append(collector);
+			builder.append(", ");
+		}
+		if (participant != null) {
+			builder.append("participant=");
+			builder.append(participant);
+			builder.append(", ");
+		}
+		if (scope != null) {
+			builder.append("scope=");
+			builder.append(scope);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
 }

@@ -499,4 +499,40 @@ public class HgChangeSetContentProvider extends SynchronizationContentProvider /
 		}
 		return outgoing;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("HgChangeSetContentProvider [collectorInitialized=");
+		builder.append(collectorInitialized);
+		builder.append(", ");
+		if (csCollector != null) {
+			builder.append("csCollector=");
+			builder.append(csCollector);
+			builder.append(", ");
+		}
+		if (provider != null) {
+			builder.append("provider=");
+			builder.append(provider);
+			builder.append(", ");
+		}
+		if (incoming != null) {
+			builder.append("incoming=");
+			builder.append(incoming);
+			builder.append(", ");
+		}
+		if (outgoing != null) {
+			builder.append("outgoing=");
+			builder.append(outgoing);
+			builder.append(", ");
+		}
+		if (uncommittedSet != null) {
+			builder.append("uncommittedSet=");
+			builder.append(uncommittedSet);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
+
+
 }

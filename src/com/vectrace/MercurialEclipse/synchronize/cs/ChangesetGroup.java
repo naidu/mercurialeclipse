@@ -43,4 +43,26 @@ public class ChangesetGroup {
 	public Set<ChangeSet> getChangesets() {
 		return changesets;
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ChangesetGroup [");
+		if (direction != null) {
+			builder.append("direction=");
+			builder.append(direction);
+			builder.append(", ");
+		}
+		if (name != null) {
+			builder.append("name=");
+			builder.append(name);
+			builder.append(", ");
+		}
+		if (changesets != null) {
+			builder.append("changesets=");
+			builder.append(changesets);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
 }
