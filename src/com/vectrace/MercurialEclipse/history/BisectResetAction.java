@@ -37,7 +37,7 @@ final class BisectResetAction extends BisectAbstractAction {
 		try {
 			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
 			// no selection or dirty working dir -> disable
-			if (HgBisectClient.isBisecting(root)) {
+			if (root != null && HgBisectClient.isBisecting(root)) {
 				return true;
 			}
 			return false;

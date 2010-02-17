@@ -44,7 +44,7 @@ final class BisectMarkGoodAction extends BisectAbstractAction {
 		try {
 			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
 			// bisect has started -> enable (bisect always start with bad revision)
-			if (HgBisectClient.isBisecting(root)) {
+			if (root != null && HgBisectClient.isBisecting(root)) {
 				return true;
 			}
 		} catch (HgException e) {
