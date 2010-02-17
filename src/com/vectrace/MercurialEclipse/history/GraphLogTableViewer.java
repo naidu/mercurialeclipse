@@ -82,8 +82,9 @@ public class GraphLogTableViewer extends TableViewer {
 		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
 		if (from != lastReqVersion && from >= 0) {
 			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
-				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(from);
-				refreshJob.addJobChangeListener(new JobChangeAdapter(){
+				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
+						from);
+				refreshJob.addJobChangeListener(new JobChangeAdapter() {
 					@Override
 					public void done(IJobChangeEvent event1) {
 						Display.getDefault().asyncExec(new Runnable() {
@@ -120,13 +121,10 @@ public class GraphLogTableViewer extends TableViewer {
 
 		// bisect colorization
 		Status bisectStatus = rev.getBisectStatus();
-		Display display = mhp.getControl().getDisplay();
 		if (bisectStatus != null && bisectStatus == Status.BAD) {
-			tableItem.setBackground(display.getSystemColor(SWT.COLOR_DARK_RED));
-			tableItem.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+			tableItem.setBackground(colours.get(10));
 		} else if (bisectStatus != null) {
-			tableItem.setBackground(display.getSystemColor(SWT.COLOR_DARK_GREEN));
-			tableItem.setBackground(display.getSystemColor(SWT.COLOR_WHITE));
+			tableItem.setBackground(colours.get(9));
 		}
 
 		// use italic dark grey font for merge changesets
@@ -140,10 +138,7 @@ public class GraphLogTableViewer extends TableViewer {
 	 * @param defaultFont
 	 */
 	private void decorateMergeChangesets(TableItem tableItem) {
-		String fontName = MercurialUtilities.getPreference(
-				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT,
-				JFaceResources.DEFAULT_FONT);
-		Font font = MercurialUtilities.getFontPreference(fontName);
+		Font font = MercurialUtilities.getFontPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT);
 		tableItem.setFont(font);
 
 		Color back = MercurialUtilities

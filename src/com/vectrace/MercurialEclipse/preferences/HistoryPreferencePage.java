@@ -19,7 +19,6 @@ import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConst
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
-import org.eclipse.swt.widgets.Group;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
@@ -61,19 +60,17 @@ public class HistoryPreferencePage extends FieldEditorPreferencePage implements
 		addField(new BooleanFieldEditor(PREF_SHOW_COMMENTS, "Show full comment",
 				getFieldEditorParent()));
 
-		Group g = SWTWidgetHelper.createGroup(getFieldEditorParent(), "Merge changesets");
-
 		addField(SWTWidgetHelper.createFontFieldEditor(
-				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT, "Font", g, this,
+				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT, "Merge Changeset Font", getFieldEditorParent(), this,
 				getPreferenceStore()));
 
 		addField(SWTWidgetHelper.createColorFieldEditor(
 				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND,
-				"Background color", g, this, getPreferenceStore()));
+				"Merge Changeset Background color", getFieldEditorParent(), this, getPreferenceStore()));
 
 		addField(SWTWidgetHelper.createColorFieldEditor(
 				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FOREGROUND,
-				"Foreground color", g, this, getPreferenceStore()));
+				"Merge Changeset Foreground color", getFieldEditorParent(), this, getPreferenceStore()));
 	}
 
 	public void init(IWorkbench workbench) {

@@ -12,10 +12,10 @@ package com.vectrace.MercurialEclipse.history;
 
 import java.util.Map;
 
-
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -34,6 +34,12 @@ final class BisectMarkGoodAction extends BisectAbstractAction {
 		this.setDescription("Bisect: Marks the selected changeset as good."
 				+ "\nIf nothing is selected, stops bisect as the working directory is good");
 		this.mercurialHistoryPage = mercurialHistoryPage;
+	}
+
+	@Override
+	protected void updateHistory(MercurialRevision rev, HgRoot root) {
+		super.updateHistory(rev, root);
+		rev.setBisectStatus(Status.GOOD);
 	}
 
 	@Override

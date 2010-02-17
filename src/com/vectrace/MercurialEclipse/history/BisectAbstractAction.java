@@ -15,10 +15,10 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
+import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -70,17 +70,14 @@ public abstract class BisectAbstractAction extends Action {
 	/**
 	 * @return
 	 */
-	ChangeSet getRevision() {
+	private MercurialRevision getRevision() {
 		MercurialRevision[] selectedRevisions = this.mercurialHistoryPage.getSelectedRevisions();
-
-		// the changeset can be a selected revision or the working directory
-		final ChangeSet changeSet;
 		if (selectedRevisions != null && selectedRevisions.length == 1) {
-			changeSet = selectedRevisions[0].getChangeSet();
-		} else {
-			changeSet = mercurialHistoryPage.getCurrentWorkdirChangeset();
+			return selectedRevisions[0];
 		}
-		return changeSet;
+		ChangeSet cs = this.mercurialHistoryPage.getCurrentWorkdirChangeset();
+		return (MercurialRevision) this.mercurialHistoryPage.getMercurialHistory().getFileRevision(
+				cs.getChangeset());
 	}
 
 	abstract String callBisect(final HgRoot root, final ChangeSet cs) throws HgException;
@@ -88,33 +85,52 @@ public abstract class BisectAbstractAction extends Action {
 	@Override
 	public void run() {
 		try {
-			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
+			final HgRoot root = MercurialTeamProvider.getHgRoot(mercurialHistoryPage.resource);
+			final MercurialRevision rev = getRevision();
+			final ChangeSet cs = rev.getChangeSet();
+			new SafeWorkspaceJob("Bisecting...") {
+				@Override
+				protected IStatus runSafe(IProgressMonitor monitor) {
+					try {
+						final String result = callBisect(root, cs);
 
-			final ChangeSet changeSet = getRevision();
+						if (result.startsWith("The first bad revision is:")) {
+							HgBisectClient.reset(root);
+						}
 
-			// mark the chosen changeset
-			final String result = callBisect(root, changeSet);
+						MercurialStatusCache.getInstance().refreshStatus(root, monitor);
 
-			if (result.startsWith("The first bad revision is:")) {
-				HgBisectClient.reset(root);
-			}
-			MercurialStatusCache.getInstance().refreshStatus(root, null);
-			mercurialHistoryPage.refresh();
-			if (result.length() > 0) {
-				new SafeUiJob(mercurialHistoryPage.getControl().getDisplay(),
-						"Show Bisection result") {
-					@Override
-					protected IStatus runSafe(IProgressMonitor m) {
-						MessageDialog.openInformation(Display.getDefault().getActiveShell(),
-								"Bisection result", result);
-						return super.runSafe(m);
+						new SafeUiJob("Show Bisection result") {
+							@Override
+							protected IStatus runSafe(IProgressMonitor m) {
+								if (result.length() > 0) {
+									MessageDialog.openInformation(getDisplay().getActiveShell(),
+											"Bisection result", result);
+								}
+								updateHistory(rev, root);
+								return super.runSafe(m);
+							}
+						}.schedule(100);
+					} catch (HgException e) {
+						MercurialEclipsePlugin.showError(e);
+						MercurialEclipsePlugin.logError(e);
 					}
-				}.schedule();
-			}
+
+					return super.runSafe(monitor);
+				}
+			}.schedule();
 		} catch (HgException e) {
-			MercurialEclipsePlugin.showError(e);
 			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
 		}
 	}
 
+	/**
+	 * @param root
+	 *
+	 */
+	protected void updateHistory(MercurialRevision rev, HgRoot root) {
+		mercurialHistoryPage.clearSelection();
+		mercurialHistoryPage.refresh();
+	}
 }

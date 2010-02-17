@@ -19,6 +19,8 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -62,6 +64,8 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  */
 public class MercurialUtilities {
 	private final static boolean isWindows = File.separatorChar == '\\';
+	private static final Map<RGB, Color> COLOR_MAP = new HashMap<RGB, Color>();
+	private static final Map<FontData, Font> FONT_MAP = new HashMap<FontData, Font>();
 
 	/**
 	 * This class is full of utilities metods, useful allover the place
@@ -413,8 +417,42 @@ public class MercurialUtilities {
 	 * @return
 	 */
 	public static Color getColorPreference(String pref) {
-		RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin.getDefault().getPreferenceStore(), pref);
-		return new Color(MercurialEclipsePlugin.getStandardDisplay(), rgb);
+		RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore(), pref);
+		return getColor(rgb);
+	}
+
+	/**
+	 * @param rgb
+	 * @return
+	 */
+	public static Color getColor(RGB rgb) {
+		Color c = COLOR_MAP.get(rgb);
+		if (c == null) {
+			c = new Color(MercurialEclipsePlugin.getStandardDisplay(), rgb);
+			COLOR_MAP.put(rgb, c);
+		}
+		return c;
+	}
+
+	public static void disposeColorsAndFonts() {
+		for (Color c : COLOR_MAP.values()) {
+			c.dispose();
+		}
+		COLOR_MAP.clear();
+		for (Font f : FONT_MAP.values()) {
+			f.dispose();
+		}
+		FONT_MAP.clear();
+	}
+
+	public static Font getFont(FontData data) {
+		Font f = FONT_MAP.get(data);
+		if (f == null) {
+			f = new Font(MercurialEclipsePlugin.getStandardDisplay(), data);
+			FONT_MAP.put(data, f);
+		}
+		return f;
 	}
 
 	/**
@@ -422,8 +460,9 @@ public class MercurialUtilities {
 	 * @return
 	 */
 	public static Font getFontPreference(String pref) {
-		FontData data = PreferenceConverter.getFontData(MercurialEclipsePlugin.getDefault().getPreferenceStore(), pref);
-		return new Font(MercurialEclipsePlugin.getStandardDisplay(), data);
+		FontData data = PreferenceConverter.getFontData(MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore(), pref);
+		return getFont(data);
 	}
 
 }
