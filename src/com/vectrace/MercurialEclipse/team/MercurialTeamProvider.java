@@ -85,7 +85,9 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		Collection<HgRoot[]> values = HG_ROOTS.values();
 		for (HgRoot[] hgRoots : values) {
 			for (HgRoot hgRoot : hgRoots) {
-				roots.add(hgRoot);
+				if(hgRoot != null) {
+					roots.add(hgRoot);
+				}
 			}
 		}
 		return roots;
@@ -152,7 +154,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		IProject project = getProject();
 		Assert.isNotNull(project);
 		// cleanup
-		HG_ROOTS.put(project, new HgRoot[]{null});
+		HG_ROOTS.put(project, new HgRoot[1]);
 		BRANCH_MAP.remove(project);
 //		project.setPersistentProperty(ResourceProperties.HG_ROOT, null);
 		project.setSessionProperty(ResourceProperties.HG_BRANCH, null);
