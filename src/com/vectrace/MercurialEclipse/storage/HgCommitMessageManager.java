@@ -49,8 +49,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
- * A manager for all Mercurial commit messages.
- * The commit messages are save to a xml file when closing down and then re-read when the plugin is started.
+ * A manager for all Mercurial commit messages. The commit messages are save to a xml file when
+ * closing down and then re-read when the plugin is started.
  *
  */
 public class HgCommitMessageManager {
@@ -66,8 +66,8 @@ public class HgCommitMessageManager {
 	public final static String KEY_PREFIX_COMMIT_NAME = "commitName_"; //$NON-NLS-1$
 
 	private final static String COMMIT_MESSAGE_FILE = "commit_messages.xml"; //$NON-NLS-1$
-	private final static String XML_TAG_COMMIT_MESSAGE  = "commitmessage";   //$NON-NLS-1$
-	private final static String XML_TAG_COMMIT_MESSAGES = "commitmessages";  //$NON-NLS-1$
+	private final static String XML_TAG_COMMIT_MESSAGE = "commitmessage"; //$NON-NLS-1$
+	private final static String XML_TAG_COMMIT_MESSAGES = "commitmessages"; //$NON-NLS-1$
 
 	private final XmlHandler xmlHandler;
 
@@ -76,7 +76,7 @@ public class HgCommitMessageManager {
 	}
 
 	/**
-	 *  Save message in in-memory database
+	 * Save message in in-memory database
 	 */
 	public void saveCommitMessage(String message) {
 		if (commitMessages.contains(message)) {
@@ -91,30 +91,27 @@ public class HgCommitMessageManager {
 	}
 
 	/**
-	 * Make sure we don't have more commit messages than are allowed
-	 * in the plugin prefs.
+	 * Make sure we don't have more commit messages than are allowed in the plugin prefs.
 	 */
 	private void restrictSavedCommitMessages() {
-		int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
-				.getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
-						"10")); //$NON-NLS-1$
+		int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities.getPreference(
+				MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, "10")); //$NON-NLS-1$
 
 		while (commitMessages.size() > prefs_commit_message_size_max) {
-			commitMessages.remove(commitMessages.size()-1);
+			commitMessages.remove(commitMessages.size() - 1);
 		}
 	}
 
 	/**
-	 *  Save message in in-memory database new data last (used when loading from file)
+	 * Save message in in-memory database new data last (used when loading from file)
 	 */
 	private void addCommitMessage(String message) {
 		commitMessages.add(message);
 		restrictSavedCommitMessages();
 	}
 
-
 	/**
-	 *  Get all messages from in-memory database
+	 * Get all messages from in-memory database
 	 */
 	public String[] getCommitMessages() {
 		restrictSavedCommitMessages();
@@ -122,12 +119,12 @@ public class HgCommitMessageManager {
 	}
 
 	/**
-	 * Return a <code>File</code> object representing the location file. The
-	 * file may or may not exist and must be checked before use.
+	 * Return a <code>File</code> object representing the location file. The file may or may not
+	 * exist and must be checked before use.
 	 */
 	private File getLocationFile() {
-		return MercurialEclipsePlugin.getDefault().getStateLocation().append(
-				COMMIT_MESSAGE_FILE).toFile();
+		return MercurialEclipsePlugin.getDefault().getStateLocation().append(COMMIT_MESSAGE_FILE)
+				.toFile();
 	}
 
 	/**
@@ -137,7 +134,7 @@ public class HgCommitMessageManager {
 	 */
 	public void start() throws HgException {
 		File file = getLocationFile();
-		if(!file.isFile()){
+		if (!file.isFile()) {
 			return;
 		}
 		BufferedReader reader = null;
@@ -155,7 +152,7 @@ public class HgCommitMessageManager {
 		} catch (IOException e) {
 			throw new HgException("Failed to open commit database file: " + file, e);
 		} finally {
-			if(reader != null) {
+			if (reader != null) {
 				try {
 					reader.close();
 				} catch (IOException e) {
@@ -174,28 +171,30 @@ public class HgCommitMessageManager {
 				new FileOutputStream(file), MercurialEclipsePlugin.getDefaultEncoding()));
 
 		StreamResult streamResult = new StreamResult(writer);
-		SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactory.newInstance();
+		SAXTransformerFactory transformerFactory = (SAXTransformerFactory) TransformerFactory
+				.newInstance();
 
 		try {
 			TransformerHandler transformerHandler = transformerFactory.newTransformerHandler();
 			Transformer transformer = transformerHandler.getTransformer();
-			transformer.setOutputProperty(OutputKeys.ENCODING, MercurialEclipsePlugin.getDefaultEncoding());
-/*
-			transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"mercurialeclipse_commitmessage.dtd"); //$NON-NLS-1$
-*/
-			transformer.setOutputProperty(OutputKeys.INDENT,"yes"); //$NON-NLS-1$
+			transformer.setOutputProperty(OutputKeys.ENCODING, MercurialEclipsePlugin
+					.getDefaultEncoding());
+			/*
+			 * transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"mercurialeclipse_commitmessage.dtd"
+			 * ); //$NON-NLS-1$
+			 */
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes"); //$NON-NLS-1$
 			transformerHandler.setResult(streamResult);
 			transformerHandler.startDocument();
 
 			AttributesImpl atts = new AttributesImpl();
 			atts.clear();
-			transformerHandler.startElement("","",XML_TAG_COMMIT_MESSAGES,atts); //$NON-NLS-1$
+			transformerHandler.startElement("", "", XML_TAG_COMMIT_MESSAGES, atts); //$NON-NLS-1$
 
 			int size = commitMessages.size();
 
-			int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities
-					.getPreference(MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE,
-							"10")); //$NON-NLS-1$
+			int prefs_commit_message_size_max = Integer.parseInt(MercurialUtilities.getPreference(
+					MercurialPreferenceConstants.COMMIT_MESSAGE_BATCH_SIZE, "10")); //$NON-NLS-1$
 
 			/* Do not save more then the prefs size */
 			if (size > prefs_commit_message_size_max) {
@@ -208,7 +207,7 @@ public class HgCommitMessageManager {
 				transformerHandler.characters(msg.toCharArray(), 0, msg.length());
 				transformerHandler.endElement("", "", XML_TAG_COMMIT_MESSAGE); //$NON-NLS-1$
 			}
-			transformerHandler.endElement("","",XML_TAG_COMMIT_MESSAGES); //$NON-NLS-1$
+			transformerHandler.endElement("", "", XML_TAG_COMMIT_MESSAGES); //$NON-NLS-1$
 			transformerHandler.endDocument();
 		} catch (TransformerConfigurationException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -223,28 +222,41 @@ public class HgCommitMessageManager {
 
 	/**
 	 * Get the commit name for given root
-	 * @param hgRoot non null
+	 *
+	 * @param hgRoot
+	 *            non null
 	 * @return never null, but might be empty
 	 */
 	public static String getDefaultCommitName(HgRoot hgRoot) {
+		// first the stored commit name
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		String commitName = store.getString(getKey(hgRoot));
-		if(commitName != null && commitName.length() != 0){
+		if (commitName != null && commitName.length() != 0) {
+			return commitName;
+		}
+
+		// Bastian: A *USERNAME* shouldn't be the default for a full committer name.
+		// Therefore I changed the code to use username only in the case that Mercurial
+		// hasn't been configured with a user name.
+
+		commitName = MercurialUtilities.getDefaultUserName();
+		if (commitName != null && commitName.length() != 0) {
 			return commitName;
 		}
 
 		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
-			.getDefaultRepoLocation(hgRoot);
-		if(repoLocation != null) {
+				.getDefaultRepoLocation(hgRoot);
+		if (repoLocation != null) {
 			String user = repoLocation.getUser();
 			if (user != null && user.trim().length() > 0) {
 				return user;
 			}
 		}
-		return MercurialUtilities.getDefaultUserName();
+		// shouldn't happen
+		return "";
 	}
 
-	public static void setDefaultCommitName(HgRoot hgRoot, String name){
+	public static void setDefaultCommitName(HgRoot hgRoot, String name) {
 		IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		store.setValue(getKey(hgRoot), name);
 	}
@@ -253,9 +265,8 @@ public class HgCommitMessageManager {
 		return HgCommitMessageManager.KEY_PREFIX_COMMIT_NAME + root.getAbsolutePath();
 	}
 
-
 	/**
-	 *  SAX Handler methods class to handle XML parsing
+	 * SAX Handler methods class to handle XML parsing
 	 */
 	private static class XmlHandler extends DefaultHandler {
 
@@ -267,10 +278,10 @@ public class HgCommitMessageManager {
 		}
 
 		/**
-		 * Called when the starting of the Element is reached. For Example if we have Tag
-		 * called <Title> ... </Title>, then this method is called when <Title> tag is
-		 * Encountered while parsing the Current XML File. The AttributeList Parameter has
-		 * the list of all Attributes declared for the Current Element in the XML File.
+		 * Called when the starting of the Element is reached. For Example if we have Tag called
+		 * <Title> ... </Title>, then this method is called when <Title> tag is Encountered while
+		 * parsing the Current XML File. The AttributeList Parameter has the list of all Attributes
+		 * declared for the Current Element in the XML File.
 		 */
 		@Override
 		public void startElement(String uri, String localName, String qname, Attributes attr) {
@@ -279,8 +290,8 @@ public class HgCommitMessageManager {
 		}
 
 		/**
-		 * Called when the Ending of the current Element is reached. For example in the
-		 * above explanation, this method is called when </Title> tag is reached
+		 * Called when the Ending of the current Element is reached. For example in the above
+		 * explanation, this method is called when </Title> tag is reached
 		 */
 		@Override
 		public void endElement(String uri, String localName, String qname) {
@@ -291,9 +302,9 @@ public class HgCommitMessageManager {
 		}
 
 		/**
-		 * While Parsing the XML file, if extra characters like space or enter Character
-		 * are encountered then this method is called. If you don't want to do anything
-		 * special with these characters, then you can normally leave this method blank.
+		 * While Parsing the XML file, if extra characters like space or enter Character are
+		 * encountered then this method is called. If you don't want to do anything special with
+		 * these characters, then you can normally leave this method blank.
 		 */
 		@Override
 		public void characters(char[] ch, int start, int length) {
@@ -301,6 +312,5 @@ public class HgCommitMessageManager {
 			tmpMessage = tmpMessage + new String(ch, start, length);
 		}
 	}
-
 
 }
