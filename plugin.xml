@@ -1150,6 +1150,10 @@
             id="com.vectrace.MercurialEclipse.prefspage.Timeouts"
             category="com.vectrace.MercurialEclipse.prefspage"
             name="%timeouts"/>
+      <page class="com.vectrace.MercurialEclipse.preferences.HistoryPreferencePage"
+            id="com.vectrace.MercurialEclipse.prefspage.History"
+            category="com.vectrace.MercurialEclipse.prefspage"
+            name="%history"/>
       <page class="com.vectrace.MercurialEclipse.preferences.PerformancePreferencePage"
             id="com.vectrace.MercurialEclipse.prefspage.Performance"
             category="com.vectrace.MercurialEclipse.prefspage"

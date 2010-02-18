@@ -427,7 +427,7 @@ public class ChangedPathsPage {
 			return null;
 		}
 		MercurialRevision derived = new MercurialRevision(base.getChangeSet(), base
-				.getGChangeSet(), file, null);
+				.getGChangeSet(), file, null, null);
 		return derived;
 	}
 }

@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
@@ -92,7 +93,7 @@ import com.vectrace.MercurialEclipse.wizards.Messages;
 public class MercurialHistoryPage extends HistoryPage {
 
 	private GraphLogTableViewer viewer;
-	private IResource resource;
+	IResource resource;
 	private HgRoot hgRoot;
 	private ChangeLogContentProvider changeLogViewContentProvider;
 	private MercurialHistory mercurialHistory;
@@ -107,6 +108,9 @@ public class MercurialHistoryPage extends HistoryPage {
 	private CompareRevisionAction compareTwo;
 	private BaseSelectionListenerAction revertAction;
 	private Action actionShowParentHistory;
+	private final IAction bisectMarkGoodAction = new BisectMarkGoodAction(this);
+	private final IAction bisectMarkBadAction = new BisectMarkBadAction(this);
+	private final IAction bisectResetAction = new BisectResetAction(this);
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -137,6 +141,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			final Runnable runnable = new Runnable() {
 				public void run() {
+					clearSelection();
 					viewer.setInput(mercurialHistory);
 					viewer.refresh();
 				}
@@ -283,11 +288,19 @@ public class MercurialHistoryPage extends HistoryPage {
 	public void createControl(Composite parent) {
 		IActionBars actionBars = getHistoryPageSite().getWorkbenchPageSite().getActionBars();
 		IMenuManager actionBarsMenu = actionBars.getMenuManager();
+
+		// bisect actions
+		actionBarsMenu.add(new Separator());
+		actionBarsMenu.add(bisectMarkBadAction);
+		actionBarsMenu.add(bisectMarkGoodAction);
+		actionBarsMenu.add(bisectResetAction);
+		actionBarsMenu.add(new Separator());
+
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
 
 		Action toggleShowTags = new Action(Messages.getString("HistoryView.showTags"), //$NON-NLS-1$
-				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) {
+				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				showTags = isChecked();
@@ -299,7 +312,6 @@ public class MercurialHistoryPage extends HistoryPage {
 		};
 		toggleShowTags.setChecked(showTags);
 		actionBarsMenu.add(toggleShowTags);
-
 		actionShowParentHistory = new Action("Show Parent History", //$NON-NLS-1$
 				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_UP)) {
 			@Override
@@ -417,7 +429,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			text.append(table.getColumn(columnIndex).getText()).append('\t');
 		}
 
-		String crlf = System.getProperty("line.separator");
+		String crlf = System.getProperty("line.separator"); //$NON-NLS-1$
 		text.append(crlf);
 
 		while(iterator.hasNext()) {
@@ -444,6 +456,24 @@ public class MercurialHistoryPage extends HistoryPage {
 		return (IStructuredSelection) viewer.getSelection();
 	}
 
+	void clearSelection() {
+		viewer.setSelection(StructuredSelection.EMPTY);
+	}
+
+	MercurialRevision[] getSelectedRevisions() {
+		Object[] obj = getSelection().toArray();
+		if (obj != null && obj.length > 0) {
+			MercurialRevision[] revs = new MercurialRevision[obj.length];
+			int i = 0;
+			for (Object o : obj) {
+				MercurialRevision mr = (MercurialRevision) o;
+				revs[i++] = mr;
+			}
+			return revs;
+		}
+		return null;
+	}
+
 	private void contributeActions() {
 
 		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
@@ -460,8 +490,8 @@ public class MercurialHistoryPage extends HistoryPage {
 					if (HgStatusClient.isDirty(root)) {
 						if (!MessageDialog
 								.openQuestion(getControl().getShell(),
-										"Uncommited Changes",
-										"Your hg root has uncommited changes.\nDo you really want to continue?")){
+										Messages.getString("MercurialHistoryPage.uncommittedChanges1"), //$NON-NLS-1$
+										Messages.getString("MercurialHistoryPage.uncommittedChanges2"))){ //$NON-NLS-1$
 							return;
 						}
 					}
@@ -481,16 +511,16 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			@Override
 			public boolean isEnabled() {
-				Object[] revs = getSelection().toArray();
+				MercurialRevision[] revs = getSelectedRevisions();
 				if (revs.length == 1) {
-					rev = (MercurialRevision) revs[0];
+					rev = revs[0];
 					return true;
 				}
 				rev = null;
 				return false;
 			}
 		};
-		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
+		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif")); //$NON-NLS-1$
 
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
@@ -511,8 +541,15 @@ public class MercurialHistoryPage extends HistoryPage {
 					}
 				}
 				updateAction.setEnabled(updateAction.isEnabled());
+				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
+				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
+				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
 				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(bisectMarkBadAction);
+				menuMgr1.add(bisectMarkGoodAction);
+				menuMgr1.add(bisectResetAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
@@ -524,7 +561,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		getOpenEditorAction();
 		getCompareWithCurrentAction();
 		getRevertAction();
-		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){
+		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){ //$NON-NLS-1$
 			@Override
 			protected boolean updateSelection(IStructuredSelection selection) {
 				if(selection.size() != 2){
@@ -539,7 +576,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		if(openAction != null){
 			return openAction;
 		}
-		openAction = new OpenMercurialRevisionAction("Open Selected Version");
+		openAction = new OpenMercurialRevisionAction(Messages.getString("MercurialHistoryPage.openSelectedVersion")); //$NON-NLS-1$
 		openAction.setPage(this);
 		return openAction;
 	}
@@ -549,7 +586,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			return openEditorAction;
 		}
 
-		openEditorAction = new BaseSelectionListenerAction("Open Current Version") {
+		openEditorAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.openCurrentVersion")) { //$NON-NLS-1$
 			private IFile file;
 
 			@Override
@@ -599,15 +636,15 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	CompareRevisionAction getCompareWithCurrentAction() {
 		if(compareWithCurrAction == null) {
-			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this);
+			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this); //$NON-NLS-1$
 			}
 		return compareWithCurrAction;
 	}
 
 	CompareRevisionAction getCompareWithPreviousAction() {
 		if(compareWithPrevAction == null) {
-			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this);
-			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
+			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this); //$NON-NLS-1$
+			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif")); //$NON-NLS-1$
 			compareWithPrevAction.setCompareWithPrevousEnabled(true);
 		}
 		return compareWithPrevAction;
@@ -690,7 +727,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	public BaseSelectionListenerAction getRevertAction() {
 		if (revertAction == null) {
-			revertAction = new BaseSelectionListenerAction("Replace Current With Selected") {
+			revertAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.replaceCurrentWithSelected")) { //$NON-NLS-1$
 				@Override
 				public void run() {
 					IStructuredSelection selection = getStructuredSelection();
@@ -701,9 +738,9 @@ public class MercurialHistoryPage extends HistoryPage {
 					MercurialRevision revision = (MercurialRevision) selection.getFirstElement();
 					IResource selectedElement = revision.getResource();
 					if (!MercurialStatusCache.getInstance().isClean(selectedElement) &&
-							!MessageDialog.openQuestion(getControl().getShell(), "Uncommited Changes",
-							"File '" + selectedElement.getName()
-									+ "' has uncommited changes.\nDo you really want to revert?")) {
+							!MessageDialog.openQuestion(getControl().getShell(), Messages.getString("MercurialHistoryPage.UncommittedChanges"), //$NON-NLS-1$
+							Messages.getString("MercurialHistoryPage.file") + selectedElement.getName() //$NON-NLS-1$
+									+ Messages.getString("MercurialHistoryPage.hasUncommittedChanges"))) { //$NON-NLS-1$
 						return;
 					}
 					selection = new StructuredSelection(selectedElement);
@@ -730,8 +767,15 @@ public class MercurialHistoryPage extends HistoryPage {
 				}
 			};
 			revertAction.setImageDescriptor(MercurialEclipsePlugin
-					.getImageDescriptor("actions/revert.gif"));
+					.getImageDescriptor("actions/revert.gif")); //$NON-NLS-1$
 		}
 		return revertAction;
+	}
+
+	/**
+	 * @param currentWorkdirChangeset the currentWorkdirChangeset to set
+	 */
+	public void setCurrentWorkdirChangeset(ChangeSet currentWorkdirChangeset) {
+		this.currentWorkdirChangeset = currentWorkdirChangeset;
 	}
 }

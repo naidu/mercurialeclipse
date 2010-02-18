@@ -42,7 +42,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 	CompareRevisionAction(String text, MercurialHistoryPage page) {
 		super(text);
 		this.page = page;
-		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/compare_with_local.gif"));
+		setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/compare_with_local.gif")); //$NON-NLS-1$
 	}
 
 	void setCompareWithPrevousEnabled(boolean enable){
@@ -53,7 +53,7 @@ class CompareRevisionAction extends BaseSelectionListenerAction {
 	public void run() {
 		final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
 		final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
-		final Job job = new Job("Retrieving hg diff data...") {
+		final Job job = new Job(Messages.CompareRevisionAction_retrievingDiffData) {
 
 			@Override
 			public IStatus run(IProgressMonitor monitor) {
