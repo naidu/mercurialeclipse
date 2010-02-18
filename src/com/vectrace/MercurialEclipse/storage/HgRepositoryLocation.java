@@ -120,7 +120,7 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 				return false;
 			}
 			return location2.getUri() != null || (location2.getLocation() != null &&
-					new File(location2.getLocation()).isDirectory());
+					new File(location2.getLocation()).exists());
 		} catch (HgException ex) {
 			MercurialEclipsePlugin.logError(ex);
 			return false;

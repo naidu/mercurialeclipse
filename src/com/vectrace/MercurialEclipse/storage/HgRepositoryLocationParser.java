@@ -155,9 +155,12 @@ public class HgRepositoryLocationParser {
 		try {
 			uri = new URI(location);
 		} catch (URISyntaxException e) {
+			// Bastian: we can't filter for directories only, as bundle-files are valid repositories
+			// as well. So only check if file exists.
+
 			// Most possibly windows path, return null
 			File localPath = new File(location);
-			if (localPath.isDirectory()) {
+			if (localPath.exists()) {
 				return null;
 			}
 			HgException hgex = new HgException("Hg repository location invalid: <" + location + ">");
