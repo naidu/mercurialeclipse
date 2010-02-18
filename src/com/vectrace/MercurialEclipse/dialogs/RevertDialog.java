@@ -92,7 +92,12 @@ public class RevertDialog extends TitleAreaDialog {
 				widgetSelected(e);
 			}
 		});
+		GridData gridData = new GridData(GridData.FILL_BOTH);
+		g.setLayoutData(gridData);
 
+
+
+		gridData = new GridData(GridData.FILL_BOTH);
 		csTable = new ChangesetTable(g, resources.get(0));
 		boolean enableChangesetTable = false;
 		if(resources.size() == 1){
@@ -100,6 +105,7 @@ public class RevertDialog extends TitleAreaDialog {
 		}
 		csTable.setAutoFetch(enableChangesetTable);
 		csTable.setEnabled(enableChangesetTable);
+		csTable.setLayoutData(gridData);
 		b.setSelection(enableChangesetTable);
 	}
 
