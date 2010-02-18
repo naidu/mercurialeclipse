@@ -53,4 +53,26 @@ public class ProjectCache {
 	public boolean isEmpty(){
 		return changesets.isEmpty();
 	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ProjectCache [");
+		if (branch != null) {
+			builder.append("branch=");
+			builder.append(branch);
+			builder.append(", ");
+		}
+		if (project != null) {
+			builder.append("project=");
+			builder.append(project);
+			builder.append(", ");
+		}
+		if (changesets != null) {
+			builder.append("changesets=");
+			builder.append(changesets);
+		}
+		builder.append("]");
+		return builder.toString();
+	}
 }

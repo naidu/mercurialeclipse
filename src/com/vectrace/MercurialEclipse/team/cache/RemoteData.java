@@ -41,9 +41,6 @@ public class RemoteData {
 
 	private static final SortedSet<ChangeSet> EMPTY_SETS = Collections
 			.unmodifiableSortedSet(new TreeSet<ChangeSet>());
-	private final HgRoot root;
-	private final IHgRepositoryLocation repo;
-	private final String branch;
 	private final Map<IProject, ProjectCache> projectMap;
 	private final Direction direction;
 	private final Map<IPath, Set<ChangeSet>> changesets;
@@ -61,14 +58,12 @@ public class RemoteData {
 	 * @param changesets this map contains AT LEAST a key corresponding to the hgroot of
 	 * this data, and may also contain additional keys for one or more projects under
 	 * the given hgroot.
+	 * @param branch can be null (means all branches)
 	 */
 	public RemoteData(IHgRepositoryLocation repo, HgRoot root, String branch, Direction direction,
 			Map<IPath, Set<ChangeSet>> changesets) {
 		super();
-		this.repo = repo;
-		this.root = root;
 		this.direction = direction;
-		this.branch = branch;
 		this.changesets = changesets;
 		key = new RemoteKey(root, repo, branch);
 		projectMap = new HashMap<IProject, ProjectCache>();
@@ -105,7 +100,7 @@ public class RemoteData {
 		if(changesets.isEmpty()){
 			return EMPTY_SETS;
 		}
-		Set<ChangeSet> set = changesets.get(new Path(root.getAbsolutePath()));
+		Set<ChangeSet> set = changesets.get(new Path(getRoot().getAbsolutePath()));
 		if(set == null || set.isEmpty()) {
 			return EMPTY_SETS;
 		}
@@ -121,7 +116,7 @@ public class RemoteData {
 			return;
 		}
 		TreeSet<ChangeSet> psets = new TreeSet<ChangeSet>();
-		ProjectCache cache = new ProjectCache(project, branch, psets);
+		ProjectCache cache = new ProjectCache(project, getBranch(), psets);
 		projectMap.put(project, cache);
 		IPath projectPath = project.getLocation();
 		Set<ChangeSet> set = changesets.get(projectPath);
@@ -129,7 +124,7 @@ public class RemoteData {
 			psets.addAll(set);
 			return;
 		}
-		Path rootPath = new Path(root.getAbsolutePath());
+		Path rootPath = new Path(getRoot().getAbsolutePath());
 		set = changesets.get(rootPath);
 		for (ChangeSet changeSet : set) {
 			Set<IFile> files = changeSet.getFiles();
@@ -172,22 +167,22 @@ public class RemoteData {
 	 * @return never null, a list with all projects contained by related hg root directory
 	 */
 	public Set<IProject> getRelatedProjects(){
-		return ResourceUtils.getProjects(root);
+		return ResourceUtils.getProjects(getRoot());
 	}
 
 	public IHgRepositoryLocation getRepo() {
-		return repo;
+		return key.getRepo();
 	}
 
 	public HgRoot getRoot() {
-		return root;
+		return key.getRoot();
 	}
 
 	/**
 	 * @return specific branch or null if the changesets are not limited by the branch
 	 */
 	public String getBranch() {
-		return branch;
+		return key.getBranch();
 	}
 
 	public Direction getDirection(){
@@ -200,5 +195,22 @@ public class RemoteData {
 
 	public RemoteKey getKey(){
 		return key;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("RemoteData [");
+		if (direction != null) {
+			builder.append("direction=");
+			builder.append(direction);
+			builder.append(", ");
+		}
+		if (key != null) {
+			builder.append("key=");
+			builder.append(key);
+		}
+		builder.append("]");
+		return builder.toString();
 	}
 }

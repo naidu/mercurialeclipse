@@ -32,10 +32,13 @@ public class RemoteKey {
 	/** never null */
 	private final String branch;
 
+	/**
+	 * @param branch can be null (means all branches)
+	 */
 	public RemoteKey(HgRoot root, IHgRepositoryLocation repo, String branch) {
 		this.root = root;
 		this.repo = repo;
-		this.branch = Branch.isDefault(branch)? Branch.DEFAULT : branch;
+		this.branch = branch != null && Branch.isDefault(branch)? Branch.DEFAULT : branch;
 	}
 
 	public static RemoteKey create(IResource res, IHgRepositoryLocation repo, String branch){
@@ -56,6 +59,9 @@ public class RemoteKey {
 		return root;
 	}
 
+	/**
+	 * Can be null (means all branches)
+	 */
 	public String getBranch() {
 		return branch;
 	}
@@ -66,7 +72,7 @@ public class RemoteKey {
 		int result = 1;
 		result = prime * result + ((repo == null) ? 0 : repo.hashCode());
 		result = prime * result + ((root == null) ? 0 : root.hashCode());
-		result = prime * result + branch.hashCode();
+		result = prime * result + ((branch == null) ? 0 : branch.hashCode());
 		return result;
 	}
 
