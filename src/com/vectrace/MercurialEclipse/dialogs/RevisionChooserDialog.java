@@ -148,13 +148,13 @@ public class RevisionChooserDialog extends Dialog {
 				| GridData.FILL_VERTICAL);
 		data.heightHint = 200;
 		tabFolder.setLayoutData(data);
-		createHeadTabItem(tabFolder);
-		createRevisionTabItem(tabFolder);
-		createTagTabItem(tabFolder);
 		// <wrong>This is a sublist of heads: unnecessary duplication to show.</wrong>
 		// The branch tab shows also *inactive* branches, which do *not* have heads.
 		// it make sense to show it to see the project state at given branch
 		createBranchTabItem(tabFolder);
+		createHeadTabItem(tabFolder);
+		createTagTabItem(tabFolder);
+		createRevisionTabItem(tabFolder);
 		try {
 			if (MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
 					ResourceProperties.EXT_BOOKMARKS_AVAILABLE,
@@ -411,9 +411,9 @@ public class RevisionChooserDialog extends Dialog {
 			}
 		});
 
-		table.addListener(SWT.Show, new Listener() {
-			public void handleEvent(Event event) {
-				table.removeListener(SWT.Show, this);
+//		table.addListener(SWT.Show, new Listener() {
+//			public void handleEvent(Event event) {
+//				table.removeListener(SWT.Show, this);
 				new SafeUiJob(Messages.getString("RevisionChooserDialog.branchJob.description")) { //$NON-NLS-1$
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
@@ -427,8 +427,8 @@ public class RevisionChooserDialog extends Dialog {
 						}
 					}
 				}.schedule();
-			}
-		});
+//			}
+//		});
 
 		item.setControl(table);
 		return item;
@@ -462,25 +462,29 @@ public class RevisionChooserDialog extends Dialog {
 		item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
 
 		final ChangesetTable table = new ChangesetTable(folder, dataLoader.getHgRoot());
-		new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
-			@Override
-			protected IStatus runSafe(IProgressMonitor monitor) {
-				try {
-					table.setLayoutData(new GridData(GridData.FILL_BOTH));
-					table.highlightParents(parents);
-					table.setAutoFetch(false);
+		table.addListener(SWT.Show, new Listener() {
+			public void handleEvent(Event event) {
+				table.removeListener(SWT.Show, this);
+				new SafeUiJob(Messages.getString("RevisionChooserDialog.fetchJob.description")) { //$NON-NLS-1$
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						try {
+							table.setLayoutData(new GridData(GridData.FILL_BOTH));
+							table.highlightParents(parents);
+							table.setAutoFetch(false);
 
-					ChangeSet[] revisions = dataLoader.getHeads();
-					table.setChangesets(revisions);
-					table.setEnabled(true);
-					return Status.OK_STATUS;
-				} catch (HgException e) {
-					logError(e);
-					return Status.CANCEL_STATUS;
-				}
+							ChangeSet[] revisions = dataLoader.getHeads();
+							table.setChangesets(revisions);
+							table.setEnabled(true);
+							return Status.OK_STATUS;
+						} catch (HgException e) {
+							logError(e);
+							return Status.CANCEL_STATUS;
+						}
+					}
+				}.schedule();
 			}
-		}.schedule();
-
+		});
 		table.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
