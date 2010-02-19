@@ -78,6 +78,7 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -111,6 +112,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private final IAction bisectMarkGoodAction = new BisectMarkGoodAction(this);
 	private final IAction bisectMarkBadAction = new BisectMarkBadAction(this);
 	private final IAction bisectResetAction = new BisectResetAction(this);
+	private final IAction exportAsBundleAction = new ExportAsBundleAction(this);
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -295,6 +297,9 @@ public class MercurialHistoryPage extends HistoryPage {
 		actionBarsMenu.add(bisectMarkGoodAction);
 		actionBarsMenu.add(bisectResetAction);
 		actionBarsMenu.add(new Separator());
+		// export to bundle
+		actionBarsMenu.add(exportAsBundleAction);
+		actionBarsMenu.add(new Separator());
 
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
 		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
@@ -460,7 +465,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		viewer.setSelection(StructuredSelection.EMPTY);
 	}
 
-	MercurialRevision[] getSelectedRevisions() {
+	public MercurialRevision[] getSelectedRevisions() {
 		Object[] obj = getSelection().toArray();
 		if (obj != null && obj.length > 0) {
 			MercurialRevision[] revs = new MercurialRevision[obj.length];
@@ -544,12 +549,15 @@ public class MercurialHistoryPage extends HistoryPage {
 				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
 				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
 				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
+				exportAsBundleAction.setEnabled(true);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(bisectMarkBadAction);
 				menuMgr1.add(bisectMarkGoodAction);
 				menuMgr1.add(bisectResetAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(exportAsBundleAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
