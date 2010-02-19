@@ -436,7 +436,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
-		if (amendCheckbox.getSelection() && cs != null) {
+		if (amendCheckbox != null && amendCheckbox.getSelection() && cs != null) {
 			// refresh patch with added/removed/changed files
 			String result = HgQRefreshClient
 					.refresh(root, true, resourcesToCommit, messageToCommit);
