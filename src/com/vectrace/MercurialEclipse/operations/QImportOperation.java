@@ -24,6 +24,7 @@ import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQImportClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.views.PatchQueueView;
 
 /**
@@ -62,7 +63,7 @@ public class QImportOperation extends HgOperation {
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.call")); //$NON-NLS-1$
-			HgQImportClient.qimport(resource, force, git, existing, changesets,
+			HgQImportClient.qimport(MercurialTeamProvider.getHgRoot(resource), force, git, existing, changesets,
 					patchFile);
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("QImportOperation.refreshingView")); //$NON-NLS-1$

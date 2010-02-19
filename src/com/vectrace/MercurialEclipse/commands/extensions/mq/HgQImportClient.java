@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions.mq;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.IPath;
 
@@ -20,6 +19,7 @@ import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 /**
@@ -27,11 +27,11 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
  *
  */
 public class HgQImportClient extends AbstractClient {
-	public static String qimport(IResource resource, boolean force, boolean git, boolean existing,
+	public static String qimport(HgRoot root, boolean force, boolean git, boolean existing,
 			ChangeSet[] changesets, IPath patchFile) throws HgException {
-		Assert.isNotNull(resource);
+		Assert.isNotNull(root);
 		AbstractShellCommand command = new HgCommand("qimport", //$NON-NLS-1$
-				getWorkingDirectory(resource), true);
+				root, true);
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.CLONE_TIMEOUT);
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
