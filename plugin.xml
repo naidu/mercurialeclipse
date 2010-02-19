@@ -85,12 +85,12 @@
               class="com.vectrace.MercurialEclipse.history.FileStatusDecorator"
               icon="icons/history.gif"
               id="com.vectrace.MercurialEclipse.history.FileStatusDecorator"
-              label="Mercurial History"
+              label="%history.decorator.label"
               lightweight="true"
               location="BOTTOM_RIGHT"
               state="true">
            <description>
-              Decorates file elements in the Mercurial History view
+              %history.decoratorDescription
            </description>
            <enablement>
               <objectClass
@@ -1477,7 +1477,7 @@
             class="com.vectrace.MercurialEclipse.repository.RepoPropertiesPage"
             icon="icons/mercury_Hg.png"
             id="com.vectrace.MercurialEclipse.repositoryProperties"
-            name="Hg Repository"
+            name="%repositoryPage.name"
             objectClass="com.vectrace.MercurialEclipse.model.IHgRepositoryLocation">
       </page>
    </extension>
@@ -1490,7 +1490,7 @@
             icon="icons/elcl16/changeset_obj.gif"
             id="com.vectrace.MercurialEclipse.changeSetContent"
             labelProvider="com.vectrace.MercurialEclipse.synchronize.cs.SyncViewLabelProvider"
-            name="Hg Change Sets"
+            name="%navigatorContent.name"
             priority="normal"> 
          <enablement>
            <or>         
@@ -1522,7 +1522,7 @@
    
    <extension
          id="changeSetModel"
-         name="Hg Change Sets"
+         name="%extension.name"
          point="org.eclipse.core.resources.modelProviders">
       <modelProvider
             class="com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider">
@@ -1550,5 +1550,15 @@
          <adapter type="org.eclipse.team.ui.mapping.ISynchronizationCompareAdapter"/>
          <adapter type="org.eclipse.team.core.mapping.ISynchronizationScopeParticipantFactory"/>
       </factory>   
+   </extension>
+   <extension
+         point="org.eclipse.ui.exportWizards">
+      <wizard
+            category="com.vectrace.MercurialEclipse.wizards.export"
+            class="com.vectrace.MercurialEclipse.wizards.BundleRepoWizard"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.mercurialeclipse.BundleWizard"
+            name="%bundleRepoWizard.name">
+      </wizard>
    </extension>   
 </plugin>
