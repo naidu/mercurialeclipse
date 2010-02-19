@@ -46,10 +46,10 @@ public class MergeHandler extends RootHandler {
 
 	@Override
 	protected void run(HgRoot hgRoot) throws CoreException {
-		merge(hgRoot, getShell(), new NullProgressMonitor(), false, true);
+		determineMergeHeadAndMerge(hgRoot, getShell(), new NullProgressMonitor(), false, true);
 	}
 
-	public static String merge(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+	public static String determineMergeHeadAndMerge(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean autoPickOtherHead, boolean showCommitDialog) throws CoreException {
 
 		// can we do the equivalent of plain "hg merge"?
@@ -107,6 +107,23 @@ public class MergeHandler extends RootHandler {
 			forced = dialog.isForceChecked();
 		}
 
+		return mergeAndCommit(hgRoot, shell, monitor, showCommitDialog, cs, forced);
+	}
+
+	/**
+	 * @param hgRoot
+	 * @param shell
+	 * @param monitor
+	 * @param showCommitDialog
+	 * @param cs
+	 * @param forced
+	 * @return
+	 * @throws HgException
+	 * @throws CoreException
+	 */
+	public static String mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
+			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
+			CoreException {
 		boolean useExternalMergeTool = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_USE_EXTERNAL_MERGE,
 				"false")).booleanValue(); //$NON-NLS-1$

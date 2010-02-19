@@ -79,6 +79,7 @@ import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
+import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -113,6 +114,7 @@ public class MercurialHistoryPage extends HistoryPage {
 	private final IAction bisectMarkBadAction = new BisectMarkBadAction(this);
 	private final IAction bisectResetAction = new BisectResetAction(this);
 	private final IAction exportAsBundleAction = new ExportAsBundleAction(this);
+	private final IAction mergeWithCurrentChangesetAction = new MergeWithCurrentChangesetAction(this);
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -293,6 +295,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 		// bisect actions
 		actionBarsMenu.add(new Separator());
+		actionBarsMenu.add(mergeWithCurrentChangesetAction);
 		actionBarsMenu.add(bisectMarkBadAction);
 		actionBarsMenu.add(bisectMarkGoodAction);
 		actionBarsMenu.add(bisectResetAction);
@@ -530,6 +533,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
 		menuMgr.addMenuListener(new IMenuListener() {
+
 			public void menuAboutToShow(IMenuManager menuMgr1) {
 				if(resource instanceof IFile){
 					IStructuredSelection sel = updateActionEnablement();
@@ -550,9 +554,11 @@ public class MercurialHistoryPage extends HistoryPage {
 				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
 				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
 				exportAsBundleAction.setEnabled(true);
+				mergeWithCurrentChangesetAction.setEnabled(true);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(updateAction);
 				menuMgr1.add(new Separator());
+				menuMgr1.add(mergeWithCurrentChangesetAction);
 				menuMgr1.add(bisectMarkBadAction);
 				menuMgr1.add(bisectMarkGoodAction);
 				menuMgr1.add(bisectResetAction);
