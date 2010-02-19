@@ -183,7 +183,7 @@ public class MergeHandler extends RootHandler {
 				continue;
 			}
 			// can't be the current
-			if (cs.equals(currentRevision)) {
+			if (cs.getChangeset().equals(currentRevision.getChangeset())) {
 				continue;
 			}
 			// if we have more than one candidate, then have to ask user anyway.
@@ -192,7 +192,6 @@ public class MergeHandler extends RootHandler {
 			}
 			candidate = cs;
 		}
-
 
 		return candidate;
 	}
