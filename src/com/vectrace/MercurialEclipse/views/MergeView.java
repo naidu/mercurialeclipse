@@ -226,6 +226,8 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				menuMgr1.add(new Separator());
 				menuMgr1.add(markResolvedAction);
 				menuMgr1.add(markUnresolvedAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(abortAction);
 			}
 		});
 		menuMgr.setRemoveAllWhenShown(true);
