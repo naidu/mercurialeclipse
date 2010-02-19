@@ -226,6 +226,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 			// save commit messages to disk
 			commitMessageManager.stop();
 			proxyServiceTracker.close();
+			MercurialUtilities.disposeColorsAndFonts();
 		} finally {
 			super.stop(context);
 		}

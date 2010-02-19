@@ -32,6 +32,9 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -41,8 +44,10 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	private static final Tag[] EMPTY_TAGS = new Tag[0];
 	private static final IFile[] EMPTY_FILES = new IFile[0];
-	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd hh:mm Z");
+	private static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat(
+			"yyyy-MM-dd hh:mm Z");
 	public static final Date UNKNOWN_DATE = new Date(0);
+
 	public static enum Direction {
 		INCOMING, OUTGOING, LOCAL;
 	}
@@ -68,27 +73,30 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	private Tag[] tags;
 
 	/**
-	 *  A more or less dummy changeset containing only index and global id. Such
-	 *  changeset is useful and can be constructed from the other changesets "parent" ids
+	 * A more or less dummy changeset containing only index and global id. Such changeset is useful
+	 * and can be constructed from the other changesets "parent" ids
 	 */
 	public static class ParentChangeSet extends ChangeSet {
 
 		/**
-		 * @param indexAndId a semicolon separated index:id pair
-		 * @param child this changeset's child from which we are constructing the parent
+		 * @param indexAndId
+		 *            a semicolon separated index:id pair
+		 * @param child
+		 *            this changeset's child from which we are constructing the parent
 		 */
 		public ParentChangeSet(String indexAndId, ChangeSet child) {
-			super(getIndex(indexAndId), getChangeset(indexAndId), null, null, null, null, "", null, child.getHgRoot()); //$NON-NLS-1$
+			super(getIndex(indexAndId), getChangeset(indexAndId), null, null, null, null,
+					"", null, child.getHgRoot()); //$NON-NLS-1$
 			this.bundleFile = child.getBundleFile();
 			this.direction = child.direction;
 		}
 
-		static int getIndex(String parentId){
-			if(parentId == null || parentId.length() < 3){
+		static int getIndex(String parentId) {
+			if (parentId == null || parentId.length() < 3) {
 				return 0;
 			}
 			String[] parts = parentId.split(":");
-			if(parts.length != 2){
+			if (parts.length != 2) {
 				return 0;
 			}
 			try {
@@ -98,12 +106,12 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			}
 		}
 
-		static String getChangeset(String parentId){
-			if(parentId == null || parentId.length() < 3){
+		static String getChangeset(String parentId) {
+			if (parentId == null || parentId.length() < 3) {
 				return null;
 			}
 			String[] parts = parentId.split(":");
-			if(parts.length != 2){
+			if (parts.length != 2) {
 				return null;
 			}
 			try {
@@ -115,24 +123,24 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * This class is getting too tangled up with everything else, has a a large
-	 * amount of fields (17) and worse is that it is not immutable, which makes
-	 * the entanglement even more dangerous.
+	 * This class is getting too tangled up with everything else, has a a large amount of fields
+	 * (17) and worse is that it is not immutable, which makes the entanglement even more dangerous.
 	 *
-	 * My plan is to make it immutable by using the builder pattern and remove
-	 * all setters. FileStatus fetching may(or may not) be feasable to put
-	 * elsewhere or fetched "on-demand" by this class itself. Currently, it has
-	 * no operations and it purely a data class which isn't very OO efficent.
+	 * My plan is to make it immutable by using the builder pattern and remove all setters.
+	 * FileStatus fetching may(or may not) be feasable to put elsewhere or fetched "on-demand" by
+	 * this class itself. Currently, it has no operations and it purely a data class which isn't
+	 * very OO efficent.
 	 *
-	 * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing,
-	 * isLocal)
+	 * Secondly, remove getDirection by tester methods (isIncoming, isOutgoing, isLocal)
 	 *
 	 */
 	public static class Builder {
 		private ChangeSet cs;
 
-		public Builder(int revision, String changeSet, String branch, String date, String user, HgRoot root) {
-			this.cs = new ChangeSet(revision, changeSet, user, date, branch == null? "" : branch, root);
+		public Builder(int revision, String changeSet, String branch, String date, String user,
+				HgRoot root) {
+			this.cs = new ChangeSet(revision, changeSet, user, date, branch == null ? "" : branch,
+					root);
 		}
 
 		public Builder tags(String tags) {
@@ -189,9 +197,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		}
 	}
 
-	ChangeSet(int changesetIndex, String changeSet, String tags,
-			String branch, String user, String date, String description,
-			String[] parents, HgRoot root) {
+	ChangeSet(int changesetIndex, String changeSet, String tags, String branch, String user,
+			String date, String description, String[] parents, HgRoot root) {
 		this.changesetIndex = changesetIndex;
 		this.changeset = changeSet;
 		this.revision = new HgRevision(changeset, changesetIndex);
@@ -206,8 +213,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 		setName(toString());
 	}
 
-
-	private ChangeSet(int changesetIndex, String changeSet, String user, String date, String branch, HgRoot root) {
+	private ChangeSet(int changesetIndex, String changeSet, String user, String date,
+			String branch, HgRoot root) {
 		this(changesetIndex, changeSet, null, branch, user, date, "", null, root); //$NON-NLS-1$
 	}
 
@@ -225,7 +232,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 */
 	public String getTagsString() {
 		if (HgRevision.TIP.getChangeset().equals(tagsStr) && bundleFile != null) {
-			StringBuilder builder = new StringBuilder(tagsStr).append(" [ ").append(repository.toString()).append(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
+			StringBuilder builder = new StringBuilder(tagsStr)
+					.append(" [ ").append(repository.toString()).append(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
 			tagsStr = builder.toString();
 		}
 		return tagsStr;
@@ -235,19 +243,19 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	 * @return tags array (all tags associated with current changeset). May return empty array, but
 	 *         never null
 	 */
-	public Tag[] getTags(){
-		if(tags == null){
-			if(!StringUtils.isEmpty(tagsStr)) {
+	public Tag[] getTags() {
+		if (tags == null) {
+			if (!StringUtils.isEmpty(tagsStr)) {
 				String[] tagsStrArr = tagsStr.split("_,_");
 				List<Tag> tagList = new ArrayList<Tag>();
 				for (String ctag : tagsStrArr) {
-					if(StringUtils.isEmpty(ctag)){
+					if (StringUtils.isEmpty(ctag)) {
 						continue;
 					}
 					Tag tag = new Tag(ctag, getChangesetIndex(), getChangeset(), false);
 					tagList.add(tag);
 				}
-				if(!tagList.isEmpty()) {
+				if (!tagList.isEmpty()) {
 					tags = tagList.toArray(new Tag[tagList.size()]);
 				}
 			}
@@ -264,7 +272,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	public String getDateString() {
-//      return date;
+		// return date;
 		String dt = date;
 		if (dt != null) {
 			// Return date without extra time-zone.
@@ -311,7 +319,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @param resource  non null
+	 * @param resource
+	 *            non null
 	 * @return true if the given resource was removed in this changeset
 	 */
 	public boolean isRemoved(IResource resource) {
@@ -319,7 +328,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @param resource  non null
+	 * @param resource
+	 *            non null
 	 * @return true if the given resource was added in this changeset
 	 */
 	public boolean isAdded(IResource resource) {
@@ -327,7 +337,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @param resource  non null
+	 * @param resource
+	 *            non null
 	 * @return true if the given resource was modified in this changeset
 	 */
 	public boolean isModified(IResource resource) {
@@ -335,22 +346,24 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @param resource non null
-	 * @param action non null
+	 * @param resource
+	 *            non null
+	 * @param action
+	 *            non null
 	 * @return true if this changeset contains a resource with given action state
 	 */
 	private boolean contains(IResource resource, Action action) {
-		if(changedFiles.length == 0){
+		if (changedFiles.length == 0) {
 			return false;
 		}
 		boolean match = false;
 		IPath path = null;
 		for (FileStatus fileStatus : changedFiles) {
-			if(fileStatus.getAction() == action){
-				if(path == null){
+			if (fileStatus.getAction() == action) {
+				if (path == null) {
 					path = ResourceUtils.getPath(resource);
 				}
-				if(path.equals(fileStatus.getAbsolutePath())){
+				if (path.equals(fileStatus.getAbsolutePath())) {
 					match = true;
 					break;
 				}
@@ -378,7 +391,7 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 			return 0;
 		}
 		int result = this.getChangesetIndex() - o.getChangesetIndex();
-		if(result != 0){
+		if (result != 0) {
 			return result;
 		}
 		if (getRealDate() != UNKNOWN_DATE && o.getRealDate() != UNKNOWN_DATE) {
@@ -389,19 +402,19 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	@Override
 	public boolean equals(Object obj) {
-		if(this == obj){
+		if (this == obj) {
 			return true;
 		}
 		if (obj instanceof ChangeSet) {
 			ChangeSet other = (ChangeSet) obj;
-			if(getChangeset().equals(other.getChangeset())){
+			if (getChangeset().equals(other.getChangeset())) {
 				return true;
 			}
 			// The question is: why changesets with different id's should be
 			// equal if they dates/indexes are equal???
-			//if (date != null && date.equals(other.getDateString())) {
-			//	return true;
-			//}
+			// if (date != null && date.equals(other.getDateString())) {
+			// return true;
+			// }
 
 			// changeset indices are not equal in different repos, e.g. incoming
 			// so we can't do a check solely based on indexes.
@@ -419,8 +432,8 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @return never returns null. Returns {@link ChangeSet#UNKNOWN_DATE} if the date
-	 * can't be parsed
+	 * @return never returns null. Returns {@link ChangeSet#UNKNOWN_DATE} if the date can't be
+	 *         parsed
 	 */
 	public Date getRealDate() {
 		try {
@@ -438,14 +451,23 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @return the bundleFile, may be null. The file can contain additional changeset
-	 * information, if this is a changeset used by "incoming" or "pull" operation
+	 * @return the bundleFile, may be null. The file can contain additional changeset information,
+	 *         if this is a changeset used by "incoming" or "pull" operation
 	 */
 	public File getBundleFile() {
 		return bundleFile;
 	}
 
 	public String[] getParents() {
+		if (parents == null || parents.length == 0) {
+			// in this case we gotta ask Mercurial -> lazy loading
+			try {
+				parents = HgParentClient.getParents(hgRoot, nodeShort);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+
+		}
 		return parents;
 	}
 
@@ -504,13 +526,12 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 
 	public boolean contains(IPath local) {
 		for (IFile resource : getFiles()) {
-			if(local.equals(resource.getLocation())){
+			if (local.equals(resource.getLocation())) {
 				return true;
 			}
 		}
 		return false;
 	}
-
 
 	@Override
 	public boolean containsChildren(final IResource local, int depth) {
@@ -518,19 +539,18 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * This method should NOT be used directly by clients of Mercurial plugin except
-	 * those from "synchronize" packages. It exists only to fulfill contract with Team
-	 * "synchronize" API and is NOT performant, as it may create dynamic proxy objects.
-	 * {@inheritDoc}
+	 * This method should NOT be used directly by clients of Mercurial plugin except those from
+	 * "synchronize" packages. It exists only to fulfill contract with Team "synchronize" API and is
+	 * NOT performant, as it may create dynamic proxy objects. {@inheritDoc}
 	 */
 	@Override
 	public IFile[] getResources() {
 		return getFiles().toArray(EMPTY_FILES);
 	}
 
-	public FileFromChangeSet[] getChangesetFiles(){
+	public FileFromChangeSet[] getChangesetFiles() {
 		List<FileFromChangeSet> fcs = new ArrayList<FileFromChangeSet>();
-		if(changedFiles == null) {
+		if (changedFiles == null) {
 			return fcs.toArray(new FileFromChangeSet[0]);
 		}
 
@@ -547,16 +567,16 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 				kind = Differencer.DELETION;
 				break;
 			}
-			switch(getDirection()){
-				case INCOMING:
-					kind |= Differencer.LEFT;
-					break;
-				case OUTGOING:
-					kind |= Differencer.RIGHT;
-					break;
-				case LOCAL:
-					kind |= Differencer.RIGHT;
-					break;
+			switch (getDirection()) {
+			case INCOMING:
+				kind |= Differencer.LEFT;
+				break;
+			case OUTGOING:
+				kind |= Differencer.RIGHT;
+				break;
+			case LOCAL:
+				kind |= Differencer.RIGHT;
+				break;
 			}
 			fcs.add(new FileFromChangeSet(this, fileStatus, kind));
 		}
@@ -564,19 +584,19 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @return not modifiable set of files changed/added/removed in this changeset, never null.
-	 * The returned file references might not exist (yet/anymore) on the disk or in the
-	 * Eclipse workspace.
+	 * @return not modifiable set of files changed/added/removed in this changeset, never null. The
+	 *         returned file references might not exist (yet/anymore) on the disk or in the Eclipse
+	 *         workspace.
 	 */
-	public Set<IFile> getFiles(){
-		if(files != null){
+	public Set<IFile> getFiles() {
+		if (files != null) {
 			return files;
 		}
 		Set<IFile> files1 = new HashSet<IFile>();
-		if(changedFiles != null) {
+		if (changedFiles != null) {
 			for (FileStatus fileStatus : changedFiles) {
 				IFile fileHandle = ResourceUtils.getFileHandle(fileStatus.getAbsolutePath());
-				if(fileHandle != null) {
+				if (fileHandle != null) {
 					files1.add(fileHandle);
 				}
 			}
@@ -612,7 +632,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	public void remove(IResource resource) {
 		// not supported
 	}
-
 
 	@Override
 	public void rootRemoved(IResource resource, int depth) {

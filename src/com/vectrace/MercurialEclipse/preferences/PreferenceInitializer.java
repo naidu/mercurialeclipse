@@ -84,6 +84,10 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
+		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_BACKGROUND, "255,255,255");
+		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_FOREGROUND, "0,0,0");
+
+
 		// default is 6 minutes. Don't ask why 6... Because it is 7 times smaller as 42?
 		int defaultTimeout = 6 * 60 * 1000;
 		store.setDefault(DEFAULT_TIMEOUT, defaultTimeout);

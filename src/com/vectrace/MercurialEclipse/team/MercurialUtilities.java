@@ -19,6 +19,8 @@ package com.vectrace.MercurialEclipse.team;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
@@ -32,7 +34,12 @@ import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
+import org.eclipse.jface.preference.PreferenceConverter;
 import org.eclipse.jface.preference.PreferenceDialog;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
+import org.eclipse.swt.graphics.FontData;
+import org.eclipse.swt.graphics.RGB;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.Team;
 import org.eclipse.ui.dialogs.PreferencesUtil;
@@ -57,6 +64,8 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  */
 public class MercurialUtilities {
 	private final static boolean isWindows = File.separatorChar == '\\';
+	private static final Map<RGB, Color> COLOR_MAP = new HashMap<RGB, Color>();
+	private static final Map<FontData, Font> FONT_MAP = new HashMap<FontData, Font>();
 
 	/**
 	 * This class is full of utilities metods, useful allover the place
@@ -296,7 +305,7 @@ public class MercurialUtilities {
 		if (username == null || username.equals("")) {
 			try {
 				username = HgConfigClient.getHgConfigLine(ResourcesPlugin.getWorkspace().getRoot()
-					.getLocation().toFile(), "ui.username");
+						.getLocation().toFile(), "ui.username");
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
@@ -308,7 +317,7 @@ public class MercurialUtilities {
 			username = readUsernameFromIni(home + "/.hgrc");
 		}
 
-		if(isWindows()){
+		if (isWindows()) {
 			if (username == null || username.equals("")) {
 				username = readUsernameFromIni(home + "/Mercurial.ini");
 			}
@@ -401,6 +410,59 @@ public class MercurialUtilities {
 			throw new HgException(e);
 		}
 
+	}
+
+	/**
+	 * @param prefHistoryMergeChangesetBackground
+	 * @return
+	 */
+	public static Color getColorPreference(String pref) {
+		RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore(), pref);
+		return getColor(rgb);
+	}
+
+	/**
+	 * @param rgb
+	 * @return
+	 */
+	public static Color getColor(RGB rgb) {
+		Color c = COLOR_MAP.get(rgb);
+		if (c == null) {
+			c = new Color(MercurialEclipsePlugin.getStandardDisplay(), rgb);
+			COLOR_MAP.put(rgb, c);
+		}
+		return c;
+	}
+
+	public static void disposeColorsAndFonts() {
+		for (Color c : COLOR_MAP.values()) {
+			c.dispose();
+		}
+		COLOR_MAP.clear();
+		for (Font f : FONT_MAP.values()) {
+			f.dispose();
+		}
+		FONT_MAP.clear();
+	}
+
+	public static Font getFont(FontData data) {
+		Font f = FONT_MAP.get(data);
+		if (f == null) {
+			f = new Font(MercurialEclipsePlugin.getStandardDisplay(), data);
+			FONT_MAP.put(data, f);
+		}
+		return f;
+	}
+
+	/**
+	 * @param prefHistoryMergeChangesetBackground
+	 * @return
+	 */
+	public static Font getFontPreference(String pref) {
+		FontData data = PreferenceConverter.getFontData(MercurialEclipsePlugin.getDefault()
+				.getPreferenceStore(), pref);
+		return getFont(data);
 	}
 
 }

@@ -11,7 +11,12 @@
 package com.vectrace.MercurialEclipse.ui;
 
 import org.eclipse.core.resources.IFile;
+import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.preference.ColorFieldEditor;
+import org.eclipse.jface.preference.FieldEditor;
+import org.eclipse.jface.preference.FontFieldEditor;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.text.Document;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.SourceViewer;
@@ -78,14 +83,21 @@ public class SWTWidgetHelper {
 		return gd;
 	}
 
-	public static Button createPushButton(Composite parent, String label,
-			int span) {
+	public static Button createPushButton(Composite parent, String label, int span) {
 		Button button = new Button(parent, SWT.PUSH);
 		button.setText(label);
 		GridData data = new GridData();
 		data.horizontalSpan = span;
 		button.setLayoutData(data);
 		return button;
+	}
+
+	public static ColorFieldEditor createColorFieldEditor(String preferenceName, String label,
+			Composite parent, DialogPage page, IPreferenceStore preferenceStore) {
+		ColorFieldEditor editor = new ColorFieldEditor(preferenceName, label, parent);
+		editor.setPage(page);
+		editor.setPreferenceStore(preferenceStore);
+		return editor;
 	}
 
 	/**
@@ -102,7 +114,6 @@ public class SWTWidgetHelper {
 		combo.setLayoutData(data);
 		return combo;
 	}
-
 
 	/**
 	 * Utility method that creates an editable combo box
@@ -145,8 +156,7 @@ public class SWTWidgetHelper {
 	}
 
 	/**
-	 * Utility method that creates a label instance and sets the default layout
-	 * data.
+	 * Utility method that creates a label instance and sets the default layout data.
 	 *
 	 * @param parent
 	 *            the parent for the new label
@@ -159,8 +169,8 @@ public class SWTWidgetHelper {
 	}
 
 	/**
-	 * Utility method that creates a label instance indented by the specified
-	 * number of pixels and sets the default layout data.
+	 * Utility method that creates a label instance indented by the specified number of pixels and
+	 * sets the default layout data.
 	 *
 	 * @param parent
 	 *            the parent for the new label
@@ -170,8 +180,7 @@ public class SWTWidgetHelper {
 	 *            the indent in pixels, or 0 for none
 	 * @return the new label
 	 */
-	public static Label createIndentedLabel(Composite parent, String text,
-			int indent) {
+	public static Label createIndentedLabel(Composite parent, String text, int indent) {
 		Label label = new Label(parent, SWT.LEFT);
 		label.setText(text);
 		GridData data = new GridData();
@@ -183,8 +192,7 @@ public class SWTWidgetHelper {
 	}
 
 	/**
-	 * Utility method that creates a label instance with word wrap and sets the
-	 * default layout data.
+	 * Utility method that creates a label instance with word wrap and sets the default layout data.
 	 *
 	 * @param parent
 	 *            the parent for the new label
@@ -196,13 +204,12 @@ public class SWTWidgetHelper {
 	 *            the nominal width of the label
 	 * @return the new label
 	 */
-	public static Label createWrappingLabel(Composite parent, String text,
-			int indent) {
+	public static Label createWrappingLabel(Composite parent, String text, int indent) {
 		return createWrappingLabel(parent, text, indent, 1);
 	}
 
-	public static Label createWrappingLabel(Composite parent, String text,
-			int indent, int horizontalSpan) {
+	public static Label createWrappingLabel(Composite parent, String text, int indent,
+			int horizontalSpan) {
 		Label label = new Label(parent, SWT.LEFT | SWT.WRAP);
 		label.setText(text);
 		GridData data = new GridData();
@@ -240,7 +247,7 @@ public class SWTWidgetHelper {
 	 * @return the new password field
 	 */
 	public static Text createPasswordField(Composite parent) {
-		Text text = new Text(parent, SWT.SINGLE | SWT.BORDER | SWT.PASSWORD );
+		Text text = new Text(parent, SWT.SINGLE | SWT.BORDER | SWT.PASSWORD);
 		GridData data = new GridData(GridData.FILL_HORIZONTAL);
 		data.verticalAlignment = GridData.CENTER;
 		data.grabExcessVerticalSpace = false;
@@ -260,8 +267,7 @@ public class SWTWidgetHelper {
 	 *            the number of columns to span
 	 * @return the created radio button
 	 */
-	public static Button createRadioButton(Composite parent, String label,
-			int span) {
+	public static Button createRadioButton(Composite parent, String label, int span) {
 		Button button = new Button(parent, SWT.RADIO);
 		button.setText(label);
 		GridData data = new GridData();
@@ -271,8 +277,7 @@ public class SWTWidgetHelper {
 	}
 
 	/**
-	 * Utility method to create a full width separator preceeded by a blank
-	 * space
+	 * Utility method to create a full width separator preceeded by a blank space
 	 *
 	 * @param parent
 	 *            the parent of the separator
@@ -302,11 +307,10 @@ public class SWTWidgetHelper {
 	 *            the nominal height of the list
 	 * @return the created list viewer
 	 */
-	public static ListViewer createFileListViewer(Composite parent,
-			String title, int heightHint) {
+	public static ListViewer createFileListViewer(Composite parent, String title, int heightHint) {
 		createLabel(parent, title);
-		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY
-				| SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
+		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL
+				| SWT.BORDER);
 		listViewer.setContentProvider(new IStructuredContentProvider() {
 			public Object[] getElements(Object inputElement) {
 				return (Object[]) inputElement;
@@ -315,8 +319,7 @@ public class SWTWidgetHelper {
 			public void dispose() {
 			}
 
-			public void inputChanged(Viewer viewer, Object oldInput,
-					Object newInput) {
+			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			}
 		});
 		listViewer.setLabelProvider(new LabelProvider() {
@@ -325,8 +328,7 @@ public class SWTWidgetHelper {
 				return ((IFile) element).getFullPath().toString();
 			}
 		});
-		listViewer
-		.setComparator(new org.eclipse.ui.model.WorkbenchViewerComparator());
+		listViewer.setComparator(new org.eclipse.ui.model.WorkbenchViewerComparator());
 
 		GridData data = new GridData(GridData.FILL_BOTH);
 		data.heightHint = heightHint;
@@ -345,13 +347,13 @@ public class SWTWidgetHelper {
 	 *            the nominal height of the list
 	 * @return the created list viewer
 	 */
-	public static ListViewer createChangeSetListViewer(Composite parent,
-			String title, int heightHint) {
+	public static ListViewer createChangeSetListViewer(Composite parent, String title,
+			int heightHint) {
 		if (title != null) {
 			createLabel(parent, title);
 		}
-		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY
-				| SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
+		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL
+				| SWT.BORDER);
 		listViewer.setContentProvider(new IStructuredContentProvider() {
 			public Object[] getElements(Object inputElement) {
 				return (Object[]) inputElement;
@@ -360,8 +362,7 @@ public class SWTWidgetHelper {
 			public void dispose() {
 			}
 
-			public void inputChanged(Viewer viewer, Object oldInput,
-					Object newInput) {
+			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			}
 
 		});
@@ -370,7 +371,7 @@ public class SWTWidgetHelper {
 			public String getText(Object element) {
 				ChangeSet cs = (ChangeSet) element;
 				return (cs.toString().concat("\t").concat(cs.getDateString()).concat( //$NON-NLS-1$
-				"\t").concat(cs.getUser())); //$NON-NLS-1$
+						"\t").concat(cs.getUser())); //$NON-NLS-1$
 			}
 		});
 
@@ -403,13 +404,13 @@ public class SWTWidgetHelper {
 	 *            label decorator
 	 * @return the created list viewer
 	 */
-	public static ListViewer createListViewer(Composite parent, String title,
-			int heightHint, IBaseLabelProvider labelProvider) {
+	public static ListViewer createListViewer(Composite parent, String title, int heightHint,
+			IBaseLabelProvider labelProvider) {
 		if (title != null) {
 			createLabel(parent, title);
 		}
-		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY
-				| SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER | SWT.MULTI);
+		ListViewer listViewer = new ListViewer(parent, SWT.READ_ONLY | SWT.V_SCROLL | SWT.H_SCROLL
+				| SWT.BORDER | SWT.MULTI);
 		listViewer.setContentProvider(new IStructuredContentProvider() {
 			public Object[] getElements(Object inputElement) {
 				return (Object[]) inputElement;
@@ -418,8 +419,7 @@ public class SWTWidgetHelper {
 			public void dispose() {
 			}
 
-			public void inputChanged(Viewer viewer, Object oldInput,
-					Object newInput) {
+			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 			}
 
 		});
@@ -432,8 +432,7 @@ public class SWTWidgetHelper {
 		return listViewer;
 	}
 
-	public static Group createGroup(Composite parent, String text, int span,
-			int style) {
+	public static Group createGroup(Composite parent, String text, int span, int style) {
 		Group group = new Group(parent, SWT.NULL);
 		group.setText(text);
 		GridData data = new GridData(style);
@@ -456,23 +455,21 @@ public class SWTWidgetHelper {
 	}
 
 	public static SourceViewer createTextArea(Composite container) {
-		SourceViewer textBox = new SourceViewer(container, null, SWT.V_SCROLL
-				| SWT.MULTI | SWT.BORDER | SWT.WRAP);
+		SourceViewer textBox = new SourceViewer(container, null, SWT.V_SCROLL | SWT.MULTI
+				| SWT.BORDER | SWT.WRAP);
 		textBox.setEditable(true);
 
 		// set up spell-check annotations
 		final SourceViewerDecorationSupport decorationSupport = new SourceViewerDecorationSupport(
-				textBox, null, new DefaultMarkerAnnotationAccess(), EditorsUI
-				.getSharedTextColors());
+				textBox, null, new DefaultMarkerAnnotationAccess(), EditorsUI.getSharedTextColors());
 
 		AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
-		.getAnnotationPreference(SpellingAnnotation.TYPE);
+				.getAnnotationPreference(SpellingAnnotation.TYPE);
 
 		decorationSupport.setAnnotationPreference(pref);
 		decorationSupport.install(EditorsUI.getPreferenceStore());
 
-		textBox.configure(new TextSourceViewerConfiguration(EditorsUI
-				.getPreferenceStore()));
+		textBox.configure(new TextSourceViewerConfiguration(EditorsUI.getPreferenceStore()));
 		textBox.setDocument(new Document(), new AnnotationModel());
 		textBox.getTextWidget().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent e) {
@@ -480,17 +477,32 @@ public class SWTWidgetHelper {
 			}
 		});
 		GridData data = new GridData(GridData.FILL_BOTH);
-		//        data.heightHint = heightHint;
+		// data.heightHint = heightHint;
 		textBox.getControl().setLayoutData(data);
 		return textBox;
 	}
 
+	/**
+	 * @param prefHistoryMergeChangesetFont
+	 * @param string
+	 * @param g
+	 * @param historyPreferencePage
+	 * @param preferenceStore
+	 * @return
+	 */
+	public static FieldEditor createFontFieldEditor(String pref, String label, Composite parent,
+			DialogPage page, IPreferenceStore preferenceStore) {
+		FontFieldEditor editor = new FontFieldEditor(pref, label, parent);
+		editor.setPage(page);
+		editor.setPreferenceStore(preferenceStore);
+		return editor;
+	}
+
 	/*
-	 * incompatible with 3.2 public static DateTime createDateTime(Composite c,
-	 * int style) { DateTime dt = new DateTime(c, style); GridData data = new
-	 * GridData(GridData.FILL_HORIZONTAL); data.verticalAlignment =
-	 * GridData.CENTER; data.grabExcessVerticalSpace = false; data.widthHint =
-	 * IDialogConstants.ENTRY_FIELD_WIDTH; dt.setLayoutData(data); return dt; }
+	 * incompatible with 3.2 public static DateTime createDateTime(Composite c, int style) {
+	 * DateTime dt = new DateTime(c, style); GridData data = new GridData(GridData.FILL_HORIZONTAL);
+	 * data.verticalAlignment = GridData.CENTER; data.grabExcessVerticalSpace = false;
+	 * data.widthHint = IDialogConstants.ENTRY_FIELD_WIDTH; dt.setLayoutData(data); return dt; }
 	 */
 
 }

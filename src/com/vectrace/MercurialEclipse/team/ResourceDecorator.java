@@ -40,6 +40,7 @@ import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -407,6 +408,10 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			String hex = changeSet.getNodeShort();
 			String tags = changeSet.getTagsString();
 			String merging = HgStatusClient.getMergeChangesetId(project);
+			String bisecting = null;
+			if (HgBisectClient.isBisecting(MercurialTeamProvider.getHgRoot(project))) {
+				bisecting = " BISECTING";
+			}
 
 			// rev info
 			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
@@ -426,6 +431,11 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			// merge flag
 			if (merging != null && merging.length() > 0) {
 				suffix.append(Messages.getString("ResourceDecorator.merging"));
+			}
+
+			// bisect information
+			if (bisecting != null && bisecting.length() > 0) {
+				suffix.append(bisecting);
 			}
 			suffix.append(']');
 		}

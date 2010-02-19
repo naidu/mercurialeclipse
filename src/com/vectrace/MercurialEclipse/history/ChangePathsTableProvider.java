@@ -92,7 +92,7 @@ public class ChangePathsTableProvider extends TableViewer {
 			if (!(element instanceof FileStatus)) {
 				return null;
 			}
-			return " " + ((FileStatus) element).getRootRelativePath().toOSString();
+			return " " + ((FileStatus) element).getRootRelativePath().toOSString(); //$NON-NLS-1$
 		}
 	}
 
@@ -176,7 +176,7 @@ public class ChangePathsTableProvider extends TableViewer {
 		private void fetchPaths(final MercurialRevision rev) {
 			final MercurialHistory history = page.getMercurialHistory();
 			final ChangeSet [] cs = new ChangeSet[1];
-			Job pathJob = new Job("Retrieving affected paths for " + rev.getChangeSet()){
+			Job pathJob = new Job(Messages.ChangePathsTableProvider_retrievingAffectedPaths + rev.getChangeSet()){
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					synchronized(revToFiles){
