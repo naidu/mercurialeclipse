@@ -61,6 +61,11 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
+	protected void createAmendCheckBox(Composite container) {
+	    // not available when merging
+	}
+
+	@Override
 	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
 		return CommitMergeHandler.commitMerge(hgRoot, getUser(), messageToCommit);
 	}

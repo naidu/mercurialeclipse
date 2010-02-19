@@ -32,10 +32,10 @@ public class HgQRefreshClient extends AbstractClient {
 
 		command.addOptions("--config", "extensions.hgext.mq="); //$NON-NLS-1$ //$NON-NLS-2$
 		if (shortFlag) {
-			command.addOptions("-s");
+			command.addOptions("-s"); //$NON-NLS-1$
 		}
 		if (message != null && message.length() > 0) {
-			command.addOptions("-m", message);
+			command.addOptions("-m", message); //$NON-NLS-1$
 		}
 		command.addFiles(files);
 		return command.executeToString();

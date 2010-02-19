@@ -75,6 +75,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.mylyn.MylynFacadeFactory;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.ActionRevert;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
@@ -115,6 +116,8 @@ public class CommitDialog extends TitleAreaDialog {
 	private String commitResult;
 	private Button closeBranchCheckBox;
 	private Button amendCheckbox;
+	private ChangeSet currentChangeset;
+
 	/**
 	 *
 	 * @param shell
@@ -214,7 +217,19 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected void createAmendCheckBox(Composite container) {
-		amendCheckbox = SWTWidgetHelper.createCheckBox(container, "Amend previous commit");
+		try {
+			currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+			if (currentChangeset != null) {
+				String branch = MercurialTeamProvider.getCurrentBranch(ResourceUtils
+						.convert(this.root));
+				String label = Messages.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
+						+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+				amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
+			}
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			setErrorMessage(e.getLocalizedMessage());
+		}
 	}
 
 	protected void createFilesList(Composite container) {
@@ -327,6 +342,7 @@ public class CommitDialog extends TitleAreaDialog {
 			if (!commitMessage.equals(defaultCommitMessage)) {
 				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
 			}
+
 			user = userTextField.getText();
 			if (user == null || user.length() == 0) {
 				user = getInitialCommitUserName();
@@ -334,15 +350,16 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// amend changeset
 			ChangeSet cs = null;
-			if (amendCheckbox.getSelection()) {
+			if (amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null) {
+				// only one root allowed when amending
 				Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
-				if (map.size()>1) {
-					throw new HgException("Amending works only if all resources are in the same repository.");
+				if (map.size() > 1) {
+					throw new HgException(
+							Messages.getString("CommitDialog.amendingOnlyForOneRoot")); //$NON-NLS-1$
 				}
 
 				// determine current changeset
-				int startRev = LocalChangesetCache.getInstance().getChangesetForRoot(root)
-						.getChangesetIndex();
+				int startRev = currentChangeset.getChangesetIndex();
 
 				// update to get file status information
 				Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev,
@@ -352,7 +369,7 @@ public class CommitDialog extends TitleAreaDialog {
 					cs = changesets.get(root.getIPath()).iterator().next();
 					// determine parent
 					String[] parents = cs.getParents();
-					if (parents != null && parents.length > 0 && !parents[0].startsWith("-1")) {
+					if (parents != null && parents.length > 0 && !parents[0].startsWith("-1")) { //$NON-NLS-1$
 						boolean ok = confirmHistoryRewrite();
 						if (ok) {
 							// import old current changeset into MQ
@@ -360,12 +377,11 @@ public class CommitDialog extends TitleAreaDialog {
 									new ChangeSet[] { cs }, null);
 							setMessage(result);
 						} else {
-							throw new HgException(
-									"Aborted rewriting the repository history for amending latest commit.");
+							throw new HgException(Messages.getString("CommitDialog.abortedAmending")); //$NON-NLS-1$
 						}
 					}
 				} else {
-					setErrorMessage("There is no previous changeset to amend.");
+					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend")); //$NON-NLS-1$
 				}
 			}
 
@@ -398,10 +414,11 @@ public class CommitDialog extends TitleAreaDialog {
 	 * @return
 	 */
 	private boolean confirmHistoryRewrite() {
-		return MessageDialog.openQuestion(getShell(), "Rewrite History?",
-				"Amending changesets rewrites history.\n"
-						+ "If you have already pushed the last changeset don't do this.\n\n"
-						+ "Do you really want to rewrite the repository history?");
+		return MessageDialog.openQuestion(getShell(),
+				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
+				Messages.getString("CommitDialog.amendWarning1") //$NON-NLS-1$
+						+ Messages.getString("CommitDialog.amendWarning2") //$NON-NLS-1$
+						+ Messages.getString("CommitDialog.amendWarning3")); //$NON-NLS-1$
 	}
 
 	/**
@@ -409,26 +426,29 @@ public class CommitDialog extends TitleAreaDialog {
 	 *         commit ouput was null, return empty string
 	 */
 	public String getCommitResult() {
-		return commitResult != null ? commitResult : "";
+		return commitResult != null ? commitResult : ""; //$NON-NLS-1$
 	}
 
 	protected String performCommit(String messageToCommit, boolean closeBranch)
-	throws CoreException {
+			throws CoreException {
 		return performCommit(messageToCommit, closeBranch, null);
 	}
-
 
 	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
 			throws CoreException {
 		if (amendCheckbox.getSelection() && cs != null) {
 			// refresh patch with added/removed/changed files
-			String result = HgQRefreshClient.refresh(root, true, resourcesToCommit, messageToCommit);
+			String result = HgQRefreshClient
+					.refresh(root, true, resourcesToCommit, messageToCommit);
 			// remove patch and promote it to a new changeset
-			result = HgQFinishClient.finish(root, cs.getChangesetIndex()+".diff");
+			result = HgQFinishClient.finish(root, cs.getChangesetIndex() + ".diff"); //$NON-NLS-1$
 			setMessage(result);
-			new RefreshRootJob("Refreshing " + root.getName(), root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+			new RefreshRootJob(Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
+					+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
+					.schedule();
 			return result;
 		}
+
 		if (!filesSelectable && resourcesToCommit.isEmpty()) {
 			// enforce commit anyway
 			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit,
