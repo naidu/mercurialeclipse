@@ -84,7 +84,7 @@ public class AddHandler extends MultipleResourcesHandler {
 				untrackedFolders);
 
 		CheckedTreeSelectionDialog dialog = new CheckedTreeSelectionDialog(getShell(),
-				new WorkbenchLabelProvider(),
+				WorkbenchLabelProvider.getDecoratingWorkbenchLabelProvider(),
 				new ResourcesTreeContentProvider(roots));
 
 		dialog.setInput(ResourcesTreeContentProvider.ROOT);
