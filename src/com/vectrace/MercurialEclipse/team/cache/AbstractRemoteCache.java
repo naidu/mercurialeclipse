@@ -175,22 +175,19 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> getChangeSets(IResource resource,
 			IHgRepositoryLocation repository, String branch) throws HgException {
+		IProject project = resource.getProject();
+		// check if mercurial is team provider and if we're working on an open project
+		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
+			return EMPTY_SET;
+		}
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 		synchronized (repoDatas){
-			IProject project = resource.getProject();
-			// check if mercurial is team provider and if we're working on an open project
-			if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
-				return EMPTY_SET;
-			}
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 			RemoteData data = fastRepoMap.get(key);
-
 			if(data == null){
 				// lazy loading: refresh cache on demand only.
 				// lock the cache till update is complete
-				synchronized (repoDatas){
-					addResourcesToCache(key);
-				}
+				addResourcesToCache(key);
 				// XXX not sure if the full repo refresh event need to be sent here
 //				notifyChanged(key.getRepo(), true);
 				notifyChanged(resource, true);
@@ -204,6 +201,32 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	}
 
 	/**
+	 * Gets all (in or out) changesets of the given location for the given
+	 * IResource.
+	 *
+	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
+	 * @return never null
+	 */
+	public SortedSet<ChangeSet> hasChangeSets(IResource resource, IHgRepositoryLocation repository,
+			String branch) {
+		IProject project = resource.getProject();
+		// check if mercurial is team provider and if we're working on an open project
+		if (!project.isAccessible() || !MercurialTeamProvider.isHgTeamProviderFor(project)){
+			return EMPTY_SET;
+		}
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
+		synchronized (repoDatas){
+			RemoteData data = fastRepoMap.get(key);
+
+			if(data == null){
+				return EMPTY_SET;
+			}
+			return data.getChangeSets(resource);
+		}
+	}
+
+	/**
 	 * Gets all (in or out) changesets of the given hg root
 	 *
 	 * @param branch name of branch (default or "" for unnamed) or null if branch unaware
@@ -211,16 +234,13 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 	 */
 	public SortedSet<ChangeSet> getChangeSets(HgRoot hgRoot,
 			IHgRepositoryLocation repository, String branch) throws HgException {
+		RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 		synchronized (repoDatas){
-			RemoteKey key = new RemoteKey(hgRoot, repository, branch);
 			RemoteData data = fastRepoMap.get(key);
-
 			if(data == null){
 				// lazy loading: refresh cache on demand only.
 				// lock the cache till update is complete
-				synchronized (repoDatas){
-					addResourcesToCache(key);
-				}
+				addResourcesToCache(key);
 				// XXX not sure if the full repo refresh event need to be sent here
 //				notifyChanged(key.getRepo(), true);
 				notifyChanged(hgRoot, true);
