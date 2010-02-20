@@ -128,7 +128,7 @@ public class GraphLogTableViewer extends TableViewer {
 		}
 
 		// use italic dark grey font for merge changesets
-		if (rev.getChangeSet().getParents().length == 2) {
+		if (rev.getChangeSet().getParents()!= null && rev.getChangeSet().getParents().length == 2) {
 			decorateMergeChangesets(tableItem);
 		}
 	}

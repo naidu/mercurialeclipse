@@ -367,18 +367,14 @@ public class CommitDialog extends TitleAreaDialog {
 
 				if (changesets != null && changesets.size() > 0) {
 					cs = changesets.get(root.getIPath()).iterator().next();
-					// determine parent
-					String[] parents = cs.getParents();
-					if (parents != null && parents.length > 0 && !parents[0].startsWith("-1")) { //$NON-NLS-1$
-						boolean ok = confirmHistoryRewrite();
-						if (ok) {
-							// import old current changeset into MQ
-							String result = HgQImportClient.qimport(root, true, true, false,
-									new ChangeSet[] { cs }, null);
-							setMessage(result);
-						} else {
-							throw new HgException(Messages.getString("CommitDialog.abortedAmending")); //$NON-NLS-1$
-						}
+					boolean ok = confirmHistoryRewrite();
+					if (ok) {
+						// import old current changeset into MQ
+						String result = HgQImportClient.qimport(root, true, true, false,
+								new ChangeSet[] { cs }, null);
+						setMessage(result);
+					} else {
+						throw new HgException(Messages.getString("CommitDialog.abortedAmending")); //$NON-NLS-1$
 					}
 				} else {
 					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend")); //$NON-NLS-1$

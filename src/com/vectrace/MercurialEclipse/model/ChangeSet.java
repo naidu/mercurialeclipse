@@ -32,9 +32,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
-import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
@@ -459,15 +456,6 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	public String[] getParents() {
-		if (parents == null || parents.length == 0) {
-			// in this case we gotta ask Mercurial -> lazy loading
-			try {
-				parents = HgParentClient.getParents(hgRoot, nodeShort);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
-
-		}
 		return parents;
 	}
 
