@@ -41,7 +41,7 @@ public class MergeWithCurrentChangesetAction extends Action {
 	 *
 	 */
 	public MergeWithCurrentChangesetAction(MercurialHistoryPage mhp) {
-		super("Merge selected changeset into current changeset.", imageDesc); //$NON-NLS-1$
+		super(Messages.getString("MergeWithCurrentChangesetAction.mergeSelectedChangesetWithCurrentChangeset"), imageDesc); //$NON-NLS-1$
 		this.mhp = mhp;
 	}
 
