@@ -95,11 +95,14 @@ public class HgPath extends File implements IWorkbenchAdapter, IAdaptable {
 
 	public Object getParent(Object o) {
 		try {
-			return new HgPath(getParentFile());
+			File parentFile = getParentFile();
+			if(parentFile != null) {
+				return new HgPath(parentFile);
+			}
 		} catch (IOException e) {
 			MercurialEclipsePlugin.logError(e);
-			return null;
 		}
+		return null;
 	}
 
 	@SuppressWarnings("rawtypes")
