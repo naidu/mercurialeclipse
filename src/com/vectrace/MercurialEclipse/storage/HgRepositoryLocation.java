@@ -90,6 +90,7 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 			}
 		} else {
 			this.location = location;
+			isLocal = true;
 		}
 	}
 
