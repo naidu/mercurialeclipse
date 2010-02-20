@@ -205,8 +205,12 @@ public class SelectProjectsToSyncPage extends WizardPage {
 		treeViewer.setContentProvider(contentProvider);
 		treeViewer.setLabelProvider(new HgRootsLabelProvider());
 		treeViewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
-		treeViewer.setCheckedElements(projects);
-		treeViewer.setExpandedElements(ResourceUtils.groupByRoot(Arrays.asList(projects)).keySet().toArray());
+		Object[] selectedRoots = ResourceUtils.groupByRoot(Arrays.asList(projects)).keySet().toArray();
+		if(selectedRoots.length == 1) {
+			// only pre-select projects if they are from the same root
+			treeViewer.setCheckedElements(projects);
+		}
+		treeViewer.setExpandedElements(selectedRoots);
 		return treeViewer;
 	}
 
@@ -229,6 +233,7 @@ public class SelectProjectsToSyncPage extends WizardPage {
 		return roots.toArray(new HgRoot[roots.size()]);
 	}
 
+	@SuppressWarnings("unchecked")
 	public IProject[] getSelectedProjects() {
 		Set<IProject> selected = new HashSet<IProject>();
 		Object[] checkedElements = viewer.getCheckedElements();

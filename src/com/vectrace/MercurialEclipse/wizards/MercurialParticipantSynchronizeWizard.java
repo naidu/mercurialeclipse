@@ -26,6 +26,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 import org.eclipse.team.ui.TeamUI;
@@ -100,14 +101,22 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 
 	@Override
 	public void addPages() {
-		IResource[] resources = getInitialSelection();
-		if (resources.length == 0) {
-			return;
+		// creates selection page, but only if there is something selected.
+		// the point is, that the sync view starts the wizard with ZERO selection and
+		// expects that the first page is somehow created (and it is created by the supe class
+		// but only if the getRootResources() ireturns something).
+		// so inorder to support it, we init the selection to ALL projects...
+		if(getInitialSelection().length == 0){
+			projects = MercurialTeamProvider.getKnownHgProjects().toArray(new IProject[0]);
 		}
-		// creates selection page
 		super.addPages();
 		repoPage = createrepositoryConfigPage();
 		addPage(repoPage);
+	}
+
+	@Override
+	public IWizardPage getStartingPage() {
+		return selectionPage;
 	}
 
 	private ConfigurationWizardMainPage createrepositoryConfigPage() {
