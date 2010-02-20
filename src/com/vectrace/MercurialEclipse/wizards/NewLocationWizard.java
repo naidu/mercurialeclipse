@@ -13,7 +13,10 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Properties;
 
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.ui.INewWizard;
+import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -24,7 +27,7 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
  * Wizard to add a new location. Uses ConfigurationWizardMainPage for entering
  * informations about Hg repository location
  */
-public class NewLocationWizard extends HgWizard {
+public class NewLocationWizard extends HgWizard implements INewWizard {
 
 	private IHgRepositoryLocation repository;
 
@@ -79,5 +82,9 @@ public class NewLocationWizard extends HgWizard {
 
 	public IHgRepositoryLocation getRepository() {
 		return repository;
+	}
+
+	public void init(IWorkbench workbench, IStructuredSelection selection) {
+		// noop
 	}
 }

@@ -1190,10 +1190,20 @@
             canFinishEarly="false"
             category="com.vectrace.MercurialEclipse.wizards.new"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
-            icon="icons/mercury_Hg.png"
+            hasPages="true"
+            icon="icons/clone_repo.gif"
             id="com.vectrace.MercurialEclipse.wizards.NewHgProjectWizard"
             name="%cloneRepository2"
             project="true"/>
+      <wizard
+            canFinishEarly="false"
+            category="com.vectrace.MercurialEclipse.wizards.new"
+            class="com.vectrace.MercurialEclipse.wizards.NewLocationWizard"
+            hasPages="true"
+            icon="icons/wizards/newlocation_wiz.gif"
+            id="com.vectrace.MercurialEclipse.wizards.NewLocationWizard"
+            name="%createRepository">
+      </wizard>
    </extension>
 
    <extension
