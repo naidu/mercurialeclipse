@@ -1560,5 +1560,13 @@
             id="com.vectrace.mercurialeclipse.BundleWizard"
             name="%bundleRepoWizard.name">
       </wizard>
+   </extension>
+   <extension
+         point="org.eclipse.search.textSearchEngine">
+      <textSearchEngine
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchEngine"
+            id="com.vectrace.MercurialEclipse.mercurialTextSearch"
+            label="Mercurial Text Search">
+      </textSearchEngine>
    </extension>   
 </plugin>
