@@ -12,6 +12,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IExportWizard;
 import org.eclipse.ui.IWorkbench;
@@ -43,7 +44,8 @@ public class BundleRepoWizard extends HgWizard implements IExportWizard {
 		if (this.selection.isEmpty()) {
 			return;
 		}
-		IResource res = (IResource) selection.getFirstElement();
+		PlatformObject po = (PlatformObject) selection.getFirstElement();
+		IResource res = (IResource) po.getAdapter(IResource.class);
 		try {
 			root = MercurialTeamProvider.getHgRoot(res);
 			if (root != null) {
