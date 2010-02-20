@@ -114,15 +114,16 @@ public class HgStatusClient extends AbstractClient {
 		String mergeId = null;
 		String branch = Branch.DEFAULT;
 		// current working directory id
-		String id = versionIds.split(" ")[0];
-		if (id.endsWith("+")) {
-			id = id.substring(0, id.length()-1);
-		}
+		String id = "";
 		if (m.matches() && m.groupCount() > 2) {
+			id = m.group(1);
 			mergeId = m.group(2);
 			branch = m.group(3);
 		}
-		return new String[]{id, mergeId, branch};
+		if (id.endsWith("+")) {
+			id = id.substring(0, id.length() - 1);
+		}
+		return new String[] { id, mergeId, branch };
 	}
 
 	public static String getStatusWithoutIgnored(HgRoot root, List<IResource> files) throws HgException {
