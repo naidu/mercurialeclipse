@@ -16,7 +16,7 @@ import java.util.List;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.search.MercurialTextSearchResult;
+import com.vectrace.MercurialEclipse.search.MercurialTextSearchMatchAccess;
 
 /**
  * @author Bastian
@@ -32,14 +32,14 @@ public class HgGrepClient extends AbstractClient {
 	 * @return
 	 * @throws HgException
 	 */
-	public static List<MercurialTextSearchResult> grep(HgRoot root, String pattern)
+	public static List<MercurialTextSearchMatchAccess> grep(HgRoot root, String pattern)
 			throws HgException {
 		AbstractShellCommand cmd = new HgCommand("grep", root, true);
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 
 		cmd.addOptions("-nuf", "--all", pattern);
 		String result = cmd.executeToString();
-		List<MercurialTextSearchResult> list = getSearchResults(root, result);
+		List<MercurialTextSearchMatchAccess> list = getSearchResults(root, result);
 		return list;
 	}
 
@@ -48,12 +48,12 @@ public class HgGrepClient extends AbstractClient {
 	 * @param result
 	 * @return
 	 */
-	private static List<MercurialTextSearchResult> getSearchResults(HgRoot root,
+	private static List<MercurialTextSearchMatchAccess> getSearchResults(HgRoot root,
 			String result) {
 		String[] lines = result.split("\n");
-		List<MercurialTextSearchResult> list = new ArrayList<MercurialTextSearchResult>();
+		List<MercurialTextSearchMatchAccess> list = new ArrayList<MercurialTextSearchMatchAccess>();
 		for (String line : lines) {
-			list.add(new MercurialTextSearchResult(root, line));
+			list.add(new MercurialTextSearchMatchAccess(root, line));
 		}
 		return list;
 	}

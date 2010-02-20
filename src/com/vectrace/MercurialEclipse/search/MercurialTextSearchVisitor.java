@@ -91,11 +91,11 @@ public class MercurialTextSearchVisitor {
 		try {
 			requestor.beginReporting();
 			monitor.subTask("Calling Mercurial grep command...");
-			List<MercurialTextSearchResult> result = HgGrepClient.grep(root, pattern
+			List<MercurialTextSearchMatchAccess> result = HgGrepClient.grep(root, pattern
 					.pattern());
 			monitor.worked(1);
 			monitor.subTask("Processing Mercurial grep results...");
-			for (MercurialTextSearchResult sr : result) {
+			for (MercurialTextSearchMatchAccess sr : result) {
 				monitor.subTask("Found match in: " + sr.getFile().getName());
 				requestor.acceptFile(sr.getFile());
 				monitor.worked(1);

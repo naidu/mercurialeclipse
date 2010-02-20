@@ -1568,5 +1568,35 @@
             id="com.vectrace.MercurialEclipse.mercurialTextSearch"
             label="Mercurial Text Search">
       </textSearchEngine>
+   </extension>
+   <extension
+         point="org.eclipse.search.searchPages">
+      <page
+            canSearchEnclosingProjects="true"
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchPage"
+            enabled="true"
+            icon="icons/mercury_Hg.png"
+            id="MercurialEclipse.page1"
+            label="Mercurial Text Search"
+            showScopeSection="true">
+      </page>
+   </extension>
+   <extension
+         point="org.eclipse.search.searchResultViewPages">
+      <viewPage
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
+            icon="icons/mercury_Hg.png"
+            id="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
+            label="Mercurial Text Search"
+            searchResultClass="com.vectrace.MercurialEclipse.search.MercurialTextSearchResult">
+      </viewPage>
+   </extension>
+   <extension
+         point="org.eclipse.search.textSearchQueryProvider">
+      <textSearchQueryProvider
+            class="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
+            id="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
+            label="Mercurial Text Search Query Provider">
+      </textSearchQueryProvider>
    </extension>   
 </plugin>
