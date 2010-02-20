@@ -844,8 +844,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				continue;
 			}
 
+			char space = line.charAt(1);
 			int bit = getBit(line.charAt(0));
-			if(bit == BIT_IMPOSSIBLE){
+			if(bit == BIT_IMPOSSIBLE || space != ' '){
 				strangeStates.add(line);
 				continue;
 			}
@@ -879,7 +880,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 			changed.addAll(setStatusToAncestors(member, bitSet));
 		}
-		if(strangeStates.size() > 0){
+		if(debug && strangeStates.size() > 0){
 			IStatus [] states = new IStatus[strangeStates.size()];
 			for (int i = 0; i < states.length; i++) {
 				states[i] = MercurialEclipsePlugin.createStatus(strangeStates.get(i), IStatus.OK, IStatus.INFO, null);
