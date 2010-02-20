@@ -6,26 +6,39 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * 		bastian	implementation
+ * 		Andrei Loskutov (Intland) - bugfixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
+
+import java.io.File;
 
 import org.eclipse.core.resources.IProject;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
  *
  */
 public class HgInitClient extends AbstractClient {
+
 	public static String init(IProject project, String path) throws HgException {
 		AbstractShellCommand command = new HgCommand("init", getWorkingDirectory(project), //$NON-NLS-1$
 				false);
 		command.addOptions(path);
 		command
 				.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
+		return command.executeToString();
+	}
+
+	public static String init(File file) throws HgException {
+		AbstractShellCommand command = new HgCommand("init", ResourceUtils
+				.getFirstExistingDirectory(file), false);
+		command.addOptions(file.getAbsolutePath());
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
 		return command.executeToString();
 	}
 }

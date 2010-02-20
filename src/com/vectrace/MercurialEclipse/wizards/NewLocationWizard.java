@@ -11,6 +11,7 @@
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.File;
 import java.util.Properties;
 
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -19,6 +20,7 @@ import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
@@ -42,10 +44,7 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 
 	@Override
 	public void addPages() {
-		page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"),
-				Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$
-				Messages.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
-				Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
+		page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
 		addPage(page);
 	}
 
@@ -55,6 +54,16 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
+		File localRepo = ((CreateRepoPage)page).getLocalRepo();
+		if(localRepo != null){
+			try {
+				HgInitClient.init(localRepo);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				page.setErrorMessage(e.getMessage());
+				return false;
+			}
+		}
 		Properties props = page.getProperties();
 		HgRepositoryLocationManager manager = MercurialEclipsePlugin.getRepoManager();
 		try {
@@ -69,13 +78,8 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 	/**
 	 * Creates a ConfigurationWizardPage.
 	 */
-	protected HgWizardPage createPage(String pageName, String pageTitle,
-			String iconPath, String description) {
-		ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
-				MercurialEclipsePlugin.getImageDescriptor(iconPath));
-		mainPage.setShowCredentials(true);
-		mainPage.setShowBundleButton(false);
-		page = mainPage;
+	protected HgWizardPage createPage(String description) {
+		page = new CreateRepoPage();
 		initPage(description, page);
 		return page;
 	}
