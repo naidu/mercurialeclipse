@@ -17,10 +17,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -33,7 +31,7 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  *
  * @author bastian
  */
-public class HgRoot extends File implements IHgRepositoryLocation {
+public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	private static final String HG_HGRC = ".hg/hgrc";
 	private static final String HGENCODING;
 	static {
@@ -52,15 +50,13 @@ public class HgRoot extends File implements IHgRepositoryLocation {
 	private Charset encoding;
 	private Charset fallbackencoding;
 	private File config;
-	private final Path path;
 
 	public HgRoot(String pathname) throws IOException {
-		this(new File(pathname));
+		super(pathname);
 	}
 
 	public HgRoot(File file) throws IOException {
-		super(file.getCanonicalPath());
-		path = new Path(getAbsolutePath());
+		super(file);
 	}
 
 	public void setEncoding(Charset charset) {
@@ -114,42 +110,6 @@ public class HgRoot extends File implements IHgRepositoryLocation {
 		return fallbackencoding;
 	}
 
-	/**
-	 * Converts given path to the relative
-	 * @param child a possible child path
-	 * @return a hg root relative path of a given file, if the given file is located under this root,
-	 * otherwise the path of a given file
-	 */
-	public String toRelative(File child){
-		// first try with the unresolved path. In most cases it's enough
-		String fullPath = child.getAbsolutePath();
-		if(!fullPath.startsWith(getPath())){
-			try {
-				// ok, now try to resolve all the links etc. this takes A LOT of time...
-				fullPath = child.getCanonicalPath();
-				if(!fullPath.startsWith(getPath())){
-					return child.getPath();
-				}
-			} catch (IOException e) {
-				MercurialEclipsePlugin.logError(e);
-				return child.getPath();
-			}
-		}
-		// +1 is to remove the file separator / at the start of the relative path
-		return fullPath.substring(getPath().length() + 1);
-	}
-
-	/**
-	 * @return the {@link IPath} object corresponding to this root, never null
-	 */
-	public IPath getIPath() {
-		return path;
-	}
-
-	public IPath toAbsolute(IPath relative){
-		return path.append(relative);
-	}
-
 	@Override
 	public boolean equals(Object obj) {
 		return super.equals(obj);
@@ -190,31 +150,30 @@ public class HgRoot extends File implements IHgRepositoryLocation {
 		return null;
 	}
 
+	@Override
 	public Object[] getChildren(Object o) {
-		return MercurialTeamProvider.getKnownHgProjects(this).toArray();
+		IProject[] projects = MercurialTeamProvider.getKnownHgProjects(this).toArray(
+				new IProject[0]);
+		if (projects.length == 1) {
+			if (getIPath().equals(projects[0].getLocation())) {
+				return projects;
+			}
+		}
+		return super.getChildren(o);
 	}
 
+	@Override
 	public ImageDescriptor getImageDescriptor(Object object) {
 		return MercurialEclipsePlugin.getImageDescriptor("root.gif");
 	}
 
-	public String getLabel(Object o) {
-		return getAbsolutePath();
-	}
-
-	public Object getParent(Object o) {
-		return getParentFile();
-	}
-
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
+	@Override
 	public Object getAdapter(Class adapter) {
-		if (adapter == IWorkbenchAdapter.class) {
-			return this;
-		}
 		if(adapter == IHgRepositoryLocation.class){
 			return this;
 		}
-		return null;
+		return super.getAdapter(adapter);
 	}
 
 	public boolean isLocal() {
