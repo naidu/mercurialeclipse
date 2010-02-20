@@ -18,11 +18,15 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.repository.RepositoriesView;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
@@ -35,11 +39,6 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 
 	public NewLocationWizard() {
 		super(Messages.getString("NewLocationWizard.name")); //$NON-NLS-1$
-	}
-
-	public NewLocationWizard(Properties initialProperties) {
-		this();
-		this.properties = initialProperties;
 	}
 
 	@Override
@@ -55,7 +54,7 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 	public boolean performFinish() {
 		super.performFinish();
 		File localRepo = ((CreateRepoPage)page).getLocalRepo();
-		if(localRepo != null){
+		if(localRepo != null && !HgPath.isHgRoot(localRepo)){
 			try {
 				HgInitClient.init(localRepo);
 			} catch (HgException e) {
@@ -72,7 +71,18 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 			MercurialEclipsePlugin.logError(ex);
 			return false;
 		}
+		try {
+			RepositoriesView view = getRepoView();
+			view.refreshViewer(repository, true);
+		} catch (PartInitException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
 		return true;
+	}
+
+	private RepositoriesView getRepoView() throws PartInitException {
+		IWorkbenchPage activePage = MercurialEclipsePlugin.getActivePage();
+		return (RepositoriesView) activePage.showView(RepositoriesView.VIEW_ID);
 	}
 
 	/**
