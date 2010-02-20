@@ -24,15 +24,7 @@ import org.eclipse.search.core.text.TextSearchScope;
  *
  */
 public class MercurialTextSearchEngine extends TextSearchEngine {
-	private MercurialTextSearchEngine() {
-	}
-
-	public static TextSearchEngine create() {
-		return new MercurialTextSearchEngine();
-	}
-
-	public static TextSearchEngine createDefault() {
-		return new MercurialTextSearchEngine();
+	public MercurialTextSearchEngine() {
 	}
 
 	@Override

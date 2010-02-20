@@ -55,8 +55,7 @@ public class MercurialTextSearchResult extends TextSearchMatchAccess {
 		this.lineNumber = Integer.parseInt(split[2]);
 		this.becomesMatch = split[3].equals("-") ? false : true;
 		this.user = split[4];
-		this.date = split[5];
-		this.extract = split[6];
+		this.extract = split[5];
 	}
 
 	@Override
@@ -168,8 +167,11 @@ public class MercurialTextSearchResult extends TextSearchMatchAccess {
 
 	@Override
 	public String getFileContent(int offset, int length) {
-		getFileContent();
-		return fileContent.substring(offset, length);
+		String sub = getFileContent();
+		if (sub.length() > 0) {
+			return sub.substring(offset, offset + length);
+		}
+		return "";
 	}
 
 	/**
@@ -216,7 +218,11 @@ public class MercurialTextSearchResult extends TextSearchMatchAccess {
 
 	@Override
 	public char getFileContentChar(int offset) {
-		return getFileContent(offset, 1).charAt(0);
+		String sub = getFileContent(offset, 1);
+		if (sub != null && sub.length() > 0) {
+			return sub.charAt(0);
+		}
+		return ' ';
 	}
 
 	@Override

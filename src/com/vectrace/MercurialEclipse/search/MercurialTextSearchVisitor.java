@@ -78,7 +78,8 @@ public class MercurialTextSearchVisitor {
 				}
 			}
 		}
-		return null;
+		return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
+				"Nothing found.");
 	}
 
 	/**
