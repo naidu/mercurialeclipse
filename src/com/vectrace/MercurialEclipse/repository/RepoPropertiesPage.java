@@ -21,7 +21,6 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IWorkbenchPropertyPage;
 
-import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
@@ -75,7 +74,8 @@ public class RepoPropertiesPage extends FieldEditorPreferencePage implements IWo
 
 	@Override
 	protected void createFieldEditors() {
-		boolean editable = !(getElement() instanceof HgRoot);
+		IHgRepositoryLocation location = getLocation();
+		boolean editable = location != null && !location.isLocal();
 
 		StringFieldEditor locationEditor = new StringFieldEditor(KEY_LOCATION, "Location",
 				getFieldEditorParent());
@@ -103,13 +103,16 @@ public class RepoPropertiesPage extends FieldEditorPreferencePage implements IWo
 		return adaptable;
 	}
 
+	private IHgRepositoryLocation getLocation() {
+		if (adaptable == null) {
+			return null;
+		}
+		return (IHgRepositoryLocation) adaptable.getAdapter(IHgRepositoryLocation.class);
+	}
+
 	public void setElement(IAdaptable element) {
 		this.adaptable = element;
-		if (adaptable == null) {
-			return;
-		}
-		IHgRepositoryLocation repo = (IHgRepositoryLocation) adaptable
-				.getAdapter(IHgRepositoryLocation.class);
+		IHgRepositoryLocation repo = getLocation();
 		if (repo == null) {
 			return;
 		}
