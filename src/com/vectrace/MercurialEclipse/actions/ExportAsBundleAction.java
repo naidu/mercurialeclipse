@@ -7,18 +7,22 @@
  *
  * Contributors:
  * Bastian	implementation
+ * 		Andrei Loskutov (Intland) 	- bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.actions;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.resource.ImageDescriptor;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.SafeUiJob;
-import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
 import com.vectrace.MercurialEclipse.commands.HgBundleClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.history.MercurialHistoryPage;
 import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -27,88 +31,103 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author Bastian
- *
  */
 public class ExportAsBundleAction extends Action {
-	private final MercurialHistoryPage mhp;
-	private String file;
-	private final static ImageDescriptor imageDesc = MercurialEclipsePlugin
-			.getImageDescriptor("export.gif"); //$NON-NLS-1$
 
-	/**
-	 *
-	 */
+	private static final class ExportBundleJob extends Job {
+		private String file;
+		private final MercurialRevision rev;
+
+		private ExportBundleJob(String name, MercurialRevision rev) {
+			super(name);
+			this.rev = rev;
+		}
+
+		@Override
+		protected IStatus run(IProgressMonitor monitor) {
+			try {
+				monitor
+						.beginTask(
+								Messages.getString("ExportAsBundleAction.exportingRevision") + rev.getContentIdentifier() //$NON-NLS-1$
+										+ Messages.getString("ExportAsBundleAction.toBundle"), 3); //$NON-NLS-1$
+				monitor.subTask(Messages
+						.getString("ExportAsBundleAction.determiningRepositoryRoot")); //$NON-NLS-1$
+				HgRoot root = MercurialTeamProvider.getHgRoot(rev.getResource());
+				monitor.worked(1);
+				monitor.subTask(Messages.getString("ExportAsBundleAction.callingMercurial")); //$NON-NLS-1$
+
+				file = getFile();
+
+				if (file == null) {
+					// user cancel
+					monitor.setCanceled(true);
+					return Status.CANCEL_STATUS;
+				}
+				HgBundleClient.bundle(root, rev.getChangeSet(), file);
+				monitor.worked(1);
+
+				final String message = Messages.getString("ExportAsBundleAction.theRevision") //$NON-NLS-1$
+						+ rev.getContentIdentifier()
+						+ Messages
+								.getString("ExportAsBundleAction.andAllPreviousRevisionsHaveBeenExported") //$NON-NLS-1$
+						+ file;
+
+				showMessage(message);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				MercurialEclipsePlugin.showError(e);
+			} finally {
+				monitor.done();
+			}
+			return Status.OK_STATUS;
+		}
+
+	}
+
+	private final MercurialHistoryPage mhp;
+
+	private static String getFile() {
+		final Display display = MercurialEclipsePlugin.getStandardDisplay();
+		final String file[] = new String[1];
+		display.syncExec(new Runnable() {
+			public void run() {
+				FileDialog fileDialog = new FileDialog(MercurialEclipsePlugin.getActiveShell());
+				fileDialog.setText(Messages
+						.getString("ExportAsBundleAction.pleaseEnterTheNameOfTheBundleFile")); //$NON-NLS-1$
+				file[0] = fileDialog.open();
+			}
+		});
+		return file[0];
+	}
+
+	private static void showMessage(final String message) {
+		final Display display = MercurialEclipsePlugin.getStandardDisplay();
+		display.asyncExec(new Runnable() {
+			public void run() {
+				MessageDialog.openInformation(null, Messages
+						.getString("ExportAsBundleAction.createdSuccessfully"), message); //$NON-NLS-1$
+
+			}
+		});
+	}
+
 	public ExportAsBundleAction(MercurialHistoryPage mhp) {
-		super(Messages.getString("ExportAsBundleAction.exportSelectedRevisionAsBundle"), imageDesc); //$NON-NLS-1$
+		super(Messages.getString("ExportAsBundleAction.exportSelectedRevisionAsBundle"),
+				MercurialEclipsePlugin.getImageDescriptor("export.gif")); //$NON-NLS-1$
 		this.mhp = mhp;
 	}
 
 	@Override
 	public void run() {
 		final MercurialRevision rev = getRevision();
-		new SafeWorkspaceJob(
-				Messages.getString("ExportAsBundleAction.exportingRevision") + rev.getContentIdentifier() + Messages.getString("ExportAsBundleAction.toBundle")) { //$NON-NLS-1$ //$NON-NLS-2$
-			@Override
-			protected org.eclipse.core.runtime.IStatus runSafe(
-					org.eclipse.core.runtime.IProgressMonitor monitor) {
-				try {
-					monitor
-							.beginTask(
-									Messages.getString("ExportAsBundleAction.exportingRevision") + rev.getContentIdentifier() //$NON-NLS-1$
-											+ Messages.getString("ExportAsBundleAction.toBundle"), 3); //$NON-NLS-1$
-					monitor.subTask(Messages
-							.getString("ExportAsBundleAction.determiningRepositoryRoot")); //$NON-NLS-1$
-					HgRoot root = MercurialTeamProvider.getHgRoot(rev.getResource());
-					monitor.worked(1);
-					monitor.subTask(Messages.getString("ExportAsBundleAction.callingMercurial")); //$NON-NLS-1$
-					SafeUiJob uiJob = new SafeUiJob(Messages
-							.getString("ExportAsBundleAction.determineLocationForBundleFile")) { //$NON-NLS-1$
-						@Override
-						protected org.eclipse.core.runtime.IStatus runSafe(
-								org.eclipse.core.runtime.IProgressMonitor mon) {
-							FileDialog fileDialog = new FileDialog(getDisplay().getActiveShell());
-							fileDialog
-									.setText(Messages
-											.getString("ExportAsBundleAction.pleaseEnterTheNameOfTheBundleFile")); //$NON-NLS-1$
-							file = fileDialog.open();
-							return super.runSafe(mon);
-						}
-					};
-					uiJob.schedule();
-					uiJob.join();
-
-					HgBundleClient.bundle(root, rev.getChangeSet(), file);
-					monitor.worked(1);
-					new SafeUiJob(Messages.getString("ExportAsBundleAction.createdSuccessfully")) { //$NON-NLS-1$
-						@Override
-						protected org.eclipse.core.runtime.IStatus runSafe(
-								org.eclipse.core.runtime.IProgressMonitor m) {
-							String message = Messages.getString("ExportAsBundleAction.theRevision") + rev.getContentIdentifier() //$NON-NLS-1$
-									+ Messages
-											.getString("ExportAsBundleAction.andAllPreviousRevisionsHaveBeenExported") //$NON-NLS-1$
-									+ file;
-							MessageDialog
-									.openInformation(
-											getDisplay().getActiveShell(),
-											Messages
-													.getString("ExportAsBundleAction.createdSuccessfully"), message); //$NON-NLS-1$
-							return super.runSafe(m);
-						}
-					}.schedule();
-				} catch (Exception e) {
-					MercurialEclipsePlugin.logError(e);
-					MercurialEclipsePlugin.showError(e);
-				}
-				monitor.done();
-				return super.runSafe(monitor);
-			}
-		}.schedule();
-		super.run();
+		if (rev == null) {
+			return;
+		}
+		new ExportBundleJob(Messages.getString("ExportAsBundleAction.exportingRevision")
+				+ rev.getContentIdentifier() + Messages.getString("ExportAsBundleAction.toBundle"),
+				rev).schedule();
 	}
 
-	/**
-	 * @return
-	 */
 	private MercurialRevision getRevision() {
 		MercurialRevision[] selectedRevisions = mhp.getSelectedRevisions();
 		if (selectedRevisions != null && selectedRevisions.length == 1) {
