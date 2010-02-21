@@ -37,6 +37,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.internal.dialogs.WorkbenchWizardSelectionPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -108,6 +109,12 @@ public class ClonePage extends PushPullPage {
 		dialog.addPageChangingListener(new IPageChangingListener() {
 
 			public void handlePageChanging(PageChangingEvent event) {
+				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage
+						|| event.getCurrentPage()  instanceof WorkbenchWizardSelectionPage){
+					// always allow flip back and force from the Eclipse "New..." wizard
+					event.doit = true;
+					return;
+				}
 				event.doit = nextButtonPressed();
 			}
 		});

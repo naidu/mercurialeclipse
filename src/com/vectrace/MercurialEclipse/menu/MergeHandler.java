@@ -110,17 +110,6 @@ public class MergeHandler extends RootHandler {
 		return mergeAndCommit(hgRoot, shell, monitor, showCommitDialog, cs, forced);
 	}
 
-	/**
-	 * @param hgRoot
-	 * @param shell
-	 * @param monitor
-	 * @param showCommitDialog
-	 * @param cs
-	 * @param forced
-	 * @return
-	 * @throws HgException
-	 * @throws CoreException
-	 */
 	public static String mergeAndCommit(HgRoot hgRoot, Shell shell, IProgressMonitor monitor,
 			boolean showCommitDialog, ChangeSet cs, boolean forced) throws HgException,
 			CoreException {

@@ -464,11 +464,13 @@ public class HgRepositoryLocationManager {
 	 * @return may return null
 	 */
 	private IHgRepositoryLocation matchRepoLocation(String url) {
-		if (url != null) {
-			for (IHgRepositoryLocation loc : getAllRepoLocations()) {
-				if (url.equals(loc.getLocation())) {
-					return loc;
-				}
+		if (url == null) {
+			return null;
+		}
+		url = HgRepositoryLocationParser.trimLocation(url);
+		for (IHgRepositoryLocation loc : getAllRepoLocations()) {
+			if (url.equals(loc.getLocation())) {
+				return loc;
 			}
 		}
 		return null;
@@ -573,11 +575,6 @@ public class HgRepositoryLocationManager {
 	 * user The username for the connection (optional) password The password
 	 * used for the connection (optional) url The url where the repository
 	 * resides
-	 *
-	 * The created instance is not known by the provider and it's user
-	 * information is not cached. The purpose of the created location is to
-	 * allow connection validation before adding the location to the provider.
-	 *
 	 */
 	public IHgRepositoryLocation createRepository(Properties configuration)
 			throws HgException {

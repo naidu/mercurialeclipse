@@ -14,7 +14,9 @@ package com.vectrace.MercurialEclipse.repository;
 
 import java.util.Iterator;
 
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -29,6 +31,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
@@ -43,9 +46,11 @@ import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
 import org.eclipse.ui.actions.SelectionProviderAction;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.internal.dialogs.PropertyDialog;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.part.DrillDownAdapter;
@@ -53,12 +58,15 @@ import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.repository.actions.RemoveRootAction;
 import com.vectrace.MercurialEclipse.repository.model.AllRootsElement;
 import com.vectrace.MercurialEclipse.repository.model.RemoteContentProvider;
 import com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.CloneRepoWizard;
+import com.vectrace.MercurialEclipse.wizards.ImportProjectsFromRepoWizard;
 import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
 
 /**
@@ -91,7 +99,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	/** this listener is used when a repository is added, removed or changed */
 	private final IRepositoryListener repositoryListener = new IRepositoryListener() {
 		public void repositoryAdded(final IHgRepositoryLocation loc) {
-			refresh(null);
+			refresh(loc);
 		}
 
 		public void repositoryRemoved(IHgRepositoryLocation loc) {
@@ -115,6 +123,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			refresh(null);
 		}
 	};
+
+	private Action importAction;
 
 	public RepositoriesView() {
 		super();
@@ -147,6 +157,20 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			public void run() {
 				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
 				CloneRepoWizard wizard = new CloneRepoWizard();
+				wizard.init(PlatformUI.getWorkbench(), selection);
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				dialog.open();
+			}
+		};
+
+		// Import project (popup)
+		importAction = new Action(Messages.getString("RepositoriesView.importProject"),
+				MercurialEclipsePlugin.getImageDescriptor("import_project.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
+
+				ImportProjectsFromRepoWizard wizard = new ImportProjectsFromRepoWizard();
 				wizard.init(PlatformUI.getWorkbench(), selection);
 				WizardDialog dialog = new WizardDialog(shell, wizard);
 				dialog.open();
@@ -271,10 +295,12 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		tbm.update(false);
 		mm.update(false);
 
+
 		bars.updateActionBars();
 	}
 
 	protected void addWorkbenchActions(IMenuManager manager) {
+		IStructuredSelection selection = (IStructuredSelection) getViewer().getSelection();
 
 		// File actions go first (view file)
 		manager.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
@@ -282,10 +308,20 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		manager.add(new Separator("historyGroup")); //$NON-NLS-1$
 		manager.add(new Separator("checkoutGroup")); //$NON-NLS-1$
 		manager.add(new Separator("exportImportGroup")); //$NON-NLS-1$
+
+		boolean singleFile = selection.size() == 1
+			&& selection.getFirstElement() instanceof HgPath;
+
+		if(singleFile) {
+			HgPath path = (HgPath) selection.getFirstElement();
+			if(path.isDirectory()) {
+				manager.add(importAction);
+			}
+		}
+
 		manager.add(new Separator("miscGroup")); //$NON-NLS-1$
 
 
-		IStructuredSelection selection = (IStructuredSelection) getViewer().getSelection();
 		boolean singleRepoSelected = selection.size() == 1
 				&& selection.getFirstElement() instanceof IHgRepositoryLocation;
 
@@ -293,6 +329,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			manager.add(cloneAction);
 			manager.add(refreshPopupAction);
 		}
+
 
 		removeRootAction.selectionChanged(selection);
 		if (removeRootAction.isEnabled()) {
@@ -311,7 +348,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		treeViewer = new TreeViewer(parent, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		contentProvider = new RemoteContentProvider();
 		treeViewer.setContentProvider(contentProvider);
-		treeViewer.setLabelProvider(new WorkbenchLabelProvider());
+		treeViewer.setLabelProvider(WorkbenchLabelProvider.getDecoratingWorkbenchLabelProvider());
 		getSite().setSelectionProvider(treeViewer);
 		root = new AllRootsElement();
 		treeViewer.setInput(root);
@@ -375,7 +412,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		return treeViewer.getTree().getShell();
 	}
 
-	protected TreeViewer getViewer() {
+	public TreeViewer getViewer() {
 		return treeViewer;
 	}
 
@@ -383,7 +420,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	 * this is called whenever a new repository location is added for example or
 	 * when user wants to refresh
 	 */
-	protected void refreshViewer(Object object,
+	public void refreshViewer(Object object,
 			boolean refreshRepositoriesFolders) {
 		if (treeViewer == null || treeViewer.getControl() == null || treeViewer.getControl().isDisposed()) {
 			return;
@@ -395,14 +432,13 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
-		if (object == null) {
-			treeViewer.refresh();
-		} else {
-			treeViewer.refresh(object);
+		treeViewer.refresh();
+		if(object != null) {
+			treeViewer.setSelection(new StructuredSelection(object), true);
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	protected void refreshViewerNode() {
 		IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
 		Iterator iter = selection.iterator();
@@ -435,6 +471,32 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		if (selection instanceof IStructuredSelection) {
 			IStructuredSelection structured = (IStructuredSelection) selection;
 			if (structured.size() == 1) {
+				Object firstElement = structured.getFirstElement();
+				HgPath hgPath = MercurialEclipsePlugin.getAdapter(firstElement, HgPath.class);
+				if (hgPath != null && hgPath.isFile()) {
+					try {
+						IDE.openEditor(MercurialEclipsePlugin.getActivePage(), hgPath.toURI(),
+								"org.eclipse.ui.DefaultTextEditor", true);
+						return;
+					} catch (PartInitException e1) {
+						MercurialEclipsePlugin.logError(e1);
+					}
+				}
+				IResource resource = ResourceUtils.getResource(firstElement);
+				if (resource != null) {
+					if (resource.exists()) {
+						if (resource.getType() == IResource.FILE) {
+							try {
+								IDE.openEditor(MercurialEclipsePlugin.getActivePage(),
+										(IFile) resource);
+								return;
+							} catch (PartInitException e1) {
+								// TODO Auto-generated catch block
+								MercurialEclipsePlugin.logError(e1);
+							}
+						}
+					}
+				}
 				propertiesAction.run();
 			}
 		}

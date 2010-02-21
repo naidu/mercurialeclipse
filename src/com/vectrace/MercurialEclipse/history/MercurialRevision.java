@@ -61,8 +61,8 @@ public class MercurialRevision extends FileRevision {
 	 * @param resource must be non null
 	 * @param sig may be null
 	 */
-	public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet,
-			IResource resource, Signature sig, Status status) {
+	public MercurialRevision(ChangeSet changeSet, GChangeSet gChangeSet, IResource resource,
+			Signature sig, Status bisectStatus) {
 		super();
 		Assert.isNotNull(changeSet);
 		Assert.isNotNull(resource);
@@ -72,7 +72,7 @@ public class MercurialRevision extends FileRevision {
 		this.hash = changeSet.getChangeset();
 		this.resource = resource;
 		this.signature = sig;
-		this.bisectStatus = status;
+		this.bisectStatus = bisectStatus;
 	}
 
 	public Signature getSignature() {

@@ -73,7 +73,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Text;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkingSet;
 import org.eclipse.ui.IWorkingSetManager;
@@ -87,6 +89,7 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * The ProjectsImportPage is the page that allows the user to import
@@ -230,7 +233,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 	private CheckboxTreeViewer projectsList;
 
-	private ProjectRecord[] selectedProjects = new ProjectRecord[0];
+	private ProjectRecord[] selectedProjects;
 
 	private IProject[] wsProjects;
 
@@ -243,21 +246,30 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 	private WorkingSetGroup workingSetGroup;
 	private List<IProject> createdProjects;
-	private String destinationDirectory;
 
+	/** initial repo path */
 	private File repositoryRoot;
 
-	private HgRoot hgRoot;
+	/** cloned repo destination path */
+	private File destinationDir;
+
+	private Text destinationDirText;
+
+	private boolean destinationSelectionEnabled;
 
 	/**
 	 * Creates a new project creation wizard page.
 	 */
 	public ProjectsImportPage(String pageName) {
 		super(pageName);
-
+		selectedProjects = new ProjectRecord[0];
 		setPageComplete(false);
 		setTitle("Import Projects");
 		setDescription(DESCRIPTION);
+	}
+
+	public void setDestinationSelectionEnabled(boolean enabled){
+		this.destinationSelectionEnabled = enabled;
 	}
 
 	public void createControl(Composite parent) {
@@ -271,32 +283,49 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 		workArea.setLayoutData(new GridData(GridData.FILL_BOTH
 				| GridData.GRAB_HORIZONTAL | GridData.GRAB_VERTICAL));
 
+		if(destinationSelectionEnabled) {
+			createRootSelection(workArea);
+		}
 		createProjectsList(workArea);
-//        createOptionsArea(workArea);
 		createWorkingSetGroup(workArea);
 		restoreWidgetValues();
 		Dialog.applyDialogFont(workArea);
 
 	}
 
-	/**
-	 * Create the area with the extra options.
-	 */
-//    private void createOptionsArea(Composite workArea) {
-//        Composite optionsGroup = new Composite(workArea, SWT.NONE);
-//        optionsGroup.setLayout(new GridLayout());
-//        optionsGroup.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//
-//        copyCheckbox = new Button(optionsGroup, SWT.CHECK);
-//        copyCheckbox.setText("&Copy projects into workspace");
-//        copyCheckbox.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
-//        copyCheckbox.addSelectionListener(new SelectionAdapter() {
-//            @Override
-//            public void widgetSelected(SelectionEvent e) {
-//                copyFiles = copyCheckbox.getSelection();
-//            }
-//        });
-//    }
+	private void createRootSelection(Composite workArea) {
+		Composite selectComposite = new Composite(workArea, SWT.NONE);
+		GridLayout layout = new GridLayout();
+		layout.numColumns = 3;
+		layout.marginWidth = 0;
+		layout.makeColumnsEqualWidth = false;
+		selectComposite.setLayout(layout);
+		// GridData
+		GridData data = new GridData(GridData.FILL_HORIZONTAL);
+		selectComposite.setLayoutData(data);
+		SWTWidgetHelper.createLabel(selectComposite, "Root directory:");
+		destinationDirText = SWTWidgetHelper.createTextField(selectComposite);
+
+		Button browseButton = SWTWidgetHelper.createPushButton(selectComposite, "Browse...", 1);
+		browseButton.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				String dir;
+				if (!destinationDirText.getText().equals(destinationDir.getAbsolutePath())) {
+					dir = destinationDirText.getText();
+				} else {
+					DirectoryDialog dialog = new DirectoryDialog(getShell());
+					dialog.setFilterPath(destinationDirText.getText());
+					dialog.setMessage("Select root directory");
+					dir = dialog.open();
+				}
+				if (dir != null) {
+					dir = dir.trim();
+					setInitialSelection(new File(dir));
+				}
+			}
+		});
+	}
 
 	private void createWorkingSetGroup(Composite workArea) {
 		String[] workingSetIds = new String[] {"org.eclipse.ui.resourceWorkingSetPage",  //$NON-NLS-1$
@@ -309,10 +338,8 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	 */
 	private void createProjectsList(Composite workArea) {
 
-		Label title = new Label(workArea, SWT.NONE);
-		title.setText("&Projects:");
-
-		Composite listComposite = new Composite(workArea, SWT.NONE);
+		Group listComposite = new Group(workArea, SWT.NONE);
+		listComposite.setText("Projects");
 		GridLayout layout = new GridLayout();
 		layout.numColumns = 2;
 		layout.marginWidth = 0;
@@ -450,7 +477,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				updateProjectsList(destinationDirectory);
+				updateProjectsList(destinationDir.getAbsolutePath());
 			}
 		});
 		Dialog.applyDialogFont(refresh);
@@ -469,6 +496,16 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				ClonePage page = (ClonePage) previousPage;
 				File directory = page.getDestinationDirectory();
 				setInitialSelection(directory);
+			} else if(getWizard() instanceof ImportProjectsFromRepoWizard){
+				final ImportProjectsFromRepoWizard impWizard = (ImportProjectsFromRepoWizard) getWizard();
+				if(impWizard.getInitialPath() != null) {
+					impWizard.getShell().getDisplay().asyncExec(
+					new Runnable() {
+						public void run() {
+							setInitialSelection(impWizard.getInitialPath());
+						}
+					});
+				}
 			}
 		}
 	}
@@ -523,8 +560,7 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 						monitor.subTask("Processing results");
 						if(files.isEmpty()){
 							selectedProjects = new ProjectRecord[1];
-							selectedProjects[0] = new ProjectRecord(new File(
-									destinationDirectory));
+							selectedProjects[0] = new ProjectRecord(destinationDir);
 						} else {
 							while (filesIterator.hasNext()) {
 								File file = filesIterator.next();
@@ -756,28 +792,28 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 	}
 
 	private void registerWithTeamProvider(IProject p, IProgressMonitor monitor) throws CoreException {
-		IWizard wizard = getWizard();
-		if(!(wizard instanceof CloneRepoWizard)){
-			return;
-		}
-		IHgRepositoryLocation repo = ((CloneRepoWizard) wizard).getRepository();
 		// Register the project with Team. This will bring all the
 		// files that we cloned into the project.
-		monitor
-		.subTask(Messages
+		monitor.subTask(Messages
 				.getString("CloneRepoWizard.subTask.registeringProject1") + " " + p.getName() //$NON-NLS-1$
 				+ Messages
 				.getString("CloneRepoWizard.subTaskRegisteringProject2")); //$NON-NLS-1$
 		RepositoryProvider.map(p, MercurialTeamProvider.class.getName());
 		monitor.worked(1);
 
+		IWizard wizard = getWizard();
+		if(!(wizard instanceof CloneRepoWizard)){
+			return;
+		}
+		IHgRepositoryLocation repo = ((CloneRepoWizard) wizard).getRepository();
 		// It appears good. Stash the repo location.
-		monitor
-		.subTask(Messages
+		monitor.subTask(Messages
 				.getString("CloneRepoWizard.subTask.addingRepository.1") + " " + repo //$NON-NLS-1$
 				+ Messages
 				.getString("CloneRepoWizard.subTask.addingRepository.2")); //$NON-NLS-1$
-		MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot, repo);
+		if(destinationDir instanceof HgRoot) {
+			MercurialEclipsePlugin.getRepoManager().addRepoLocation((HgRoot) destinationDir, repo);
+		}
 		monitor.worked(1);
 	}
 
@@ -912,9 +948,11 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 
 
 	public void setInitialSelection(File destinationDirectory) {
-		hgRoot = (HgRoot)destinationDirectory;
-		this.destinationDirectory = destinationDirectory.getAbsolutePath();
-		updateProjectsList(this.destinationDirectory);
+		destinationDir = destinationDirectory;
+		if(destinationDirText != null){
+			destinationDirText.setText(destinationDir.getAbsolutePath());
+		}
+		updateProjectsList(destinationDir.getAbsolutePath());
 	}
 
 	/**

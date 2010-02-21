@@ -21,12 +21,11 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 /**
  * @author bastian
- *
  */
 public abstract class HgWizard extends Wizard {
 
 	protected HgWizardPage page;
-	protected Properties properties = null;
+	protected Properties properties;
 
 	public HgWizard(String windowTitle) {
 		super();
@@ -45,13 +44,10 @@ public abstract class HgWizard extends Wizard {
 	 * Initializes the wizard with data.
 	 */
 	private void init(String windowTitle) {
-		IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
-				.getDialogSettings();
-		IDialogSettings section = workbenchSettings.getSection(getClass()
-				.getCanonicalName());
+		IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
+		IDialogSettings section = workbenchSettings.getSection(getClass().getCanonicalName());
 		if (section == null) {
-			section = workbenchSettings.addNewSection(getClass()
-					.getCanonicalName());
+			section = workbenchSettings.addNewSection(getClass().getCanonicalName());
 		}
 		setDialogSettings(section);
 		setWindowTitle(windowTitle);
@@ -59,11 +55,14 @@ public abstract class HgWizard extends Wizard {
 	}
 
 	protected void initPage(String description, HgWizardPage wizardPage) {
+		wizardPage.setDescription(description);
 		if (properties != null) {
 			wizardPage.setProperties(properties);
 		}
-		wizardPage.setDescription(description);
 		wizardPage.setDialogSettings(getDialogSettings());
 	}
 
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
 }

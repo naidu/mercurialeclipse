@@ -16,6 +16,7 @@
 package com.vectrace.MercurialEclipse.storage;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -24,6 +25,7 @@ import org.eclipse.ui.model.IWorkbenchAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 /**
@@ -90,6 +92,7 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 			}
 		} else {
 			this.location = location;
+			isLocal = true;
 		}
 	}
 
@@ -207,7 +210,14 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 		return location;
 	}
 
-	public IHgRepositoryLocation[] getChildren(Object o) {
+	public Object[] getChildren(Object o) {
+		if(isLocal()){
+			try {
+				return new Object[]{ new HgRoot(getLocation())};
+			} catch (IOException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
 		return MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(this).toArray(
 				new IHgRepositoryLocation[0]);
 	}
@@ -220,7 +230,7 @@ public class HgRepositoryLocation implements  Comparable<IHgRepositoryLocation>,
 		return logicalName;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("rawtypes")
 	public Object getAdapter(Class adapter) {
 		if(adapter == IHgRepositoryLocation.class){
 			return this;

@@ -84,7 +84,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(PREF_AFFECTED_PATHS_LAYOUT, LAYOUT_HORIZONTAL);
 		store.setDefault(PREF_SIGCHECK_IN_HISTORY, false);
 
-		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_BACKGROUND, "255,255,255");
+		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_BACKGROUND, "222,222,222");
 		store.setDefault(PREF_HISTORY_MERGE_CHANGESET_FOREGROUND, "0,0,0");
 
 

@@ -412,27 +412,22 @@ public class MercurialUtilities {
 
 	}
 
-	/**
-	 * @param prefHistoryMergeChangesetBackground
-	 * @return
-	 */
 	public static Color getColorPreference(String pref) {
 		RGB rgb = PreferenceConverter.getColor(MercurialEclipsePlugin.getDefault()
 				.getPreferenceStore(), pref);
 		return getColor(rgb);
 	}
 
-	/**
-	 * @param rgb
-	 * @return
-	 */
 	public static Color getColor(RGB rgb) {
-		Color c = COLOR_MAP.get(rgb);
-		if (c == null) {
-			c = new Color(MercurialEclipsePlugin.getStandardDisplay(), rgb);
-			COLOR_MAP.put(rgb, c);
+		Color color;
+		synchronized (COLOR_MAP) {
+			color = COLOR_MAP.get(rgb);
+			if (color == null) {
+				color = new Color(MercurialEclipsePlugin.getStandardDisplay(), rgb);
+				COLOR_MAP.put(rgb, color);
+			}
 		}
-		return c;
+		return color;
 	}
 
 	public static void disposeColorsAndFonts() {
@@ -447,18 +442,17 @@ public class MercurialUtilities {
 	}
 
 	public static Font getFont(FontData data) {
-		Font f = FONT_MAP.get(data);
-		if (f == null) {
-			f = new Font(MercurialEclipsePlugin.getStandardDisplay(), data);
-			FONT_MAP.put(data, f);
+		Font font;
+		synchronized (FONT_MAP) {
+			font = FONT_MAP.get(data);
+			if (font == null) {
+				font = new Font(MercurialEclipsePlugin.getStandardDisplay(), data);
+				FONT_MAP.put(data, font);
+			}
 		}
-		return f;
+		return font;
 	}
 
-	/**
-	 * @param prefHistoryMergeChangesetBackground
-	 * @return
-	 */
 	public static Font getFontPreference(String pref) {
 		FontData data = PreferenceConverter.getFontData(MercurialEclipsePlugin.getDefault()
 				.getPreferenceStore(), pref);

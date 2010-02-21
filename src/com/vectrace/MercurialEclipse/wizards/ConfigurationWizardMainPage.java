@@ -47,6 +47,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationParser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -55,9 +56,9 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
 
-	static final String PROP_PASSWORD = "password";
-	static final String PROP_USER = "user";
-	static final String PROP_URL = "url";
+	public static final String PROP_PASSWORD = "password";
+	public static final String PROP_USER = "user";
+	public static final String PROP_URL = "url";
 
 	private static final int COMBO_HISTORY_LENGTH = 10;
 
@@ -79,6 +80,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	protected Button browseFileButton;
 
 	private IHgRepositoryLocation initialRepo;
+	private Composite authComposite;
 
 	/**
 	 * @param pageName
@@ -172,6 +174,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				DirectoryDialog dialog = new DirectoryDialog(getShell());
+				File localDirectory = getLocalDirectory(getUrlText());
+				if(localDirectory != null) {
+					dialog.setFilterPath(localDirectory.getAbsolutePath());
+				}
 				dialog.setMessage(Messages.getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
 				String dir = dialog.open();
 				if (dir != null) {
@@ -233,7 +239,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	}
 
 	private void createAuthenticationControl(Composite composite) {
-		Composite authComposite = SWTWidgetHelper.createComposite(composite, 2);
+		authComposite = SWTWidgetHelper.createComposite(composite, 2);
 		Group g = SWTWidgetHelper.createGroup(
 				authComposite,
 				Messages.getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
@@ -257,6 +263,12 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 				canFlipToNextPage();
 			}
 		});
+	}
+
+	protected void setAuthCompositeEnabled(boolean enable){
+		authComposite.setEnabled(enable);
+		userCombo.setEnabled(enable);
+		passwordText.setEnabled(enable);
 	}
 
 	/**
@@ -361,7 +373,9 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	}
 
 	protected String getUrlText() {
-		return urlCombo.getText().trim();
+		String text = urlCombo.getText();
+		text = HgRepositoryLocationParser.trimLocation(text);
+		return text;
 	}
 
 	private String[] updateHostNames(HgRoot hgRoot) {

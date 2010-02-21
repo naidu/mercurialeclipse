@@ -35,6 +35,19 @@ public class HgRepositoryLocationParser {
 	protected static final String PULL_PREFIX = "d";
 	protected static final String ENCRYPTED_PREFIX = "e";
 
+	public static String trimLocation(String url){
+		if(url == null){
+			return null;
+		}
+		url = url.trim();
+		// this is NOT File.separator: we simply disallow to have different locations
+		// which just ends with slash/backslash
+		while(url.endsWith("/") || url.endsWith("\\")){
+			url = url.substring(0, url.length() - 1);
+		}
+		return url;
+	}
+
 	protected static IHgRepositoryLocation parseLine(final String line) {
 		if (line == null || line.length() < 1) {
 			return null;
@@ -62,12 +75,13 @@ public class HgRepositoryLocationParser {
 			if (password.startsWith(ENCRYPTED_PREFIX + PART_SEPARATOR)) {
 				password = crypter.decrypt(password.substring(2));
 			}
-			URI uri = parseLocationToURI(parts.get(0), username, password);
+			String locationStr = trimLocation(parts.get(0));
+			URI uri = parseLocationToURI(locationStr, username, password);
 			IHgRepositoryLocation location;
 			if(uri != null) {
 				location = new HgRepositoryLocation(parts.get(3), uri);
 			} else {
-				location = new HgRepositoryLocation(parts.get(3), parts.get(0), "", "");
+				location = new HgRepositoryLocation(parts.get(3), locationStr, "", "");
 			}
 			return location;
 		} catch(Throwable th) {
@@ -143,6 +157,7 @@ public class HgRepositoryLocationParser {
 			}
 		}
 
+		location = trimLocation(location);
 		URI uri = parseLocationToURI(location, user, password);
 		if (uri != null) {
 			return new HgRepositoryLocation(logicalName, uri);
@@ -163,8 +178,7 @@ public class HgRepositoryLocationParser {
 			if (localPath.exists()) {
 				return null;
 			}
-			HgException hgex = new HgException("Hg repository location invalid: <" + location + ">");
-			throw hgex;
+			throw new HgException("Hg repository location invalid: <" + location + ">");
 		}
 		if (uri.getScheme() != null
 				&& !uri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$

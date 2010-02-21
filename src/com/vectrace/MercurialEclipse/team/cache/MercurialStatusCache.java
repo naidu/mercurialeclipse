@@ -376,7 +376,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * @return true if known, false if not.
 	 */
 	public boolean isStatusKnown(IProject project) {
-		return knownStatus.containsKey(project);
+		return project != null && knownStatus.containsKey(project);
 	}
 
 	/**
@@ -389,7 +389,8 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * @return the BitSet with status flags, MAY RETURN NULL, if status is unknown yet
 	 */
 	public Integer getStatus(IResource resource) {
-		return statusMap.get(resource.getLocation());
+		IPath location = resource.getLocation();
+		return location != null? statusMap.get(location) : null;
 	}
 
 	public boolean isSupervised(IResource resource) {
@@ -397,12 +398,14 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	}
 
 	public boolean isSupervised(IResource resource, IPath path) {
-		Assert.isNotNull(resource);
-		Assert.isNotNull(path);
+		if(path == null){
+			return false;
+		}
 		Integer statusInt = statusMap.get(path);
 		if(statusInt == null){
 			return false;
 		}
+		Assert.isNotNull(resource);
 		IProject project = resource.getProject();
 		if (path.equals(project.getLocation())) {
 			return project.isAccessible() && MercurialTeamProvider.isHgTeamProviderFor(project);
@@ -613,7 +616,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			String output = HgStatusClient.getStatusWithoutIgnored(root);
 			String[] mergeStatus = HgStatusClient.getMergeStatus(root);
 			String currentChangeSetId = mergeStatus[0];
-			LocalChangesetCache.getInstance().updateLatestChangeset(root, currentChangeSetId);
+			LocalChangesetCache.getInstance().checkLatestChangeset(root, currentChangeSetId);
 			String mergeNode = mergeStatus[1];
 			String branch = mergeStatus[2];
 
@@ -719,7 +722,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			try {
 				String[] mergeStatus = HgStatusClient.getMergeStatus(root);
 				String id = mergeStatus[0];
-				LocalChangesetCache.getInstance().updateLatestChangeset(root, id);
+				LocalChangesetCache.getInstance().checkLatestChangeset(root, id);
 				String mergeNode = mergeStatus[1];
 				String branch = mergeStatus[2];
 				HgStatusClient.setMergeStatus(project, mergeNode);
@@ -848,8 +851,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				continue;
 			}
 
+			char space = line.charAt(1);
 			int bit = getBit(line.charAt(0));
-			if(bit == BIT_IMPOSSIBLE){
+			if(bit == BIT_IMPOSSIBLE || space != ' '){
 				strangeStates.add(line);
 				continue;
 			}
@@ -883,7 +887,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 			changed.addAll(setStatusToAncestors(member, bitSet));
 		}
-		if(strangeStates.size() > 0){
+		if(debug && strangeStates.size() > 0){
 			IStatus [] states = new IStatus[strangeStates.size()];
 			for (int i = 0; i < states.length; i++) {
 				states[i] = MercurialEclipsePlugin.createStatus(strangeStates.get(i), IStatus.OK, IStatus.INFO, null);
@@ -917,6 +921,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	}
 
 	private void setStatus(IPath location, Integer status, boolean isDir) {
+		if(location == null){
+			return;
+		}
 		statusMap.put(location, status);
 		bitMap.put(location, status);
 		if(isDir){
@@ -931,6 +938,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		for (; parent != null && parent != root; parent = parent.getParent()) {
 			IPath location = parent.getLocation();
+			if(location == null){
+				continue;
+			}
 			int parentBitSet = 0;
 			{
 				Integer parentBits = statusMap.get(location);
@@ -1227,6 +1237,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 */
 	private Set<IResource> addConflict(IResource local) {
 		IPath location = local.getLocation();
+		if(location == null){
+			return EMPTY_SET;
+		}
 		Integer status = statusMap.get(location);
 		boolean isDir = local.getType() == IResource.FOLDER;
 		if(status == null){
@@ -1248,6 +1261,9 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 	 * @return true if there was a conflict and now it is removed
 	 */
 	private boolean removeConflict(IPath local) {
+		if(local == null){
+			return false;
+		}
 		Integer statusInt = statusMap.get(local);
 		if(statusInt == null){
 			return false;

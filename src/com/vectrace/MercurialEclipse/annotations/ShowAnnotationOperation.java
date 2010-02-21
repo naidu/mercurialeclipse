@@ -171,8 +171,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 		for (int i = 0; i < references.length; i++) {
 			IEditorReference reference = references[i];
 			try {
-				if (resource != null
-						&& resource.equals(reference.getEditorInput()
+				if (resource.equals(reference.getEditorInput()
 								.getAdapter(IFile.class))) {
 					IEditorPart editor = reference.getEditor(false);
 					if (editor instanceof AbstractDecoratedTextEditor) {

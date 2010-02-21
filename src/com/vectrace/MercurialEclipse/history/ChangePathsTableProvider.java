@@ -27,6 +27,7 @@ import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.Image;
@@ -176,7 +177,8 @@ public class ChangePathsTableProvider extends TableViewer {
 		private void fetchPaths(final MercurialRevision rev) {
 			final MercurialHistory history = page.getMercurialHistory();
 			final ChangeSet [] cs = new ChangeSet[1];
-			Job pathJob = new Job(Messages.ChangePathsTableProvider_retrievingAffectedPaths + rev.getChangeSet()){
+			Job pathJob = new Job(NLS.bind(
+					Messages.ChangePathsTableProvider_retrievingAffectedPaths, rev.getChangeSet())) {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 					synchronized(revToFiles){

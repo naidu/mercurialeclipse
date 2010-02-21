@@ -23,18 +23,18 @@ public class SwitchHandler extends RootHandler {
 
 	@Override
 	protected void run(HgRoot hgRoot) throws CoreException {
+		if (HgStatusClient.isDirty(hgRoot)) {
+			if (!MessageDialog
+					.openQuestion(getShell(),
+							Messages.getString("SwitchHandler.pendingChangesConfirmation.1"), //$NON-NLS-1$
+							Messages.getString("SwitchHandler.pendingChangesConfirmation.2"))) { //$NON-NLS-1$
+				return;
+			}
+		}
 		RevisionChooserDialog dialog = new RevisionChooserDialog(getShell(),
 				Messages.getString("SwitchHandler.switchTo"), hgRoot); //$NON-NLS-1$
 		int result = dialog.open();
 		if (result == IDialogConstants.OK_ID) {
-			if (HgStatusClient.isDirty(hgRoot)) {
-				if (!MessageDialog
-						.openQuestion(getShell(),
-								Messages.getString("SwitchHandler.pendingChangesConfirmation.1"), //$NON-NLS-1$
-								Messages.getString("SwitchHandler.pendingChangesConfirmation.2"))) { //$NON-NLS-1$
-					return;
-				}
-			}
 			new UpdateJob(dialog.getRevision(), true, hgRoot).schedule();
 		}
 	}

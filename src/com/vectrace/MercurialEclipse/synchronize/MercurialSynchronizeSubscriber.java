@@ -124,11 +124,8 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			return null;
 		}
 		IFile file = (IFile) resource;
-		HgRoot root;
-		try {
-			root = MercurialTeamProvider.getHgRoot(file);
-		} catch (HgException e1) {
-			MercurialEclipsePlugin.logError(e1);
+		HgRoot root = MercurialTeamProvider.hasHgRoot(file);
+		if(root == null){
 			return null;
 		}
 		String currentBranch = getCurrentBranch(file, root);
@@ -141,14 +138,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	static SyncInfo getSyncInfo(IFile file, HgRoot root, String currentBranch, IHgRepositoryLocation repo) {
-		ChangeSet csOutgoing;
-		try {
-			csOutgoing = getNewestOutgoing(file, currentBranch, repo);
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError(e);
-			return null;
-		}
-
+		ChangeSet csOutgoing = getNewestOutgoing(file, currentBranch, repo);
 		MercurialRevisionStorage outgoingIStorage;
 		IResourceVariant outgoing;
 		// determine outgoing revision
@@ -198,14 +188,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		// determine incoming revision get newest incoming changeset
-		ChangeSet csIncoming;
-		try {
-			csIncoming = getNewestIncoming(file, currentBranch, repo);
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError("failed to get newest incoming changeset", e);
-			return null;
-		}
-
+		ChangeSet csIncoming = getNewestIncoming(file, currentBranch, repo);
 		MercurialRevisionStorage incomingIStorage;
 		int syncMode = -1;
 		if (csIncoming != null) {
@@ -304,42 +287,23 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 	}
 
 	private static ChangeSet getNewestOutgoing(IFile file, String currentBranch,
-			IHgRepositoryLocation repo) throws InterruptedException {
+			IHgRepositoryLocation repo) {
 		ChangeSet csOutgoing = null;
-		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
-			// waiting didn't worked for us...
-			throw new InterruptedException("Timeout elapsed");
+
+		SortedSet<ChangeSet> changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
+		if (!changeSets.isEmpty()) {
+			csOutgoing = changeSets.last();
 		}
-		try {
-			// XXX [multi-project issue?] this call seems not to be properly understood by the cache,
-			// so that the later call to getChangeSets() on the same hg root causes the cache to call
-			// remote command again.
-			// this can trigger a refresh and a call to the remote server...
-			csOutgoing = OUTGOING_CACHE.getNewestChangeSet(file, repo, currentBranch);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			throw new InterruptedException("Cancelled due the exception: " + e.getMessage());
-		} finally {
-			cacheSema.release();
-		}
+
 		return csOutgoing;
 	}
 
 	private static ChangeSet getNewestIncoming(IFile file, String currentBranch,
-			IHgRepositoryLocation repo) throws InterruptedException {
+			IHgRepositoryLocation repo) {
 		ChangeSet csIncoming = null;
-		if(!cacheSema.tryAcquire(60 * 10, TimeUnit.SECONDS)){
-			// waiting didn't worked for us...
-			throw new InterruptedException("Timeout elapsed");
-		}
-		try {
-			// this can trigger a refresh and a call to the remote server...
-			csIncoming = INCOMING_CACHE.getNewestChangeSet(file, repo, currentBranch);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			throw new InterruptedException("Cancelled due the exception: " + e.getMessage());
-		} finally {
-			cacheSema.release();
+		SortedSet<ChangeSet> changeSets = INCOMING_CACHE.hasChangeSets(file, repo, currentBranch);
+		if (!changeSets.isEmpty()) {
+			csIncoming = changeSets.last();
 		}
 		return csIncoming;
 	}
@@ -362,24 +326,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		SortedSet<ChangeSet> changeSets = null;
 		if(!changedLocal){
 			try {
-				getNewestOutgoing(file, currentBranch, repo);
-			} catch (InterruptedException e) {
-				MercurialEclipsePlugin.logError("failed to get newest outgoing changeset", e);
-				return null;
-			}
-			try {
 				changeSets = OUTGOING_CACHE.getChangeSets(file, repo, currentBranch);
 				changedLocal = hasChanges(file, changeSets);
 			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
-		}
-
-		try {
-			getNewestIncoming(file, currentBranch, repo);
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError("failed to get newest incoming changeset", e);
-			return null;
 		}
 		try {
 			changeSets = INCOMING_CACHE.getChangeSets(file, repo, currentBranch);

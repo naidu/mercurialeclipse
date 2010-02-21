@@ -358,24 +358,38 @@ public class LocalChangesetCache extends AbstractCache {
 				return changeSet;
 			}
 			String nodeId = HgIdentClient.getCurrentChangesetId(root);
-			return updateLatestChangeset(root, nodeId);
+			if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
+				ChangeSet lastSet = HgLogClient.getChangeset(root, nodeId);
+				if (lastSet != null) {
+					latestChangesets.put(root, lastSet);
+				}
+				return lastSet;
+			}
 		}
+		return null;
 	}
 
 	/**
+	 * Checks if the cache contains an old changeset. If this is the case, simply removes the cached
+	 * value (new value will be retrieved later)
+	 * 
 	 * @param root
+	 *            working dir
 	 * @param nodeId
-	 * @throws HgException
+	 *            latest working dir (full) changeset id
 	 */
-	public ChangeSet updateLatestChangeset(HgRoot root, String nodeId) throws HgException {
-		if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
-			ChangeSet lastSet = HgLogClient.getChangeset(root, nodeId);
-			if(lastSet != null) {
-				latestChangesets.put(root, lastSet);
-			}
-			return lastSet;
+	public void checkLatestChangeset(HgRoot root, String nodeId) {
+		if (nodeId == null || root == null) {
+			return;
 		}
-		return null;
+		if (!HgIdentClient.VERSION_ZERO.equals(nodeId)) {
+			synchronized (latestChangesets) {
+				ChangeSet lastSet = latestChangesets.get(root);
+				if (lastSet != null && !nodeId.equals(lastSet.getChangeset())) {
+					latestChangesets.remove(root);
+				}
+			}
+		}
 	}
 
 

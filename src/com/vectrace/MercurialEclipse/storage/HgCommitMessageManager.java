@@ -235,15 +235,6 @@ public class HgCommitMessageManager {
 			return commitName;
 		}
 
-		// Bastian: A *USERNAME* shouldn't be the default for a full committer name.
-		// Therefore I changed the code to use username only in the case that Mercurial
-		// hasn't been configured with a user name.
-
-		commitName = MercurialUtilities.getDefaultUserName();
-		if (commitName != null && commitName.length() != 0) {
-			return commitName;
-		}
-
 		IHgRepositoryLocation repoLocation = MercurialEclipsePlugin.getRepoManager()
 				.getDefaultRepoLocation(hgRoot);
 		if (repoLocation != null) {
@@ -252,8 +243,14 @@ public class HgCommitMessageManager {
 				return user;
 			}
 		}
-		// shouldn't happen
-		return "";
+		
+		// Bastian: A *USERNAME* shouldn't be the default for a full committer name.
+		// Therefore I changed the code to use username only in the case that Mercurial
+		// hasn't been configured with a user name.
+		
+		// Andrei: unfortunately, commit name is often used as account name for authentication.
+		// So the real user name can't be used as first *default* choice
+		return MercurialUtilities.getDefaultUserName();
 	}
 
 	public static void setDefaultCommitName(HgRoot hgRoot, String name) {

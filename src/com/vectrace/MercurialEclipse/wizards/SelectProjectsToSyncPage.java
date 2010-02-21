@@ -26,12 +26,10 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.viewers.CheckStateChangedEvent;
 import org.eclipse.jface.viewers.ICheckStateListener;
 import org.eclipse.jface.viewers.ITreeContentProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -39,7 +37,6 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.dialogs.ContainerCheckedTreeViewer;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -50,41 +47,6 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author Andrei
  */
 public class SelectProjectsToSyncPage extends WizardPage {
-
-	/**
-	 * @author Andrei
-	 */
-	public static  class HgRootsLabelProvider extends LabelProvider {
-
-		private final WorkbenchLabelProvider wprovider;
-
-		public HgRootsLabelProvider() {
-			wprovider = new WorkbenchLabelProvider();
-		}
-
-		@Override
-		public String getText(Object element) {
-			if(element instanceof HgRoot){
-				HgRoot hgRoot = (HgRoot) element;
-				return hgRoot.getAbsolutePath();
-			}
-			if(element instanceof IProject){
-				return wprovider.getText(element);
-			}
-			return super.getText(element);
-		}
-
-		@Override
-		public Image getImage(Object element) {
-			if(element instanceof HgRoot){
-				return MercurialEclipsePlugin.getImage("root.gif");
-			}
-			if(element instanceof IProject){
-				return wprovider.getImage(element);
-			}
-			return super.getImage(element);
-		}
-	}
 
 	/**
 	 * @author Andrei
@@ -203,10 +165,14 @@ public class SelectProjectsToSyncPage extends WizardPage {
 		data.widthHint = 300;
 		treeViewer.getControl().setLayoutData(data);
 		treeViewer.setContentProvider(contentProvider);
-		treeViewer.setLabelProvider(new HgRootsLabelProvider());
+		treeViewer.setLabelProvider(new WorkbenchLabelProvider());
 		treeViewer.setInput(ResourcesPlugin.getWorkspace().getRoot());
-		treeViewer.setCheckedElements(projects);
-		treeViewer.setExpandedElements(ResourceUtils.groupByRoot(Arrays.asList(projects)).keySet().toArray());
+		Object[] selectedRoots = ResourceUtils.groupByRoot(Arrays.asList(projects)).keySet().toArray();
+		if(selectedRoots.length == 1) {
+			// only pre-select projects if they are from the same root
+			treeViewer.setCheckedElements(projects);
+		}
+		treeViewer.setExpandedElements(selectedRoots);
 		return treeViewer;
 	}
 
@@ -229,6 +195,7 @@ public class SelectProjectsToSyncPage extends WizardPage {
 		return roots.toArray(new HgRoot[roots.size()]);
 	}
 
+	@SuppressWarnings("unchecked")
 	public IProject[] getSelectedProjects() {
 		Set<IProject> selected = new HashSet<IProject>();
 		Object[] checkedElements = viewer.getCheckedElements();

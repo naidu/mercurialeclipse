@@ -27,7 +27,8 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class HgParentClient extends AbstractClient {
 
-	private static final Pattern ANCESTOR_PATTERN = Pattern.compile("^([0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
+	private static final Pattern ANCESTOR_PATTERN = Pattern
+			.compile("^([0-9]+):([0-9a-f]+)$"); //$NON-NLS-1$
 
 	private static final Pattern LINE_SEPERATOR_PATTERN = Pattern.compile("\n");
 
@@ -42,7 +43,8 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
-	public static String[] getParentNodeIds(HgRoot hgRoot) throws HgException {
+	public static String[] getParentNodeIds(HgRoot hgRoot)
+			throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", hgRoot, false);
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
 		String[] lines = getLines(command.executeToString());
@@ -53,28 +55,11 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
-	/**
-	 *
-	 * @param hgRoot
-	 * @param nodeId
-	 * @return the parents in the format index:nodeshort
-	 * @throws HgException
-	 */
-	public static String[] getParents(HgRoot hgRoot, String nodeId) throws HgException {
-		AbstractShellCommand command = new HgCommand("parents", hgRoot, false);
-		command.addOptions("--template", "{rev}:{node|short}\\n", "-r", nodeId); //$NON-NLS-1$ //$NON-NLS-2$
-		String[] lines = getLines(command.executeToString());
-		String[] parents = new String[lines.length];
-		for (int i = 0; i < lines.length; i++) {
-			parents[i] = lines[i].trim();
-		}
-		return parents;
-	}
-
-	public static String[] getParentNodeIds(IResource file) throws HgException {
+	public static String[] getParentNodeIds(IResource file)
+	throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				getWorkingDirectory(file), false);
-		if (file instanceof IFile) {
+		if(file instanceof IFile) {
 			command.addFiles(file);
 		}
 		command.addOptions("--template", "{node}\n"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -86,11 +71,13 @@ public class HgParentClient extends AbstractClient {
 		return parents;
 	}
 
-	public static String[] getParentNodeIds(IResource resource, ChangeSet cs) throws HgException {
+	public static String[] getParentNodeIds(IResource resource, ChangeSet cs)
+			throws HgException {
 		AbstractShellCommand command = new HgCommand("parents", //$NON-NLS-1$
 				getWorkingDirectory(resource), false);
-		command.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				.getChangeset());
+		command
+				.addOptions("--template", "{node}\n", "--rev", cs //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+						.getChangeset());
 		String[] lines = getLines(command.executeToString());
 		String[] parents = new String[lines.length];
 		for (int i = 0; i < lines.length; i++) {
@@ -113,8 +100,9 @@ public class HgParentClient extends AbstractClient {
 	}
 
 	/**
-	 * This methods finds the common ancestor of two changesets, supporting overlays for using
-	 * incoming changesets. Only one changeset may be incoming.
+	 * This methods finds the common ancestor of two changesets, supporting
+	 * overlays for using incoming changesets. Only one changeset may be
+	 * incoming.
 	 *
 	 * @param hgRoot
 	 *            hg root
