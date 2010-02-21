@@ -7,6 +7,7 @@
  *
  * Contributors:
  *     Bastian Doetsch - Implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
@@ -19,34 +20,24 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author bastian
- *
  */
 final class BisectMarkBadAction extends BisectAbstractAction {
-	/**
-	 * @param mercurialHistoryPage
-	 */
+
 	BisectMarkBadAction(MercurialHistoryPage mercurialHistoryPage) {
-		super(Messages.BisectMarkBadAction_name);
+		super(Messages.BisectMarkBadAction_name, mercurialHistoryPage);
 		this.setDescription(Messages.BisectMarkBadAction_description1
 				+ Messages.BisectMarkBadAction_description2);
-		super.mercurialHistoryPage = mercurialHistoryPage;
 	}
 
 	@Override
 	protected void updateHistory(MercurialRevision rev, HgRoot root) {
-		super.updateHistory(rev, root);
 		rev.setBisectStatus(Status.BAD);
+		super.updateHistory(rev, root);
 	}
 
-	/**
-	 * @param root
-	 * @param changeSet
-	 * @return
-	 * @throws HgException
-	 */
 	@Override
 	String callBisect(final HgRoot root, final ChangeSet changeSet) throws HgException {
-		final String result = HgBisectClient.markBad(root, changeSet);
-		return result;
+		setBisectStarted(true);
+		return HgBisectClient.markBad(root, changeSet);
 	}
 }

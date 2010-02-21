@@ -7,55 +7,41 @@
  *
  * Contributors:
  *     Bastian Doetsch - Implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- *
  */
 final class BisectMarkGoodAction extends BisectAbstractAction {
-	/**
-	 * @param mercurialHistoryPage
-	 */
+
 	BisectMarkGoodAction(MercurialHistoryPage mercurialHistoryPage) {
-		super(Messages.BisectMarkGoodAction_markSelectionAsGood);
+		super(Messages.BisectMarkGoodAction_markSelectionAsGood, mercurialHistoryPage);
 		this.setDescription(Messages.BisectMarkGoodAction_markSelectionDescription
 				+ Messages.BisectMarkGoodAction_markSelectionDescription2);
-		this.mercurialHistoryPage = mercurialHistoryPage;
 	}
 
 	@Override
 	protected void updateHistory(MercurialRevision rev, HgRoot root) {
-		super.updateHistory(rev, root);
 		rev.setBisectStatus(Status.GOOD);
+		super.updateHistory(rev, root);
 	}
 
 	@Override
 	public boolean isEnabled() {
-		try {
-			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
-			// bisect has started -> enable (bisect always start with bad revision)
-			if (root != null && HgBisectClient.isBisecting(root)) {
-				return true;
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-		return false;
+		return isBisectStarted();
 	}
 
 	@Override
 	String callBisect(HgRoot root, ChangeSet cs) throws HgException {
-		String result = HgBisectClient.markGood(root, cs);
-		return result;
+		setBisectStarted(true);
+		return HgBisectClient.markGood(root, cs);
 	}
 }

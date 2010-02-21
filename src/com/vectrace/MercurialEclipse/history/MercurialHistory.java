@@ -88,6 +88,7 @@ public class MercurialHistory extends FileHistory {
 	private GChangeSet lastGCS;
 	private int lastReqRevision;
 	private boolean showTags;
+	private boolean bisectStarted;
 
 	/**
 	 * @param resource must be non null
@@ -117,6 +118,14 @@ public class MercurialHistory extends FileHistory {
 		this.hgRoot = hgRoot;
 		revisions = new ArrayList<MercurialRevision>();
 		gChangeSets = new HashMap<Integer, GChangeSet>();
+	}
+
+	public void setBisectStarted(boolean started){
+		this.bisectStarted = started;
+	}
+
+	public boolean isBisectStarted() {
+		return bisectStarted;
 	}
 
 	/**
@@ -259,6 +268,8 @@ public class MercurialHistory extends FileHistory {
 		}
 		Map<String, Signature> sigMap = getSignatures();
 		Map<String, Status> bisectMap = HgBisectClient.getBisectStatus(hgRoot);
+		setBisectStarted(!bisectMap.isEmpty());
+
 		for (ChangeSet cs : changeSets) {
 			Signature sig = !sigMap.isEmpty() ? sigMap.get(cs.getChangeset()) : null;
 			Status bisectStatus = !bisectMap.isEmpty() ? bisectMap.get(cs.getChangeset()) : null;

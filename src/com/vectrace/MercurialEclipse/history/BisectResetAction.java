@@ -7,49 +7,39 @@
  *
  * Contributors:
  *     Bastian Doetsch - Implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBisectClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * @author bastian
- *
  */
 final class BisectResetAction extends BisectAbstractAction {
-	/**
-	 * @param mercurialHistoryPage
-	 */
+
 	BisectResetAction(MercurialHistoryPage mercurialHistoryPage) {
-		super(Messages.BisectResetAction_name);
+		super(Messages.BisectResetAction_name, mercurialHistoryPage);
 		this.setDescription(Messages.BisectResetAction_description
 				+ Messages.BisectResetAction_description2);
-		this.mercurialHistoryPage = mercurialHistoryPage;
 	}
 
 	@Override
 	public boolean isEnabled() {
-		try {
-			final HgRoot root = MercurialTeamProvider.getHgRoot(this.mercurialHistoryPage.resource);
-			// no selection or dirty working dir -> disable
-			if (root != null && HgBisectClient.isBisecting(root)) {
-				return true;
-			}
-			return false;
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
-		return false;
+		return isBisectStarted();
 	}
 
 	@Override
 	String callBisect(HgRoot root, ChangeSet cs) throws HgException {
-		String result = HgBisectClient.reset(root);
-		return result;
+		setBisectStarted(false);
+		return HgBisectClient.reset(root);
+	}
+
+	@Override
+	protected boolean checkDirty(HgRoot root) throws HgException {
+		return false;
 	}
 }

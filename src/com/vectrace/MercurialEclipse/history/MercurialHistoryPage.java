@@ -296,8 +296,6 @@ public class MercurialHistoryPage extends HistoryPage {
 		// bisect actions
 		actionBarsMenu.add(new Separator());
 		actionBarsMenu.add(mergeWithCurrentChangesetAction);
-		actionBarsMenu.add(bisectMarkBadAction);
-		actionBarsMenu.add(bisectMarkGoodAction);
 		actionBarsMenu.add(bisectResetAction);
 		actionBarsMenu.add(new Separator());
 		// export to bundle
@@ -532,6 +530,16 @@ public class MercurialHistoryPage extends HistoryPage {
 
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
+		final MenuManager bisectMenu = new MenuManager("Bisect");
+
+		bisectMenu.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				bisectMenu.add(bisectMarkBadAction);
+				bisectMenu.add(bisectMarkGoodAction);
+				bisectMenu.add(bisectResetAction);
+			}
+		});
+
 		menuMgr.addMenuListener(new IMenuListener() {
 
 			public void menuAboutToShow(IMenuManager menuMgr1) {
@@ -559,13 +567,13 @@ public class MercurialHistoryPage extends HistoryPage {
 				menuMgr1.add(updateAction);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(mergeWithCurrentChangesetAction);
-				menuMgr1.add(bisectMarkBadAction);
-				menuMgr1.add(bisectMarkGoodAction);
-				menuMgr1.add(bisectResetAction);
+				menuMgr1.add(bisectMenu);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(exportAsBundleAction);
 			}
 		});
+
+		bisectMenu.setRemoveAllWhenShown(true);
 		menuMgr.setRemoveAllWhenShown(true);
 		viewer.getTable().setMenu(menuMgr.createContextMenu(viewer.getTable()));
 	}
