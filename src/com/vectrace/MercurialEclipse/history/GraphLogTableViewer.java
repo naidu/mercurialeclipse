@@ -132,21 +132,26 @@ public class GraphLogTableViewer extends TableViewer {
 
 		// bisect colorization
 		Status bisectStatus = rev.getBisectStatus();
-		if (bisectStatus != null && bisectStatus == Status.BAD) {
-			tableItem.setBackground(colours.get(10));
-		} else if (bisectStatus != null) {
-			tableItem.setBackground(colours.get(9));
-		}
-
-		// use italic dark grey font for merge changesets
-		String[] parents = rev.getChangeSet().getParents();
-		if (parents != null && parents.length == 2) {
-			decorateMergeChangesets(tableItem);
+		if (bisectStatus != null) {
+			if (bisectStatus == Status.BAD) {
+				tableItem.setBackground(colours.get(10));
+			} else {
+				tableItem.setBackground(colours.get(9));
+			}
+		} else {
+			// use italic dark grey font for merge changesets
+			String[] parents = rev.getChangeSet().getParents();
+			if (parents != null && parents.length == 2) {
+				decorateMergeChangesets(tableItem);
+			}
 		}
 	}
 
 	private void decorateMergeChangesets(TableItem tableItem) {
-		tableItem.setFont(mergeFont);
+		// Don't ask me why, but it seems that setting the font here causes strange
+		// UI thread freeze periods on Windows. I guess that this causes another paint
+		// requests...
+//		tableItem.setFont(mergeFont);
 		tableItem.setBackground(mergeBack);
 		tableItem.setForeground(mergeFore);
 	}
