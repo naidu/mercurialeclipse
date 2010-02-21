@@ -56,9 +56,9 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
 
-	static final String PROP_PASSWORD = "password";
-	static final String PROP_USER = "user";
-	static final String PROP_URL = "url";
+	public static final String PROP_PASSWORD = "password";
+	public static final String PROP_USER = "user";
+	public static final String PROP_URL = "url";
 
 	private static final int COMBO_HISTORY_LENGTH = 10;
 
@@ -174,6 +174,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				DirectoryDialog dialog = new DirectoryDialog(getShell());
+				File localDirectory = getLocalDirectory(getUrlText());
+				if(localDirectory != null) {
+					dialog.setFilterPath(localDirectory.getAbsolutePath());
+				}
 				dialog.setMessage(Messages.getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
 				String dir = dialog.open();
 				if (dir != null) {

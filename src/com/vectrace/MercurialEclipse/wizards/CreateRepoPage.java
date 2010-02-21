@@ -86,7 +86,7 @@ public class CreateRepoPage extends ConfigurationWizardMainPage {
 			HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
 			IHgRepositoryLocation repoLocation = repoManager.getRepoLocation(url);
 			if(repoManager.getAllRepoLocations().contains(repoLocation)){
-				setErrorMessage("Repository location already exists!");
+				setErrorMessage("Repository location already known!");
 				return false;
 			}
 		} catch (HgException e) {

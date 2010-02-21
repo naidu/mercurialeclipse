@@ -168,8 +168,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
-					new InitOperation(activeWorkbenchWindow, project, hgRoot, hgRoot.getAbsolutePath())
-					.run(monitor);
+					new InitOperation(activeWorkbenchWindow, project, hgRoot).run(monitor);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}
