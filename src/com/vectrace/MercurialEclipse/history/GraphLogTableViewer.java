@@ -40,6 +40,9 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 public class GraphLogTableViewer extends TableViewer {
 	private final List<Color> colours = new ArrayList<Color>();
 	private final MercurialHistoryPage mhp;
+	private final Font mergeFont;
+	private final Color mergeBack;
+	private final Color mergeFore;
 
 	public GraphLogTableViewer(Composite parent, int style,
 			MercurialHistoryPage mercurialHistoryPage) {
@@ -63,6 +66,14 @@ public class GraphLogTableViewer extends TableViewer {
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_RED));
+		// TODO add pref store listener
+		mergeFont = MercurialUtilities
+				.getFontPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT);
+
+		mergeBack = MercurialUtilities
+				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND);
+		mergeFore = MercurialUtilities
+				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FOREGROUND);
 	}
 
 	protected void paint(Event event) {
@@ -128,26 +139,16 @@ public class GraphLogTableViewer extends TableViewer {
 		}
 
 		// use italic dark grey font for merge changesets
-		if (rev.getChangeSet().getParents()!= null && rev.getChangeSet().getParents().length == 2) {
+		String[] parents = rev.getChangeSet().getParents();
+		if (parents != null && parents.length == 2) {
 			decorateMergeChangesets(tableItem);
 		}
 	}
 
-	/**
-	 * @param tableItem
-	 * @param defaultFont
-	 */
 	private void decorateMergeChangesets(TableItem tableItem) {
-		Font font = MercurialUtilities.getFontPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT);
-		tableItem.setFont(font);
-
-		Color back = MercurialUtilities
-				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND);
-		tableItem.setBackground(back);
-
-		Color fore = MercurialUtilities
-				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FOREGROUND);
-		tableItem.setForeground(fore);
+		tableItem.setFont(mergeFont);
+		tableItem.setBackground(mergeBack);
+		tableItem.setForeground(mergeFore);
 	}
 
 	private void paint(Event event, EdgeList edges, int i) {
