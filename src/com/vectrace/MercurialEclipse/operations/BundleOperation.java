@@ -27,13 +27,15 @@ public class BundleOperation extends HgOperation {
 	private final HgRoot root;
 	private final String bundleFile;
 	private final ChangeSet rev;
+	private final String remoteRepo;
 
 	public BundleOperation(IRunnableContext ctx, HgRoot hgRoot, ChangeSet revision,
-			String bundleFileName) {
+			String bundleFileName, String remoteRepo) {
 		super(ctx);
 		root = hgRoot;
 		rev = revision;
 		bundleFile = bundleFileName;
+		this.remoteRepo = remoteRepo;
 	}
 
 	@Override
@@ -48,7 +50,7 @@ public class BundleOperation extends HgOperation {
 			monitor.beginTask("Starting to create bundle...", 2); //$NON-NLS-1$
 			monitor.subTask("Calling Mercurial bundle command...");
 			monitor.worked(1);
-			this.result = HgBundleClient.bundle(root, rev, bundleFile);
+			this.result = HgBundleClient.bundle(root, rev, bundleFile, remoteRepo);
 			monitor.worked(1);
 		} catch (CoreException e) {
 			throw new InvocationTargetException(e);

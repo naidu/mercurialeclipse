@@ -7,12 +7,12 @@
  *
  * Contributors:
  * Bastian	implementation
+ * 		Andrei Loskutov (Intland) 	- bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.PlatformObject;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IExportWizard;
 import org.eclipse.ui.IWorkbench;
@@ -23,10 +23,10 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.operations.BundleOperation;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Bastian
- *
  */
 public class BundleRepoWizard extends HgWizard implements IExportWizard {
 	private HgRoot root;
@@ -40,21 +40,20 @@ public class BundleRepoWizard extends HgWizard implements IExportWizard {
 	}
 
 	public void init(IWorkbench workbench, IStructuredSelection s) {
-		this.selection = s;
-		if (this.selection.isEmpty()) {
+		selection = s;
+		if (selection.isEmpty()) {
 			return;
 		}
-		PlatformObject po = (PlatformObject) selection.getFirstElement();
-		IResource res = (IResource) po.getAdapter(IResource.class);
+		IResource res = ResourceUtils.getResource(selection.getFirstElement());
 		try {
 			root = MercurialTeamProvider.getHgRoot(res);
 			if (root != null) {
-				this.page = new BundleRepoPage("bundleRepoPage",
+				page = new BundleRepoPage("bundleRepoPage",
 						"Export Mercurial Repository as Bundle", null, root);
 				initPage(page.getDescription(), page);
 				addPage(page);
-				this.outgoingPage = new OutgoingPage("outgoingPage");
-				initPage(outgoingPage.getDescription(),outgoingPage);
+				outgoingPage = new OutgoingPage("outgoingPage");
+				initPage(outgoingPage.getDescription(), outgoingPage);
 				addPage(outgoingPage);
 			} else {
 				throw new HgException("Could not find a Mercurial repository for export.");
@@ -70,11 +69,11 @@ public class BundleRepoWizard extends HgWizard implements IExportWizard {
 		page.finish(new NullProgressMonitor());
 		outgoingPage.finish(new NullProgressMonitor());
 
-
 		String bundleFile = page.getBundleFile();
+		String remoteRepo = page.getUrlText();
 		ChangeSet cs = outgoingPage.getRevision();
 
-		BundleOperation op = new BundleOperation(getContainer(), root, cs, bundleFile);
+		BundleOperation op = new BundleOperation(getContainer(), root, cs, bundleFile, remoteRepo);
 		try {
 			getContainer().run(true, true, op);
 		} catch (Exception e) {

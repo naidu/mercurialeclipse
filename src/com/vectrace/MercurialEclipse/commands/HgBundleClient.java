@@ -15,17 +15,24 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgBundleClient extends AbstractClient {
-	public static String bundle(HgRoot root, ChangeSet rev, String file) throws HgException {
+	public static String bundle(HgRoot root, ChangeSet rev, String file, String remoteRepo) throws HgException {
 		AbstractShellCommand cmd = new HgCommand("bundle", root, true);
 		cmd.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(root));
 		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 
+		boolean compareWithRemote = remoteRepo != null && remoteRepo.trim().length() > 0;
+
 		if (rev != null) {
 			cmd.addOptions("-r", rev.getChangeset());
-			cmd.addOptions("--base", "null");
+			if(!compareWithRemote) {
+				cmd.addOptions("--base", "null");
+			}
 		}
 
 		cmd.addOptions(file);
+		if(compareWithRemote){
+			cmd.addOptions(remoteRepo);
+		}
 		return cmd.executeToString();
 	}
 

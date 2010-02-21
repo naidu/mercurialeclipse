@@ -1580,6 +1580,10 @@
    </extension>
    <extension
          point="org.eclipse.ui.exportWizards">
+      <category
+            id="com.vectrace.MercurialEclipse.wizards.export"
+            name="%mercurial">
+      </category>
       <wizard
             category="com.vectrace.MercurialEclipse.wizards.export"
             class="com.vectrace.MercurialEclipse.wizards.BundleRepoWizard"

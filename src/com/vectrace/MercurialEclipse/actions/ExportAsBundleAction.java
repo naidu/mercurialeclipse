@@ -63,7 +63,7 @@ public class ExportAsBundleAction extends Action {
 					monitor.setCanceled(true);
 					return Status.CANCEL_STATUS;
 				}
-				HgBundleClient.bundle(root, rev.getChangeSet(), file);
+				HgBundleClient.bundle(root, rev.getChangeSet(), file, null);
 				monitor.worked(1);
 
 				final String message = Messages.getString("ExportAsBundleAction.theRevision") //$NON-NLS-1$

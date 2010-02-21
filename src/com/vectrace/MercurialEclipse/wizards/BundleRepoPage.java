@@ -99,11 +99,12 @@ public class BundleRepoPage extends PushPullPage {
 	@Override
 	public boolean canFlipToNextPage() {
 		try {
-			if (getUrlCombo().getText() != null && getUrlCombo().getText() != null) {
+			String url = getUrlCombo().getText();
+			if (url != null && url.length() > 0) {
 				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
 				outgoingPage.setHgRoot(hgRoot);
 				IHgRepositoryLocation loc = MercurialEclipsePlugin.getRepoManager()
-						.getRepoLocation(urlCombo.getText(), getUserCombo().getText(),
+						.getRepoLocation(url, getUserCombo().getText(),
 								getPasswordText().getText());
 				outgoingPage.setLocation(loc);
 				outgoingPage.setSvn(getSvnCheckBox() != null && getSvnCheckBox().getSelection());
