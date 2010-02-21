@@ -15,8 +15,6 @@
 
 package com.vectrace.MercurialEclipse.preferences;
 
-import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
-
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.ui.IWorkbench;
@@ -54,15 +52,11 @@ public class HistoryPreferencePage extends FieldEditorPreferencePage implements
 				MercurialPreferenceConstants.PREF_SIGCHECK_IN_HISTORY,
 				Messages.getString("GeneralPreferencePage.verifyGpgSignaturesInHistoryView"), getFieldEditorParent())); //$NON-NLS-1$
 
-		addField(new BooleanFieldEditor(PREF_SHOW_PATHS, "Show file information of revisions",
-				getFieldEditorParent()));
 
-		addField(new BooleanFieldEditor(PREF_SHOW_COMMENTS, "Show full comment",
-				getFieldEditorParent()));
-
-		addField(SWTWidgetHelper.createFontFieldEditor(
-				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT, "Merge Changeset Font", getFieldEditorParent(), this,
-				getPreferenceStore()));
+// TODO Temporarily disabled as the font change caused strange UI freezes
+//		addField(SWTWidgetHelper.createFontFieldEditor(
+//				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT, "Merge Changeset Font", getFieldEditorParent(), this,
+//				getPreferenceStore()));
 
 		addField(SWTWidgetHelper.createColorFieldEditor(
 				MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND,
