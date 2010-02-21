@@ -1172,11 +1172,21 @@
       <wizard
             category="com.vectrace.MercurialEclipse.wizards.import"
             class="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
-            icon="icons/mercury_Hg.png"
+            icon="icons/clone_repo.gif"
             id="com.vectrace.MercurialEclipse.wizards.CloneRepoWizard"
-            name="%cloneRepository">
+            name="%cloneRepository2">
          <description>
-            %importFile
+            Clone existing local or remote Mercurial repository
+         </description>
+      </wizard>
+      <wizard
+            category="com.vectrace.MercurialEclipse.wizards.import"
+            class="com.vectrace.MercurialEclipse.wizards.ImportProjectsFromRepoWizard"
+            icon="icons/import_project.gif"
+            id="com.vectrace.MercurialEclipse.wizards.ImportProjectsFromRepoWizard"
+            name="%importFromRepository">
+         <description>
+            Import one or more projects from local Mercurial repository
          </description>
       </wizard>
    </extension>
@@ -1194,7 +1204,11 @@
             icon="icons/clone_repo.gif"
             id="com.vectrace.MercurialEclipse.wizards.NewHgProjectWizard"
             name="%cloneRepository2"
-            project="true"/>
+            project="true">
+         <description>
+            Clone existing local or remote Mercurial repository
+         </description>
+      </wizard>
       <wizard
             canFinishEarly="false"
             category="com.vectrace.MercurialEclipse.wizards.new"
@@ -1203,6 +1217,9 @@
             icon="icons/wizards/newlocation_wiz.gif"
             id="com.vectrace.MercurialEclipse.wizards.NewLocationWizard"
             name="%createRepository">
+         <description>
+            Create new local Mercurial repository or new remote repository location
+         </description>
       </wizard>
    </extension>
 

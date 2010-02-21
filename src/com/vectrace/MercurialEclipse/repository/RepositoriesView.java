@@ -66,6 +66,7 @@ import com.vectrace.MercurialEclipse.repository.model.RemoteContentProvider;
 import com.vectrace.MercurialEclipse.ui.HgProjectPropertyPage;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.wizards.CloneRepoWizard;
+import com.vectrace.MercurialEclipse.wizards.ImportProjectsFromRepoWizard;
 import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
 
 /**
@@ -123,6 +124,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		}
 	};
 
+	private Action importAction;
+
 	public RepositoriesView() {
 		super();
 	}
@@ -154,6 +157,20 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			public void run() {
 				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
 				CloneRepoWizard wizard = new CloneRepoWizard();
+				wizard.init(PlatformUI.getWorkbench(), selection);
+				WizardDialog dialog = new WizardDialog(shell, wizard);
+				dialog.open();
+			}
+		};
+
+		// Import project (popup)
+		importAction = new Action(Messages.getString("RepositoriesView.importProject"),
+				MercurialEclipsePlugin.getImageDescriptor("import_project.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
+
+				ImportProjectsFromRepoWizard wizard = new ImportProjectsFromRepoWizard();
 				wizard.init(PlatformUI.getWorkbench(), selection);
 				WizardDialog dialog = new WizardDialog(shell, wizard);
 				dialog.open();
@@ -283,6 +300,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 	}
 
 	protected void addWorkbenchActions(IMenuManager manager) {
+		IStructuredSelection selection = (IStructuredSelection) getViewer().getSelection();
 
 		// File actions go first (view file)
 		manager.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
@@ -290,10 +308,20 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		manager.add(new Separator("historyGroup")); //$NON-NLS-1$
 		manager.add(new Separator("checkoutGroup")); //$NON-NLS-1$
 		manager.add(new Separator("exportImportGroup")); //$NON-NLS-1$
+
+		boolean singleFile = selection.size() == 1
+			&& selection.getFirstElement() instanceof HgPath;
+
+		if(singleFile) {
+			HgPath path = (HgPath) selection.getFirstElement();
+			if(path.isDirectory()) {
+				manager.add(importAction);
+			}
+		}
+
 		manager.add(new Separator("miscGroup")); //$NON-NLS-1$
 
 
-		IStructuredSelection selection = (IStructuredSelection) getViewer().getSelection();
 		boolean singleRepoSelected = selection.size() == 1
 				&& selection.getFirstElement() instanceof IHgRepositoryLocation;
 
@@ -301,6 +329,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 			manager.add(cloneAction);
 			manager.add(refreshPopupAction);
 		}
+
 
 		removeRootAction.selectionChanged(selection);
 		if (removeRootAction.isEnabled()) {
