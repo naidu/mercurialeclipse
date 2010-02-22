@@ -23,7 +23,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.search.internal.ui.text.LineElement;
 import org.eclipse.search.ui.text.AbstractTextSearchResult;
 import org.eclipse.search.ui.text.Match;
 
@@ -76,6 +75,15 @@ public class MercurialTextSearchTreeContentProvider implements
 		boolean showLineMatches = !((MercurialTextSearchQuery) fResult
 				.getQuery()).isFileNameSearch();
 
+		getMatches(result, showLineMatches);
+	}
+
+	/**
+	 * @param result
+	 * @param showLineMatches
+	 */
+	private void getMatches(AbstractTextSearchResult result,
+			boolean showLineMatches) {
 		if (result != null) {
 			Object[] elements = result.getElements();
 			for (int i = 0; i < elements.length; i++) {
@@ -171,10 +179,6 @@ public class MercurialTextSearchTreeContentProvider implements
 	}
 
 	private boolean hasMatches(Object element) {
-		if (element instanceof LineElement) {
-			LineElement lineElement = (LineElement) element;
-			return lineElement.getNumberOfMatches(fResult) > 0;
-		}
 		return fResult.getMatchCount(element) > 0;
 	}
 
@@ -204,6 +208,7 @@ public class MercurialTextSearchTreeContentProvider implements
 	 * elementsChanged(java.lang.Object[])
 	 */
 	public synchronized void elementsChanged(Object[] updatedElements) {
+		getMatches(fResult, true);
 		for (int i = 0; i < updatedElements.length; i++) {
 			if (!(updatedElements[i] instanceof MercurialRevisionStorage)) {
 				// change events to elements are reported in file search

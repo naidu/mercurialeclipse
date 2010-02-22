@@ -23,8 +23,6 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.SearchMessages;
-import org.eclipse.search.internal.ui.text.DecoratingFileSearchLabelProvider;
-import org.eclipse.search.internal.ui.text.FileLabelProvider;
 import org.eclipse.search.internal.ui.text.NewTextSearchActionGroup;
 import org.eclipse.search.ui.IContextMenuConstants;
 import org.eclipse.search.ui.ISearchResultViewPart;
@@ -69,8 +67,8 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage
 		viewer.setUseHashlookup(true);
 		contentProvider = new MercurialTextSearchTableContentProvider(this);
 		viewer.setContentProvider(contentProvider);
-		FileLabelProvider innerLabelProvider = new FileLabelProvider(this,
-				FileLabelProvider.SHOW_LABEL);
+		MercurialTextSearchLabelProvider innerLabelProvider = new MercurialTextSearchLabelProvider(
+				this, MercurialTextSearchLabelProvider.SHOW_LABEL);
 		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(
 				innerLabelProvider));
 	}
@@ -81,8 +79,10 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage
 		contentProvider = new MercurialTextSearchTreeContentProvider(this,
 				viewer);
 		viewer.setContentProvider(contentProvider);
-		FileLabelProvider innerLabelProvider= new FileLabelProvider(this, FileLabelProvider.SHOW_LABEL);
-		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(innerLabelProvider));
+		MercurialTextSearchLabelProvider innerLabelProvider = new MercurialTextSearchLabelProvider(
+				this, MercurialTextSearchLabelProvider.SHOW_LABEL);
+		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(
+				innerLabelProvider));
 	}
 
 	@Override
