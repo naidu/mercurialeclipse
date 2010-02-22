@@ -72,8 +72,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 /**
  * TODO enable tree/flat view switch
  *
- * @author steeven
- * $Id$
+ * @author steeven $Id$
  */
 public class CommitFilesChooser extends Composite {
 	private final UntrackedFilesFilter untrackedFilesFilter;
@@ -94,13 +93,17 @@ public class CommitFilesChooser extends Composite {
 		return viewer;
 	}
 
-	public CommitFilesChooser(HgRoot hgRoot, Composite container, boolean selectable, boolean showUntracked, boolean showMissing, boolean showClean) {
+	public CommitFilesChooser(HgRoot hgRoot, Composite container,
+			boolean selectable, boolean showUntracked, boolean showMissing,
+			boolean showClean) {
 		this(container, selectable, null, showUntracked, showMissing, showClean);
 		setResources(hgRoot);
 	}
 
-	public CommitFilesChooser(Composite container, boolean selectable, List<IResource> resources, boolean showUntracked, boolean showMissing, boolean showClean) {
-		super(container, container.getStyle());
+	public CommitFilesChooser(Composite container, boolean selectable,
+			List<IResource> resources, boolean showUntracked,
+			boolean showMissing, boolean showClean) {
+		super(container, container.getStyle() | SWT.V_SCROLL);
 		this.selectable = selectable;
 		this.showUntracked = showUntracked;
 		this.missing = showMissing;
@@ -115,10 +118,9 @@ public class CommitFilesChooser extends Composite {
 		layout.marginHeight = 0;
 		setLayout(layout);
 
-		setLayoutData(SWTWidgetHelper.getFillGD(200));
+		setLayoutData(SWTWidgetHelper.getFillGD(150));
 
 		Table table = createTable();
-
 		viewer = new CheckboxTableViewer(table);
 		viewer.setContentProvider(new ArrayContentProvider());
 		CommitResourceLabelProvider labelProvider = new CommitResourceLabelProvider();
@@ -126,7 +128,8 @@ public class CommitFilesChooser extends Composite {
 			public void labelProviderChanged(LabelProviderChangedEvent event) {
 				int count = viewer.getTable().getItemCount();
 				for (int i = 0; i < count; i++) {
-					CommitResource commitResource = (CommitResource) viewer.getElementAt(i);
+					CommitResource commitResource = (CommitResource) viewer
+							.getElementAt(i);
 					viewer.update(commitResource, null);
 				}
 			}
@@ -137,37 +140,41 @@ public class CommitFilesChooser extends Composite {
 			viewer.addFilter(untrackedFilesFilter);
 		}
 
-
 		createOptionCheckbox();
 		createShowDiffButton(container);
 		createFileSelectionListener();
 
 		makeActions();
-		if(resources != null) {
+		if (resources != null) {
 			setResources(resources);
 		}
 	}
 
 	private void createFileSelectionListener() {
-		getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				ISelection selection = event.getSelection();
+		getViewer().addSelectionChangedListener(
+				new ISelectionChangedListener() {
+					public void selectionChanged(SelectionChangedEvent event) {
+						ISelection selection = event.getSelection();
 
-				if (selection instanceof IStructuredSelection) {
-					IStructuredSelection sel = (IStructuredSelection) selection;
-					CommitResource commitResource = (CommitResource) sel.getFirstElement();
-					if (commitResource != null) {
-						IFile oldSelectedFile = selectedFile;
-						selectedFile = (IFile) commitResource.getResource();
-						if (oldSelectedFile == null || !oldSelectedFile.equals(selectedFile)) {
-							trayButton.setEnabled(true);
+						if (selection instanceof IStructuredSelection) {
+							IStructuredSelection sel = (IStructuredSelection) selection;
+							CommitResource commitResource = (CommitResource) sel
+									.getFirstElement();
+							if (commitResource != null) {
+								IFile oldSelectedFile = selectedFile;
+								selectedFile = (IFile) commitResource
+										.getResource();
+								if (oldSelectedFile == null
+										|| !oldSelectedFile
+												.equals(selectedFile)) {
+									trayButton.setEnabled(true);
+								}
+							}
+
 						}
 					}
 
-				}
-			}
-
-		});
+				});
 	}
 
 	private void createShowDiffButton(Composite container) {
@@ -203,22 +210,26 @@ public class CommitFilesChooser extends Composite {
 			return;
 		}
 		selectAllButton = new Button(this, SWT.CHECK);
-		selectAllButton.setText(Messages.getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
+		selectAllButton.setText(Messages
+				.getString("Common.SelectOrUnselectAll")); //$NON-NLS-1$
 		selectAllButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 
 		if (!showUntracked) {
 			return;
 		}
 		showUntrackedFilesButton = new Button(this, SWT.CHECK);
-		showUntrackedFilesButton.setText(Messages.getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
-		showUntrackedFilesButton.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		showUntrackedFilesButton.setText(Messages
+				.getString("Common.ShowUntrackedFiles")); //$NON-NLS-1$
+		showUntrackedFilesButton.setLayoutData(new GridData(
+				GridData.FILL_HORIZONTAL));
 	}
 
 	protected CompareEditorInput getCompareEditorInput() {
 		if (selectedFile == null) {
 			return null;
 		}
-		MercurialRevisionStorage iStorage = new MercurialRevisionStorage(selectedFile);
+		MercurialRevisionStorage iStorage = new MercurialRevisionStorage(
+				selectedFile);
 		ResourceNode right = new RevisionNode(iStorage);
 		ResourceNode left = new ResourceNode(selectedFile);
 		return CompareUtils.getCompareInput(left, right, false);
@@ -254,18 +265,19 @@ public class CommitFilesChooser extends Composite {
 
 		if (selectable && showUntracked) {
 			showUntrackedFilesButton.setSelection(true); // Start selected.
-			showUntrackedFilesButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					if (showUntrackedFilesButton.getSelection()) {
-						getViewer().removeFilter(untrackedFilesFilter);
-					} else {
-						getViewer().addFilter(untrackedFilesFilter);
-					}
-					getViewer().refresh(true);
-					fireStateChanged();
-				}
-			});
+			showUntrackedFilesButton
+					.addSelectionListener(new SelectionAdapter() {
+						@Override
+						public void widgetSelected(SelectionEvent e) {
+							if (showUntrackedFilesButton.getSelection()) {
+								getViewer().removeFilter(untrackedFilesFilter);
+							} else {
+								getViewer().addFilter(untrackedFilesFilter);
+							}
+							getViewer().refresh(true);
+							fireStateChanged();
+						}
+					});
 		}
 
 		final Table table = getViewer().getTable();
@@ -277,10 +289,11 @@ public class CommitFilesChooser extends Composite {
 				@Override
 				protected int doCompare(Viewer v, Object e1, Object e2) {
 					StructuredViewer v1 = (StructuredViewer) v;
-					ITableLabelProvider lp = ((ITableLabelProvider) v1.getLabelProvider());
+					ITableLabelProvider lp = ((ITableLabelProvider) v1
+							.getLabelProvider());
 					String t1 = lp.getColumnText(e1, colIdx);
 					String t2 = lp.getColumnText(e2, colIdx);
-					if(t1 != null) {
+					if (t1 != null) {
 						return t1.compareTo(t2);
 					}
 					return 0;
@@ -290,27 +303,34 @@ public class CommitFilesChooser extends Composite {
 	}
 
 	/**
-	 * Set the resources, and from those select resources, which are tracked by Mercurial
-	 * @param resources non null
+	 * Set the resources, and from those select resources, which are tracked by
+	 * Mercurial
+	 *
+	 * @param resources
+	 *            non null
 	 */
 	public void setResources(List<IResource> resources) {
 		CommitResource[] commitResources = createCommitResources(resources);
 		getViewer().setInput(commitResources);
 
-		List<CommitResource> tracked = new CommitResourceUtil().filterForTracked(commitResources);
+		List<CommitResource> tracked = new CommitResourceUtil()
+				.filterForTracked(commitResources);
 		getViewer().setCheckedElements(tracked.toArray());
 		if (selectable && !showUntracked) {
 			selectAllButton.setSelection(true);
 		}
-		// show clean file, if we are called on a single, not modified file (revert to any version in the past)
-		if(showClean && resources.size() == 1 && commitResources.length == 0) {
+		// show clean file, if we are called on a single, not modified file
+		// (revert to any version in the past)
+		if (showClean && resources.size() == 1 && commitResources.length == 0) {
 			IResource resource = resources.get(0);
-			if(resource.getType() == IResource.FILE){
+			if (resource.getType() == IResource.FILE) {
 				try {
 					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
-					File path = new File(hgRoot.toRelative(resource.getLocation().toFile()));
-					CommitResource cr = new CommitResource("" + MercurialStatusCache.CHAR_CLEAN, resource, path);
-					CommitResource[] input = new CommitResource[]{cr};
+					File path = new File(hgRoot.toRelative(resource
+							.getLocation().toFile()));
+					CommitResource cr = new CommitResource(""
+							+ MercurialStatusCache.CHAR_CLEAN, resource, path);
+					CommitResource[] input = new CommitResource[] { cr };
 					getViewer().setInput(input);
 					getViewer().setCheckedElements(input);
 				} catch (HgException e) {
@@ -321,18 +341,23 @@ public class CommitFilesChooser extends Composite {
 	}
 
 	/**
-	 * Set the all the modified resources from given hg root, and from those select resources, which are tracked by Mercurial
-	 * @param hgRoot non null
+	 * Set the all the modified resources from given hg root, and from those
+	 * select resources, which are tracked by Mercurial
+	 *
+	 * @param hgRoot
+	 *            non null
 	 */
 	public void setResources(HgRoot hgRoot) {
 		List<IResource> resources = new ArrayList<IResource>();
 		// get the dirty files...
 		try {
-			Set<IPath> dirtyFilePaths = HgStatusClient.getDirtyFilePaths(hgRoot);
+			Set<IPath> dirtyFilePaths = HgStatusClient
+					.getDirtyFilePaths(hgRoot);
 			for (IPath path : dirtyFilePaths) {
 				IFile fileHandle = ResourceUtils.getFileHandle(path);
-				// XXX this would NOT add files which are not under Eclipse control (outside of a project)
-				if(fileHandle != null) {
+				// XXX this would NOT add files which are not under Eclipse
+				// control (outside of a project)
+				if (fileHandle != null) {
 					resources.add(fileHandle);
 				}
 			}
@@ -344,11 +369,13 @@ public class CommitFilesChooser extends Composite {
 
 	/**
 	 * Create the Commit-resources' for a set of resources
+	 *
 	 * @param res
 	 */
 	private CommitResource[] createCommitResources(List<IResource> res) {
 		try {
-			return new CommitResourceUtil().getCommitResources(res.toArray(new IResource[0]));
+			return new CommitResourceUtil().getCommitResources(res
+					.toArray(new IResource[0]));
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 		}
@@ -356,15 +383,20 @@ public class CommitFilesChooser extends Composite {
 	}
 
 	/**
-	 * Set the selected resources. Obviously this will only select those resources, which are displayed...
+	 * Set the selected resources. Obviously this will only select those
+	 * resources, which are displayed...
+	 *
 	 * @param resources
 	 */
 	public void setSelectedResources(List<IResource> resources) {
-		CommitResource[] allCommitResources = (CommitResource[]) getViewer().getInput();
+		CommitResource[] allCommitResources = (CommitResource[]) getViewer()
+				.getInput();
 		if (allCommitResources == null) {
 			return;
 		}
-		List<CommitResource> selected = new CommitResourceUtil().filterForResources(Arrays.asList(allCommitResources), resources);
+		List<CommitResource> selected = new CommitResourceUtil()
+				.filterForResources(Arrays.asList(allCommitResources),
+						resources);
 		getViewer().setCheckedElements(selected.toArray());
 	}
 
@@ -380,7 +412,8 @@ public class CommitFilesChooser extends Composite {
 		TableItem[] children = getViewer().getTable().getItems();
 		List<IResource> list = new ArrayList<IResource>(children.length);
 		for (TableItem item : children) {
-			if (item.getChecked() == checked && item.getData() instanceof CommitResource) {
+			if (item.getChecked() == checked
+					&& item.getData() instanceof CommitResource) {
 				CommitResource resource = (CommitResource) item.getData();
 				if (status == null || status.length == 0) {
 					list.add(resource.getResource());
@@ -409,7 +442,8 @@ public class CommitFilesChooser extends Composite {
 
 	private void showDiffForSelection() {
 		if (selectedFile != null) {
-			MercurialRevisionStorage iStorage = new MercurialRevisionStorage(selectedFile);
+			MercurialRevisionStorage iStorage = new MercurialRevisionStorage(
+					selectedFile);
 			ResourceNode right = new RevisionNode(iStorage);
 			ResourceNode left = new ResourceNode(selectedFile);
 			CompareUtils.openEditor(left, right, true, false);

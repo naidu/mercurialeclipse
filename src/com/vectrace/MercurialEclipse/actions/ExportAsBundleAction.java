@@ -16,9 +16,12 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.dialogs.InputDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
+import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBundleClient;
@@ -34,8 +37,7 @@ import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
  */
 public class ExportAsBundleAction extends Action {
 
-	private static final class ExportBundleJob extends Job {
-		private String file;
+	private final class ExportBundleJob extends Job {
 		private final MercurialRevision rev;
 
 		private ExportBundleJob(String name, MercurialRevision rev) {
@@ -56,14 +58,14 @@ public class ExportAsBundleAction extends Action {
 				monitor.worked(1);
 				monitor.subTask(Messages.getString("ExportAsBundleAction.callingMercurial")); //$NON-NLS-1$
 
-				file = getFile();
+				determineFileAndBase();
 
 				if (file == null) {
 					// user cancel
 					monitor.setCanceled(true);
 					return Status.CANCEL_STATUS;
 				}
-				HgBundleClient.bundle(root, rev.getChangeSet(), file, null);
+				HgBundleClient.bundle(root, rev.getChangeSet(), null, file, false, base);
 				monitor.worked(1);
 
 				final String message = Messages.getString("ExportAsBundleAction.theRevision") //$NON-NLS-1$
@@ -85,19 +87,26 @@ public class ExportAsBundleAction extends Action {
 	}
 
 	private final MercurialHistoryPage mhp;
+	private String file;
+	private String base;
+	private final static ImageDescriptor imageDesc = MercurialEclipsePlugin
+			.getImageDescriptor("export.gif"); //$NON-NLS-1$
 
-	private static String getFile() {
+	private void determineFileAndBase() {
 		final Display display = MercurialEclipsePlugin.getStandardDisplay();
-		final String file[] = new String[1];
 		display.syncExec(new Runnable() {
 			public void run() {
-				FileDialog fileDialog = new FileDialog(MercurialEclipsePlugin.getActiveShell());
+				Shell shell = MercurialEclipsePlugin.getActiveShell();
+				FileDialog fileDialog = new FileDialog(shell);
 				fileDialog.setText(Messages
 						.getString("ExportAsBundleAction.pleaseEnterTheNameOfTheBundleFile")); //$NON-NLS-1$
-				file[0] = fileDialog.open();
+				file = fileDialog.open();
+				InputDialog d = new InputDialog(shell, "Please specify the base revision",
+						"Please specify the base revision e.g. 1333", "0", null);
+				d.open();
+				base = d.getValue();
 			}
 		});
-		return file[0];
 	}
 
 	private static void showMessage(final String message) {
@@ -112,8 +121,7 @@ public class ExportAsBundleAction extends Action {
 	}
 
 	public ExportAsBundleAction(MercurialHistoryPage mhp) {
-		super(Messages.getString("ExportAsBundleAction.exportSelectedRevisionAsBundle"),
-				MercurialEclipsePlugin.getImageDescriptor("export.gif")); //$NON-NLS-1$
+		super(Messages.getString("ExportAsBundleAction.exportSelectedRevisionAsBundle"), imageDesc);
 		this.mhp = mhp;
 	}
 

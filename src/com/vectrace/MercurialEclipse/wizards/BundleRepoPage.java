@@ -19,6 +19,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
@@ -29,9 +30,11 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -43,6 +46,9 @@ public class BundleRepoPage extends PushPullPage {
 	private Text bundleFileTextField;
 	private Button bundleFileBrowseButton;
 	private String bundleFile;
+	private ChangesetTable baseRevTable;
+	private Button baseRevCheckbox;
+	private ChangeSet baseRevision;
 
 	public BundleRepoPage(String pageName, String title, ImageDescriptor titleImage, HgRoot hgRoot) {
 		super(hgRoot, pageName, title, titleImage);
@@ -85,6 +91,35 @@ public class BundleRepoPage extends PushPullPage {
 				}
 			}
 		});
+
+		Group baseGroup = SWTWidgetHelper.createGroup(c, "Base revision", 2,
+				GridData.FILL_HORIZONTAL);
+		this.baseRevCheckbox = SWTWidgetHelper.createCheckBox(baseGroup,
+				"Select a base revision");
+		this.baseRevCheckbox.addSelectionListener(new SelectionListener() {
+
+			private String oldRepo;
+
+			public void widgetSelected(SelectionEvent e) {
+				baseRevTable.setEnabled(baseRevCheckbox.getSelection());
+				if (baseRevCheckbox.getSelection()) {
+					this.oldRepo = getUrlText();
+					getUrlCombo().setText("");
+				} else {
+					getUrlCombo().setText(oldRepo);
+				}
+			}
+
+			public void widgetDefaultSelected(SelectionEvent e) {
+				widgetSelected(e);
+			}
+		});
+		this.baseRevTable = new ChangesetTable(baseGroup, hgRoot);
+		GridData gd = SWTWidgetHelper.getFillGD(100);
+		gd.heightHint = 100;
+		this.baseRevTable.setLayoutData(gd);
+		this.baseRevTable.setEnabled(false);
+
 		optionGroup.moveBelow(c);
 		optionGroup.setVisible(false);
 		setControl(composite);
@@ -93,6 +128,8 @@ public class BundleRepoPage extends PushPullPage {
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
 		this.bundleFile = bundleFileTextField.getText();
+		this.baseRevision = baseRevCheckbox.getSelection() ? baseRevTable
+				.getSelection() : null;
 		return super.finish(monitor);
 	}
 
@@ -153,5 +190,12 @@ public class BundleRepoPage extends PushPullPage {
 
 	public String getBundleFile() {
 		return bundleFile;
+	}
+
+	/**
+	 * @return the baseRevision
+	 */
+	public ChangeSet getBaseRevision() {
+		return baseRevision;
 	}
 }

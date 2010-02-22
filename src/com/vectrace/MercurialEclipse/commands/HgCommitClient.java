@@ -28,7 +28,6 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.dialogs.Messages;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -110,7 +109,9 @@ public class HgCommitClient extends AbstractClient {
 		if (message.length() != 0) {
 			command.addOptions("-m", message);
 		} else {
-			command.addOptions("-m", Messages.getString("CommitDialog.defaultCommitMessage"));
+			command.addOptions("-m",
+					com.vectrace.MercurialEclipse.dialogs.Messages
+							.getString("CommitDialog.defaultCommitMessage"));
 		}
 	}
 
