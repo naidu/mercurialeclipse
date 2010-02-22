@@ -54,10 +54,11 @@ public class BundleRepoWizard extends HgWizard implements IExportWizard {
 				initPage(page.getDescription(), page);
 				addPage(page);
 				this.outgoingPage = new OutgoingPage("outgoingPage");
-				initPage(outgoingPage.getDescription(),outgoingPage);
+				initPage(outgoingPage.getDescription(), outgoingPage);
 				addPage(outgoingPage);
 			} else {
-				throw new HgException("Could not find a Mercurial repository for export.");
+				throw new HgException(
+						"Could not find a Mercurial repository for export.");
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -67,15 +68,28 @@ public class BundleRepoWizard extends HgWizard implements IExportWizard {
 
 	@Override
 	public boolean performFinish() {
+		// finish work in each page
 		page.finish(new NullProgressMonitor());
 		outgoingPage.finish(new NullProgressMonitor());
 
-
 		String bundleFile = page.getBundleFile();
-		ChangeSet cs = outgoingPage.getRevision();
 
-		BundleOperation op = new BundleOperation(getContainer(), root, cs, bundleFile);
+		// only use a target rev if checkbox was selected
+		ChangeSet cs = outgoingPage.getRevisionCheckBox().getSelection() ? outgoingPage
+				.getRevision()
+				: null;
+
+		// base will be null if nothing was selected or checkbox is not selected
+		ChangeSet base = page.getBaseRevision();
+
+		// can be null or empty
+		String repo = page.getUrlText();
+
+		// create operation
+		BundleOperation op = new BundleOperation(getContainer(), root, cs,
+				base, bundleFile, repo);
 		try {
+			// and run it...
 			getContainer().run(true, true, op);
 		} catch (Exception e) {
 			MercurialEclipsePlugin.logError(e);
