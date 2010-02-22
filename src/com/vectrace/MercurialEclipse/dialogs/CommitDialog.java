@@ -16,8 +16,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +26,6 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.dialogs.TitleAreaDialog;
@@ -39,6 +36,7 @@ import org.eclipse.jface.text.TextEvent;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.jface.wizard.ProgressMonitorPart;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -84,16 +82,22 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
- * A commit dialog box allowing choosing of what files to commit and a commit message for those
- * files. Untracked files may also be chosen.
+ * A commit dialog box allowing choosing of what files to commit and a commit
+ * message for those files. Untracked files may also be chosen.
  */
 public class CommitDialog extends TitleAreaDialog {
-	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
-	public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
-	public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
-	public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
-	public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
-	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
+	public static final String FILE_MODIFIED = Messages
+			.getString("CommitDialog.modified"); //$NON-NLS-1$
+	public static final String FILE_ADDED = Messages
+			.getString("CommitDialog.added"); //$NON-NLS-1$
+	public static final String FILE_REMOVED = Messages
+			.getString("CommitDialog.removed"); //$NON-NLS-1$
+	public static final String FILE_UNTRACKED = Messages
+			.getString("CommitDialog.untracked"); //$NON-NLS-1$
+	public static final String FILE_DELETED = Messages
+			.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+	public static final String FILE_CLEAN = Messages
+			.getString("CommitDialog.clean"); //$NON-NLS-1$
 	private static final String DEFAULT_COMMIT_MESSAGE = Messages
 			.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
@@ -117,6 +121,7 @@ public class CommitDialog extends TitleAreaDialog {
 	private Button closeBranchCheckBox;
 	private Button amendCheckbox;
 	private ChangeSet currentChangeset;
+	private ProgressMonitorPart monitor;
 
 	/**
 	 *
@@ -152,11 +157,6 @@ public class CommitDialog extends TitleAreaDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = SWTWidgetHelper.createComposite(parent, 1);
-		GridData gd = getFillGD(400);
-		gd.minimumWidth = 500;
-		container.setLayoutData(gd);
-		super.createDialogArea(parent);
-
 		container.addKeyListener(new KeyListener() {
 			public void keyReleased(KeyEvent e) {
 				if (e.character == SWT.CR && e.stateMask == SWT.MOD1) {
@@ -179,6 +179,9 @@ public class CommitDialog extends TitleAreaDialog {
 
 		getShell().setText(Messages.getString("CommitDialog.window.title")); //$NON-NLS-1$
 		setTitle(Messages.getString("CommitDialog.title")); //$NON-NLS-1$";
+		monitor = new ProgressMonitorPart(container, null);
+		monitor.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		monitor.setVisible(false);
 		return container;
 	}
 
@@ -187,7 +190,8 @@ public class CommitDialog extends TitleAreaDialog {
 		Control control = super.createContents(parent);
 		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskComment(
-						inResources == null ? null : inResources.toArray(new IResource[0]));
+						inResources == null ? null : inResources
+								.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
 
 		commitTextBox.getTextWidget().setFocus();
@@ -196,35 +200,42 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void validateCommitMessage(final String message) {
-		if (StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message)) {
-			setErrorMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
+		if (StringUtils.isEmpty(message)
+				|| DEFAULT_COMMIT_MESSAGE.equals(message)) {
+			setErrorMessage(Messages.getString("CommitDialog.message")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
 			setErrorMessage(null); // ";
-			setMessage(Messages.getString("CommitDialog.message")); //$NON-NLS-1$";
+			setMessage(Messages.getString("CommitDialog.message")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(true);
 		}
 	}
 
 	protected void createRevertCheckBox(Composite container) {
-		revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
-				.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
+		revertCheckBox = SWTWidgetHelper
+				.createCheckBox(
+						container,
+						Messages
+								.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources"));
 	}
 
 	protected void createCloseBranchCheckBox(Composite container) {
-		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
-				.getString("CommitDialog.closeBranch")); //$NON-NLS-1$
+		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container,
+				Messages.getString("CommitDialog.closeBranch"));
 	}
 
 	protected void createAmendCheckBox(Composite container) {
 		try {
-			currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
+			currentChangeset = LocalChangesetCache.getInstance()
+					.getChangesetForRoot(root);
 			if (currentChangeset != null) {
-				String branch = MercurialTeamProvider.getCurrentBranch(ResourceUtils
-						.convert(this.root));
-				String label = Messages.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
+				String branch = MercurialTeamProvider
+						.getCurrentBranch(ResourceUtils.convert(this.root));
+				String label = Messages
+						.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
 						+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
+				amendCheckbox = SWTWidgetHelper
+						.createCheckBox(container, label);
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -233,14 +244,16 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected void createFilesList(Composite container) {
-		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources,
-				true, true, false);
+		SWTWidgetHelper.createLabel(container, Messages
+				.getString("CommitDialog.selectFiles"));
+		commitFilesList = new CommitFilesChooser(container,
+				areFilesSelectable(), inResources, true, true, false);
 
 		IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskResources();
 		if (mylynTaskResources != null) {
-			commitFilesList.setSelectedResources(Arrays.asList(mylynTaskResources));
+			commitFilesList.setSelectedResources(Arrays
+					.asList(mylynTaskResources));
 		}
 	}
 
@@ -254,7 +267,8 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private void createUserCommitCombo(Composite container) {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
-		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(comp, Messages
+				.getString("CommitDialog.userLabel.text"));
 		userTextField = SWTWidgetHelper.createTextField(comp);
 		user = getInitialCommitUserName();
 		userTextField.setText(user);
@@ -265,16 +279,18 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void createCommitTextBox(Composite container) {
-		setMessage(Messages.getString("CommitDialog.commitTextLabel.text")); //$NON-NLS-1$
+		setMessage(Messages.getString("CommitDialog.commitTextLabel.text"));
 
-		commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER
-				| SWT.WRAP);
+		commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL
+				| SWT.MULTI | SWT.BORDER | SWT.WRAP);
 		commitTextBox.setEditable(true);
-		commitTextBox.getTextWidget().setLayoutData(getFillGD(150));
+		commitTextBox.getTextWidget().setLayoutData(
+				SWTWidgetHelper.getFillGD(100));
 
 		// set up spell-check annotations
-		decorationSupport = new SourceViewerDecorationSupport(commitTextBox, null,
-				new DefaultMarkerAnnotationAccess(), EditorsUI.getSharedTextColors());
+		decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
+				null, new DefaultMarkerAnnotationAccess(), EditorsUI
+						.getSharedTextColors());
 
 		AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
 				.getAnnotationPreference(SpellingAnnotation.TYPE);
@@ -282,7 +298,8 @@ public class CommitDialog extends TitleAreaDialog {
 		decorationSupport.setAnnotationPreference(pref);
 		decorationSupport.install(EditorsUI.getPreferenceStore());
 
-		commitTextBox.configure(new TextSourceViewerConfiguration(EditorsUI.getPreferenceStore()));
+		commitTextBox.configure(new TextSourceViewerConfiguration(EditorsUI
+				.getPreferenceStore()));
 		AnnotationModel annotationModel = new AnnotationModel();
 		commitTextBox.setDocument(commitTextDocument, annotationModel);
 		commitTextBox.getTextWidget().addDisposeListener(new DisposeListener() {
@@ -299,26 +316,30 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void createOldCommitCombo(Composite container) {
-		final String oldCommits[] = MercurialEclipsePlugin.getCommitMessageManager()
-				.getCommitMessages();
+		final String oldCommits[] = MercurialEclipsePlugin
+				.getCommitMessageManager().getCommitMessages();
 		if (oldCommits.length > 0) {
 			oldCommitComboBox = SWTWidgetHelper.createCombo(container);
-			oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
-			oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
+			oldCommitComboBox.add(Messages
+					.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
+			oldCommitComboBox.setText(Messages
+					.getString("CommitDialog.oldCommitMessages"));
 			for (int i = 0; i < oldCommits.length; i++) {
 				/*
-				 * Add text to the combo but replace \n with <br> to get a one-liner
+				 * Add text to the combo but replace \n with <br> to get a
+				 * one-liner
 				 */
-				oldCommitComboBox.add(oldCommits[i].replaceAll("\\n", "<br>")); //$NON-NLS-1$ //$NON-NLS-2$
+				oldCommitComboBox.add(oldCommits[i].replaceAll("\\n", "<br>"));
 			}
 			oldCommitComboBox.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					if (oldCommitComboBox.getSelectionIndex() != 0) {
-						commitTextDocument
-								.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
-						commitTextBox.setSelectedRange(0, oldCommits[oldCommitComboBox
-								.getSelectionIndex() - 1].length());
+						commitTextDocument.set(oldCommits[oldCommitComboBox
+								.getSelectionIndex() - 1]);
+						commitTextBox.setSelectedRange(0,
+								oldCommits[oldCommitComboBox
+										.getSelectionIndex() - 1].length());
 					}
 
 				}
@@ -328,21 +349,25 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	/**
-	 * Override the OK button pressed to capture the info we want first and then call super.
+	 * Override the OK button pressed to capture the info we want first and then
+	 * call super.
 	 */
 	@Override
 	protected void okPressed() {
 		try {
-			resourcesToAdd = commitFilesList.getCheckedResources(FILE_UNTRACKED);
+			IProgressMonitor pm = monitor;
+			monitor.setVisible(true);
+			monitor
+					.attachToCancelComponent(getButton(IDialogConstants.CANCEL_ID));
+			pm.beginTask("Committing...", 20);
+			pm.subTask("Determining resources to add, remove and to commit.");
+			resourcesToAdd = commitFilesList
+					.getCheckedResources(FILE_UNTRACKED);
 			resourcesToCommit = commitFilesList.getCheckedResources();
-			resourcesToRemove = commitFilesList.getCheckedResources(FILE_DELETED);
-
+			resourcesToRemove = commitFilesList
+					.getCheckedResources(FILE_DELETED);
+			pm.worked(3);
 			commitMessage = commitTextDocument.get();
-			/* Store commit message in the database if not the default message */
-			if (!commitMessage.equals(defaultCommitMessage)) {
-				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
-			}
-
 			user = userTextField.getText();
 			if (user == null || user.length() == 0) {
 				user = getInitialCommitUserName();
@@ -350,79 +375,108 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// amend changeset
 			ChangeSet cs = null;
-			if (amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null) {
+			if (amendCheckbox != null && amendCheckbox.getSelection()
+					&& currentChangeset != null) {
 				// only one root allowed when amending
-				Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
+				Map<HgRoot, List<IResource>> map = ResourceUtils
+						.groupByRoot(resourcesToCommit);
 				if (map.size() > 1) {
-					throw new HgException(
-							Messages.getString("CommitDialog.amendingOnlyForOneRoot")); //$NON-NLS-1$
+					throw new HgException(Messages
+							.getString("CommitDialog.amendingOnlyForOneRoot"));
 				}
 
 				// determine current changeset
 				int startRev = currentChangeset.getChangesetIndex();
 
 				// update to get file status information
-				Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev,
-						true);
-
+				pm.subTask("Amending changeset "
+						+ currentChangeset.getChangesetIndex()
+						+ ". Fetching changeset information.");
+				Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(
+						root, 1, startRev, true);
+				pm.worked(1);
 				if (changesets != null && changesets.size() > 0) {
 					cs = changesets.get(root.getIPath()).iterator().next();
+					pm.worked(1);
 					boolean ok = confirmHistoryRewrite();
 					if (ok) {
 						// import old current changeset into MQ
-						String result = HgQImportClient.qimport(root, true, true, false,
+						pm.subTask("Importing changeset into MQ.");
+						HgQImportClient.qimport(root, true, true, false,
 								new ChangeSet[] { cs }, null);
-						setMessage(result);
+						pm.worked(1);
 					} else {
-						throw new HgException(Messages.getString("CommitDialog.abortedAmending")); //$NON-NLS-1$
+						throw new HgException(Messages
+								.getString("CommitDialog.abortedAmending"));
 					}
 				} else {
-					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend")); //$NON-NLS-1$
+					setErrorMessage(Messages
+							.getString("CommitDialog.noChangesetToAmend"));
 				}
 			}
 
 			// add new resources
+			pm.subTask("Adding selected unknown resources to repository.");
 			HgAddClient.addResources(resourcesToAdd, null);
+			pm.worked(1);
 
 			// remove deleted resources
+			pm.subTask("Removing selected deleted resources from repository.");
 			HgRemoveClient.removeResources(resourcesToRemove);
+			pm.worked(1);
 
 			// commit all
 			String messageToCommit = getCommitMessage();
 
-			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox.getSelection()
+			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox
+					.getSelection()
 					: false;
 
 			commitResult = performCommit(messageToCommit, closeBranch, cs);
+			pm.worked(1);
+
+			/* Store commit message in the database if not the default message */
+			if (!commitMessage.equals(defaultCommitMessage)) {
+				pm.subTask("Storing the commit message for later use.");
+				MercurialEclipsePlugin.getCommitMessageManager()
+						.saveCommitMessage(commitMessage);
+			}
+			pm.worked(1);
 
 			// revertCheckBox can be null if this is a merge dialog
 			if (revertCheckBox != null && revertCheckBox.getSelection()) {
+				pm.subTask("Reverting resources not selected.");
 				revertResources();
 			}
+
 			super.okPressed();
+			pm.done();
 		} catch (Exception e) {
 			setErrorMessage(e.getLocalizedMessage());
 			MercurialEclipsePlugin.logError(e);
 		}
+		monitor
+				.removeFromCancelComponent(getButton(IDialogConstants.CANCEL_ID));
+		monitor.setVisible(false);
 	}
 
 	/**
 	 * @return
 	 */
 	private boolean confirmHistoryRewrite() {
-		return MessageDialog.openQuestion(getShell(),
-				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
-				Messages.getString("CommitDialog.amendWarning1") //$NON-NLS-1$
-						+ Messages.getString("CommitDialog.amendWarning2") //$NON-NLS-1$
-						+ Messages.getString("CommitDialog.amendWarning3")); //$NON-NLS-1$
+		return MessageDialog.openQuestion(getShell(), Messages
+				.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$
+				Messages.getString("CommitDialog.amendWarning1")
+						+ Messages.getString("CommitDialog.amendWarning2")
+						+ Messages.getString("CommitDialog.amendWarning3"));
 	}
 
 	/**
-	 * @return the result of the commit operation (hg output), if any. If there was no commit or
-	 *         commit ouput was null, return empty string
+	 * @return the result of the commit operation (hg output), if any. If there
+	 *         was no commit or commit ouput was null, return empty string
 	 */
 	public String getCommitResult() {
-		return commitResult != null ? commitResult : ""; //$NON-NLS-1$
+		return commitResult != null ? commitResult : "";
 	}
 
 	protected String performCommit(String messageToCommit, boolean closeBranch)
@@ -430,46 +484,58 @@ public class CommitDialog extends TitleAreaDialog {
 		return performCommit(messageToCommit, closeBranch, null);
 	}
 
-	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
-			throws CoreException {
+	protected String performCommit(String messageToCommit, boolean closeBranch,
+			ChangeSet cs) throws CoreException {
+		IProgressMonitor pm = monitor;
 		if (amendCheckbox != null && amendCheckbox.getSelection() && cs != null) {
 			// refresh patch with added/removed/changed files
-			String result = HgQRefreshClient
-					.refresh(root, true, resourcesToCommit, messageToCommit);
+			pm
+					.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
+			String result = HgQRefreshClient.refresh(root, true,
+					resourcesToCommit, messageToCommit);
+			pm.worked(1);
 			// remove patch and promote it to a new changeset
-			result = HgQFinishClient.finish(root, cs.getChangesetIndex() + ".diff"); //$NON-NLS-1$
-			setMessage(result);
-			new RefreshRootJob(Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
-					+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
+			pm
+					.subTask("Removing amend patch from MQ and promoting it to repository.");
+			result = HgQFinishClient.finish(root, cs.getChangesetIndex()
+					+ ".diff");
+			pm.worked(1);
+			new RefreshRootJob(
+					Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
+							+ Messages
+									.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
 					.schedule();
 			return result;
 		}
 
 		if (!filesSelectable && resourcesToCommit.isEmpty()) {
 			// enforce commit anyway
-			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit,
-					new NullProgressMonitor());
+			return HgCommitClient.commitResources(root, closeBranch, user,
+					messageToCommit, pm);
 		}
-		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit,
-				new NullProgressMonitor(), closeBranch);
+		return HgCommitClient.commitResources(resourcesToCommit, user,
+				messageToCommit, pm, closeBranch);
 	}
 
 	private void revertResources() {
-		final List<IResource> revertResources = commitFilesList.getUncheckedResources(FILE_ADDED,
-				FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
+		final List<IResource> revertResources = commitFilesList
+				.getUncheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED,
+						FILE_REMOVED);
 		final List<IResource> untrackedResources = commitFilesList
 				.getUncheckedResources(FILE_UNTRACKED);
-		new SafeWorkspaceJob(Messages.getString("CommitDialog.revertJob.RevertingFiles")) { //$NON-NLS-1$
+		new SafeWorkspaceJob(Messages
+				.getString("CommitDialog.revertJob.RevertingFiles")) {
 			@Override
-			protected IStatus runSafe(IProgressMonitor monitor) {
+			protected IStatus runSafe(IProgressMonitor m) {
 				ActionRevert action = new ActionRevert();
 				try {
-					action.doRevert(monitor, revertResources, untrackedResources, false, null);
+					action.doRevert(m, revertResources, untrackedResources,
+							false, null);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();
 				}
-				return super.runSafe(monitor);
+				return super.runSafe(m);
 			}
 		}.schedule();
 	}
