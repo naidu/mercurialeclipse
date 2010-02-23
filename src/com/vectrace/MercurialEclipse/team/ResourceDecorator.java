@@ -45,6 +45,7 @@ import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -409,7 +410,9 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			String tags = changeSet.getTagsString();
 			String merging = HgStatusClient.getMergeChangesetId(project);
 			String bisecting = null;
-			if (HgBisectClient.isBisecting(MercurialTeamProvider.getHgRoot(project))) {
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			// XXX should use map, as there can be 100 projects under the same root 
+			if (HgBisectClient.isBisecting(hgRoot)) {
 				bisecting = " BISECTING";
 			}
 
@@ -417,8 +420,8 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
 
 			// branch
-			String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
-			if (branch == null || branch.length() == 0) {
+			String branch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+			if (branch.length() == 0) {
 				branch = Branch.DEFAULT;
 			}
 			suffix.append('@').append(branch);

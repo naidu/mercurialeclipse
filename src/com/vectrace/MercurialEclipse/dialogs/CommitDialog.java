@@ -220,8 +220,7 @@ public class CommitDialog extends TitleAreaDialog {
 		try {
 			currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
 			if (currentChangeset != null) {
-				String branch = MercurialTeamProvider.getCurrentBranch(ResourceUtils
-						.convert(this.root));
+				String branch = MercurialTeamProvider.getCurrentBranch(root);
 				String label = Messages.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
 						+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
@@ -400,15 +399,12 @@ public class CommitDialog extends TitleAreaDialog {
 				revertResources();
 			}
 			super.okPressed();
-		} catch (Exception e) {
+		} catch (CoreException e) {
 			setErrorMessage(e.getLocalizedMessage());
 			MercurialEclipsePlugin.logError(e);
 		}
 	}
 
-	/**
-	 * @return
-	 */
 	private boolean confirmHistoryRewrite() {
 		return MessageDialog.openQuestion(getShell(),
 				Messages.getString("CommitDialog.reallyAmendAndRewriteHistory"), //$NON-NLS-1$

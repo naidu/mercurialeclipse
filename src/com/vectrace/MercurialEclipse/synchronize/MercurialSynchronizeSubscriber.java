@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -82,8 +81,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	/** key is hg root, value is the *current* changeset of this root */
 	private static final Map<HgRoot, String> currentCsMap = new ConcurrentHashMap<HgRoot, String>();
-	/** key is hg root, value is the *current* changeset of this root */
-	private final Map<HgRoot, String> currentBranchMap;
 
 	private ISubscriberChangeEvent[] lastEvents;
 
@@ -94,7 +91,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 	public MercurialSynchronizeSubscriber(RepositorySynchronizationScope synchronizationScope) {
 		Assert.isNotNull(synchronizationScope);
-		currentBranchMap = new ConcurrentHashMap<HgRoot, String>();
 		scope = synchronizationScope;
 		synchronizationScope.setSubscriber(this);
 		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
@@ -128,7 +124,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		if(root == null){
 			return null;
 		}
-		String currentBranch = getCurrentBranch(file, root);
+		String currentBranch = MercurialTeamProvider.getCurrentBranch(root);
 
 		IHgRepositoryLocation repo = getRepo();
 		if(computeFullState) {
@@ -390,14 +386,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return nodeId;
 	}
 
-	public String getCurrentBranch(IResource resource, HgRoot root) {
-		String currentBranch = currentBranchMap.get(root);
-		if(currentBranch == null){
-			currentBranch = updateBranchMap(root, MercurialTeamProvider.getCurrentBranch(resource));
-		}
-		return currentBranch;
-	}
-
 	private boolean isInteresting(IResource resource) {
 		return resource instanceof IFile
 				&& MercurialTeamProvider.isHgTeamProviderFor(resource.getProject())
@@ -451,11 +439,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		}
 
 		Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(new ArrayList<IResource>(byProject.keySet()));
-		for (Entry<HgRoot, List<IResource>> entry : byRoot.entrySet()) {
-			IResource res = entry.getValue().get(0);
-			String branch = MercurialTeamProvider.getCurrentBranch(res);
-			updateBranchMap(entry.getKey(), branch);
-		}
+
 		// we need to send events only if WE trigger status update, not if the refresh
 		// is called from the framework (like F5 hit by user)
 		Set<IResource> resourcesToRefresh;
@@ -509,7 +493,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			// clear caches in any case, but refresh them only if project exists
 			boolean forceRefresh = project.exists();
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
-			String currentBranch = currentBranchMap.get(hgRoot);
+			String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
 
 			try {
 				cacheSema.acquire();
@@ -553,11 +537,6 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 			monitor.worked(1);
 		}
 		monitor.done();
-	}
-
-	private String updateBranchMap(HgRoot root, String branch) {
-		currentBranchMap.put(root, branch);
-		return branch;
 	}
 
 	private List<ISubscriberChangeEvent> createEvents(IResource[] resources,
@@ -632,11 +611,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		return scope.getRoots();
 	}
 
-	public void branchChanged(final IProject project){
+	public void branchChanged(final HgRoot hgRoot){
 		IResource[] roots = roots();
 		boolean related = false;
 		for (IResource resource : roots) {
-			if(resource.getProject().equals(project)){
+			if(hgRoot.equals(MercurialTeamProvider.hasHgRoot(resource))){
 				related = true;
 				break;
 			}
@@ -644,10 +623,10 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		if(!related){
 			return;
 		}
-		Job job = new Job("Updating branch info for " + project.getName()){
+		Job job = new Job("Updating branch info for " + hgRoot.getName()){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				currentCsMap.remove(MercurialTeamProvider.getHgRoot(project));
+				currentCsMap.remove(hgRoot);
 				if(lastEvents != null) {
 					fireTeamResourceChange(lastEvents);
 				}

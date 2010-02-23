@@ -21,6 +21,7 @@ import java.util.Map;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * @author Stefan Chyssler
@@ -83,32 +84,25 @@ public final class HgBisectClient extends AbstractClient {
 
 	/**
 	 * Checks if the repository is currently being bisected
-	 * @param repository
-	 * @return
 	 */
-	public static boolean isBisecting(File repository) {
-		try {
-			File file = getStatusFile(repository);
-			return file.exists();
-		} catch (IOException e) {
-			return false;
-		}
+	public static boolean isBisecting(HgRoot hgRoot) {
+		return getStatusFile(hgRoot).exists();
 	}
 
 	/**
 	 * Gets a Status by Changeset map containing marked bisect statuses.
-	 * @param repository
+	 * @param hgRoot
 	 * @return
 	 * @throws HgException
 	 */
-	public static Map<String, Status> getBisectStatus(File repository) throws HgException {
+	public static Map<String, Status> getBisectStatus(HgRoot hgRoot) throws HgException {
 		HashMap<String, Status> statusByRevision = new HashMap<String, Status>();
-		if(!isBisecting(repository)) {
+		if(!isBisecting(hgRoot)) {
 			return statusByRevision;
 		}
 		BufferedReader reader = null;
 		try {
-			File file = getStatusFile(repository);
+			File file = getStatusFile(hgRoot);
 			reader = new BufferedReader(new FileReader(file));
 			String line = null;
 			while(null != (line = reader.readLine())) {
@@ -134,11 +128,8 @@ public final class HgBisectClient extends AbstractClient {
 		return statusByRevision;
 	}
 
-	private static File getStatusFile(File repository) throws IOException {
-		String root = repository.getCanonicalPath();
-		String bisectStatusFile = root + File.separator + ".hg" + File.separator + "bisect.state"; //$NON-NLS-1$ //$NON-NLS-2$
-		File file = new File(bisectStatusFile);
-		return file;
+	private static File getStatusFile(HgRoot hgRoot) {
+		return new File(hgRoot, ".hg" + File.separator + "bisect.state");  //$NON-NLS-1$ //$NON-NLS-2$
 	}
 
 	private static String getRevision(ChangeSet change) {

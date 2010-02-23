@@ -32,6 +32,7 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.synchronize.MercurialSynchronizeParticipant;
@@ -147,7 +148,7 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
 				if(getScope().getChangesetProvider().isParticipantCreated()) {
-					branchChanged((IProject) source);
+					branchChanged((HgRoot)source);
 				}
 			}
 		};
@@ -156,12 +157,12 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 	}
 
 
-	protected void branchChanged(IProject source) {
+	protected void branchChanged(HgRoot hgRoot) {
 		MercurialSynchronizeSubscriber subscriber = getSubscriber();
 		IProject[] projects = subscriber.getProjects();
 		boolean needUpdate = false;
 		for (IProject project : projects) {
-			if(project.equals(source)){
+			if(hgRoot.equals(MercurialTeamProvider.hasHgRoot(project))){
 				needUpdate = true;
 				break;
 			}
@@ -195,7 +196,6 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			return EMPTY_SET;
 		}
 
-		final String currentBranch = MercurialTeamProvider.getCurrentBranch(projects[0]);
 		final IHgRepositoryLocation repo = participant.getRepositoryLocation();
 		final Set<ChangeSet> result = new HashSet<ChangeSet>();
 
@@ -203,6 +203,8 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 			public void run() {
 				for (IProject project : projects) {
 					try {
+						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+						final String currentBranch = MercurialTeamProvider.getCurrentBranch(hgRoot);
 						result.addAll(cache.getChangeSets(project, repo, currentBranch));
 					} catch (HgException e) {
 						MercurialEclipsePlugin.logError(e);

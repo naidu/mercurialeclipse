@@ -45,10 +45,12 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 			String branch = null;
 			if(!refreshOnly) {
 				branch = HgBranchClient.getActiveBranch(root);
+				// update branch name
+				MercurialTeamProvider.setCurrentBranch(branch, root);
 			}
 			Set<IProject> projects = ResourceUtils.getProjects(root);
 			for (IProject project1 : projects) {
-				refreshProject(monitor, project1, branch);
+				refreshProject(monitor, project1);
 			}
 			return super.runSafe(monitor);
 		} catch (CoreException e) {
@@ -57,16 +59,8 @@ public final class RefreshWorkspaceStatusJob extends SafeWorkspaceJob {
 		}
 	}
 
-	/**
-	 * @param monitor
-	 * @throws HgException
-	 * @throws CoreException
-	 */
-	private void refreshProject(IProgressMonitor monitor, IProject toRefresh, String branch) throws HgException, CoreException {
+	private void refreshProject(IProgressMonitor monitor, IProject toRefresh) throws HgException, CoreException {
 		if(!refreshOnly){
-			// update branch name
-			MercurialTeamProvider.setCurrentBranch(branch, toRefresh);
-
 			// reset merge properties
 			HgStatusClient.clearMergeStatus(toRefresh);
 		}

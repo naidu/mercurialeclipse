@@ -10,7 +10,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import java.io.File;
 import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -71,8 +70,8 @@ public class HgBranchClient extends AbstractClient {
 	 * @throws HgException
 	 *             if a hg error occurred
 	 */
-	public static String getActiveBranch(File workingDir) throws HgException {
-		AbstractShellCommand command = new HgCommand("branch", getWorkingDirectory(workingDir), false); //$NON-NLS-1$
+	public static String getActiveBranch(HgRoot workingDir) throws HgException {
+		AbstractShellCommand command = new HgCommand("branch", workingDir, false); //$NON-NLS-1$
 		return command.executeToString().replaceAll("\n", "");
 	}
 
