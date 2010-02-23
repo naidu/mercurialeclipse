@@ -31,7 +31,6 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class MercurialTextSearchLabelProvider extends LabelProvider implements IStyledLabelProvider {
@@ -100,15 +99,9 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 	}
 
 	public StyledString getStyledText(Object element) {
-
-		if (element instanceof ChangeSet) {
-			ChangeSet cs = (ChangeSet) element;
-			return new StyledString(cs.getChangesetIndex()+"");
-		}
-
 		if (element instanceof MercurialRevisionStorage) {
 			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
-			return new StyledString(mrs.getResource().getName());
+			return new StyledString(mrs.getRevision() + ":" + mrs.getChangeSet().getNodeShort());
 		}
 
 		if (element instanceof MercurialMatch) {
@@ -152,7 +145,8 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		String lineNumberString = Messages.format(SearchMessages.FileLabelProvider_line_number,
 				new Integer(lineNumber));
 
-		StyledString str = new StyledString(lineNumberString, StyledString.QUALIFIER_STYLER);
+		StyledString str = new StyledString(lineNumberString + "," + match.getOffset(),
+				StyledString.QUALIFIER_STYLER);
 
 		String content = match.getExtract();
 

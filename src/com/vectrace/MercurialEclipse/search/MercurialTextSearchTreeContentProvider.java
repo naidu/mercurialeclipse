@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2008 IBM Corporation and others.
+ * Copyright (c) 2000, 2008, 2010 IBM Corporation and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -10,6 +10,7 @@
  *     Juerg Billeter, juergbi@ethz.ch - 47136 Search view should show match objects
  *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
+ *     Bastian Doetsch - Adaptation for MercurialEclipse
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -128,7 +129,7 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 	 * @return <code>true</code> if this set did not already contain the specified element
 	 */
 	private boolean insertChild(Object parent, Object child) {
-		Set children = (Set) fChildrenMap.get(parent);
+		Set<Object> children = (Set<Object>) fChildrenMap.get(parent);
 		if (children == null) {
 			children = new HashSet();
 			fChildrenMap.put(parent, children);
@@ -201,16 +202,10 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 	public synchronized void elementsChanged(Object[] updatedElements) {
 		for (int i = 0; i < updatedElements.length; i++) {
 			if (!(updatedElements[i] instanceof MercurialRevisionStorage)) {
-				// change events to elements are reported in file search
-				if (fResult.getMatchCount(updatedElements[i]) > 0) {
-					insert(updatedElements[i], true, null);
-				} else {
-					remove(updatedElements[i], true);
-				}
+				// do nothing
 			} else {
 				MercurialRevisionStorage mrs = (MercurialRevisionStorage) updatedElements[i];
-				insertChild(mrs.getResource().getParent(), mrs.getChangeSet());
-				insert(mrs, true, mrs);
+				insert(mrs.getResource(), true, mrs);
 				addMatches(fResult);
 			}
 		}
@@ -222,21 +217,20 @@ public class MercurialTextSearchTreeContentProvider implements ITreeContentProvi
 	}
 
 	public Object getParent(Object element, MercurialRevisionStorage mrs) {
-		// TODO
 		if (element instanceof IProject) {
-			return mrs.getChangeSet();
+			return null;
 		}
 		if (element instanceof IResource) {
 			IResource resource = (IResource) element;
 			return resource.getParent();
 		}
+
 		if (element instanceof MercurialRevisionStorage) {
-			MercurialRevisionStorage m = (MercurialRevisionStorage) element;
-			return m.getResource().getParent();
+			return mrs.getResource();
 		}
 
 		if (element instanceof MercurialMatch) {
-			return mrs.getResource();
+			return mrs;
 		}
 		return null;
 	}
