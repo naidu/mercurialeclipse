@@ -30,7 +30,6 @@ public class MercurialEditorMatchAdapter implements IEditorMatchAdapter {
 
 	public Match[] computeContainedMatches(AbstractTextSearchResult result,
 			IEditorPart editor) {
-		// TODO Auto-generated method stub
 		return null;
 	}
 

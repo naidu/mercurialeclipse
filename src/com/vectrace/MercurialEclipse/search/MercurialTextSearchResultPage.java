@@ -15,12 +15,19 @@
 package com.vectrace.MercurialEclipse.search;
 
 import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
 import org.eclipse.jface.viewers.StructuredViewer;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TreeViewer;
+import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.jface.viewers.ViewerComparator;
 import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.SearchMessages;
 import org.eclipse.search.internal.ui.text.NewTextSearchActionGroup;
@@ -30,14 +37,20 @@ import org.eclipse.search.ui.text.AbstractTextSearchResult;
 import org.eclipse.search.ui.text.AbstractTextSearchViewPage;
 import org.eclipse.search.ui.text.Match;
 import org.eclipse.search2.internal.ui.OpenSearchPreferencesAction;
+import org.eclipse.team.internal.ui.Utils;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.actions.ActionGroup;
 import org.eclipse.ui.part.IPageSite;
+import org.eclipse.ui.texteditor.ITextEditor;
+
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.history.MercurialRevision;
+import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 @SuppressWarnings("restriction")
-public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage
-		implements IAdaptable {
+public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage implements IAdaptable {
 
 	private static final String KEY_LIMIT = "org.eclipse.search.resultpage.limit"; //$NON-NLS-1$
 
@@ -69,31 +82,75 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage
 		viewer.setContentProvider(contentProvider);
 		MercurialTextSearchLabelProvider innerLabelProvider = new MercurialTextSearchLabelProvider(
 				this, MercurialTextSearchLabelProvider.SHOW_LABEL);
-		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(
-				innerLabelProvider));
+		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(innerLabelProvider));
 	}
 
 	@Override
 	protected void configureTreeViewer(TreeViewer viewer) {
 		viewer.setUseHashlookup(true);
-		contentProvider = new MercurialTextSearchTreeContentProvider(this,
-				viewer);
+		contentProvider = new MercurialTextSearchTreeContentProvider(this, viewer);
 		viewer.setContentProvider(contentProvider);
 		MercurialTextSearchLabelProvider innerLabelProvider = new MercurialTextSearchLabelProvider(
 				this, MercurialTextSearchLabelProvider.SHOW_LABEL);
-		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(
-				innerLabelProvider));
+		viewer.setLabelProvider(new DecoratingFileSearchLabelProvider(innerLabelProvider));
+		viewer.setComparator(new ViewerComparator() {
+			@Override
+			public int compare(Viewer viewer, Object e1, Object e2) {
+				if (e1 instanceof MercurialRevisionStorage
+						&& e2 instanceof MercurialRevisionStorage) {
+					MercurialRevisionStorage mrs1 = (MercurialRevisionStorage) e1;
+					MercurialRevisionStorage mrs2 = (MercurialRevisionStorage) e2;
+					if (mrs1.getResource().equals(mrs2)) {
+						return mrs1.getRevision() - mrs2.getRevision();
+					}
+				} else if (e1 instanceof MercurialMatch && e2 instanceof MercurialMatch) {
+					MercurialMatch m1 = (MercurialMatch) e1;
+					MercurialMatch m2 = (MercurialMatch) e2;
+					if (m2.getLineNumber() == m1.getLineNumber()) {
+						return m1.getOffset() - m2.getOffset();
+					}
+					return m1.getLineNumber() - m2.getLineNumber();
+				}
+				return super.compare(viewer, e1, e2);
+			}
+		});
 	}
 
 	@Override
-	protected void showMatch(Match match, int offset, int length,
-			boolean activate) throws PartInitException {
+	protected void showMatch(Match match, int offset, int length, boolean activate)
+			throws PartInitException {
 		// TODO
 	}
 
 	@Override
 	protected void handleOpen(OpenEvent event) {
-		// TODO
+		if (showLineMatches()) {
+			Object firstElement = ((IStructuredSelection) event.getSelection()).getFirstElement();
+			if (firstElement instanceof MercurialMatch) {
+				if (getDisplayedMatchCount(firstElement) == 0) {
+					try {
+						MercurialMatch m = (MercurialMatch) firstElement;
+						// open an editor with the content of the changeset this matc
+						MercurialRevision revision = new MercurialRevision(m
+								.getMercurialRevisionStorage().getChangeSet(), null, m.getFile(),
+								null, null);
+						IEditorPart editor = Utils.openEditor(getSite().getPage(), revision,
+								new NullProgressMonitor());
+						if (editor instanceof ITextEditor) {
+							ITextEditor textEditor = (ITextEditor) editor;
+							textEditor.selectAndReveal(m.getOffset(), m.getLength());
+						}
+					} catch (Exception e) {
+						ErrorDialog.openError(getSite().getShell(),
+								SearchMessages.FileSearchPage_open_file_dialog_title,
+								SearchMessages.FileSearchPage_open_file_failed, new Status(
+										IStatus.ERROR, MercurialEclipsePlugin.ID, e
+												.getLocalizedMessage(), e));
+					}
+					return;
+				}
+			}
+		}
 	}
 
 	@Override
@@ -172,27 +229,21 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage
 
 			AbstractTextSearchResult result = getInput();
 			if (result != null) {
-				int itemCount = ((IStructuredContentProvider) tv
-						.getContentProvider()).getElements(getInput()).length;
+				int itemCount = ((IStructuredContentProvider) tv.getContentProvider())
+						.getElements(getInput()).length;
 				if (showLineMatches()) {
 					int matchCount = getInput().getMatchCount();
 					if (itemCount < matchCount) {
-						return Messages
-								.format(
-										SearchMessages.FileSearchPage_limited_format_matches,
-										new Object[] { label,
-												new Integer(itemCount),
-												new Integer(matchCount) });
+						return Messages.format(
+								SearchMessages.FileSearchPage_limited_format_matches, new Object[] {
+										label, new Integer(itemCount), new Integer(matchCount) });
 					}
 				} else {
 					int fileCount = getInput().getElements().length;
 					if (itemCount < fileCount) {
-						return Messages
-								.format(
-										SearchMessages.FileSearchPage_limited_format_files,
-										new Object[] { label,
-												new Integer(itemCount),
-												new Integer(fileCount) });
+						return Messages.format(SearchMessages.FileSearchPage_limited_format_files,
+								new Object[] { label, new Integer(itemCount),
+										new Integer(fileCount) });
 					}
 				}
 			}
@@ -202,10 +253,8 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage
 
 	private boolean showLineMatches() {
 		AbstractTextSearchResult input = getInput();
-		return getLayout() == FLAG_LAYOUT_TREE
-				&& input != null
-				&& !((MercurialTextSearchQuery) input.getQuery())
-						.isFileNameSearch();
+		return getLayout() == FLAG_LAYOUT_TREE && input != null
+				&& !((MercurialTextSearchQuery) input.getQuery()).isFileNameSearch();
 	}
 
 }

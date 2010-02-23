@@ -20,8 +20,7 @@ public class MercurialMatch extends Match {
 	 */
 	public MercurialMatch(MercurialTextSearchMatchAccess ma) {
 
-		super(ma.getMercurialRevisionStorage(), ma.getMatchOffset(), ma
-				.getMatchLength());
+		super(ma.getMercurialRevisionStorage(), ma.getMatchOffset(), ma.getMatchLength());
 		this.rev = ma.getRev();
 		this.lineNumber = ma.getLineNumber();
 		this.extract = ma.getExtract();

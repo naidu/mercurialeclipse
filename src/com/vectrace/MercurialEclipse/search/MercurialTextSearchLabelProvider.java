@@ -142,10 +142,8 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 
 	private StyledString getMercurialMatchLabel(MercurialMatch match) {
 		int lineNumber = match.getLineNumber();
-		String lineNumberString = Messages.format(SearchMessages.FileLabelProvider_line_number,
-				new Integer(lineNumber));
 
-		StyledString str = new StyledString(lineNumberString + "," + match.getOffset(),
+		StyledString str = new StyledString(lineNumber + ", " + match.getOffset()+": ",
 				StyledString.QUALIFIER_STYLER);
 
 		String content = match.getExtract();

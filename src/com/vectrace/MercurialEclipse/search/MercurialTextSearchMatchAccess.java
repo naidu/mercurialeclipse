@@ -19,11 +19,7 @@ import java.io.InputStreamReader;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.Path;
-import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.search.core.text.TextSearchMatchAccess;
-import org.eclipse.search.ui.ISearchQuery;
-import org.eclipse.search.ui.ISearchResult;
-import org.eclipse.search.ui.ISearchResultListener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -34,8 +30,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  * @author Bastian
  *
  */
-public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess
-		implements ISearchResult {
+public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	private final HgRoot root;
 	private int rev;
 	private int lineNumber;
@@ -243,36 +238,6 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess
 	@Override
 	public int getMatchOffset() {
 		return getFileContent().indexOf(extract);
-	}
-
-	public void addListener(ISearchResultListener l) {
-		// TODO Auto-generated method stub
-
-	}
-
-	public ImageDescriptor getImageDescriptor() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getLabel() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public ISearchQuery getQuery() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public String getTooltip() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	public void removeListener(ISearchResultListener l) {
-		// TODO Auto-generated method stub
-
 	}
 
 	public HgRoot getRoot() {
