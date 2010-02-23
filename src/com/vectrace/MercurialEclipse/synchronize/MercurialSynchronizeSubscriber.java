@@ -211,7 +211,7 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 
 			// TODO validate if code below fixes the issue 10486
 			try {
-				SortedSet<ChangeSet> sets = OUTGOING_CACHE.getChangeSets(file, repo, currentBranch);
+				SortedSet<ChangeSet> sets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
 				int size = sets.size();
 
 				// case where we have one outgoung changeset AND one not committed change
@@ -321,22 +321,11 @@ public class MercurialSynchronizeSubscriber extends Subscriber /*implements Obse
 		boolean changedLocal = !Bits.contains(sMask, MercurialStatusCache.BIT_CLEAN);
 		SortedSet<ChangeSet> changeSets = null;
 		if(!changedLocal){
-			try {
-				changeSets = OUTGOING_CACHE.getChangeSets(file, repo, currentBranch);
-				changedLocal = hasChanges(file, changeSets);
-			} catch (HgException e) {
-				MercurialEclipsePlugin.logError(e);
-			}
+			changeSets = OUTGOING_CACHE.hasChangeSets(file, repo, currentBranch);
+			changedLocal = hasChanges(file, changeSets);
 		}
-		try {
-			changeSets = INCOMING_CACHE.getChangeSets(file, repo, currentBranch);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-			if(changedLocal){
-				return new DelayedSyncInfo(file, root, currentBranch, repo, comparator,
-						SyncInfo.OUTGOING | SyncInfo.CHANGE);
-			}
-		}
+
+		changeSets = INCOMING_CACHE.hasChangeSets(file, repo, currentBranch);
 
 		boolean changedRemote = hasChanges(file, changeSets);
 		if(!changedLocal && !changedRemote){

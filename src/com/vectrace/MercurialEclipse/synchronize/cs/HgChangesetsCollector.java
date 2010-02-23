@@ -256,9 +256,17 @@ public class HgChangesetsCollector extends SyncInfoSetChangeSetCollector {
 		super.dispose();
 	}
 
+	/**
+	 * user has requested a manual refresh
+	 * @param roots currently unused
+	 */
 	public void refresh(ResourceMapping[] roots) {
-		// user has requested a manual refresh
-		fireDefaultChangedEvent(null, null);
+		// the line below doesn't seem to work anymore as for some reason there is no
+		// diff tree events anymore if we've updated to the the changeset and it should be removed
+		// fireDefaultChangedEvent(null, null);
+
+		// TODO not sure if this is a too big hammer, but right now it seems to fix the update issue #10985
+		initializeSets();
 	}
 
 
