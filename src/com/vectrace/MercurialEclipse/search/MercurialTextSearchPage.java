@@ -60,6 +60,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
@@ -69,6 +70,9 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.fieldassist.ContentAssistCommandAdapter;
 import org.eclipse.ui.texteditor.ITextEditorActionDefinitionIds;
 
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+
+@SuppressWarnings("restriction")
 public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 	private static final int HISTORY_SIZE = 12;
@@ -76,9 +80,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 	// Dialog store id constants
 	private static final String PAGE_NAME = "TextSearchPage"; //$NON-NLS-1$
-	private static final String STORE_CASE_SENSITIVE = "CASE_SENSITIVE"; //$NON-NLS-1$
-	private static final String STORE_IS_REG_EX_SEARCH = "REG_EX_SEARCH"; //$NON-NLS-1$
-	private static final String STORE_SEARCH_DERIVED = "SEARCH_DERIVED"; //$NON-NLS-1$
 	private static final String STORE_HISTORY = "HISTORY"; //$NON-NLS-1$
 	private static final String STORE_HISTORY_SIZE = "HISTORY_SIZE"; //$NON-NLS-1$
 
@@ -86,15 +87,15 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			20);
 
 	private boolean fFirstTime = true;
-	private boolean fIsRegExSearch;
+	private final boolean fIsRegExSearch = true;
 	private Combo fPattern;
 	private Combo fExtensions;
-	private Button fIsRegExCheckbox;
 	private CLabel fStatusLabel;
 	private ISearchPageContainer fContainer;
 	private FileTypeEditor fFileTypeEditor;
 
 	private ContentAssistCommandAdapter fPatterFieldContentAssist;
+	private Button firstRevisionCheckbox;
 
 	private static class SearchPatternData {
 		public final boolean isCaseSensitive;
@@ -306,7 +307,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		if (match != null) {
 			fPreviousSearchPatterns.remove(match);
 		}
-		match = new SearchPatternData(getPattern(), false, fIsRegExCheckbox.getSelection(),
+		match = new SearchPatternData(getPattern(), false, fIsRegExSearch,
 				getExtensions(), getContainer().getSelectedScope(), getContainer()
 						.getSelectedWorkingSets());
 		fPreviousSearchPatterns.add(0, match);
@@ -392,12 +393,29 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 		addFileNameControls(result);
 
+		separator = new Label(result, SWT.NONE);
+		separator.setVisible(false);
+		data = new GridData(GridData.FILL, GridData.FILL, false, false, 2, 1);
+		data.heightHint = convertHeightInCharsToPixels(1) / 3;
+		separator.setLayoutData(data);
+
+		addSearchInControls(result);
+
 		setControl(result);
 		Dialog.applyDialogFont(result);
 	}
 
+	/**
+	 * @param result
+	 */
+	private void addSearchInControls(Composite result) {
+		Group g = SWTWidgetHelper.createGroup(result, "Search in");
+		this.firstRevisionCheckbox = SWTWidgetHelper.createCheckBox(g, "Stop search after finding a match in a revision.");
+		this.firstRevisionCheckbox.setEnabled(true);
+	}
+
 	private boolean validateRegex() {
-		if (fIsRegExCheckbox.getSelection()) {
+		if (fIsRegExSearch) {
 			try {
 				PatternConstructor.createPattern(fPattern.getText(), false, true);
 			} catch (PatternSyntaxException e) {
@@ -406,9 +424,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 				while (i < locMessage.length() && "\n\r".indexOf(locMessage.charAt(i)) == -1) { //$NON-NLS-1$
 					i++;
 				}
-				statusMessage(true, locMessage.substring(0, i)); // only take
-				// first
-				// line
+				statusMessage(true, locMessage.substring(0, i)); // only take first line
 				return false;
 			}
 			statusMessage(false, ""); //$NON-NLS-1$
@@ -449,14 +465,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		data.widthHint = convertWidthInCharsToPixels(50);
 		fPattern.setLayoutData(data);
 
-		ComboContentAdapter contentAdapter = new ComboContentAdapter();
-		FindReplaceDocumentAdapterContentProposalProvider findProposer = new FindReplaceDocumentAdapterContentProposalProvider(
-				true);
-		fPatterFieldContentAssist = new ContentAssistCommandAdapter(fPattern, contentAdapter,
-				findProposer, ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS, new char[] {
-						'\\', '[', '(' }, true);
-		fPatterFieldContentAssist.setEnabled(fIsRegExSearch);
-
 		// Text line which explains the special characters
 		fStatusLabel = new CLabel(group, SWT.LEAD);
 		fStatusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
@@ -464,23 +472,13 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		fStatusLabel.setAlignment(SWT.LEFT);
 		fStatusLabel.setText(SearchMessages.SearchPage_containingText_hint);
 
-		// RegEx checkbox
-		fIsRegExCheckbox = new Button(group, SWT.CHECK);
-		fIsRegExCheckbox.setText(SearchMessages.SearchPage_regularExpression);
-		fIsRegExCheckbox.setSelection(fIsRegExSearch);
-
-		fIsRegExCheckbox.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				fIsRegExSearch = fIsRegExCheckbox.getSelection();
-				updateOKStatus();
-
-				writeConfiguration();
-				fPatterFieldContentAssist.setEnabled(fIsRegExSearch);
-			}
-		});
-		fIsRegExCheckbox.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-		fIsRegExCheckbox.setFont(group.getFont());
+		ComboContentAdapter contentAdapter = new ComboContentAdapter();
+		FindReplaceDocumentAdapterContentProposalProvider findProposer = new FindReplaceDocumentAdapterContentProposalProvider(
+				true);
+		fPatterFieldContentAssist = new ContentAssistCommandAdapter(fPattern, contentAdapter,
+				findProposer, ITextEditorActionDefinitionIds.CONTENT_ASSIST_PROPOSALS, new char[] {
+						'\\', '[', '(' }, true);
+		fPatterFieldContentAssist.setEnabled(fIsRegExSearch);
 	}
 
 	private void handleWidgetSelected() {
@@ -493,7 +491,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		if (!fPattern.getText().equals(patternData.textPattern)) {
 			return;
 		}
-		fIsRegExCheckbox.setSelection(patternData.isRegExSearch);
+
 		fPattern.setText(patternData.textPattern);
 		fFileTypeEditor.setFileTypes(patternData.fileNamePatterns);
 		if (patternData.workingSets != null) {
@@ -651,8 +649,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	 */
 	private void readConfiguration() {
 		IDialogSettings s = getDialogSettings();
-		fIsRegExSearch = s.getBoolean(STORE_IS_REG_EX_SEARCH);
-
 		try {
 			int historySize = s.getInt(STORE_HISTORY_SIZE);
 			for (int i = 0; i < historySize; i++) {
@@ -674,7 +670,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	 */
 	private void writeConfiguration() {
 		IDialogSettings s = getDialogSettings();
-		s.put(STORE_IS_REG_EX_SEARCH, fIsRegExSearch);
 
 		int historySize = Math.min(fPreviousSearchPatterns.size(), HISTORY_SIZE);
 		s.put(STORE_HISTORY_SIZE, historySize);

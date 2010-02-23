@@ -120,4 +120,10 @@ public class MercurialMatch extends Match {
 			MercurialRevisionStorage mercurialRevisionStorage) {
 		this.mercurialRevisionStorage = mercurialRevisionStorage;
 	}
+
+	@Override
+	public int getOffset() {
+		// TODO Auto-generated method stub
+		return super.getOffset();
+	}
 }

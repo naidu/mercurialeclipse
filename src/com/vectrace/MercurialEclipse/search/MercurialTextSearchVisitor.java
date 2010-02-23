@@ -66,6 +66,7 @@ public class MercurialTextSearchVisitor {
 				scopeRoots.length * 5);
 		for (IResource resource : scopeRoots) {
 			monitor.subTask("Searching in " + resource);
+			// TODO: Handle workspace root
 			HgRoot root = MercurialTeamProvider.hasHgRoot(resource);
 			monitor.worked(1);
 			if (root != null) {
