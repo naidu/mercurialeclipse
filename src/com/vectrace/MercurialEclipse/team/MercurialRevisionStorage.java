@@ -368,4 +368,54 @@ public class MercurialRevisionStorage implements IStorage {
 		builder.append("]");
 		return builder.toString();
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((global == null) ? 0 : global.hashCode());
+		result = prime * result + ((parent == null) ? 0 : parent.hashCode());
+		result = prime * result + ((resource == null) ? 0 : resource.hashCode());
+		result = prime * result + revision;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		MercurialRevisionStorage other = (MercurialRevisionStorage) obj;
+		if (global == null) {
+			if (other.global != null) {
+				return false;
+			}
+		} else if (!global.equals(other.global)) {
+			return false;
+		}
+		if (parent == null) {
+			if (other.parent != null) {
+				return false;
+			}
+		} else if (!parent.equals(other.parent)) {
+			return false;
+		}
+		if (resource == null) {
+			if (other.resource != null) {
+				return false;
+			}
+		} else if (!resource.getFullPath().equals(other.resource.getFullPath())) {
+			return false;
+		}
+		if (revision != other.revision) {
+			return false;
+		}
+		return true;
+	}
 }

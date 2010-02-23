@@ -28,8 +28,8 @@ import org.eclipse.search.ui.text.Match;
 
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
-public class MercurialTextSearchTreeContentProvider implements
-		ITreeContentProvider, IMercurialTextSearchContentProvider {
+public class MercurialTextSearchTreeContentProvider implements ITreeContentProvider,
+		IMercurialTextSearchContentProvider {
 
 	private final Object[] EMPTY_ARR = new Object[0];
 
@@ -72,39 +72,31 @@ public class MercurialTextSearchTreeContentProvider implements
 	private synchronized void initialize(AbstractTextSearchResult result) {
 		fResult = result;
 		fChildrenMap = new HashMap();
-		boolean showLineMatches = !((MercurialTextSearchQuery) fResult
-				.getQuery()).isFileNameSearch();
-
-		getMatches(result, showLineMatches);
+		addMatches(result);
 	}
 
 	/**
 	 * @param result
 	 * @param showLineMatches
 	 */
-	private void getMatches(AbstractTextSearchResult result,
-			boolean showLineMatches) {
-		if (result != null) {
+	private void addMatches(AbstractTextSearchResult result) {
+		boolean showLineMatches = !((MercurialTextSearchQuery) fResult.getQuery())
+				.isFileNameSearch();
+
+		if (result != null && showLineMatches) {
 			Object[] elements = result.getElements();
 			for (int i = 0; i < elements.length; i++) {
-				if (showLineMatches) {
-					Match[] matches = result.getMatches(elements[i]);
-					for (int j = 0; j < matches.length; j++) {
-						MercurialMatch m = ((MercurialMatch) matches[j]);
-						String child = "Changeset: " + m.getRev() + ", Line: "
-								+ m.getLineNumber() + ", Extract: "
-								+ m.getExtract();
-						insert(child, false);
-					}
-				} else {
-					insert(elements[i], false);
+				Match[] matches = result.getMatches(elements[i]);
+				for (int j = 0; j < matches.length; j++) {
+					MercurialMatch m = ((MercurialMatch) matches[j]);
+					insert(m, false, m.getMercurialRevisionStorage());
 				}
 			}
 		}
 	}
 
-	private void insert(Object child, boolean refreshViewer) {
-		Object parent = getParent(child);
+	private void insert(Object child, boolean refreshViewer, MercurialRevisionStorage mrs) {
+		Object parent = getParent(child, mrs);
 		while (parent != null) {
 			if (insertChild(parent, child)) {
 				if (refreshViewer) {
@@ -117,7 +109,7 @@ public class MercurialTextSearchTreeContentProvider implements
 				return;
 			}
 			child = parent;
-			parent = getParent(child);
+			parent = getParent(child, mrs);
 		}
 		if (insertChild(fResult, child)) {
 			if (refreshViewer) {
@@ -133,8 +125,7 @@ public class MercurialTextSearchTreeContentProvider implements
 	 *            the parent
 	 * @param child
 	 *            the child
-	 * @return <code>true</code> if this set did not already contain the
-	 *         specified element
+	 * @return <code>true</code> if this set did not already contain the specified element
 	 */
 	private boolean insertChild(Object parent, Object child) {
 		Set children = (Set) fChildrenMap.get(parent);
@@ -208,20 +199,19 @@ public class MercurialTextSearchTreeContentProvider implements
 	 * elementsChanged(java.lang.Object[])
 	 */
 	public synchronized void elementsChanged(Object[] updatedElements) {
-		getMatches(fResult, true);
 		for (int i = 0; i < updatedElements.length; i++) {
 			if (!(updatedElements[i] instanceof MercurialRevisionStorage)) {
 				// change events to elements are reported in file search
 				if (fResult.getMatchCount(updatedElements[i]) > 0) {
-					insert(updatedElements[i], true);
+					insert(updatedElements[i], true, null);
 				} else {
 					remove(updatedElements[i], true);
 				}
 			} else {
-				// change events to line elements are reported in text search
-				// TODO
 				MercurialRevisionStorage mrs = (MercurialRevisionStorage) updatedElements[i];
-				insert(mrs, true);
+				insertChild(mrs.getResource().getParent(), mrs.getChangeSet());
+				insert(mrs, true, mrs);
+				addMatches(fResult);
 			}
 		}
 	}
@@ -231,24 +221,27 @@ public class MercurialTextSearchTreeContentProvider implements
 		fTreeViewer.refresh();
 	}
 
-	public Object getParent(Object element) {
+	public Object getParent(Object element, MercurialRevisionStorage mrs) {
 		// TODO
 		if (element instanceof IProject) {
-			return null;
+			return mrs.getChangeSet();
 		}
 		if (element instanceof IResource) {
 			IResource resource = (IResource) element;
 			return resource.getParent();
 		}
 		if (element instanceof MercurialRevisionStorage) {
-			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
-			return mrs.getResource().getParent();
+			MercurialRevisionStorage m = (MercurialRevisionStorage) element;
+			return m.getResource().getParent();
 		}
 
 		if (element instanceof MercurialMatch) {
-			MercurialMatch match = (MercurialMatch) element;
-			return match.getMercurialRevisionStorage().getChangeSet();
+			return mrs.getResource();
 		}
+		return null;
+	}
+
+	public Object getParent(Object element) {
 		return null;
 	}
 }

@@ -31,10 +31,10 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
-public class MercurialTextSearchLabelProvider extends LabelProvider implements
-		IStyledLabelProvider {
+public class MercurialTextSearchLabelProvider extends LabelProvider implements IStyledLabelProvider {
 
 	public static final int SHOW_LABEL = 1;
 	public static final int SHOW_LABEL_PATH = 2;
@@ -46,23 +46,20 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 
 	private final WorkbenchLabelProvider fLabelProvider;
 	private final AbstractTextSearchViewPage fPage;
-	private final Comparator fMatchComparator;
+	private final Comparator<MercurialMatch> fMatchComparator;
 
 	private final Image fLineMatchImage;
 
 	private int fOrder;
 
-	public MercurialTextSearchLabelProvider(AbstractTextSearchViewPage page,
-			int orderFlag) {
+	public MercurialTextSearchLabelProvider(AbstractTextSearchViewPage page, int orderFlag) {
 		fLabelProvider = new WorkbenchLabelProvider();
 		fOrder = orderFlag;
 		fPage = page;
-		fLineMatchImage = SearchPluginImages
-				.get(SearchPluginImages.IMG_OBJ_TEXT_SEARCH_LINE);
-		fMatchComparator = new Comparator() {
-			public int compare(Object o1, Object o2) {
-				return ((MercurialMatch) o1).getOriginalOffset()
-						- ((MercurialMatch) o2).getOriginalOffset();
+		fLineMatchImage = SearchPluginImages.get(SearchPluginImages.IMG_OBJ_TEXT_SEARCH_LINE);
+		fMatchComparator = new Comparator<MercurialMatch>() {
+			public int compare(MercurialMatch o1, MercurialMatch o2) {
+				return o1.getLineNumber() - o2.getLineNumber();
 			}
 		};
 	}
@@ -85,8 +82,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 		return getStyledText(object).getString();
 	}
 
-	private StyledString getColoredLabelWithCounts(Object element,
-			StyledString coloredName) {
+	private StyledString getColoredLabelWithCounts(Object element, StyledString coloredName) {
 		AbstractTextSearchResult result = fPage.getInput();
 		if (result == null) {
 			return coloredName;
@@ -97,18 +93,22 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 			return coloredName;
 		}
 
-		String countInfo = Messages.format(
-				SearchMessages.FileLabelProvider_count_format, new Integer(
-						matchCount));
+		String countInfo = Messages.format(SearchMessages.FileLabelProvider_count_format,
+				new Integer(matchCount));
 		coloredName.append(' ').append(countInfo, StyledString.COUNTER_STYLER);
 		return coloredName;
 	}
 
 	public StyledString getStyledText(Object element) {
+
+		if (element instanceof ChangeSet) {
+			ChangeSet cs = (ChangeSet) element;
+			return new StyledString(cs.getChangesetIndex()+"");
+		}
+
 		if (element instanceof MercurialRevisionStorage) {
 			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
-			return new StyledString(mrs.getRevision() + " - "
-					+ mrs.getResource().getName());
+			return new StyledString(mrs.getResource().getName());
 		}
 
 		if (element instanceof MercurialMatch) {
@@ -122,8 +122,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 
 		IResource resource = (IResource) element;
 		if (!resource.exists()) {
-			new StyledString(
-					SearchMessages.FileLabelProvider_removed_resource_label);
+			new StyledString(SearchMessages.FileLabelProvider_removed_resource_label);
 		}
 
 		String name = BasicElementLabels.getResourceName(resource);
@@ -131,31 +130,29 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 			return getColoredLabelWithCounts(resource, new StyledString(name));
 		}
 
-		String pathString = BasicElementLabels.getPathLabel(resource
-				.getParent().getFullPath(), false);
+		String pathString = BasicElementLabels.getPathLabel(resource.getParent().getFullPath(),
+				false);
 		if (fOrder == SHOW_LABEL_PATH) {
 			StyledString str = new StyledString(name);
-			String decorated = Messages.format(fgSeparatorFormat, new String[] {
-					str.getString(), pathString });
+			String decorated = Messages.format(fgSeparatorFormat, new String[] { str.getString(),
+					pathString });
 
-			StyledCellLabelProvider.styleDecoratedString(decorated,
-					StyledString.QUALIFIER_STYLER, str);
+			StyledCellLabelProvider.styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER,
+					str);
 			return getColoredLabelWithCounts(resource, str);
 		}
 
-		StyledString str = new StyledString(Messages.format(fgSeparatorFormat,
-				new String[] { pathString, name }));
+		StyledString str = new StyledString(Messages.format(fgSeparatorFormat, new String[] {
+				pathString, name }));
 		return getColoredLabelWithCounts(resource, str);
 	}
 
 	private StyledString getMercurialMatchLabel(MercurialMatch match) {
 		int lineNumber = match.getLineNumber();
-		String lineNumberString = Messages.format(
-				SearchMessages.FileLabelProvider_line_number, new Integer(
-						lineNumber));
+		String lineNumberString = Messages.format(SearchMessages.FileLabelProvider_line_number,
+				new Integer(lineNumber));
 
-		StyledString str = new StyledString(lineNumberString,
-				StyledString.QUALIFIER_STYLER);
+		StyledString str = new StyledString(lineNumberString, StyledString.QUALIFIER_STYLER);
 
 		String content = match.getExtract();
 
@@ -206,9 +203,8 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see
-	 * org.eclipse.jface.viewers.BaseLabelProvider#isLabelProperty(java.lang
-	 * .Object, java.lang.String)
+	 * @see org.eclipse.jface.viewers.BaseLabelProvider#isLabelProperty(java.lang .Object,
+	 * java.lang.String)
 	 */
 	@Override
 	public boolean isLabelProperty(Object element, String property) {
@@ -218,8 +214,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see
-	 * org.eclipse.jface.viewers.BaseLabelProvider#removeListener(org.eclipse
+	 * @see org.eclipse.jface.viewers.BaseLabelProvider#removeListener(org.eclipse
 	 * .jface.viewers.ILabelProviderListener)
 	 */
 	@Override
@@ -231,8 +226,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements
 	/*
 	 * (non-Javadoc)
 	 *
-	 * @see
-	 * org.eclipse.jface.viewers.BaseLabelProvider#addListener(org.eclipse.jface
+	 * @see org.eclipse.jface.viewers.BaseLabelProvider#addListener(org.eclipse.jface
 	 * .viewers.ILabelProviderListener)
 	 */
 	@Override
