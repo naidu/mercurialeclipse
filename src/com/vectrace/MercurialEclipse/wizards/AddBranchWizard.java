@@ -80,12 +80,9 @@ public class AddBranchWizard extends HgWizard {
 
 				Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
 				String branch = HgBranchClient.getActiveBranch(hgRoot);
-				List<IResource> projectList = new ArrayList<IResource>();
-				for (IProject project : projects) {
-					projectList.add(project);
-					MercurialTeamProvider.setCurrentBranch(branch, project);
-				}
+				MercurialTeamProvider.setCurrentBranch(branch, hgRoot);
 				if(commitEnabled){
+					List<IResource> projectList = new ArrayList<IResource>(projects);
 					CommitHandler commitHandler = new CommitHandler();
 					commitHandler.setCommitMessage("Starting '" + branch + "' branch");
 					commitHandler.setFilesSelectable(false);

@@ -640,12 +640,12 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 			changed.addAll(parseStatus(root, pathMap, lines));
 			boolean mergeInProgress = mergeNode != null && mergeNode.length() > 0;
+			MercurialTeamProvider.setCurrentBranch(branch, root);
 			for (IProject project : projects) {
 				// TODO use multiple projects (from this hg root) as input at ONCE
 				knownStatus.put(project, root);
 				try {
 					HgStatusClient.setMergeStatus(project, mergeNode);
-					MercurialTeamProvider.setCurrentBranch(branch, project);
 				} catch (CoreException e) {
 					throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
 				}
@@ -726,8 +726,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 				String mergeNode = mergeStatus[1];
 				String branch = mergeStatus[2];
 				HgStatusClient.setMergeStatus(project, mergeNode);
-				// TODO use branch map
-				MercurialTeamProvider.setCurrentBranch(branch, project);
+				MercurialTeamProvider.setCurrentBranch(branch, root);
 			} catch (CoreException e) {
 				throw new HgException(Messages.mercurialStatusCache_FailedToRefreshMergeStatus, e);
 			}

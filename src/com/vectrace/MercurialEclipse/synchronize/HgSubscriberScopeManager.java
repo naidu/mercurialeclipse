@@ -30,6 +30,7 @@ import org.eclipse.team.core.subscribers.SubscriberScopeManager;
 import org.eclipse.ui.IPropertyListener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -56,7 +57,7 @@ public class HgSubscriberScopeManager extends SubscriberScopeManager implements 
 		branchListener = new IPropertyListener() {
 			public void propertyChanged(Object source, int propId) {
 				MercurialSynchronizeSubscriber subscriber1 = (MercurialSynchronizeSubscriber) getSubscriber();
-				subscriber1.branchChanged((IProject) source);
+				subscriber1.branchChanged((HgRoot)source);
 			}
 		};
 		MercurialTeamProvider.addBranchListener(branchListener);

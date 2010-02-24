@@ -78,13 +78,6 @@ public interface ResourceProperties {
 			MercurialEclipsePlugin.ID, "hgRoot"); //$NON-NLS-1$
 
 	/**
-	 * Qualified name for a project session property that stores the current
-	 * hg branch.
-	 */
-	public static final QualifiedName HG_BRANCH = new QualifiedName(
-			MercurialEclipsePlugin.ID, "hgBranch"); //$NON-NLS-1$
-
-	/**
 	 * Qualified name for a workspace session property that signifies whether
 	 * the bookmarks extension is available.
 	 */

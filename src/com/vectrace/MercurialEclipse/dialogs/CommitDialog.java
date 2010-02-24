@@ -16,6 +16,8 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
+import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -212,11 +214,8 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected void createRevertCheckBox(Composite container) {
-		revertCheckBox = SWTWidgetHelper
-				.createCheckBox(
-						container,
-						Messages
-								.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources"));
+		revertCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
+				.getString("CommitDialog.revertCheckBoxLabel.revertUncheckedResources")); //$NON-NLS-1$
 	}
 
 	protected void createCloseBranchCheckBox(Composite container) {
@@ -229,10 +228,8 @@ public class CommitDialog extends TitleAreaDialog {
 			currentChangeset = LocalChangesetCache.getInstance()
 					.getChangesetForRoot(root);
 			if (currentChangeset != null) {
-				String branch = MercurialTeamProvider
-						.getCurrentBranch(ResourceUtils.convert(this.root));
-				String label = Messages
-						.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
+				String branch = MercurialTeamProvider.getCurrentBranch(root);
+				String label = Messages.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
 						+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 				amendCheckbox = SWTWidgetHelper
 						.createCheckBox(container, label);
@@ -451,7 +448,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 			super.okPressed();
 			pm.done();
-		} catch (Exception e) {
+		} catch (CoreException e) {
 			setErrorMessage(e.getLocalizedMessage());
 			MercurialEclipsePlugin.logError(e);
 		}

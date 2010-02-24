@@ -190,7 +190,7 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 				addResourcesToCache(key);
 				// XXX not sure if the full repo refresh event need to be sent here
 //				notifyChanged(key.getRepo(), true);
-				notifyChanged(resource, true);
+				notifyChanged(hgRoot, true);
 			}
 			RemoteData remoteData = fastRepoMap.get(key);
 			if(remoteData != null) {
@@ -299,6 +299,9 @@ public abstract class AbstractRemoteCache extends AbstractCache {
 			data = HgIncomingClient.getHgIncoming(key);
 		}
 
+		if(debug) {
+			System.out.println("\n!got " + data.getChangeSets().size() + " " + direction + " changesets");
+		}
 		fastRepoMap.put(key, data);
 
 		Set<RemoteData> set = repoDatas.get(key.getRoot());
