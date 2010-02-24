@@ -112,7 +112,7 @@ public class ChangesetTable extends Composite {
 				Messages.getString("ChangesetTable.column.branch"),
 				"Tags",
 				Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$
-		int[] widths = { 40, 80, 100, 80, 70, 70, 300 };
+		int[] widths = { 60, 80, 100, 80, 70, 70, 300 };
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);

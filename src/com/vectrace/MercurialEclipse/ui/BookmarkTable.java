@@ -60,7 +60,7 @@ public class BookmarkTable extends Composite {
 		table.setLayoutData(data);
 
 		String[] titles = { Messages.getString("BookmarkTable.column.rev"), Messages.getString("BookmarkTable.column.global"), Messages.getString("BookmarkTable.column.name"), Messages.getString("BookmarkTable.column.state") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		int[] widths = { 50, 150, 300, 70 };
+		int[] widths = { 60, 150, 300, 70 };
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
