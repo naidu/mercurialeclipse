@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,6 +8,7 @@
  * Contributors:
  * bastian	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
@@ -317,6 +318,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 					if (!newRoot.equals(currentHgRoot)) {
 						currentHgRoot = newRoot;
 						resource = file;
+						populateTable();
 						statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
 					}
 				}
