@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * bastian       implementation
+ * Philip Graf   bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
@@ -95,9 +96,7 @@ public class QNewWizardPage extends HgWizardPage {
 
 		createLabel(g, Messages
 				.getString("QNewWizardPage.commitMessageLabel.title")); //$NON-NLS-1$
-		commitTextBox = new SourceViewer(g, null, SWT.FILL
-				| SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
-		commitTextBox.setEditable(true);
+		commitTextBox = new SourceViewer(g, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER | SWT.WRAP);
 		commitTextBox.getTextWidget().setLayoutData(data);
 
 
