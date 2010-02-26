@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *     Jerome Negre              - implementation
  *     Bastian Doetsch           - support for multi-select tables
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -35,6 +36,7 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -211,8 +213,7 @@ public class ChangesetTable extends Composite {
 			row.setText(2, rev.getDateString());
 			row.setText(3, rev.getUser());
 			row.setText(4, rev.getBranch());
-			String tagsString = rev.getTagsString();
-			row.setText(5, tagsString == null? "" : tagsString);
+			row.setText(5, ChangeSetUtils.getPrintableTagsString(rev));
 			row.setText(6, rev.getSummary());
 			row.setData(rev);
 		}

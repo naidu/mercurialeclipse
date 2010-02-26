@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -11,7 +11,7 @@
  *     Bastian Doetsch			 - small changes
  *     Adam Berkes (Intland)     - bug fixes
  *     Andrei Loskutov (Intland) - bug fixes
- *     Philip Graf               - Field assistance for revision field
+ *     Philip Graf               - Field assistance for revision field and bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
@@ -77,6 +77,7 @@ import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.BranchTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.TagTable;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
@@ -571,10 +572,13 @@ public class RevisionChooserDialog extends Dialog {
 					if (changeSet.getName().toLowerCase().startsWith(filter)
 							|| changeSet.getChangeset().startsWith(filter)) {
 						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.REVISION));
-					} else if (changeSet.getTagsString()!= null && changeSet.getTagsString().toLowerCase().startsWith(filter)) {
-						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.TAG));
-					} else if (changeSet.getBranch().toLowerCase().startsWith(filter)) {
-						result.add(0, new ChangeSetContentProposal(changeSet, ContentType.BRANCH));
+					} else {
+						String value = getTagsStartingWith(filter, changeSet);
+						if (value.length() > 0) {
+							result.add(0, new ChangeSetContentProposal(changeSet, ContentType.TAG, value));
+						} else if (changeSet.getBranch().toLowerCase().startsWith(filter)) {
+							result.add(0, new ChangeSetContentProposal(changeSet, ContentType.BRANCH, changeSet.getBranch()));
+						}
 					}
 				}
 			} catch (InterruptedException e) {
@@ -596,6 +600,20 @@ public class RevisionChooserDialog extends Dialog {
 			return result.toArray(new IContentProposal[result.size()]);
 		}
 
+		private String getTagsStartingWith(String filter, ChangeSet changeSet) {
+			StringBuilder builder = new StringBuilder();
+			for(Tag tag: changeSet.getTags()) {
+				if(tag.getName().toLowerCase().startsWith(filter)) {
+					builder.append(tag.getName()).append(", "); //$NON-NLS-1$
+				}
+			}
+			if(builder.length() > 2) {
+				// truncate the trailing ", "
+				builder.setLength(builder.length() - 2);
+			}
+			return builder.toString();
+		}
+
 		private static enum ContentType {REVISION, TAG, BRANCH}
 
 		private static class ChangeSetContentProposal implements IContentProposal {
@@ -604,12 +622,20 @@ public class RevisionChooserDialog extends Dialog {
 
 			private final ChangeSet changeSet;
 			private final ContentType type;
+			private final String value;
 			private String label;
 			private String description;
 
 			private ChangeSetContentProposal(ChangeSet changeSet, ContentType type) {
 				this.changeSet = changeSet;
 				this.type = type;
+				value = null;
+			}
+
+			private ChangeSetContentProposal(ChangeSet changeSet, ContentType type, String value) {
+				this.changeSet = changeSet;
+				this.type = type;
+				this.value = value;
 			}
 
 			public String getContent() {
@@ -641,10 +667,10 @@ public class RevisionChooserDialog extends Dialog {
 				}
 
 				// tag (optional)
-				String tag = changeSet.getTagsString();
-				if(tag != null && tag.length() > 0) {
-					builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.tag")); //$NON-NLS-1$
-					builder.append(": ").append(tag).append('\n'); //$NON-NLS-1$
+				String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
+				if(tags.length() > 0) {
+					builder.append(Messages.getString("RevisionChooserDialog.fieldassist.description.changeset.tags")); //$NON-NLS-1$
+					builder.append(": ").append(tags).append('\n'); //$NON-NLS-1$
 				}
 
 				// author
@@ -676,11 +702,8 @@ public class RevisionChooserDialog extends Dialog {
 				String text;
 				switch(type) {
 					case TAG:
-						text = "[" + changeSet.getTagsString() + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
-						break;
-
 					case BRANCH:
-						text = "[" + changeSet.getBranch() + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
+						text = "[" + value + "] " + changeSet.getSummary(); //$NON-NLS-1$ //$NON-NLS-2$
 						break;
 
 					case REVISION:
@@ -688,7 +711,6 @@ public class RevisionChooserDialog extends Dialog {
 						text = changeSet.getSummary();
 						break;
 				}
-
 
 				// shorten label text if necessary
 				if(text.length() > 50) {
