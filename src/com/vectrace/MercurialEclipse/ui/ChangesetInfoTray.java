@@ -89,10 +89,11 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 	public Control createContents(Composite parent) {
 		comp = SWTWidgetHelper.createComposite(parent, 1);
 		GridData layoutData = new GridData(GridData.FILL_BOTH);
-		layoutData.minimumWidth = 200;
+		layoutData.minimumWidth = 100;
 		comp.setLayoutData(layoutData);
 		createChangesetInfoGroup();
 		createChangedFilesTable();
+		// populate viewer
 		viewer.setInput(changeset);
 		return comp;
 	}
@@ -169,6 +170,20 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 		text += "\nDate:\t\t" + changeset.getDate();
 		text += "\n\nComment:\n\n" + changeset.getComment();
 		SWTWidgetHelper.createLabel(g, text);
+	}
+
+	/**
+	 * @return the viewer
+	 */
+	public Viewer getViewer() {
+		return viewer;
+	}
+
+	/**
+	 * @param viewer the viewer to set
+	 */
+	public void setViewer(Viewer viewer) {
+		this.viewer = viewer;
 	}
 
 }

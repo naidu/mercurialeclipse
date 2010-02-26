@@ -367,19 +367,24 @@ public class CommitDialog extends TitleAreaDialog {
 			monitor.setVisible(true);
 			monitor.attachToCancelComponent(getButton(IDialogConstants.CANCEL_ID));
 			pm.beginTask("Committing...", 20);
+
+			// get checked resources and add them to the maps to be used by hg
 			pm.subTask("Determining resources to add, remove and to commit.");
 			resourcesToAdd = commitFilesList.getCheckedResources(FILE_UNTRACKED);
 			resourcesToCommit = commitFilesList.getCheckedResources();
 			resourcesToRemove = commitFilesList.getCheckedResources(FILE_DELETED);
 			pm.worked(3);
+
+			// get commit message
 			commitMessage = commitTextDocument.get();
+
+			// get commit username
 			user = userTextField.getText();
 			if (user == null || user.length() == 0) {
 				user = getInitialCommitUserName();
 			}
 
 			// amend changeset
-			ChangeSet cs = null;
 			if (amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null) {
 				// only one root allowed when amending
 				Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
@@ -387,23 +392,17 @@ public class CommitDialog extends TitleAreaDialog {
 					throw new HgException(Messages.getString("CommitDialog.amendingOnlyForOneRoot"));
 				}
 
-				// determine current changeset
-				int startRev = currentChangeset.getChangesetIndex();
+				// load additional changeset information (files, parents)
+				updateChangeset(pm);
 
-				// update to get file status information
-				pm.subTask("Amending changeset " + currentChangeset.getChangesetIndex()
-						+ ". Fetching changeset information.");
-				Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev,
-						true);
-				pm.worked(1);
-				if (changesets != null && changesets.size() > 0) {
-					cs = changesets.get(root.getIPath()).iterator().next();
+				// only proceed if files are present
+				if (currentChangeset.getChangedFiles()!=null) {
 					pm.worked(1);
 					boolean ok = confirmHistoryRewrite();
 					if (ok) {
 						// import old current changeset into MQ
 						pm.subTask("Importing changeset into MQ.");
-						HgQImportClient.qimport(root, true, true, false, new ChangeSet[] { cs },
+						HgQImportClient.qimport(root, true, true, false, new ChangeSet[] { currentChangeset },
 								null);
 						pm.worked(1);
 					} else {
@@ -424,13 +423,12 @@ public class CommitDialog extends TitleAreaDialog {
 			HgRemoveClient.removeResources(resourcesToRemove);
 			pm.worked(1);
 
-			// commit all
-			String messageToCommit = getCommitMessage();
-
+			// is a branch to be closed?
 			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox.getSelection()
 					: false;
 
-			commitResult = performCommit(messageToCommit, closeBranch, cs);
+			// perform commit
+			commitResult = performCommit(commitMessage, closeBranch, currentChangeset);
 			pm.worked(1);
 
 			/* Store commit message in the database if not the default message */
@@ -555,7 +553,8 @@ public class CommitDialog extends TitleAreaDialog {
 	private void openSash() throws HgException {
 		IProgressMonitor pm = this.monitor;
 		monitor.setVisible(true);
-		pm.beginTask("Loading changeset information for amend", 2);
+		pm.beginTask("Loading amend data.", 2);
+
 		// only one root allowed when amending
 		Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
 		if (map.size() > 1) {
@@ -565,17 +564,17 @@ public class CommitDialog extends TitleAreaDialog {
 		}
 
 		// determine current changeset
-		int startRev = currentChangeset.getChangesetIndex();
-
-		// update to get file status information
-		Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev, true);
-		pm.worked(1);
-		if (changesets != null && changesets.size() > 0) {
-			currentChangeset = changesets.get(root.getIPath()).iterator().next();
-			pm.worked(1);
-		}
+		updateChangeset(pm);
 		pm.done();
 		monitor.setVisible(false);
+
+		// set old commit message
+		IDocument msg = commitTextBox.getDocument();
+		if (msg.get().equals("") || msg.get().equals(DEFAULT_COMMIT_MESSAGE)) {
+			msg.set(currentChangeset.getComment());
+		}
+
+		// create tray controls
 		ChangesetInfoTray t = new ChangesetInfoTray(currentChangeset);
 		final Shell shell = getShell();
 		leftSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
@@ -585,6 +584,8 @@ public class CommitDialog extends TitleAreaDialog {
 		rightSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
 		rightSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
 		trayControl = t.createContents(shell);
+
+		// calculate width
 		Rectangle clientArea = shell.getClientArea();
 		final GridData data = new GridData(GridData.FILL_VERTICAL);
 		data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
@@ -610,6 +611,27 @@ public class CommitDialog extends TitleAreaDialog {
 			}
 		});
 		this.tray = t;
+	}
+
+	/**
+	 * @param pm
+	 * @throws HgException
+	 */
+	private void updateChangeset(IProgressMonitor pm) throws HgException {
+		if (currentChangeset.getChangedFiles() != null
+				&& currentChangeset.getChangedFiles().length != 0) {
+			// no update necessary
+			return;
+		}
+		int startRev = currentChangeset.getChangesetIndex();
+
+		// update to get file status information
+		Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev, true);
+		pm.worked(1);
+		if (changesets != null && changesets.size() > 0) {
+			currentChangeset = changesets.get(root.getIPath()).iterator().next();
+			pm.worked(1);
+		}
 	}
 
 	private void closeSash() {
