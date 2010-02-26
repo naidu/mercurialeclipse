@@ -24,7 +24,6 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITableLabelProvider;
-import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.osgi.util.NLS;
@@ -35,7 +34,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Table;
-import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -73,28 +71,6 @@ public class ChangePathsTableProvider extends TableViewer {
 			return 0;
 		}
 		return contentProvider.getElements(revision).length;
-	}
-
-	private static final class SimpleLabelImageProvider extends LabelProvider {
-
-		private final Image fileImg;
-
-		public SimpleLabelImageProvider() {
-			fileImg = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
-		}
-
-		@Override
-		public Image getImage(Object element) {
-			return fileImg;
-		}
-
-		@Override
-		public String getText(Object element) {
-			if (!(element instanceof FileStatus)) {
-				return null;
-			}
-			return " " + ((FileStatus) element).getRootRelativePath().toOSString(); //$NON-NLS-1$
-		}
 	}
 
 	private static class ChangePathLabelProvider extends DecoratingLabelProvider implements

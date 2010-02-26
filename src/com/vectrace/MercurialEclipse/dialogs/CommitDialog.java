@@ -16,8 +16,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
-import static com.vectrace.MercurialEclipse.ui.SWTWidgetHelper.getFillGD;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +36,7 @@ import org.eclipse.jface.text.TextEvent;
 import org.eclipse.jface.text.source.AnnotationModel;
 import org.eclipse.jface.text.source.ISourceViewer;
 import org.eclipse.jface.text.source.SourceViewer;
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.ProgressMonitorPart;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.DisposeEvent;
@@ -46,11 +45,17 @@ import org.eclipse.swt.events.KeyEvent;
 import org.eclipse.swt.events.KeyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Sash;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.editors.text.EditorsUI;
@@ -78,28 +83,23 @@ import com.vectrace.MercurialEclipse.team.ActionRevert;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.ui.ChangesetInfoTray;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
- * A commit dialog box allowing choosing of what files to commit and a commit
- * message for those files. Untracked files may also be chosen.
+ * A commit dialog box allowing choosing of what files to commit and a commit message for those
+ * files. Untracked files may also be chosen.
  */
 public class CommitDialog extends TitleAreaDialog {
-	public static final String FILE_MODIFIED = Messages
-			.getString("CommitDialog.modified"); //$NON-NLS-1$
-	public static final String FILE_ADDED = Messages
-			.getString("CommitDialog.added"); //$NON-NLS-1$
-	public static final String FILE_REMOVED = Messages
-			.getString("CommitDialog.removed"); //$NON-NLS-1$
-	public static final String FILE_UNTRACKED = Messages
-			.getString("CommitDialog.untracked"); //$NON-NLS-1$
-	public static final String FILE_DELETED = Messages
-			.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
-	public static final String FILE_CLEAN = Messages
-			.getString("CommitDialog.clean"); //$NON-NLS-1$
+	public static final String FILE_MODIFIED = Messages.getString("CommitDialog.modified"); //$NON-NLS-1$
+	public static final String FILE_ADDED = Messages.getString("CommitDialog.added"); //$NON-NLS-1$
+	public static final String FILE_REMOVED = Messages.getString("CommitDialog.removed"); //$NON-NLS-1$
+	public static final String FILE_UNTRACKED = Messages.getString("CommitDialog.untracked"); //$NON-NLS-1$
+	public static final String FILE_DELETED = Messages.getString("CommitDialog.deletedInWorkspace"); //$NON-NLS-1$
+	public static final String FILE_CLEAN = Messages.getString("CommitDialog.clean"); //$NON-NLS-1$
 	private static final String DEFAULT_COMMIT_MESSAGE = Messages
 			.getString("CommitDialog.defaultCommitMessage"); //$NON-NLS-1$
 
@@ -124,6 +124,11 @@ public class CommitDialog extends TitleAreaDialog {
 	private Button amendCheckbox;
 	private ChangeSet currentChangeset;
 	private ProgressMonitorPart monitor;
+	private Sash sash;
+	private ChangesetInfoTray tray;
+	private Label leftSeparator;
+	private Label rightSeparator;
+	private Control trayControl;
 
 	/**
 	 *
@@ -192,8 +197,7 @@ public class CommitDialog extends TitleAreaDialog {
 		Control control = super.createContents(parent);
 		final String initialCommitMessage = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskComment(
-						inResources == null ? null : inResources
-								.toArray(new IResource[0]));
+						inResources == null ? null : inResources.toArray(new IResource[0]));
 		setCommitMessage(initialCommitMessage);
 
 		commitTextBox.getTextWidget().setFocus();
@@ -202,8 +206,7 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void validateCommitMessage(final String message) {
-		if (StringUtils.isEmpty(message)
-				|| DEFAULT_COMMIT_MESSAGE.equals(message)) {
+		if (StringUtils.isEmpty(message) || DEFAULT_COMMIT_MESSAGE.equals(message)) {
 			setErrorMessage(Messages.getString("CommitDialog.message")); // ";
 			getButton(IDialogConstants.OK_ID).setEnabled(false);
 		} else {
@@ -219,20 +222,39 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected void createCloseBranchCheckBox(Composite container) {
-		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container,
-				Messages.getString("CommitDialog.closeBranch"));
+		closeBranchCheckBox = SWTWidgetHelper.createCheckBox(container, Messages
+				.getString("CommitDialog.closeBranch"));
 	}
 
 	protected void createAmendCheckBox(Composite container) {
 		try {
-			currentChangeset = LocalChangesetCache.getInstance()
-					.getChangesetForRoot(root);
+			currentChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(root);
 			if (currentChangeset != null) {
 				String branch = MercurialTeamProvider.getCurrentBranch(root);
 				String label = Messages.getString("CommitDialog.amendCurrentChangeset1") + currentChangeset.getChangesetIndex() //$NON-NLS-1$
 						+ ":" + currentChangeset.getNodeShort() + "@" + branch + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-				amendCheckbox = SWTWidgetHelper
-						.createCheckBox(container, label);
+				amendCheckbox = SWTWidgetHelper.createCheckBox(container, label);
+				amendCheckbox.addSelectionListener(new SelectionListener() {
+
+					public void widgetSelected(SelectionEvent e) {
+						if (amendCheckbox.getSelection() && currentChangeset != null) {
+							try {
+								openSash();
+							} catch (HgException e1) {
+								setErrorMessage("Cannot amend.");
+								closeSash();
+								amendCheckbox.setSelection(false);
+								amendCheckbox.setEnabled(false);
+							}
+						} else {
+							closeSash();
+						}
+					}
+
+					public void widgetDefaultSelected(SelectionEvent e) {
+						widgetSelected(e);
+					}
+				});
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
@@ -241,16 +263,14 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	protected void createFilesList(Composite container) {
-		SWTWidgetHelper.createLabel(container, Messages
-				.getString("CommitDialog.selectFiles"));
-		commitFilesList = new CommitFilesChooser(container,
-				areFilesSelectable(), inResources, true, true, false);
+		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles"));
+		commitFilesList = new CommitFilesChooser(container, areFilesSelectable(), inResources,
+				true, true, false);
 
 		IResource[] mylynTaskResources = MylynFacadeFactory.getMylynFacade()
 				.getCurrentTaskResources();
 		if (mylynTaskResources != null) {
-			commitFilesList.setSelectedResources(Arrays
-					.asList(mylynTaskResources));
+			commitFilesList.setSelectedResources(Arrays.asList(mylynTaskResources));
 		}
 	}
 
@@ -264,8 +284,7 @@ public class CommitDialog extends TitleAreaDialog {
 
 	private void createUserCommitCombo(Composite container) {
 		Composite comp = SWTWidgetHelper.createComposite(container, 2);
-		SWTWidgetHelper.createLabel(comp, Messages
-				.getString("CommitDialog.userLabel.text"));
+		SWTWidgetHelper.createLabel(comp, Messages.getString("CommitDialog.userLabel.text"));
 		userTextField = SWTWidgetHelper.createTextField(comp);
 		user = getInitialCommitUserName();
 		userTextField.setText(user);
@@ -278,16 +297,14 @@ public class CommitDialog extends TitleAreaDialog {
 	private void createCommitTextBox(Composite container) {
 		setMessage(Messages.getString("CommitDialog.commitTextLabel.text"));
 
-		commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL
-				| SWT.MULTI | SWT.BORDER | SWT.WRAP);
+		commitTextBox = new SourceViewer(container, null, SWT.V_SCROLL | SWT.MULTI | SWT.BORDER
+				| SWT.WRAP);
 		commitTextBox.setEditable(true);
-		commitTextBox.getTextWidget().setLayoutData(
-				SWTWidgetHelper.getFillGD(100));
+		commitTextBox.getTextWidget().setLayoutData(SWTWidgetHelper.getFillGD(100));
 
 		// set up spell-check annotations
-		decorationSupport = new SourceViewerDecorationSupport(commitTextBox,
-				null, new DefaultMarkerAnnotationAccess(), EditorsUI
-						.getSharedTextColors());
+		decorationSupport = new SourceViewerDecorationSupport(commitTextBox, null,
+				new DefaultMarkerAnnotationAccess(), EditorsUI.getSharedTextColors());
 
 		AnnotationPreference pref = EditorsUI.getAnnotationPreferenceLookup()
 				.getAnnotationPreference(SpellingAnnotation.TYPE);
@@ -295,8 +312,7 @@ public class CommitDialog extends TitleAreaDialog {
 		decorationSupport.setAnnotationPreference(pref);
 		decorationSupport.install(EditorsUI.getPreferenceStore());
 
-		commitTextBox.configure(new TextSourceViewerConfiguration(EditorsUI
-				.getPreferenceStore()));
+		commitTextBox.configure(new TextSourceViewerConfiguration(EditorsUI.getPreferenceStore()));
 		AnnotationModel annotationModel = new AnnotationModel();
 		commitTextBox.setDocument(commitTextDocument, annotationModel);
 		commitTextBox.getTextWidget().addDisposeListener(new DisposeListener() {
@@ -313,18 +329,15 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	private void createOldCommitCombo(Composite container) {
-		final String oldCommits[] = MercurialEclipsePlugin
-				.getCommitMessageManager().getCommitMessages();
+		final String oldCommits[] = MercurialEclipsePlugin.getCommitMessageManager()
+				.getCommitMessages();
 		if (oldCommits.length > 0) {
 			oldCommitComboBox = SWTWidgetHelper.createCombo(container);
-			oldCommitComboBox.add(Messages
-					.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
-			oldCommitComboBox.setText(Messages
-					.getString("CommitDialog.oldCommitMessages"));
+			oldCommitComboBox.add(Messages.getString("CommitDialog.oldCommitMessages")); //$NON-NLS-1$
+			oldCommitComboBox.setText(Messages.getString("CommitDialog.oldCommitMessages"));
 			for (int i = 0; i < oldCommits.length; i++) {
 				/*
-				 * Add text to the combo but replace \n with <br> to get a
-				 * one-liner
+				 * Add text to the combo but replace \n with <br> to get a one-liner
 				 */
 				oldCommitComboBox.add(oldCommits[i].replaceAll("\\n", "<br>"));
 			}
@@ -332,11 +345,10 @@ public class CommitDialog extends TitleAreaDialog {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					if (oldCommitComboBox.getSelectionIndex() != 0) {
-						commitTextDocument.set(oldCommits[oldCommitComboBox
-								.getSelectionIndex() - 1]);
-						commitTextBox.setSelectedRange(0,
-								oldCommits[oldCommitComboBox
-										.getSelectionIndex() - 1].length());
+						commitTextDocument
+								.set(oldCommits[oldCommitComboBox.getSelectionIndex() - 1]);
+						commitTextBox.setSelectedRange(0, oldCommits[oldCommitComboBox
+								.getSelectionIndex() - 1].length());
 					}
 
 				}
@@ -346,23 +358,19 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	/**
-	 * Override the OK button pressed to capture the info we want first and then
-	 * call super.
+	 * Override the OK button pressed to capture the info we want first and then call super.
 	 */
 	@Override
 	protected void okPressed() {
 		try {
 			IProgressMonitor pm = monitor;
 			monitor.setVisible(true);
-			monitor
-					.attachToCancelComponent(getButton(IDialogConstants.CANCEL_ID));
+			monitor.attachToCancelComponent(getButton(IDialogConstants.CANCEL_ID));
 			pm.beginTask("Committing...", 20);
 			pm.subTask("Determining resources to add, remove and to commit.");
-			resourcesToAdd = commitFilesList
-					.getCheckedResources(FILE_UNTRACKED);
+			resourcesToAdd = commitFilesList.getCheckedResources(FILE_UNTRACKED);
 			resourcesToCommit = commitFilesList.getCheckedResources();
-			resourcesToRemove = commitFilesList
-					.getCheckedResources(FILE_DELETED);
+			resourcesToRemove = commitFilesList.getCheckedResources(FILE_DELETED);
 			pm.worked(3);
 			commitMessage = commitTextDocument.get();
 			user = userTextField.getText();
@@ -372,25 +380,21 @@ public class CommitDialog extends TitleAreaDialog {
 
 			// amend changeset
 			ChangeSet cs = null;
-			if (amendCheckbox != null && amendCheckbox.getSelection()
-					&& currentChangeset != null) {
+			if (amendCheckbox != null && amendCheckbox.getSelection() && currentChangeset != null) {
 				// only one root allowed when amending
-				Map<HgRoot, List<IResource>> map = ResourceUtils
-						.groupByRoot(resourcesToCommit);
+				Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
 				if (map.size() > 1) {
-					throw new HgException(Messages
-							.getString("CommitDialog.amendingOnlyForOneRoot"));
+					throw new HgException(Messages.getString("CommitDialog.amendingOnlyForOneRoot"));
 				}
 
 				// determine current changeset
 				int startRev = currentChangeset.getChangesetIndex();
 
 				// update to get file status information
-				pm.subTask("Amending changeset "
-						+ currentChangeset.getChangesetIndex()
+				pm.subTask("Amending changeset " + currentChangeset.getChangesetIndex()
 						+ ". Fetching changeset information.");
-				Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(
-						root, 1, startRev, true);
+				Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev,
+						true);
 				pm.worked(1);
 				if (changesets != null && changesets.size() > 0) {
 					cs = changesets.get(root.getIPath()).iterator().next();
@@ -399,16 +403,14 @@ public class CommitDialog extends TitleAreaDialog {
 					if (ok) {
 						// import old current changeset into MQ
 						pm.subTask("Importing changeset into MQ.");
-						HgQImportClient.qimport(root, true, true, false,
-								new ChangeSet[] { cs }, null);
+						HgQImportClient.qimport(root, true, true, false, new ChangeSet[] { cs },
+								null);
 						pm.worked(1);
 					} else {
-						throw new HgException(Messages
-								.getString("CommitDialog.abortedAmending"));
+						throw new HgException(Messages.getString("CommitDialog.abortedAmending"));
 					}
 				} else {
-					setErrorMessage(Messages
-							.getString("CommitDialog.noChangesetToAmend"));
+					setErrorMessage(Messages.getString("CommitDialog.noChangesetToAmend"));
 				}
 			}
 
@@ -425,8 +427,7 @@ public class CommitDialog extends TitleAreaDialog {
 			// commit all
 			String messageToCommit = getCommitMessage();
 
-			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox
-					.getSelection()
+			boolean closeBranch = closeBranchCheckBox != null ? closeBranchCheckBox.getSelection()
 					: false;
 
 			commitResult = performCommit(messageToCommit, closeBranch, cs);
@@ -435,8 +436,7 @@ public class CommitDialog extends TitleAreaDialog {
 			/* Store commit message in the database if not the default message */
 			if (!commitMessage.equals(defaultCommitMessage)) {
 				pm.subTask("Storing the commit message for later use.");
-				MercurialEclipsePlugin.getCommitMessageManager()
-						.saveCommitMessage(commitMessage);
+				MercurialEclipsePlugin.getCommitMessageManager().saveCommitMessage(commitMessage);
 			}
 			pm.worked(1);
 
@@ -452,8 +452,7 @@ public class CommitDialog extends TitleAreaDialog {
 			setErrorMessage(e.getLocalizedMessage());
 			MercurialEclipsePlugin.logError(e);
 		}
-		monitor
-				.removeFromCancelComponent(getButton(IDialogConstants.CANCEL_ID));
+		monitor.removeFromCancelComponent(getButton(IDialogConstants.CANCEL_ID));
 		monitor.setVisible(false);
 	}
 
@@ -469,8 +468,8 @@ public class CommitDialog extends TitleAreaDialog {
 	}
 
 	/**
-	 * @return the result of the commit operation (hg output), if any. If there
-	 *         was no commit or commit ouput was null, return empty string
+	 * @return the result of the commit operation (hg output), if any. If there was no commit or
+	 *         commit ouput was null, return empty string
 	 */
 	public String getCommitResult() {
 		return commitResult != null ? commitResult : "";
@@ -481,53 +480,45 @@ public class CommitDialog extends TitleAreaDialog {
 		return performCommit(messageToCommit, closeBranch, null);
 	}
 
-	protected String performCommit(String messageToCommit, boolean closeBranch,
-			ChangeSet cs) throws CoreException {
+	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs)
+			throws CoreException {
 		IProgressMonitor pm = monitor;
 		if (amendCheckbox != null && amendCheckbox.getSelection() && cs != null) {
 			// refresh patch with added/removed/changed files
-			pm
-					.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
-			String result = HgQRefreshClient.refresh(root, true,
-					resourcesToCommit, messageToCommit);
+			pm.subTask("Refreshing MQ amend patch with newly added/removed/changed files.");
+			String result = HgQRefreshClient
+					.refresh(root, true, resourcesToCommit, messageToCommit);
 			pm.worked(1);
 			// remove patch and promote it to a new changeset
-			pm
-					.subTask("Removing amend patch from MQ and promoting it to repository.");
-			result = HgQFinishClient.finish(root, cs.getChangesetIndex()
-					+ ".diff");
+			pm.subTask("Removing amend patch from MQ and promoting it to repository.");
+			result = HgQFinishClient.finish(root, cs.getChangesetIndex() + ".diff");
 			pm.worked(1);
 			new RefreshRootJob(
 					Messages.getString("CommitDialog.refreshingAfterAmend1") + root.getName() //$NON-NLS-1$
-							+ Messages
-									.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
+							+ Messages.getString("CommitDialog.refreshingAfterAmend2"), root, RefreshRootJob.LOCAL_AND_OUTGOING) //$NON-NLS-1$
 					.schedule();
 			return result;
 		}
 
 		if (!filesSelectable && resourcesToCommit.isEmpty()) {
 			// enforce commit anyway
-			return HgCommitClient.commitResources(root, closeBranch, user,
-					messageToCommit, pm);
+			return HgCommitClient.commitResources(root, closeBranch, user, messageToCommit, pm);
 		}
-		return HgCommitClient.commitResources(resourcesToCommit, user,
-				messageToCommit, pm, closeBranch);
+		return HgCommitClient.commitResources(resourcesToCommit, user, messageToCommit, pm,
+				closeBranch);
 	}
 
 	private void revertResources() {
-		final List<IResource> revertResources = commitFilesList
-				.getUncheckedResources(FILE_ADDED, FILE_DELETED, FILE_MODIFIED,
-						FILE_REMOVED);
+		final List<IResource> revertResources = commitFilesList.getUncheckedResources(FILE_ADDED,
+				FILE_DELETED, FILE_MODIFIED, FILE_REMOVED);
 		final List<IResource> untrackedResources = commitFilesList
 				.getUncheckedResources(FILE_UNTRACKED);
-		new SafeWorkspaceJob(Messages
-				.getString("CommitDialog.revertJob.RevertingFiles")) {
+		new SafeWorkspaceJob(Messages.getString("CommitDialog.revertJob.RevertingFiles")) {
 			@Override
 			protected IStatus runSafe(IProgressMonitor m) {
 				ActionRevert action = new ActionRevert();
 				try {
-					action.doRevert(m, revertResources, untrackedResources,
-							false, null);
+					action.doRevert(m, revertResources, untrackedResources, false, null);
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					return e.getStatus();
@@ -559,6 +550,88 @@ public class CommitDialog extends TitleAreaDialog {
 
 	public Button getCloseBranchCheckBox() {
 		return closeBranchCheckBox;
+	}
+
+	private void openSash() throws HgException {
+		IProgressMonitor pm = this.monitor;
+		monitor.setVisible(true);
+		pm.beginTask("Loading changeset information for amend", 2);
+		// only one root allowed when amending
+		Map<HgRoot, List<IResource>> map = ResourceUtils.groupByRoot(resourcesToCommit);
+		if (map.size() > 1) {
+			setMessage(Messages.getString("CommitDialog.amendingOnlyForOneRoot"));
+			amendCheckbox.setEnabled(false);
+			amendCheckbox.setSelection(false);
+		}
+
+		// determine current changeset
+		int startRev = currentChangeset.getChangesetIndex();
+
+		// update to get file status information
+		Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev, true);
+		pm.worked(1);
+		if (changesets != null && changesets.size() > 0) {
+			currentChangeset = changesets.get(root.getIPath()).iterator().next();
+			pm.worked(1);
+		}
+		pm.done();
+		monitor.setVisible(false);
+		ChangesetInfoTray t = new ChangesetInfoTray(currentChangeset);
+		final Shell shell = getShell();
+		leftSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
+		leftSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		sash = new Sash(shell, SWT.VERTICAL);
+		sash.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		rightSeparator = new Label(shell, SWT.SEPARATOR | SWT.VERTICAL);
+		rightSeparator.setLayoutData(new GridData(GridData.FILL_VERTICAL));
+		trayControl = t.createContents(shell);
+		Rectangle clientArea = shell.getClientArea();
+		final GridData data = new GridData(GridData.FILL_VERTICAL);
+		data.widthHint = trayControl.computeSize(SWT.DEFAULT, clientArea.height).x;
+		trayControl.setLayoutData(data);
+		int trayWidth = leftSeparator.computeSize(SWT.DEFAULT, clientArea.height).x
+				+ sash.computeSize(SWT.DEFAULT, clientArea.height).x
+				+ rightSeparator.computeSize(SWT.DEFAULT, clientArea.height).x + data.widthHint;
+		Rectangle bounds = shell.getBounds();
+		shell.setBounds(bounds.x
+				- ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0),
+				bounds.y, bounds.width + trayWidth, bounds.height);
+		sash.addListener(SWT.Selection, new Listener() {
+			public void handleEvent(Event event) {
+				if (event.detail != SWT.DRAG) {
+					Rectangle rect = shell.getClientArea();
+					int newWidth = rect.width - event.x
+							- (sash.getSize().x + rightSeparator.getSize().x);
+					if (newWidth != data.widthHint) {
+						data.widthHint = newWidth;
+						shell.layout();
+					}
+				}
+			}
+		});
+		this.tray = t;
+	}
+
+	private void closeSash() {
+		if (tray == null) {
+			throw new IllegalStateException("Tray was not open"); //$NON-NLS-1$
+		}
+		int trayWidth = trayControl.getSize().x + leftSeparator.getSize().x + sash.getSize().x
+				+ rightSeparator.getSize().x;
+		trayControl.dispose();
+		trayControl = null;
+		tray = null;
+		leftSeparator.dispose();
+		leftSeparator = null;
+		rightSeparator.dispose();
+		rightSeparator = null;
+		sash.dispose();
+		sash = null;
+		Shell shell = getShell();
+		Rectangle bounds = shell.getBounds();
+		shell.setBounds(bounds.x
+				+ ((Window.getDefaultOrientation() == SWT.RIGHT_TO_LEFT) ? trayWidth : 0),
+				bounds.y, bounds.width - trayWidth, bounds.height);
 	}
 
 }
