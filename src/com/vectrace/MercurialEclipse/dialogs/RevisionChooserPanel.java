@@ -29,12 +29,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
@@ -48,12 +46,10 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.MessageBox;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TabFolder;
 import org.eclipse.swt.widgets.TabItem;
 import org.eclipse.swt.widgets.Text;
@@ -68,8 +64,6 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
-import com.vectrace.MercurialEclipse.storage.FileDataLoader;
-import com.vectrace.MercurialEclipse.storage.RootDataLoader;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -82,38 +76,33 @@ import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 /**
  * @author Jerome Negre <jerome+hg@jnegre.org>
  */
-public class RevisionChooserPanel extends Dialog {
+public class RevisionChooserPanel extends Composite {
+
+	public static class Settings {
+		public boolean defaultShowingHeads;
+		public boolean disallowSelectingParents;
+		public boolean showForceButton;
+		public boolean isForceChecked;
+		public String forceButtonText;
+		public String revision;
+		public ChangeSet changeSet;
+	}
+
 	private final DataLoader dataLoader;
-	private final String title;
-	private Text text;
-	private String revision;
+	private final Text text;
+	private final int[] parents;
+	private final Settings data;
+
 	private Tag tag;
 	private Branch branch;
 	private Bookmark bookmark;
-	private boolean defaultShowingHeads;
-	private boolean disallowSelectingParents;
-
-	private final int[] parents;
-
-	private ChangeSet changeSet;
-	private boolean showForceButton;
 	private Button forceButton;
-	private String forceButtonText;
-	private boolean isForceChecked;
 
-	public RevisionChooserPanel(Shell parentShell, String title, IFile file) {
-		this(parentShell, title, new FileDataLoader(file));
-	}
+	public RevisionChooserPanel(Composite parent, DataLoader loader, Settings settings) {
+		super(parent, SWT.NONE);
 
-	public RevisionChooserPanel(Shell parentShell, String title, HgRoot hgRoot) {
-		this(parentShell, title, new RootDataLoader(hgRoot));
-	}
-
-	private RevisionChooserPanel(Shell parentShell, String title, DataLoader loader) {
-		super(parentShell);
-		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.title = title;
 		dataLoader = loader;
+		this.data = settings;
 		int[] p = {};
 		try {
 			p = loader.getParents();
@@ -121,34 +110,22 @@ public class RevisionChooserPanel extends Dialog {
 			logError(e);
 		}
 		parents = p;
-	}
 
-
-	@Override
-	protected void configureShell(Shell newShell) {
-		super.configureShell(newShell);
-		newShell.setText(title);
-	}
-
-	@Override
-	protected Control createDialogArea(Composite parent) {
-		Composite composite = (Composite) super.createDialogArea(parent);
 		GridLayout gridLayout = new GridLayout(1, true);
-		gridLayout.marginWidth = 10;
-		composite.setLayout(gridLayout);
+		setLayoutData(new GridData(GridData.FILL_BOTH));
+		setLayout(gridLayout);
 
-		Label label = new Label(composite, SWT.NONE);
+		Label label = new Label(this, SWT.NONE);
 		label.setText(Messages.getString("RevisionChooserDialog.rev.label")); //$NON-NLS-1$
 
-		text = new Text(composite, SWT.BORDER);
+		text = new Text(this, SWT.BORDER);
 		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 		setupRevisionFieldAssistance();
 
-		TabFolder tabFolder = new TabFolder(composite, SWT.NONE);
-		GridData data = new GridData(GridData.FILL_HORIZONTAL
-				| GridData.FILL_VERTICAL);
-		data.heightHint = 200;
-		tabFolder.setLayoutData(data);
+		TabFolder tabFolder = new TabFolder(this, SWT.NONE);
+		GridData gdata = new GridData(GridData.FILL_HORIZONTAL	| GridData.FILL_VERTICAL);
+		gdata.heightHint = 200;
+		tabFolder.setLayoutData(gdata);
 		// <wrong>This is a sublist of heads: unnecessary duplication to show.</wrong>
 		// The branch tab shows also *inactive* branches, which do *not* have heads.
 		// it make sense to show it to see the project state at given branch
@@ -165,8 +142,7 @@ public class RevisionChooserPanel extends Dialog {
 		} catch (HgException e) {
 			logError(e);
 		}
-		createOptions(composite);
-		return composite;
+		createOptions(this);
 	}
 
 	/**
@@ -189,10 +165,10 @@ public class RevisionChooserPanel extends Dialog {
 
 				String changeSetId = proposal.getContent().split(" ", 2)[0]; //$NON-NLS-1$
 				try {
-					changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(
+					data.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(
 							dataLoader.getHgRoot(), changeSetId);
 				} catch (HgException e) {
-					changeSet = null;
+					data.changeSet = null;
 					String message = Messages.getString(
 							"RevisionChooserDialog.error.loadChangeset1", changeSetId); //$NON-NLS-1$
 					logError(message, e);
@@ -202,53 +178,41 @@ public class RevisionChooserPanel extends Dialog {
 	}
 
 	private void createOptions(Composite composite) {
-		if(showForceButton){
+		if(data.showForceButton){
 			forceButton = new Button(composite, SWT.CHECK);
 			String message = getForceText();
 			if(message == null) {
 				message = Messages.getString("RevisionChooserDialog.button.forcedOperation.label"); //$NON-NLS-1$
 			}
 			forceButton.setText(message);
-			forceButton.setSelection(isForceChecked);
+			forceButton.setSelection(data.isForceChecked);
 			forceButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					isForceChecked = forceButton.getSelection();
+					data.isForceChecked = forceButton.getSelection();
 				}
 			});
 		}
 	}
 
-	public void setForceChecked(boolean on){
-		isForceChecked = true;
-	}
 	public boolean isForceChecked(){
-		return isForceChecked;
+		return data.isForceChecked;
 	}
 
 	private String getForceText() {
-		return forceButtonText;
-	}
-
-	public void showForceButton(boolean show){
-		showForceButton = show;
-	}
-
-	public void setForceButtonText(String forceButtonText) {
-		this.forceButtonText = forceButtonText;
+		return data.forceButtonText;
 	}
 
 	@SuppressWarnings("boxing")
-	@Override
-	protected void okPressed() {
+	public void calculateRevision() {
 		String[] split = text.getText().split(":"); //$NON-NLS-1$
-		revision = split[0].trim();
-		if (changeSet == null) {
+		data.revision = split[0].trim();
+		if (data.changeSet == null) {
 			HgRoot hgRoot = dataLoader.getHgRoot();
 			LocalChangesetCache localCache = LocalChangesetCache.getInstance();
 			if (tag != null){
 				try {
-					changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getRevision()
+					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, tag.getRevision()
 							+ ":" + tag.getGlobalId()); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(
@@ -257,7 +221,7 @@ public class RevisionChooserPanel extends Dialog {
 				}
 			} else if(branch != null) {
 				try {
-					changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getRevision()
+					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, branch.getRevision()
 							+ ":" + branch.getGlobalId()); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
@@ -265,7 +229,7 @@ public class RevisionChooserPanel extends Dialog {
 				}
 			} else if (bookmark != null) {
 				try {
-					changeSet = localCache.getOrFetchChangeSetById(hgRoot, bookmark.getRevision()
+					data.changeSet = localCache.getOrFetchChangeSetById(hgRoot, bookmark.getRevision()
 							+ ":" + bookmark.getShortNodeId()); //$NON-NLS-1$
 				} catch (HgException ex) {
 					logError(Messages.getString("RevisionChooserDialog.error.loadChangeset2",
@@ -273,17 +237,17 @@ public class RevisionChooserPanel extends Dialog {
 				}
 			}
 		}
-		if (changeSet != null) {
-			revision = Integer.toString(changeSet.getChangesetIndex());
+		if (data.changeSet != null) {
+			data.revision = Integer.toString(data.changeSet.getChangesetIndex());
 		}
 
-		if (revision.length() == 0) {
-			revision = null;
+		if (data.revision.length() == 0) {
+			data.revision = null;
 		}
 
-		if (disallowSelectingParents) {
+		if (data.disallowSelectingParents) {
 			for (int p : parents) {
-				if (String.valueOf(p).equals(revision)) {
+				if (String.valueOf(p).equals(data.revision)) {
 					MessageBox mb = new MessageBox(getShell(), SWT.ICON_WARNING);
 					mb.setText("Merge"); //$NON-NLS-1$
 					mb.setMessage(Messages.getString("RevisionChooserDialog.cannotMergeWithParent")); //$NON-NLS-1$
@@ -292,12 +256,10 @@ public class RevisionChooserPanel extends Dialog {
 				}
 			}
 		}
-
-		super.okPressed();
 	}
 
 	public String getRevision() {
-		return revision;
+		return data.revision;
 	}
 
 	protected TabItem createRevisionTabItem(TabFolder folder) {
@@ -322,12 +284,12 @@ public class RevisionChooserPanel extends Dialog {
 				branch = null;
 				bookmark = null;
 				text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
-				changeSet = table.getSelection();
+				data.changeSet = table.getSelection();
 			}
 
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
-				okPressed();
+				calculateRevision();
 			}
 		});
 
@@ -365,7 +327,7 @@ public class RevisionChooserPanel extends Dialog {
 				tag = table.getSelection();
 				branch = null;
 				bookmark = null;
-				changeSet = null;
+				data.changeSet = null;
 			}
 		});
 
@@ -408,7 +370,7 @@ public class RevisionChooserPanel extends Dialog {
 				branch = table.getSelection();
 				tag = null;
 				bookmark = null;
-				changeSet = null;
+				data.changeSet = null;
 			}
 		});
 
@@ -450,7 +412,7 @@ public class RevisionChooserPanel extends Dialog {
 				bookmark = table.getSelection();
 				tag = null;
 				branch = null;
-				changeSet = null;
+				data.changeSet = null;
 			}
 		});
 
@@ -493,27 +455,19 @@ public class RevisionChooserPanel extends Dialog {
 				branch = null;
 				bookmark = null;
 				text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
-				changeSet = table.getSelection();
+				data.changeSet = table.getSelection();
 			}
 		});
 
 		item.setControl(table);
-		if (defaultShowingHeads) {
+		if (data.defaultShowingHeads) {
 			folder.setSelection(item);
 		}
 		return item;
 	}
 
 	public ChangeSet getChangeSet() {
-		return changeSet;
-	}
-
-	public void setDefaultShowingHeads(boolean defaultShowingHeads) {
-		this.defaultShowingHeads = defaultShowingHeads;
-	}
-
-	public void setDisallowSelectingParents(boolean b) {
-		this.disallowSelectingParents = b;
+		return data.changeSet;
 	}
 
 	/**
@@ -532,18 +486,19 @@ public class RevisionChooserPanel extends Dialog {
 					IResource resource = dataLoader.getResource();
 					HgRoot hgRoot = dataLoader.getHgRoot();
 					SortedSet<ChangeSet> result;
+					LocalChangesetCache cache = LocalChangesetCache.getInstance();
 					if(resource != null) {
-						result = LocalChangesetCache.getInstance().getOrFetchChangeSets(resource);
+						result = cache.getOrFetchChangeSets(resource);
 					} else {
-						result = LocalChangesetCache.getInstance().getOrFetchChangeSets(hgRoot);
+						result = cache.getOrFetchChangeSets(hgRoot);
 					}
 					if(result == null || result.isEmpty() || result.first().getChangesetIndex() != 0) {
 						if(resource != null) {
-							LocalChangesetCache.getInstance().fetchRevisions(resource, false, 0, 0, false);
-							result = LocalChangesetCache.getInstance().getOrFetchChangeSets(resource);
+							cache.fetchRevisions(resource, false, 0, 0, false);
+							result = cache.getOrFetchChangeSets(resource);
 						} else {
-							LocalChangesetCache.getInstance().fetchRevisions(hgRoot, false, 0, 0, false);
-							result = LocalChangesetCache.getInstance().getOrFetchChangeSets(hgRoot);
+							cache.fetchRevisions(hgRoot, false, 0, 0, false);
+							result = cache.getOrFetchChangeSets(hgRoot);
 						}
 
 						if(result == null) {
@@ -755,7 +710,6 @@ public class RevisionChooserPanel extends Dialog {
 			}
 
 		}
-
 	}
 
 }
