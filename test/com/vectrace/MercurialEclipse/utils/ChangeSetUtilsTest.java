@@ -39,4 +39,17 @@ public class ChangeSetUtilsTest extends TestCase {
 		changeSet = new ChangeSet.Builder(0, "a", "b", "c", "d", null).tags("tag1_,_tag2_,_tag3").build();
 		assertEquals("changeset with three tags", "tag1, tag2, tag3", ChangeSetUtils.getPrintableTagsString(changeSet));
 	}
+
+	/**
+	 * Tests for {@link ChangeSetUtils#getPrintableRevisionShort(ChangeSet)}.
+	 */
+	public void testGetPrintableRevisionShort() {
+		assertEquals("no changeset", "", ChangeSetUtils.getPrintableRevisionShort(null));
+
+		ChangeSet changeSet = new ChangeSet.Builder(1, "a", "b", "c", "d", null).build();
+		assertEquals("changeset without short revision", "1", ChangeSetUtils.getPrintableRevisionShort(changeSet));
+
+		changeSet = new ChangeSet.Builder(1, "a", "b", "c", "d", null).nodeShort("cafebeef").build();
+		assertEquals("changeset with short revision", "1:cafebeef", ChangeSetUtils.getPrintableRevisionShort(changeSet));
+	}
 }

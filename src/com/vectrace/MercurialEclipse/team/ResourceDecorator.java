@@ -10,6 +10,7 @@
  *     Andrei Loskutov (Intland) - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *     Zsolt Kopany (Intland)    - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -50,6 +51,7 @@ import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 /**
  * @author zingo
@@ -407,7 +409,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		} else {
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
-			String tags = changeSet.getTagsString();
+			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
 			String merging = HgStatusClient.getMergeChangesetId(project);
 			String bisecting = null;
 			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
@@ -427,7 +429,7 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 			suffix.append('@').append(branch);
 
 			// tags
-			if (tags != null && tags.length() > 0) {
+			if (tags.length() > 0) {
 				suffix.append('(').append(tags).append(')');
 			}
 

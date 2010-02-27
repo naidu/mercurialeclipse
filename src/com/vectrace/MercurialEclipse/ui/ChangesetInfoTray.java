@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * bastian       implementation
+ * Philip Graf   bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -36,6 +37,7 @@ import com.vectrace.MercurialEclipse.history.SimpleLabelImageProvider;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -102,7 +104,7 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 	 *
 	 */
 	private void createChangedFilesTable() {
-		Group g = SWTWidgetHelper.createGroup(comp, "Changed files", 1, GridData.FILL_BOTH);
+		Group g = SWTWidgetHelper.createGroup(comp, Messages.getString("ChangesetInfoTray.changedFiles"), 1, GridData.FILL_BOTH); //$NON-NLS-1$
 		table = new Table(g, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
 		table.setLinesVisible(true);
 		table.setHeaderVisible(false);
@@ -157,19 +159,19 @@ public class ChangesetInfoTray extends org.eclipse.jface.dialogs.DialogTray {
 		tableViewer.addDoubleClickListener(listener);
 	}
 
-	/**
-	 *
-	 */
 	private void createChangesetInfoGroup() {
-		Group g = SWTWidgetHelper.createGroup(comp, "Changeset to be amended", 1,
-				GridData.FILL_BOTH);
-		String text = "Changeset:\t" + changeset.getChangesetIndex() + ":"
-				+ changeset.getNodeShort();
-		text += "\nTag:\t\t" + changeset.getTagsString();
-		text += "\nUser:\t\t" + changeset.getAuthor();
-		text += "\nDate:\t\t" + changeset.getDate();
-		text += "\n\nComment:\n\n" + changeset.getComment();
-		SWTWidgetHelper.createLabel(g, text);
+		Group g = SWTWidgetHelper.createGroup(comp, Messages
+				.getString("ChangesetInfoTray.changesetToBeAmended"), 2, GridData.FILL_BOTH); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(g, Messages.getString("ChangesetInfoTray.changeset")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(g, ChangeSetUtils.getPrintableRevisionShort(changeset));
+		SWTWidgetHelper.createLabel(g, Messages.getString("ChangesetInfoTray.tags")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(g, ChangeSetUtils.getPrintableTagsString(changeset));
+		SWTWidgetHelper.createLabel(g, Messages.getString("ChangesetInfoTray.user")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(g, changeset.getAuthor());
+		SWTWidgetHelper.createLabel(g, Messages.getString("ChangesetInfoTray.date")); //$NON-NLS-1$
+		SWTWidgetHelper.createLabel(g, String.valueOf(changeset.getDate()));
+		SWTWidgetHelper.createLabel(g, Messages.getString("ChangesetInfoTray.comment")); //$NON-NLS-1$
+		SWTWidgetHelper.createWrappingLabel(g, changeset.getComment(), 0);
 	}
 
 	/**

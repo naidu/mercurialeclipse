@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2007-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -12,6 +12,7 @@
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (Intland)   - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.model;
 
@@ -33,6 +34,7 @@ import org.eclipse.team.internal.core.subscribers.CheckedInChangeSet;
 
 import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.model.FileStatus.Action;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 import com.vectrace.MercurialEclipse.utils.StringUtils;
 
@@ -224,21 +226,9 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 	}
 
 	/**
-	 * @return all tags associated with current changeset, separated with spaces. Return value may
-	 *         be an empty string (or even null?)
-	 */
-	public String getTagsString() {
-		if (HgRevision.TIP.getChangeset().equals(tagsStr) && bundleFile != null) {
-			StringBuilder builder = new StringBuilder(tagsStr)
-					.append(" [ ").append(repository.toString()).append(" ]"); //$NON-NLS-1$ //$NON-NLS-2$
-			tagsStr = builder.toString();
-		}
-		return tagsStr;
-	}
-
-	/**
 	 * @return tags array (all tags associated with current changeset). May return empty array, but
 	 *         never null
+	 * @see ChangeSetUtils#getPrintableTagsString(ChangeSet)
 	 */
 	public Tag[] getTags() {
 		if (tags == null) {
@@ -256,8 +246,11 @@ public class ChangeSet extends CheckedInChangeSet implements Comparable<ChangeSe
 					tags = tagList.toArray(new Tag[tagList.size()]);
 				}
 			}
+			if(tags == null) {
+				tags = EMPTY_TAGS;
+			}
 		}
-		return tags != null ? tags : EMPTY_TAGS;
+		return tags;
 	}
 
 	public String getBranch() {

@@ -22,7 +22,8 @@ public class ChangeSetUtils {
 	 * Returns a printable String listing of all tags of a changeset. If the changeset does not have
 	 * any tags, an empty String is returned.
 	 *
-	 * @param changeSet The changeset. May be {@code null}.
+	 * @param changeSet
+	 *            The changeset. May be {@code null}.
 	 * @return a printable String listing all tags of a changeset. Never returns {@code null}.
 	 */
 	public static String getPrintableTagsString(ChangeSet changeSet) {
@@ -40,6 +41,31 @@ public class ChangeSetUtils {
 		}
 
 		return tagsString;
+	}
+
+	/**
+	 * Returns the changeset index followed by the short revision. If the changeset is {@code null},
+	 * an empty String is returned. If the short revision is not available, only the index is
+	 * returned.
+	 *
+	 *@param changeSet
+	 *            The changeset. May be {@code null}.
+	 * @return the changeset index followed by the short revision. Never returns {@code null}.
+	 */
+	public static String getPrintableRevisionShort(ChangeSet changeSet) {
+		String revisionShort;
+
+		if (changeSet == null) {
+			revisionShort = ""; //$NON-NLS-1$
+
+		} else if (changeSet.getNodeShort() == null) {
+			revisionShort = Integer.toString(changeSet.getChangesetIndex());
+
+		} else {
+			revisionShort = changeSet.getChangesetIndex() + ":" + changeSet.getNodeShort(); //$NON-NLS-1$
+		}
+
+		return revisionShort;
 	}
 
 }

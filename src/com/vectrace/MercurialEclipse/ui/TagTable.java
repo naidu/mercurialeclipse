@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -9,6 +9,7 @@
  *     Jerome Negre              - implementation
  *     Andrei Loskutov (Intland) - bug fixes
  *     Zsolt Koppany (Intland)   - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
@@ -118,11 +119,8 @@ public class TagTable extends Composite {
 						if(monitor.isCanceled()) {
 							return Status.CANCEL_STATUS;
 						}
-						if(cs.getTagsString() != null && cs.getTagsString().length() > 0) {
-							Tag[] csTags = cs.getTags();
-							for (Tag tag : csTags) {
-								tagged.put(tag.getName(), cs);
-							}
+						for (Tag tag : cs.getTags()) {
+							tagged.put(tag.getName(), cs);
 						}
 					}
 				} catch (HgException e1) {
