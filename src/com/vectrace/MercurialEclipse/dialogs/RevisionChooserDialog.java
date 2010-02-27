@@ -74,6 +74,7 @@ public class RevisionChooserDialog extends Dialog {
 		opt.showForceButton = showForceButton;
 
 		panel = new RevisionChooserPanel(composite, dataLoader, opt);
+		panel.addSelectionListener(this);
 		return composite;
 	}
 
@@ -95,7 +96,14 @@ public class RevisionChooserDialog extends Dialog {
 
 	@Override
 	protected void okPressed() {
-		panel.calculateRevision();
+		boolean ok = panel.calculateRevision();
+		if(!ok){
+			return;
+		}
+		super.okPressed();
+	}
+
+	protected void revisionSelected() {
 		super.okPressed();
 	}
 

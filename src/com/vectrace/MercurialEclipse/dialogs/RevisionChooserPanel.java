@@ -97,6 +97,7 @@ public class RevisionChooserPanel extends Composite {
 	private Branch branch;
 	private Bookmark bookmark;
 	private Button forceButton;
+	private RevisionChooserDialog dialog;
 
 	public RevisionChooserPanel(Composite parent, DataLoader loader, Settings settings) {
 		super(parent, SWT.NONE);
@@ -204,7 +205,7 @@ public class RevisionChooserPanel extends Composite {
 	}
 
 	@SuppressWarnings("boxing")
-	public void calculateRevision() {
+	public boolean calculateRevision() {
 		String[] split = text.getText().split(":"); //$NON-NLS-1$
 		data.revision = split[0].trim();
 		if (data.changeSet == null) {
@@ -252,8 +253,17 @@ public class RevisionChooserPanel extends Composite {
 					mb.setText("Merge"); //$NON-NLS-1$
 					mb.setMessage(Messages.getString("RevisionChooserDialog.cannotMergeWithParent")); //$NON-NLS-1$
 					mb.open();
-					return;
+					return false;
 				}
+			}
+		}
+		return true;
+	}
+
+	public void applyRevision() {
+		if(calculateRevision()){
+			if(dialog != null){
+				dialog.revisionSelected();
 			}
 		}
 	}
@@ -283,13 +293,13 @@ public class RevisionChooserPanel extends Composite {
 				tag = null;
 				branch = null;
 				bookmark = null;
-				text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
-				data.changeSet = table.getSelection();
+				ChangeSet selection = table.getSelection();
+				text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				data.changeSet = selection;
 			}
-
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
-				calculateRevision();
+				applyRevision();
 			}
 		});
 
@@ -320,14 +330,17 @@ public class RevisionChooserPanel extends Composite {
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		table.addSelectionListener(new SelectionAdapter() {
-
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				text.setText(table.getSelection().getName());
 				tag = table.getSelection();
+				text.setText(tag.getName());
 				branch = null;
 				bookmark = null;
 				data.changeSet = null;
+			}
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				applyRevision();
 			}
 		});
 
@@ -363,14 +376,17 @@ public class RevisionChooserPanel extends Composite {
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		table.addSelectionListener(new SelectionAdapter() {
-
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				text.setText(table.getSelection().getName());
 				branch = table.getSelection();
+				text.setText(branch.getName());
 				tag = null;
 				bookmark = null;
 				data.changeSet = null;
+			}
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				applyRevision();
 			}
 		});
 
@@ -405,14 +421,17 @@ public class RevisionChooserPanel extends Composite {
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		table.addSelectionListener(new SelectionAdapter() {
-
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				text.setText(table.getSelection().getName());
 				bookmark = table.getSelection();
+				text.setText(bookmark.getName());
 				tag = null;
 				branch = null;
 				data.changeSet = null;
+			}
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				applyRevision();
 			}
 		});
 
@@ -448,14 +467,20 @@ public class RevisionChooserPanel extends Composite {
 				}.schedule();
 			}
 		});
+
 		table.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				tag = null;
 				branch = null;
 				bookmark = null;
-				text.setText(table.getSelection().getChangesetIndex()+":"+table.getSelection().getChangeset()); //$NON-NLS-1$
-				data.changeSet = table.getSelection();
+				ChangeSet selection = table.getSelection();
+				data.changeSet = selection;
+				text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+			}
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				applyRevision();
 			}
 		});
 
@@ -708,8 +733,14 @@ public class RevisionChooserPanel extends Composite {
 			public String getLabel() {
 				return bookmark.getRevision() + ": " + bookmark.getName(); //$NON-NLS-1$
 			}
-
 		}
+	}
+
+	/**
+	 * @param dialog non null
+	 */
+	public void addSelectionListener(RevisionChooserDialog dialog) {
+		this.dialog = dialog;
 	}
 
 }
