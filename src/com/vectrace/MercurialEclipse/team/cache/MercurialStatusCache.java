@@ -614,7 +614,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		synchronized (statusUpdateLock) {
 			// get status and branch for hg root
 			String output = HgStatusClient.getStatusWithoutIgnored(root);
-			String[] mergeStatus = HgStatusClient.getMergeStatus(root);
+			String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);
 			String currentChangeSetId = mergeStatus[0];
 			LocalChangesetCache.getInstance().checkLatestChangeset(root, currentChangeSetId);
 			String mergeNode = mergeStatus[1];
@@ -720,7 +720,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 		if(res instanceof IProject){
 			try {
-				String[] mergeStatus = HgStatusClient.getMergeStatus(root);
+				String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);
 				String id = mergeStatus[0];
 				LocalChangesetCache.getInstance().checkLatestChangeset(root, id);
 				String mergeNode = mergeStatus[1];
