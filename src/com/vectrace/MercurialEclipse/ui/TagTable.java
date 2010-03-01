@@ -50,7 +50,7 @@ public class TagTable extends Composite {
 	private int[] parents;
 	private boolean showTip;
 
-	private final HgRoot hgRoot;
+	private HgRoot hgRoot;
 
 	public TagTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
@@ -81,6 +81,11 @@ public class TagTable extends Composite {
 
 	public void highlightParents(int[] newParents) {
 		this.parents = newParents;
+	}
+
+	public void setHgRoot(HgRoot newRoot) {
+		this.hgRoot = newRoot;
+		table.removeAll();
 	}
 
 	public void setTags(Tag[] tags) {

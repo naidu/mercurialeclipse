@@ -58,7 +58,7 @@ public class ChangesetTable extends Composite {
 
 	private boolean bottomNotFetched;
 
-	private final HgRoot hgRoot;
+	private HgRoot hgRoot;
 
 	public ChangesetTable(Composite parent, IResource resource) {
 		this(parent, DEFAULT_STYLE, resource, true);
@@ -151,8 +151,14 @@ public class ChangesetTable extends Composite {
 		this.parents = newParents;
 	}
 
+	public void setHgRoot(HgRoot newRoot) {
+		this.hgRoot = newRoot;
+		clearTable();
+	}
+
 	/**
-	 * @param startRev
+	 * Updates the table data if autofetch is enabled
+	 * @param startRev -1 to fetch data from the beginning
 	 * @throws HgException
 	 */
 	private void updateTable(int startRev) throws HgException {

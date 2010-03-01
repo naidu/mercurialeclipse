@@ -40,8 +40,6 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
  */
 public class BookmarkDialog extends TrayDialog {
 	private final HgRoot hgRoot;
@@ -51,7 +49,7 @@ public class BookmarkDialog extends TrayDialog {
 	private BookmarkTable bookmarkTable;
 	private Text newBmNameTextBox;
 	private Button deleteCheckBox;
-	private boolean modifyTab = false;
+	private boolean modifyTab;
 	private Label renameLabel;
 
 	public BookmarkDialog(Shell parentShell, HgRoot hgRoot) {
@@ -144,8 +142,9 @@ public class BookmarkDialog extends TrayDialog {
 		// create widgets
 		Group selGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.selectBookmark")); //$NON-NLS-1$
 		selGroup.setLayoutData(layoutData);
-		this.bookmarkTable = new BookmarkTable(selGroup, hgRoot);
-		this.bookmarkTable.setLayoutData(layoutData);
+		bookmarkTable = new BookmarkTable(selGroup);
+		bookmarkTable.setLayoutData(layoutData);
+		bookmarkTable.updateTable(hgRoot);
 		SelectionListener sl = new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);

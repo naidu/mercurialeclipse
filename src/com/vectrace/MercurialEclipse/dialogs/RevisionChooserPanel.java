@@ -17,6 +17,7 @@ package com.vectrace.MercurialEclipse.dialogs;
 
 import static com.vectrace.MercurialEclipse.MercurialEclipsePlugin.logError;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +40,8 @@ import org.eclipse.jface.fieldassist.IContentProposalListener;
 import org.eclipse.jface.fieldassist.IContentProposalProvider;
 import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Point;
@@ -64,6 +67,7 @@ import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.Tag;
 import com.vectrace.MercurialEclipse.storage.DataLoader;
+import com.vectrace.MercurialEclipse.storage.EmptyDataLoader;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
@@ -88,9 +92,9 @@ public class RevisionChooserPanel extends Composite {
 		public ChangeSet changeSet;
 	}
 
-	private final DataLoader dataLoader;
+	private DataLoader dataLoader;
 	private final Text text;
-	private final int[] parents;
+	private int[] parents;
 	private final Settings data;
 
 	private Tag tag;
@@ -98,19 +102,13 @@ public class RevisionChooserPanel extends Composite {
 	private Bookmark bookmark;
 	private Button forceButton;
 	private RevisionChooserDialog dialog;
+	private ContentAssistCommandAdapter contentAssist;
 
 	public RevisionChooserPanel(Composite parent, DataLoader loader, Settings settings) {
 		super(parent, SWT.NONE);
-
-		dataLoader = loader;
 		this.data = settings;
-		int[] p = {};
-		try {
-			p = loader.getParents();
-		} catch (HgException e) {
-			logError(e);
-		}
-		parents = p;
+
+		setDataLoader(loader);
 
 		GridLayout gridLayout = new GridLayout(1, true);
 		setLayoutData(new GridData(GridData.FILL_BOTH));
@@ -121,6 +119,25 @@ public class RevisionChooserPanel extends Composite {
 
 		text = new Text(this, SWT.BORDER);
 		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		text.addFocusListener(new FocusListener() {
+			String textStr;
+
+			public void focusLost(FocusEvent e) {
+				String newText = text.getText();
+				if(newText.equals(textStr)){
+					return;
+				}
+				// cleanup not up-to-date data
+				data.changeSet = null;
+				bookmark = null;
+				tag = null;
+				branch = null;
+			}
+
+			public void focusGained(FocusEvent e) {
+				textStr = text.getText();
+			}
+		});
 		setupRevisionFieldAssistance();
 
 		TabFolder tabFolder = new TabFolder(this, SWT.NONE);
@@ -146,11 +163,22 @@ public class RevisionChooserPanel extends Composite {
 		createOptions(this);
 	}
 
+	public void setDataLoader(DataLoader loader) {
+		dataLoader = loader;
+		int[] p = {};
+		try {
+			p = loader.getParents();
+		} catch (HgException e) {
+			logError(e);
+		}
+		parents = p;
+	}
+
 	/**
 	 * Adds field assistance to the revision text field.
 	 */
 	private void setupRevisionFieldAssistance() {
-		ContentAssistCommandAdapter contentAssist = new ContentAssistCommandAdapter(text,
+		contentAssist = new ContentAssistCommandAdapter(text,
 				new TextContentAdapter(), new RevisionContentProposalProvider(dataLoader), null,
 				null, true);
 		contentAssist.setAutoActivationDelay(300);
@@ -309,6 +337,7 @@ public class RevisionChooserPanel extends Composite {
 				new SafeUiJob(Messages.getString("RevisionChooserDialog.tagJob.description")) { //$NON-NLS-1$
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
+						table.setHgRoot(dataLoader.getHgRoot());
 						table.setAutoFetch(true);
 						table.setEnabled(true);
 						return Status.OK_STATUS;
@@ -352,6 +381,7 @@ public class RevisionChooserPanel extends Composite {
 					protected IStatus runSafe(IProgressMonitor monitor) {
 						try {
 							Tag[] tags = dataLoader.getTags();
+							table.setHgRoot(dataLoader.getHgRoot());
 							table.setTags(tags);
 							return Status.OK_STATUS;
 						} catch (HgException e) {
@@ -390,24 +420,32 @@ public class RevisionChooserPanel extends Composite {
 			}
 		});
 
-//		table.addListener(SWT.Show, new Listener() {
-//			public void handleEvent(Event event) {
-//				table.removeListener(SWT.Show, this);
-				new SafeUiJob(Messages.getString("RevisionChooserDialog.branchJob.description")) { //$NON-NLS-1$
-					@Override
-					protected IStatus runSafe(IProgressMonitor monitor) {
-						try {
-							Branch[] branches = dataLoader.getBranches();
-							table.setBranches(branches);
-							return Status.OK_STATUS;
-						} catch (HgException e) {
-							logError(e);
-							return Status.CANCEL_STATUS;
-						}
-					}
-				}.schedule();
-//			}
-//		});
+		boolean needListener = dataLoader == null || dataLoader instanceof EmptyDataLoader;
+		final SafeUiJob fetchData = new SafeUiJob(Messages.getString("RevisionChooserDialog.branchJob.description")) { //$NON-NLS-1$
+			@Override
+			protected IStatus runSafe(IProgressMonitor monitor) {
+				try {
+					Branch[] branches = dataLoader.getBranches();
+					table.setBranches(branches);
+					table.redraw();
+					table.update();
+					return Status.OK_STATUS;
+				} catch (HgException e) {
+					logError(e);
+					return Status.CANCEL_STATUS;
+				}
+			}
+		};
+		if(needListener){
+			table.addListener(SWT.Paint, new Listener() {
+				public void handleEvent(Event event) {
+					table.removeListener(SWT.Paint, this);
+					fetchData.schedule();
+				}
+			});
+		} else {
+			fetchData.schedule();
+		}
 
 		item.setControl(table);
 		return item;
@@ -417,8 +455,22 @@ public class RevisionChooserPanel extends Composite {
 		TabItem item = new TabItem(folder, SWT.NONE);
 		item.setText(Messages.getString("RevisionChooserDialog.bookmarkTab.name")); //$NON-NLS-1$
 
-		final BookmarkTable table = new BookmarkTable(folder, dataLoader.getHgRoot());
+		final BookmarkTable table = new BookmarkTable(folder);
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
+
+		table.addListener(SWT.Show, new Listener() {
+			public void handleEvent(Event event) {
+				table.removeListener(SWT.Show, this);
+				new SafeUiJob(Messages.getString("RevisionChooserDialog.bookmarksJob.name")) { //$NON-NLS-1$
+					@Override
+					protected IStatus runSafe(IProgressMonitor monitor) {
+						table.updateTable(dataLoader.getHgRoot());
+						table.setEnabled(true);
+						return Status.OK_STATUS;
+					}
+				}.schedule();
+			}
+		});
 
 		table.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -444,6 +496,8 @@ public class RevisionChooserPanel extends Composite {
 		item.setText(Messages.getString("RevisionChooserDialog.headTab.name")); //$NON-NLS-1$
 
 		final ChangesetTable table = new ChangesetTable(folder, dataLoader.getHgRoot());
+		table.setAutoFetch(false);
+		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 		table.addListener(SWT.Show, new Listener() {
 			public void handleEvent(Event event) {
 				table.removeListener(SWT.Show, this);
@@ -451,10 +505,8 @@ public class RevisionChooserPanel extends Composite {
 					@Override
 					protected IStatus runSafe(IProgressMonitor monitor) {
 						try {
-							table.setLayoutData(new GridData(GridData.FILL_BOTH));
+							table.setHgRoot(dataLoader.getHgRoot());
 							table.highlightParents(parents);
-							table.setAutoFetch(false);
-
 							ChangeSet[] revisions = dataLoader.getHeads();
 							table.setChangesets(revisions);
 							table.setEnabled(true);
@@ -495,6 +547,15 @@ public class RevisionChooserPanel extends Composite {
 		return data.changeSet;
 	}
 
+	public void addSelectionListener(RevisionChooserDialog dialog1) {
+		this.dialog = dialog1;
+	}
+
+	public void update(DataLoader loader){
+		setDataLoader(loader);
+		contentAssist.setContentProposalProvider(new RevisionContentProposalProvider(loader));
+	}
+
 	/**
 	 * Proposal provider for the revision text field.
 	 */
@@ -504,43 +565,56 @@ public class RevisionChooserPanel extends Composite {
 		private final Future<List<Bookmark>> bookmarks;
 
 		private RevisionContentProposalProvider(final DataLoader dataLoader) {
-			ExecutorService executor = Executors.newFixedThreadPool(2);
 
-			changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
-				public SortedSet<ChangeSet> call() throws Exception {
-					IResource resource = dataLoader.getResource();
-					HgRoot hgRoot = dataLoader.getHgRoot();
-					SortedSet<ChangeSet> result;
-					LocalChangesetCache cache = LocalChangesetCache.getInstance();
-					if(resource != null) {
-						result = cache.getOrFetchChangeSets(resource);
-					} else {
-						result = cache.getOrFetchChangeSets(hgRoot);
+			ExecutorService executor = Executors.newFixedThreadPool(2);
+			if(dataLoader instanceof EmptyDataLoader){
+				changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
+					public SortedSet<ChangeSet> call() throws Exception {
+						return Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
 					}
-					if(result == null || result.isEmpty() || result.first().getChangesetIndex() != 0) {
+				});
+
+				bookmarks = executor.submit(new Callable<List<Bookmark>>() {
+					public List<Bookmark> call() throws Exception {
+						return Collections.unmodifiableList(new ArrayList<Bookmark>());
+					}
+				});
+			} else {
+				changeSets = executor.submit(new Callable<SortedSet<ChangeSet>>() {
+					public SortedSet<ChangeSet> call() throws Exception {
+						IResource resource = dataLoader.getResource();
+						HgRoot hgRoot = dataLoader.getHgRoot();
+						SortedSet<ChangeSet> result;
+						LocalChangesetCache cache = LocalChangesetCache.getInstance();
 						if(resource != null) {
-							cache.fetchRevisions(resource, false, 0, 0, false);
 							result = cache.getOrFetchChangeSets(resource);
 						} else {
-							cache.fetchRevisions(hgRoot, false, 0, 0, false);
 							result = cache.getOrFetchChangeSets(hgRoot);
 						}
+						if(result == null || result.isEmpty() || result.first().getChangesetIndex() != 0) {
+							if(resource != null) {
+								cache.fetchRevisions(resource, false, 0, 0, false);
+								result = cache.getOrFetchChangeSets(resource);
+							} else {
+								cache.fetchRevisions(hgRoot, false, 0, 0, false);
+								result = cache.getOrFetchChangeSets(hgRoot);
+							}
 
-						if(result == null) {
-							// fetching the change sets failed
-							result = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
+							if(result == null) {
+								// fetching the change sets failed
+								result = Collections.unmodifiableSortedSet(new TreeSet<ChangeSet>());
+							}
 						}
+						return result;
 					}
-					return result;
-				}
-			});
+				});
 
-			bookmarks = executor.submit(new Callable<List<Bookmark>>() {
-				public List<Bookmark> call() throws Exception {
-					return HgBookmarkClient.getBookmarks(dataLoader.getHgRoot());
-				}
-			});
-
+				bookmarks = executor.submit(new Callable<List<Bookmark>>() {
+					public List<Bookmark> call() throws Exception {
+						return HgBookmarkClient.getBookmarks(dataLoader.getHgRoot());
+					}
+				});
+			}
 			executor.shutdown();
 		}
 
@@ -736,11 +810,5 @@ public class RevisionChooserPanel extends Composite {
 		}
 	}
 
-	/**
-	 * @param dialog non null
-	 */
-	public void addSelectionListener(RevisionChooserDialog dialog) {
-		this.dialog = dialog;
-	}
 
 }

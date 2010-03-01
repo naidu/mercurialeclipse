@@ -496,6 +496,10 @@ public class ProjectsImportPage extends WizardPage implements IOverwriteQuery {
 				ClonePage page = (ClonePage) previousPage;
 				File directory = page.getDestinationDirectory();
 				setInitialSelection(directory);
+			} if(previousPage instanceof SelectRevisionPage){
+				SelectRevisionPage page = (SelectRevisionPage) previousPage;
+				File directory = page.getHgRoot();
+				setInitialSelection(directory);
 			} else if(getWizard() instanceof ImportProjectsFromRepoWizard){
 				final ImportProjectsFromRepoWizard impWizard = (ImportProjectsFromRepoWizard) getWizard();
 				if(impWizard.getInitialPath() != null) {
