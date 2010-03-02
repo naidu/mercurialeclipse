@@ -862,7 +862,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
 			if (member == null) {
-				if(bit == BIT_REMOVED){
+				if(bit == BIT_REMOVED || bit == BIT_MISSING){
 					IPath path = hgRootPath.append(localName);
 					// creates a handle to non-existent file. This is ok.
 					member = workspaceRoot.getFileForLocation(path);
@@ -1008,19 +1008,19 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 	private int getBit(char status) {
 		switch (status) {
-		case '!':
+		case CHAR_MISSING:
 			return BIT_MISSING;
-		case 'R':
+		case CHAR_REMOVED:
 			return BIT_REMOVED;
-		case 'I':
+		case CHAR_IGNORED:
 			return BIT_IGNORE;
-		case 'C':
+		case CHAR_CLEAN:
 			return BIT_CLEAN;
-		case '?':
+		case CHAR_UNKNOWN:
 			return BIT_UNKNOWN;
-		case 'A':
+		case CHAR_ADDED:
 			return BIT_ADDED;
-		case 'M':
+		case CHAR_MODIFIED:
 			return BIT_MODIFIED;
 		default:
 			return BIT_IMPOSSIBLE;
