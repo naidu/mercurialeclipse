@@ -164,6 +164,11 @@ public class CommitDialog extends TitleAreaDialog {
 	@Override
 	protected Control createDialogArea(Composite parent) {
 		Composite container = SWTWidgetHelper.createComposite(parent, 1);
+		GridData gd = SWTWidgetHelper.getFillGD(400);
+		gd.minimumWidth = 500;
+		container.setLayoutData(gd);
+		super.createDialogArea(parent);
+
 		container.addKeyListener(new KeyListener() {
 			public void keyReleased(KeyEvent e) {
 				if (e.character == SWT.CR && e.stateMask == SWT.MOD1) {

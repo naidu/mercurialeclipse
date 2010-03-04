@@ -101,6 +101,10 @@ public class ExportAsBundleAction extends Action {
 				fileDialog.setText(Messages
 						.getString("ExportAsBundleAction.pleaseEnterTheNameOfTheBundleFile")); //$NON-NLS-1$
 				file = fileDialog.open();
+				if(file == null){
+					// user cancel
+					return;
+				}
 				InputDialog d = new InputDialog(shell, "Please specify the base revision",
 						"Please specify the base revision e.g. 1333", "0", null);
 				d.open();

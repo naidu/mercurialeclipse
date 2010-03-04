@@ -31,6 +31,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 	private ClonePage clonePage;
 	private ProjectsImportPage importPage;
 	private IHgRepositoryLocation defaultLocation;
+	private SelectRevisionPage selectRevisionPage;
 
 
 	public CloneRepoWizard() {
@@ -73,10 +74,12 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 			clonePage.setInitialRepo(getDefaultLocation());
 		}
 
+		selectRevisionPage = new SelectRevisionPage("SelectRevisionPage");
+
 		importPage = new ProjectsImportPage("ProjectsImportPage");
 
 		addPage(clonePage);
-		// TODO Add here "select branch/revision" page
+		addPage(selectRevisionPage);
 		addPage(importPage);
 	}
 

@@ -11,6 +11,7 @@
  *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
  *     Bastian Doetsch - adaptation for MercurialEclipse
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -33,7 +34,6 @@ import org.eclipse.jface.dialogs.DialogPage;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.fieldassist.ComboContentAdapter;
 import org.eclipse.jface.resource.JFaceColors;
-import org.eclipse.jface.text.FindReplaceDocumentAdapter;
 import org.eclipse.jface.text.FindReplaceDocumentAdapterContentProposalProvider;
 import org.eclipse.jface.text.ITextSelection;
 import org.eclipse.jface.viewers.ISelection;
@@ -340,9 +340,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		return fFileTypeEditor.getFileTypes();
 	}
 
-	/*
-	 * Implements method from IDialogPage
-	 */
 	@Override
 	public void setVisible(boolean visible) {
 		if (visible && fPattern != null) {
@@ -405,9 +402,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		Dialog.applyDialogFont(result);
 	}
 
-	/**
-	 * @param result
-	 */
 	private void addSearchInControls(Composite result) {
 		Group g = SWTWidgetHelper.createGroup(result, "Search in");
 		this.firstRevisionCheckbox = SWTWidgetHelper.createCheckBox(g, "Stop search after finding a match in a revision.");
@@ -507,7 +501,7 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			String text = ((ITextSelection) selection).getText();
 			if (text != null) {
 				if (fIsRegExSearch) {
-					fPattern.setText(FindReplaceDocumentAdapter.escapeForRegExPattern(text));
+					fPattern.setText(escapeForRegExPattern(text));
 				} else {
 					fPattern.setText(insertEscapeChars(text));
 				}
@@ -526,6 +520,79 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			}
 		}
 		return false;
+	}
+
+	/**
+	 * TODO this is a temporary copy from FindReplaceDocumentAdapter (Eclipse 3.5)
+	 * we have to keep it as long as we want to be Eclipse 3.4 compatible
+	 *
+	 * Escapes special characters in the string, such that the resulting pattern
+	 * matches the given string.
+	 *
+	 * @param string the string to escape
+	 * @return a regex pattern that matches the given string
+	 * @since 3.5
+	 */
+	private static String escapeForRegExPattern(String string) {
+		//implements https://bugs.eclipse.org/bugs/show_bug.cgi?id=44422
+
+		StringBuffer pattern= new StringBuffer(string.length() + 16);
+		int length= string.length();
+		if (length > 0 && string.charAt(0) == '^') {
+			pattern.append('\\');
+		}
+		for (int i= 0; i < length; i++) {
+			char ch= string.charAt(i);
+			switch (ch) {
+				case '\\':
+				case '(':
+				case ')':
+				case '[':
+				case ']':
+				case '{':
+				case '}':
+				case '.':
+				case '?':
+				case '*':
+				case '+':
+				case '|':
+					pattern.append('\\').append(ch);
+					break;
+
+				case '\r':
+					if (i + 1 < length && string.charAt(i + 1) == '\n') {
+						i++;
+					}
+					//$FALL-THROUGH$
+				case '\n':
+					pattern.append("\\R"); //$NON-NLS-1$
+					break;
+				case '\t':
+					pattern.append("\\t"); //$NON-NLS-1$
+					break;
+				case '\f':
+					pattern.append("\\f"); //$NON-NLS-1$
+					break;
+				case 0x07:
+					pattern.append("\\a"); //$NON-NLS-1$
+					break;
+				case 0x1B:
+					pattern.append("\\e"); //$NON-NLS-1$
+					break;
+
+				default:
+					if (0 <= ch && ch < 0x20) {
+						pattern.append("\\x"); //$NON-NLS-1$
+						pattern.append(Integer.toHexString(ch).toUpperCase());
+					} else {
+						pattern.append(ch);
+					}
+			}
+		}
+		if (length > 0 && string.charAt(length - 1) == '$') {
+			pattern.insert(pattern.length() - 1, '\\');
+		}
+		return pattern.toString();
 	}
 
 	private String insertEscapeChars(String text) {
@@ -624,11 +691,6 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 	// --------------- Configuration handling --------------
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.dialogs.DialogPage#dispose()
-	 */
 	@Override
 	public void dispose() {
 		writeConfiguration();

@@ -72,7 +72,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 /**
  * TODO enable tree/flat view switch
  *
- * @author steeven $Id$
+ * @author steeven
  */
 public class CommitFilesChooser extends Composite {
 	private final UntrackedFilesFilter untrackedFilesFilter;
@@ -103,7 +103,7 @@ public class CommitFilesChooser extends Composite {
 	public CommitFilesChooser(Composite container, boolean selectable,
 			List<IResource> resources, boolean showUntracked,
 			boolean showMissing, boolean showClean) {
-		super(container, container.getStyle() | SWT.V_SCROLL);
+		super(container, container.getStyle());
 		this.selectable = selectable;
 		this.showUntracked = showUntracked;
 		this.missing = showMissing;

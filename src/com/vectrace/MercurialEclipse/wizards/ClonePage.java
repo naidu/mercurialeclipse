@@ -430,8 +430,14 @@ public class ClonePage extends PushPullPage {
 			boolean timeout2 = getTimeoutCheckBox().getSelection();
 			String rev = revisionTextField.getText();
 
+			boolean noUpdate = true;
+			if(svn || forest){
+				// TODO allow branch /revision selection for the svn/forest clones
+				noUpdate = false;
+			}
+
 			CloneOperation cloneOperation = new CloneOperation(getContainer(), destDirectory
-					.getParentFile(), lastRepo, false, pull, uncompressed, timeout2, rev,
+					.getParentFile(), lastRepo, noUpdate, pull, uncompressed, timeout2, rev,
 					destDirectory.getName(), forest, svn);
 
 			getContainer().run(true, true, cloneOperation);

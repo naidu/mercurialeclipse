@@ -614,7 +614,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 		synchronized (statusUpdateLock) {
 			// get status and branch for hg root
 			String output = HgStatusClient.getStatusWithoutIgnored(root);
-			String[] mergeStatus = HgStatusClient.getMergeStatus(root);
+			String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);
 			String currentChangeSetId = mergeStatus[0];
 			LocalChangesetCache.getInstance().checkLatestChangeset(root, currentChangeSetId);
 			String mergeNode = mergeStatus[1];
@@ -720,7 +720,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 		if(res instanceof IProject){
 			try {
-				String[] mergeStatus = HgStatusClient.getMergeStatus(root);
+				String[] mergeStatus = HgStatusClient.getIdMergeAndBranch(root);
 				String id = mergeStatus[0];
 				LocalChangesetCache.getInstance().checkLatestChangeset(root, id);
 				String mergeNode = mergeStatus[1];
@@ -862,7 +862,7 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 			// doesn't belong to our project (can happen if root is above project level)
 			// or simply deleted, so can't be found...
 			if (member == null) {
-				if(bit == BIT_REMOVED){
+				if(bit == BIT_REMOVED || bit == BIT_MISSING){
 					IPath path = hgRootPath.append(localName);
 					// creates a handle to non-existent file. This is ok.
 					member = workspaceRoot.getFileForLocation(path);
@@ -1008,19 +1008,19 @@ public class MercurialStatusCache extends AbstractCache implements IResourceChan
 
 	private int getBit(char status) {
 		switch (status) {
-		case '!':
+		case CHAR_MISSING:
 			return BIT_MISSING;
-		case 'R':
+		case CHAR_REMOVED:
 			return BIT_REMOVED;
-		case 'I':
+		case CHAR_IGNORED:
 			return BIT_IGNORE;
-		case 'C':
+		case CHAR_CLEAN:
 			return BIT_CLEAN;
-		case '?':
+		case CHAR_UNKNOWN:
 			return BIT_UNKNOWN;
-		case 'A':
+		case CHAR_ADDED:
 			return BIT_ADDED;
-		case 'M':
+		case CHAR_MODIFIED:
 			return BIT_MODIFIED;
 		default:
 			return BIT_IMPOSSIBLE;

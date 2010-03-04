@@ -50,7 +50,7 @@ public class HgStatusClient extends AbstractClient {
 
 	//             group 1                         group 2                             group 3
 	// (first parent, optional dirty flag)(merge parent, optional dirty flag) space (branch name)
-	private static final Pattern MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$", Pattern.MULTILINE); //$NON-NLS-1$
+	private static final Pattern ID_MERGE_AND_BRANCH_PATTERN = Pattern.compile("^([0-9a-z]+\\+?)([0-9a-z]+)?\\+?\\s+(.+)$", Pattern.MULTILINE); //$NON-NLS-1$
 
 	public static String getStatus(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("status", root, true); //$NON-NLS-1$
@@ -103,14 +103,19 @@ public class HgStatusClient extends AbstractClient {
 		return command.executeToBytes().length != 0;
 	}
 
-	public static String[] getMergeStatus(HgRoot root) throws HgException {
+	/**
+	 * @param root non null
+	 * @return current changeset id, merge id and branch name for the working directory
+	 * @throws HgException
+	 */
+	public static String[] getIdMergeAndBranch(HgRoot root) throws HgException {
 		AbstractShellCommand command = new HgCommand("id", root, true); //$NON-NLS-1$
 		// Full global IDs + branch name
 		command.addOptions("-ib","--debug"); //$NON-NLS-1$ //$NON-NLS-2$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.STATUS_TIMEOUT);
 		String versionIds = command.executeToString().trim();
 
-		Matcher m = MERGE_AND_BRANCH_PATTERN.matcher(versionIds);
+		Matcher m = ID_MERGE_AND_BRANCH_PATTERN.matcher(versionIds);
 		String mergeId = null;
 		String branch = Branch.DEFAULT;
 		// current working directory id

@@ -28,7 +28,7 @@ public class HgUpdateClient extends AbstractClient {
 		HgCommand command = new HgCommand("update", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
-		if (revision != null) {
+		if (revision != null && revision.trim().length() > 0) {
 			command.addOptions("-r", revision); //$NON-NLS-1$
 		}
 		if (clean) {

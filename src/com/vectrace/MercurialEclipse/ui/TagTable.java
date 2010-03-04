@@ -51,7 +51,7 @@ public class TagTable extends Composite {
 	private int[] parents;
 	private boolean showTip;
 
-	private final HgRoot hgRoot;
+	private HgRoot hgRoot;
 
 	public TagTable(Composite parent, HgRoot hgRoot) {
 		super(parent, SWT.NONE);
@@ -68,7 +68,7 @@ public class TagTable extends Composite {
 		table.setLayoutData(data);
 
 		String[] titles = { Messages.getString("TagTable.column.rev"), Messages.getString("TagTable.column.global"), Messages.getString("TagTable.column.tag"), Messages.getString("TagTable.column.local"), Messages.getString("ChangesetTable.column.summary") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-		int[] widths = { 50, 150, 200, 70, 300};
+		int[] widths = { 60, 150, 200, 70, 300};
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
@@ -82,6 +82,11 @@ public class TagTable extends Composite {
 
 	public void highlightParents(int[] newParents) {
 		this.parents = newParents;
+	}
+
+	public void setHgRoot(HgRoot newRoot) {
+		this.hgRoot = newRoot;
+		table.removeAll();
 	}
 
 	public void setTags(Tag[] tags) {

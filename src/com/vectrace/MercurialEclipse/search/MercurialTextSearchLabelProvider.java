@@ -10,6 +10,7 @@
  *     Juerg Billeter, juergbi@ethz.ch - 47136 Search view should show match objects
  *     Ulrich Etter, etteru@ethz.ch - 47136 Search view should show match objects
  *     Roman Fuchs, fuchsro@ethz.ch - 47136 Search view should show match objects
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
@@ -18,9 +19,9 @@ import java.util.Comparator;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.LabelProvider;
-import org.eclipse.jface.viewers.StyledCellLabelProvider;
 import org.eclipse.jface.viewers.StyledString;
 import org.eclipse.jface.viewers.DelegatingStyledCellLabelProvider.IStyledLabelProvider;
+import org.eclipse.jface.viewers.StyledString.Styler;
 import org.eclipse.search.internal.ui.Messages;
 import org.eclipse.search.internal.ui.SearchMessages;
 import org.eclipse.search.internal.ui.SearchPluginImages;
@@ -71,11 +72,6 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		return fOrder;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.LabelProvider#getText(java.lang.Object)
-	 */
 	@Override
 	public String getText(Object object) {
 		return getStyledText(object).getString();
@@ -130,7 +126,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 			String decorated = Messages.format(fgSeparatorFormat, new String[] { str.getString(),
 					pathString });
 
-			StyledCellLabelProvider.styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER,
+			styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER,
 					str);
 			return getColoredLabelWithCounts(resource, str);
 		}
@@ -138,6 +134,48 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		StyledString str = new StyledString(Messages.format(fgSeparatorFormat, new String[] {
 				pathString, name }));
 		return getColoredLabelWithCounts(resource, str);
+	}
+
+	/**
+	 * TODO this is a temporary copy from StyledCellLabelProvider (Eclipse 3.5)
+	 * we have to keep it as long as we want to be Eclipse 3.4 compatible
+	 *
+	 * Applies decoration styles to the decorated string and adds the styles of the previously
+	 * undecorated string.
+	 * <p>
+	 * If the <code>decoratedString</code> contains the <code>styledString</code>, then the result
+	 * keeps the styles of the <code>styledString</code> and styles the decorations with the
+	 * <code>decorationStyler</code>. Otherwise, the decorated string is returned without any
+	 * styles.
+	 *
+	 * @param decoratedString the decorated string
+	 * @param decorationStyler the styler to use for the decoration or <code>null</code> for no
+	 *            styles
+	 * @param styledString the original styled string
+	 *
+	 * @return the styled decorated string (can be the given <code>styledString</code>)
+	 * @since 3.5
+	 */
+	private static StyledString styleDecoratedString(String decoratedString, Styler decorationStyler, StyledString styledString) {
+		String label= styledString.getString();
+		int originalStart= decoratedString.indexOf(label);
+		if (originalStart == -1) {
+			return new StyledString(decoratedString); // the decorator did something wild
+		}
+
+		if (decoratedString.length() == label.length()) {
+			return styledString;
+		}
+
+		if (originalStart > 0) {
+			StyledString newString= new StyledString(decoratedString.substring(0, originalStart), decorationStyler);
+			newString.append(styledString);
+			styledString= newString;
+		}
+		if (decoratedString.length() > originalStart + label.length()) { // decorator appended something
+			return styledString.append(decoratedString.substring(originalStart + label.length()), decorationStyler);
+		}
+		return styledString; // no change
 	}
 
 	private StyledString getMercurialMatchLabel(MercurialMatch match) {
@@ -157,11 +195,6 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 	// after and before a
 	// match
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.LabelProvider#getImage(java.lang.Object)
-	 */
 	@Override
 	public Image getImage(Object element) {
 		if (element instanceof MercurialRevisionStorage) {
@@ -181,46 +214,23 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		return image;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.BaseLabelProvider#dispose()
-	 */
 	@Override
 	public void dispose() {
 		super.dispose();
 		fLabelProvider.dispose();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.BaseLabelProvider#isLabelProperty(java.lang .Object,
-	 * java.lang.String)
-	 */
 	@Override
 	public boolean isLabelProperty(Object element, String property) {
 		return fLabelProvider.isLabelProperty(element, property);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.BaseLabelProvider#removeListener(org.eclipse
-	 * .jface.viewers.ILabelProviderListener)
-	 */
 	@Override
 	public void removeListener(ILabelProviderListener listener) {
 		super.removeListener(listener);
 		fLabelProvider.removeListener(listener);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.viewers.BaseLabelProvider#addListener(org.eclipse.jface
-	 * .viewers.ILabelProviderListener)
-	 */
 	@Override
 	public void addListener(ILabelProviderListener listener) {
 		super.addListener(listener);

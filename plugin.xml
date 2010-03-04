@@ -1597,7 +1597,7 @@
       <textSearchEngine
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchEngine"
             id="com.vectrace.MercurialEclipse.mercurialTextSearch"
-            label="Mercurial Text Search">
+            label="Mercurial Search">
       </textSearchEngine>
    </extension>
    <extension
@@ -1608,7 +1608,7 @@
             enabled="true"
             icon="icons/mercury_Hg.png"
             id="MercurialEclipse.page1"
-            label="Mercurial Text Search"
+            label="Mercurial Search"
             showScopeSection="true">
       </page>
    </extension>
@@ -1618,7 +1618,7 @@
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
             icon="icons/mercury_Hg.png"
             id="com.vectrace.MercurialEclipse.search.MercurialTextSearchResultPage"
-            label="Mercurial Text Search"
+            label="Mercurial Search"
             searchResultClass="com.vectrace.MercurialEclipse.search.MercurialTextSearchResult">
       </viewPage>
    </extension>
@@ -1627,7 +1627,7 @@
       <textSearchQueryProvider
             class="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
             id="com.vectrace.MercurialEclipse.search.MercurialTextSearchQueryProvider"
-            label="Mercurial Text Search Query Provider">
+            label="Mercurial Search Query Provider">
       </textSearchQueryProvider>
    </extension>   
 </plugin>

@@ -42,11 +42,9 @@ public class BookmarkTable extends Composite {
 			.getBold(JFaceResources.DIALOG_FONT);
 
 	private final Table table;
-	private final HgRoot hgRoot;
 
-	public BookmarkTable(Composite parent, HgRoot hgRoot) {
+	public BookmarkTable(Composite parent) {
 		super(parent, SWT.NONE);
-		this.hgRoot = hgRoot;
 		this.setLayout(new GridLayout());
 		this.setLayoutData(new GridData());
 
@@ -60,19 +58,15 @@ public class BookmarkTable extends Composite {
 		table.setLayoutData(data);
 
 		String[] titles = { Messages.getString("BookmarkTable.column.rev"), Messages.getString("BookmarkTable.column.global"), Messages.getString("BookmarkTable.column.name"), Messages.getString("BookmarkTable.column.state") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		int[] widths = { 50, 150, 300, 70 };
+		int[] widths = { 60, 150, 300, 70 };
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
 			column.setWidth(widths[i]);
 		}
-		updateTable();
 	}
 
-	/**
-	 *
-	 */
-	private void updateTable() {
+	public void updateTable(HgRoot hgRoot) {
 		try {
 			List<Bookmark> bookmarks = HgBookmarkClient.getBookmarks(hgRoot);
 			setBookmarks(bookmarks.toArray(new Bookmark[bookmarks.size()]));
