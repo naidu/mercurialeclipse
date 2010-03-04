@@ -87,6 +87,7 @@ public class RevisionChooserPanel extends Composite {
 		public boolean disallowSelectingParents;
 		public boolean showForceButton;
 		public boolean isForceChecked;
+		public boolean highlightDefaultBranch;
 		public String forceButtonText;
 		public String revision;
 		public ChangeSet changeSet;
@@ -119,6 +120,9 @@ public class RevisionChooserPanel extends Composite {
 
 		text = new Text(this, SWT.BORDER);
 		text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+		if(data.highlightDefaultBranch){
+			text.setText(Branch.DEFAULT);
+		}
 		text.addFocusListener(new FocusListener() {
 			String textStr;
 
@@ -403,6 +407,9 @@ public class RevisionChooserPanel extends Composite {
 
 		final BranchTable table = new BranchTable(folder);
 		table.highlightParents(parents);
+		if(data.highlightDefaultBranch) {
+			table.highlightBranch(Branch.DEFAULT);
+		}
 		table.setLayoutData(new GridData(GridData.FILL_BOTH));
 
 		table.addSelectionListener(new SelectionAdapter() {

@@ -65,6 +65,7 @@ public class SelectRevisionPage extends WizardPage {
 		setControl(composite);
 		DataLoader loader = getDataLoader();
 		Settings settings = new Settings();
+		settings.highlightDefaultBranch = true;
 		panel = new RevisionChooserPanel(composite, loader, settings);
 		hookNextButtonListener();
 	}

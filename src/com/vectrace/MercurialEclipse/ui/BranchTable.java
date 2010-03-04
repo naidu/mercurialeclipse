@@ -39,6 +39,8 @@ public class BranchTable extends Composite {
 	private int[] parents;
 	private boolean showTip = true;
 
+	private String highlightBranch;
+
 	public BranchTable(Composite parent) {
 		super(parent, SWT.NONE);
 
@@ -73,7 +75,8 @@ public class BranchTable extends Composite {
 		for (Branch branch : branches) {
 			if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
 				TableItem row = new TableItem(table, SWT.NONE);
-				if (parents != null && isParent(branch.getRevision())) {
+				if ((parents != null && isParent(branch.getRevision()))
+						|| Branch.same(highlightBranch, branch.getName())) {
 					row.setFont(PARENT_FONT);
 				}
 				row.setText(0, Integer.toString(branch.getRevision()));
@@ -112,5 +115,12 @@ public class BranchTable extends Composite {
 			default:
 				return false;
 		}
+	}
+
+	/**
+	 * @param branch non null branch to highlight
+	 */
+	public void highlightBranch(String branch) {
+		this.highlightBranch = branch;
 	}
 }
