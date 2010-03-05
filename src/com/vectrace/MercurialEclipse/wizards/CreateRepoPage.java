@@ -78,7 +78,8 @@ public class CreateRepoPage extends ConfigurationWizardMainPage {
 			createCheckBox.setEnabled(true);
 			setAuthCompositeEnabled(false);
 		} else {
-			createCheckBox.setEnabled(false);
+			boolean isSsh = url.startsWith("ssh:");
+			createCheckBox.setEnabled(isSsh);
 			setAuthCompositeEnabled(true);
 		}
 
@@ -90,7 +91,7 @@ public class CreateRepoPage extends ConfigurationWizardMainPage {
 				return false;
 			}
 		} catch (HgException e) {
-
+			// do not report error here
 		}
 		if(localDirectory != null){
 			if(!localDirectory.exists() && !createCheckBox.getSelection()){
@@ -148,6 +149,10 @@ public class CreateRepoPage extends ConfigurationWizardMainPage {
 
 	public File getLocalRepo(){
 		return getLocalDirectory(getUrlText());
+	}
+
+	public boolean shouldInitRepo(){
+		return createCheckBox.getSelection();
 	}
 
 	@Override

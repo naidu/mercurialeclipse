@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.wizards;
 import java.io.File;
 import java.util.Properties;
 
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.ui.INewWizard;
@@ -53,8 +54,9 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
-		File localRepo = ((CreateRepoPage)page).getLocalRepo();
-		if(localRepo != null && !HgPath.isHgRoot(localRepo)){
+		CreateRepoPage createRepoPage = (CreateRepoPage)page;
+		File localRepo = createRepoPage.getLocalRepo();
+		if(localRepo != null && !HgPath.isHgRoot(localRepo) && createRepoPage.shouldInitRepo()){
 			try {
 				HgInitClient.init(localRepo);
 			} catch (HgException e) {
@@ -76,6 +78,20 @@ public class NewLocationWizard extends HgWizard implements INewWizard {
 			view.refreshViewer(repository, true);
 		} catch (PartInitException e) {
 			MercurialEclipsePlugin.logError(e);
+		}
+		if (createRepoPage.shouldInitRepo() && !repository.isLocal()
+				&& repository.getLocation().startsWith("ssh:")) {
+			boolean confirm = MessageDialog.openConfirm(getShell(), "Hg init", "Do you really want to run hg init on remote server?");
+			if(!confirm){
+				return true;
+			}
+			try {
+				HgInitClient.init(repository);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				page.setErrorMessage(e.getMessage());
+				return false;
+			}
 		}
 		return true;
 	}

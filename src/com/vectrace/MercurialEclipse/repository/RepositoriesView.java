@@ -17,13 +17,21 @@ import java.util.Iterator;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.PreferenceDialog;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.AbstractTreeViewer;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -55,8 +63,10 @@ import org.eclipse.ui.internal.dialogs.PropertyDialog;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 import org.eclipse.ui.part.DrillDownAdapter;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgPath;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
@@ -73,6 +83,65 @@ import com.vectrace.MercurialEclipse.wizards.NewLocationWizard;
  * RepositoriesView is a view on a set of known Hg repositories
  */
 public class RepositoriesView extends ViewPart implements ISelectionListener {
+
+	private final class InitAction extends Action {
+
+		private final Shell shell;
+
+		private InitAction(String text, ImageDescriptor image, Shell shell) {
+			super(text, image);
+			this.shell = shell;
+		}
+
+		@Override
+		public void run() {
+			IStructuredSelection selection = (IStructuredSelection) treeViewer.getSelection();
+			if(selection.size() != 1 || !(selection.getFirstElement() instanceof IHgRepositoryLocation)){
+				return;
+			}
+			final IHgRepositoryLocation repo = (IHgRepositoryLocation) selection.getFirstElement();
+			final String [] initResult = new String[]{""};
+			Job job = new Job("Init for " + repo.toString()) {
+
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					try {
+						initResult[0] = HgInitClient.init(repo);
+					} catch (HgException e) {
+						initResult[0] = e.getMessage();
+						MercurialEclipsePlugin.logError(e);
+						return e.getStatus();
+					}
+					return Status.OK_STATUS;
+				}
+			};
+			job.addJobChangeListener(new JobChangeAdapter() {
+				@Override
+				public void done(final IJobChangeEvent event) {
+					Display.getDefault().asyncExec(new Runnable() {
+						public void run() {
+							String message;
+							if (event.getResult().isOK()) {
+								message = "Hg init for repository '" + repo.toString()
+										+ "' was successful!";
+							} else {
+								message = "Hg init for repository '" + repo.toString()
+										+ "' failed!";
+							}
+							if (initResult[0] != null && initResult[0].length() > 0) {
+								message += "\nHg said: " + initResult[0];
+							}
+							MessageDialog.openInformation(shell, "Hg init result", message);
+						}
+					});
+				}
+			});
+			IWorkbenchSiteProgressService service = (IWorkbenchSiteProgressService) getSite()
+					.getService(IWorkbenchSiteProgressService.class);
+			service.schedule(job);
+		}
+	}
+
 	public static final String VIEW_ID = "com.vectrace.MercurialEclipse.repository.RepositoriesView"; //$NON-NLS-1$
 
 	// The root
@@ -126,6 +195,8 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 
 	private Action importAction;
 
+	private Action initAction;
+
 	public RepositoriesView() {
 		super();
 	}
@@ -162,6 +233,10 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 				dialog.open();
 			}
 		};
+
+		// Init Repository (popup)
+		initAction = new InitAction(Messages.getString("RepositoriesView.initRepo"), MercurialEclipsePlugin //$NON-NLS-1$
+				.getImageDescriptor("release_rls.gif"), shell);
 
 		// Import project (popup)
 		importAction = new Action(Messages.getString("RepositoriesView.importProject"),
@@ -327,6 +402,10 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 
 		if(singleRepoSelected){
 			manager.add(cloneAction);
+			IHgRepositoryLocation repo = (IHgRepositoryLocation) selection.getFirstElement();
+			if(!repo.isLocal() && repo.getLocation().startsWith("ssh:")) {
+				manager.add(initAction);
+			}
 			manager.add(refreshPopupAction);
 		}
 

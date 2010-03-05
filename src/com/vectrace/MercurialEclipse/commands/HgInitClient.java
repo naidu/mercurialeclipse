@@ -14,6 +14,7 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -31,6 +32,21 @@ public class HgInitClient extends AbstractClient {
 				.getFirstExistingDirectory(file), false);
 		command.addOptions(file.getAbsolutePath());
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.DEFAULT_TIMEOUT);
+		return command.executeToString();
+	}
+
+	/**
+	 * Creates hg repository at given location
+	 * @param repo non null repository (which may not exist yet)
+	 */
+	public static String init(IHgRepositoryLocation repo) throws HgException {
+		AbstractShellCommand command = new HgCommand("init", false);
+		if(repo.isLocal()) {
+			command.addOptions(repo.getLocation());
+		} else {
+			command.addOptions(repo.getUri().toString());
+		}
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PUSH_TIMEOUT);
 		return command.executeToString();
 	}
 }
