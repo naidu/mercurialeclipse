@@ -16,14 +16,11 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
-import org.eclipse.compare.CompareConfiguration;
-import org.eclipse.compare.CompareUI;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IWorkspaceRoot;
 import org.eclipse.core.resources.ResourcesPlugin;
-import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
@@ -55,17 +52,14 @@ import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
-import com.vectrace.MercurialEclipse.compare.RevisionNode;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.team.CompareAction;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -385,30 +379,11 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	}
 
 	private void openMergeEditor(TableItem item) {
-		try {
-			FlaggedAdaptable flagged = (FlaggedAdaptable) item.getData();
-			IFile file = (IFile) flagged.getAdapter(IFile.class);
-
-			String mergeNodeId = HgStatusClient.getMergeChangesetId(hgRoot);
-
-			String[] parents = HgParentClient.getParentNodeIds(hgRoot);
-			int ancestor = HgParentClient
-					.findCommonAncestor(hgRoot, parents[0], parents[1]);
-
-			RevisionNode mergeNode = new RevisionNode(
-					new MercurialRevisionStorage(file, mergeNodeId));
-			RevisionNode ancestorNode = new RevisionNode(
-					new MercurialRevisionStorage(file, ancestor));
-
-			HgCompareEditorInput compareInput = new HgCompareEditorInput(
-					new CompareConfiguration(), file, ancestorNode,
-					mergeNode, true);
-
-			CompareUI.openCompareEditor(compareInput);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
-		}
+		FlaggedAdaptable flagged = (FlaggedAdaptable) item.getData();
+		IFile file = (IFile) flagged.getAdapter(IFile.class);
+		CompareAction compareAction = new CompareAction(file);
+		compareAction.setEnableMerge(true);
+		compareAction.run(null);
 	}
 
 }

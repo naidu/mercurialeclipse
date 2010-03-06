@@ -70,6 +70,10 @@ public class MercurialSynchronizePageActionGroup extends ModelSynchronizePartici
 			configuration.setProperty(keyOpen, openAction);
 		}
 
+		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
+				ISynchronizePageConfiguration.FILE_GROUP,
+				new OpenMergeEditorAction("Open In Merge Editor",
+						configuration, getVisibleRootsSelectionProvider()));
 
 		appendToGroup(ISynchronizePageConfiguration.P_CONTEXT_MENU,
 				ISynchronizePageConfiguration.FILE_GROUP,

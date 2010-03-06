@@ -11,18 +11,25 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
+import org.eclipse.compare.CompareConfiguration;
+import org.eclipse.compare.CompareUI;
 import org.eclipse.compare.ResourceNode;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgParentClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
 import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
@@ -31,6 +38,8 @@ import com.vectrace.MercurialEclipse.utils.CompareUtils;
  * @author zingo, Jerome Negre <jerome+hg@jnegre.org>
  */
 public class CompareAction extends SingleFileAction {
+
+	private boolean mergeEnabled;
 
 	/**
 	 * Empty constructor must be here, otherwise Eclipse wouldn't be able to create the object via reflection
@@ -50,6 +59,10 @@ public class CompareAction extends SingleFileAction {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
+				if(mergeEnabled){
+					openMergeEditor(file);
+					return Status.OK_STATUS;
+				}
 				boolean clean = MercurialStatusCache.getInstance().isClean(file);
 				if (!clean) {
 					compareToLocal(file);
@@ -92,6 +105,39 @@ public class CompareAction extends SingleFileAction {
 		// mercurial version
 		RevisionNode rightNode = new RevisionNode(new MercurialRevisionStorage(file));
 		CompareUtils.openEditor(leftNode, rightNode, false, true);
+	}
+
+	private void openMergeEditor(IFile file){
+
+		try {
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(file);
+			String mergeNodeId = HgStatusClient.getMergeChangesetId(hgRoot);
+
+			String[] parents = HgParentClient.getParentNodeIds(hgRoot);
+			int ancestor = HgParentClient
+					.findCommonAncestor(hgRoot, parents[0], parents[1]);
+
+			RevisionNode mergeNode = new RevisionNode(
+					new MercurialRevisionStorage(file, mergeNodeId));
+			RevisionNode ancestorNode = new RevisionNode(
+					new MercurialRevisionStorage(file, ancestor));
+
+			final HgCompareEditorInput compareInput = new HgCompareEditorInput(
+					new CompareConfiguration(), file, ancestorNode, mergeNode, true);
+
+			Display.getDefault().asyncExec(new Runnable() {
+				public void run() {
+					CompareUI.openCompareEditor(compareInput);
+				}
+			});
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			MercurialEclipsePlugin.showError(e);
+		}
+	}
+
+	public void setEnableMerge(boolean enable) {
+		mergeEnabled = enable;
 	}
 
 }
