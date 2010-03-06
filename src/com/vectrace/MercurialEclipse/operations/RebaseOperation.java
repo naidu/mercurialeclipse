@@ -14,12 +14,15 @@ package com.vectrace.MercurialEclipse.operations;
 import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -69,9 +72,21 @@ public class RebaseOperation extends HgOperation {
 			ex = e;
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
 		} finally {
-			RefreshRootJob refreshRootJob = new RefreshRootJob(Messages.getString("RebaseOperation.refreshing"), hgRoot);
-			refreshRootJob.schedule();
-			refreshRootJob.join();
+			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
+			job.addJobChangeListener(new JobChangeAdapter(){
+				@Override
+				public void done(IJobChangeEvent event) {
+					final RefreshRootJob refreshRootJob = new RefreshRootJob(Messages.getString("RebaseOperation.refreshing"), hgRoot);
+					refreshRootJob.schedule();
+					try {
+						refreshRootJob.join();
+					} catch (InterruptedException e) {
+						MercurialEclipsePlugin.logError(e);
+					}
+				}
+			});
+			job.schedule();
+			job.join();
 			monitor.done();
 			if(ex != null) {
 				showMergeView();
