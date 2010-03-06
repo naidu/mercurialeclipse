@@ -22,7 +22,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 public class SwitchHandler extends RootHandler {
 
 	@Override
-	protected void run(HgRoot hgRoot) throws CoreException {
+	public void run(HgRoot hgRoot) throws CoreException {
 		if (HgStatusClient.isDirty(hgRoot)) {
 			if (!MessageDialog
 					.openQuestion(getShell(),
