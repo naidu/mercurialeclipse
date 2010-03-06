@@ -15,12 +15,16 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.PartInitException;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.extensions.HgRebaseClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.views.MergeView;
 
 /**
  * @author bastian
@@ -51,7 +55,8 @@ public class RebaseOperation extends HgOperation {
 	@Override
 	public void run(IProgressMonitor monitor) throws InvocationTargetException,
 			InterruptedException {
-		monitor.beginTask(getActionDescription(), 3);
+		monitor.beginTask(getActionDescription(), 2);
+		HgException ex = null;
 		try {
 			monitor.worked(1);
 			monitor.subTask(Messages.getString("RebaseOperation.calling")); //$NON-NLS-1$
@@ -59,13 +64,39 @@ public class RebaseOperation extends HgOperation {
 					sourceRev,
 					baseRev, destRev, collapse, cont, abort);
 			monitor.worked(1);
-			monitor.subTask(Messages.getString("RebaseOperation.refreshing")); //$NON-NLS-1$
-			LocalChangesetCache.getInstance().refreshAllLocalRevisions(hgRoot, true);
-			monitor.worked(1);
+
 		} catch (HgException e) {
+			ex = e;
 			throw new InvocationTargetException(e, e.getLocalizedMessage());
+		} finally {
+			RefreshRootJob refreshRootJob = new RefreshRootJob(Messages.getString("RebaseOperation.refreshing"), hgRoot);
+			refreshRootJob.schedule();
+			refreshRootJob.join();
+			monitor.done();
+			if(ex != null) {
+				showMergeView();
+			}
 		}
-		monitor.done();
+	}
+
+	/**
+	 * show Merge view, as it offers to abort a merge and revise the automatically merged files
+	 */
+	private void showMergeView() {
+		Runnable runnable = new Runnable() {
+			public void run() {
+				MergeView view;
+				try {
+					view = (MergeView) MercurialEclipsePlugin.getActivePage()
+							.showView(MergeView.ID);
+					view.clearView();
+					view.setCurrentRoot(hgRoot);
+				} catch (PartInitException e1) {
+					MercurialEclipsePlugin.logError(e1);
+				}
+			}
+		};
+		Display.getDefault().asyncExec(runnable);
 	}
 
 	@Override

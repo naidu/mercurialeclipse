@@ -20,6 +20,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -69,6 +70,9 @@ public class RebasePage extends HgWizardPage {
 	}
 
 	private void createOptionsWidgets(Composite comp) {
+
+		final boolean mergeInProgress = HgStatusClient.isMergeInProgress(hgRoot);
+
 		Group optionGroup = SWTWidgetHelper.createGroup(comp, Messages.getString("RebasePage.optionGroup.label"), 2, //$NON-NLS-1$
 				GridData.FILL_BOTH);
 
@@ -84,18 +88,25 @@ public class RebasePage extends HgWizardPage {
 
 			public void widgetSelected(SelectionEvent e) {
 				boolean selection = abortRevCheckBox.getSelection();
-				sourceRevCheckBox.setEnabled(!selection);
-				baseRevCheckBox.setEnabled(!selection);
-				destRevCheckBox.setEnabled(!selection);
+				sourceRevCheckBox.setEnabled(!selection && !mergeInProgress);
+				baseRevCheckBox.setEnabled(!selection && !mergeInProgress);
+				destRevCheckBox.setEnabled(!selection && !mergeInProgress);
 
-				if (selection) {
+				if (selection || mergeInProgress) {
 					sourceRevCheckBox.setSelection(false);
 					baseRevCheckBox.setSelection(false);
 					destRevCheckBox.setSelection(false);
 					collapseRevCheckBox.setSelection(false);
-					continueRevCheckBox.setSelection(false);
 					srcTable.setEnabled(false);
 					destTable.setEnabled(false);
+				}
+				if(selection) {
+					continueRevCheckBox.setSelection(false);
+				}
+				if(mergeInProgress && !selection && !continueRevCheckBox.getSelection()){
+					setPageComplete(false);
+				} else {
+					setPageComplete(true);
 				}
 			}
 		};
@@ -112,21 +123,33 @@ public class RebasePage extends HgWizardPage {
 
 			public void widgetSelected(SelectionEvent e) {
 				boolean selection = continueRevCheckBox.getSelection();
-				sourceRevCheckBox.setEnabled(!selection);
-				baseRevCheckBox.setEnabled(!selection);
-				destRevCheckBox.setEnabled(!selection);
 
-				if (selection) {
+				sourceRevCheckBox.setEnabled(!selection && !mergeInProgress);
+				baseRevCheckBox.setEnabled(!selection && !mergeInProgress);
+				destRevCheckBox.setEnabled(!selection && !mergeInProgress);
+
+				if (selection || mergeInProgress) {
 					sourceRevCheckBox.setSelection(false);
 					baseRevCheckBox.setSelection(false);
 					destRevCheckBox.setSelection(false);
 					collapseRevCheckBox.setSelection(false);
-					abortRevCheckBox.setSelection(false);
 					srcTable.setEnabled(false);
 					destTable.setEnabled(false);
 				}
+				if(selection) {
+					abortRevCheckBox.setSelection(false);
+				}
+				if(mergeInProgress && !selection && !abortRevCheckBox.getSelection()){
+					setPageComplete(false);
+				} else {
+					setPageComplete(true);
+				}
 			}
 		};
+		if(mergeInProgress){
+			continueRevCheckBox.setSelection(true);
+			contSl.widgetSelected(null);
+		}
 		continueRevCheckBox.addSelectionListener(contSl);
 	}
 
