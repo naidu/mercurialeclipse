@@ -75,7 +75,7 @@ public class BundleRepoWizard extends HgWizard implements IExportWizard {
 		String bundleFile = page.getBundleFile();
 
 		// only use a target rev if checkbox was selected
-		ChangeSet cs = outgoingPage.getRevisionCheckBox().getSelection() ? outgoingPage
+		ChangeSet cs = outgoingPage.isRevisionSelected() ? outgoingPage
 				.getRevision()
 				: null;
 

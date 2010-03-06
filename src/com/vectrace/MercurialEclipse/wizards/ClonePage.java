@@ -404,11 +404,11 @@ public class ClonePage extends PushPullPage {
 		}
 		boolean forest = false;
 		if (isShowForest()) {
-			forest = getForestCheckBox().getSelection();
+			forest = isForestSelected();
 		}
 		boolean svn = false;
 		if (isShowSvn()) {
-			svn = getSvnCheckBox().getSelection();
+			svn = isSvnSelected();
 		}
 		lastRepo = getRepository();
 		if(lastRepo == null){
@@ -427,7 +427,7 @@ public class ClonePage extends PushPullPage {
 			// run clone
 			boolean pull = pullCheckBox.getSelection();
 			boolean uncompressed = uncompressedCheckBox.getSelection();
-			boolean timeout2 = getTimeoutCheckBox().getSelection();
+			boolean timeout2 = isTimeoutSelected();
 			String rev = revisionTextField.getText();
 
 			boolean noUpdate = true;

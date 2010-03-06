@@ -103,14 +103,14 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 	public void addPages() {
 		// creates selection page, but only if there is something selected.
 		// the point is, that the sync view starts the wizard with ZERO selection and
-		// expects that the first page is somehow created (and it is created by the supe class
-		// but only if the getRootResources() ireturns something).
-		// so inorder to support it, we init the selection to ALL projects...
+		// expects that the first page is somehow created (and it is created by the super class
+		// but only if the getRootResources() returns something).
+		// so in order to support it, we init the selection to ALL projects...
 		if(getInitialSelection().length == 0){
 			projects = MercurialTeamProvider.getKnownHgProjects().toArray(new IProject[0]);
 		}
-		super.addPages();
 		repoPage = createrepositoryConfigPage();
+		super.addPages();
 		addPage(repoPage);
 	}
 
@@ -131,6 +131,12 @@ public class MercurialParticipantSynchronizeWizard extends ParticipantSynchroniz
 		mainPage.setDescription(Messages
 				.getString("MercurialParticipantSynchronizeWizard.repositoryPage.description")); //$NON-NLS-1$
 		mainPage.setDialogSettings(getDialogSettings());
+		if(projects != null && projects.length > 0){
+			Map<HgRoot, List<IResource>> byRoot = ResourceUtils.groupByRoot(Arrays.asList(projects));
+			if(byRoot.size() == 1){
+				mainPage.setHgRoot(byRoot.keySet().iterator().next());
+			}
+		}
 		return mainPage;
 	}
 

@@ -97,7 +97,7 @@ public class PushRepoWizard extends HgWizard {
 		}
 
 		final String changeset;
-		if (outgoingPage.getRevisionCheckBox().getSelection()) {
+		if (outgoingPage.isRevisionSelected()) {
 			ChangeSet cs = outgoingPage.getRevision();
 			if (cs != null) {
 				changeset = cs.getChangeset();
@@ -177,11 +177,11 @@ public class PushRepoWizard extends HgWizard {
 	}
 
 	private boolean isForestEnabled(PushPullPage pushRepoPage) {
-		return pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection();
+		return pushRepoPage.isShowForest() && pushRepoPage.isForestSelected();
 	}
 
 	private boolean isSvnEnabled(PushPullPage pushRepoPage) {
-		return pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection();
+		return pushRepoPage.isShowSvn() && pushRepoPage.isSvnSelected();
 	}
 
 	private static void updateAfterPush(String result, HgRoot hgRoot, IHgRepositoryLocation repo, boolean isForest) throws HgException {

@@ -54,8 +54,8 @@ public class BundleRepoPage extends PushPullPage {
 		super(hgRoot, pageName, title, titleImage);
 		setDescription("Generate a compressed changegroup file collecting changesets \n"
 				+ "not known to be in another repository.");
-		showRevisionTable = false;
-		showCredentials = true;
+		setShowRevisionTable(false);
+		setShowCredentials(true);
 	}
 
 	@Override
@@ -65,8 +65,8 @@ public class BundleRepoPage extends PushPullPage {
 		Composite c = SWTWidgetHelper.createComposite(composite, 3);
 		Group g = SWTWidgetHelper.createGroup(c, "Destination", 3, GridData.FILL_HORIZONTAL);
 		SWTWidgetHelper.createLabel(g, "Bundle file to export to");
-		this.bundleFileTextField = SWTWidgetHelper.createTextField(g);
-		this.bundleFileTextField.addModifyListener(new ModifyListener() {
+		bundleFileTextField = SWTWidgetHelper.createTextField(g);
+		bundleFileTextField.addModifyListener(new ModifyListener() {
 
 			public void modifyText(ModifyEvent e) {
 				if (bundleFileTextField.getText() != null
@@ -75,9 +75,9 @@ public class BundleRepoPage extends PushPullPage {
 				}
 			}
 		});
-		this.bundleFileBrowseButton = SWTWidgetHelper.createPushButton(g,
+		bundleFileBrowseButton = SWTWidgetHelper.createPushButton(g,
 				"Select destination file...", 1);
-		this.bundleFileBrowseButton.addSelectionListener(new SelectionAdapter() {
+		bundleFileBrowseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				FileDialog dialog = new FileDialog(getShell());
@@ -94,9 +94,9 @@ public class BundleRepoPage extends PushPullPage {
 
 		Group baseGroup = SWTWidgetHelper.createGroup(c, "Base revision", 2,
 				GridData.FILL_HORIZONTAL);
-		this.baseRevCheckbox = SWTWidgetHelper.createCheckBox(baseGroup,
+		baseRevCheckbox = SWTWidgetHelper.createCheckBox(baseGroup,
 				"Select a base revision");
-		this.baseRevCheckbox.addSelectionListener(new SelectionListener() {
+		baseRevCheckbox.addSelectionListener(new SelectionListener() {
 
 			private String oldRepo;
 
@@ -114,11 +114,11 @@ public class BundleRepoPage extends PushPullPage {
 				widgetSelected(e);
 			}
 		});
-		this.baseRevTable = new ChangesetTable(baseGroup, hgRoot);
+		baseRevTable = new ChangesetTable(baseGroup, getHgRoot());
 		GridData gd = SWTWidgetHelper.getFillGD(100);
 		gd.heightHint = 100;
-		this.baseRevTable.setLayoutData(gd);
-		this.baseRevTable.setEnabled(false);
+		baseRevTable.setLayoutData(gd);
+		baseRevTable.setEnabled(false);
 
 		optionGroup.moveBelow(c);
 		optionGroup.setVisible(false);
@@ -127,24 +127,23 @@ public class BundleRepoPage extends PushPullPage {
 
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
-		this.bundleFile = bundleFileTextField.getText();
-		this.baseRevision = baseRevCheckbox.getSelection() ? baseRevTable
-				.getSelection() : null;
+		bundleFile = bundleFileTextField.getText();
+		baseRevision = baseRevCheckbox.getSelection() ? baseRevTable.getSelection() : null;
 		return super.finish(monitor);
 	}
 
 	@Override
 	public boolean canFlipToNextPage() {
 		try {
-			String url = getUrlCombo().getText();
+			String url = getUrlText();
 			if (url != null && url.length() > 0) {
 				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
-				outgoingPage.setHgRoot(hgRoot);
+				outgoingPage.setHgRoot(getHgRoot());
 				IHgRepositoryLocation loc = MercurialEclipsePlugin.getRepoManager()
-						.getRepoLocation(url, getUserCombo().getText(),
-								getPasswordText().getText());
+						.getRepoLocation(url, getUserText(),
+								getPasswordText());
 				outgoingPage.setLocation(loc);
-				outgoingPage.setSvn(getSvnCheckBox() != null && getSvnCheckBox().getSelection());
+				outgoingPage.setSvn(isSvnSelected());
 				setErrorMessage(null);
 				return isPageComplete() && (getWizard().getNextPage(this) != null);
 			}
@@ -192,9 +191,6 @@ public class BundleRepoPage extends PushPullPage {
 		return bundleFile;
 	}
 
-	/**
-	 * @return the baseRevision
-	 */
 	public ChangeSet getBaseRevision() {
 		return baseRevision;
 	}

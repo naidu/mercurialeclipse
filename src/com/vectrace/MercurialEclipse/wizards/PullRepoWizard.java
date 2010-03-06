@@ -19,7 +19,6 @@ import java.util.SortedSet;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Button;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
@@ -67,31 +66,24 @@ public class PullRepoWizard extends HgWizard {
 		incomingPage.finish(new NullProgressMonitor());
 		repo = getLocation();
 
-		doUpdate = pullPage.getUpdateCheckBox().getSelection();
-		doCleanUpdate = pullPage.getCleanUpdateCheckBox().getSelection();
-		boolean force = pullPage.getForceCheckBox().getSelection();
+		doUpdate = pullPage.isUpdateSelected();
+		doCleanUpdate = pullPage.isCleanUpdateSelected();
+		boolean force = pullPage.isForceSelected();
 
 		ChangeSet cs = null;
-		if (incomingPage.getRevisionCheckBox().getSelection()) {
+		if (incomingPage.isRevisionSelected()) {
 			cs = incomingPage.getRevision();
 		}
 
-		boolean timeout = pullPage.getTimeoutCheckBox().getSelection();
-		boolean merge = pullPage.getMergeCheckBox().getSelection();
-		boolean rebase = false;
-		Button rebase_button = pullPage.getRebaseCheckBox();
-		if (rebase_button != null ) {
-			rebase = rebase_button.getSelection();
-		}
-		boolean showCommitDialog = pullPage.getCommitDialogCheckBox().getSelection();
-		boolean svn = false;
-		if (pullPage.isShowSvn()) {
-			svn = pullPage.getSvnCheckBox().getSelection();
-		}
+		boolean timeout = pullPage.isTimeoutSelected();
+		boolean merge = pullPage.isMergeSelected();
+		boolean rebase = pullPage.isRebaseSelected();
+		boolean showCommitDialog = pullPage.isShowCommitDialogSelected();
+		boolean svn = pullPage.isSvnSelected();
 		boolean forest = false;
 		File snapFile = null;
 		if (pullPage.isShowForest()) {
-			forest = pullPage.getForestCheckBox().getSelection();
+			forest = pullPage.isForestSelected();
 			String snapFileText = pullPage.getSnapFileText();
 			if (snapFileText.length() > 0) {
 				snapFile = new File(snapFileText);

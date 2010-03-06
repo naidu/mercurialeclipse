@@ -21,6 +21,7 @@ import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -71,9 +72,9 @@ public class RebasePage extends HgWizardPage {
 		Group optionGroup = SWTWidgetHelper.createGroup(comp, Messages.getString("RebasePage.optionGroup.label"), 2, //$NON-NLS-1$
 				GridData.FILL_BOTH);
 
-		this.collapseRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		collapseRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("RebasePage.option.collapse")); //$NON-NLS-1$
-		this.abortRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		abortRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("RebasePage.option.abort")); //$NON-NLS-1$
 
 		SelectionListener abortSl = new SelectionListener() {
@@ -101,7 +102,7 @@ public class RebasePage extends HgWizardPage {
 
 		abortRevCheckBox.addSelectionListener(abortSl);
 
-		this.continueRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		continueRevCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("RebasePage.option.continue")); //$NON-NLS-1$
 
 		SelectionListener contSl = new SelectionListener() {
@@ -132,7 +133,7 @@ public class RebasePage extends HgWizardPage {
 	private void createDestWidgets(Composite comp) {
 		Group destGroup = SWTWidgetHelper.createGroup(comp,
 				Messages.getString("RebasePage.destinationGroup.label"), 2, GridData.FILL_BOTH); //$NON-NLS-1$
-		this.destRevCheckBox = SWTWidgetHelper.createCheckBox(destGroup,
+		destRevCheckBox = SWTWidgetHelper.createCheckBox(destGroup,
 				Messages.getString("RebasePage.destinationCheckbox.label")); //$NON-NLS-1$
 
 		SelectionListener sl = new SelectionListener() {
@@ -156,9 +157,9 @@ public class RebasePage extends HgWizardPage {
 	private void createSrcWidgets(Composite comp) {
 		Group srcGroup = SWTWidgetHelper.createGroup(comp,
 				Messages.getString("RebasePage.sourceGroup.label"), 2, GridData.FILL_BOTH); //$NON-NLS-1$
-		this.sourceRevCheckBox = SWTWidgetHelper.createCheckBox(srcGroup,
+		sourceRevCheckBox = SWTWidgetHelper.createCheckBox(srcGroup,
 				Messages.getString("RebasePage.source.label")); //$NON-NLS-1$
-		this.baseRevCheckBox = SWTWidgetHelper.createCheckBox(srcGroup,
+		baseRevCheckBox = SWTWidgetHelper.createCheckBox(srcGroup,
 				Messages.getString("RebasePage.base.label")); //$NON-NLS-1$
 
 		SelectionListener srcSl = new SelectionListener() {
@@ -189,8 +190,8 @@ public class RebasePage extends HgWizardPage {
 			}
 		};
 
-		this.sourceRevCheckBox.addSelectionListener(srcSl);
-		this.baseRevCheckBox.addSelectionListener(baseSl);
+		sourceRevCheckBox.addSelectionListener(srcSl);
+		baseRevCheckBox.addSelectionListener(baseSl);
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
@@ -199,68 +200,44 @@ public class RebasePage extends HgWizardPage {
 		srcTable.setEnabled(false);
 	}
 
-	public ChangesetTable getSrcTable() {
-		return srcTable;
+	/**
+	 * @return may return -1 if nothing is selected
+	 */
+	public int getSelectedSrcIndex() {
+		ChangeSet selection = srcTable.getSelection();
+		return selection == null? -1 : selection.getChangesetIndex();
 	}
 
-	public void setSrcTable(ChangesetTable changesetTable) {
-		this.srcTable = changesetTable;
+	public boolean isSourceRevSelected() {
+		return sourceRevCheckBox.getSelection();
 	}
 
-	public Button getSourceRevCheckBox() {
-		return sourceRevCheckBox;
+	public boolean isBaseRevSelected() {
+		return baseRevCheckBox.getSelection();
 	}
 
-	public void setSourceRevCheckBox(Button sourceRevCheckBox) {
-		this.sourceRevCheckBox = sourceRevCheckBox;
+	public boolean isDestRevSelected() {
+		return destRevCheckBox.getSelection();
 	}
 
-	public Button getBaseRevCheckBox() {
-		return baseRevCheckBox;
+	public boolean isCollapseRevSelected() {
+		return collapseRevCheckBox.getSelection();
 	}
 
-	public void setBaseRevCheckBox(Button baseRevCheckBox) {
-		this.baseRevCheckBox = baseRevCheckBox;
+	public boolean isContinueRevSelected() {
+		return continueRevCheckBox.getSelection();
 	}
 
-	public Button getDestRevCheckBox() {
-		return destRevCheckBox;
+	public boolean isAbortSelected() {
+		return abortRevCheckBox.getSelection();
 	}
 
-	public void setDestRevCheckBox(Button destRevCheckBox) {
-		this.destRevCheckBox = destRevCheckBox;
-	}
-
-	public Button getCollapseRevCheckBox() {
-		return collapseRevCheckBox;
-	}
-
-	public void setCollapseRevCheckBox(Button collapseRevCheckBox) {
-		this.collapseRevCheckBox = collapseRevCheckBox;
-	}
-
-	public Button getContinueRevCheckBox() {
-		return continueRevCheckBox;
-	}
-
-	public void setContinueRevCheckBox(Button continueRevCheckBox) {
-		this.continueRevCheckBox = continueRevCheckBox;
-	}
-
-	public Button getAbortRevCheckBox() {
-		return abortRevCheckBox;
-	}
-
-	public void setAbortRevCheckBox(Button abortRevCheckBox) {
-		this.abortRevCheckBox = abortRevCheckBox;
-	}
-
-	public ChangesetTable getDestTable() {
-		return destTable;
-	}
-
-	public void setDestTable(ChangesetTable destTable) {
-		this.destTable = destTable;
+	/**
+	 * @return may return -1 if nothing is selected
+	 */
+	public int getSelectedDestIndex() {
+		ChangeSet selection = destTable.getSelection();
+		return selection == null? -1 : selection.getChangesetIndex();
 	}
 
 }

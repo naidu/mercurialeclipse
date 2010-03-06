@@ -51,33 +51,31 @@ public class PullPage extends PushPullPage {
 		setShowRevisionTable(false);
 	}
 
-	public Button getRebaseCheckBox() {
-		return rebaseCheckBox;
+	public boolean isRebaseSelected() {
+		return rebaseCheckBox != null && rebaseCheckBox.getSelection();
 	}
 
-	public Button getCommitDialogCheckBox() {
-		return commitDialogCheckBox;
+	public boolean isShowCommitDialogSelected() {
+		return commitDialogCheckBox.getSelection();
 	}
 
 	@Override
 	public boolean canFlipToNextPage() {
 		try {
-			if (getUrlCombo().getText() != null
-					&& getUrlCombo().getText().length() != 0) {
+			String urlText = getUrlText();
+			if (urlText != null && urlText.length() != 0) {
 				IncomingPage incomingPage = (IncomingPage) getNextPage();
 				incomingPage.setHgRoot(getHgRoot());
 				IHgRepositoryLocation loc =
 					MercurialEclipsePlugin
 						.getRepoManager().getRepoLocation(
-								getUrlCombo().getText(),
-								getUserCombo().getText(),
-								getPasswordText().getText());
+								urlText,
+								getUserText(),
+								getPasswordText());
 				incomingPage.setLocation(loc);
-				incomingPage.setSvn(getSvnCheckBox() != null
-						&& getSvnCheckBox().getSelection());
+				incomingPage.setSvn(isSvnSelected());
 
-				return isPageComplete()
-						&& (getWizard().getNextPage(this) != null);
+				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}
 		} catch (HgException e) {
 			setErrorMessage(e.getLocalizedMessage());
@@ -88,8 +86,7 @@ public class PullPage extends PushPullPage {
 	@Override
 	public boolean isPageComplete() {
 		return super.isPageComplete()
-				&& HgRepositoryLocation.validateLocation(getUrlCombo()
-						.getText());
+				&& HgRepositoryLocation.validateLocation(getUrlText());
 	}
 
 	protected boolean isPageComplete(String url) {
@@ -112,18 +109,18 @@ public class PullPage extends PushPullPage {
 		// now the options
 		Group pullGroup = SWTWidgetHelper
 				.createGroup(composite, Messages.getString("PullPage.pullGroup.label")); //$NON-NLS-1$
-		this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+		updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 				Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-		this.updateCheckBox.setSelection(true);
+		updateCheckBox.setSelection(true);
 
-		this.cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+		cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 				Messages.getString("PullPage.toggleCleanUpdate.text")); //$NON-NLS-1$
-		this.cleanUpdateCheckBox.setSelection(false);
+		cleanUpdateCheckBox.setSelection(false);
 
 		try {
 			if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
 					ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) { //$NON-NLS-1$
-				this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+				rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 						Messages.getString("PullPage.option.rebase")); //$NON-NLS-1$
 				SelectionListener rebaseCheckBoxListener = new SelectionListener() {
 					public void widgetDefaultSelected(SelectionEvent e) {
@@ -180,7 +177,7 @@ public class PullPage extends PushPullPage {
 				if (mergeCheckBox.getSelection()) {
 					String status;
 					try {
-						status = HgStatusClient.getStatus(hgRoot);
+						status = HgStatusClient.getStatus(getHgRoot());
 						if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
 							setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
 							setPageComplete(false);
@@ -235,20 +232,16 @@ public class PullPage extends PushPullPage {
 		return Messages.getString("PullPage.timeoutCheckBox.title"); //$NON-NLS-1$
 	}
 
-	public Button getUpdateCheckBox() {
-		return updateCheckBox;
+	public boolean isUpdateSelected() {
+		return updateCheckBox.getSelection();
 	}
 
-	public Button getCleanUpdateCheckBox() {
-		return cleanUpdateCheckBox;
+	public boolean isCleanUpdateSelected() {
+		return cleanUpdateCheckBox.getSelection();
 	}
 
-	public void setUpdateCheckBox(Button updateCheckBox) {
-		this.updateCheckBox = updateCheckBox;
-	}
-
-	public Button getMergeCheckBox() {
-		return mergeCheckBox;
+	public boolean isMergeSelected() {
+		return mergeCheckBox.getSelection();
 	}
 
 }

@@ -14,9 +14,7 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Set;
 
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
@@ -34,40 +32,24 @@ public class PushRepoPage extends PushPullPage {
 	public PushRepoPage(String pageName, String title,
 			ImageDescriptor titleImage, HgRoot hgRoot) {
 		super(hgRoot, pageName, title, titleImage);
-		showRevisionTable = false;
-	}
-
-	@Override
-	public void createControl(Composite parent) {
-		super.createControl(parent);
-	}
-
-
-	@Override
-	public boolean finish(IProgressMonitor monitor) {
-		this.force = forceCheckBox.getSelection();
-		this.timeout = timeoutCheckBox.getSelection();
-		return super.finish(monitor);
+		setShowRevisionTable(false);
 	}
 
 	@Override
 	public boolean canFlipToNextPage() {
 		try {
-			if (getUrlCombo().getText() != null
-					&& getUrlCombo().getText() != null) {
+			String urlText = getUrlText();
+			if (urlText != null && urlText.length() > 0) {
 				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
-				outgoingPage.setHgRoot(hgRoot);
+				outgoingPage.setHgRoot(getHgRoot());
 				IHgRepositoryLocation loc = MercurialEclipsePlugin
-						.getRepoManager().getRepoLocation(urlCombo.getText(),
-								getUserCombo().getText(),
-								getPasswordText()
-								.getText());
+						.getRepoManager().getRepoLocation(urlText,
+								getUserText(),
+								getPasswordText());
 				outgoingPage.setLocation(loc);
-				outgoingPage.setSvn(getSvnCheckBox() != null
-						&& getSvnCheckBox().getSelection());
+				outgoingPage.setSvn(isSvnSelected());
 				setErrorMessage(null);
-				return isPageComplete()
-						&& (getWizard().getNextPage(this) != null);
+				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}
 		} catch (HgException e) {
 			setErrorMessage(e.getLocalizedMessage());

@@ -159,7 +159,7 @@ public class OutgoingPage extends IncomingPage {
 	@Override
 	public void createControl(Composite parent) {
 		super.createControl(parent);
-		getRevisionCheckBox().setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
+		revisionCheckBox.setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
 	}
 
 	@Override

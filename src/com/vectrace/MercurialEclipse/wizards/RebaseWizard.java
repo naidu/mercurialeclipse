@@ -35,21 +35,18 @@ public class RebaseWizard extends HgWizard {
 		int srcRev = -1;
 		int baseRev = -1;
 		int destRev = -1;
-		if (rebasePage.getSourceRevCheckBox().getSelection()) {
-			srcRev = rebasePage.getSrcTable().getSelection()
-					.getChangesetIndex();
+		if (rebasePage.isSourceRevSelected()) {
+			srcRev = rebasePage.getSelectedSrcIndex();
 		}
-		if (rebasePage.getBaseRevCheckBox().getSelection()) {
-			baseRev = rebasePage.getSrcTable().getSelection()
-					.getChangesetIndex();
+		if (rebasePage.isBaseRevSelected()) {
+			baseRev = rebasePage.getSelectedSrcIndex();
 		}
-		if (rebasePage.getDestRevCheckBox().getSelection()) {
-			destRev = rebasePage.getDestTable().getSelection()
-					.getChangesetIndex();
+		if (rebasePage.isDestRevSelected()) {
+			destRev = rebasePage.getSelectedDestIndex();
 		}
-		boolean collapse = rebasePage.getCollapseRevCheckBox().getSelection();
-		boolean abort = rebasePage.getAbortRevCheckBox().getSelection();
-		boolean cont = rebasePage.getContinueRevCheckBox().getSelection();
+		boolean collapse = rebasePage.isCollapseRevSelected();
+		boolean abort = rebasePage.isAbortSelected();
+		boolean cont = rebasePage.isContinueRevSelected();
 
 		RebaseOperation op = new RebaseOperation(getContainer(), hgRoot,
 				srcRev, destRev, baseRev, collapse,

@@ -60,13 +60,11 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class IncomingPage extends HgWizardPage {
 
-
-
-	TableViewer changeSetViewer;
+	private TableViewer changeSetViewer;
 	private TableViewer fileStatusViewer;
 	private HgRoot hgRoot;
 	private IHgRepositoryLocation location;
-	private Button revisionCheckBox;
+	protected Button revisionCheckBox;
 	private ChangeSet revision;
 	private SortedSet<ChangeSet> changesets;
 	private boolean svn;
@@ -334,8 +332,8 @@ public class IncomingPage extends HgWizardPage {
 		this.location = repo;
 	}
 
-	public Button getRevisionCheckBox() {
-		return revisionCheckBox;
+	public boolean isRevisionSelected() {
+		return revisionCheckBox.getSelection();
 	}
 
 	public ChangeSet getRevision() {
