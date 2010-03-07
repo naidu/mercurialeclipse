@@ -26,6 +26,8 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
@@ -34,14 +36,13 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- *
  */
 public class BackoutWizardPage extends HgWizardPage {
 
 	private ChangesetTable changesetTable;
 	private Text messageTextField;
 	private Button mergeCheckBox;
-	protected ChangeSet backoutRevision;
+	private ChangeSet backoutRevision;
 	private final HgRoot hgRoot;
 	private Text userTextField;
 
@@ -101,6 +102,23 @@ public class BackoutWizardPage extends HgWizardPage {
 
 
 		setControl(composite);
+		setPageComplete(true);
+	}
+
+	@Override
+	public void setPageComplete(boolean complete) {
+		if(complete){
+			try {
+				if(HgStatusClient.isDirty(hgRoot)){
+					setErrorMessage("Outstanding uncommitted changes! Backout is not possible.");
+					super.setPageComplete(false);
+					return;
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		super.setPageComplete(complete);
 	}
 
 	@Override

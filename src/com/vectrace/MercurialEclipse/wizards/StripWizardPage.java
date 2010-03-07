@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgStripClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
@@ -37,7 +38,7 @@ public class StripWizardPage extends HgWizardPage {
 
 	private ChangesetTable changesetTable;
 	private Button unrelatedCheckBox;
-	protected ChangeSet stripRevision;
+	private ChangeSet stripRevision;
 	private final HgRoot hgRoot;
 	private Button backupCheckBox;
 	private Button stripHeadsCheckBox;
@@ -82,25 +83,42 @@ public class StripWizardPage extends HgWizardPage {
 		Group optionGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("StripWizardPage.optionsGroup.title")); //$NON-NLS-1$
 
 		// backup
-		this.unrelatedCheckBox = SWTWidgetHelper.createCheckBox(
+		unrelatedCheckBox = SWTWidgetHelper.createCheckBox(
 				optionGroup,
 				Messages.getString("StripWizardPage.unrelatedCheckBox.title")); //$NON-NLS-1$
-		this.unrelatedCheckBox.setSelection(true);
-		this.backupCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
-		this.backupCheckBox.setSelection(true);
-		this.stripHeadsCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		unrelatedCheckBox.setSelection(true);
+		backupCheckBox = SWTWidgetHelper.createCheckBox(optionGroup, Messages.getString("StripWizardPage.backupCheckBox.title")); //$NON-NLS-1$
+		backupCheckBox.setSelection(true);
+		stripHeadsCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("StripWizardPage.stripHeadsCheckBox.title")); //$NON-NLS-1$
 
 		setControl(composite);
+		setPageComplete(true);
+	}
+
+	@Override
+	public void setPageComplete(boolean complete) {
+		if(complete){
+			try {
+				if(HgStatusClient.isDirty(hgRoot)){
+					setErrorMessage("Outstanding uncommitted changes! Strip is not possible.");
+					super.setPageComplete(false);
+					return;
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		super.setPageComplete(complete);
 	}
 
 	@Override
 	public boolean finish(IProgressMonitor monitor) {
 		super.finish(monitor);
-		this.stripRevision = changesetTable.getSelection();
-		this.unrelated = unrelatedCheckBox.getSelection();
-		this.stripHeads = stripHeadsCheckBox.getSelection();
-		this.backup = backupCheckBox.getSelection();
+		stripRevision = changesetTable.getSelection();
+		unrelated = unrelatedCheckBox.getSelection();
+		stripHeads = stripHeadsCheckBox.getSelection();
+		backup = backupCheckBox.getSelection();
 		try {
 			String result = HgStripClient.strip(hgRoot, unrelated, backup, stripHeads, stripRevision);
 			HgClients.getConsole().printMessage(result, null);
