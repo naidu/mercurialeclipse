@@ -21,12 +21,12 @@ import org.eclipse.ui.IWorkbenchPart;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
-import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgAtticClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 /**
  * @author bastian
@@ -56,7 +56,7 @@ public class UnShelveOperation extends HgOperation {
 							ResourceProperties.EXT_HGATTIC_AVAILABLE, "")) { // $NON-NLS-1$
 				String output = HgAtticClient.unshelve(hgRoot, false, true, hgRoot.getName());
 				monitor.worked(1);
-				new RefreshWorkspaceStatusJob(hgRoot, true).schedule();
+				new RefreshWorkspaceStatusJob(hgRoot).schedule();
 				monitor.worked(1);
 				HgClients.getConsole().printMessage(output, null);
 			} else {
@@ -78,7 +78,7 @@ public class UnShelveOperation extends HgOperation {
 						boolean deleted = shelveFile.delete();
 						monitor.worked(1);
 						monitor.subTask(Messages.getString("UnShelveOperation.refreshingProject")); //$NON-NLS-1$
-						new RefreshWorkspaceStatusJob(hgRoot, true).schedule();
+						new RefreshWorkspaceStatusJob(hgRoot).schedule();
 						monitor.worked(1);
 						if (!deleted) {
 							throw new HgException(shelveFile.getName() + " could not be deleted.");

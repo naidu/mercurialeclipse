@@ -36,7 +36,7 @@ public class HgSvnClient extends AbstractClient {
 		// The reason to use "all" instead of only "local + incoming", is that we can pull
 		// from another repo as the sync clients for given project may use
 		// in this case, we also need to update "outgoing" changesets
-		new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.ALL).schedule();
+		new RefreshRootJob(hgRoot, RefreshRootJob.ALL).schedule();
 		return result;
 	}
 
@@ -55,7 +55,7 @@ public class HgSvnClient extends AbstractClient {
 		cmd.addOptions("--config", "extensions.hgext.rebase="); //$NON-NLS-1$ //$NON-NLS-2$
 		cmd.addOptions("rebase"); //$NON-NLS-1$
 		String result = cmd.executeToString();
-		new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.LOCAL).schedule();
+		new RefreshRootJob(hgRoot, RefreshRootJob.ALL).schedule();
 		return result;
 	}
 

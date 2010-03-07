@@ -12,11 +12,10 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgRollbackClient  extends AbstractClient {
 
@@ -24,15 +23,7 @@ public class HgRollbackClient  extends AbstractClient {
 		HgCommand command = new HgCommand("rollback", hgRoot, true);
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		String result = command.executeToString();
-
-		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
-		job.addJobChangeListener(new JobChangeAdapter(){
-			@Override
-			public void done(IJobChangeEvent event) {
-				new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot).schedule();
-			}
-		});
-		job.schedule();
+		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		return result;
 	}
 

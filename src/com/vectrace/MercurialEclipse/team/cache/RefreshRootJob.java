@@ -23,88 +23,109 @@ import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
- * Refreshes status, local changesets, incoming changesets and outgoing
- * changesets. If you only want to refresh the status use
- * {@link RefreshStatusJob}.
+ * Refreshes working directory status, local changesets, incoming changesets and outgoing
+ * changesets. If you only want to refresh the working directory status use {@link RefreshStatusJob}.
+ * If you want additionally refresh Eclipse workspace data, use {@link RefreshWorkspaceStatusJob}.
  *
+ * <p>
+ * This job uses exclusive rule based on given hg root (see {@link HgRootRule}). It means, this job
+ * never runs in parallel with any other job using the same rule on given hg root.
+ *
+ * @author Andrei Loskutov
  * @author Bastian Doetsch
  */
-public final class RefreshRootJob extends Job {
-	public static final int LOCAL = 1;
-	public static final int INCOMING = 2;
-	public static final int OUTGOING = 4;
+public class RefreshRootJob extends Job {
+
+	public static final int LOCAL = 1 << 0;
+	public static final int INCOMING = 1 << 1;
+	public static final int OUTGOING = 1 << 2;
+	/** right now only used by {@link RefreshWorkspaceStatusJob} */
+	public static final int WORKSPACE = 1 << 3;
+
 	public static final int LOCAL_AND_INCOMING = LOCAL | INCOMING;
 	public static final int LOCAL_AND_OUTGOING = LOCAL | OUTGOING;
+
+	/** refresh local, incoming and outgoing cache. Does not include workspace refresh */
 	public static final int ALL = LOCAL | INCOMING | OUTGOING;
 
-	private final static MercurialStatusCache mercurialStatusCache = MercurialStatusCache
-			.getInstance();
-
-	private final HgRoot hgRoot;
+	protected final HgRoot hgRoot;
 	private final int type;
 
 	/**
-	 * @param name non null job name, shown to user
+	 * If the flags are non zero, refreshes different mercurial caches for the given root.
 	 * @param hgRoot non null
-	 * @param type one of RefreshRootJob flags
+	 * @param flags one of RefreshRootJob flags
 	 */
-	public RefreshRootJob(String name, HgRoot hgRoot, int type) {
-		super(name);
-		Assert.isNotNull(hgRoot);
-		this.hgRoot = hgRoot;
-		this.type = type;
-		setRule(new HgRootRule(hgRoot));
+	public RefreshRootJob(HgRoot hgRoot, int flags) {
+		this("Refreshing " + hgRoot.getName(), hgRoot, flags);
 	}
 
 	/**
-	 * Refreshes local, incoming and outgoing data
+	 * If the flags are non zero, refreshes different mercurial caches for the given root.
 	 * @param name non null job name, shown to user
 	 * @param hgRoot non null
+	 * @param flags one of RefreshRootJob flags
 	 */
-	public RefreshRootJob(String name, HgRoot hgRoot) {
-		this(name, hgRoot, ALL);
+	public RefreshRootJob(String name, HgRoot hgRoot, int flags) {
+		super(name);
+		Assert.isNotNull(hgRoot);
+		this.hgRoot = hgRoot;
+		this.type = flags;
+		setRule(new HgRootRule(hgRoot));
 	}
 
 	@Override
 	protected IStatus run(IProgressMonitor monitor) {
-		if(monitor.isCanceled()){
-			return Status.CANCEL_STATUS;
+		if((type & LOCAL) != 0){
+			if(monitor.isCanceled()){
+				return Status.CANCEL_STATUS;
+			}
+			trace("LOCAL");
+			monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
+			LocalChangesetCache.getInstance().clear(hgRoot, true);
+			monitor.worked(1);
+
+			monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
+			MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
+			statusCache.clear(hgRoot, false);
+			try {
+				statusCache.refreshStatus(hgRoot, monitor);
+				monitor.worked(1);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 
-		if(MercurialEclipsePlugin.getDefault().isDebugging()) {
-			System.out.println("Refresh Job for: " + hgRoot.getName());
+		if((type & INCOMING) != 0){
+			if(monitor.isCanceled()){
+				return Status.CANCEL_STATUS;
+			}
+			trace("INCOMING");
+			monitor.subTask(NLS.bind(Messages.refreshJob_LoadingIncomingRevisions, hgRoot.getName()));
+			IncomingChangesetCache.getInstance().clear(hgRoot, true);
+			monitor.worked(1);
 		}
 
-		try {
-			if((type & LOCAL) != 0){
-				monitor.subTask(Messages.refreshJob_LoadingLocalRevisions);
-				LocalChangesetCache.getInstance().clear(hgRoot, true);
-				monitor.worked(1);
-
-				monitor.subTask(Messages.refreshJob_UpdatingStatusAndVersionCache);
-				mercurialStatusCache.clear(hgRoot, false);
-				mercurialStatusCache.refreshStatus(hgRoot, monitor);
-				monitor.worked(1);
+		if((type & OUTGOING) != 0){
+			if(monitor.isCanceled()){
+				return Status.CANCEL_STATUS;
 			}
-			if((type & OUTGOING) == 0 && (type & INCOMING) == 0){
-				return Status.OK_STATUS;
-			}
-			if((type & INCOMING) != 0){
-				monitor.subTask(NLS.bind(Messages.refreshJob_LoadingIncomingRevisions, hgRoot.getName()));
-				IncomingChangesetCache.getInstance().clear(hgRoot, true);
-				monitor.worked(1);
-			}
-			if((type & OUTGOING) != 0){
-				monitor.subTask(NLS.bind(Messages.refreshJob_LoadingOutgoingRevisionsFor, hgRoot.getName()));
-				OutgoingChangesetCache.getInstance().clear(hgRoot, true);
-				monitor.worked(1);
-			}
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(e);
-		} finally {
-			monitor.done();
+			trace("OUTGOING");
+			monitor.subTask(NLS.bind(Messages.refreshJob_LoadingOutgoingRevisionsFor, hgRoot.getName()));
+			OutgoingChangesetCache.getInstance().clear(hgRoot, true);
+			monitor.worked(1);
 		}
+		monitor.done();
 		return Status.OK_STATUS;
+	}
+
+	/**
+	 * @param step current job task, non null
+	 */
+	protected void trace(String step) {
+		if(MercurialEclipsePlugin.getDefault().isDebugging()) {
+			System.out.println("Refresh " + step + " for: " + hgRoot.getName());
+		}
 	}
 
 	@Override
@@ -124,7 +145,7 @@ public final class RefreshRootJob extends Job {
 		return true;
 	}
 
-	private boolean isSimilar(Job job) {
+	protected boolean isSimilar(Job job) {
 		if(!(job instanceof RefreshRootJob)){
 			return false;
 		}

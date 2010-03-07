@@ -12,15 +12,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
-
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgPushPullClient extends AbstractClient {
 
@@ -89,16 +87,9 @@ public class HgPushPullClient extends AbstractClient {
 		// in this case, we also need to update "outgoing" changesets
 		final int flags = RefreshRootJob.ALL;
 		if(update) {
-			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
-			job.addJobChangeListener(new JobChangeAdapter(){
-				@Override
-				public void done(IJobChangeEvent event) {
-					new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, flags).schedule();
-				}
-			});
-			job.schedule();
+			new RefreshWorkspaceStatusJob(hgRoot, flags).schedule();
 		} else {
-			new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, flags).schedule();
+			new RefreshRootJob(hgRoot, flags).schedule();
 		}
 	}
 }

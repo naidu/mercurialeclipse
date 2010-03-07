@@ -10,21 +10,16 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
-
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgUpdateClient extends AbstractClient {
 
 	public static void update(final HgRoot hgRoot, String revision, boolean clean)
 			throws HgException {
-		final String oldBranch = HgBranchClient.getActiveBranch(hgRoot);
 		HgCommand command = new HgCommand("update", hgRoot, false); //$NON-NLS-1$
 		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.UPDATE_TIMEOUT);
@@ -36,25 +31,6 @@ public class HgUpdateClient extends AbstractClient {
 		}
 		command.executeToBytes();
 
-		RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
-		job.addJobChangeListener(new JobChangeAdapter(){
-			@Override
-			public void done(IJobChangeEvent event) {
-				String newBranch = null;
-				try {
-					newBranch = HgBranchClient.getActiveBranch(hgRoot);
-				} catch (HgException e) {
-					MercurialEclipsePlugin.logError(e);
-				}
-				int refreshFlags;
-				if(Branch.same(oldBranch, newBranch)){
-					refreshFlags = RefreshRootJob.LOCAL;
-				} else {
-					refreshFlags = RefreshRootJob.ALL;
-				}
-				new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, refreshFlags).schedule();
-			}
-		});
-		job.schedule();
+		new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.LOCAL).schedule();
 	}
 }

@@ -220,7 +220,7 @@ public class TagDialog extends Dialog {
 					HgClients.getConsole().printMessage(result, null);
 					tt.setTags(HgTagClient.getTags(hgRoot));
 					new RefreshRootJob(com.vectrace.MercurialEclipse.menu.Messages.getString(
-							"TagHandler.refreshing"), hgRoot).schedule(); //$NON-NLS-1$
+							"TagHandler.refreshing"), hgRoot, RefreshRootJob.ALL).schedule(); //$NON-NLS-1$
 				} catch (HgException e1) {
 					MercurialEclipsePlugin.showError(e1);
 					MercurialEclipsePlugin.logError(e1);

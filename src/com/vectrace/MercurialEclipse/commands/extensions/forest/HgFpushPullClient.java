@@ -17,20 +17,18 @@ import java.net.URI;
 import java.util.Set;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
-import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgFpushPullClient extends HgPushPullClient {
 
@@ -106,25 +104,18 @@ public class HgFpushPullClient extends HgPushPullClient {
 		} else {
 			result = new String(command.executeToBytes(Integer.MAX_VALUE));
 		}
-			Set<HgRoot> roots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
-			// The reason to use "all" instead of only "local + incoming", is that we can pull
-			// from another repo as the sync clients for given project may use
-			// in this case, we also need to update "outgoing" changesets
-			final int flags = RefreshRootJob.ALL;
-			for (final HgRoot hgRoot : roots) {
-				if(update) {
-					RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
-					job.addJobChangeListener(new JobChangeAdapter(){
-					@Override
-						public void done(IJobChangeEvent event) {
-							new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, flags).schedule();
-						}
-					});
-					job.schedule();
-				} else {
-					new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, flags).schedule();
-				}
+		Set<HgRoot> roots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
+		// The reason to use "all" instead of only "local + incoming", is that we can pull
+		// from another repo as the sync clients for given project may use
+		// in this case, we also need to update "outgoing" changesets
+		final int flags = RefreshRootJob.ALL;
+		for (final HgRoot hgRoot : roots) {
+			if (update) {
+				new RefreshWorkspaceStatusJob(hgRoot, flags).schedule();
+			} else {
+				new RefreshRootJob(hgRoot, flags).schedule();
 			}
+		}
 		return result;
 	}
 }

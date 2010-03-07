@@ -56,7 +56,7 @@ public class HgCommitClient extends AbstractClient {
 			commit.append(commit(root, AbstractClient.toFiles(files), user, message, closeBranch));
 		}
 		for (HgRoot root : resourcesByRoot.keySet()) {
-			new RefreshRootJob("Refreshing " + root.getName(), root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+			new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		}
 		return commit.toString();
 	}
@@ -68,7 +68,7 @@ public class HgCommitClient extends AbstractClient {
 		monitor.subTask(Messages.getString("HgCommitClient.commitJob.committing") + root.getName()); //$NON-NLS-1$
 		List<File> emptyList = Collections.emptyList();
 		String commit = commit(root, emptyList, user, message, closeBranch);
-		new RefreshRootJob("Refreshing " + root.getName(), root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+		new RefreshRootJob(root, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 		return commit;
 	}
 
@@ -129,7 +129,7 @@ public class HgCommitClient extends AbstractClient {
 			addMessage(command, messageFile, message);
 			String result = command.executeToString();
 			command.rememberUserName();
-			new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
+			new RefreshRootJob(hgRoot, RefreshRootJob.LOCAL_AND_OUTGOING).schedule();
 			return result;
 		} finally {
 			deleteMessage(messageFile);

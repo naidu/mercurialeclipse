@@ -198,7 +198,7 @@ public class PushPullSynchronizeOperation extends SynchronizeModelOperation {
 					// pull client does the refresh automatically, no extra job required here
 				} else {
 					HgPushPullClient.push(hgRoot, location, false, changeSet.getChangeset(), Integer.MAX_VALUE);
-					new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot, RefreshRootJob.OUTGOING).schedule();
+					new RefreshRootJob(hgRoot, RefreshRootJob.OUTGOING).schedule();
 				}
 			} catch (HgException ex) {
 				MercurialEclipsePlugin.logError(ex);

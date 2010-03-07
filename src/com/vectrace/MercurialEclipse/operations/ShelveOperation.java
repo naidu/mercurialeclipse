@@ -28,13 +28,13 @@ import com.vectrace.MercurialEclipse.commands.HgIdentClient;
 import com.vectrace.MercurialEclipse.commands.HgPatchClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
-import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.commands.extensions.HgAtticClient;
 import com.vectrace.MercurialEclipse.exception.HgCoreException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
@@ -69,7 +69,7 @@ public class ShelveOperation extends HgOperation {
 						true, HgCommitMessageManager.getDefaultCommitName(hgRoot),
 						hgRoot.getName());
 				monitor.worked(1);
-				new RefreshWorkspaceStatusJob(hgRoot, true).schedule();
+				new RefreshWorkspaceStatusJob(hgRoot).schedule();
 				monitor.worked(1);
 				HgClients.getConsole().printMessage(output, null);
 			} else {

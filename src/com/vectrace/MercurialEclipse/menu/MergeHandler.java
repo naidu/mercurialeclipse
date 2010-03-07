@@ -29,7 +29,6 @@ import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgMergeClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.dialogs.RevisionChooserDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
@@ -40,6 +39,7 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.views.MergeView;
 
 public class MergeHandler extends RootHandler {
@@ -128,7 +128,7 @@ public class MergeHandler extends RootHandler {
 			MercurialEclipsePlugin.logError(e);
 			MercurialEclipsePlugin.showError(e);
 		}
-		new RefreshWorkspaceStatusJob(hgRoot, true).schedule();
+		new RefreshWorkspaceStatusJob(hgRoot).schedule();
 		return result;
 	}
 

@@ -12,14 +12,12 @@
 package com.vectrace.MercurialEclipse.menu;
 
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 
-import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.wizards.BackoutWizard;
 
 public class BackoutHandler extends RootHandler {
@@ -32,14 +30,7 @@ public class BackoutHandler extends RootHandler {
 		int result = dialog.open();
 
 		if(result == Window.OK){
-			RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(hgRoot);
-			job.addJobChangeListener(new JobChangeAdapter(){
-				@Override
-				public void done(IJobChangeEvent event) {
-					new RefreshRootJob("Refreshing " + hgRoot.getName(), hgRoot).schedule();
-				}
-			});
-			job.schedule();
+			new RefreshWorkspaceStatusJob(hgRoot, RefreshRootJob.ALL).schedule();
 		}
 	}
 
