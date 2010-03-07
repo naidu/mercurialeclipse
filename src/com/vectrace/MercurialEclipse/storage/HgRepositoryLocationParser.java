@@ -20,6 +20,7 @@ import java.util.List;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * Repository location line format:
@@ -42,7 +43,7 @@ public class HgRepositoryLocationParser {
 		url = url.trim();
 		// this is NOT File.separator: we simply disallow to have different locations
 		// which just ends with slash/backslash
-		while(url.endsWith("/") || url.endsWith("\\")){
+		while(url.endsWith("/") || url.endsWith("\\") || url.endsWith(" ") ){
 			url = url.substring(0, url.length() - 1);
 		}
 		return url;
@@ -130,6 +131,10 @@ public class HgRepositoryLocationParser {
 	}
 
 	protected static IHgRepositoryLocation parseLine(String logicalName, String location, String user, String password) throws HgException {
+		if(StringUtils.isEmpty(location)){
+			throw new HgException("Empty location!");
+		}
+
 		String[] repoInfo = location.split(SPLIT_TOKEN);
 
 		if ((user == null || user.length() == 0)

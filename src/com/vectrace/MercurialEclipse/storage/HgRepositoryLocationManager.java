@@ -42,6 +42,7 @@ import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.repository.IRepositoryListener;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * A manager for all Mercurial repository locations.
@@ -464,10 +465,10 @@ public class HgRepositoryLocationManager {
 	 * @return may return null
 	 */
 	private IHgRepositoryLocation matchRepoLocation(String url) {
-		if (url == null) {
+		url = HgRepositoryLocationParser.trimLocation(url);
+		if (StringUtils.isEmpty(url)) {
 			return null;
 		}
-		url = HgRepositoryLocationParser.trimLocation(url);
 		for (IHgRepositoryLocation loc : getAllRepoLocations()) {
 			if (url.equals(loc.getLocation())) {
 				return loc;
