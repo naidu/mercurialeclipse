@@ -232,6 +232,10 @@ public class ChangesetTable extends Composite {
 		this.changesets = null;
 	}
 
+	public void clearSelection(){
+		table.deselectAll();
+	}
+
 	public ChangeSet[] getSelections() {
 		TableItem[] selection = table.getSelection();
 		if (selection.length == 0) {
