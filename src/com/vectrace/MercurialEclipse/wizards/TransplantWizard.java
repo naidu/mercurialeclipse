@@ -11,20 +11,20 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
-import java.util.Properties;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.Display;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient;
+import com.vectrace.MercurialEclipse.commands.extensions.HgTransplantClient.TransplantOptions;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.operations.TransplantOperation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * @author bastian
@@ -62,44 +62,64 @@ public class TransplantWizard extends HgWizard {
 	public boolean performFinish() {
 		try {
 			page.finish(new NullProgressMonitor());
-			Properties props = page.getProperties();
-			IHgRepositoryLocation repo = MercurialEclipsePlugin.getRepoManager()
-					.fromProperties(hgRoot, props);
+			HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+			TransplantOptions options = createOptions();
 
-			TransplantPage transplantPage = (TransplantPage) page;
-			TransplantOptionsPage optionsPage = (TransplantOptionsPage) page
-					.getNextPage();
-			boolean isBranch = transplantPage.isBranch();
-			String branchName = transplantPage.getBranchName();
-			if (isBranch && Branch.isDefault(branchName)) {
-				// branch name, as command parameter is default if empty
-				branchName = Branch.DEFAULT;
+			IHgRepositoryLocation repo;
+			if (options.branch) {
+				repo = null;
+			} else {
+				repo = repoManager.fromProperties(hgRoot, page.getProperties());
 			}
-			String result = HgTransplantClient.transplant(hgRoot,
-					transplantPage.getNodeIds(), repo, isBranch, branchName,
-					transplantPage.isAll(), optionsPage.isMerge(), optionsPage
-							.getMergeNodeId(), optionsPage.isPrune(),
-					optionsPage.getPruneNodeId(), optionsPage
-							.isContinueLastTransplant(), optionsPage
-							.isFilterChangesets(), optionsPage.getFilter());
 
-			if (result.length() != 0) {
-				HgClients.getConsole().printMessage(result, null);
-			}
+			TransplantOperation runnable = new TransplantOperation(getContainer(), hgRoot,
+					options, repo);
+
+			getContainer().run(true, true, runnable);
 
 			// It appears good. Stash the repo location.
-			MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot,	repo);
+			if(repo != null) {
+				repoManager.addRepoLocation(hgRoot,	repo);
+			}
 		} catch (HgException e) {
 			if(!(e.getCause() instanceof URISyntaxException)) {
 				MercurialEclipsePlugin.logError(e);
 			}
-			MessageDialog.openError(Display.getCurrent().getActiveShell(), e
-					.getMessage(), e.getMessage());
-			// return normally (as success) to refresh project because exception means
-			// not totally successful transplant but user has to see what has already
-			// happened.
+			MercurialEclipsePlugin.showError(e);
+			return false;
+		} catch (InvocationTargetException e) {
+			MercurialEclipsePlugin.logError(e.getCause());
+			MercurialEclipsePlugin.showError(e.getCause());
+			return false;
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+			return false;
 		}
 		return true;
+	}
+
+	private HgTransplantClient.TransplantOptions createOptions() {
+		HgTransplantClient.TransplantOptions options = new HgTransplantClient.TransplantOptions();
+		TransplantPage transplantPage = (TransplantPage) page;
+		TransplantOptionsPage optionsPage = (TransplantOptionsPage) page.getNextPage();
+
+		options.all = transplantPage.isAll();
+		options.branch = transplantPage.isBranch();
+		if (options.branch && Branch.isDefault(transplantPage.getBranchName())) {
+			// branch name, as command parameter is default if empty
+			options.branchName = Branch.DEFAULT;
+		} else {
+			options.branchName = transplantPage.getBranchName();
+		}
+		options.continueLastTransplant = optionsPage.isContinueLastTransplant();
+		options.filter = optionsPage.getFilter();
+		options.filterChangesets = optionsPage.isFilterChangesets();
+		options.merge = optionsPage.isMerge();
+		options.mergeNodeId = optionsPage.getMergeNodeId();
+		options.nodes = transplantPage.getSelectedChangesets();
+		options.prune = optionsPage.isPrune();
+		options.pruneNodeId = optionsPage.getPruneNodeId();
+		return options;
 	}
 
 }

@@ -12,13 +12,18 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import java.util.ArrayList;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.SortedSet;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.TreeSet;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
@@ -29,19 +34,23 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * @author bastian
@@ -49,21 +58,23 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class TransplantPage extends ConfigurationWizardMainPage {
 
-	private final List<String> nodeIds;
+	/** changesets sorted in the ascending revision order */
+	private final SortedSet<ChangeSet> selectedChangesets;
 	private boolean branch;
-	private String branchName;
 	private boolean all;
+	private String branchName;
+	private final SortedSet<ChangeSet> changesets;
+
 	private ChangesetTable changesetTable;
 	private Button branchCheckBox;
 	private Combo branchNameCombo;
 	private Button allCheckBox;
-	private final SortedSet<ChangeSet> changesets;
 
 	public TransplantPage(String pageName, String title,
 			ImageDescriptor titleImage, HgRoot hgRoot) {
 		super(pageName, title, titleImage);
 		setHgRoot(hgRoot);
-		nodeIds = new ArrayList<String>();
+		selectedChangesets = new TreeSet<ChangeSet>();
 		changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
 	}
 
@@ -73,26 +84,17 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		Composite composite = (Composite) getControl();
 
 		ModifyListener urlModifyListener = new ModifyListener() {
+
 			public void modifyText(ModifyEvent e) {
-				IHgRepositoryLocation repoLocation;
 				try {
-					repoLocation = MercurialEclipsePlugin.getRepoManager()
-							.getRepoLocation(getUrlText());
+					HgRepositoryLocationManager repoManager = MercurialEclipsePlugin.getRepoManager();
+					getIncoming(repoManager.getRepoLocation(getUrlText()));
 				} catch (HgException e1) {
+					clearChangesets();
 					// bad URI?
 					setErrorMessage(e1.getMessage());
+					setPageComplete(false);
 					return;
-				}
-				setErrorMessage(null);
-				try {
-					Set<ChangeSet> changes = IncomingChangesetCache
-							.getInstance().getChangeSets(getHgRoot(), repoLocation, null);
-					changesets.clear();
-					changesets.addAll(changes);
-					populateChangesetTable();
-				} catch (HgException e1) {
-					setErrorMessage(Messages.getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$)
-					MercurialEclipsePlugin.logError(e1);
 				}
 			}
 		};
@@ -100,24 +102,65 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 		addBranchGroup(composite);
 		addChangesetGroup(composite);
+		setPageComplete(true);
+		validatePage();
 	}
 
 	@Override
-	public boolean canFlipToNextPage() {
-		return super.canFlipToNextPage();
+	public void setPageComplete(boolean complete) {
+		if(complete){
+			try {
+				if(HgStatusClient.isDirty(getHgRoot())){
+					setErrorMessage("Outstanding uncommitted changes! Transplant is not possible.");
+					super.setPageComplete(false);
+					return;
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		super.setPageComplete(complete);
 	}
+
 
 	private void validatePage() {
 		boolean valid = true;
-		if (branch) {
-			valid &= branchName != null;
-			if (!all) {
-				valid &= nodeIds.size() > 0;
+		try {
+			if (branch) {
+				valid &= !StringUtils.isEmpty(branchName);
+				if(!valid){
+					setErrorMessage("Please select branch!");
+					return;
+				}
+				if (!all) {
+					valid &= selectedChangesets.size() == 1
+							&& Branch.same(branchName, selectedChangesets.first().getBranch());
+					if(!valid){
+						setErrorMessage("Please select exact one changeset if transplanting " +
+							"not all changesets from branch!");
+						return;
+					}
+				}
+			} else {
+				valid &= !StringUtils.isEmpty(getUrlText());
+				if(!valid){
+					setErrorMessage("Please provide valid repository location!");
+					return;
+				}
+				valid &= selectedChangesets.size() > 0;
+				if(!valid){
+					setErrorMessage("Please select at least one changeset!");
+					return;
+				}
 			}
-		} else {
-			valid &= nodeIds.size() > 0;
+		} finally {
+			if(valid){
+				setErrorMessage(null);
+			}
+			if(isPageComplete() ^ valid) {
+				setPageComplete(valid);
+			}
 		}
-		setPageComplete(valid);
 	}
 
 	private void addBranchGroup(Composite composite) {
@@ -132,30 +175,17 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 	private void createBranchNameCombo(Group branchGroup) {
 		SWTWidgetHelper.createLabel(branchGroup, Messages
 				.getString("TransplantPage.branchLabel.title")); //$NON-NLS-1$
-		this.branchNameCombo = SWTWidgetHelper.createCombo(branchGroup);
-		this.branchNameCombo.setEnabled(false);
+		branchNameCombo = SWTWidgetHelper.createCombo(branchGroup);
+		branchNameCombo.setEnabled(false);
 		populateBranchNameCombo();
 
 		SelectionListener branchNameComboListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				// TODO filter changeset table
 				branchName = branchNameCombo.getText();
 				if (Branch.isDefault(branchName)) {
-					branchName = ""; //$NON-NLS-1$
+					branchName = Branch.DEFAULT;
 				}
-
-				try {
-					changesets.clear();
-					changesets.addAll(LocalChangesetCache.getInstance()
-							.getOrFetchChangeSetsByBranch(getHgRoot(), branchName));
-					populateChangesetTable();
-				} catch (HgException e1) {
-					setErrorMessage(Messages
-							.getString("TransplantPage.errorLoadChangesets")); //$NON-NLS-1$
-					MercurialEclipsePlugin.logError(e1);
-				}
-
-				validatePage();
+				getLocalFromBranch(branchName);
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -163,7 +193,7 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 			}
 		};
 
-		this.branchNameCombo.addSelectionListener(branchNameComboListener);
+		branchNameCombo.addSelectionListener(branchNameComboListener);
 	}
 
 	private void createAllCheckBox(Group branchGroup) {
@@ -179,6 +209,11 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 			public void widgetSelected(SelectionEvent e) {
 				all = allCheckBox.getSelection();
+				changesetTable.setEnabled(!all);
+				if(all){
+					changesetTable.clearSelection();
+					selectedChangesets.clear();
+				}
 				validatePage();
 			}
 		};
@@ -193,16 +228,20 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 		SelectionListener branchCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
 				branch = branchCheckBox.getSelection();
-				getUrlCombo().setEnabled(!branch);
+				if(branch){
+
+				}
+				setUrlGroupEnabled(!branch);
+//				getUrlCombo().setEnabled(!branch);
 				getUserCombo().setEnabled(!branch);
 				passwordText.setEnabled(!branch);
 				allCheckBox.setEnabled(branch);
 				branchNameCombo.setEnabled(branch);
+				clearChangesets();
 				if (branch) {
-					changesets.clear();
+					branchName = null;
 					branchNameCombo.deselectAll();
 				} else {
-					changesets.clear();
 					getUrlCombo().deselectAll();
 				}
 				validatePage();
@@ -239,28 +278,11 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 			public void widgetSelected(SelectionEvent e) {
 				setErrorMessage(null);
-				nodeIds.clear();
+				selectedChangesets.clear();
 				ChangeSet[] changeSets = changesetTable.getSelections();
-				if(changeSets == null || changeSets.length == 0){
-					return;
+				if(changeSets != null && changeSets.length != 0) {
+					selectedChangesets.addAll(Arrays.asList(changeSets));
 				}
-				ChangeSet last = changeSets[0];
-				for (ChangeSet changeSet : changeSets) {
-					String[] parents = last.getParents();
-					if (parents != null && parents.length > 0) {
-						String changesetId = changeSet.getRevision().getChangeset();
-						if (last.equals(changeSet) || parents[0].endsWith(changesetId)
-								|| (parents.length > 1 && parents[1].endsWith(changesetId))) {
-							nodeIds.add(0, changeSet.getChangeset());
-						} else {
-							setErrorMessage(Messages.getString("TransplantPage.errorNotSequential")); //$NON-NLS-1$
-							setPageComplete(false);
-							return;
-						}
-					}
-					last = changeSet;
-				}
-
 				validatePage();
 			}
 		};
@@ -283,28 +305,106 @@ public class TransplantPage extends ConfigurationWizardMainPage {
 
 	private void populateChangesetTable() {
 		changesetTable.clearTable();
-		changesetTable.setChangesets(changesets
-				.toArray(new ChangeSet[changesets.size()]));
+		changesetTable.setChangesets(changesets.toArray(new ChangeSet[changesets.size()]));
 	}
 
 	public boolean isBranch() {
-		return this.branch;
+		return branch;
 	}
 
-	public List<String> getNodeIds() {
-		return nodeIds;
+	public SortedSet<ChangeSet> getSelectedChangesets() {
+		return selectedChangesets;
 	}
 
 	public String getBranchName() {
-		return this.branchName;
+		return branchName;
 	}
 
 	public boolean isAll() {
-		return this.all;
+		return all;
 	}
 
 	public SortedSet<ChangeSet> getChangesets() {
 		return changesets;
+	}
+
+	private void getIncoming(final IHgRepositoryLocation repoLocation) {
+		FetchChangesetsOperation op = new FetchChangesetsOperation() {
+			@Override
+			protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException {
+				return  IncomingChangesetCache.getInstance().getChangeSets(
+						getHgRoot(), repoLocation, null);
+			}
+		};
+		run(op);
+	}
+
+	private void getLocalFromBranch(final String branchName1) {
+		FetchChangesetsOperation op = new FetchChangesetsOperation() {
+			@Override
+			protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException {
+				return LocalChangesetCache.getInstance().getOrFetchChangeSetsByBranch(getHgRoot(),
+						branchName1);
+			}
+		};
+		run(op);
+	}
+
+	private void run(FetchChangesetsOperation runnable) {
+		clearChangesets();
+		try {
+			getContainer().run(true, true, runnable);
+			changesets.addAll(runnable.getChanges());
+			populateChangesetTable();
+			validatePage();
+		} catch (InvocationTargetException e) {
+			setErrorMessage(Messages.getString("TransplantPage.errorLoadChangesets")
+					+ ": " + e.getCause().getMessage()); //$NON-NLS-1$
+			setPageComplete(false);
+			MercurialEclipsePlugin.logError(e.getCause());
+		} catch (InterruptedException e) {
+			MercurialEclipsePlugin.logError(e);
+			validatePage();
+		}
+	}
+
+	private void clearChangesets() {
+		changesets.clear();
+		changesetTable.clearTable();
+		selectedChangesets.clear();
+	}
+
+	abstract static class FetchChangesetsOperation implements IRunnableWithProgress {
+		Set<ChangeSet> changes = new HashSet<ChangeSet>();
+		Set<ChangeSet> getChanges(){
+			return changes;
+		}
+		public final void run(final IProgressMonitor monitor) throws InvocationTargetException {
+			monitor.beginTask("Retrieving changesets...", IProgressMonitor.UNKNOWN); //$NON-NLS-1$
+			// Timer which is used to monitor the monitor cancellation
+			Timer t = new Timer("Fetch data watcher", false);
+
+			// only start timer if the operation is NOT running in the UI thread
+			if(Display.getCurrent() == null){
+				final Thread threadToCancel = Thread.currentThread();
+				t.scheduleAtFixedRate(new TimerTask() {
+					@Override
+					public void run() {
+						if (monitor.isCanceled() && !threadToCancel.isInterrupted()) {
+							threadToCancel.interrupt();
+						}
+					}
+				}, 500, 50);
+			}
+			try {
+				changes = fetchChanges(monitor);
+			} catch (HgException e) {
+				throw new InvocationTargetException(e);
+			} finally {
+				t.cancel();
+			}
+		}
+		abstract protected Set<ChangeSet> fetchChanges(IProgressMonitor monitor) throws HgException;
 	}
 
 }
