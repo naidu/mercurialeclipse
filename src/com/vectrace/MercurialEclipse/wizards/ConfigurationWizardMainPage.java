@@ -36,6 +36,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
@@ -85,6 +86,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	private IHgRepositoryLocation initialRepo;
 	private Composite authComposite;
 	private HgRoot hgRoot;
+	private Group urlGroup;
 
 	/**
 	 * @param pageName
@@ -164,16 +166,16 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	private void createUrlControl(Composite composite, final Listener listener) {
 		Composite urlComposite = SWTWidgetHelper.createComposite(composite, 4);
 
-		Group g = SWTWidgetHelper.createGroup(urlComposite,
+		urlGroup = SWTWidgetHelper.createGroup(urlComposite,
 				Messages.getString("ConfigurationWizardMainPage.urlGroup.title"), 4, //$NON-NLS-1$
 				GridData.FILL_HORIZONTAL);
 
 		// repository Url
-		SWTWidgetHelper.createLabel(g, Messages.getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
-		urlCombo = createEditableCombo(g);
+		SWTWidgetHelper.createLabel(urlGroup, Messages.getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
+		urlCombo = createEditableCombo(urlGroup);
 		urlCombo.addListener(SWT.Modify, listener);
 
-		browseButton = SWTWidgetHelper.createPushButton(g, Messages.getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
+		browseButton = SWTWidgetHelper.createPushButton(urlGroup, Messages.getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
 		browseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -192,7 +194,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		});
 
 		if (showBundleButton) {
-			browseFileButton = SWTWidgetHelper.createPushButton(g, Messages.getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
+			browseFileButton = SWTWidgetHelper.createPushButton(urlGroup, Messages.getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
 
 			browseFileButton.addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -238,6 +240,18 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 				}
 			}
 		});
+	}
+
+	public void setUrlGroupEnabled(boolean enable){
+		if(urlGroup != null) {
+			urlGroup.setEnabled(enable);
+			Control[] children = urlGroup.getChildren();
+			if(children != null){
+				for (Control control : children) {
+					control.setEnabled(enable);
+				}
+			}
+		}
 	}
 
 	private void createAuthenticationControl(Composite composite) {
