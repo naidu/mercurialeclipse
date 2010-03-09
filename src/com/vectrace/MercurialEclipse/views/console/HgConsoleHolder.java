@@ -55,7 +55,7 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 			console = new HgConsole();
 			// install font
 			Font f = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getFontRegistry().get(
-					JFaceResources.TEXT_FONT);
+					MercurialPreferenceConstants.PREF_CONSOLE_FONT);
 			console.setFont(f);
 			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
 					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));

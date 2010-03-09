@@ -18,6 +18,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.preference.PreferenceConverter;
+import org.eclipse.jface.resource.FontRegistry;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.RGB;
@@ -320,6 +321,8 @@ public class HgConsole extends MessageConsole {
 				errorColor.dispose();
 				errorColor = newColor;
 				// font
+			} else if (property.equals(PREF_CONSOLE_FONT)) {
+				setFont(((FontRegistry) event.getSource()).get(PREF_CONSOLE_FONT));
 			}
 		}
 		if (property.equals(PREF_CONSOLE_LIMIT_OUTPUT)) {
