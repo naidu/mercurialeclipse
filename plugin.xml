@@ -1490,6 +1490,15 @@
         %fontDefinition.description.ignored
         </description>
       </fontDefinition>
+      <fontDefinition
+            categoryId="com.vectrace.mercurialeclipse.ui.colorsandfonts"
+            id="com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"
+            label="%fontDefinition.label.console"
+            defaultsTo="org.eclipse.jface.textfont">
+         <description>
+            %fontDefinition.description.console
+         </description>
+      </fontDefinition>
 </extension>
    <extension
          point="org.eclipse.team.core.ignore">
