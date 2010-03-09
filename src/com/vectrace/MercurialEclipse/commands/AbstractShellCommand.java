@@ -364,6 +364,9 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		Map<String, String> env = builder.environment();
 		env.put("LANG", "C"); //$NON-NLS-1$ //$NON-NLS-2$
 		env.put("LANGUAGE", "C"); //$NON-NLS-1$ //$NON-NLS-2$
+
+		// HGPLAIN normalizes output in Mercurial 1.5+
+		env.put("HGPLAIN","set by MercurialEclipse"); //$NON-NLS-1$ //$NON-NLS-2$
 		Charset charset = setupEncoding(cmd);
 		if (charset != null) {
 			env.put("HGENCODING", charset.name()); //$NON-NLS-1$
