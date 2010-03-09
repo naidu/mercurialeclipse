@@ -443,14 +443,15 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
-	private static String getMessage(OutputStream output) {
+	private String getMessage(OutputStream output) {
 		String msg = null;
 		if (output instanceof FileOutputStream) {
 			return null;
 		} else if (output instanceof ByteArrayOutputStream) {
 			ByteArrayOutputStream baos = (ByteArrayOutputStream) output;
 			try {
-				msg = baos.toString(getDefaultEncoding());
+				String encoding = getEncoding();
+				msg = baos.toString(encoding);
 			} catch (UnsupportedEncodingException e) {
 				logError(e);
 				msg = baos.toString();
@@ -462,11 +463,24 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		return msg;
 	}
 
+	/**
+	 * @return
+	 */
+	private String getEncoding() {
+		String encoding = null;
+		if (hgRoot != null) {
+			encoding = hgRoot.getEncoding().name();
+		} else {
+			encoding = getDefaultEncoding();
+		}
+		return encoding;
+	}
+
 	public String executeToString() throws HgException {
 		byte[] bytes = executeToBytes();
 		if (bytes != null && bytes.length > 0) {
 			try {
-				return new String(bytes, getDefaultEncoding());
+				return new String(bytes, getEncoding());
 			} catch (UnsupportedEncodingException e) {
 				throw new HgException(e.getLocalizedMessage(), e);
 			}
