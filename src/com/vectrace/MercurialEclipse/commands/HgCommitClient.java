@@ -90,6 +90,7 @@ public class HgCommitClient extends AbstractClient {
 		File messageFile = saveMessage(message);
 		try {
 			addMessage(command, messageFile, message);
+			addEncoding(command);
 			command.addFiles(AbstractClient.toPaths(files));
 			String result = command.executeToString();
 			command.rememberUserName();
@@ -113,6 +114,10 @@ public class HgCommitClient extends AbstractClient {
 					com.vectrace.MercurialEclipse.dialogs.Messages
 							.getString("CommitDialog.defaultCommitMessage"));
 		}
+	}
+
+	private static void addEncoding(HgCommand command) {
+		command.addOptions("--encoding", MercurialEclipsePlugin.getDefaultEncoding());
 	}
 
 	/**
