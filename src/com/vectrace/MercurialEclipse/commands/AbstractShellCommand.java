@@ -362,6 +362,10 @@ public abstract class AbstractShellCommand extends AbstractClient {
 
 		// set locale to english have deterministic output
 		Map<String, String> env = builder.environment();
+		// From wiki: http://mercurial.selenic.com/wiki/UpgradeNotes
+		// "If your tools look for particular English messages in Mercurial output,
+		// they should disable translations with LC_ALL=C"
+		env.put("LC_ALL", "C"); //$NON-NLS-1$ //$NON-NLS-2$
 		env.put("LANG", "C"); //$NON-NLS-1$ //$NON-NLS-2$
 		env.put("LANGUAGE", "C"); //$NON-NLS-1$ //$NON-NLS-2$
 		Charset charset = setupEncoding(cmd);

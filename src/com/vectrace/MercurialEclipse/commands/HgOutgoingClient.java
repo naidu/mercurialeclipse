@@ -74,7 +74,7 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {
-				if(HgBranchClient.isKnownRemote(hgRoot, key.getRepo(), branch)) {
+				if(HgBranchClient.isKnownRemote(key)) {
 					command.addOptions("-r", branch);
 				}
 			} else {

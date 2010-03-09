@@ -46,7 +46,7 @@ public class HgIncomingClient extends AbstractParseChangesetClient {
 		String branch = key.getBranch();
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {
-				if(HgBranchClient.isKnownRemote(hgRoot, key.getRepo(), branch)) {
+				if(HgBranchClient.isKnownRemote(key)) {
 					command.addOptions("-r", branch);
 				} else {
 					// this branch is not known remote, so there can be NO incoming changes
