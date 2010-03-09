@@ -72,7 +72,6 @@ public class MercurialPreferenceConstants {
 	public static final String PREF_CONSOLE_COMMAND_COLOR = "hg.console.command_color"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_MESSAGE_COLOR = "hg.console.message_color"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_ERROR_COLOR = "hg.console.error_color"; //$NON-NLS-1$
-	public static final String PREF_CONSOLE_FONT = "hg.console.font"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_DEBUG = "hg.console.debug"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_DEBUG_TIME = "hg.console.debug.time"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_SHOW_ON_STARTUP = "hg.console.showOnStartup"; //$NON-NLS-1$
