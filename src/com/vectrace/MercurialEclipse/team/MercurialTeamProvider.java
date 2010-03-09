@@ -251,16 +251,18 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	 *             if an error occurred (e.g. no root could be found)
 	 */
 	public static HgRoot getHgRoot(IResource resource) throws HgException {
-		if(resource == null || resource instanceof IWorkspaceRoot){
+		if(resource == null){
 			return null;
 		}
+
 		if(resource instanceof HgRootContainer){
 			HgRootContainer rootContainer = (HgRootContainer) resource;
 			return rootContainer.getHgRoot();
 		}
+
 		IProject project = resource.getProject();
 		if (project == null && resource.getLocation() != null) {
-			// can it happen at all????
+			// happens in case of IResource instanceof IWorkspaceRoot
 			return AbstractClient.getHgRoot(resource);
 		}
 		return getHgRoot(project);

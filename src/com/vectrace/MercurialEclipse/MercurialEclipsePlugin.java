@@ -413,9 +413,15 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	public static String getDefaultEncoding(IProject project) {
-		if (project != null && getDefaultEncoding().equals(Charset.defaultCharset().name())) {
+		// if a user EXPLICITLY states he wants a certain encoding
+		// in a project, we should respect it (if its supported)
+		if (project != null) {
 			try {
-				return project.getDefaultCharset();
+				String defaultCharset = project.getDefaultCharset();
+				if (Charset.isSupported(defaultCharset)
+						&& HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
+					return defaultCharset;
+				}
 			} catch (CoreException ex) {
 				MercurialEclipsePlugin.logError(ex);
 			}
