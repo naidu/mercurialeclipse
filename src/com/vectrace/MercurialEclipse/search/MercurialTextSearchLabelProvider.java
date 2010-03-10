@@ -99,8 +99,8 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		if (element instanceof MercurialRevisionStorage) {
 			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
 			ChangeSet cs = mrs.getChangeSet();
-			return new StyledString(cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ["
-					+ cs.getAgeDate() + "]");
+			return new StyledString(cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ("
+					+ cs.getAgeDate() + ")");
 		}
 
 		if (element instanceof MercurialMatch) {
