@@ -33,18 +33,6 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  */
 public class HgRoot extends HgPath implements IHgRepositoryLocation {
 	private static final String HG_HGRC = ".hg/hgrc";
-	private static final String HGENCODING;
-	static {
-		// next in line is HGENCODING in environment
-		String enc = System.getProperty("HGENCODING");
-
-		// next is platform encoding as available in JDK
-		if (enc == null || enc.length() == 0) {
-			HGENCODING = Charset.defaultCharset().name();
-		} else {
-			HGENCODING = enc;
-		}
-	}
 
 	private static final long serialVersionUID = 2L;
 	private Charset encoding;
@@ -65,7 +53,7 @@ public class HgRoot extends HgPath implements IHgRepositoryLocation {
 
 	public Charset getEncoding() {
 		if(encoding == null){
-			setEncoding(Charset.forName(HGENCODING));
+			setEncoding(MercurialEclipsePlugin.getDefaultEncoding());
 		}
 		return encoding;
 	}

@@ -27,7 +27,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.net.proxy.IProxyService;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -60,10 +59,12 @@ import com.vectrace.MercurialEclipse.commands.HgClients;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 import com.vectrace.MercurialEclipse.views.console.HgConsoleHolder;
 
 /**
@@ -80,15 +81,28 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	// The shared instance.
 	private static MercurialEclipsePlugin plugin;
 
+	private static final Charset HGENCODING;
+	static {
+		// next in line is HGENCODING in environment
+		String enc = System.getProperty("HGENCODING");
+
+		// next is platform encoding as available in JDK
+		if (!StringUtils.isEmpty(enc) && Charset.isSupported(enc)) {
+			HGENCODING = Charset.forName(enc);
+		} else {
+			if(Charset.isSupported("UTF-8")){
+				HGENCODING = Charset.forName("UTF-8");
+			} else {
+				HGENCODING = Charset.defaultCharset();
+			}
+		}
+	}
+
 	// the repository manager
 	private static HgRepositoryLocationManager repoManager = new HgRepositoryLocationManager();
 
 	// the commit message manager
 	private static HgCommitMessageManager commitMessageManager = new HgCommitMessageManager();
-
-	private static final String defaultEncoding = Charset
-			.isSupported(MercurialPreferenceConstants.PREF_DEFAULT_ENCODING) ? MercurialPreferenceConstants.PREF_DEFAULT_ENCODING
-			: Charset.defaultCharset().name();
 
 	private boolean hgUsable = true;
 
@@ -98,6 +112,7 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 
 	private static final Pattern VERSION_PATTERN = Pattern.compile(
 			".*version\\s+(\\d(\\.\\d)+)+.*", Pattern.CASE_INSENSITIVE); //$NON-NLS-1$
+
 
 	public MercurialEclipsePlugin() {
 		// should NOT do anything until started by OSGI
@@ -406,28 +421,14 @@ public class MercurialEclipsePlugin extends AbstractUIPlugin {
 	}
 
 	/**
-	 * @return the defaultencoding
+	 * The default encoding which is used by the current environment.
+	 * <p>
+	 * <b>Note</b>: you probably want use {@link HgRoot#getEncoding()} instead, as each
+	 * repository may use it's own encoding
+	 * @return a valid {@link Charset} encoding, never null.
 	 */
-	public static String getDefaultEncoding() {
-		return defaultEncoding;
-	}
-
-	public static String getDefaultEncoding(IProject project) {
-		// if a user EXPLICITLY states he wants a certain encoding
-		// in a project, we should respect it (if its supported)
-		if (project != null) {
-			try {
-				String defaultCharset = project.getDefaultCharset();
-				if (Charset.isSupported(defaultCharset)
-						&& HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
-					return defaultCharset;
-				}
-			} catch (CoreException ex) {
-				MercurialEclipsePlugin.logError(ex);
-			}
-
-		}
-		return getDefaultEncoding();
+	public static Charset getDefaultEncoding() {
+		return HGENCODING;
 	}
 
 	/**

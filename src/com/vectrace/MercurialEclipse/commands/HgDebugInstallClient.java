@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch  -  implementation
+ * 		Bastian Doetsch  -  implementation
+ * 		Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands;
 
@@ -18,6 +19,10 @@ import java.util.Map;
 import com.vectrace.MercurialEclipse.exception.HgException;
 
 public class HgDebugInstallClient extends AbstractClient {
+
+	/**
+	 * Key is the charset name, value is "true" if hg supports this charset encoding
+	 */
 	public final static Map<String, Boolean> ENCODINGS = Collections
 			.synchronizedMap(new HashMap<String, Boolean>());
 
@@ -26,22 +31,19 @@ public class HgDebugInstallClient extends AbstractClient {
 		return new String(command.executeToBytes(Integer.MAX_VALUE)).trim();
 	}
 
-	/**
-	 * @return
-	 */
 	private static AbstractShellCommand getDebugInstallCommand() {
-		// we don't really need a working dir...
-		AbstractShellCommand command = new HgCommand("debuginstall", (File) null, true); //$NON-NLS-1$
-		command.setShowOnConsole(false);
-		return command;
+		return new HgCommand("debuginstall", (File) null, true);
 	}
 
 	/**
-	 * @param defaultCharset
-	 * @return
+	 * @param defaultCharset non null
+	 * @return true if the given changeset is supported by the hg installation
 	 */
 	public static boolean hgSupportsEncoding(String defaultCharset) {
-		Boolean b = ENCODINGS.get(defaultCharset);
+		Boolean b;
+		synchronized(ENCODINGS){
+			b = ENCODINGS.get(defaultCharset);
+		}
 		if (b == null) {
 			AbstractShellCommand cmd = getDebugInstallCommand();
 			cmd.addOptions("--encoding", defaultCharset); //$NON-NLS-1$
@@ -52,11 +54,15 @@ public class HgDebugInstallClient extends AbstractClient {
 				// related to the encoding. so only return false if the following
 				// string is in the message
 				if (e.getMessage().contains("unknown encoding:")) { //$NON-NLS-1$
-					ENCODINGS.put(defaultCharset, Boolean.FALSE);
+					synchronized(ENCODINGS){
+						ENCODINGS.put(defaultCharset, Boolean.FALSE);
+					}
 					return false;
 				}
 			}
-			ENCODINGS.put(defaultCharset, Boolean.TRUE);
+			synchronized(ENCODINGS){
+				ENCODINGS.put(defaultCharset, Boolean.TRUE);
+			}
 			return true;
 		}
 		return b.booleanValue();

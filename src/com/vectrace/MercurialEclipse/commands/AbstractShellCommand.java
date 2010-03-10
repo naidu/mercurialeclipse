@@ -468,14 +468,14 @@ public abstract class AbstractShellCommand extends AbstractClient {
 	}
 
 	/**
-	 * @return
+	 * @return never returns null
 	 */
 	private String getEncoding() {
 		String encoding = null;
 		if (hgRoot != null) {
 			encoding = hgRoot.getEncoding().name();
 		} else {
-			encoding = getDefaultEncoding();
+			encoding = getDefaultEncoding().name();
 		}
 		return encoding;
 	}

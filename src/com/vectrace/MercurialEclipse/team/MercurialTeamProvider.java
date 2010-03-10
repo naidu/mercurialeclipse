@@ -38,7 +38,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 import org.eclipse.ui.IPropertyListener;
@@ -46,6 +48,7 @@ import org.eclipse.ui.IPropertyListener;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
 import com.vectrace.MercurialEclipse.commands.HgBranchClient;
+import com.vectrace.MercurialEclipse.commands.HgDebugInstallClient;
 import com.vectrace.MercurialEclipse.commands.HgRootClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
@@ -164,7 +167,7 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			}
 		}
 		if(!MercurialStatusCache.getInstance().isStatusKnown(project)) {
-			new RefreshStatusJob("Initializing hg cache for: " + hgRoot.getName(),  hgRoot).schedule(200);
+			new RefreshStatusJob("Initializing hg cache for: " + hgRoot.getName(), hgRoot).schedule(100);
 		}
 	}
 
@@ -200,15 +203,12 @@ public class MercurialTeamProvider extends RepositoryProvider {
 	}
 
 	/**
-	 * Determines if the resources hg root is known. If it isn't known, Mercurial is called to determine it. The result
-	 * will be saved as project session property on the resource's project with the qualified name
-	 * {@link ResourceProperties#HG_ROOT}.
-	 *
-	 * This property can be used to create a {@link java.io.File}.
+	 * Determines if the resources hg root is known.
+	 * If it isn't known, Mercurial is called to determine it.
 	 *
 	 * @param resource
 	 *            the resource to get the hg root for, not null
-	 * @return the canonical file path of the HgRoot
+	 * @return the canonical file path of the hg root
 	 * @throws HgException
 	 */
 	private static HgRoot getAndStoreHgRoot(IResource resource) throws HgException {
@@ -221,21 +221,72 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			rootElt = new HgRoot[1];
 			HG_ROOTS.put(project, rootElt);
 		}
-		HgRoot hgRoot = rootElt[0]; // (HgRoot) project.getSessionProperty(ResourceProperties.HG_ROOT);
+		HgRoot hgRoot = rootElt[0];
 		if (hgRoot == null) {
 			hgRoot = AbstractClient.getHgRoot(resource);
 			rootElt[0] = hgRoot;
 			setRepositoryEncoding(project, hgRoot);
-			// project.setSessionProperty(ResourceProperties.HG_ROOT, hgRoot);
 		}
 		return hgRoot;
 	}
 
-	private static void setRepositoryEncoding(IProject project, HgRoot hgRoot) {
-		if (project != null) {
-			hgRoot.setEncoding(Charset.forName(MercurialEclipsePlugin.getDefaultEncoding(project)));
+	private static void setRepositoryEncoding(IProject project, final HgRoot hgRoot) {
+		// if a user EXPLICITLY states he wants a certain encoding
+		// in a project, we should respect it (if its supported)
+		final String defaultCharset;
+		try {
+			defaultCharset = project.getDefaultCharset();
+			if (!Charset.isSupported(defaultCharset)) {
+				return;
+			}
+		} catch (CoreException ex) {
+			MercurialEclipsePlugin.logError(ex);
+			return;
+		}
+
+		if(Display.getCurrent() == null) {
+			if (HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
+				hgRoot.setEncoding(Charset.forName(defaultCharset));
+			}
+		} else {
+			// This code is running on very beginning of the eclipse startup. Do not run
+			// hg commands from UI thread, as this can deadlock Eclipse at this point of time!
+			Job job = new Job("Changeset detection") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					if (HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
+						hgRoot.setEncoding(Charset.forName(defaultCharset));
+					}
+					monitor.done();
+					return Status.OK_STATUS;
+				}
+				@Override
+				public boolean shouldSchedule() {
+					Boolean supports = HgDebugInstallClient.ENCODINGS.get(defaultCharset);
+					if(supports != null && supports.booleanValue()){
+						hgRoot.setEncoding(Charset.forName(defaultCharset));
+					}
+					return supports == null;
+				}
+			};
+			class CharsetRule implements ISchedulingRule {
+				private final String cs;
+				CharsetRule(String cs){
+					this.cs = cs;
+				}
+				public boolean isConflicting(ISchedulingRule rule) {
+					return contains(rule);
+				}
+				public boolean contains(ISchedulingRule rule) {
+					return rule instanceof CharsetRule && cs.equals(((CharsetRule)rule).cs);
+				}
+			}
+			job.setRule(new CharsetRule(defaultCharset));
+			job.setSystem(true);
+			job.schedule();
 		}
 	}
+
 
 	private static HgRoot getHgRootFile(File file) throws HgException {
 		return HgRootClient.getHgRoot(file);
@@ -399,7 +450,6 @@ public class MercurialTeamProvider extends RepositoryProvider {
 		if (FileHistoryProvider == null) {
 			FileHistoryProvider = new MercurialHistoryProvider();
 		}
-		// System.out.println("getFileHistoryProvider()");
 		return FileHistoryProvider;
 	}
 
