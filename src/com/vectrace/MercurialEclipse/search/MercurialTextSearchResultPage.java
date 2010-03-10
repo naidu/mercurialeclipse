@@ -20,6 +20,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.text.IDocument;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.OpenEvent;
@@ -100,15 +101,12 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 						&& e2 instanceof MercurialRevisionStorage) {
 					MercurialRevisionStorage mrs1 = (MercurialRevisionStorage) e1;
 					MercurialRevisionStorage mrs2 = (MercurialRevisionStorage) e2;
-					if (mrs1.getResource().equals(mrs2)) {
-						return mrs1.getRevision() - mrs2.getRevision();
+					if (mrs1.getResource().equals(mrs2.getResource())) {
+						return mrs2.getRevision() - mrs1.getRevision();
 					}
 				} else if (e1 instanceof MercurialMatch && e2 instanceof MercurialMatch) {
 					MercurialMatch m1 = (MercurialMatch) e1;
 					MercurialMatch m2 = (MercurialMatch) e2;
-					if (m2.getLineNumber() == m1.getLineNumber()) {
-						return m1.getOffset() - m2.getOffset();
-					}
 					return m1.getLineNumber() - m2.getLineNumber();
 				}
 				return super.compare(viewer, e1, e2);
@@ -138,7 +136,15 @@ public class MercurialTextSearchResultPage extends AbstractTextSearchViewPage im
 								new NullProgressMonitor());
 						if (editor instanceof ITextEditor) {
 							ITextEditor textEditor = (ITextEditor) editor;
-							textEditor.selectAndReveal(m.getOffset(), m.getLength());
+							IDocument document = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
+							if (document != null) {
+								String content = document.get();
+								int offset = content.indexOf(m.getExtract());
+								int length = m.getExtract().length();
+								m.setOffset(offset);
+								m.setLength(length);
+								textEditor.selectAndReveal(offset, length);
+							}
 						}
 					} catch (Exception e) {
 						ErrorDialog.openError(getSite().getShell(),

@@ -30,7 +30,6 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -321,12 +320,14 @@ public class MercurialRevisionStorage implements IStorage {
 			return;
 		}
 		try {
-			ChangeSet tip = HgLogClient.getTip(MercurialTeamProvider.getHgRoot(res));
+			// hoping the cache is up-to-date!!!
+			LocalChangesetCache cache = LocalChangesetCache.getInstance();
+			ChangeSet tip = cache.getNewestChangeSet(res);
 			boolean localKnown = tip.getChangesetIndex() >= rev;
 			if(!localKnown){
 				return;
 			}
-			this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, String.valueOf(rev));
+			this.changeSet = cache.getOrFetchChangeSetById(res, String.valueOf(rev));
 			if(changeSet != null){
 				this.revision = changeSet.getChangesetIndex();
 				this.global = changeSet.getChangeset();

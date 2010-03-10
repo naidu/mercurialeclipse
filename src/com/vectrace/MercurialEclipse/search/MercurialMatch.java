@@ -14,17 +14,19 @@ public class MercurialMatch extends Match {
 	private MercurialRevisionStorage mercurialRevisionStorage;
 	private Region originalLocation;
 	private IFile file;
+	private boolean becomesMatch;
 
 	/**
 	 * @param matchRequestor
 	 */
 	public MercurialMatch(MercurialTextSearchMatchAccess ma) {
 
-		super(ma.getMercurialRevisionStorage(), ma.getMatchOffset(), ma.getMatchLength());
+		super(ma.getMercurialRevisionStorage(), -1, -1);
 		this.rev = ma.getRev();
 		this.lineNumber = ma.getLineNumber();
 		this.extract = ma.getExtract();
 		this.mercurialRevisionStorage = ma.getMercurialRevisionStorage();
+		this.becomesMatch = ma.isBecomesMatch();
 		this.file = ma.getFile();
 	}
 
@@ -125,5 +127,19 @@ public class MercurialMatch extends Match {
 	public int getOffset() {
 		// TODO Auto-generated method stub
 		return super.getOffset();
+	}
+
+	/**
+	 * @return the becomesMatch
+	 */
+	public boolean isBecomesMatch() {
+		return becomesMatch;
+	}
+
+	/**
+	 * @param becomesMatch the becomesMatch to set
+	 */
+	public void setBecomesMatch(boolean becomesMatch) {
+		this.becomesMatch = becomesMatch;
 	}
 }

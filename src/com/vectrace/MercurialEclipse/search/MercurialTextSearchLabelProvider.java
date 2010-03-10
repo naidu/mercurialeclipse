@@ -32,6 +32,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.model.WorkbenchLabelProvider;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 
 public class MercurialTextSearchLabelProvider extends LabelProvider implements IStyledLabelProvider {
@@ -97,7 +98,9 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 	public StyledString getStyledText(Object element) {
 		if (element instanceof MercurialRevisionStorage) {
 			MercurialRevisionStorage mrs = (MercurialRevisionStorage) element;
-			return new StyledString(mrs.getRevision() + ":" + mrs.getChangeSet().getNodeShort());
+			ChangeSet cs = mrs.getChangeSet();
+			return new StyledString(cs.getChangesetIndex() + " [" + cs.getAuthor() + "] ["
+					+ cs.getAgeDate() + "]");
 		}
 
 		if (element instanceof MercurialMatch) {
@@ -126,8 +129,7 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 			String decorated = Messages.format(fgSeparatorFormat, new String[] { str.getString(),
 					pathString });
 
-			styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER,
-					str);
+			styleDecoratedString(decorated, StyledString.QUALIFIER_STYLER, str);
 			return getColoredLabelWithCounts(resource, str);
 		}
 
@@ -137,8 +139,8 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 	}
 
 	/**
-	 * TODO this is a temporary copy from StyledCellLabelProvider (Eclipse 3.5)
-	 * we have to keep it as long as we want to be Eclipse 3.4 compatible
+	 * TODO this is a temporary copy from StyledCellLabelProvider (Eclipse 3.5) we have to keep it
+	 * as long as we want to be Eclipse 3.4 compatible
 	 *
 	 * Applies decoration styles to the decorated string and adds the styles of the previously
 	 * undecorated string.
@@ -148,17 +150,20 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 	 * <code>decorationStyler</code>. Otherwise, the decorated string is returned without any
 	 * styles.
 	 *
-	 * @param decoratedString the decorated string
-	 * @param decorationStyler the styler to use for the decoration or <code>null</code> for no
-	 *            styles
-	 * @param styledString the original styled string
+	 * @param decoratedString
+	 *            the decorated string
+	 * @param decorationStyler
+	 *            the styler to use for the decoration or <code>null</code> for no styles
+	 * @param styledString
+	 *            the original styled string
 	 *
 	 * @return the styled decorated string (can be the given <code>styledString</code>)
 	 * @since 3.5
 	 */
-	private static StyledString styleDecoratedString(String decoratedString, Styler decorationStyler, StyledString styledString) {
-		String label= styledString.getString();
-		int originalStart= decoratedString.indexOf(label);
+	private static StyledString styleDecoratedString(String decoratedString,
+			Styler decorationStyler, StyledString styledString) {
+		String label = styledString.getString();
+		int originalStart = decoratedString.indexOf(label);
 		if (originalStart == -1) {
 			return new StyledString(decoratedString); // the decorator did something wild
 		}
@@ -168,20 +173,23 @@ public class MercurialTextSearchLabelProvider extends LabelProvider implements I
 		}
 
 		if (originalStart > 0) {
-			StyledString newString= new StyledString(decoratedString.substring(0, originalStart), decorationStyler);
+			StyledString newString = new StyledString(decoratedString.substring(0, originalStart),
+					decorationStyler);
 			newString.append(styledString);
-			styledString= newString;
+			styledString = newString;
 		}
-		if (decoratedString.length() > originalStart + label.length()) { // decorator appended something
-			return styledString.append(decoratedString.substring(originalStart + label.length()), decorationStyler);
+		if (decoratedString.length() > originalStart + label.length()) { // decorator appended
+			// something
+			return styledString.append(decoratedString.substring(originalStart + label.length()),
+					decorationStyler);
 		}
 		return styledString; // no change
 	}
 
 	private StyledString getMercurialMatchLabel(MercurialMatch match) {
 		int lineNumber = match.getLineNumber();
-
-		StyledString str = new StyledString(lineNumber + ", " + match.getOffset()+": ",
+		String becomesMatch = match.isBecomesMatch() ? "+" : "-";
+		StyledString str = new StyledString(lineNumber + " (" + becomesMatch + ") ",
 				StyledString.QUALIFIER_STYLER);
 
 		String content = match.getExtract();
