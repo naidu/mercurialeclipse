@@ -323,6 +323,11 @@ public class MercurialRevisionStorage implements IStorage {
 			// hoping the cache is up-to-date!!!
 			LocalChangesetCache cache = LocalChangesetCache.getInstance();
 			ChangeSet tip = cache.getNewestChangeSet(res);
+			if (tip == null) {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+				cache.refreshAllLocalRevisions(hgRoot, true);
+				tip = cache.getNewestChangeSet(res.getProject());
+			}
 			boolean localKnown = tip.getChangesetIndex() >= rev;
 			if(!localKnown){
 				return;
