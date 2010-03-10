@@ -121,6 +121,7 @@ public class PreferenceInitializer extends AbstractPreferenceInitializer {
 			job.setSystem(true);
 			job.schedule();
 		}
+		store.setDefault(PREF_USE_MERCURIAL_USERNAME, true);
 	}
 
 	private void detectAndSetHgExecutable(IPreferenceStore store) {

@@ -93,4 +93,5 @@ public class MercurialPreferenceConstants {
 	public static final String PREF_HISTORY_MERGE_CHANGESET_BACKGROUND = "hg.history.mergeChangesetsBackground";
 	public static final String PREF_HISTORY_MERGE_CHANGESET_FOREGROUND = "hg.history.mergeChangesetsForeground";
 	public static final String PREF_HISTORY_MERGE_CHANGESET_FONT = "hg.history.mergeChangesetsFont";
+	public static final String PREF_USE_MERCURIAL_USERNAME = "hg.useMercurialUsernameForCommit";
 }
