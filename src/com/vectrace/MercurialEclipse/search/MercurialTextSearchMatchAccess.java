@@ -37,7 +37,7 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	private String user;
 	private String date;
 	private IFile file;
-	private boolean becomesMatch;
+	private boolean becomesMatch = true;
 	private final String extract;
 	private String fileContent;
 	private MercurialRevisionStorage mercurialRevisionStorage;
@@ -47,16 +47,19 @@ public class MercurialTextSearchMatchAccess extends TextSearchMatchAccess {
 	 *
 	 * @param line
 	 */
-	public MercurialTextSearchMatchAccess(HgRoot root, String line) {
+	public MercurialTextSearchMatchAccess(HgRoot root, String line, boolean all) {
 		this.root = root;
 		String[] split = line.trim().split(":");
-		Path path = new Path(root.getAbsolutePath() + File.separator + split[0]);
+		int i=0;
+		Path path = new Path(root.getAbsolutePath() + File.separator + split[i++]);
 		this.file = ResourceUtils.getFileHandle(path);
-		this.rev = Integer.parseInt(split[1]);
-		this.lineNumber = Integer.parseInt(split[2]);
-		this.becomesMatch = split[3].equals("-") ? false : true;
-		this.user = split[4];
-		this.extract = split[5];
+		this.rev = Integer.parseInt(split[i++]);
+		this.lineNumber = Integer.parseInt(split[i++]);
+		if (all) {
+			this.becomesMatch = split[i++].equals("-") ? false : true;
+		}
+		this.user = split[i++];
+		this.extract = split[i++];
 	}
 
 	@Override

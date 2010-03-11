@@ -107,22 +107,17 @@ public class MercurialTextSearchQuery implements ISearchQuery {
 		}
 	}
 
-	private final FileTextSearchScope fScope;
+	private final MercurialTextSearchScope fScope;
 	private final String fSearchText;
-	private final boolean fIsRegEx;
-	private final boolean fIsCaseSensitive;
 
 	private MercurialTextSearchResult fResult;
 
-	public MercurialTextSearchQuery(String searchText, boolean isRegEx,
-			boolean isCaseSensitive, FileTextSearchScope scope) {
+	public MercurialTextSearchQuery(String searchText, MercurialTextSearchScope scope) {
 		fSearchText = searchText;
-		fIsRegEx = isRegEx;
-		fIsCaseSensitive = isCaseSensitive;
 		fScope = scope;
 	}
 
-	public FileTextSearchScope getSearchScope() {
+	public MercurialTextSearchScope getSearchScope() {
 		return fScope;
 	}
 
@@ -235,20 +230,12 @@ public class MercurialTextSearchQuery implements ISearchQuery {
 	}
 
 	protected Pattern getSearchPattern() {
-		return PatternConstructor.createPattern(fSearchText, fIsCaseSensitive,
-				fIsRegEx);
+		return PatternConstructor.createPattern(fSearchText, true,
+				true);
 	}
 
 	public boolean isFileNameSearch() {
 		return fSearchText.length() == 0;
-	}
-
-	public boolean isRegexSearch() {
-		return fIsRegEx;
-	}
-
-	public boolean isCaseSensitive() {
-		return fIsCaseSensitive;
 	}
 
 	public boolean canRerun() {

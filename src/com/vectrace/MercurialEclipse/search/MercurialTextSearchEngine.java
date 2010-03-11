@@ -32,7 +32,7 @@ public class MercurialTextSearchEngine extends TextSearchEngine {
 			Pattern searchPattern, IProgressMonitor monitor) {
 		// do all the work in the visitor
 		return new MercurialTextSearchVisitor(requestor, searchPattern).search(
-				scope, monitor);
+				(MercurialTextSearchScope) scope, monitor);
 	}
 
 	@Override

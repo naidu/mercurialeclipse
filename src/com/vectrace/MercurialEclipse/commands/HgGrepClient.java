@@ -13,9 +13,10 @@ package com.vectrace.MercurialEclipse.commands;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.core.resources.IResource;
+
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.search.MercurialTextSearchMatchAccess;
 
 /**
@@ -29,17 +30,22 @@ public class HgGrepClient extends AbstractClient {
 	 *
 	 * @param root
 	 * @param pattern
+	 * @param all
+	 * @param res
 	 * @return
 	 * @throws HgException
 	 */
-	public static List<MercurialTextSearchMatchAccess> grep(HgRoot root, String pattern)
+	public static List<MercurialTextSearchMatchAccess> grep(HgRoot root, String pattern, List<IResource> files, boolean all)
 			throws HgException {
 		AbstractShellCommand cmd = new HgCommand("grep", root, true);
-		cmd.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
-
-		cmd.addOptions("-nuf", "--all", pattern);
+		cmd.addOptions("-nuf");
+		if (all) {
+			cmd.addOptions("--all");
+		}
+		cmd.addOptions(pattern);
+		cmd.addFilesWithoutFolders(files);
 		String result = cmd.executeToString();
-		List<MercurialTextSearchMatchAccess> list = getSearchResults(root, result);
+		List<MercurialTextSearchMatchAccess> list = getSearchResults(root, result, all);
 		return list;
 	}
 
@@ -49,11 +55,11 @@ public class HgGrepClient extends AbstractClient {
 	 * @return
 	 */
 	private static List<MercurialTextSearchMatchAccess> getSearchResults(HgRoot root,
-			String result) {
+			String result, boolean all) {
 		String[] lines = result.split("\n");
 		List<MercurialTextSearchMatchAccess> list = new ArrayList<MercurialTextSearchMatchAccess>();
 		for (String line : lines) {
-			list.add(new MercurialTextSearchMatchAccess(root, line));
+			list.add(new MercurialTextSearchMatchAccess(root, line, all));
 		}
 		return list;
 	}

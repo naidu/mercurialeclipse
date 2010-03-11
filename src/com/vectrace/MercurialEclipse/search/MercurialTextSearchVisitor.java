@@ -10,7 +10,10 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.search;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.eclipse.core.resources.IFile;
@@ -20,13 +23,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.search.core.text.TextSearchRequestor;
-import org.eclipse.search.core.text.TextSearchScope;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgGrepClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author Bastian
@@ -48,8 +50,7 @@ public class MercurialTextSearchVisitor {
 	 * @param requestor
 	 * @param searchPattern
 	 */
-	public MercurialTextSearchVisitor(TextSearchRequestor requestor,
-			Pattern searchPattern) {
+	public MercurialTextSearchVisitor(TextSearchRequestor requestor, Pattern searchPattern) {
 		this.requestor = requestor;
 		this.pattern = searchPattern;
 	}
@@ -59,41 +60,42 @@ public class MercurialTextSearchVisitor {
 	 * @param monitor
 	 * @return
 	 */
-	public IStatus search(TextSearchScope scope, IProgressMonitor monitor) {
+	public IStatus search(MercurialTextSearchScope scope, IProgressMonitor monitor) {
 		IResource[] scopeRoots = scope.getRoots();
+		boolean all = scope.isAll();
+
+		Map<HgRoot, List<IResource>> resourcesByRoot = ResourceUtils.groupByRoot(Arrays
+				.asList(scopeRoots));
 		String searchString = pattern.pattern();
 		monitor.beginTask("Searching for " + searchString + " with Mercurial",
 				scopeRoots.length * 5);
-		for (IResource resource : scopeRoots) {
-			monitor.subTask("Searching in " + resource);
-			// TODO: Handle workspace root
-			HgRoot root = MercurialTeamProvider.hasHgRoot(resource);
+		for (Iterator<HgRoot> i = resourcesByRoot.keySet().iterator(); i.hasNext();) {
+			HgRoot root = i.next();
+			monitor.subTask("Searching in respository " + root.getName());
 			monitor.worked(1);
-			if (root != null) {
-				try {
-					return search(root, monitor);
-				} catch (CoreException e) {
-					MercurialEclipsePlugin.logError(e);
-					return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
-							e.getLocalizedMessage(), e);
-				}
+			try {
+				return search(root, resourcesByRoot.get(root), monitor, all);
+			} catch (CoreException e) {
+				MercurialEclipsePlugin.logError(e);
+				return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID,
+						e.getLocalizedMessage(), e);
 			}
 		}
-		return new Status(IStatus.INFO, MercurialEclipsePlugin.ID,
-				"Nothing found.");
+		return new Status(IStatus.INFO, MercurialEclipsePlugin.ID, "Nothing found.");
 	}
 
 	/**
 	 * @param root
+	 * @param all
 	 * @throws CoreException
 	 */
-	private IStatus search(HgRoot root, IProgressMonitor monitor)
+	private IStatus search(HgRoot root, List<IResource> resources, IProgressMonitor monitor, boolean all)
 			throws CoreException {
 		try {
 			requestor.beginReporting();
 			monitor.subTask("Calling Mercurial grep command...");
-			List<MercurialTextSearchMatchAccess> result = HgGrepClient.grep(root, pattern
-					.pattern());
+			List<MercurialTextSearchMatchAccess> result = HgGrepClient.grep(root,
+					pattern.pattern(), resources, all);
 			monitor.worked(1);
 			monitor.subTask("Processing Mercurial grep results...");
 			for (MercurialTextSearchMatchAccess sr : result) {
@@ -105,8 +107,7 @@ public class MercurialTextSearchVisitor {
 			}
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
-			return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, e
-					.getLocalizedMessage(), e);
+			return new Status(IStatus.ERROR, MercurialEclipsePlugin.ID, e.getLocalizedMessage(), e);
 		}
 		requestor.endReporting();
 		return new Status(IStatus.OK, MercurialEclipsePlugin.ID,

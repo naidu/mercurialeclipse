@@ -47,8 +47,6 @@ import org.eclipse.search.ui.ISearchPage;
 import org.eclipse.search.ui.ISearchPageContainer;
 import org.eclipse.search.ui.ISearchQuery;
 import org.eclipse.search.ui.NewSearchUI;
-import org.eclipse.search.ui.text.FileTextSearchScope;
-import org.eclipse.search.ui.text.TextSearchQueryProvider.TextSearchInput;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
 import org.eclipse.swt.events.ModifyEvent;
@@ -168,38 +166,21 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 	}
 
-	private static class TextSearchPageInput extends TextSearchInput {
+	static class TextSearchPageInput {
 
 		private final String fSearchText;
-		private final boolean fIsCaseSensitive;
-		private final boolean fIsRegEx;
-		private final FileTextSearchScope fScope;
+		private final MercurialTextSearchScope fScope;
 
-		public TextSearchPageInput(String searchText, boolean isCaseSensitive, boolean isRegEx,
-				FileTextSearchScope scope) {
+		public TextSearchPageInput(String searchText, MercurialTextSearchScope scope) {
 			fSearchText = searchText;
-			fIsCaseSensitive = isCaseSensitive;
-			fIsRegEx = isRegEx;
 			fScope = scope;
 		}
 
-		@Override
 		public String getSearchText() {
 			return fSearchText;
 		}
 
-		@Override
-		public boolean isCaseSensitiveSearch() {
-			return fIsCaseSensitive;
-		}
-
-		@Override
-		public boolean isRegExSearch() {
-			return fIsRegEx;
-		}
-
-		@Override
-		public FileTextSearchScope getScope() {
+		public MercurialTextSearchScope getScope() {
 			return fScope;
 		}
 	}
@@ -208,9 +189,10 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 	private ISearchQuery newQuery() {
 		SearchPatternData data = getPatternData();
-		TextSearchPageInput input = new TextSearchPageInput(data.textPattern, data.isCaseSensitive,
-				data.isRegExSearch, createTextSearchScope());
-		return new MercurialTextSearchQueryProvider().createQuery(input);
+		TextSearchPageInput input = new TextSearchPageInput(data.textPattern,
+				createTextSearchScope());
+		return new MercurialTextSearchQueryProvider(firstRevisionCheckbox.getSelection())
+				.createQuery(input);
 	}
 
 	public boolean performAction() {
@@ -222,25 +204,27 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		return fPattern.getText();
 	}
 
-	public FileTextSearchScope createTextSearchScope() {
+	public MercurialTextSearchScope createTextSearchScope() {
 		// Setup search scope
 		switch (getContainer().getSelectedScope()) {
 		case ISearchPageContainer.WORKSPACE_SCOPE:
-			return FileTextSearchScope.newWorkspaceScope(getExtensions(), false);
+			return MercurialTextSearchScope.newWorkspaceScope(getExtensions(), firstRevisionCheckbox.getSelection());
 		case ISearchPageContainer.SELECTION_SCOPE:
 			return getSelectedResourcesScope();
 		case ISearchPageContainer.SELECTED_PROJECTS_SCOPE:
 			return getEnclosingProjectScope();
 		case ISearchPageContainer.WORKING_SET_SCOPE:
 			IWorkingSet[] workingSets = getContainer().getSelectedWorkingSets();
-			return FileTextSearchScope.newSearchScope(workingSets, getExtensions(), false);
+			return MercurialTextSearchScope.newSearchScope(workingSets, getExtensions(),
+					firstRevisionCheckbox.getSelection());
 		default:
 			// unknown scope
-			return FileTextSearchScope.newWorkspaceScope(getExtensions(), false);
+			return MercurialTextSearchScope.newWorkspaceScope(getExtensions(),
+					firstRevisionCheckbox.getSelection());
 		}
 	}
 
-	private FileTextSearchScope getSelectedResourcesScope() {
+	private MercurialTextSearchScope getSelectedResourcesScope() {
 		HashSet<IResource> resources = new HashSet<IResource>();
 		ISelection sel = getContainer().getSelection();
 		if (sel instanceof IStructuredSelection && !sel.isEmpty()) {
@@ -250,7 +234,8 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 				if (curr instanceof IWorkingSet) {
 					IWorkingSet workingSet = (IWorkingSet) curr;
 					if (workingSet.isAggregateWorkingSet() && workingSet.isEmpty()) {
-						return FileTextSearchScope.newWorkspaceScope(getExtensions(), false);
+						return MercurialTextSearchScope.newWorkspaceScope(getExtensions(),
+								firstRevisionCheckbox.getSelection());
 					}
 					IAdaptable[] elements = workingSet.getElements();
 					for (int i = 0; i < elements.length; i++) {
@@ -269,13 +254,15 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			}
 		}
 		IResource[] arr = resources.toArray(new IResource[resources.size()]);
-		return FileTextSearchScope.newSearchScope(arr, getExtensions(), false);
+		return MercurialTextSearchScope.newSearchScope(arr, getExtensions(), firstRevisionCheckbox
+				.getSelection());
 	}
 
-	private FileTextSearchScope getEnclosingProjectScope() {
+	private MercurialTextSearchScope getEnclosingProjectScope() {
 		String[] enclosingProjectName = getContainer().getSelectedProjectNames();
 		if (enclosingProjectName == null) {
-			return FileTextSearchScope.newWorkspaceScope(getExtensions(), false);
+			return MercurialTextSearchScope.newWorkspaceScope(getExtensions(),
+					firstRevisionCheckbox.getSelection());
 		}
 
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
@@ -284,7 +271,8 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			res[i] = root.getProject(enclosingProjectName[i]);
 		}
 
-		return FileTextSearchScope.newSearchScope(res, getExtensions(), false);
+		return MercurialTextSearchScope.newSearchScope(res, getExtensions(), firstRevisionCheckbox
+				.getSelection());
 	}
 
 	private SearchPatternData findInPrevious(String pattern) {
@@ -307,9 +295,8 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 		if (match != null) {
 			fPreviousSearchPatterns.remove(match);
 		}
-		match = new SearchPatternData(getPattern(), false, fIsRegExSearch,
-				getExtensions(), getContainer().getSelectedScope(), getContainer()
-						.getSelectedWorkingSets());
+		match = new SearchPatternData(getPattern(), false, fIsRegExSearch, getExtensions(),
+				getContainer().getSelectedScope(), getContainer().getSelectedWorkingSets());
 		fPreviousSearchPatterns.add(0, match);
 		return match;
 	}
@@ -404,8 +391,10 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 
 	private void addSearchInControls(Composite result) {
 		Group g = SWTWidgetHelper.createGroup(result, "Search in");
-		this.firstRevisionCheckbox = SWTWidgetHelper.createCheckBox(g, "Stop search after finding a match in a revision.");
+		this.firstRevisionCheckbox = SWTWidgetHelper.createCheckBox(g,
+				"Search in all changesets");
 		this.firstRevisionCheckbox.setEnabled(true);
+		this.firstRevisionCheckbox.setSelection(false);
 	}
 
 	private boolean validateRegex() {
@@ -523,70 +512,71 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 	}
 
 	/**
-	 * TODO this is a temporary copy from FindReplaceDocumentAdapter (Eclipse 3.5)
-	 * we have to keep it as long as we want to be Eclipse 3.4 compatible
+	 * TODO this is a temporary copy from FindReplaceDocumentAdapter (Eclipse 3.5) we have to keep
+	 * it as long as we want to be Eclipse 3.4 compatible
 	 *
-	 * Escapes special characters in the string, such that the resulting pattern
-	 * matches the given string.
+	 * Escapes special characters in the string, such that the resulting pattern matches the given
+	 * string.
 	 *
-	 * @param string the string to escape
+	 * @param string
+	 *            the string to escape
 	 * @return a regex pattern that matches the given string
 	 * @since 3.5
 	 */
 	private static String escapeForRegExPattern(String string) {
-		//implements https://bugs.eclipse.org/bugs/show_bug.cgi?id=44422
+		// implements https://bugs.eclipse.org/bugs/show_bug.cgi?id=44422
 
-		StringBuffer pattern= new StringBuffer(string.length() + 16);
-		int length= string.length();
+		StringBuffer pattern = new StringBuffer(string.length() + 16);
+		int length = string.length();
 		if (length > 0 && string.charAt(0) == '^') {
 			pattern.append('\\');
 		}
-		for (int i= 0; i < length; i++) {
-			char ch= string.charAt(i);
+		for (int i = 0; i < length; i++) {
+			char ch = string.charAt(i);
 			switch (ch) {
-				case '\\':
-				case '(':
-				case ')':
-				case '[':
-				case ']':
-				case '{':
-				case '}':
-				case '.':
-				case '?':
-				case '*':
-				case '+':
-				case '|':
-					pattern.append('\\').append(ch);
-					break;
+			case '\\':
+			case '(':
+			case ')':
+			case '[':
+			case ']':
+			case '{':
+			case '}':
+			case '.':
+			case '?':
+			case '*':
+			case '+':
+			case '|':
+				pattern.append('\\').append(ch);
+				break;
 
-				case '\r':
-					if (i + 1 < length && string.charAt(i + 1) == '\n') {
-						i++;
-					}
-					//$FALL-THROUGH$
-				case '\n':
-					pattern.append("\\R"); //$NON-NLS-1$
-					break;
-				case '\t':
-					pattern.append("\\t"); //$NON-NLS-1$
-					break;
-				case '\f':
-					pattern.append("\\f"); //$NON-NLS-1$
-					break;
-				case 0x07:
-					pattern.append("\\a"); //$NON-NLS-1$
-					break;
-				case 0x1B:
-					pattern.append("\\e"); //$NON-NLS-1$
-					break;
+			case '\r':
+				if (i + 1 < length && string.charAt(i + 1) == '\n') {
+					i++;
+				}
+				//$FALL-THROUGH$
+			case '\n':
+				pattern.append("\\R"); //$NON-NLS-1$
+				break;
+			case '\t':
+				pattern.append("\\t"); //$NON-NLS-1$
+				break;
+			case '\f':
+				pattern.append("\\f"); //$NON-NLS-1$
+				break;
+			case 0x07:
+				pattern.append("\\a"); //$NON-NLS-1$
+				break;
+			case 0x1B:
+				pattern.append("\\e"); //$NON-NLS-1$
+				break;
 
-				default:
-					if (0 <= ch && ch < 0x20) {
-						pattern.append("\\x"); //$NON-NLS-1$
-						pattern.append(Integer.toHexString(ch).toUpperCase());
-					} else {
-						pattern.append(ch);
-					}
+			default:
+				if (0 <= ch && ch < 0x20) {
+					pattern.append("\\x"); //$NON-NLS-1$
+					pattern.append(Integer.toHexString(ch).toUpperCase());
+				} else {
+					pattern.append(ch);
+				}
 			}
 		}
 		if (length > 0 && string.charAt(length - 1) == '$') {

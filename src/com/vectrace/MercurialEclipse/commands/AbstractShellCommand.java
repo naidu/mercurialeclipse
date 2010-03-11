@@ -550,6 +550,17 @@ public abstract class AbstractShellCommand extends AbstractClient {
 		}
 	}
 
+	/**
+	 * Add all resources that are of type IResource.FILE
+	 */
+	public void addFilesWithoutFolders(List<? extends IResource> resources) {
+		for (IResource resource : resources) {
+			if (resource.getType() == IResource.FILE) {
+				files.add(resource.getLocation().toOSString());
+			}
+		}
+	}
+
 	public void addFiles(Set<IPath> paths) {
 		for (IPath path : paths) {
 			files.add(path.toOSString());
