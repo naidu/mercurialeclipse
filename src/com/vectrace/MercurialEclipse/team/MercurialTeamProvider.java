@@ -40,7 +40,6 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ISchedulingRule;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.team.core.history.IFileHistoryProvider;
 import org.eclipse.ui.IPropertyListener;
@@ -244,47 +243,44 @@ public class MercurialTeamProvider extends RepositoryProvider {
 			return;
 		}
 
-		if(Display.getCurrent() == null) {
-			if (HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
-				hgRoot.setEncoding(Charset.forName(defaultCharset));
+		// This code is running on very beginning of the eclipse startup. ALWAYS run
+		// hg commands in a job, to awoid deadlocks of Eclipse at this point of time!
+
+		// Deadlocks seen already: if running in UI thread, or if running inside the
+		// lock acquired by the RepositoryProvider.mapExistingProvider
+		Job job = new Job("Changeset detection") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				if (HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
+					hgRoot.setEncoding(Charset.forName(defaultCharset));
+				}
+				monitor.done();
+				return Status.OK_STATUS;
 			}
-		} else {
-			// This code is running on very beginning of the eclipse startup. Do not run
-			// hg commands from UI thread, as this can deadlock Eclipse at this point of time!
-			Job job = new Job("Changeset detection") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					if (HgDebugInstallClient.hgSupportsEncoding(defaultCharset)) {
-						hgRoot.setEncoding(Charset.forName(defaultCharset));
-					}
-					monitor.done();
-					return Status.OK_STATUS;
+			@Override
+			public boolean shouldSchedule() {
+				Boolean supports = HgDebugInstallClient.ENCODINGS.get(defaultCharset);
+				if(supports != null && supports.booleanValue()){
+					hgRoot.setEncoding(Charset.forName(defaultCharset));
 				}
-				@Override
-				public boolean shouldSchedule() {
-					Boolean supports = HgDebugInstallClient.ENCODINGS.get(defaultCharset);
-					if(supports != null && supports.booleanValue()){
-						hgRoot.setEncoding(Charset.forName(defaultCharset));
-					}
-					return supports == null;
-				}
-			};
-			class CharsetRule implements ISchedulingRule {
-				private final String cs;
-				CharsetRule(String cs){
-					this.cs = cs;
-				}
-				public boolean isConflicting(ISchedulingRule rule) {
-					return contains(rule);
-				}
-				public boolean contains(ISchedulingRule rule) {
-					return rule instanceof CharsetRule && cs.equals(((CharsetRule)rule).cs);
-				}
+				return supports == null;
 			}
-			job.setRule(new CharsetRule(defaultCharset));
-			job.setSystem(true);
-			job.schedule();
+		};
+		class CharsetRule implements ISchedulingRule {
+			private final String cs;
+			CharsetRule(String cs){
+				this.cs = cs;
+			}
+			public boolean isConflicting(ISchedulingRule rule) {
+				return contains(rule);
+			}
+			public boolean contains(ISchedulingRule rule) {
+				return rule instanceof CharsetRule && cs.equals(((CharsetRule)rule).cs);
+			}
 		}
+		job.setRule(new CharsetRule(defaultCharset));
+		job.setSystem(true);
+		job.schedule();
 	}
 
 
