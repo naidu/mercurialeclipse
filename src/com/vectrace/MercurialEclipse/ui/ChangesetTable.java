@@ -181,11 +181,8 @@ public class ChangesetTable extends Composite {
 		}
 
 		// only fetch rev 0:0+logbatchsize once
-		if (set == null || set.size() == 0 || set.first().getChangesetIndex() == 0) {
+		if (set.size() == 0 || set.first().getChangesetIndex() == 0) {
 			bottomNotFetched = false;
-			if (set == null) {
-				return;
-			}
 		}
 
 		/*

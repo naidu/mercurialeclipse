@@ -644,7 +644,7 @@ public class CommitDialog extends TitleAreaDialog {
 		// update to get file status information
 		Map<IPath, Set<ChangeSet>> changesets = HgLogClient.getRootLog(root, 1, startRev, true);
 		pm.worked(1);
-		if (changesets != null && changesets.size() > 0) {
+		if (!changesets.isEmpty()) {
 			currentChangeset = changesets.get(root.getIPath()).iterator().next();
 			pm.worked(1);
 		}

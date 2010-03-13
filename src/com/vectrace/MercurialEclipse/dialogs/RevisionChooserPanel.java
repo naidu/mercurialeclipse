@@ -271,7 +271,12 @@ public class RevisionChooserPanel extends Composite {
 			}
 		}
 		if (data.changeSet != null) {
-			data.revision = Integer.toString(data.changeSet.getChangesetIndex());
+			int changesetIndex = data.changeSet.getChangesetIndex();
+			if(changesetIndex >= 0){
+				data.revision = Integer.toString(changesetIndex);
+			} else {
+				data.revision = "";
+			}
 		}
 
 		if (data.revision.length() == 0) {
@@ -433,6 +438,10 @@ public class RevisionChooserPanel extends Composite {
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
 					Branch[] branches = dataLoader.getBranches();
+					if(data.highlightDefaultBranch &&  branches.length == 0 &&
+							Branch.DEFAULT.equals(text.getText())){
+						text.setText("");
+					}
 					table.setBranches(branches);
 					table.redraw();
 					table.update();
@@ -535,7 +544,12 @@ public class RevisionChooserPanel extends Composite {
 				bookmark = null;
 				ChangeSet selection = table.getSelection();
 				data.changeSet = selection;
-				text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				if(selection.getChangesetIndex() >= 0) {
+					text.setText(selection.getChangesetIndex() + ":" + selection.getChangeset()); //$NON-NLS-1$
+				} else {
+					text.setText(""); //$NON-NLS-1$
+				}
+
 			}
 			@Override
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -598,7 +612,7 @@ public class RevisionChooserPanel extends Composite {
 						} else {
 							result = cache.getOrFetchChangeSets(hgRoot);
 						}
-						if(result == null || result.isEmpty() || result.first().getChangesetIndex() != 0) {
+						if(result.isEmpty() || result.first().getChangesetIndex() > 0) {
 							if(resource != null) {
 								cache.fetchRevisions(resource, false, 0, 0, false);
 								result = cache.getOrFetchChangeSets(resource);

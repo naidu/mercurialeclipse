@@ -295,6 +295,9 @@ final class ChangesetContentHandler implements ContentHandler {
 		fileRevisions.put(path, fileRevs);
 	}
 
+	/**
+	 * @return never null
+	 */
 	public Map<IPath, Set<ChangeSet>> getFileRevisions() {
 		return fileRevisions;
 	}

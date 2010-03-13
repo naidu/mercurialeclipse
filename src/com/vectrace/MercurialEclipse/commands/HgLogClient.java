@@ -12,7 +12,10 @@ package com.vectrace.MercurialEclipse.commands;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -30,15 +33,21 @@ import com.vectrace.MercurialEclipse.history.MercurialRevision;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.HgRootContainer;
+import com.vectrace.MercurialEclipse.model.ChangeSet.Builder;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class HgLogClient extends AbstractParseChangesetClient {
 
+	private static final Map<IPath, Set<ChangeSet>> EMPTY_MAP =
+		Collections.unmodifiableMap(new HashMap<IPath, Set<ChangeSet>>());
+
+	// "{rev}:{node} {date|isodate} {author|person}#{tags}**#{branches}**#{desc|firstline}\n"
 	private static final Pattern GET_REVISIONS_PATTERN = Pattern
-			.compile("^([0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]+)#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
+			.compile("^([-0-9]+):([a-f0-9]+) ([^ ]+ [^ ]+ [^ ]+) ([^#]*)#(.*)\\*\\*#(.*)\\*\\*#(.*)$"); //$NON-NLS-1$
 
 	public static final String NOLIMIT = "999999999999";
 
@@ -66,7 +75,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	private static ChangeSet[] getRevisions(HgCommand command)
 			throws HgException {
 		command.addOptions("--template", //$NON-NLS-1$
-				"{rev}:{node} {date|isodate} {author|person}#{branches}**#{desc|firstline}\n"); //$NON-NLS-1$
+				"{rev}:{node} {date|isodate} {author|person}#{tags}**#{branches}**#{desc|firstline}\n"); //$NON-NLS-1$
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.LOG_TIMEOUT);
 		String[] lines = null;
 		try {
@@ -79,32 +88,33 @@ public class HgLogClient extends AbstractParseChangesetClient {
 			}
 			return null;
 		}
-		int length = lines.length;
-		ChangeSet[] changeSets = new ChangeSet[length];
+		List<ChangeSet> changeSets = new ArrayList<ChangeSet>();
 		HgRoot hgRoot = command.getHgRoot();
-		for (int i = 0; i < length; i++) {
-			Matcher m = GET_REVISIONS_PATTERN.matcher(lines[i]);
+		for (String line : lines) {
+			if(StringUtils.isEmpty(line)){
+				continue;
+			}
+			Matcher m = GET_REVISIONS_PATTERN.matcher(line);
 			if (m.matches()) {
-				ChangeSet changeSet = new ChangeSet.Builder(
+				Builder builder = new ChangeSet.Builder(
 						Integer.parseInt(m.group(1)), // revisions
 						m.group(2), // changeset
-						m.group(5), // branch
+						m.group(6), // branch
 						m.group(3), // date
 						m.group(4), // user
-						hgRoot).description(m.group(6)).build();
-
-				changeSets[i] = changeSet;
+						hgRoot).description(m.group(7));
+				builder.tags(m.group(5));
+				ChangeSet changeSet = builder.build();
+				changeSets.add(changeSet);
 			} else {
-				throw new HgException(Messages.getString("HgLogClient.parseException") + lines[i] + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				throw new HgException(Messages.getString("HgLogClient.parseException") + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
-
 		}
-
-		return changeSets;
+		return changeSets.toArray(new ChangeSet[changeSets.size()]);
 	}
 
 	/**
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getCompleteProjectLog(
 			IResource res, boolean withFiles) throws HgException {
@@ -112,7 +122,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	/**
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getCompleteRootLog(
 			HgRoot hgRoot, boolean withFiles) throws HgException {
@@ -120,7 +130,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	/**
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getProjectLogBatch(
 			IResource res, int batchSize, int startRev, boolean withFiles)
@@ -129,7 +139,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	/**
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getRecentProjectLog(
 			IResource res, int limitNumber, boolean withFiles) throws HgException {
@@ -137,7 +147,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	/**
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getProjectLog(IResource res,
 			int limitNumber, int startRev, boolean withFiles)
@@ -170,7 +180,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			String result = command.executeToString();
 			if (result.length() == 0) {
-				return null;
+				return EMPTY_MAP;
 			}
 			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					res, result, Direction.LOCAL, null, null, null);
@@ -181,7 +191,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 	}
 
 	/**
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 */
 	public static Map<IPath, Set<ChangeSet>> getRootLog(HgRoot hgRoot,
 			int limitNumber, int startRev, boolean withFiles)
@@ -198,7 +208,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			String result = command.executeToString();
 			if (result.length() == 0) {
-				return null;
+				return EMPTY_MAP;
 			}
 			Path path = new Path(hgRoot.getAbsolutePath());
 			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(path, result, Direction.LOCAL, null, null, null, hgRoot);
@@ -208,6 +218,9 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 	}
 
+	/**
+	 * @return never null
+	 */
 	public static Map<IPath, Set<ChangeSet>> getPathLog(boolean isFile, File path,
 			HgRoot hgRoot, int limitNumber, int startRev, boolean withFiles)
 			throws HgException {
@@ -229,7 +242,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			String result = command.executeToString();
 			if (result.length() == 0) {
-				return null;
+				return EMPTY_MAP;
 			}
 			Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(
 					new Path(path.getAbsolutePath()),
@@ -276,7 +289,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 
 		IPath location = ResourceUtils.getPath(resource);
-		if(map != null) {
+		if(!map.isEmpty()) {
 			return Collections.min(map.get(location));
 		}
 		File possibleParent = rev.getParent();
@@ -296,7 +309,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 			// go up one revision step by step, looking for the fist time "branch" occurence
 			// this may take a long time...
-			while(map == null && (next = history.getNext(next)) != null && !monitor.isCanceled()){
+			while(map.isEmpty() && (next = history.getNext(next)) != null && !monitor.isCanceled()){
 				if(next.getParent() == null) {
 					int revision = next.getRevision();
 					possibleParent = HgStatusClient.getPossibleSourcePath(hgRoot, file, revision);
@@ -307,7 +320,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 					// validate if the possible parent IS the parent for this version
 					map = getPathLog(resource.getType() == IResource.FILE,
 							possibleParent, hgRoot, limitNumber, rev.getRevision(), true);
-					if(map != null) {
+					if(!map.isEmpty()) {
 						// bingo, log is not null
 						break;
 					}
@@ -342,12 +355,12 @@ public class HgLogClient extends AbstractParseChangesetClient {
 
 		if(possibleParent != null){
 			rev.setParent(possibleParent);
-			if(map == null && !monitor.isCanceled()) {
+			if(map.isEmpty() && !monitor.isCanceled()) {
 				map = getPathLog(resource.getType() == IResource.FILE,
 						possibleParent, MercurialTeamProvider.getHgRoot(resource),
 						limitNumber, rev.getRevision(), true);
 			}
-			if(map != null) {
+			if(!map.isEmpty()) {
 				return Collections.min(map.get(new Path(possibleParent.getAbsolutePath())));
 			}
 		}
@@ -381,6 +394,12 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		}
 	}
 
+	/**
+	 * Tries to retrieve (possible not existing) changeset for the given id.
+	 * @param hgRoot non null
+	 * @param nodeId non null
+	 * @return might return null if the changeset is not known/existing in the repo
+	 */
 	public static ChangeSet getChangeset(HgRoot hgRoot, String nodeId) throws HgException {
 		Assert.isNotNull(nodeId);
 		String stylePath;
@@ -399,7 +418,7 @@ public class HgLogClient extends AbstractParseChangesetClient {
 		Path path = new Path(hgRoot.getAbsolutePath());
 		Map<IPath, Set<ChangeSet>> revisions = createLocalRevisions(path, result, Direction.LOCAL, null, null, null, hgRoot);
 		Set<ChangeSet> set = revisions.get(path);
-		if (set != null) {
+		if (set != null && !set.isEmpty()) {
 			return Collections.min(set);
 		}
 		return null;

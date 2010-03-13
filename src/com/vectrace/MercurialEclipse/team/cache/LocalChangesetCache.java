@@ -127,7 +127,10 @@ public class LocalChangesetCache extends AbstractCache {
 		clear(project, false);
 	}
 
-
+	/**
+	 * @param resource non null
+	 * @return never null, but possibly empty set
+	 */
 	public SortedSet<ChangeSet> getOrFetchChangeSets(IResource resource) throws HgException {
 		IPath location = resource.getLocation();
 
@@ -147,9 +150,13 @@ public class LocalChangesetCache extends AbstractCache {
 		if (revisions != null) {
 			return Collections.unmodifiableSortedSet(revisions);
 		}
-		return null;
+		return EMPTY_SET;
 	}
 
+	/**
+	 * @param hgRoot non null
+	 * @return never null, but possibly empty set
+	 */
 	public SortedSet<ChangeSet> getOrFetchChangeSets(HgRoot hgRoot) throws HgException {
 		IPath location = hgRoot.getIPath();
 
@@ -164,7 +171,7 @@ public class LocalChangesetCache extends AbstractCache {
 		if (revisions != null) {
 			return Collections.unmodifiableSortedSet(revisions);
 		}
-		return null;
+		return EMPTY_SET;
 	}
 
 	/**
@@ -177,7 +184,7 @@ public class LocalChangesetCache extends AbstractCache {
 	 */
 	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
 		SortedSet<ChangeSet> revisions = getOrFetchChangeSets(resource);
-		if (revisions != null && revisions.size() > 0) {
+		if (revisions.size() > 0) {
 			return revisions.last();
 		}
 		return null;
@@ -372,7 +379,7 @@ public class LocalChangesetCache extends AbstractCache {
 	/**
 	 * Checks if the cache contains an old changeset. If this is the case, simply removes the cached
 	 * value (new value will be retrieved later)
-	 * 
+	 *
 	 * @param root
 	 *            working dir
 	 * @param nodeId
@@ -427,7 +434,7 @@ public class LocalChangesetCache extends AbstractCache {
 			} else {
 				revisions = HgLogClient.getCompleteProjectLog(res, withFiles);
 			}
-			if (revisions == null || revisions.size() <= 0) {
+			if (revisions.size() == 0) {
 				return;
 			}
 
@@ -492,7 +499,7 @@ public class LocalChangesetCache extends AbstractCache {
 			} else {
 				revisions = HgLogClient.getCompleteRootLog(hgRoot, withFiles);
 			}
-			if (revisions == null || revisions.size() <= 0) {
+			if (revisions.size() == 0) {
 				return EMPTY_SET;
 			}
 

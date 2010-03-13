@@ -151,7 +151,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 *            Incoming, Outgoing or Local changesets
 	 * @param repository
 	 * @param bundleFile
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 * @throws HgException
 	 */
 	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(
@@ -182,7 +182,7 @@ abstract class AbstractParseChangesetClient extends AbstractClient {
 	 * @param path full absolute file path, which MAY NOT EXIST in the local file system
 	 *        (because it is the original path of moved or renamed file)
 	 *
-	 * @return map where the key is an absolute file path
+	 * @return map where the key is an absolute file path, never null
 	 * @throws HgException
 	 */
 	protected static Map<IPath, Set<ChangeSet>> createLocalRevisions(IPath path, String input,

@@ -235,12 +235,15 @@ public class SelectRevisionPage extends WizardPage {
 			// lookup one (latest) revision only
 			Map<IPath, Set<ChangeSet>> log = HgLogClient.getRootLog(hgRoot, 1, -1, false);
 			Set<ChangeSet> set = log.get(hgRoot.getIPath());
-			if(set.isEmpty()){
+			if(set == null || set.isEmpty()){
 				return false;
 			}
 			expected = set.iterator().next();
 		} else {
 			expected = HgLogClient.getChangeset(hgRoot, revision);
+		}
+		if(expected == null){
+			return false;
 		}
 		String changesetId = HgIdentClient.getCurrentChangesetId(hgRoot);
 		revisionRef[0] = "" + expected.getChangesetIndex();

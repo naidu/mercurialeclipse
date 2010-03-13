@@ -202,7 +202,7 @@ public class MercurialHistory extends FileHistory {
 		if (from < 0) {
 			return;
 		}
-		if (from == Integer.MAX_VALUE && !revisions.isEmpty()) {
+		if (from == Integer.MAX_VALUE) {
 			// We're getting revisions up to the latest one available.
 			// So clear out the cached list, as it may contain revisions
 			// that no longer exist (e.g. after a strip/rollback).
@@ -231,7 +231,7 @@ public class MercurialHistory extends FileHistory {
 		}
 
 		// no result -> bottom reached
-		if (map == null) {
+		if (map.isEmpty()) {
 			lastReqRevision = from;
 			return;
 		}
