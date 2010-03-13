@@ -444,13 +444,13 @@ public class MercurialTextSearchPage extends DialogPage implements ISearchPage {
 			}
 		});
 		fPattern.setFont(group.getFont());
-		GridData data = new GridData(GridData.FILL, GridData.FILL, true, false, 1, 1);
+		GridData data = new GridData(GridData.FILL, GridData.FILL, true, false, 2, 1);
 		data.widthHint = convertWidthInCharsToPixels(50);
 		fPattern.setLayoutData(data);
 
 		// Text line which explains the special characters
 		fStatusLabel = new CLabel(group, SWT.LEAD);
-		fStatusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+		fStatusLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 		fStatusLabel.setFont(group.getFont());
 		fStatusLabel.setAlignment(SWT.LEFT);
 		fStatusLabel.setText(SearchMessages.SearchPage_containingText_hint);
