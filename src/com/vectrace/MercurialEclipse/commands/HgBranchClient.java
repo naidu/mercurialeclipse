@@ -11,6 +11,8 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
@@ -23,6 +25,7 @@ import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 public class HgBranchClient extends AbstractClient {
 
@@ -31,23 +34,31 @@ public class HgBranchClient extends AbstractClient {
 
 	private static Map<RemoteKey, Boolean> KNOWN_BRANCHES = new ConcurrentHashMap<RemoteKey, Boolean>();
 
+	/**
+	 * Returns all available (not closed) branches
+	 * @param hgRoot non null
+	 * @return never null, but possibly empty array
+	 * @throws HgException
+	 */
 	public static Branch[] getBranches(HgRoot hgRoot) throws HgException {
 		AbstractShellCommand command = new HgCommand("branches", hgRoot, false); //$NON-NLS-1$
 		command.addOptions("-v"); //$NON-NLS-1$
 		String[] lines = command.executeToString().split("\n"); //$NON-NLS-1$
-		int length = lines.length;
-		Branch[] branches = new Branch[length];
-		for (int i = 0; i < length; i++) {
-			Matcher m = GET_BRANCHES_PATTERN.matcher(lines[i]);
+		List<Branch> branches = new ArrayList<Branch>();
+		for (String line : lines) {
+			if(StringUtils.isEmpty(line)){
+				continue;
+			}
+			Matcher m = GET_BRANCHES_PATTERN.matcher(line);
 			if (m.matches()) {
 				Branch branch = new Branch(m.group(1), Integer.parseInt(m.group(2)), m
-						.group(3), (m.group(5) == null || !m.group(5).equals("(inactive)"))); //$NON-NLS-1$
-				branches[i] = branch;
+						.group(3), !"(inactive)".equals(m.group(5))); //$NON-NLS-1$
+				branches.add(branch);
 			} else {
-				throw new HgException("Parse exception: '" + lines[i] + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+				throw new HgException("Failed to parse branch from: '" + line + "'"); //$NON-NLS-1$ //$NON-NLS-2$
 			}
 		}
-		return branches;
+		return branches.toArray(new Branch[branches.size()]);
 	}
 
 	/**
