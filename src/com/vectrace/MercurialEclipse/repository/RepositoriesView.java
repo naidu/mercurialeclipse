@@ -428,7 +428,6 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 		contentProvider = new RemoteContentProvider();
 		treeViewer.setContentProvider(contentProvider);
 		treeViewer.setLabelProvider(WorkbenchLabelProvider.getDecoratingWorkbenchLabelProvider());
-		getSite().setSelectionProvider(treeViewer);
 		root = new AllRootsElement();
 		treeViewer.setInput(root);
 		treeViewer.setSorter(new RepositorySorter());
@@ -438,6 +437,7 @@ public class RepositoriesView extends ViewPart implements ISelectionListener {
 
 		initializeListeners();
 		MercurialEclipsePlugin.getRepoManager().addRepositoryListener(repositoryListener);
+		getSite().setSelectionProvider(treeViewer);
 	}
 
 	protected void initializeListeners() {
