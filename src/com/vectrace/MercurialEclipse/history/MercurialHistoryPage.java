@@ -269,7 +269,7 @@ public class MercurialHistoryPage extends HistoryPage {
 			return true;
 		}
 		IResource old = resource;
-		this.resource = (IResource)object;
+		this.resource = MercurialEclipsePlugin.getAdapter(object, IResource.class);
 		super.setInput(object);
 		if(resource == null || (resource != null && !resource.equals(old))){
 			if(resource != null) {
@@ -692,7 +692,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 	public boolean isValidInput(Object object) {
 		return object == null || object instanceof IResource || object instanceof HgRoot
-			|| getAdapter(IResource.class) != null;
+			|| MercurialEclipsePlugin.getAdapter(object, IResource.class) != null;
 	}
 
 	public ChangeSet getCurrentWorkdirChangeset() {
