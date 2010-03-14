@@ -570,12 +570,14 @@ public class MercurialHistoryPage extends HistoryPage {
 				menuMgr1.add(bisectMenu);
 				menuMgr1.add(new Separator());
 				menuMgr1.add(exportAsBundleAction);
+				menuMgr1.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 			}
 		});
 
 		bisectMenu.setRemoveAllWhenShown(true);
 		menuMgr.setRemoveAllWhenShown(true);
 		viewer.getTable().setMenu(menuMgr.createContextMenu(viewer.getTable()));
+		getSite().registerContextMenu(MercurialEclipsePlugin.ID + ".hgHistoryPage",  menuMgr, viewer);
 	}
 
 	private void createActions() {
