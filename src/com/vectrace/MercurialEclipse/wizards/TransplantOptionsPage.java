@@ -6,7 +6,8 @@
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * Bastian Doetsch	implementation
+ * 		Bastian Doetsch				- implementation
+ * 		Andrei Loskutov (Intland) 	- bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -14,8 +15,6 @@ import java.util.Collections;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -27,17 +26,21 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * @author bastian
- *
  */
 public class TransplantOptionsPage extends HgWizardPage {
 
-	private IProject project;
+	private final HgRoot hgRoot;
 	private boolean merge;
 	private String mergeNodeId;
 	private boolean prune;
@@ -52,23 +55,13 @@ public class TransplantOptionsPage extends HgWizardPage {
 	private Button mergeCheckBox;
 	private Button pruneCheckBox;
 	private ChangesetTable pruneNodeIdTable;
-	private SortedSet<ChangeSet> changesets = new TreeSet<ChangeSet>(
-			Collections.reverseOrder());
+	private final SortedSet<ChangeSet> changesets;
 
-	public TransplantOptionsPage(String pageName, String title,
-			ImageDescriptor titleImage, IProject project) {
+	public TransplantOptionsPage(String pageName, String title, ImageDescriptor titleImage,
+			HgRoot hgRoot) {
 		super(pageName, title, titleImage);
-		this.project = project;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see org.eclipse.jface.wizard.WizardPage#canFlipToNextPage()
-	 */
-	@Override
-	public boolean canFlipToNextPage() {
-		return super.canFlipToNextPage();
+		this.hgRoot = hgRoot;
+		changesets = new TreeSet<ChangeSet>(Collections.reverseOrder());
 	}
 
 	public void createControl(Composite parent) {
@@ -76,139 +69,142 @@ public class TransplantOptionsPage extends HgWizardPage {
 		addContinueOptionGroup(composite);
 		addOtherOptionsGroup(composite);
 		setControl(composite);
+		setPageComplete(true);
+		validatePage();
 	}
 
-	/**
-	 * @param composite
-	 */
+	@Override
+	public void setPageComplete(boolean complete) {
+		if(complete){
+			try {
+				if(HgStatusClient.isDirty(hgRoot)){
+					setErrorMessage("Outstanding uncommitted changes! Transplant is not possible.");
+					super.setPageComplete(false);
+					return;
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		super.setPageComplete(complete);
+	}
+
 	private void addOtherOptionsGroup(Composite composite) {
 		createMergeGroup(composite);
 		createPruneGroup(composite);
 		createFilterGroup(composite);
 	}
 
-	/**
-	 * @param composite
-	 */
 	private void createFilterGroup(Composite composite) {
-		// filter
-		Group filterGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.filtergroup.title")); //$NON-NLS-1$
+		Group filterGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("TransplantOptionsPage.filtergroup.title")); //$NON-NLS-1$
 
-		this.filterChangesetsCheckBox = SWTWidgetHelper.createCheckBox(filterGroup,
+		filterChangesetsCheckBox = SWTWidgetHelper.createCheckBox(filterGroup,
 				Messages.getString("TransplantOptionsPage.filterCheckBox.title")); //$NON-NLS-1$
 
 		SelectionListener filterChangesetsCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				filterTextField.setEnabled(filterChangesetsCheckBox
-						.getSelection());
+				filterChangesets = filterChangesetsCheckBox.getSelection();
+				filterTextField.setEnabled(filterChangesets);
+				validatePage();
 			}
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
 		};
 
-		this.filterChangesetsCheckBox
-				.addSelectionListener(filterChangesetsCheckBoxListener);
+		filterChangesetsCheckBox.addSelectionListener(filterChangesetsCheckBoxListener);
 
 		SWTWidgetHelper.createLabel(filterGroup, Messages.getString("TransplantOptionsPage.filterLabel.title")); //$NON-NLS-1$
-		this.filterTextField = SWTWidgetHelper.createTextField(filterGroup);
-		this.filterTextField.setEnabled(false);
+		filterTextField = SWTWidgetHelper.createTextField(filterGroup);
+		filterTextField.setEnabled(false);
 
 		ModifyListener filterListener = new ModifyListener() {
-
 			public void modifyText(ModifyEvent e) {
-				filter = filterTextField.getText();
+				filter = filterTextField.getText().trim();
 				validatePage();
 			}
-
 		};
 
-		this.filterTextField.addModifyListener(filterListener);
-
+		filterTextField.addModifyListener(filterListener);
 	}
 
-	/**
-	 * @param composite
-	 */
 	private void createPruneGroup(Composite composite) {
-		GridData gridData;
 		// prune
-		Group pruneGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.pruneGroup.title")); //$NON-NLS-1$
-		this.pruneCheckBox = SWTWidgetHelper.createCheckBox(pruneGroup, Messages.getString("TransplantOptionsPage.pruneCheckBox.title")); //$NON-NLS-1$
+		Group pruneGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("TransplantOptionsPage.pruneGroup.title")); //$NON-NLS-1$
+		pruneCheckBox = SWTWidgetHelper.createCheckBox(pruneGroup, Messages
+				.getString("TransplantOptionsPage.pruneCheckBox.title")); //$NON-NLS-1$
 
 		SelectionListener pruneCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				pruneNodeIdTable.setEnabled(pruneCheckBox.getSelection());
+				prune = pruneCheckBox.getSelection();
+				pruneNodeIdTable.setEnabled(prune);
 				populatePruneNodeIdTable();
+				validatePage();
 			}
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
 		};
 
-		this.pruneCheckBox.addSelectionListener(pruneCheckBoxListener);
+		pruneCheckBox.addSelectionListener(pruneCheckBoxListener);
 
-		this.pruneNodeIdTable = new ChangesetTable(pruneGroup, project);
-		gridData = new GridData(GridData.FILL_BOTH);
+		pruneNodeIdTable = new ChangesetTable(pruneGroup, hgRoot);
+		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
-		this.pruneNodeIdTable.setLayoutData(gridData);
-		this.pruneNodeIdTable.setEnabled(false);
+		pruneNodeIdTable.setLayoutData(gridData);
+		pruneNodeIdTable.setEnabled(false);
 		SelectionListener pruneTableListener = new SelectionListener() {
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
-
 			public void widgetSelected(SelectionEvent e) {
 				ChangeSet changeSet = pruneNodeIdTable.getSelection();
-				pruneNodeId = changeSet.getChangeset();
+				pruneNodeId = changeSet == null? null : changeSet.getChangeset();
 				validatePage();
 			}
 		};
 		pruneNodeIdTable.addSelectionListener(pruneTableListener);
 	}
 
-	/**
-	 * @param composite
-	 */
 	private void createMergeGroup(Composite composite) {
 		// other options
-		Group mergeGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.mergeGroup.title")); //$NON-NLS-1$
+		Group mergeGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("TransplantOptionsPage.mergeGroup.title")); //$NON-NLS-1$
 
 		// merge at revision
-		this.mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup, Messages.getString("TransplantOptionsPage.mergeCheckBox.title")); //$NON-NLS-1$
+		mergeCheckBox = SWTWidgetHelper.createCheckBox(mergeGroup, Messages
+				.getString("TransplantOptionsPage.mergeCheckBox.title")); //$NON-NLS-1$
 
 		SelectionListener mergeCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				mergeNodeIdTable.setEnabled(mergeCheckBox.getSelection());
+				merge = mergeCheckBox.getSelection();
+				mergeNodeIdTable.setEnabled(merge);
 				populateMergeNodeIdTable();
+				validatePage();
 			}
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
 		};
 
-		this.mergeCheckBox.addSelectionListener(mergeCheckBoxListener);
-		this.mergeNodeIdTable = new ChangesetTable(mergeGroup, project);
+		mergeCheckBox.addSelectionListener(mergeCheckBoxListener);
+		mergeNodeIdTable = new ChangesetTable(mergeGroup, hgRoot);
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
-		this.mergeNodeIdTable.setLayoutData(gridData);
-		this.mergeNodeIdTable.setEnabled(false);
+		mergeNodeIdTable.setLayoutData(gridData);
+		mergeNodeIdTable.setEnabled(false);
 
 		SelectionListener mergeTableListener = new SelectionListener() {
-
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
 			}
-
 			public void widgetSelected(SelectionEvent e) {
 				ChangeSet changeSet = mergeNodeIdTable.getSelection();
-				mergeNodeId = changeSet.getChangeset();
+				mergeNodeId = changeSet == null? null : changeSet.getChangeset();
 				validatePage();
 			}
 		};
@@ -217,7 +213,7 @@ public class TransplantOptionsPage extends HgWizardPage {
 	}
 
 	private void loadChangesets() {
-		if (changesets.size()==0) {
+		if (changesets.isEmpty()) {
 			TransplantPage page = (TransplantPage) getPreviousPage();
 			changesets.addAll(page.getChangesets());
 		}
@@ -225,43 +221,55 @@ public class TransplantOptionsPage extends HgWizardPage {
 
 	private void validatePage() {
 		boolean valid = true;
-		if (merge) {
-			valid &= mergeNodeId != null && mergeNodeId.length() > 0;
-		}
-		if (prune) {
-			valid &= pruneNodeId != null && pruneNodeId.length() > 0;
-		}
+		try {
+			if (continueLastTransplant) {
+				return;
+			}
+			if (merge) {
+				valid &= !StringUtils.isEmpty(mergeNodeId);
+				if(!valid){
+					setErrorMessage("Please select merge changeset!");
+					return;
+				}
+			}
+			if (prune) {
+				valid &= !StringUtils.isEmpty(pruneNodeId);
+				if(!valid){
+					setErrorMessage("Please select prune changeset!");
+					return;
+				}
+			}
 
-		if (filterChangesets) {
-			valid &= filter != null && filter.length() > 0;
+			if (filterChangesets) {
+				valid &= !StringUtils.isEmpty(filter);
+				if(!valid){
+					setErrorMessage("Please enter changeset filter!");
+					return;
+				}
+			}
+		} finally {
+			if(valid){
+				setErrorMessage(null);
+			}
+			if(isPageComplete() ^ valid) {
+				setPageComplete(valid);
+			}
 		}
-		if (continueLastTransplant) {
-			valid = true;
-		}
-		setPageComplete(valid);
 	}
 
-	/**
-	 * @param composite
-	 */
 	private void addContinueOptionGroup(Composite composite) {
 		// other options
 		Group continueGroup = SWTWidgetHelper.createGroup(composite, Messages.getString("TransplantOptionsPage.continueGroup.title")); //$NON-NLS-1$
 
-		this.continueLastTransplantCheckBox = SWTWidgetHelper.createCheckBox(continueGroup,
+		continueLastTransplantCheckBox = SWTWidgetHelper.createCheckBox(continueGroup,
 				Messages.getString("TransplantOptionsPage.continueCheckBox.title")); //$NON-NLS-1$
 
 		SelectionListener continueLastTransplantCheckBoxListener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent e) {
-				TransplantOptionsPage.this.filterChangesetsCheckBox
-						.setEnabled(!continueLastTransplantCheckBox
-								.getSelection());
-				TransplantOptionsPage.this.mergeCheckBox
-						.setEnabled(!continueLastTransplantCheckBox
-								.getSelection());
-				TransplantOptionsPage.this.pruneCheckBox
-						.setEnabled(!continueLastTransplantCheckBox
-								.getSelection());
+				continueLastTransplant = continueLastTransplantCheckBox.getSelection();
+				filterChangesetsCheckBox.setEnabled(!continueLastTransplant);
+				mergeCheckBox.setEnabled(!continueLastTransplant);
+				pruneCheckBox.setEnabled(!continueLastTransplant);
 				validatePage();
 			}
 
@@ -270,92 +278,45 @@ public class TransplantOptionsPage extends HgWizardPage {
 			}
 		};
 
-		this.continueLastTransplantCheckBox
-				.addSelectionListener(continueLastTransplantCheckBoxListener);
+		continueLastTransplantCheckBox.addSelectionListener(continueLastTransplantCheckBoxListener);
 	}
 
-	/**
-	 *
-	 */
 	private void populatePruneNodeIdTable() {
 		loadChangesets();
-		pruneNodeIdTable.setChangesets(changesets
-				.toArray(new ChangeSet[changesets.size()]));
+		pruneNodeIdTable.setChangesets(changesets.toArray(new ChangeSet[changesets.size()]));
 	}
 
-	/**
-	 *
-	 */
 	private void populateMergeNodeIdTable() {
 		loadChangesets();
-		mergeNodeIdTable.setChangesets(changesets
-				.toArray(new ChangeSet[changesets.size()]));
+		mergeNodeIdTable.setChangesets(changesets.toArray(new ChangeSet[changesets.size()]));
 	}
 
-	@Override
-	public boolean finish(IProgressMonitor monitor) {
-		return super.finish(monitor);
-	}
-
-	/**
-	 * @return the project
-	 */
-	public IProject getProject() {
-		return project;
-	}
-
-	/**
-	 * @param project
-	 *            the project to set
-	 */
-	public void setProject(IProject project) {
-		this.project = project;
-	}
-
-	/**
-	 * @return
-	 */
 	public boolean isMerge() {
-		return this.merge;
+		return merge;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getMergeNodeId() {
-		return this.mergeNodeId;
+		return mergeNodeId;
 	}
 
-	/**
-	 * @return
-	 */
 	public boolean isPrune() {
-		return this.prune;
+		return prune;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getPruneNodeId() {
-		return this.pruneNodeId;
+		return pruneNodeId;
 	}
 
 	public boolean isFilterChangesets() {
-		return this.filterChangesets;
+		return filterChangesets;
 	}
 
-	/**
-	 * @return
-	 */
 	public String getFilter() {
-		return this.filter;
+		return filter;
 	}
 
-	/**
-	 * @return
-	 */
 	public boolean isContinueLastTransplant() {
-		return this.continueLastTransplant;
+		return continueLastTransplant;
 	}
 
 }

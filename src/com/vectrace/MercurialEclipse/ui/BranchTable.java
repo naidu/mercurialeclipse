@@ -39,6 +39,8 @@ public class BranchTable extends Composite {
 	private int[] parents;
 	private boolean showTip = true;
 
+	private String highlightBranch;
+
 	public BranchTable(Composite parent) {
 		super(parent, SWT.NONE);
 
@@ -52,7 +54,7 @@ public class BranchTable extends Composite {
 		table.setLayoutData(data);
 
 		String[] titles = { Messages.getString("BranchTable.column.rev"), Messages.getString("BranchTable.column.global"), Messages.getString("BranchTable.column.branch"), Messages.getString("BranchTable.column.active") }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-		int[] widths = { 50, 150, 300, 70 };
+		int[] widths = { 60, 150, 300, 70 };
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
@@ -73,7 +75,8 @@ public class BranchTable extends Composite {
 		for (Branch branch : branches) {
 			if (showTip || !HgRevision.TIP.getChangeset().equals(branch.getName())) {
 				TableItem row = new TableItem(table, SWT.NONE);
-				if (parents != null && isParent(branch.getRevision())) {
+				if ((parents != null && isParent(branch.getRevision()))
+						|| Branch.same(highlightBranch, branch.getName())) {
 					row.setFont(PARENT_FONT);
 				}
 				row.setText(0, Integer.toString(branch.getRevision()));
@@ -112,5 +115,12 @@ public class BranchTable extends Composite {
 			default:
 				return false;
 		}
+	}
+
+	/**
+	 * @param branch non null branch to highlight
+	 */
+	public void highlightBranch(String branch) {
+		this.highlightBranch = branch;
 	}
 }

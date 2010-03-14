@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -27,41 +26,39 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgBackoutClient;
 import com.vectrace.MercurialEclipse.commands.HgClients;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
+import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- *
  */
 public class BackoutWizardPage extends HgWizardPage {
 
 	private ChangesetTable changesetTable;
 	private Text messageTextField;
 	private Button mergeCheckBox;
-	protected ChangeSet backoutRevision;
-	private final IProject project;
+	private ChangeSet backoutRevision;
+	private final HgRoot hgRoot;
 	private Text userTextField;
 
-	public BackoutWizardPage(String pageName, String title,
-			ImageDescriptor image, IProject project) {
+	public BackoutWizardPage(String pageName, String title, ImageDescriptor image, HgRoot hgRoot) {
 		super(pageName, title, image);
-		this.project = project;
+		this.hgRoot = hgRoot;
 	}
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 2);
 
 		// list view of changesets
-		Group changeSetGroup = SWTWidgetHelper
-				.createGroup(
-						composite,
-						Messages
-								.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
+		Group changeSetGroup = SWTWidgetHelper.createGroup(composite, Messages
+				.getString("BackoutWizardPage.changeSetGroup.title"), GridData.FILL_BOTH); //$NON-NLS-1$
 
-		changesetTable = new ChangesetTable(changeSetGroup, project);
+		changesetTable = new ChangesetTable(changeSetGroup, hgRoot);
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
@@ -72,7 +69,7 @@ public class BackoutWizardPage extends HgWizardPage {
 				backoutRevision = changesetTable.getSelection();
 				messageTextField.setText(Messages.getString(
 						"BackoutWizardPage.defaultCommitMessage") //$NON-NLS-1$
-						.concat(backoutRevision.toString()));
+						+ " " + backoutRevision.toString()); //$NON-NLS-1$
 				setPageComplete(true);
 			}
 
@@ -91,20 +88,37 @@ public class BackoutWizardPage extends HgWizardPage {
 
 		SWTWidgetHelper.createLabel(optionGroup, Messages
 				.getString("BackoutWizardPage.userLabel.text")); //$NON-NLS-1$
-		this.userTextField = SWTWidgetHelper.createTextField(optionGroup);
-		this.userTextField.setText(MercurialUtilities.getHGUsername());
+		userTextField = SWTWidgetHelper.createTextField(optionGroup);
+		userTextField.setText(MercurialUtilities.getDefaultUserName());
 
 		SWTWidgetHelper.createLabel(optionGroup, Messages
 				.getString("BackoutWizardPage.commitLabel.text")); //$NON-NLS-1$
-		this.messageTextField = SWTWidgetHelper.createTextField(optionGroup);
+		messageTextField = SWTWidgetHelper.createTextField(optionGroup);
 
 		// --merge merge with old dirstate parent after backout
-		this.mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		mergeCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				Messages.getString("BackoutWizardPage.mergeCheckBox.text")); //$NON-NLS-1$
-		this.mergeCheckBox.setSelection(true);
+		mergeCheckBox.setSelection(true);
 
 
 		setControl(composite);
+		setPageComplete(true);
+	}
+
+	@Override
+	public void setPageComplete(boolean complete) {
+		if(complete){
+			try {
+				if(HgStatusClient.isDirty(hgRoot)){
+					setErrorMessage("Outstanding uncommitted changes! Backout is not possible.");
+					super.setPageComplete(false);
+					return;
+				}
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+			}
+		}
+		super.setPageComplete(complete);
 	}
 
 	@Override
@@ -113,7 +127,7 @@ public class BackoutWizardPage extends HgWizardPage {
 		boolean merge = mergeCheckBox.getSelection();
 		backoutRevision = changesetTable.getSelection();
 		try {
-			String result = HgBackoutClient.backout(project, backoutRevision,
+			String result = HgBackoutClient.backout(hgRoot, backoutRevision,
 					merge, msg, userTextField.getText());
 			HgClients.getConsole().printMessage(result, null);
 

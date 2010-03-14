@@ -23,11 +23,6 @@ public interface IConfiguration {
 	/**
 	 * @return
 	 */
-	String getDefaultUserName();
-
-	/**
-	 * @return
-	 */
 	String getExecutable();
 
 	/**

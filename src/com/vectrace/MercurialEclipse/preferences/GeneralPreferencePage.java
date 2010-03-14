@@ -160,6 +160,10 @@ IWorkbenchPreferencePage {
 				Messages.getString("GeneralPreferencePage.field.username"), getFieldEditorParent())); //$NON-NLS-1$
 
 		addField(new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_USE_MERCURIAL_USERNAME,
+				"Use Mercurial username as default for commit", getFieldEditorParent())); //$NON-NLS-1$
+
+		addField(new BooleanFieldEditor(
 				PREF_USE_EXTERNAL_MERGE,
 				Messages.getString("GeneralPreferencePage.useExternalMergeTool"), getFieldEditorParent())); //$NON-NLS-1$
 

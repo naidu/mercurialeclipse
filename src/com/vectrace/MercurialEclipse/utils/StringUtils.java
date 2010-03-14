@@ -39,4 +39,12 @@ public class StringUtils {
 		}
 		return text;
 	}
+
+	/**
+	 * @param text any kind of text
+	 * @return true if the text is either null or empty string
+	 */
+	public static boolean isEmpty(String text){
+		return text == null || text.length() == 0;
+	}
 }

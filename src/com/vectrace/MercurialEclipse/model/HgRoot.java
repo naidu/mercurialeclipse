@@ -14,12 +14,15 @@ package com.vectrace.MercurialEclipse.model;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
 
-import org.eclipse.core.runtime.IPath;
-import org.eclipse.core.runtime.Path;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.jface.resource.ImageDescriptor;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.utils.IniFile;
 
 /**
@@ -28,61 +31,47 @@ import com.vectrace.MercurialEclipse.utils.IniFile;
  *
  * @author bastian
  */
-public class HgRoot extends File {
-	private static final String HGENCODING;
-	static {
-		// next in line is HGENCODING in environment
-		String enc = System.getProperty("HGENCODING");
-
-		// next is platform encoding as available in JDK
-		if (enc == null || enc.length() == 0) {
-			HGENCODING = Charset.defaultCharset().name();
-		} else {
-			HGENCODING = enc;
-		}
-	}
+public class HgRoot extends HgPath implements IHgRepositoryLocation {
+	private static final String HG_HGRC = ".hg/hgrc";
 
 	private static final long serialVersionUID = 2L;
 	private Charset encoding;
 	private Charset fallbackencoding;
 	private File config;
-	private final Path path;
 
 	public HgRoot(String pathname) throws IOException {
-		this(new File(pathname));
+		super(pathname);
 	}
 
 	public HgRoot(File file) throws IOException {
-		super(file.getCanonicalPath());
-		path = new Path(getAbsolutePath());
+		super(file);
 	}
 
 	public void setEncoding(Charset charset) {
 		this.encoding = charset;
 	}
 
-	/**
-	 * @return the encoding
-	 */
 	public Charset getEncoding() {
 		if(encoding == null){
-			setEncoding(Charset.forName(HGENCODING));
+			setEncoding(MercurialEclipsePlugin.getDefaultEncoding());
 		}
 		return encoding;
 	}
 
 	/**
-	 * @return
+	 * Gets the resource hgrc as a {@link java.io.File}.
+	 *
+	 * @return the {@link java.io.File} referencing the hgrc file, <code>null</code> if it doesn't exist.
 	 */
 	public File getConfig() {
 		if (config == null) {
-			File hgrc = new File(this, ".hg/hgrc");
-			if (hgrc.exists()) {
+			File hgrc = new File(this, HG_HGRC);
+			if (hgrc.isFile()) {
 				config = hgrc;
 				return hgrc;
 			}
 		}
-		return null;
+		return config;
 	}
 
 	public String getConfigItem(String section, String key) {
@@ -97,9 +86,6 @@ public class HgRoot extends File {
 		return null;
 	}
 
-	/**
-	 * @return the fallbackencoding
-	 */
 	public Charset getFallbackencoding() {
 		if(fallbackencoding == null){
 			// set fallbackencoding to windows standard codepage
@@ -112,35 +98,6 @@ public class HgRoot extends File {
 		return fallbackencoding;
 	}
 
-	/**
-	 * Converts given path to the relative
-	 * @param child a possible child path
-	 * @return a hg root relative path of a given file, if the given file is located under this root,
-	 * otherwise the path of a given file
-	 */
-	public String toRelative(File child){
-		// first try with the unresolved path. In most cases it's enough
-		String fullPath = child.getAbsolutePath();
-		if(!fullPath.startsWith(getPath())){
-			try {
-				// ok, now try to resolve all the links etc. this takes A LOT of time...
-				fullPath = child.getCanonicalPath();
-				if(!fullPath.startsWith(getPath())){
-					return child.getPath();
-				}
-			} catch (IOException e) {
-				MercurialEclipsePlugin.logError(e);
-				return child.getPath();
-			}
-		}
-		// +1 is to remove the file separator / at the start of the relative path
-		return fullPath.substring(getPath().length() + 1);
-	}
-
-	public IPath toAbsolute(IPath relative){
-		return path.append(relative);
-	}
-
 	@Override
 	public boolean equals(Object obj) {
 		return super.equals(obj);
@@ -149,5 +106,65 @@ public class HgRoot extends File {
 	@Override
 	public int hashCode() {
 		return super.hashCode();
+	}
+
+	public int compareTo(IHgRepositoryLocation loc) {
+		if(getLocation() == null) {
+			return -1;
+		}
+		if(loc.getLocation() == null){
+			return 1;
+		}
+		return getLocation().compareToIgnoreCase(loc.getLocation());
+	}
+
+	public String getLocation() {
+		return getAbsolutePath();
+	}
+
+	public URI getUri() throws HgException {
+		return toURI();
+	}
+
+	public String getLogicalName() {
+		return null;
+	}
+
+	public String getPassword() {
+		return null;
+	}
+
+	public String getUser() {
+		return null;
+	}
+
+	@Override
+	public Object[] getChildren(Object o) {
+		IProject[] projects = MercurialTeamProvider.getKnownHgProjects(this).toArray(
+				new IProject[0]);
+		if (projects.length == 1) {
+			if (getIPath().equals(projects[0].getLocation())) {
+				return projects;
+			}
+		}
+		return super.getChildren(o);
+	}
+
+	@Override
+	public ImageDescriptor getImageDescriptor(Object object) {
+		return MercurialEclipsePlugin.getImageDescriptor("root.gif");
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public Object getAdapter(Class adapter) {
+		if(adapter == IHgRepositoryLocation.class){
+			return this;
+		}
+		return super.getAdapter(adapter);
+	}
+
+	public boolean isLocal() {
+		return true;
 	}
 }

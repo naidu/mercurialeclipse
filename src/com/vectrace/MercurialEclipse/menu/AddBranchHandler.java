@@ -7,19 +7,20 @@
  *
  * Contributors:
  *     Bastian Doetsch
+ *     Abdrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.AddBranchWizard;
 
-public class AddBranchHandler extends SingleResourceHandler {
+public class AddBranchHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		AddBranchWizard wizard = new AddBranchWizard(resource);
+	protected void run(HgRoot hgRoot) {
+		AddBranchWizard wizard = new AddBranchWizard(hgRoot);
 		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 		wizardDialog.open();
 	}

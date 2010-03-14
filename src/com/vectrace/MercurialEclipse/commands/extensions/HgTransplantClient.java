@@ -7,44 +7,58 @@
  *
  * Contributors:
  *     Bastian Doetsch           - implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.commands.extensions;
 
 import java.net.URI;
-import java.util.List;
-
-import org.eclipse.core.resources.IProject;
+import java.util.SortedSet;
 
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgTransplantClient {
+
+	public static class TransplantOptions {
+		public boolean all;
+		public boolean branch;
+		public boolean continueLastTransplant;
+		public boolean filterChangesets;
+		public boolean merge;
+		public boolean prune;
+		public String branchName;
+		public String filter;
+		public String mergeNodeId;
+		public String pruneNodeId;
+		/** changesets sorted in the ascending revision order */
+		public SortedSet<ChangeSet> nodes;
+	}
 
 	/**
 	 * Cherrypicks given ChangeSets from repository or branch.
 	 */
-	public static String transplant(IProject project, List<String> nodeIds,
-			HgRepositoryLocation repo, boolean branch, String branchName,
-			boolean all, boolean merge, String mergeNodeId, boolean prune,
-			String pruneNodeId, boolean continueLastTransplant,
-			boolean filterChangesets, String filter) throws HgException {
+	public static String transplant(HgRoot hgRoot,
+			IHgRepositoryLocation repo, TransplantOptions options) throws HgException {
 
-		AbstractShellCommand command = new HgCommand("transplant", project, false); //$NON-NLS-1$
-		command
-				.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
+		AbstractShellCommand command = new HgCommand("transplant", hgRoot, false); //$NON-NLS-1$
+		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		command.addOptions("--config", "extensions.hgext.transplant="); //$NON-NLS-1$ //$NON-NLS-2$
-		if (continueLastTransplant) {
+		if (options.continueLastTransplant) {
 			command.addOptions("--continue"); //$NON-NLS-1$
 		} else {
 			command.addOptions("--log"); //$NON-NLS-1$
-			if (branch) {
+			if (options.branch) {
 				command.addOptions("--branch"); //$NON-NLS-1$
-				command.addOptions(branchName);
-				if (all) {
+				command.addOptions(options.branchName);
+				if (options.all) {
 					command.addOptions("--all"); //$NON-NLS-1$
+				} else {
+					// the exact revision will be specified below via changeset id
 				}
 			} else {
 				command.addOptions("--source"); //$NON-NLS-1$
@@ -56,24 +70,24 @@ public class HgTransplantClient {
 				}
 			}
 
-			if (prune) {
+			if (options.prune) {
 				command.addOptions("--prune"); //$NON-NLS-1$
-				command.addOptions(pruneNodeId);
+				command.addOptions(options.pruneNodeId);
 			}
 
-			if (merge) {
+			if (options.merge) {
 				command.addOptions("--merge"); //$NON-NLS-1$
-				command.addOptions(mergeNodeId);
+				command.addOptions(options.mergeNodeId);
 			}
 
-			if (nodeIds != null && nodeIds.size() > 0) {
-				for (String node : nodeIds) {
-					command.addOptions(node);
+			if (!options.all && options.nodes != null && options.nodes.size() > 0) {
+				for (ChangeSet node : options.nodes) {
+					command.addOptions(node.getChangeset());
 				}
 			}
 
-			if (filterChangesets) {
-				command.addOptions("--filter", filter); //$NON-NLS-1$
+			if (options.filterChangesets) {
+				command.addOptions("--filter", options.filter); //$NON-NLS-1$
 			}
 		}
 		return new String(command.executeToBytes());

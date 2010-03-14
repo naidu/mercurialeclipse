@@ -20,11 +20,11 @@ import java.util.List;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.GpgCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 /**
@@ -42,8 +42,8 @@ public class HgSignClient {
 	 * revision is given, the parent of the working directory is used, or tip if
 	 * no revision is checked out.
 	 *
-	 * @param directory
-	 *            the current project (working directory)
+	 * @param hgRoot
+	 *            the current hg root
 	 * @param cs
 	 *            ChangeSet, may be null
 	 * @param key
@@ -62,13 +62,12 @@ public class HgSignClient {
 	 * @param passphrase
 	 *            the passphrase or null
 	 * @author Bastian Doetsch
-	 * @return
 	 *
 	 */
-	public static String sign(File directory, ChangeSet cs, String key,
+	public static String sign(HgRoot hgRoot, ChangeSet cs, String key,
 			String message, String user, boolean local, boolean force,
 			boolean noCommit, String passphrase) throws HgException {
-		AbstractShellCommand command = new HgCommand("sign", directory, true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("sign", hgRoot, true); //$NON-NLS-1$
 		File file = new File("me.gpg.tmp"); //$NON-NLS-1$
 		String cmd = "gpg.cmd=".concat( //$NON-NLS-1$
 				MercurialUtilities.getGpgExecutable(true)).concat(
@@ -93,7 +92,7 @@ public class HgSignClient {
 				}
 			}
 		}
-		command.addOptions("-k", key, "--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
+		command.addOptions("-k", key, "--config","extensions.gpg=","--config", cmd); //$NON-NLS-1$ //$NON-NLS-2$
 		if (local) {
 			command.addOptions("-l"); //$NON-NLS-1$
 		}
@@ -103,13 +102,15 @@ public class HgSignClient {
 		if (noCommit) {
 			command.addOptions("--no-commit"); //$NON-NLS-1$
 		} else {
-			command.addOptions("-m", message, "-u", user); //$NON-NLS-1$ //$NON-NLS-2$
+			command.addOptions("-m", message); //$NON-NLS-1$
+			command.addUserName(user);
 		}
 
 		command.addOptions(cs.getChangeset());
 		String result;
 		try {
 			result = command.executeToString();
+			command.rememberUserName();
 			return result;
 		} finally {
 			if (file.delete() == false) {

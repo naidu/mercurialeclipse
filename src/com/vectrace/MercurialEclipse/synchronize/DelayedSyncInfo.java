@@ -25,7 +25,7 @@ import org.eclipse.team.internal.core.mapping.ResourceVariantFileRevision;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 
 /**
@@ -35,13 +35,13 @@ public class DelayedSyncInfo extends MercurialSyncInfo {
 
 	private final HgRoot root;
 	private final String currentBranch;
-	private final HgRepositoryLocation repo;
+	private final IHgRepositoryLocation repo;
 
 	private IResourceVariant delayedBase;
 	private IResourceVariant delayedRemote;
 	private DelayedDiff delayedDiff;
 
-	public DelayedSyncInfo(IFile local, HgRoot root, String currentBranch, HgRepositoryLocation repo, IResourceVariantComparator comparator, int description) {
+	public DelayedSyncInfo(IFile local, HgRoot root, String currentBranch, IHgRepositoryLocation repo, IResourceVariantComparator comparator, int description) {
 		super(local, null, null, comparator, description);
 		this.root = root;
 		this.currentBranch = currentBranch;

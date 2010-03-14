@@ -26,10 +26,8 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.core.TeamException;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractClient;
@@ -44,7 +42,6 @@ import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
 	private IWorkbenchWindow window;
-	// private IWorkbenchPart targetPart;
 	private IStructuredSelection selection;
 
 	public ActionRemove() {
@@ -80,17 +77,7 @@ public class ActionRemove implements IWorkbenchWindowActionDelegate {
 
 	@SuppressWarnings("unchecked")
 	public void run(IAction action) {
-		// String FullPath;
-		Shell shell;
-		IWorkbench workbench;
-
-		// Get shell & workbench
-		if ((window != null) && (window.getShell() != null)) {
-			shell = window.getShell();
-		} else {
-			workbench = PlatformUI.getWorkbench();
-			shell = workbench.getActiveWorkbenchWindow().getShell();
-		}
+		Shell shell = window != null ? window.getShell() : MercurialEclipsePlugin.getActiveShell();
 
 		// the last argument will be replaced with a path
 		String launchCmd[] = { MercurialUtilities.getHGExecutable(),

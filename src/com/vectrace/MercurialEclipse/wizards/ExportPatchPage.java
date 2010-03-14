@@ -48,7 +48,7 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
 	protected boolean validatePage() {
 		String msg = locationChooser.validate();
 		if (msg == null && getCheckedResources().size() == 0) {
-			msg = Messages.getString("ExportPatchWizard.InvalidPathFile"); //$NON-NLS-1$
+			msg = "Please select at least one file to export"; //$NON-NLS-1$
 		}
 		if (msg == null) {
 			setMessage(null);
@@ -60,8 +60,6 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
 
 	public void createControl(Composite parent) {
 		Composite composite = SWTWidgetHelper.createComposite(parent, 1);
-		// TODO help
-
 		Group group = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("ExportPatchWizard.PathLocation")); //$NON-NLS-1$
 		locationChooser = new LocationChooser(group, true, getDialogSettings());
@@ -71,7 +69,7 @@ public class ExportPatchPage extends HgWizardPage implements Listener {
 		locationChooser.setLayoutData(data);
 
 		// TODO no diff for untracked files, bug?
-		commitFiles = new CommitFilesChooser(composite, true, resources, false, false);
+		commitFiles = new CommitFilesChooser(composite, true, resources, false, false, false);
 		commitFiles.setLayoutData(new GridData(GridData.FILL_BOTH));
 		commitFiles.addStateListener(this);
 

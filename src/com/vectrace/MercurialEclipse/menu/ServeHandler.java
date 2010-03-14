@@ -11,18 +11,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.jface.wizard.WizardDialog;
 
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.wizards.ServeWizard;
 
-public class ServeHandler extends SingleResourceHandler {
+public class ServeHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+	protected void run(HgRoot hgRoot) {
 		ServeWizard wizard = new ServeWizard(hgRoot);
 		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 		wizardDialog.open();

@@ -14,6 +14,11 @@
  *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -27,7 +32,9 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgRemoveClient;
 import com.vectrace.MercurialEclipse.commands.HgRenameClient;
+import com.vectrace.MercurialEclipse.commands.HgRevertClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 
 
@@ -148,7 +155,18 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		if(resource.getType() == IResource.FOLDER) {
 			tree.deletedFolder((IFolder) resource);
 		} else {
+			// hg deletes the parent folder too if the deleted file was the only one in the folder
+			// we have to tell Eclipse that the folder (and probably all subsequent parents)
+			// are deleted too...
+			File dir = resource.getLocation().toFile().getParentFile();
+			IContainer parent = resource.getParent();
 			tree.deletedFile((IFile) resource);
+			while(parent instanceof IFolder && !dir.exists()){
+				IContainer backup = parent.getParent();
+				tree.deletedFolder((IFolder) parent);
+				parent = backup;
+				dir = dir.getParentFile();
+			}
 		}
 
 		// Returning true indicates that this method has removed resource in both
@@ -232,8 +250,23 @@ public class HgMoveDeleteHook implements IMoveDeleteHook {
 		// updateFlags.
 		try {
 			HgRenameClient.renameResource(source, destination, monitor);
-		} catch (HgException e) {
-			MercurialEclipsePlugin.logError(Messages.getString("HgMoveDeleteHook.moveFailed"), e);
+		} catch (final HgException e) {
+			MercurialEclipsePlugin.logError(e);
+			if (MercurialUtilities.isWindows()
+					&& source.getName().equalsIgnoreCase(destination.getName())) {
+				try {
+					HgRoot hgRoot = MercurialTeamProvider.getHgRoot(source);
+					List<IResource> res = new ArrayList<IResource>();
+					res.add(source);
+					HgRevertClient.performRevert(monitor, hgRoot, res, null);
+				} catch (HgException e1) {
+					MercurialEclipsePlugin.logError(e1);
+				}
+				HgException ex = new HgException(
+						"Mercurial does not support renaming of files on Windows,"
+								+ " if file names differs only by the lower/upper case letters!", e);
+				MercurialEclipsePlugin.showError(ex);
+			}
 			return false;
 		}
 		return true;

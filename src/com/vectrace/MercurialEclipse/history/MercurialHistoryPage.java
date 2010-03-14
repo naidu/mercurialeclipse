@@ -15,10 +15,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.history;
 
-import java.lang.reflect.InvocationTargetException;
+import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.PREF_SHOW_ALL_TAGS;
+
 import java.util.Iterator;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
@@ -26,15 +29,18 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobChangeEvent;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IMenuListener;
 import org.eclipse.jface.action.IMenuManager;
+import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnWeightData;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
@@ -42,6 +48,7 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableLayout;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
@@ -50,119 +57,64 @@ import org.eclipse.swt.custom.BusyIndicator;
 import org.eclipse.swt.dnd.Clipboard;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.team.core.history.IFileHistory;
 import org.eclipse.team.core.history.IFileRevision;
 import org.eclipse.team.ui.history.HistoryPage;
+import org.eclipse.ui.IActionBars;
+import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchActionConstants;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.actions.ActionFactory;
+import org.eclipse.ui.actions.BaseSelectionListenerAction;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.progress.IWorkbenchSiteProgressService;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.actions.ExportAsBundleAction;
+import com.vectrace.MercurialEclipse.actions.MergeWithCurrentChangesetAction;
 import com.vectrace.MercurialEclipse.actions.OpenMercurialRevisionAction;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
-import com.vectrace.MercurialEclipse.commands.HgUpdateClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.menu.UpdateJob;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.ActionRevert;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
-import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class MercurialHistoryPage extends HistoryPage {
 
 	private GraphLogTableViewer viewer;
-	private IResource resource;
+	IResource resource;
+	private HgRoot hgRoot;
 	private ChangeLogContentProvider changeLogViewContentProvider;
 	private MercurialHistory mercurialHistory;
-	private IFileRevision[] entries;
 	private RefreshMercurialHistory refreshFileHistoryJob;
 	private ChangedPathsPage changedPaths;
 	private ChangeSet currentWorkdirChangeset;
 	private OpenMercurialRevisionAction openAction;
-
-	private final class CompareRevisionAction extends Action {
-
-		private CompareRevisionAction(String text) {
-			super(text);
-			setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif"));
-		}
-
-		@Override
-		public void run() {
-			IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
-			final Object[] revs = selection.toArray();
-
-			final MercurialRevisionStorage [] right = new MercurialRevisionStorage [1];
-			final MercurialRevisionStorage [] left = new MercurialRevisionStorage [1];
-			final IRunnableWithProgress runnable = new IRunnableWithProgress() {
-
-				public void run(IProgressMonitor monitor) throws InvocationTargetException,
-						InterruptedException {
-					try {
-						if(revs.length > 0 && !monitor.isCanceled()){
-							left[0] = getStorage((MercurialRevision) revs[0], monitor);
-							if(revs.length > 1 && !monitor.isCanceled()){
-								right[0] = getStorage((MercurialRevision) revs[1], monitor);
-							}
-						}
-					} catch (CoreException e) {
-						MercurialEclipsePlugin.logError(e);
-						throw new InvocationTargetException(e);
-					}
-					if(monitor.isCanceled()){
-						throw new InterruptedException("Cancelled by user");
-					}
-				}
-			};
-			ProgressMonitorDialog progress = new ProgressMonitorDialog(viewer.getControl().getShell());
-			try {
-				progress.run(true, true, runnable);
-			} catch (InvocationTargetException e) {
-				MercurialEclipsePlugin.logError(e.getCause());
-				return;
-			} catch (InterruptedException e) {
-				// user cancel
-				return;
-			}
-
-			if(left[0] == null){
-				return;
-			}
-			boolean localEditable = right[0] == null;
-			CompareUtils.openEditor(left[0], right[0], false, localEditable);
-		}
-
-		@Override
-		public boolean isEnabled() {
-			int size = ((IStructuredSelection) viewer.getSelection()).size();
-			return IFile.class.isAssignableFrom(getInput().getClass()) && (size == 1 || size == 2);
-		}
-
-		/**
-		 * this can take a lot of time, and UI must take care that it will not be frozen until
-		 * the info is fetched...
-		 * @param monitor
-		 */
-		private MercurialRevisionStorage getStorage(MercurialRevision rev, IProgressMonitor monitor) throws CoreException {
-			if(rev.getParent() == null){
-				// see issue #10302: this is a dirty trick to make sure to get content even
-				// if the file was renamed/copied.
-				HgLogClient.getLogWithBranchInfo(rev, mercurialHistory, monitor);
-			}
-			return (MercurialRevisionStorage) rev.getStorage(monitor);
-		}
-	}
+	private BaseSelectionListenerAction openEditorAction;
+	private boolean showTags;
+	private CompareRevisionAction compareWithCurrAction;
+	private CompareRevisionAction compareWithPrevAction;
+	private CompareRevisionAction compareTwo;
+	private BaseSelectionListenerAction revertAction;
+	private Action actionShowParentHistory;
+	private final IAction bisectMarkGoodAction = new BisectMarkGoodAction(this);
+	private final IAction bisectMarkBadAction = new BisectMarkBadAction(this);
+	private final IAction bisectResetAction = new BisectResetAction(this);
+	private final IAction exportAsBundleAction = new ExportAsBundleAction(this);
+	private final IAction mergeWithCurrentChangesetAction = new MergeWithCurrentChangesetAction(this);
 
 	class RefreshMercurialHistory extends Job {
 		private final int from;
@@ -170,6 +122,7 @@ public class MercurialHistoryPage extends HistoryPage {
 		public RefreshMercurialHistory(int from) {
 			super("Fetching Mercurial revisions..."); //$NON-NLS-1$
 			this.from = from;
+			setRule(new ExclusiveHistoryRule());
 		}
 
 		@Override
@@ -177,10 +130,14 @@ public class MercurialHistoryPage extends HistoryPage {
 			if (mercurialHistory == null) {
 				return Status.OK_STATUS;
 			}
-
+			mercurialHistory.setEnableExtraTags(showTags);
 			try {
 				mercurialHistory.refresh(monitor, from);
-				currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+				if(resource != null) {
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetByRootId(resource);
+				} else {
+					currentWorkdirChangeset = LocalChangesetCache.getInstance().getChangesetForRoot(hgRoot);
+				}
 			} catch (CoreException e) {
 				MercurialEclipsePlugin.logError(e);
 				return e.getStatus();
@@ -188,6 +145,7 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			final Runnable runnable = new Runnable() {
 				public void run() {
+					clearSelection();
 					viewer.setInput(mercurialHistory);
 					viewer.refresh();
 				}
@@ -213,13 +171,18 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
-	class ChangeLogContentProvider implements IStructuredContentProvider {
+	static class ChangeLogContentProvider implements IStructuredContentProvider {
+		private IFileRevision[] entries;
+		public ChangeLogContentProvider() {
+			super();
+		}
 
 		public void inputChanged(Viewer v, Object oldInput, Object newInput) {
 			entries = null;
 		}
 
 		public void dispose() {
+			entries = null;
 		}
 
 		public Object[] getElements(Object parent) {
@@ -229,7 +192,6 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			final IFileHistory fileHistory = (IFileHistory) parent;
 			entries = fileHistory.getFileRevisions();
-
 			return entries;
 		}
 	}
@@ -240,19 +202,19 @@ public class MercurialHistoryPage extends HistoryPage {
 		public String getColumnText(Object obj, int index) {
 			String ret;
 
-			if ((obj instanceof MercurialRevision) != true) {
+			if (!(obj instanceof MercurialRevision)) {
 				return "Type Error"; //$NON-NLS-1$
 			}
 
-			MercurialRevision mercurialFileRevision = (MercurialRevision) obj;
-			ChangeSet changeSet = mercurialFileRevision.getChangeSet();
+			MercurialRevision revision = (MercurialRevision) obj;
+			ChangeSet changeSet = revision.getChangeSet();
 
 			switch (index) {
 			case 1:
 				ret = changeSet.toString();
 				break;
 			case 2:
-				ret = changeSet.getTag();
+				ret = revision.getTagsString();
 				break;
 			case 3:
 				ret = changeSet.getBranch();
@@ -278,11 +240,8 @@ public class MercurialHistoryPage extends HistoryPage {
 		}
 	}
 
-	public MercurialHistoryPage(IResource resource) {
+	public MercurialHistoryPage() {
 		super();
-		if (isValidInput(resource)) {
-			this.resource = resource;
-		}
 	}
 
 	public MercurialHistory getMercurialHistory() {
@@ -290,14 +249,111 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	@Override
+	public boolean setInput(Object object) {
+		if (!isValidInput(object)) {
+			return false;
+		}
+		if(object instanceof HgRoot){
+			actionShowParentHistory.setEnabled(false);
+			HgRoot old = hgRoot;
+			this.hgRoot = (HgRoot)object;
+			super.setInput(object);
+			if(hgRoot == null || (hgRoot != null && !hgRoot.equals(old))){
+				if(hgRoot != null) {
+					mercurialHistory = new MercurialHistory(hgRoot);
+				} else {
+					mercurialHistory = null;
+				}
+				refresh();
+			}
+			return true;
+		}
+		IResource old = resource;
+		this.resource = MercurialEclipsePlugin.getAdapter(object, IResource.class);
+		super.setInput(object);
+		if(resource == null || (resource != null && !resource.equals(old))){
+			if(resource != null) {
+				mercurialHistory = new MercurialHistory(resource);
+				actionShowParentHistory.setEnabled(true);
+			} else {
+				mercurialHistory = null;
+			}
+			refresh();
+		}
+		return true;
+	}
+
+	@Override
 	public boolean inputSet() {
-		mercurialHistory = new MercurialHistory(resource);
-		refresh();
 		return true;
 	}
 
 	@Override
 	public void createControl(Composite parent) {
+		IActionBars actionBars = getHistoryPageSite().getWorkbenchPageSite().getActionBars();
+		IMenuManager actionBarsMenu = actionBars.getMenuManager();
+
+		// bisect actions
+		actionBarsMenu.add(new Separator());
+		actionBarsMenu.add(mergeWithCurrentChangesetAction);
+		actionBarsMenu.add(bisectResetAction);
+		actionBarsMenu.add(new Separator());
+		// export to bundle
+		actionBarsMenu.add(exportAsBundleAction);
+		actionBarsMenu.add(new Separator());
+
+		final IPreferenceStore store = MercurialEclipsePlugin.getDefault().getPreferenceStore();
+		showTags = store.getBoolean(PREF_SHOW_ALL_TAGS);
+
+		Action toggleShowTags = new Action(Messages.getString("HistoryView.showTags"), //$NON-NLS-1$
+				MercurialEclipsePlugin.getImageDescriptor("actions/tag.gif")) { //$NON-NLS-1$
+			@Override
+			public void run() {
+				showTags = isChecked();
+				store.setValue(PREF_SHOW_ALL_TAGS, showTags);
+				if(mercurialHistory != null) {
+					refresh();
+				}
+			}
+		};
+		toggleShowTags.setChecked(showTags);
+		actionBarsMenu.add(toggleShowTags);
+		actionShowParentHistory = new Action("Show Parent History", //$NON-NLS-1$
+				PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(ISharedImages.IMG_TOOL_UP)) {
+			@Override
+			public void run() {
+				if(mercurialHistory == null || hgRoot != null || resource == null) {
+					setEnabled(false);
+					return;
+				}
+				if(resource instanceof IProject){
+					try {
+						HgRoot root = MercurialTeamProvider.getHgRoot(resource);
+						if(root != null){
+							getHistoryView().showHistoryFor(root, true);
+						} else {
+							setEnabled(false);
+						}
+					} catch (HgException e) {
+						MercurialEclipsePlugin.logError(e);
+						setEnabled(false);
+					}
+				} else {
+					IContainer parentRes = resource.getParent();
+					if (parentRes instanceof IFolder || parentRes instanceof IProject) {
+						getHistoryView().showHistoryFor(parentRes, true);
+					} else {
+						setEnabled(false);
+					}
+				}
+			}
+		};
+
+		IToolBarManager tbm = actionBars.getToolBarManager();
+		tbm.add(new Separator());
+		tbm.add(toggleShowTags);
+		tbm.add(actionShowParentHistory);
+
 		changedPaths = new ChangedPathsPage(this, parent);
 		createTableHistory(changedPaths.getControl());
 		changedPaths.createControl();
@@ -308,6 +364,7 @@ public class MercurialHistoryPage extends HistoryPage {
 				copyToClipboard();
 			}
 		});
+
 	}
 
 	private void createTableHistory(Composite parent) {
@@ -360,10 +417,10 @@ public class MercurialHistoryPage extends HistoryPage {
 		viewer.setContentProvider(changeLogViewContentProvider);
 		viewer.addDoubleClickListener(new IDoubleClickListener() {
 			public void doubleClick(DoubleClickEvent event) {
-				getOpenAction();
-				updateOpenActionEnablement();
-				if(openAction.isEnabled()) {
-					openAction.run();
+				getCompareWithPreviousAction();
+				updateActionEnablement();
+				if(compareWithPrevAction.isEnabled()) {
+					compareWithPrevAction.run();
 				}
 			}
 		});
@@ -371,48 +428,88 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	private void copyToClipboard() {
-		IStructuredSelection selection = (IStructuredSelection) viewer.getSelection();
-		Iterator<?> iterator = selection.iterator();
+		Iterator<?> iterator = getSelection().iterator();
 		StringBuilder text = new StringBuilder();
-		for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
-			text.append(viewer.getTable().getColumn(columnIndex).getText()).append('\t');
+		Table table = viewer.getTable();
+		for(int columnIndex = 1; columnIndex < table.getColumnCount(); columnIndex++) {
+			text.append(table.getColumn(columnIndex).getText()).append('\t');
 		}
 
-		text.append(System.getProperty("line.separator")); //$NON-NLS-1$
+		String crlf = System.getProperty("line.separator"); //$NON-NLS-1$
+		text.append(crlf);
 
 		while(iterator.hasNext()) {
 			Object next = iterator.next();
 			ITableLabelProvider labelProvider = (ITableLabelProvider) viewer.getLabelProvider();
-			for(int columnIndex = 1; columnIndex < viewer.getTable().getColumnCount(); columnIndex++) {
+			for(int columnIndex = 1; columnIndex < table.getColumnCount(); columnIndex++) {
 				text.append(labelProvider.getColumnText(next, columnIndex)).append('\t');
 			}
-			text.append(System.getProperty("line.separator")); //$NON-NLS-1$
+			text.append(crlf);
 		}
-		new Clipboard(getSite().getShell().getDisplay()).setContents(new String[]{text.toString()},
-				new Transfer[]{ TextTransfer.getInstance() });
+		Clipboard clipboard = null;
+		try {
+			clipboard = new Clipboard(getSite().getShell().getDisplay());
+			clipboard.setContents(new String[]{text.toString()},
+					new Transfer[]{ TextTransfer.getInstance() });
+		} finally {
+			if(clipboard != null){
+				clipboard.dispose();
+			}
+		}
+	}
+
+	private IStructuredSelection getSelection() {
+		return (IStructuredSelection) viewer.getSelection();
+	}
+
+	void clearSelection() {
+		viewer.setSelection(StructuredSelection.EMPTY);
+	}
+
+	public MercurialRevision[] getSelectedRevisions() {
+		Object[] obj = getSelection().toArray();
+		if (obj != null && obj.length > 0) {
+			MercurialRevision[] revs = new MercurialRevision[obj.length];
+			int i = 0;
+			for (Object o : obj) {
+				MercurialRevision mr = (MercurialRevision) o;
+				revs[i++] = mr;
+			}
+			return revs;
+		}
+		return null;
 	}
 
 	private void contributeActions() {
-		final Action compareAction = getCompareAction();
 
 		final Action updateAction = new Action(Messages.getString("MercurialHistoryPage.updateAction.name")) { //$NON-NLS-1$
 			private MercurialRevision rev;
 
 			@Override
 			public void run() {
+				if(rev == null){
+					return;
+				}
 				try {
-					IProject project = resource.getProject();
-					Assert.isNotNull(project);
-					if (HgStatusClient.isDirty(project)) {
+					HgRoot root = resource != null ? MercurialTeamProvider.getHgRoot(resource) : hgRoot;
+					Assert.isNotNull(root);
+					if (HgStatusClient.isDirty(root)) {
 						if (!MessageDialog
 								.openQuestion(getControl().getShell(),
-										"Uncommited Changes",
-										"Your project has uncommited changes.\nDo you really want to continue?")){
+										Messages.getString("MercurialHistoryPage.uncommittedChanges1"), //$NON-NLS-1$
+										Messages.getString("MercurialHistoryPage.uncommittedChanges2"))){ //$NON-NLS-1$
 							return;
 						}
 					}
-					HgUpdateClient.update(project, rev.getChangeSet().getChangeset(), true);
-					refresh();
+					UpdateJob job = new UpdateJob(rev.getHash(), true, root);
+					JobChangeAdapter adap = new JobChangeAdapter() {
+						@Override
+						public void done(IJobChangeEvent event) {
+							refresh();
+						}
+					};
+					job.addJobChangeListener(adap);
+					job.schedule();
 				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 				}
@@ -420,57 +517,159 @@ public class MercurialHistoryPage extends HistoryPage {
 
 			@Override
 			public boolean isEnabled() {
-				IStructuredSelection selection = (IStructuredSelection) viewer
-						.getSelection();
-				Object[] revs = selection.toArray();
-				if (revs != null && revs.length == 1) {
-					rev = (MercurialRevision) revs[0];
+				MercurialRevision[] revs = getSelectedRevisions();
+				if (revs.length == 1) {
+					rev = revs[0];
 					return true;
 				}
+				rev = null;
 				return false;
 			}
 		};
-		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif"));
+		updateAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("actions/update.gif")); //$NON-NLS-1$
 
 		// Contribute actions to popup menu
 		final MenuManager menuMgr = new MenuManager();
-		Menu menu = menuMgr.createContextMenu(viewer.getTable());
-		menuMgr.addMenuListener(new IMenuListener() {
+		final MenuManager bisectMenu = new MenuManager("Bisect");
+
+		bisectMenu.addMenuListener(new IMenuListener() {
 			public void menuAboutToShow(IMenuManager menuMgr1) {
-				getOpenAction();
-				menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
-				menuMgr1.add(openAction);
-				updateOpenActionEnablement();
-				// TODO This is a HACK but I can't get the menu to update on
-				// selection :-(
-				compareAction.setEnabled(compareAction.isEnabled());
-				menuMgr1.add(compareAction);
-				updateAction.setEnabled(updateAction.isEnabled());
-				menuMgr1.add(updateAction);
+				bisectMenu.add(bisectMarkBadAction);
+				bisectMenu.add(bisectMarkGoodAction);
+				bisectMenu.add(bisectResetAction);
 			}
 		});
+
+		menuMgr.addMenuListener(new IMenuListener() {
+
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				if(resource instanceof IFile){
+					IStructuredSelection sel = updateActionEnablement();
+					menuMgr1.add(openAction);
+					menuMgr1.add(openEditorAction);
+					menuMgr1.add(new Separator(IWorkbenchActionConstants.GROUP_FILE));
+					if(sel.size() == 2){
+						menuMgr1.add(compareTwo);
+					} else {
+						menuMgr1.add(compareWithPrevAction);
+						menuMgr1.add(compareWithCurrAction);
+						menuMgr1.add(new Separator());
+						menuMgr1.add(revertAction);
+					}
+				}
+				updateAction.setEnabled(updateAction.isEnabled());
+				bisectMarkBadAction.setEnabled(bisectMarkBadAction.isEnabled());
+				bisectMarkGoodAction.setEnabled(bisectMarkGoodAction.isEnabled());
+				bisectResetAction.setEnabled(bisectResetAction.isEnabled());
+				exportAsBundleAction.setEnabled(true);
+				mergeWithCurrentChangesetAction.setEnabled(true);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(updateAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(mergeWithCurrentChangesetAction);
+				menuMgr1.add(bisectMenu);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(exportAsBundleAction);
+			}
+		});
+
+		bisectMenu.setRemoveAllWhenShown(true);
 		menuMgr.setRemoveAllWhenShown(true);
-		viewer.getTable().setMenu(menu);
+		viewer.getTable().setMenu(menuMgr.createContextMenu(viewer.getTable()));
 	}
 
-	private OpenMercurialRevisionAction getOpenAction() {
+	private void createActions() {
+		getOpenAction();
+		getOpenEditorAction();
+		getCompareWithCurrentAction();
+		getRevertAction();
+		compareTwo = new CompareRevisionAction(Messages.getString("CompareWithEachOtherAction.label"), this){ //$NON-NLS-1$
+			@Override
+			protected boolean updateSelection(IStructuredSelection selection) {
+				if(selection.size() != 2){
+					return false;
+				}
+				return super.updateSelection(selection);
+			}
+		};
+	}
+
+	OpenMercurialRevisionAction getOpenAction() {
 		if(openAction != null){
 			return openAction;
 		}
-		openAction = new OpenMercurialRevisionAction("Open");
-		viewer.getTable().addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				openAction.selectionChanged((IStructuredSelection) viewer
-						.getSelection());
-			}
-		});
+		openAction = new OpenMercurialRevisionAction(Messages.getString("MercurialHistoryPage.openSelectedVersion")); //$NON-NLS-1$
 		openAction.setPage(this);
 		return openAction;
 	}
 
-	private Action getCompareAction() {
-		return new CompareRevisionAction(Messages.getString("CompareAction.label"));
+	BaseSelectionListenerAction getOpenEditorAction() {
+		if(openEditorAction != null){
+			return openEditorAction;
+		}
+
+		openEditorAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.openCurrentVersion")) { //$NON-NLS-1$
+			private IFile file;
+
+			@Override
+			public void run() {
+				if(file == null){
+					return;
+				}
+				try {
+					IDE.openEditor(getSite().getPage(), file);
+				} catch (PartInitException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+
+			@Override
+			protected boolean updateSelection(IStructuredSelection selection) {
+				Object element = selection.getFirstElement();
+				if(element instanceof MercurialHistory){
+					MercurialHistory history = (MercurialHistory) element;
+					IFileRevision[] revisions = history.getFileRevisions();
+					if(revisions.length != 1 || !(revisions[0] instanceof MercurialRevision)){
+						file = null;
+						return false;
+					}
+					MercurialRevision rev = (MercurialRevision) revisions[0];
+					if(rev.getResource() instanceof IFile){
+						file = (IFile) rev.getResource();
+						return file.exists();
+					}
+				} else if (element instanceof MercurialRevision){
+					MercurialRevision rev = (MercurialRevision) element;
+					if(rev.getResource() instanceof IFile){
+						file = (IFile) rev.getResource();
+						return file.exists();
+					}
+				}
+				if(resource instanceof IFile){
+					file = (IFile) resource;
+					return file.exists();
+				}
+				file = null;
+				return false;
+			}
+		};
+		return openEditorAction;
+	}
+
+	CompareRevisionAction getCompareWithCurrentAction() {
+		if(compareWithCurrAction == null) {
+			compareWithCurrAction = new CompareRevisionAction(Messages.getString("CompareAction.label"), this); //$NON-NLS-1$
+			}
+		return compareWithCurrAction;
+	}
+
+	CompareRevisionAction getCompareWithPreviousAction() {
+		if(compareWithPrevAction == null) {
+			compareWithPrevAction = new CompareRevisionAction(Messages.getString("CompareWithPreviousAction.label"), this); //$NON-NLS-1$
+			compareWithPrevAction.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("compare_view.gif")); //$NON-NLS-1$
+			compareWithPrevAction.setCompareWithPrevousEnabled(true);
+		}
+		return compareWithPrevAction;
 	}
 
 	@Override
@@ -484,15 +683,16 @@ public class MercurialHistoryPage extends HistoryPage {
 	}
 
 	public String getDescription() {
-		return resource.getFullPath().toOSString();
+		return resource != null? resource.getLocation().toOSString() : hgRoot.getAbsolutePath();
 	}
 
 	public String getName() {
-		return resource.getFullPath().toOSString();
+		return getDescription();
 	}
 
 	public boolean isValidInput(Object object) {
-		return true;
+		return object == null || object instanceof IResource || object instanceof HgRoot
+			|| MercurialEclipsePlugin.getAdapter(object, IResource.class) != null;
 	}
 
 	public ChangeSet getCurrentWorkdirChangeset() {
@@ -535,12 +735,69 @@ public class MercurialHistoryPage extends HistoryPage {
 		return viewer;
 	}
 
-	private void updateOpenActionEnablement() {
-		openAction.selectionChanged((IStructuredSelection) viewer.getSelection());
-		if (resource == null || resource.getType() != IResource.FILE) {
-			openAction.setEnabled(false);
-		} else {
-			openAction.setEnabled(true);
+	private IStructuredSelection updateActionEnablement() {
+		createActions();
+		IStructuredSelection selection = getSelection();
+		openAction.selectionChanged(selection);
+		openEditorAction.selectionChanged(selection);
+		compareWithCurrAction.selectionChanged(selection);
+		compareWithPrevAction.selectionChanged(selection);
+		compareTwo.selectionChanged(selection);
+		revertAction.selectionChanged(selection);
+		return selection;
+	}
+
+	public BaseSelectionListenerAction getRevertAction() {
+		if (revertAction == null) {
+			revertAction = new BaseSelectionListenerAction(Messages.getString("MercurialHistoryPage.replaceCurrentWithSelected")) { //$NON-NLS-1$
+				@Override
+				public void run() {
+					IStructuredSelection selection = getStructuredSelection();
+					if (selection.isEmpty()) {
+						return;
+					}
+					ActionRevert revert = new ActionRevert();
+					MercurialRevision revision = (MercurialRevision) selection.getFirstElement();
+					IResource selectedElement = revision.getResource();
+					if (!MercurialStatusCache.getInstance().isClean(selectedElement) &&
+							!MessageDialog.openQuestion(getControl().getShell(), Messages.getString("MercurialHistoryPage.UncommittedChanges"), //$NON-NLS-1$
+							Messages.getString("MercurialHistoryPage.file") + selectedElement.getName() //$NON-NLS-1$
+									+ Messages.getString("MercurialHistoryPage.hasUncommittedChanges"))) { //$NON-NLS-1$
+						return;
+					}
+					selection = new StructuredSelection(selectedElement);
+					revert.setChangesetToRevert(revision.getChangeSet());
+					revert.selectionChanged(this, selection);
+					revert.run(this);
+				}
+
+				@Override
+				protected boolean updateSelection(IStructuredSelection sSelection) {
+					if(sSelection.size() != 1 ){
+						return false;
+					}
+					if(sSelection.size() == 1){
+						Object element = sSelection.getFirstElement();
+						if(element instanceof MercurialRevision){
+							MercurialRevision rev = (MercurialRevision) element;
+							if(rev.getResource() instanceof IFile){
+								return true;
+							}
+						}
+					}
+					return false;
+				}
+			};
+			revertAction.setImageDescriptor(MercurialEclipsePlugin
+					.getImageDescriptor("actions/revert.gif")); //$NON-NLS-1$
 		}
+		return revertAction;
+	}
+
+	/**
+	 * @param currentWorkdirChangeset the currentWorkdirChangeset to set
+	 */
+	public void setCurrentWorkdirChangeset(ChangeSet currentWorkdirChangeset) {
+		this.currentWorkdirChangeset = currentWorkdirChangeset;
 	}
 }

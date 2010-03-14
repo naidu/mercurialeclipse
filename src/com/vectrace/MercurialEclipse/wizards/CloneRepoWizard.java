@@ -21,7 +21,7 @@ import org.eclipse.ui.IImportWizard;
 import org.eclipse.ui.INewWizard;
 import org.eclipse.ui.IWorkbench;
 
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 
 /**
  * This class implements the import wizard extension and the new wizard
@@ -30,6 +30,8 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWizard {
 	private ClonePage clonePage;
 	private ProjectsImportPage importPage;
+	private IHgRepositoryLocation defaultLocation;
+	private SelectRevisionPage selectRevisionPage;
 
 
 	public CloneRepoWizard() {
@@ -47,7 +49,7 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 		return super.performCancel();
 	}
 
-	public HgRepositoryLocation getRepository() {
+	public IHgRepositoryLocation getRepository() {
 		return clonePage.getLastUsedRepository();
 	}
 
@@ -61,16 +63,36 @@ public class CloneRepoWizard extends HgWizard implements IImportWizard, INewWiza
 		clonePage.setDescription(Messages
 				.getString("CloneRepoWizard.pageDescription")); //$NON-NLS-1$
 		initPage(clonePage.getDescription(), clonePage);
+		if(!selection.isEmpty()){
+			Object firstElement = selection.getFirstElement();
+			if(firstElement instanceof IHgRepositoryLocation){
+				IHgRepositoryLocation repo = (IHgRepositoryLocation) firstElement;
+				setDefaultLocation(repo);
+			}
+		}
+		if(getDefaultLocation() != null) {
+			clonePage.setInitialRepo(getDefaultLocation());
+		}
+
+		selectRevisionPage = new SelectRevisionPage("SelectRevisionPage");
 
 		importPage = new ProjectsImportPage("ProjectsImportPage");
 
 		addPage(clonePage);
-		// TODO Add here "select branch/revision" page
+		addPage(selectRevisionPage);
 		addPage(importPage);
 	}
 
 	@Override
 	public boolean canFinish() {
 		return getContainer().getCurrentPage() instanceof ProjectsImportPage && super.canFinish();
+	}
+
+	public void setDefaultLocation(IHgRepositoryLocation defaultLocation) {
+		this.defaultLocation = defaultLocation;
+	}
+
+	public IHgRepositoryLocation getDefaultLocation() {
+		return defaultLocation;
 	}
 }

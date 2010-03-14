@@ -47,8 +47,8 @@ public class HgQSeriesClient extends AbstractClient {
 		if (executeToString != null && executeToString.indexOf("\n") >= 0) { //$NON-NLS-1$
 			String[] patches = executeToString.split("\n"); //$NON-NLS-1$
 			for (String string : patches) {
-				String[] components = string.split(":"); //$NON-NLS-1$
-				String[] patchData = components[0].trim().split(" "); //$NON-NLS-1$
+                String[] components = string.split(":", 2); //$NON-NLS-1$
+                String[] patchData = components[0].trim().split(" ", 3); //$NON-NLS-1$
 
 				Patch p = new Patch();
 				p.setIndex(patchData[0]);

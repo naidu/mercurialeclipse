@@ -15,7 +15,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
 
-public class HgRenameClient {
+public class HgRenameClient extends AbstractClient {
 
 	public static void renameResource(IResource source, IResource dest,
 			IProgressMonitor monitor) throws HgException {
@@ -25,7 +25,8 @@ public class HgRenameClient {
 			monitor.subTask(Messages.getString("HgRenameClient.moving.1") + source.getName() + Messages.getString("HgRenameClient.moving.2") //$NON-NLS-1$ //$NON-NLS-2$
 					+ dest.getName());
 		}
-		AbstractShellCommand command = new HgCommand("rename", source.getProject(), true); //$NON-NLS-1$
+		HgCommand command = new HgCommand("rename", getWorkingDirectory(source), true); //$NON-NLS-1$
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(command.getHgRoot()));
 		command.addOptions("--force"); //$NON-NLS-1$
 		command.addFiles(source, dest);
 		command.executeToBytes();

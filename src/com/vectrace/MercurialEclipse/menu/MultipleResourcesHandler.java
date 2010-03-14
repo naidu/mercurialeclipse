@@ -22,8 +22,8 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
-import org.eclipse.ui.PlatformUI;
 
+import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
@@ -37,9 +37,10 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 public abstract class MultipleResourcesHandler extends AbstractHandler {
 
 	private List<IResource> selection;
+	private ExecutionEvent event;
 
 	protected Shell getShell() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+		return MercurialEclipsePlugin.getActiveShell();
 	}
 
 	protected List<IResource> getSelectedResources() {
@@ -47,7 +48,8 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 	}
 
 	@SuppressWarnings("unchecked")
-	public Object execute(ExecutionEvent event) throws ExecutionException {
+	public Object execute(ExecutionEvent event1) throws ExecutionException {
+		this.event = event1;
 		Object selectionObject = ((EvaluationContext) event
 				.getApplicationContext()).getDefaultVariable();
 		selection = new ArrayList<IResource>();
@@ -75,6 +77,7 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 									.getString("MultipleResourcesHandler.hgSays"), e.getMessage() + Messages.getString("MultipleResourcesHandler.seeErrorLog")); //$NON-NLS-1$ //$NON-NLS-2$
 			throw new ExecutionException(e.getMessage(), e);
 		}
+		this.event = null;
 		return null;
 	}
 
@@ -91,4 +94,8 @@ public abstract class MultipleResourcesHandler extends AbstractHandler {
 	}
 
 	protected abstract void run(List<IResource> resources) throws Exception;
+
+	public ExecutionEvent getEvent() {
+		return event;
+	}
 }

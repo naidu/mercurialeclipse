@@ -32,10 +32,13 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IAdaptable;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.ide.ResourceUtil;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
@@ -53,27 +56,27 @@ public class ResourceUtils {
 	private static final File TMP_ROOT = new File(System.getProperty("java.io.tmpdir"));
 	private static long tmpFileSuffix = 0;
 
-	public static File getSystemTempDirectory(){
+	public static File getSystemTempDirectory() {
 		return TMP_ROOT;
 	}
 
 	/**
-	 * @return a newly created temp directory which is located inside the default temp
-	 * directory
+	 * @return a newly created temp directory which is located inside the default temp directory
 	 */
-	public static File createNewTempDirectory(){
+	public static File createNewTempDirectory() {
 		File tmp = getSystemTempDirectory();
 		File newTemp = null;
-		while(!(newTemp = new File(tmp, "hgTemp_" + tmpFileSuffix)).mkdir()) {
-			tmpFileSuffix ++;
+		while (!(newTemp = new File(tmp, "hgTemp_" + tmpFileSuffix)).mkdir()) {
+			tmpFileSuffix++;
 		}
 		return newTemp;
 	}
 
 	/**
-	 * If "recursive" is false, then this is a single file/directory delete
-	 * operation. Directory should be empty before it can be deleted.
-	 * If "recursive" is true, then all children will be deleted too.
+	 * If "recursive" is false, then this is a single file/directory delete operation. Directory
+	 * should be empty before it can be deleted. If "recursive" is true, then all children will be
+	 * deleted too.
+	 *
 	 * @param source
 	 * @return true if source was successfully deleted or if it was not existing
 	 */
@@ -101,8 +104,8 @@ public class ResourceUtils {
 	/**
 	 * Checks which editor is active an determines the IResource that is edited.
 	 */
-	public static IResource getActiveResourceFromEditor() {
-		IEditorPart editorPart = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor();
+	public static IFile getActiveResourceFromEditor() {
+		IEditorPart editorPart = MercurialEclipsePlugin.getActivePage().getActiveEditor();
 
 		if (editorPart != null) {
 			IFileEditorInput input = (IFileEditorInput) editorPart.getEditorInput();
@@ -113,7 +116,8 @@ public class ResourceUtils {
 	}
 
 	/**
-	 * @param resource a handle to possibly non-existing resource
+	 * @param resource
+	 *            a handle to possibly non-existing resource
 	 * @return a (file) path representing given resource
 	 */
 	public static File getFileHandle(IResource resource) {
@@ -122,29 +126,33 @@ public class ResourceUtils {
 	}
 
 	/**
-	 * @param path a path to possibly non-existing or not mapped resource
-	 * @return a (file) representing given resource
+	 * @param path
+	 *            a path to possibly non-existing or not mapped resource
+	 * @return a (file) representing given resource, may return null if the resource is not in the
+	 *         workspace
 	 */
-	public static IFile getFileHandle(IPath path){
+	public static IFile getFileHandle(IPath path) {
 		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
 		return root.getFileForLocation(path);
 	}
 
 	/**
-	 * @param resource a handle to possibly non-existing resource
+	 * @param resource
+	 *            a handle to possibly non-existing resource
 	 * @return a (file) path representing given resource
 	 */
 	public static IPath getPath(IResource resource) {
 		IPath path = resource.getLocation();
-		if(path == null){
+		if (path == null) {
 			// file was removed
 			IProject project = resource.getProject();
 			IPath projectLocation = project.getLocation();
-			if(projectLocation == null){
+			if (projectLocation == null) {
 				// project removed too
-				projectLocation = project.getWorkspace().getRoot().getLocation().append(project.getName());
+				projectLocation = project.getWorkspace().getRoot().getLocation().append(
+						project.getName());
 			}
-			if(project == resource){
+			if (project == resource) {
 				return projectLocation;
 			}
 			path = projectLocation.append(resource.getFullPath().removeFirstSegments(1));
@@ -178,7 +186,9 @@ public class ResourceUtils {
 
 	/**
 	 * For a given path, tries to find out first <b>existing</b> parent directory
-	 * @param path may be null
+	 *
+	 * @param path
+	 *            may be null
 	 * @return may return null
 	 */
 	public static File getFirstExistingDirectory(File path) {
@@ -190,20 +200,22 @@ public class ResourceUtils {
 
 	/**
 	 * For a given path, tries to find out first <b>existing</b> parent directory
-	 * @param res may be null
+	 *
+	 * @param res
+	 *            may be null
 	 * @return may return null
 	 */
 	public static IContainer getFirstExistingDirectory(IResource res) {
-		if(res == null){
+		if (res == null) {
 			return null;
 		}
-		IContainer parent = res instanceof IContainer? (IContainer)res : res.getParent();
-		if(parent instanceof IWorkspaceRoot){
+		IContainer parent = res instanceof IContainer ? (IContainer) res : res.getParent();
+		if (parent instanceof IWorkspaceRoot) {
 			return null;
 		}
 		while (parent != null && !parent.exists()) {
 			parent = parent.getParent();
-			if(parent instanceof IWorkspaceRoot){
+			if (parent instanceof IWorkspaceRoot) {
 				return null;
 			}
 		}
@@ -211,7 +223,8 @@ public class ResourceUtils {
 	}
 
 	/**
-	 * @param resources non null
+	 * @param resources
+	 *            non null
 	 * @return never null
 	 */
 	public static Map<IProject, List<IResource>> groupByProject(Collection<IResource> resources) {
@@ -235,14 +248,14 @@ public class ResourceUtils {
 		Set<IProject> set = new HashSet<IProject>();
 		IProject[] projects = ResourcesPlugin.getWorkspace().getRoot().getProjects();
 		for (IProject project : projects) {
-			if(!project.isAccessible()){
+			if (!project.isAccessible()) {
 				continue;
 			}
 			HgRoot proot = MercurialTeamProvider.hasHgRoot(project);
-			if(proot == null){
+			if (proot == null) {
 				continue;
 			}
-			if(root.equals(proot)){
+			if (root.equals(proot)) {
 				set.add(project);
 			}
 		}
@@ -250,19 +263,25 @@ public class ResourceUtils {
 	}
 
 	/**
-	 * @param resources non null
+	 * @param resources
+	 *            non null
 	 * @return never null
 	 */
-	public static Map<HgRoot, List<IResource>> groupByRoot(List<IResource> resources) throws HgException {
+	public static Map<HgRoot, List<IResource>> groupByRoot(Collection<? extends IResource> resources) {
 		Map<HgRoot, List<IResource>> result = new HashMap<HgRoot, List<IResource>>();
-		for (IResource resource : resources) {
-			HgRoot root = MercurialTeamProvider.getHgRoot(resource);
-			List<IResource> list = result.get(root);
-			if (list == null) {
-				list = new ArrayList<IResource>();
-				result.put(root, list);
+		if (resources != null) {
+			for (IResource resource : resources) {
+				HgRoot root = MercurialTeamProvider.hasHgRoot(resource);
+				if (root == null) {
+					continue;
+				}
+				List<IResource> list = result.get(root);
+				if (list == null) {
+					list = new ArrayList<IResource>();
+					result.put(root, list);
+				}
+				list.add(resource);
 			}
-			list.add(resource);
 		}
 		return result;
 	}
@@ -277,7 +296,7 @@ public class ResourceUtils {
 		}
 		children.add(root);
 		for (IResource res : members) {
-			if(res instanceof IFolder && !res.equals(root)){
+			if (res instanceof IFolder && !res.equals(root)) {
 				collectAllResources((IFolder) res, children);
 			} else {
 				children.add(res);
@@ -286,9 +305,12 @@ public class ResourceUtils {
 	}
 
 	/**
-	 * @param hgRoot non null
-	 * @param project non null
-	 * @param repoRelPath path <b>relative</b> to the hg root
+	 * @param hgRoot
+	 *            non null
+	 * @param project
+	 *            non null
+	 * @param repoRelPath
+	 *            path <b>relative</b> to the hg root
 	 * @return may return null, if the path is not found in the project
 	 */
 	public static IResource convertRepoRelPath(HgRoot hgRoot, IProject project, String repoRelPath) {
@@ -325,36 +347,56 @@ public class ResourceUtils {
 	}
 
 	/**
-	 * @param o some object which is or can be adopted to resource
+	 * @param o
+	 *            some object which is or can be adopted to resource
 	 * @return given object as resource, may return null
 	 */
-	public static IResource getResource(Object o){
-		if(o instanceof IResource){
+	public static IResource getResource(Object o) {
+		if (o instanceof IResource) {
 			return (IResource) o;
 		}
-		if(o instanceof ChangeSet){
+		if (o instanceof ChangeSet) {
 			ChangeSet changeSet = (ChangeSet) o;
 			Set<IFile> files = changeSet.getFiles();
-			if(files.size() > 0){
+			if (files.size() > 0) {
 				IFile file = files.iterator().next();
-				if(files.size() == 1){
+				if (files.size() == 1) {
 					return file;
 				}
 				return file.getProject();
 			}
 			return null;
 		}
-		if(o instanceof IAdaptable){
+		if (o instanceof IAdaptable) {
 			IAdaptable adaptable = (IAdaptable) o;
 			IResource adapter = (IResource) adaptable.getAdapter(IResource.class);
-			if(adapter != null){
+			if (adapter != null) {
 				return adapter;
 			}
 			adapter = (IResource) adaptable.getAdapter(IFile.class);
-			if(adapter != null){
+			if (adapter != null) {
 				return adapter;
 			}
 		}
 		return null;
+	}
+
+	public static void touch(final IResource res) {
+		Job job = new Job("Refresh for: " + res.getName()) {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				// triggers the decoration update
+				try {
+					if (res.isAccessible()) {
+						res.touch(monitor);
+					}
+				} catch (CoreException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 }

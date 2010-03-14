@@ -19,6 +19,7 @@ import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.LineAttributes;
 import org.eclipse.swt.widgets.Composite;
@@ -28,14 +29,20 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 
+import com.vectrace.MercurialEclipse.commands.HgBisectClient.Status;
 import com.vectrace.MercurialEclipse.model.GChangeSet;
 import com.vectrace.MercurialEclipse.model.Signature;
 import com.vectrace.MercurialEclipse.model.GChangeSet.Edge;
 import com.vectrace.MercurialEclipse.model.GChangeSet.EdgeList;
+import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
+import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 
 public class GraphLogTableViewer extends TableViewer {
 	private final List<Color> colours = new ArrayList<Color>();
 	private final MercurialHistoryPage mhp;
+	private final Font mergeFont;
+	private final Color mergeBack;
+	private final Color mergeFore;
 
 	public GraphLogTableViewer(Composite parent, int style,
 			MercurialHistoryPage mercurialHistoryPage) {
@@ -56,6 +63,17 @@ public class GraphLogTableViewer extends TableViewer {
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_YELLOW));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_MAGENTA));
 		colours.add(display.getSystemColor(SWT.COLOR_DARK_CYAN));
+		colours.add(display.getSystemColor(SWT.COLOR_DARK_GRAY));
+		colours.add(display.getSystemColor(SWT.COLOR_DARK_GREEN));
+		colours.add(display.getSystemColor(SWT.COLOR_DARK_RED));
+		// TODO add pref store listener
+		mergeFont = MercurialUtilities
+				.getFontPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FONT);
+
+		mergeBack = MercurialUtilities
+				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_BACKGROUND);
+		mergeFore = MercurialUtilities
+				.getColorPreference(MercurialPreferenceConstants.PREF_HISTORY_MERGE_CHANGESET_FOREGROUND);
 	}
 
 	protected void paint(Event event) {
@@ -71,26 +89,28 @@ public class GraphLogTableViewer extends TableViewer {
 			paint(event, gcs.getAfter(), 2);
 		}
 		final Table table = tableItem.getParent();
-		int from = rev.getChangeSet().getChangesetIndex() - 1;
-		if (tableItem.equals(table.getItems()[table.getItemCount() - 1])
-				&& from != mhp.getMercurialHistory().getBottom() && from >= 0) {
-			MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(from);
-			refreshJob.setRule(new ExclusiveHistoryRule());
-			refreshJob.addJobChangeListener(new JobChangeAdapter(){
-				@Override
-				public void done(IJobChangeEvent event1) {
-					Display.getDefault().asyncExec(new Runnable() {
-						public void run() {
-							if(table.isDisposed()){
-								return;
+		int from = rev.getRevision() - 1;
+		int lastReqVersion = mhp.getMercurialHistory().getLastRequestedVersion();
+		if (from != lastReqVersion && from >= 0) {
+			if (tableItem.equals(table.getItems()[table.getItemCount() - 1])) {
+				MercurialHistoryPage.RefreshMercurialHistory refreshJob = mhp.new RefreshMercurialHistory(
+						from);
+				refreshJob.addJobChangeListener(new JobChangeAdapter() {
+					@Override
+					public void done(IJobChangeEvent event1) {
+						Display.getDefault().asyncExec(new Runnable() {
+							public void run() {
+								if (table.isDisposed()) {
+									return;
+								}
+								table.redraw();
+								table.update();
 							}
-							table.redraw();
-							table.update();
-						}
-					});
-				}
-			});
-			mhp.scheduleInPage(refreshJob);
+						});
+					}
+				});
+				mhp.scheduleInPage(refreshJob);
+			}
 		}
 
 		// validate signed changesets
@@ -102,11 +122,38 @@ public class GraphLogTableViewer extends TableViewer {
 				tableItem.setBackground(colours.get(2));
 			}
 		}
+
 		if (mhp.getCurrentWorkdirChangeset() != null) {
-			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getRevision().getRevision()) {
-				tableItem.setFont(JFaceResources.getFontRegistry().getBold(JFaceResources.DEFAULT_FONT));
+			if (rev.getRevision() == mhp.getCurrentWorkdirChangeset().getChangesetIndex()) {
+				tableItem.setFont(JFaceResources.getFontRegistry().getBold(
+						JFaceResources.DEFAULT_FONT));
 			}
 		}
+
+		// bisect colorization
+		Status bisectStatus = rev.getBisectStatus();
+		if (bisectStatus != null) {
+			if (bisectStatus == Status.BAD) {
+				tableItem.setBackground(colours.get(10));
+			} else {
+				tableItem.setBackground(colours.get(9));
+			}
+		} else {
+			// use italic dark grey font for merge changesets
+			String[] parents = rev.getChangeSet().getParents();
+			if (parents != null && parents.length == 2) {
+				decorateMergeChangesets(tableItem);
+			}
+		}
+	}
+
+	private void decorateMergeChangesets(TableItem tableItem) {
+		// Don't ask me why, but it seems that setting the font here causes strange
+		// UI thread freeze periods on Windows. I guess that this causes another paint
+		// requests...
+//		tableItem.setFont(mergeFont);
+		tableItem.setBackground(mergeBack);
+		tableItem.setForeground(mergeFore);
 	}
 
 	private void paint(Event event, EdgeList edges, int i) {
@@ -117,8 +164,7 @@ public class GraphLogTableViewer extends TableViewer {
 		int y = event.y + div3 * i;
 		int middle = event.y + (event.height / 2);
 		for (Edge e : edges.getEdges()) {
-			drawLine(event, g, div3, e.isFinish() ? middle : y, e, e.getTop(),
-					e.getBottom());
+			drawLine(event, g, div3, e.isFinish() ? middle : y, e, e.getTop(), e.getBottom());
 			if (e.isDot()) {
 				fillOval(event, e);
 			}
@@ -127,13 +173,11 @@ public class GraphLogTableViewer extends TableViewer {
 		if (jump != null) {
 			g.setLineStyle(SWT.LINE_DOT);
 			g.setForeground(g.getDevice().getSystemColor(SWT.COLOR_BLACK));
-			g.drawLine(getX(event, jump[0]), middle, getX(event, jump[1]),
-					middle);
+			g.drawLine(getX(event, jump[0]), middle, getX(event, jump[1]), middle);
 		}
 	}
 
-	private void drawLine(Event event, GC g, int div3, int y, Edge e, int top,
-			int bottom) {
+	private void drawLine(Event event, GC g, int div3, int y, Edge e, int top, int bottom) {
 		g.setForeground(getColor(event, e));
 		g.drawLine(getX(event, top), y, getX(event, bottom), y + div3);
 	}
@@ -144,11 +188,11 @@ public class GraphLogTableViewer extends TableViewer {
 		int halfSize = size / 2;
 		int i = e.getTop();
 		if (e.isPlus()) {
-			event.gc.drawOval(getX(event, i) - halfSize, event.y
-					+ (event.height / 2) - halfSize, size, size);
+			event.gc.drawOval(getX(event, i) - halfSize, event.y + (event.height / 2) - halfSize,
+					size, size);
 		} else {
-			event.gc.fillOval(getX(event, i) - halfSize, event.y
-					+ (event.height / 2) - halfSize, size, size);
+			event.gc.fillOval(getX(event, i) - halfSize, event.y + (event.height / 2) - halfSize,
+					size, size);
 		}
 	}
 

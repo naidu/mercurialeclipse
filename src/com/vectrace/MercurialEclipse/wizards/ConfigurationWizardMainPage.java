@@ -9,7 +9,8 @@
  *     Subclipse project committers - initial API and implementation
  *     Bastian Doetsch              - adaptions&additions
  *     Adam Berkes (Intland)        - repository location handling
- *     Zsolt Koppany - zsolt.koppany@intland.com
+ *     Zsolt Koppany (Intland)		- bug fixes
+ *     Andrei Loskutov (Intland)	- bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
@@ -17,10 +18,11 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TreeSet;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.IDialogSettings;
@@ -34,6 +36,7 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
@@ -44,7 +47,10 @@ import org.eclipse.swt.widgets.Text;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationParser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
@@ -52,32 +58,37 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * wizard can be initialized using setProperties or using setDialogSettings
  */
 public class ConfigurationWizardMainPage extends HgWizardPage {
-	protected boolean showCredentials = false;
-	protected boolean showBundleButton = false;
 
-	// Widgets
-
-	// User
-	protected Combo userCombo;
-	// Password
-	protected Text passwordText;
-
-	// url of the repository we want to add
-	protected Combo urlCombo;
-
-	// local repositories button
-	protected Button browseButton;
-
-	// bundles
-	protected Button browseFileButton;
+	private static final String REPO_SEPARATOR = "----------------";
+	public static final String PROP_PASSWORD = "password";
+	public static final String PROP_USER = "user";
+	public static final String PROP_URL = "url";
 
 	private static final int COMBO_HISTORY_LENGTH = 10;
 
-	// Dialog store id constants
+	/**  Dialog store id constant */
 	private static final String STORE_USERNAME_ID = "ConfigurationWizardMainPage.STORE_USERNAME_ID"; //$NON-NLS-1$
+
+	private boolean showCredentials;
+	private boolean showBundleButton;
+
+	private Combo userCombo;
+	protected Text passwordText;
+
+	/** url of the repository we want to add */
+	private Combo urlCombo;
+
+	/** local repositories button */
+	private Button browseButton;
+
+	private Button browseFileButton;
+
+	private IHgRepositoryLocation initialRepo;
+	private Composite authComposite;
+	private HgRoot hgRoot;
+	private Group urlGroup;
+
 	/**
-	 * ConfigurationWizardMainPage constructor.
-	 *
 	 * @param pageName
 	 *            the name of the page
 	 * @param title
@@ -155,32 +166,35 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	private void createUrlControl(Composite composite, final Listener listener) {
 		Composite urlComposite = SWTWidgetHelper.createComposite(composite, 4);
 
-		Group g = SWTWidgetHelper.createGroup(urlComposite,
+		urlGroup = SWTWidgetHelper.createGroup(urlComposite,
 				Messages.getString("ConfigurationWizardMainPage.urlGroup.title"), 4, //$NON-NLS-1$
 				GridData.FILL_HORIZONTAL);
 
 		// repository Url
-		SWTWidgetHelper.createLabel(g, Messages.getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
-		urlCombo = createEditableCombo(g);
+		SWTWidgetHelper.createLabel(urlGroup, Messages.getString("ConfigurationWizardMainPage.urlLabel.text")); //$NON-NLS-1$
+		urlCombo = createEditableCombo(urlGroup);
 		urlCombo.addListener(SWT.Modify, listener);
 
-		browseButton = SWTWidgetHelper.createPushButton(g, Messages.getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
+		browseButton = SWTWidgetHelper.createPushButton(urlGroup, Messages.getString("ConfigurationWizardMainPage.browseButton.text"), 1); //$NON-NLS-1$
 		browseButton.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				DirectoryDialog dialog = new DirectoryDialog(getShell());
+				File localDirectory = getLocalDirectory(getUrlText());
+				if(localDirectory != null) {
+					dialog.setFilterPath(localDirectory.getAbsolutePath());
+				}
 				dialog.setMessage(Messages.getString("ConfigurationWizardMainPage.dialog.message")); //$NON-NLS-1$
 				String dir = dialog.open();
 				if (dir != null) {
 					dir = dir.trim();
-					// urlCombo.setText(new File(dir).toURI().toASCIIString());
 					getUrlCombo().setText(dir);
 				}
 			}
 		});
 
 		if (showBundleButton) {
-			browseFileButton = SWTWidgetHelper.createPushButton(g, Messages.getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
+			browseFileButton = SWTWidgetHelper.createPushButton(urlGroup, Messages.getString("PullPage.browseFileButton.text"), 1);//$NON-NLS-1$
 
 			browseFileButton.addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -189,7 +203,6 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 					dialog.setText(Messages.getString("PullPage.bundleDialog.text")); //$NON-NLS-1$
 					String file = dialog.open();
 					if (file != null) {
-						//                        getUrlCombo().setText(new File(file).toURI().toASCIIString());
 						getUrlCombo().setText(file);
 					}
 				}
@@ -199,7 +212,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		urlCombo.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 
-				HgRepositoryLocation repo;
+				IHgRepositoryLocation repo;
 				try {
 					// note that repo will not be null, will be blank
 					// repo if no existing one was found
@@ -220,17 +233,29 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 				if (getPasswordText() != null) {
 					String password = repo.getPassword();
 					if (password != null && password.length() != 0) {
-						getPasswordText().setText(password);
+						passwordText.setText(password);
 					} else {
-						getPasswordText().setText("");
+						passwordText.setText("");
 					}
 				}
 			}
 		});
 	}
 
+	public void setUrlGroupEnabled(boolean enable){
+		if(urlGroup != null) {
+			urlGroup.setEnabled(enable);
+			Control[] children = urlGroup.getChildren();
+			if(children != null){
+				for (Control control : children) {
+					control.setEnabled(enable);
+				}
+			}
+		}
+	}
+
 	private void createAuthenticationControl(Composite composite) {
-		Composite authComposite = SWTWidgetHelper.createComposite(composite, 2);
+		authComposite = SWTWidgetHelper.createComposite(composite, 2);
 		Group g = SWTWidgetHelper.createGroup(
 				authComposite,
 				Messages.getString("ConfigurationWizardMainPage.authenticationGroup.title")); //$NON-NLS-1$
@@ -254,6 +279,12 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 				canFlipToNextPage();
 			}
 		});
+	}
+
+	protected void setAuthCompositeEnabled(boolean enable){
+		authComposite.setEnabled(enable);
+		userCombo.setEnabled(enable);
+		passwordText.setEnabled(enable);
 	}
 
 	/**
@@ -286,10 +317,10 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 	protected Properties createProperties() {
 		Properties result = new Properties();
 		if (showCredentials) {
-			result.setProperty("user", getUserText()); //$NON-NLS-1$
-			result.setProperty("password", passwordText.getText()); //$NON-NLS-1$
+			result.setProperty(PROP_USER, getUserText());
+			result.setProperty(PROP_PASSWORD, passwordText.getText());
 		}
-		result.setProperty("url", getUrlText()); //$NON-NLS-1$
+		result.setProperty(PROP_URL, getUrlText());
 		return result;
 	}
 
@@ -300,7 +331,7 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		// Set remembered values
 		IDialogSettings setts = getDialogSettings();
 		if (setts != null) {
-			String[] hostNames = updateHostNames(getProject());
+			String[] hostNames = updateHostNames();
 			if (hostNames != null) {
 				for (String hn : hostNames) {
 					urlCombo.add(hn);
@@ -318,17 +349,17 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 
 		if (properties != null) {
 			if (showCredentials) {
-				String user = properties.getProperty("user"); //$NON-NLS-1$
+				String user = properties.getProperty(PROP_USER);
 				if (user != null) {
 					userCombo.setText(user);
 				}
 
-				String password = properties.getProperty("password"); //$NON-NLS-1$
+				String password = properties.getProperty(PROP_PASSWORD);
 				if (password != null) {
 					passwordText.setText(password);
 				}
 			}
-			String host = properties.getProperty("url"); //$NON-NLS-1$
+			String host = properties.getProperty(PROP_URL);
 			if (host != null) {
 				urlCombo.setText(host);
 			}
@@ -353,30 +384,43 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		}
 	}
 
-	private String getUserText() {
+	protected String getUserText() {
 		return userCombo.getText().trim();
 	}
 
 	protected String getUrlText() {
-		return urlCombo.getText().trim();
+		String text = urlCombo.getText();
+		if(REPO_SEPARATOR.equals(text)){
+			return "";
+		}
+		text = HgRepositoryLocationParser.trimLocation(text);
+		return text;
 	}
 
-	private String[] updateHostNames(IProject project) {
-		String[] newHostNames = new String[0];
-		Set<HgRepositoryLocation> repositories = null;
-		if (project != null) {
-			repositories = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(project);
+	private String[] updateHostNames() {
+		List<String> newHostNames = new ArrayList<String>();
+		Set<IHgRepositoryLocation> repositories;
+		Set<IHgRepositoryLocation> all = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
+		if (hgRoot == null) {
+			repositories = new TreeSet<IHgRepositoryLocation>();
 		} else {
-			repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations();
+			repositories = MercurialEclipsePlugin.getRepoManager().getAllRepoLocations(hgRoot);
 		}
-		if (repositories != null) {
-			for (HgRepositoryLocation hgRepositoryLocation : repositories) {
-				if(hgRepositoryLocation.getLocation() != null) {
-					newHostNames = addToHistory(newHostNames, hgRepositoryLocation.getLocation(), -1);
-				}
+		for (IHgRepositoryLocation repoLocation : repositories) {
+			if(repoLocation.getLocation() != null) {
+				newHostNames.add(repoLocation.getLocation());
 			}
 		}
-		return newHostNames;
+		if(repositories.size() > 0) {
+			newHostNames.add(REPO_SEPARATOR);
+		}
+		for (IHgRepositoryLocation repoLocation : all) {
+			String location = repoLocation.getLocation();
+			if(location != null && !newHostNames.contains(location)) {
+				newHostNames.add(location);
+			}
+		}
+		return newHostNames.toArray(new String[newHostNames.size()]);
 	}
 
 	/**
@@ -456,28 +500,16 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		this.showCredentials = showCredentials;
 	}
 
-	public Combo getUserCombo() {
+	protected Combo getUserCombo() {
 		return userCombo;
 	}
 
-	public void setUserCombo(Combo userCombo) {
-		this.userCombo = userCombo;
+	public String getPasswordText() {
+		return passwordText.getText();
 	}
 
-	public Text getPasswordText() {
-		return passwordText;
-	}
-
-	public void setPasswordText(Text passwordText) {
-		this.passwordText = passwordText;
-	}
-
-	public Combo getUrlCombo() {
+	protected Combo getUrlCombo() {
 		return urlCombo;
-	}
-
-	public void setUrlCombo(Combo urlCombo) {
-		this.urlCombo = urlCombo;
 	}
 
 	public boolean isShowBundleButton() {
@@ -502,41 +534,99 @@ public class ConfigurationWizardMainPage extends HgWizardPage {
 		return ok;
 	}
 
-	protected IProject getProject() {
-		return null;
+	protected HgRoot getHgRoot() {
+		return hgRoot;
 	}
 
-	protected Set<HgRepositoryLocation> setDefaultLocation() {
-		if (getProject() == null) {
-			return null;
+	protected void initDefaultLocation() {
+		IHgRepositoryLocation defaultLocation = null;
+		if (getHgRoot() != null) {
+			defaultLocation = getRepoFromRoot();
 		}
-		HgRepositoryLocation defaultLocation = null;
-
-		Set<HgRepositoryLocation> repos = MercurialEclipsePlugin.getRepoManager().getAllProjectRepoLocations(getProject());
-
-		for (HgRepositoryLocation repo : repos) {
-			if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName()) || HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
-				defaultLocation = repo;
-				break;
-			}
+		if(defaultLocation == null){
+			defaultLocation = getInitialRepo();
 		}
+		setRepository(defaultLocation);
+	}
 
+	protected IHgRepositoryLocation getRepoFromRoot(){
+		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
+		IHgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
+		Set<IHgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
 		if (defaultLocation == null) {
-			defaultLocation = MercurialEclipsePlugin.getRepoManager().getDefaultProjectRepoLocation(getProject());
-		}
-
-		if (defaultLocation != null) {
-			getUrlCombo().setText(defaultLocation.getLocation());
-
-			String user = defaultLocation.getUser();
-			if (user != null && user.length() != 0) {
-				getUserCombo().setText(user);
-			}
-			String password = defaultLocation.getPassword();
-			if (password != null && password.length() != 0) {
-				getPasswordText().setText(password);
+			for (IHgRepositoryLocation repo : repos) {
+				if (HgPathsClient.DEFAULT_PULL.equals(repo.getLogicalName())
+						|| HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+					defaultLocation = repo;
+					break;
+				}
 			}
 		}
-		return repos;
+		return defaultLocation;
+	}
+
+	public void setRepository(IHgRepositoryLocation repo) {
+		if (repo == null) {
+			return;
+		}
+		getUrlCombo().setText(repo.getLocation());
+
+		String user = repo.getUser();
+		if (user != null && user.length() != 0) {
+			getUserCombo().setText(user);
+		}
+		String password = repo.getPassword();
+		if (password != null && password.length() != 0) {
+			passwordText.setText(password);
+		}
+	}
+
+	@Override
+	public void setProperties(Properties properties) {
+		super.setProperties(properties);
+		if(urlCombo != null && isValid(properties, PROP_URL)){
+			String[] items = urlCombo.getItems();
+			if(items != null){
+				String url = properties.getProperty(PROP_URL);
+				for (int i = 0; i < items.length; i++) {
+					if(url.equals(items[i])){
+						urlCombo.select(i);
+						break;
+					}
+				}
+			}
+		}
+		if(userCombo != null && isValid(properties, PROP_USER)){
+			String[] items = userCombo.getItems();
+			if(items != null){
+				String user = properties.getProperty(PROP_USER);
+				for (int i = 0; i < items.length; i++) {
+					if(user.equals(items[i])){
+						userCombo.select(i);
+						break;
+					}
+				}
+			}
+		}
+		if(passwordText != null && isValid(properties, PROP_PASSWORD)){
+			passwordText.setText(properties.getProperty(PROP_PASSWORD));
+		}
+	}
+
+	private static boolean isValid(Properties properties, String key){
+		String value = properties.getProperty(key);
+		return value != null && value.trim().length() > 0;
+	}
+
+	public void setInitialRepo(IHgRepositoryLocation initialRepo) {
+		this.initialRepo = initialRepo;
+	}
+
+	public IHgRepositoryLocation getInitialRepo() {
+		return initialRepo;
+	}
+
+	public void setHgRoot(HgRoot hgRoot) {
+		this.hgRoot = hgRoot;
 	}
 }

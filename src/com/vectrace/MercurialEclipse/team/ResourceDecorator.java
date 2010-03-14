@@ -10,6 +10,7 @@
  *     Andrei Loskutov (Intland) - bug fixes
  *     Adam Berkes (Intland)     - bug fixes
  *     Zsolt Kopany (Intland)    - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -40,13 +41,17 @@ import org.eclipse.ui.themes.ITheme;
 import org.eclipse.ui.themes.IThemeManager;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgBisectClient;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.Bits;
+import com.vectrace.MercurialEclipse.utils.ChangeSetUtils;
 
 /**
  * @author zingo
@@ -320,11 +325,14 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 
 	private void addChangesetInfo(IDecoration d, IResource resource, IProject project, StringBuilder prefix) throws CoreException {
 		// label info for incoming changesets
-		ChangeSet newestIncomingChangeSet;
+		ChangeSet newestIncomingChangeSet = null;
 		if(showIncomingChangeset) {
-			newestIncomingChangeSet = INCOMING_CACHE.getNewestChangeSet(resource);
-		} else {
-			newestIncomingChangeSet = null;
+			try {
+				newestIncomingChangeSet = INCOMING_CACHE.getNewestChangeSet(resource);
+			} catch (HgException e) {
+				// if an error occurs we want the rest of the decoration to succeed nonetheless
+				MercurialEclipsePlugin.logError(e);
+			}
 		}
 
 		if (newestIncomingChangeSet != null) {
@@ -401,27 +409,38 @@ public class ResourceDecorator extends LabelProvider implements ILightweightLabe
 		} else {
 			suffix.append(" ["); //$NON-NLS-1$
 			String hex = changeSet.getNodeShort();
-			String tags = changeSet.getTag();
-			String merging = project.getPersistentProperty(ResourceProperties.MERGING);
+			String tags = ChangeSetUtils.getPrintableTagsString(changeSet);
+			String merging = HgStatusClient.getMergeChangesetId(project);
+			String bisecting = null;
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
+			// XXX should use map, as there can be 100 projects under the same root 
+			if (HgBisectClient.isBisecting(hgRoot)) {
+				bisecting = " BISECTING";
+			}
 
 			// rev info
 			suffix.append(changeSet.getChangesetIndex()).append(':').append(hex);
 
 			// branch
-			String branch = (String) project.getSessionProperty(ResourceProperties.HG_BRANCH);
-			if (branch == null || branch.length() == 0) {
+			String branch = MercurialTeamProvider.getCurrentBranch(hgRoot);
+			if (branch.length() == 0) {
 				branch = Branch.DEFAULT;
 			}
 			suffix.append('@').append(branch);
 
 			// tags
-			if (tags != null && tags.length() > 0) {
+			if (tags.length() > 0) {
 				suffix.append('(').append(tags).append(')');
 			}
 
 			// merge flag
 			if (merging != null && merging.length() > 0) {
 				suffix.append(Messages.getString("ResourceDecorator.merging"));
+			}
+
+			// bisect information
+			if (bisecting != null && bisecting.length() > 0) {
+				suffix.append(bisecting);
 			}
 			suffix.append(']');
 		}

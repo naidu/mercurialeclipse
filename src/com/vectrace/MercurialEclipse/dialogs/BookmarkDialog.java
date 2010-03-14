@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.jface.dialogs.TrayDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
@@ -34,30 +33,29 @@ import com.vectrace.MercurialEclipse.HgRevision;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgBookmarkClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.BookmarkTable;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 /**
  * @author bastian
- * @author <a href="mailto:zsolt.koppany@intland.com">Zsolt Koppany</a>
- * @version $Id$
  */
 public class BookmarkDialog extends TrayDialog {
-	private final IProject project;
+	private final HgRoot hgRoot;
 	private ChangesetTable csTable;
 	private Text bmNameTextBox;
 	private Button renameCheckBox;
 	private BookmarkTable bookmarkTable;
 	private Text newBmNameTextBox;
 	private Button deleteCheckBox;
-	private boolean modifyTab = false;
+	private boolean modifyTab;
 	private Label renameLabel;
 
-	public BookmarkDialog(Shell parentShell, IProject project) {
+	public BookmarkDialog(Shell parentShell, HgRoot hgRoot) {
 		super(parentShell);
 		setShellStyle(getShellStyle() | SWT.RESIZE);
-		this.project = project;
+		this.hgRoot = hgRoot;
 	}
 
 	@Override
@@ -105,7 +103,7 @@ public class BookmarkDialog extends TrayDialog {
 		this.bmNameTextBox = SWTWidgetHelper.createTextField(tipGroup);
 		Group revGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.selectRevision")); //$NON-NLS-1$
 		revGroup.setLayoutData(layoutData);
-		this.csTable = new ChangesetTable(revGroup, project, true);
+		this.csTable = new ChangesetTable(revGroup, hgRoot);
 		csTable.setLayoutData(layoutData);
 		this.csTable.setEnabled(true);
 
@@ -144,8 +142,9 @@ public class BookmarkDialog extends TrayDialog {
 		// create widgets
 		Group selGroup = SWTWidgetHelper.createGroup(c, Messages.getString("BookmarkDialog.selectBookmark")); //$NON-NLS-1$
 		selGroup.setLayoutData(layoutData);
-		this.bookmarkTable = new BookmarkTable(selGroup, project);
-		this.bookmarkTable.setLayoutData(layoutData);
+		bookmarkTable = new BookmarkTable(selGroup);
+		bookmarkTable.setLayoutData(layoutData);
+		bookmarkTable.updateTable(hgRoot);
 		SelectionListener sl = new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent e) {
 				widgetSelected(e);
@@ -212,12 +211,12 @@ public class BookmarkDialog extends TrayDialog {
 				if (csTable.getSelection() != null) {
 					targetRev = csTable.getSelection().getChangeset();
 				}
-				HgBookmarkClient.create(project.getLocation().toFile(), bmNameTextBox.getText(), targetRev);
+				HgBookmarkClient.create(hgRoot, bmNameTextBox.getText(), targetRev);
 			} else {
 				if (renameCheckBox.getSelection()) {
-					HgBookmarkClient.rename(project.getLocation().toFile(), bookmarkTable.getSelection().getName(), newBmNameTextBox.getText());
+					HgBookmarkClient.rename(hgRoot, bookmarkTable.getSelection().getName(), newBmNameTextBox.getText());
 				} else if (deleteCheckBox.getSelection()) {
-					HgBookmarkClient.delete(project.getLocation().toFile(), bookmarkTable.getSelection().getName());
+					HgBookmarkClient.delete(hgRoot, bookmarkTable.getSelection().getName());
 				}
 			}
 		} catch (HgException e) {
@@ -225,10 +224,6 @@ public class BookmarkDialog extends TrayDialog {
 			MercurialEclipsePlugin.showError(e);
 		}
 		super.okPressed();
-	}
-
-	public IProject getProject() {
-		return project;
 	}
 
 	public ChangesetTable getCsTable() {

@@ -26,18 +26,20 @@ public class MercurialPreferenceConstants {
 	// user name should be per project in the future, different repositories
 	// could have different names (sub optimal I know but it really could)
 	public static final String MERCURIAL_USERNAME = "user.name"; //$NON-NLS-1$
-	public static final String PREF_DEFAULT_ENCODING = "UTF-8"; //$NON-NLS-1$
 
 	// label decorator
 	public static final String LABELDECORATOR_LOGIC = "hg.labeldecorator.logic"; //$NON-NLS-1$
 	public static final String LABELDECORATOR_LOGIC_2MM = "2-means-modified"; //$NON-NLS-1$
 	public static final String LABELDECORATOR_LOGIC_HB = "high-bit"; //$NON-NLS-1$
-	public static final String RESOURCE_DECORATOR_COMPLETE_STATUS = "hg.performance.getStatusForCompleteRepository"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_COMPUTE_DEEP_STATUS = "hg.performance.computeDeepStatus"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_SHOW_CHANGESET = "hg.performance.fileShowsChangeset"; //$NON-NLS-1$
 	public static final String RESOURCE_DECORATOR_SHOW_INCOMING_CHANGESET = "hg.performance.fileShowsChangesetIncoming"; //$NON-NLS-1$
 	public static final String PREF_DECORATE_WITH_COLORS = "hg.labeldecorator.colors"; //$NON-NLS-1$
-	public static String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
+	public static final String PREF_AUTO_SHARE_PROJECTS = "hg.autoshare"; //$NON-NLS-1$
+
+	/** do not limit graphical log data to show pretty revision graphs in the history view */
+	public static final String ENABLE_FULL_GLOG = "hg.performance.enableFullGlog"; //$NON-NLS-1$
+	public static final String PREF_SIGCHECK_IN_HISTORY = Messages.getString("MercurialPreferenceConstants.sigcheck.in.history"); //$NON-NLS-1$
 
 	// Timeouts
 	public static final String DEFAULT_TIMEOUT = "hg.timeout.default"; //$NON-NLS-1$
@@ -72,15 +74,23 @@ public class MercurialPreferenceConstants {
 	public static final String PREF_CONSOLE_FONT = "hg.console.font"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_DEBUG = "hg.console.debug"; //$NON-NLS-1$
 	public static final String PREF_CONSOLE_DEBUG_TIME = "hg.console.debug.time"; //$NON-NLS-1$
+	public static final String PREF_CONSOLE_SHOW_ON_STARTUP = "hg.console.showOnStartup"; //$NON-NLS-1$
 
 	// merge
 	public static final String PREF_USE_EXTERNAL_MERGE = "hg.merge.useExternal"; //$NON-NLS-1$
 
 	// history view
-	public static  final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+	public static final String PREF_SHOW_COMMENTS = "pref_show_comments"; //$NON-NLS-1$
+
+	/** shows all tags also for file history, even if the file changeset's was not tagged as such */
+	public static  final String PREF_SHOW_ALL_TAGS = "pref_show_alltags"; //$NON-NLS-1$
 	public static final String PREF_WRAP_COMMENTS = "pref_wrap_comments"; //$NON-NLS-1$
 	public static final String PREF_SHOW_PATHS = "pref_show_paths"; //$NON-NLS-1$
 	public static final String PREF_AFFECTED_PATHS_LAYOUT = "pref_affected_paths_layout2"; //$NON-NLS-1$
 	public static final int LAYOUT_HORIZONTAL = 1;
 	public static final int LAYOUT_VERTICAL = 2;
+	public static final String PREF_HISTORY_MERGE_CHANGESET_BACKGROUND = "hg.history.mergeChangesetsBackground";
+	public static final String PREF_HISTORY_MERGE_CHANGESET_FOREGROUND = "hg.history.mergeChangesetsForeground";
+	public static final String PREF_HISTORY_MERGE_CHANGESET_FONT = "hg.history.mergeChangesetsFont";
+	public static final String PREF_USE_MERCURIAL_USERNAME = "hg.useMercurialUsernameForCommit";
 }

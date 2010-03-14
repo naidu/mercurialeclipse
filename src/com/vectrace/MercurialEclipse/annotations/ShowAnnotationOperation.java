@@ -12,6 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.annotations;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -38,12 +39,9 @@ import org.eclipse.team.ui.TeamOperation;
 import org.eclipse.ui.IEditorDescriptor;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
-import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.editors.text.EditorsUI;
 import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.FileEditorInput;
@@ -53,7 +51,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeUiJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.model.HgFile;
 import com.vectrace.MercurialEclipse.team.cache.LocalChangesetCache;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
@@ -105,10 +102,10 @@ public class ShowAnnotationOperation extends TeamOperation {
 	}
 
 	private static final String DEFAULT_TEXT_EDITOR_ID = EditorsUI.DEFAULT_TEXT_EDITOR_ID;
-	private final HgFile remoteFile;
+	private final File remoteFile;
 	private final IResource res;
 
-	public ShowAnnotationOperation(IWorkbenchPart part, HgFile remoteFile)
+	public ShowAnnotationOperation(IWorkbenchPart part, File remoteFile)
 			throws HgException {
 		super(part);
 		this.remoteFile = remoteFile;
@@ -164,9 +161,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 	}
 
 	private AbstractDecoratedTextEditor getEditor() {
-		final IWorkbench workbench = PlatformUI.getWorkbench();
-		final IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
-		IEditorReference[] references = window.getActivePage()
+		IEditorReference[] references = MercurialEclipsePlugin.getActivePage()
 				.getEditorReferences();
 		IResource resource = res;
 		if (resource == null) {
@@ -176,8 +171,7 @@ public class ShowAnnotationOperation extends TeamOperation {
 		for (int i = 0; i < references.length; i++) {
 			IEditorReference reference = references[i];
 			try {
-				if (resource != null
-						&& resource.equals(reference.getEditorInput()
+				if (resource.equals(reference.getEditorInput()
 								.getAdapter(IFile.class))) {
 					IEditorPart editor = reference.getEditor(false);
 					if (editor instanceof AbstractDecoratedTextEditor) {

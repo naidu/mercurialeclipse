@@ -7,38 +7,44 @@
  *
  * Contributors:
  *     Subclipse project committers - initial API and implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  ******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
+import java.io.File;
 import java.util.Properties;
 
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.IWizard;
+import org.eclipse.ui.INewWizard;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.commands.HgInitClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgPath;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.repository.RepositoriesView;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * Wizard to add a new location. Uses ConfigurationWizardMainPage for entering
- * informations about SVN repository location
+ * informations about Hg repository location
  */
-public class NewLocationWizard extends HgWizard {
+public class NewLocationWizard extends HgWizard implements INewWizard {
+
+	private IHgRepositoryLocation repository;
 
 	public NewLocationWizard() {
 		super(Messages.getString("NewLocationWizard.name")); //$NON-NLS-1$
 	}
 
-	public NewLocationWizard(Properties initialProperties) {
-		this();
-		this.properties = initialProperties;
-	}
-
 	@Override
 	public void addPages() {
-		page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.name"),
-				Messages.getString("NewLocationWizard.repoCreationPage.title"), //$NON-NLS-1$
-				Messages.getString("NewLocationWizard.repoCreationPage.image"), //$NON-NLS-1$
-				Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
+		page = createPage(Messages.getString("NewLocationWizard.repoCreationPage.description")); //$NON-NLS-1$
 		addPage(page);
 	}
 
@@ -48,28 +54,67 @@ public class NewLocationWizard extends HgWizard {
 	@Override
 	public boolean performFinish() {
 		super.performFinish();
+		CreateRepoPage createRepoPage = (CreateRepoPage)page;
+		File localRepo = createRepoPage.getLocalRepo();
+		if(localRepo != null && !HgPath.isHgRoot(localRepo) && createRepoPage.shouldInitRepo()){
+			try {
+				HgInitClient.init(localRepo);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				page.setErrorMessage(e.getMessage());
+				return false;
+			}
+		}
 		Properties props = page.getProperties();
 		HgRepositoryLocationManager manager = MercurialEclipsePlugin.getRepoManager();
 		try {
-			manager.createRepository(null, props);
+			repository = manager.createRepository(props);
 		} catch (HgException ex) {
 			MercurialEclipsePlugin.logError(ex);
 			return false;
 		}
+		try {
+			RepositoriesView view = getRepoView();
+			view.refreshViewer(repository, true);
+		} catch (PartInitException e) {
+			MercurialEclipsePlugin.logError(e);
+		}
+		if (createRepoPage.shouldInitRepo() && !repository.isLocal()
+				&& repository.getLocation().startsWith("ssh:")) {
+			boolean confirm = MessageDialog.openConfirm(getShell(), "Hg init", "Do you really want to run hg init on remote server?");
+			if(!confirm){
+				return true;
+			}
+			try {
+				HgInitClient.init(repository);
+			} catch (HgException e) {
+				MercurialEclipsePlugin.logError(e);
+				page.setErrorMessage(e.getMessage());
+				return false;
+			}
+		}
 		return true;
+	}
+
+	private RepositoriesView getRepoView() throws PartInitException {
+		IWorkbenchPage activePage = MercurialEclipsePlugin.getActivePage();
+		return (RepositoriesView) activePage.showView(RepositoriesView.VIEW_ID);
 	}
 
 	/**
 	 * Creates a ConfigurationWizardPage.
 	 */
-	protected HgWizardPage createPage(String pageName, String pageTitle,
-			String iconPath, String description) {
-		ConfigurationWizardMainPage mainPage = new ConfigurationWizardMainPage(pageName, pageTitle,
-				MercurialEclipsePlugin.getImageDescriptor(iconPath));
-
-		mainPage.setShowBundleButton(false);
-		page = mainPage;
+	protected HgWizardPage createPage(String description) {
+		page = new CreateRepoPage();
 		initPage(description, page);
 		return page;
+	}
+
+	public IHgRepositoryLocation getRepository() {
+		return repository;
+	}
+
+	public void init(IWorkbench workbench, IStructuredSelection selection) {
+		// noop
 	}
 }

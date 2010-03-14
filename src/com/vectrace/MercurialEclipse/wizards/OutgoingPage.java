@@ -34,11 +34,12 @@ import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author bastian
@@ -70,10 +71,10 @@ public class OutgoingPage extends IncomingPage {
 			if (isSvn()) {
 				return new TreeSet<ChangeSet>();
 			}
-			HgRepositoryLocation remote = getLocation();
+			IHgRepositoryLocation remote = getLocation();
 			try {
-				Set<ChangeSet> changesets = OutgoingChangesetCache
-						.getInstance().getChangeSets(getProject(), remote, null);
+				Set<ChangeSet> changesets = OutgoingChangesetCache.getInstance().getChangeSets(
+						getHgRoot(), remote, null);
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(changesets);
 				return revertedSet;
@@ -99,7 +100,7 @@ public class OutgoingPage extends IncomingPage {
 			IPath hgRoot = new Path(cs.getHgRoot().getPath());
 			IPath fileRelPath = clickedFileStatus.getRootRelativePath();
 			IPath fileAbsPath = hgRoot.append(fileRelPath);
-			IFile file = getProject().getWorkspace().getRoot().getFileForLocation(fileAbsPath);
+			IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 
 			if (file != null) {
 				// See issue #10249: Push/Pull diff problem on outgoing/incoming stage
@@ -158,7 +159,7 @@ public class OutgoingPage extends IncomingPage {
 	@Override
 	public void createControl(Composite parent) {
 		super.createControl(parent);
-		getRevisionCheckBox().setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
+		revisionCheckBox.setText(Messages.getString("OutgoingPage.option.pushUpTo")); //$NON-NLS-1$
 	}
 
 	@Override

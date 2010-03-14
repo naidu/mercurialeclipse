@@ -11,7 +11,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -28,7 +27,8 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSignClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
-import com.vectrace.MercurialEclipse.team.MercurialUtilities;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.storage.HgCommitMessageManager;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -43,7 +43,7 @@ public class SignWizardPage extends HgWizardPage {
 	 * "sec   2048R/XXXXXXXX 2009-09-16 [expires: 2010-09-16]"
 	 */
 	private static final String KEY_PREFIX = "sec";
-	private final IProject project;
+	private final HgRoot hgRoot;
 	private Text userTextField;
 	private Combo keyCombo;
 	private Button localCheckBox;
@@ -55,9 +55,9 @@ public class SignWizardPage extends HgWizardPage {
 	private boolean gotGPGkeys;
 
 	public SignWizardPage(String pageName, String title,
-			ImageDescriptor titleImage, String description, IProject proj) {
+			ImageDescriptor titleImage, String description, HgRoot hgRoot) {
 		super(pageName, title, titleImage, description);
-		project = proj;
+		this.hgRoot = hgRoot;
 	}
 
 	public void createControl(Composite parent) {
@@ -70,22 +70,23 @@ public class SignWizardPage extends HgWizardPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 200;
 		gridData.minimumHeight = 50;
-		changesetTable = new ChangesetTable(changeSetGroup, project);
+		changesetTable = new ChangesetTable(changeSetGroup, hgRoot);
 		changesetTable.setLayoutData(gridData);
 		changesetTable.setEnabled(true);
 
 		SelectionListener listener = new SelectionListener() {
 			public void widgetSelected(SelectionEvent event) {
 				ChangeSet cs = changesetTable.getSelection();
-				messageTextField.setText(Messages.getString("SignWizardPage.messageTextField.text") //$NON-NLS-1$
-						.concat(cs.toString()));
+				messageTextField.setText(Messages.getString(
+						"SignWizardPage.messageTextField.text") //$NON-NLS-1$
+						+ " " + cs.toString()); //$NON-NLS-1$
 				if (gotGPGkeys) {
 					setPageComplete(true);
 				}
 			}
 
 			public void widgetDefaultSelected(SelectionEvent e) {
-			widgetSelected(e);
+				widgetSelected(e);
 			}
 		};
 
@@ -97,7 +98,7 @@ public class SignWizardPage extends HgWizardPage {
 
 		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.userLabel.text")); //$NON-NLS-1$
 		userTextField = SWTWidgetHelper.createTextField(userGroup);
-		userTextField.setText(MercurialUtilities.getHGUsername());
+		userTextField.setText(HgCommitMessageManager.getDefaultCommitName(hgRoot));
 
 		SWTWidgetHelper.createLabel(userGroup, Messages.getString("SignWizardPage.keyLabel.text")); //$NON-NLS-1$
 		keyCombo = SWTWidgetHelper.createCombo(userGroup);
@@ -153,7 +154,9 @@ public class SignWizardPage extends HgWizardPage {
 			setPageComplete(false);
 			MercurialEclipsePlugin.logError(e);
 		}
-		combo.setText(combo.getItem(0));
+		if(combo.getItemCount() > 0) {
+			combo.setText(combo.getItem(0));
+		}
 	}
 
 	@Override
@@ -176,9 +179,7 @@ public class SignWizardPage extends HgWizardPage {
 		boolean force = forceCheckBox.getSelection();
 		boolean noCommit = noCommitCheckBox.getSelection();
 		try {
-			HgSignClient.sign(project.getLocation().toFile(), cs, key, msg,
-					user, local, force,
-					noCommit, pass);
+			HgSignClient.sign(hgRoot, cs, key, msg,	user, local, force,	noCommit, pass);
 		} catch (HgException e) {
 			MessageDialog.openInformation(getShell(), Messages.getString("SignWizardPage.errorSigning"), //$NON-NLS-1$
 					e.getMessage());

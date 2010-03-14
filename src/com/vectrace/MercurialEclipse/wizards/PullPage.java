@@ -12,7 +12,6 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.SelectionEvent;
@@ -24,6 +23,8 @@ import org.eclipse.swt.widgets.Group;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
@@ -35,48 +36,46 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class PullPage extends PushPullPage {
 
-	public Button getRebaseCheckBox() {
-		return rebaseCheckBox;
-	}
-
 	private Button updateCheckBox;
 	private Button mergeCheckBox;
 	private Button commitDialogCheckBox;
 	private Button rebaseCheckBox;
 	private Button cleanUpdateCheckBox;
 
-	public Button getCommitDialogCheckBox() {
-		return commitDialogCheckBox;
-	}
-
 	public PullPage(String pageName, String title, String description,
-			IResource resource, ImageDescriptor titleImage) {
-		super(resource, pageName, title, titleImage);
+			HgRoot hgRoot, ImageDescriptor titleImage) {
+		super(hgRoot, pageName, title, titleImage);
 		setDescription(description);
 		setShowCredentials(true);
 		setShowBundleButton(true);
 		setShowRevisionTable(false);
 	}
 
+	public boolean isRebaseSelected() {
+		return rebaseCheckBox != null && rebaseCheckBox.getSelection();
+	}
+
+	public boolean isShowCommitDialogSelected() {
+		return commitDialogCheckBox.getSelection();
+	}
+
 	@Override
 	public boolean canFlipToNextPage() {
 		try {
-			if (getUrlCombo().getText() != null
-					&& getUrlCombo().getText().length() != 0) {
+			String urlText = getUrlText();
+			if (urlText != null && urlText.length() != 0) {
 				IncomingPage incomingPage = (IncomingPage) getNextPage();
-				incomingPage.setProject(resource.getProject());
-				HgRepositoryLocation loc =
+				incomingPage.setHgRoot(getHgRoot());
+				IHgRepositoryLocation loc =
 					MercurialEclipsePlugin
 						.getRepoManager().getRepoLocation(
-								getUrlCombo().getText(),
-								getUserCombo().getText(),
-								getPasswordText().getText());
+								urlText,
+								getUserText(),
+								getPasswordText());
 				incomingPage.setLocation(loc);
-				incomingPage.setSvn(getSvnCheckBox() != null
-						&& getSvnCheckBox().getSelection());
-				setErrorMessage(null);
-				return isPageComplete()
-						&& (getWizard().getNextPage(this) != null);
+				incomingPage.setSvn(isSvnSelected());
+
+				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}
 		} catch (HgException e) {
 			setErrorMessage(e.getLocalizedMessage());
@@ -87,8 +86,7 @@ public class PullPage extends PushPullPage {
 	@Override
 	public boolean isPageComplete() {
 		return super.isPageComplete()
-				&& HgRepositoryLocation.validateLocation(getUrlCombo()
-						.getText());
+				&& HgRepositoryLocation.validateLocation(getUrlText());
 	}
 
 	protected boolean isPageComplete(String url) {
@@ -111,18 +109,18 @@ public class PullPage extends PushPullPage {
 		// now the options
 		Group pullGroup = SWTWidgetHelper
 				.createGroup(composite, Messages.getString("PullPage.pullGroup.label")); //$NON-NLS-1$
-		this.updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+		updateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 				Messages.getString("PullPage.toggleUpdate.text")); //$NON-NLS-1$
-		this.updateCheckBox.setSelection(true);
+		updateCheckBox.setSelection(true);
 
-		this.cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+		cleanUpdateCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 				Messages.getString("PullPage.toggleCleanUpdate.text")); //$NON-NLS-1$
-		this.cleanUpdateCheckBox.setSelection(false);
+		cleanUpdateCheckBox.setSelection(false);
 
 		try {
 			if (MercurialUtilities.isCommandAvailable("rebase", //$NON-NLS-1$
 					ResourceProperties.REBASE_AVAILABLE, "hgext.rebase=")) { //$NON-NLS-1$
-				this.rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
+				rebaseCheckBox = SWTWidgetHelper.createCheckBox(pullGroup,
 						Messages.getString("PullPage.option.rebase")); //$NON-NLS-1$
 				SelectionListener rebaseCheckBoxListener = new SelectionListener() {
 					public void widgetDefaultSelected(SelectionEvent e) {
@@ -131,8 +129,8 @@ public class PullPage extends PushPullPage {
 
 					public void widgetSelected(SelectionEvent e) {
 						if (rebaseCheckBox.getSelection()) {
-							updateCheckBox.setSelection(!rebaseCheckBox
-									.getSelection());
+							updateCheckBox.setSelection(false);
+							mergeCheckBox.setSelection(false);
 						}
 					}
 				};
@@ -142,8 +140,7 @@ public class PullPage extends PushPullPage {
 					}
 					public void widgetSelected(SelectionEvent e) {
 						if (updateCheckBox.getSelection()) {
-							rebaseCheckBox.setSelection(!updateCheckBox
-									.getSelection());
+							rebaseCheckBox.setSelection(false);
 						}
 					}
 				};
@@ -180,14 +177,15 @@ public class PullPage extends PushPullPage {
 				if (mergeCheckBox.getSelection()) {
 					String status;
 					try {
-						status = HgStatusClient
-								.getStatus(resource.getProject());
+						status = HgStatusClient.getStatus(getHgRoot());
 						if (status.length() > 0 && status.indexOf("M ") >= 0) { //$NON-NLS-1$
 							setErrorMessage(Messages.getString("PullPage.error.modifiedResources")); //$NON-NLS-1$
 							setPageComplete(false);
 						} else {
 							setErrorMessage(null);
 							setPageComplete(true);
+							// you can only rebase OR merge, not both
+							rebaseCheckBox.setSelection(false);
 						}
 					} catch (HgException e1) {
 						setErrorMessage(Messages.getString("PullPage.error.noStatus")); //$NON-NLS-1$
@@ -234,20 +232,16 @@ public class PullPage extends PushPullPage {
 		return Messages.getString("PullPage.timeoutCheckBox.title"); //$NON-NLS-1$
 	}
 
-	public Button getUpdateCheckBox() {
-		return updateCheckBox;
+	public boolean isUpdateSelected() {
+		return updateCheckBox.getSelection();
 	}
 
-	public Button getCleanUpdateCheckBox() {
-		return cleanUpdateCheckBox;
+	public boolean isCleanUpdateSelected() {
+		return cleanUpdateCheckBox.getSelection();
 	}
 
-	public void setUpdateCheckBox(Button updateCheckBox) {
-		this.updateCheckBox = updateCheckBox;
-	}
-
-	public Button getMergeCheckBox() {
-		return mergeCheckBox;
+	public boolean isMergeSelected() {
+		return mergeCheckBox.getSelection();
 	}
 
 }

@@ -8,6 +8,7 @@
  *
  * Contributors:
  *     Bastian Doetsch - Implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
@@ -27,6 +28,7 @@ import org.eclipse.team.core.TeamException;
 
 import com.vectrace.MercurialEclipse.actions.AddToWorkspaceAction;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 /**
  * Defines ProjectSetCapabilities for MercurialEclipse
@@ -34,6 +36,9 @@ import com.vectrace.MercurialEclipse.commands.HgPathsClient;
  * @author Bastian Doetsch
  */
 public class MercurialProjectSetCapability extends ProjectSetCapability {
+
+	public static final String SEPARATOR = "|";
+
 	private static MercurialProjectSetCapability instance;
 
 	@Override
@@ -103,21 +108,24 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 		try {
 			IWorkspace workspace = ResourcesPlugin.getWorkspace();
 			IProject project = workspace.getRoot().getProject(projectName);
+			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 
 			String srcRepository = ""; //$NON-NLS-1$
-			Map<String, String> locs = HgPathsClient.getPaths(project);
+			Map<String, String> locs = HgPathsClient.getPaths(hgRoot);
 			if (locs.containsKey(HgPathsClient.DEFAULT_PULL)) {
 				srcRepository = locs.get(HgPathsClient.DEFAULT_PULL);
 			} else if (locs.containsKey(HgPathsClient.DEFAULT)) {
 				srcRepository = locs.get(HgPathsClient.DEFAULT);
 			} else {
-				srcRepository = project.getLocation().toFile()
-						.getAbsolutePath();
+				srcRepository = hgRoot.getAbsolutePath();
 			}
 
 			if (srcRepository != null && srcRepository.length() > 0) {
-				reference = "MercurialEclipseProjectSet_" + project.getName() //$NON-NLS-1$
-						+ "_" + srcRepository; //$NON-NLS-1$
+				reference = "MercurialEclipseProjectSet" + SEPARATOR + project.getName()
+						+ SEPARATOR + srcRepository;
+				if(!hgRoot.getIPath().equals(project.getLocation())){
+					reference += SEPARATOR + hgRoot.toRelative(project.getLocation().toFile());
+				}
 			}
 		} catch (CoreException e) {
 			// reference is null -> error condition
@@ -127,15 +135,33 @@ public class MercurialProjectSetCapability extends ProjectSetCapability {
 
 	@Override
 	public String getProject(String referenceString) {
-		return referenceString.split("_")[1]; //$NON-NLS-1$
+		String[] split = referenceString.split("\\" + SEPARATOR);
+		if(split.length > 1){
+			return split[1];
+		}
+		return null;
+	}
+
+	public String getPullRepo(String referenceString) {
+		String[] split = referenceString.split("\\" + SEPARATOR);
+		if(split.length > 2){
+			return split[2];
+		}
+		return null;
+	}
+
+	public String getRootRelativePath(String referenceString) {
+		String[] split = referenceString.split("\\" + SEPARATOR);
+		if(split.length > 3){
+			return split[3];
+		}
+		return null;
 	}
 
 	/**
 	 * Singleton accessor method.
-	 *
-	 * @return
 	 */
-	public static ProjectSetCapability getInstance() {
+	public static MercurialProjectSetCapability getInstance() {
 		if (instance == null) {
 			instance = new MercurialProjectSetCapability();
 		}

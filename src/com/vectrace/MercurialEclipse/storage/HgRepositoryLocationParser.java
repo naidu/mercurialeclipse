@@ -15,11 +15,12 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.utils.StringUtils;
 
 /**
  * Repository location line format:
@@ -35,18 +36,29 @@ public class HgRepositoryLocationParser {
 	protected static final String PULL_PREFIX = "d";
 	protected static final String ENCRYPTED_PREFIX = "e";
 
-	protected static HgRepositoryLocation parseLine(final String line) {
+	public static String trimLocation(String url){
+		if(url == null){
+			return null;
+		}
+		url = url.trim();
+		// this is NOT File.separator: we simply disallow to have different locations
+		// which just ends with slash/backslash
+		while(url.endsWith("/") || url.endsWith("\\") || url.endsWith(" ") ){
+			url = url.substring(0, url.length() - 1);
+		}
+		return url;
+	}
+
+	protected static IHgRepositoryLocation parseLine(final String line) {
 		if (line == null || line.length() < 1) {
 			return null;
 		}
 		String repositoryLine = line;
-		//get direction indicator
-		String direction = repositoryLine.substring(0,1);
+		// get direction indicator: OBSOLETED. It does not make sense to save this attribute on the repo.
+		// unfortunately if was released with 1.5.0, so simply read the first character
+		// String direction = repositoryLine.substring(0,1);
 		repositoryLine = repositoryLine.substring(1);
 		try {
-			//get date
-			Date lastUsage = new Date(Long.valueOf(repositoryLine.substring(0, repositoryLine.indexOf(PART_SEPARATOR))).longValue());
-			repositoryLine = repositoryLine.substring(repositoryLine.indexOf(PART_SEPARATOR) + 1);
 			List<String> parts = new ArrayList<String>(5);
 			while (repositoryLine != null && repositoryLine.length() > 0) {
 				int len = Integer.valueOf(repositoryLine.substring(0, repositoryLine.indexOf(PART_SEPARATOR))).intValue();
@@ -64,17 +76,14 @@ public class HgRepositoryLocationParser {
 			if (password.startsWith(ENCRYPTED_PREFIX + PART_SEPARATOR)) {
 				password = crypter.decrypt(password.substring(2));
 			}
-			URI uri = parseLocationToURI(parts.get(0), username, password);
-			HgRepositoryLocation location;
+			String locationStr = trimLocation(parts.get(0));
+			URI uri = parseLocationToURI(locationStr, username, password);
+			IHgRepositoryLocation location;
 			if(uri != null) {
-				location = new HgRepositoryLocation(parts.get(3),
-						PUSH_PREFIX.equals(direction),
-						uri);
+				location = new HgRepositoryLocation(parts.get(3), uri);
 			} else {
-				location = new HgRepositoryLocation(parts.get(3),
-						PUSH_PREFIX.equals(direction), parts.get(0), "", "");
+				location = new HgRepositoryLocation(parts.get(3), locationStr, "", "");
 			}
-			location.setLastUsage(lastUsage);
 			return location;
 		} catch(Throwable th) {
 			MercurialEclipsePlugin.logError(th);
@@ -82,10 +91,8 @@ public class HgRepositoryLocationParser {
 		}
 	}
 
-	protected static String createLine(final HgRepositoryLocation location) {
-		StringBuilder line = new StringBuilder(location.isPush() ? PUSH_PREFIX : PULL_PREFIX);
-		line.append(location.getLastUsage() != null ? location.getLastUsage().getTime() : new Date().getTime());
-		line.append(PART_SEPARATOR);
+	protected static String createLine(final IHgRepositoryLocation location) {
+		StringBuilder line = new StringBuilder(PULL_PREFIX);
 		// remove authentication from location
 		line.append(String.valueOf(location.getLocation().length()));
 		line.append(PART_SEPARATOR);
@@ -115,19 +122,19 @@ public class HgRepositoryLocationParser {
 		return line.toString();
 	}
 
-	protected static HgRepositoryLocation parseLocation(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
-		return parseLine(logicalName, isPush, location, user, password);
+	protected static IHgRepositoryLocation parseLocation(String logicalName, String location, String user, String password) throws HgException {
+		return parseLine(logicalName, location, user, password);
 	}
 
-	protected static HgRepositoryLocation parseLocation(boolean isPush, String location, String user, String password) throws HgException {
-		return parseLocation(null, isPush, location, user, password);
+	protected static IHgRepositoryLocation parseLocation(String location, String user, String password) throws HgException {
+		return parseLocation(null, location, user, password);
 	}
 
-	protected static HgRepositoryLocation parseLocation(boolean isPush, String location) throws HgException {
-		return parseLocation(null, isPush, location, null, null);
-	}
+	protected static IHgRepositoryLocation parseLine(String logicalName, String location, String user, String password) throws HgException {
+		if(StringUtils.isEmpty(location)){
+			throw new HgException("Empty location!");
+		}
 
-	protected static HgRepositoryLocation parseLine(String logicalName, boolean isPush, String location, String user, String password) throws HgException {
 		String[] repoInfo = location.split(SPLIT_TOKEN);
 
 		if ((user == null || user.length() == 0)
@@ -155,11 +162,12 @@ public class HgRepositoryLocationParser {
 			}
 		}
 
+		location = trimLocation(location);
 		URI uri = parseLocationToURI(location, user, password);
 		if (uri != null) {
-			return new HgRepositoryLocation(logicalName, isPush, uri);
+			return new HgRepositoryLocation(logicalName, uri);
 		}
-		return new HgRepositoryLocation(logicalName, isPush, location, user, password);
+		return new HgRepositoryLocation(logicalName, location, user, password);
 	}
 
 	protected static URI parseLocationToURI(String location, String user, String password) throws HgException {
@@ -167,13 +175,15 @@ public class HgRepositoryLocationParser {
 		try {
 			uri = new URI(location);
 		} catch (URISyntaxException e) {
+			// Bastian: we can't filter for directories only, as bundle-files are valid repositories
+			// as well. So only check if file exists.
+
 			// Most possibly windows path, return null
 			File localPath = new File(location);
-			if (localPath.isDirectory()) {
+			if (localPath.exists()) {
 				return null;
 			}
-			HgException hgex = new HgException("Hg repository location invalid: <" + location + ">");
-			throw hgex;
+			throw new HgException("Hg repository location invalid: <" + location + ">");
 		}
 		if (uri.getScheme() != null
 				&& !uri.getScheme().equalsIgnoreCase("file")) { //$NON-NLS-1$
@@ -251,7 +261,7 @@ public class HgRepositoryLocationParser {
 	}
 
 	@Deprecated
-	public static String createSaveString(HgRepositoryLocation location) {
+	public static String createSaveString(IHgRepositoryLocation location) {
 		StringBuilder line = new StringBuilder(location.getLocation());
 		if (location.getUser() != null ) {
 			line.append(SPLIT_TOKEN);

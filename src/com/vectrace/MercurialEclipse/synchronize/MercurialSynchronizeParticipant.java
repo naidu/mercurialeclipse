@@ -42,7 +42,7 @@ import org.eclipse.ui.PartInitException;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.FileFromChangeSet;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.synchronize.actions.MercurialSynchronizePageActionGroup;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetCapability;
 import com.vectrace.MercurialEclipse.synchronize.cs.HgChangeSetModelProvider;
@@ -60,7 +60,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	private static final String PROJECTS = "PROJECTS";
 
 	private String secondaryId;
-	private HgRepositoryLocation repositoryLocation;
+	private IHgRepositoryLocation repositoryLocation;
 	private Set<IProject> restoredProjects;
 	private HgChangeSetCapability changeSetCapability;
 
@@ -69,7 +69,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	}
 
 	public MercurialSynchronizeParticipant(HgSubscriberMergeContext ctx,
-			HgRepositoryLocation repositoryLocation, RepositorySynchronizationScope scope) {
+			IHgRepositoryLocation repositoryLocation, RepositorySynchronizationScope scope) {
 		super(ctx);
 		this.repositoryLocation = repositoryLocation;
 		secondaryId = computeSecondaryId(scope, repositoryLocation);
@@ -82,7 +82,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 		}
 	}
 
-	private String computeSecondaryId(RepositorySynchronizationScope scope, HgRepositoryLocation repo) {
+	private String computeSecondaryId(RepositorySynchronizationScope scope, IHgRepositoryLocation repo) {
 		IProject[] projects = scope.getProjects();
 		StringBuilder sb = new StringBuilder();
 		if(projects.length > 0){
@@ -207,7 +207,7 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 	/**
 	 * @return the repositoryLocation
 	 */
-	public HgRepositoryLocation getRepositoryLocation() {
+	public IHgRepositoryLocation getRepositoryLocation() {
 		return repositoryLocation;
 	}
 
@@ -275,7 +275,28 @@ public class MercurialSynchronizeParticipant extends ModelSynchronizeParticipant
 
 	public ResourceMapping[] handleContextChange(ISynchronizationScope scope,
 			IResource[] resources, IProject[] projects) {
-		// TODO Auto-generated method stub
 		return new ResourceMapping[0];
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("MercurialSynchronizeParticipant [");
+		if (repositoryLocation != null) {
+			builder.append("repositoryLocation=");
+			builder.append(repositoryLocation);
+			builder.append(", ");
+		}
+		if (restoredProjects != null) {
+			builder.append("restoredProjects=");
+			builder.append(restoredProjects);
+			builder.append(", ");
+		}
+		if (secondaryId != null) {
+			builder.append("secondaryId=");
+			builder.append(secondaryId);
+		}
+		builder.append("]");
+		return builder.toString();
 	}
 }

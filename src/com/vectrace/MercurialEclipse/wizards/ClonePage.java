@@ -12,13 +12,13 @@
 package com.vectrace.MercurialEclipse.wizards;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.IPageChangingListener;
@@ -37,11 +37,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.internal.dialogs.WorkbenchWizardSelectionPage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.operations.CloneOperation;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
@@ -58,18 +60,18 @@ public class ClonePage extends PushPullPage {
 	private Button pullCheckBox;
 	private Button uncompressedCheckBox;
 	private Text revisionTextField;
-	private final Map<HgRepositoryLocation, File> destDirectories = new HashMap<HgRepositoryLocation, File>();
-	private HgRepositoryLocation lastRepo;
+	private final Map<IHgRepositoryLocation, File> destDirectories;
+	private IHgRepositoryLocation lastRepo;
 	private Text directoryTextField;
 	private Button directoryButton;
 	private Button useWorkspace;
 	private Text cloneNameTextField;
 	static private File lastUsedDir;
 
-	public ClonePage(IResource resource, String pageName, String title,
+	public ClonePage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
-		super(resource, pageName, title, titleImage);
-		this.resource = resource;
+		super(hgRoot, pageName, title, titleImage);
+		destDirectories = new HashMap<IHgRepositoryLocation, File>();
 		setShowBundleButton(false);
 		setShowRevisionTable(false);
 		setShowCredentials(true);
@@ -80,11 +82,18 @@ public class ClonePage extends PushPullPage {
 	@Override
 	public void createControl(Composite parent) {
 		super.createControl(parent);
+		if(getInitialRepo() == null) {
+			setPageComplete(false);
+		}
+	}
+
+	@Override
+	protected void createExtensionControls() {
+		super.createExtensionControls();
 		Composite composite = (Composite) getControl();
 		createDestGroup(composite);
 		createOptionsGroup(composite);
 		hookNextButtonListener(composite);
-		setPageComplete(false);
 	}
 
 	private boolean isEmpty(String s){
@@ -100,6 +109,12 @@ public class ClonePage extends PushPullPage {
 		dialog.addPageChangingListener(new IPageChangingListener() {
 
 			public void handlePageChanging(PageChangingEvent event) {
+				if(event.getTargetPage() instanceof WorkbenchWizardSelectionPage
+						|| event.getCurrentPage()  instanceof WorkbenchWizardSelectionPage){
+					// always allow flip back and force from the Eclipse "New..." wizard
+					event.doit = true;
+					return;
+				}
 				event.doit = nextButtonPressed();
 			}
 		});
@@ -172,7 +187,7 @@ public class ClonePage extends PushPullPage {
 		cloneNameTextField.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent e) {
 				validateFields();
-				HgRepositoryLocation repo = getRepository();
+				IHgRepositoryLocation repo = getRepository();
 				File destinationDirectory = getDestinationDirectory();
 				cloneNameTextField.setToolTipText(String.format(TOOLTIP, destinationDirectory.getAbsolutePath()));
 				if(repo != null && hasDataLocally(repo)){
@@ -218,14 +233,19 @@ public class ClonePage extends PushPullPage {
 	public File getDestinationDirectory() {
 		String root = getRootName();
 		File dest = new File(root, getCloneName());
-		return dest;
+		try {
+			return new HgRoot(dest);
+		} catch (IOException e) {
+			MercurialEclipsePlugin.logError(e);
+			return dest;
+		}
 	}
 
 
 	@Override
 	protected boolean urlChanged() {
 		boolean dataFetched = false;
-		HgRepositoryLocation repository = null;
+		IHgRepositoryLocation repository = null;
 		if(super.validateFields()){
 			repository = getRepository();
 			dataFetched = hasDataLocally(repository);
@@ -273,7 +293,7 @@ public class ClonePage extends PushPullPage {
 		return guess;
 	}
 
-	private boolean hasDataLocally(HgRepositoryLocation repo){
+	private boolean hasDataLocally(IHgRepositoryLocation repo){
 		if(repo == null){
 			return false;
 		}
@@ -306,7 +326,7 @@ public class ClonePage extends PushPullPage {
 			setPageComplete(false);
 			return false;
 		}
-		HgRepositoryLocation repository = getRepository();
+		IHgRepositoryLocation repository = getRepository();
 		if(repository == null) {
 			setErrorMessage("Clone repository URL is invalid!");
 			setPageComplete(false);
@@ -384,11 +404,11 @@ public class ClonePage extends PushPullPage {
 		}
 		boolean forest = false;
 		if (isShowForest()) {
-			forest = getForestCheckBox().getSelection();
+			forest = isForestSelected();
 		}
 		boolean svn = false;
 		if (isShowSvn()) {
-			svn = getSvnCheckBox().getSelection();
+			svn = isSvnSelected();
 		}
 		lastRepo = getRepository();
 		if(lastRepo == null){
@@ -407,11 +427,17 @@ public class ClonePage extends PushPullPage {
 			// run clone
 			boolean pull = pullCheckBox.getSelection();
 			boolean uncompressed = uncompressedCheckBox.getSelection();
-			boolean timeout2 = getTimeoutCheckBox().getSelection();
+			boolean timeout2 = isTimeoutSelected();
 			String rev = revisionTextField.getText();
 
+			boolean noUpdate = true;
+			if(svn || forest){
+				// TODO allow branch /revision selection for the svn/forest clones
+				noUpdate = false;
+			}
+
 			CloneOperation cloneOperation = new CloneOperation(getContainer(), destDirectory
-					.getParentFile(), lastRepo, false, pull, uncompressed, timeout2, rev,
+					.getParentFile(), lastRepo, noUpdate, pull, uncompressed, timeout2, rev,
 					destDirectory.getName(), forest, svn);
 
 			getContainer().run(true, true, cloneOperation);
@@ -427,11 +453,11 @@ public class ClonePage extends PushPullPage {
 		return true;
 	}
 
-	public HgRepositoryLocation getLastUsedRepository(){
+	public IHgRepositoryLocation getLastUsedRepository(){
 		return lastRepo;
 	}
 
-	private HgRepositoryLocation getRepository() {
+	private IHgRepositoryLocation getRepository() {
 		if(getUrlText().length() == 0){
 			return null;
 		}
@@ -455,7 +481,7 @@ public class ClonePage extends PushPullPage {
 	}
 
 	private boolean nextButtonPressed() {
-		HgRepositoryLocation repository = getRepository();
+		IHgRepositoryLocation repository = getRepository();
 		if (hasDataLocally(repository)
 				&& getDestinationDirectory().equals(destDirectories.get(repository))) {
 			// simply forward to the next page

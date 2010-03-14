@@ -56,8 +56,8 @@ public class ServeWizard extends HgWizard {
 
 	@Override
 	public boolean performFinish() {
-		servePage.finish(new NullProgressMonitor());
-		return super.performFinish();
+		boolean finish = servePage.finish(new NullProgressMonitor());
+		return finish && super.performFinish();
 	}
 
 }

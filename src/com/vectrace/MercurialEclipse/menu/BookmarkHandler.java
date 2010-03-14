@@ -7,25 +7,24 @@
  *
  * Contributors:
  * bastian  implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
-import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.dialogs.BookmarkDialog;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 
-public class BookmarkHandler extends SingleResourceHandler {
+public class BookmarkHandler extends RootHandler {
+
 	@Override
-	protected void run(IResource resource) throws Exception {
-		IProject project = resource.getProject();
+	protected void run(HgRoot hgRoot) {
 
 		try {
 			if (!MercurialUtilities.isCommandAvailable("bookmarks", //$NON-NLS-1$
@@ -44,11 +43,8 @@ public class BookmarkHandler extends SingleResourceHandler {
 			MercurialEclipsePlugin.logError(e);
 		}
 
-		BookmarkDialog dialog = new BookmarkDialog(getShell(), project);
-
-		if (dialog.open() == IDialogConstants.OK_ID) {
-			// do nothing
-		}
+		BookmarkDialog dialog = new BookmarkDialog(getShell(), hgRoot);
+		dialog.open();
 	}
 
 }

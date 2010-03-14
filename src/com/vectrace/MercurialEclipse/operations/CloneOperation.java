@@ -25,13 +25,13 @@ import com.vectrace.MercurialEclipse.commands.HgCloneClient;
 import com.vectrace.MercurialEclipse.commands.extensions.HgSvnClient;
 import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFcloneClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.wizards.Messages;
 
 public class CloneOperation extends HgOperation {
 
 	private final File parentDirectory;
-	private final HgRepositoryLocation repo;
+	private final IHgRepositoryLocation repo;
 	private final boolean noUpdate;
 	private final boolean pull;
 	private final boolean uncompressed;
@@ -56,7 +56,7 @@ public class CloneOperation extends HgOperation {
 	 * @param svn to use svn extension
 	 */
 	public CloneOperation(IRunnableContext context, File parentDirectory,
-			HgRepositoryLocation repo, boolean noUpdate, boolean pull,
+			IHgRepositoryLocation repo, boolean noUpdate, boolean pull,
 			boolean uncompressed, boolean timeout, String rev,
 			String cloneName, boolean forest, boolean svn) {
 		super(context);

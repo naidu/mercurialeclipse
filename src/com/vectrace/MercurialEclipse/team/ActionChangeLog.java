@@ -13,22 +13,13 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.team;
 
-import java.lang.reflect.InvocationTargetException;
-
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.dialogs.ProgressMonitorDialog;
-import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
 public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
 
@@ -63,31 +54,9 @@ public class ActionChangeLog implements IWorkbenchWindowActionDelegate {
 	 *
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
-
 	public void run(IAction action) {
-		final Shell shell = Display.getDefault().getActiveShell();
-		try {
-			new ProgressMonitorDialog(shell).run(true, true,
-					new IRunnableWithProgress() {
-						public void run(IProgressMonitor monitor)
-								throws InvocationTargetException,
-								InterruptedException {
-							final IResource resource = (IResource) selection
-									.getFirstElement();
-							Runnable r = new Runnable() {
-								public void run() {
-									TeamUI.getHistoryView().showHistoryFor(
-											resource);
-								}
-							};
-							Display.getDefault().asyncExec(r);
-						}
-					});
-		} catch (InvocationTargetException e) {
-			MercurialEclipsePlugin.logError(e);
-		} catch (InterruptedException e) {
-			MercurialEclipsePlugin.logError(e);
-		}
+		final IResource resource = (IResource) selection.getFirstElement();
+		TeamUI.getHistoryView().showHistoryFor(resource);
 	}
 
 	/**

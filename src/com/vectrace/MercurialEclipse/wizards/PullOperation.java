@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -34,14 +33,14 @@ import com.vectrace.MercurialEclipse.menu.MergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation.BundleRepository;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 class PullOperation extends HgOperation {
 	private final boolean doUpdate;
-	private final IProject resource;
-	private final HgRepositoryLocation repo;
+
+	private final HgRoot hgRoot;
+	private final IHgRepositoryLocation repo;
 	private final boolean force;
 	private final ChangeSet pullRevision;
 	private final boolean timeout;
@@ -56,14 +55,14 @@ class PullOperation extends HgOperation {
 	private final boolean doCleanUpdate;
 
 	public PullOperation(IRunnableContext context, boolean doUpdate,
-			boolean doCleanUpdate, IProject resource, boolean force, HgRepositoryLocation repo,
+			boolean doCleanUpdate, HgRoot hgRoot, boolean force, IHgRepositoryLocation repo,
 			ChangeSet pullRevision, boolean timeout, boolean merge,
 			boolean showCommitDialog, File bundleFile, boolean forest,
 			File snapFile, boolean rebase, boolean svn) {
 		super(context);
 		this.doUpdate = doUpdate;
 		this.doCleanUpdate = doCleanUpdate;
-		this.resource = resource;
+		this.hgRoot = hgRoot;
 		this.force = force;
 		this.repo = repo;
 		this.pullRevision = pullRevision;
@@ -85,13 +84,13 @@ class PullOperation extends HgOperation {
 	private String performMerge(IProgressMonitor monitor) throws HgException, InterruptedException {
 		String r = Messages.getString("PullRepoWizard.pullOperation.mergeHeader"); //$NON-NLS-1$
 		monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.merging")); //$NON-NLS-1$
-		if (HgLogClient.getHeads(resource.getProject()).length > 1) {
+		if (HgLogClient.getHeads(hgRoot).length > 1) {
 
 			SafeUiJob job = new SafeUiJob(Messages.getString("PullRepoWizard.pullOperation.mergeJob.description")) { //$NON-NLS-1$
 				@Override
 				protected IStatus runSafe(IProgressMonitor m) {
 					try {
-						String res = MergeHandler.merge(resource, getShell(), m, true, showCommitDialog);
+						String res = MergeHandler.determineMergeHeadAndMerge(hgRoot, getShell(), m, true, showCommitDialog);
 						return new Status(IStatus.OK, MercurialEclipsePlugin.ID, res);
 					} catch (CoreException e) {
 						MercurialEclipsePlugin.logError(e);
@@ -112,7 +111,7 @@ class PullOperation extends HgOperation {
 		return r;
 	}
 
-	private String performPull(final HgRepositoryLocation repository,
+	private String performPull(final IHgRepositoryLocation repository,
 			IProgressMonitor monitor) throws CoreException {
 		monitor.worked(1);
 		monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.incoming")); //$NON-NLS-1$
@@ -120,12 +119,11 @@ class PullOperation extends HgOperation {
 		boolean updateSeparately = false;
 
 		if (svn) {
-			r += HgSvnClient.pull(resource);
+			r += HgSvnClient.pull(hgRoot);
 			if (rebase) {
-				r += HgSvnClient.rebase(resource);
+				r += HgSvnClient.rebase(hgRoot);
 			}
 		} else if (bundleFile == null) {
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 			if (forest) {
 				File forestRoot = hgRoot.getParentFile();
 				r += HgFpushPullClient.fpull(forestRoot, repo,
@@ -140,9 +138,8 @@ class PullOperation extends HgOperation {
 			if (doUpdate) {
 				updateSeparately = true;
 			}
-			HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
 			File canonicalBundle = toCanonicalBundle();
-			BundleRepository bundleRepo = new BundleRepository(canonicalBundle, false);
+			BundleRepository bundleRepo = new BundleRepository(canonicalBundle);
 			r += HgPushPullClient.pull(hgRoot, pullRevision, bundleRepo, false, rebase, force, timeout);
 		}
 
@@ -175,14 +172,12 @@ class PullOperation extends HgOperation {
 				try {
 					UpdateHandler updateHandler = new UpdateHandler();
 					updateHandler.setCleanEnabled(doCleanUpdate);
-					updateHandler.run(resource);
+					updateHandler.run(hgRoot);
 					return Status.OK_STATUS;
-				} catch (Exception e) {
-					if (e instanceof HgException) {
-						// no point in complaining, since they want to merge/rebase anyway
-						if ((merge || rebase) && e.getMessage().contains("crosses branches")) {
-							return Status.OK_STATUS;
-						}
+				} catch (HgException e) {
+					// no point in complaining, since they want to merge/rebase anyway
+					if ((merge || rebase) && e.getMessage().contains("crosses branches")) {
+						return Status.OK_STATUS;
 					}
 					MercurialEclipsePlugin.logError(e);
 					MercurialEclipsePlugin.showError(e);
@@ -196,8 +191,7 @@ class PullOperation extends HgOperation {
 		// It appears good. Stash the repo location.
 		monitor.subTask(Messages.getString("PullRepoWizard.pullOperation.addRepo") + repo); //$NON-NLS-1$
 		try {
-			MercurialEclipsePlugin.getRepoManager().addRepoLocation(
-					resource.getProject(), repo);
+			MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot, repo);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(Messages
 					.getString("PullRepoWizard.addingRepositoryFailed"), e); //$NON-NLS-1$

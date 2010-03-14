@@ -10,17 +10,15 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.dialogs;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
 
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
+import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.CommitFilesChooser;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
@@ -28,21 +26,29 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  * @author Andrei
  */
 public class MergeDialog extends CommitDialog {
-	private final IProject mergeProject;
+	private final HgRoot hgRoot;
 
-	public MergeDialog(Shell shell, IProject mergeProject, String defaultCommitMessage) {
-		super(shell, null);
-		Assert.isNotNull(mergeProject);
-		this.mergeProject = mergeProject;
+	public MergeDialog(Shell shell, HgRoot hgRoot, String defaultCommitMessage) {
+		super(shell, hgRoot, null);
+		Assert.isNotNull(hgRoot);
+		this.hgRoot = hgRoot;
 		setDefaultCommitMessage(defaultCommitMessage);
 	}
 
 	@Override
-	protected void createFilesList(Composite container) {
+	protected Control createDialogArea(Composite parent) {
+		Control control = super.createDialogArea(parent);
+
+		getShell().setText(Messages.getString("MergeDialog.window.title")); //$NON-NLS-1$
+		setTitle(Messages.getString("MergeDialog.title")); //$NON-NLS-1$";
+		setMessage(Messages.getString("MergeDialog.message")); //$NON-NLS-1$";
+		return control;
+	}
+
+	@Override
+	protected CommitFilesChooser createFilesList(Composite container) {
 		SWTWidgetHelper.createLabel(container, Messages.getString("CommitDialog.selectFiles")); //$NON-NLS-1$
-		List<IResource> resources = new ArrayList<IResource>();
-		resources.add(mergeProject);
-		commitFilesList = new CommitFilesChooser(container, false, resources, true, true);
+		return new CommitFilesChooser(hgRoot, container, false, true, true, false);
 	}
 
 	@Override
@@ -51,12 +57,23 @@ public class MergeDialog extends CommitDialog {
 	}
 
 	@Override
-	protected void performCommit(String messageToCommit) throws CoreException {
-		CommitMergeHandler.commitMerge(mergeProject.getProject(), messageToCommit);
+	protected void createCloseBranchCheckBox(Composite container) {
+		// don't create it as we don't want it in merge dialog
 	}
 
 	@Override
-	protected String getInitialCommitUserName() {
-		return getDefaultCommitName(mergeProject);
+	protected void createAmendCheckBox(Composite container) {
+		// not available when merging
 	}
+
+	@Override
+	protected String performCommit(String messageToCommit, boolean closeBranch) throws CoreException {
+		return CommitMergeHandler.commitMerge(hgRoot, getUser(), messageToCommit);
+	}
+
+	@Override
+	protected String performCommit(String messageToCommit, boolean closeBranch, ChangeSet cs) throws CoreException {
+		return performCommit(messageToCommit, closeBranch);
+	}
+
 }

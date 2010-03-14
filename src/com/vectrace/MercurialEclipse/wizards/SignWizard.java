@@ -7,27 +7,27 @@
  *
  * Contributors:
  * bastian  implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.jface.dialogs.IDialogSettings;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.wizard.Wizard;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 
 public class SignWizard extends Wizard {
-	SignWizardPage page = null;
+	private final SignWizardPage page;
 
-	public SignWizard(IProject proj) {
+	public SignWizard(HgRoot hgRoot) {
 		ImageDescriptor image = MercurialEclipsePlugin
 				.getImageDescriptor(Messages.getString("SignWizard.signWizardPage.image")); //$NON-NLS-1$
 		page = new SignWizardPage(Messages.getString("SignWizard.signWizardPage.name"), Messages.getString("SignWizard.signWizardPage.title"), image, //$NON-NLS-1$ //$NON-NLS-2$
-				Messages.getString("SignWizard.signWizardPage.description"), proj); //$NON-NLS-1$
-		IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault()
-				.getDialogSettings();
+				Messages.getString("SignWizard.signWizardPage.description"), hgRoot); //$NON-NLS-1$
+		IDialogSettings workbenchSettings = MercurialEclipsePlugin.getDefault().getDialogSettings();
 		IDialogSettings section = workbenchSettings.getSection("SignWizard"); //$NON-NLS-1$
 		if (section == null) {
 			section = workbenchSettings.addNewSection("SignWizard"); //$NON-NLS-1$

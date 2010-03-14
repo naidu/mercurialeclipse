@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %Bundle-Name.0
 Bundle-SymbolicName: com.vectrace.MercurialEclipse; singleton:=true
-Bundle-Version: 1.5.0.qualifier
+Bundle-Version: 1.6.0.qualifier
 Bundle-Activator: com.vectrace.MercurialEclipse.MercurialEclipsePlugin
 Bundle-Vendor: %Bundle-Vendor.0
 Bundle-Localization: plugin
@@ -26,7 +26,8 @@ Require-Bundle: org.eclipse.ui;bundle-version="3.3.0",
  org.eclipse.mylyn.tasks.core;bundle-version="3.0.0";resolution:=optional,
  org.eclipse.mylyn.context.core;bundle-version="3.0.0";resolution:=optional,
  org.eclipse.mylyn.tasks.ui;bundle-version="3.0.0";resolution:=optional,
- org.eclipse.mylyn.resources.ui;bundle-version="3.0.0";resolution:=optional
+ org.eclipse.mylyn.resources.ui;bundle-version="3.0.0";resolution:=optional,
+ org.eclipse.search;bundle-version="3.4.1"
 Eclipse-LazyStart: true
 Export-Package: com.vectrace.MercurialEclipse,
  com.vectrace.MercurialEclipse.actions,
@@ -39,7 +40,6 @@ Export-Package: com.vectrace.MercurialEclipse,
  com.vectrace.MercurialEclipse.dialogs,
  com.vectrace.MercurialEclipse.exception,
  com.vectrace.MercurialEclipse.history,
- com.vectrace.MercurialEclipse.mapping,
  com.vectrace.MercurialEclipse.menu,
  com.vectrace.MercurialEclipse.model,
  com.vectrace.MercurialEclipse.mylyn,

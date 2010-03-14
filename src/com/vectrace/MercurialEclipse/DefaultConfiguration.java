@@ -36,10 +36,6 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 	public DefaultConfiguration() {
 	}
 
-	public String getDefaultUserName() {
-		return MercurialUtilities.getHGUsername(false);
-	}
-
 	public String getExecutable() {
 		if (!MercurialEclipsePlugin.getDefault().isHgUsable()) {
 			MercurialUtilities.configureHgExecutable();
@@ -80,7 +76,7 @@ public class DefaultConfiguration implements IConsole, IErrorHandler, IConfigura
 		return timeout;
 	}
 
-	public HgRoot getHgRoot(File file) {
+	public HgRoot getHgRoot(File file) throws HgCoreException {
 		try {
 			return MercurialTeamProvider.getHgRoot(file);
 		} catch (CoreException e) {

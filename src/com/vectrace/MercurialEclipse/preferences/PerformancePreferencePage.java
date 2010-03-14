@@ -35,7 +35,6 @@ import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
  * preference store that belongs to the main plug-in class. That way,
  * preferences can be accessed directly via the preference store.
  */
-
 public class PerformancePreferencePage extends FieldEditorPreferencePage
 implements IWorkbenchPreferencePage {
 
@@ -77,8 +76,8 @@ implements IWorkbenchPreferencePage {
 				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(
-				RESOURCE_DECORATOR_COMPLETE_STATUS,
-				Messages.getString("PerformancePreferencePage.field.completeStatus"), //$NON-NLS-1$
+				ENABLE_FULL_GLOG,
+				Messages.getString("PerformancePreferencePage.field.enableFullGlog"), //$NON-NLS-1$
 				getFieldEditorParent()));
 
 		addField(new BooleanFieldEditor(

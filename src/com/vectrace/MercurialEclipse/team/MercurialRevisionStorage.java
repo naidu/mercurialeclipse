@@ -30,7 +30,6 @@ import org.eclipse.core.runtime.Path;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgCatClient;
-import com.vectrace.MercurialEclipse.commands.HgLogClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
@@ -321,12 +320,19 @@ public class MercurialRevisionStorage implements IStorage {
 			return;
 		}
 		try {
-			ChangeSet tip = HgLogClient.getTip(res.getProject());
+			// hoping the cache is up-to-date!!!
+			LocalChangesetCache cache = LocalChangesetCache.getInstance();
+			ChangeSet tip = cache.getNewestChangeSet(res);
+			if (tip == null) {
+				HgRoot hgRoot = MercurialTeamProvider.getHgRoot(res);
+				cache.refreshAllLocalRevisions(hgRoot, true);
+				tip = cache.getNewestChangeSet(res.getProject());
+			}
 			boolean localKnown = tip.getChangesetIndex() >= rev;
 			if(!localKnown){
 				return;
 			}
-			this.changeSet = LocalChangesetCache.getInstance().getOrFetchChangeSetById(res, String.valueOf(rev));
+			this.changeSet = cache.getOrFetchChangeSetById(res, String.valueOf(rev));
 			if(changeSet != null){
 				this.revision = changeSet.getChangesetIndex();
 				this.global = changeSet.getChangeset();
@@ -367,5 +373,55 @@ public class MercurialRevisionStorage implements IStorage {
 		}
 		builder.append("]");
 		return builder.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((global == null) ? 0 : global.hashCode());
+		result = prime * result + ((parent == null) ? 0 : parent.hashCode());
+		result = prime * result + ((resource == null) ? 0 : resource.hashCode());
+		result = prime * result + revision;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		MercurialRevisionStorage other = (MercurialRevisionStorage) obj;
+		if (global == null) {
+			if (other.global != null) {
+				return false;
+			}
+		} else if (!global.equals(other.global)) {
+			return false;
+		}
+		if (parent == null) {
+			if (other.parent != null) {
+				return false;
+			}
+		} else if (!parent.equals(other.parent)) {
+			return false;
+		}
+		if (resource == null) {
+			if (other.resource != null) {
+				return false;
+			}
+		} else if (!resource.getFullPath().equals(other.resource.getFullPath())) {
+			return false;
+		}
+		if (revision != other.revision) {
+			return false;
+		}
+		return true;
 	}
 }

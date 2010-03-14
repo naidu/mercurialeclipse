@@ -18,10 +18,7 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.util.Properties;
-import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -35,13 +32,10 @@ import com.vectrace.MercurialEclipse.commands.extensions.forest.HgFpushPullClien
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
-import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
 import com.vectrace.MercurialEclipse.team.cache.OutgoingChangesetCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * @author zingo
@@ -49,7 +43,7 @@ import com.vectrace.MercurialEclipse.utils.ResourceUtils;
  */
 public class PushRepoWizard extends HgWizard {
 
-	private IProject project;
+	private HgRoot hgRoot;
 	private OutgoingPage outgoingPage;
 
 	private PushRepoWizard() {
@@ -57,9 +51,9 @@ public class PushRepoWizard extends HgWizard {
 		setNeedsProgressMonitor(true);
 	}
 
-	public PushRepoWizard(IResource resource) {
+	public PushRepoWizard(HgRoot hgRoot) {
 		this();
-		this.project = resource.getProject();
+		this.hgRoot = hgRoot;
 	}
 
 	@Override
@@ -67,7 +61,7 @@ public class PushRepoWizard extends HgWizard {
 		super.addPages();
 		PushPullPage myPage = new PushRepoPage(
 				Messages.getString("PushRepoWizard.pushRepoPage.name"), //$NON-NLS-1$
-				Messages.getString("PushRepoWizard.pushRepoPage.title"), null, project); //$NON-NLS-1$
+				Messages.getString("PushRepoWizard.pushRepoPage.title"), null, hgRoot); //$NON-NLS-1$
 		initPage(Messages.getString("PushRepoWizard.pushRepoPage.description"), //$NON-NLS-1$
 				myPage);
 		myPage.setShowCredentials(true);
@@ -75,7 +69,7 @@ public class PushRepoWizard extends HgWizard {
 		addPage(page);
 		outgoingPage = new OutgoingPage("OutgoingPage"); //$NON-NLS-1$
 		initPage(outgoingPage.getDescription(), outgoingPage);
-		outgoingPage.setProject(project);
+		outgoingPage.setHgRoot(hgRoot);
 		addPage(outgoingPage);
 	}
 
@@ -83,21 +77,13 @@ public class PushRepoWizard extends HgWizard {
 	public boolean performFinish() {
 		super.performFinish();
 		Properties props = page.getProperties();
-		final HgRepositoryLocation repo;
+		final IHgRepositoryLocation repo;
 		try {
-			repo = MercurialEclipsePlugin.getRepoManager().fromProperties(project, props);
+			repo = MercurialEclipsePlugin.getRepoManager().fromProperties(hgRoot, props);
 		} catch (HgException e){
 			if(!(e.getCause() instanceof URISyntaxException)){
 				MercurialEclipsePlugin.logError(e);
 			}
-			return false;
-		}
-		// Check that this project exist.
-		if (project.getLocation() == null) {
-			String msg = Messages.getString("PushRepoWizard.project") + project.getName() //$NON-NLS-1$
-					+ Messages.getString("PushRepoWizard.notExists"); //$NON-NLS-1$
-			MercurialEclipsePlugin.logError(msg, null);
-			// System.out.println( string);
 			return false;
 		}
 
@@ -111,7 +97,7 @@ public class PushRepoWizard extends HgWizard {
 		}
 
 		final String changeset;
-		if (outgoingPage.getRevisionCheckBox().getSelection()) {
+		if (outgoingPage.isRevisionSelected()) {
 			ChangeSet cs = outgoingPage.getRevision();
 			if (cs != null) {
 				changeset = cs.getChangeset();
@@ -138,10 +124,9 @@ public class PushRepoWizard extends HgWizard {
 				monitor.beginTask("Pushing...", IProgressMonitor.UNKNOWN);
 				try {
 					if (svnEnabled) {
-						output = HgSvnClient.push(project.getLocation().toFile());
+						output = HgSvnClient.push(hgRoot);
 					} else if (isForest) {
-						File forestRoot = MercurialTeamProvider.getHgRoot(
-								project.getLocation().toFile()).getParentFile();
+						File forestRoot = hgRoot.getParentFile();
 
 						File snapFile = null;
 						if (snapFileText.length() > 0) {
@@ -149,7 +134,6 @@ public class PushRepoWizard extends HgWizard {
 						}
 						output = HgFpushPullClient.fpush(forestRoot, repo, changeset, timeout, snapFile);
 					} else {
-						HgRoot hgRoot = MercurialTeamProvider.getHgRoot(project);
 						output = HgPushPullClient.push(hgRoot, repo, pushRepoPage.isForce(), changeset, timeout);
 					}
 				} catch (CoreException e){
@@ -161,7 +145,7 @@ public class PushRepoWizard extends HgWizard {
 
 			@Override
 			protected String getActionDescription() {
-				return "Pushing " + project.getName() + " ...";
+				return "Pushing " + hgRoot.getName() + " ...";
 			}
 
 			public String getOutput() {
@@ -182,7 +166,7 @@ public class PushRepoWizard extends HgWizard {
 		}
 
 		try {
-			updateAfterPush(result, project, repo, isForest);
+			updateAfterPush(result, hgRoot, repo, isForest);
 		} catch (HgException e) {
 			MercurialEclipsePlugin.logError(e);
 			MessageDialog.openError(getContainer().getShell(),
@@ -193,32 +177,26 @@ public class PushRepoWizard extends HgWizard {
 	}
 
 	private boolean isForestEnabled(PushPullPage pushRepoPage) {
-		return pushRepoPage.isShowForest() && pushRepoPage.getForestCheckBox().getSelection();
+		return pushRepoPage.isShowForest() && pushRepoPage.isForestSelected();
 	}
 
 	private boolean isSvnEnabled(PushPullPage pushRepoPage) {
-		return pushRepoPage.isShowSvn() && pushRepoPage.getSvnCheckBox().getSelection();
+		return pushRepoPage.isShowSvn() && pushRepoPage.isSvnSelected();
 	}
 
-	private static void updateAfterPush(String result, IProject project, HgRepositoryLocation repo, boolean isForest) throws HgException {
+	private static void updateAfterPush(String result, HgRoot hgRoot, IHgRepositoryLocation repo, boolean isForest) throws HgException {
 		if (result.length() != 0) {
 			HgClients.getConsole().printMessage(result, null);
 		}
 
 		// It appears good. Stash the repo location.
-		MercurialEclipsePlugin.getRepoManager().addRepoLocation(project, repo);
-		Set<IProject> projects = ResourceUtils.getProjects(MercurialTeamProvider.getHgRoot(project));
+		MercurialEclipsePlugin.getRepoManager().addRepoLocation(hgRoot, repo);
 		if(isForest){
 			IncomingChangesetCache.getInstance().clear(repo);
 			OutgoingChangesetCache.getInstance().clear(repo);
 		} else {
-			for (IProject iProject : projects) {
-				IncomingChangesetCache.getInstance().clear(repo, iProject, true);
-				OutgoingChangesetCache.getInstance().clear(repo, iProject, true);
-			}
-		}
-		for (IProject iProject : projects) {
-			MercurialStatusCache.getInstance().refreshStatus(iProject, null);
+			IncomingChangesetCache.getInstance().clear(hgRoot, true);
+			OutgoingChangesetCache.getInstance().clear(hgRoot, true);
 		}
 	}
 

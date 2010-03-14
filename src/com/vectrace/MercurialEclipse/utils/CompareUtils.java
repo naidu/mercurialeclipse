@@ -19,14 +19,18 @@ import org.eclipse.compare.internal.CompareEditor;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.window.Window;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.team.internal.ui.IPreferenceIds;
 import org.eclipse.team.internal.ui.TeamUIPlugin;
-import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IEditorReference;
 import org.eclipse.ui.IReusableEditor;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.progress.UIJob;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
@@ -75,46 +79,56 @@ public class CompareUtils {
 	}
 
 	@SuppressWarnings("restriction")
-	public static void openEditor(ResourceNode left, ResourceNode right, boolean dialog, boolean localEditable) {
+	public static void openEditor(final ResourceNode left, final ResourceNode right,
+			final boolean dialog, final boolean localEditable) {
 		Assert.isNotNull(right);
-
 		if (dialog) {
 			openCompareDialog(left, right, localEditable);
 			return;
 		}
 
-		CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
+		final CompareEditorInput compareInput = getCompareInput(left, right, localEditable);
 		if (compareInput == null) {
 			return;
 		}
 
-		IWorkbenchPage workBenchPage = MercurialEclipsePlugin.getActivePage();
-		boolean reuse = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(
-				IPreferenceIds.REUSE_OPEN_COMPARE_EDITOR);
-		IEditorPart editor = null;
-		if(reuse) {
-			IEditorReference[] editorRefs = workBenchPage.getEditorReferences();
-			for (IEditorReference ref : editorRefs) {
-				IEditorPart part = ref.getEditor(false);
-				if(part != null && part instanceof CompareEditor){
-					editor = part;
-					break;
+		UIJob uiDiffJob = new UIJob("Preparing hg diff...") {
+			@Override
+			public IStatus runInUIThread(IProgressMonitor monitor) {
+
+				IWorkbenchPage workBenchPage = MercurialEclipsePlugin.getActivePage();
+				boolean reuse = TeamUIPlugin.getPlugin().getPreferenceStore().getBoolean(
+						IPreferenceIds.REUSE_OPEN_COMPARE_EDITOR);
+				IEditorPart editor = null;
+				if(reuse) {
+					IEditorReference[] editorRefs = workBenchPage.getEditorReferences();
+					for (IEditorReference ref : editorRefs) {
+						IEditorPart part = ref.getEditor(false);
+						if(part != null && part instanceof CompareEditor){
+							editor = part;
+							break;
+						}
+					}
 				}
+
+				if (editor == null) {
+					CompareUI.openCompareEditor(compareInput);
+					return Status.OK_STATUS;
+				}
+
+				// re-use existing editor enforces Eclipse to re-compare the both sides
+				// even if the compare editor already opened the file. The point is, that the
+				// file may be changed by user after opening the compare editor and so editor
+				// still shows "old" diff state and to be updated. See also issue #10757.
+				CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
+
+				// provide focus to editor
+				workBenchPage.activate(editor);
+
+				return Status.OK_STATUS;
 			}
-		}
-
-		if (editor == null) {
-			CompareUI.openCompareEditor(compareInput);
-			return;
-		}
-
-		IEditorInput otherInput = editor.getEditorInput();
-		if (!otherInput.equals(compareInput)) {
-			// if editor is currently not open on that input either re-use existing
-			CompareUI.reuseCompareEditor(compareInput, (IReusableEditor) editor);
-		}
-		// provide focus to editor
-		workBenchPage.activate(editor);
+		};
+		uiDiffJob.schedule();
 	}
 
 	/**
@@ -137,8 +151,13 @@ public class CompareUtils {
 	 * @param compareInput
 	 * @return
 	 */
-	public static int openCompareDialog(CompareEditorInput compareInput) {
-		CompareUI.openCompareDialog(compareInput);
+	public static int openCompareDialog(final CompareEditorInput compareInput) {
+		Runnable uiAction = new Runnable() {
+			public void run() {
+				CompareUI.openCompareDialog(compareInput);
+			}
+		};
+		Display.getDefault().asyncExec(uiAction);
 		return Window.CANCEL;
 	}
 

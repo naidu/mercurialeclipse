@@ -35,7 +35,6 @@ import org.eclipse.jface.util.PropertyChangeEvent;
 
 import com.vectrace.MercurialEclipse.synchronize.HgSubscriberMergeContext;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 /**
  * A temporary changeset which holds not commited resources. This changeset cannot be used
@@ -71,6 +70,9 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		if(context != null && context.isHidden(file)){
 			return false;
 		}
+		if(cache.isDirectory(file.getLocation())){
+			return false;
+		}
 		boolean added;
 		synchronized (files){
 			added = files.add(file);
@@ -87,7 +89,7 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	private void notifyListeners() {
-		Job job = new Job("Uncommitted changeset update"){
+		Job updateJob = new Job("Uncommitted changeset update"){
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				for (IPropertyChangeListener listener : listeners) {
@@ -100,10 +102,22 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 			public boolean belongsTo(Object family) {
 				return family == ExclusiveRule.class;
 			}
+
+			@Override
+			public boolean shouldSchedule() {
+				Job[] jobs = Job.getJobManager().find(ExclusiveRule.class);
+				for (Job job : jobs) {
+					ExclusiveRule rule = (ExclusiveRule) job.getRule();
+					if(WorkingChangeSet.this.equals(rule.cs)){
+						// do not schedule me because exactly the same job is waiting to be started!
+						return false;
+					}
+				}
+				return true;
+			}
 		};
-		Job.getJobManager().cancel(ExclusiveRule.class);
-		job.setRule(new ExclusiveRule());
-		job.schedule(50);
+		updateJob.setRule(new ExclusiveRule(this));
+		updateJob.schedule(50);
 	}
 
 	@Override
@@ -115,35 +129,35 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		if(context == null){
 			return;
 		}
-				boolean changed = false;
-				MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
-				for (IPath path : paths) {
-					if(path.segmentCount() < 2){
-						continue;
+		boolean changed = false;
+		MercurialStatusCache statusCache = MercurialStatusCache.getInstance();
+		for (IPath path : paths) {
+			if(path.segmentCount() < 2){
+				continue;
+			}
+			IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+			IProject project = root.getProject(path.segment(0));
+			if(project == null || !projects.contains(project)){
+				continue;
+			}
+			IResource res = project.findMember(path.removeFirstSegments(1));
+			// only allow to hide files which are dirty
+			if(res instanceof IFile && !statusCache.isClean(res)){
+				IFile file = (IFile) res;
+				synchronized (files) {
+					if(files.contains(file)){
+						context.hide(file);
+						files.remove(file);
+						changed = true;
 					}
-					IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
-					IProject project = root.getProject(path.segment(0));
-					if(project == null || !projects.contains(project)){
-						continue;
-					}
-					IResource res = project.findMember(path.removeFirstSegments(1));
-					// only allow to hide files which are dirty
-					if(res instanceof IFile && !statusCache.isClean(res)){
-						IFile file = (IFile) res;
-						synchronized (files) {
-							if(files.contains(file)){
-								context.hide(file);
-								files.remove(file);
-								changed = true;
-							}
-						}
-					}
-				}
-				if(changed){
-					updateRequired = true;
-					endInput(null);
 				}
 			}
+		}
+		if(changed){
+			updateRequired = true;
+			endInput(null);
+		}
+	}
 
 	public void addListener(IPropertyChangeListener listener){
 		if(!listeners.contains(listener)) {
@@ -194,31 +208,23 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 		notifyListeners();
 	}
 
-	@SuppressWarnings("unchecked")
 	public void update(Observable o, Object arg) {
-		if(arg == null){
-			update(projects);
-			return;
-		}
-		if (!(arg instanceof Set)) {
-			return;
-		}
-		Set<IResource> changed = (Set<IResource>) arg;
-		update(ResourceUtils.groupByProject(changed).keySet());
+		update(projects);
+		return;
 	}
 
 	private void update(Set<IProject> projectSet){
-				boolean changed = false;
-				try {
-					beginInput();
-					clear();
-					for (IProject project : projectSet) {
-						changed |= update(project);
-					}
-				} finally {
-					updateRequired |= changed;
-					endInput(null);
-				}
+		boolean changed = false;
+		try {
+			beginInput();
+			clear();
+			for (IProject project : projectSet) {
+				changed |= update(project);
+			}
+		} finally {
+			updateRequired |= changed;
+			endInput(null);
+		}
 	}
 
 	private boolean update(IProject project){
@@ -270,12 +276,18 @@ public class WorkingChangeSet extends ChangeSet implements Observer {
 	}
 
 	private final class ExclusiveRule implements ISchedulingRule {
+		private final WorkingChangeSet cs;
+
+		public ExclusiveRule(WorkingChangeSet cs) {
+			this.cs = cs;
+		}
+
 		public boolean isConflicting(ISchedulingRule rule) {
 			return contains(rule);
 		}
 
 		public boolean contains(ISchedulingRule rule) {
-			return rule instanceof ExclusiveRule;
+			return rule instanceof ExclusiveRule && cs.equals(((ExclusiveRule)rule).cs);
 		}
 	}
 }

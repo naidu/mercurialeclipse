@@ -16,18 +16,20 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.Set;
 
-import org.eclipse.compare.CompareConfiguration;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.IAdaptable;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IMenuListener;
+import org.eclipse.jface.action.IMenuManager;
 import org.eclipse.jface.action.IToolBarManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.resource.JFaceResources;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -36,29 +38,32 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.ui.IEditorInput;
-import org.eclipse.ui.IEditorPart;
+import org.eclipse.team.ui.TeamUI;
 import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.ide.IDE;
 import org.eclipse.ui.part.ViewPart;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
-import com.vectrace.MercurialEclipse.commands.HgParentClient;
 import com.vectrace.MercurialEclipse.commands.HgResolveClient;
-import com.vectrace.MercurialEclipse.commands.extensions.HgIMergeClient;
-import com.vectrace.MercurialEclipse.compare.HgCompareEditorInput;
-import com.vectrace.MercurialEclipse.compare.RevisionNode;
+import com.vectrace.MercurialEclipse.commands.HgStatusClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.menu.CommitMergeHandler;
 import com.vectrace.MercurialEclipse.menu.UpdateHandler;
 import com.vectrace.MercurialEclipse.model.FlaggedAdaptable;
-import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.team.CompareAction;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
-import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class MergeView extends ViewPart implements ISelectionListener, Observer {
 
@@ -69,11 +74,11 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	private Action abortAction;
 
-	private IProject currentProject;
-
 	private Action markResolvedAction;
 
 	private Action markUnresolvedAction;
+
+	private HgRoot hgRoot;
 
 	@Override
 	public void createPartControl(final Composite parent) {
@@ -93,36 +98,8 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		table.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetDefaultSelected(SelectionEvent event) {
-				try {
-					TableItem item = (TableItem) event.item;
-					FlaggedAdaptable flagged = (FlaggedAdaptable) item.getData();
-					IFile file = (IFile) flagged.getAdapter(IFile.class);
-
-					String mergeNodeId = currentProject
-							.getPersistentProperty(ResourceProperties.MERGING);
-
-					String[] parents = HgParentClient.getParentNodeIds(currentProject);
-					int ancestor = HgParentClient.findCommonAncestor(
-							currentProject.getLocation().toFile(), parents[0],
-							parents[1]);
-
-					RevisionNode mergeNode = new RevisionNode(
-							new MercurialRevisionStorage(file, mergeNodeId));
-					RevisionNode ancestorNode = new RevisionNode(
-							new MercurialRevisionStorage(file, ancestor));
-
-					HgCompareEditorInput compareInput = new HgCompareEditorInput(
-							new CompareConfiguration(), file, ancestorNode,
-							mergeNode, true);
-
-					int returnValue = CompareUtils.openCompareDialog(compareInput);
-					if (returnValue == Window.OK && markResolvedAction.isEnabled()) {
-						markResolvedAction.run();
-					}
-				} catch (Exception e) {
-					MercurialEclipsePlugin.logError(e);
-					MercurialEclipsePlugin.showError(e);
-				}
+				TableItem item = (TableItem) event.item;
+				openMergeEditor(item);
 			}
 		});
 
@@ -150,14 +127,16 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 					update.setCleanEnabled(true);
 					update.setRevision(".");
 					update.setShell(table.getShell());
-					update.run(currentProject);
-				} catch (Exception e) {
+					update.run(hgRoot);
+				} catch (HgException e) {
 					MercurialEclipsePlugin.logError(e);
 					statusLabel.setText(e.getLocalizedMessage());
 				}
 			}
 		};
 		abortAction.setEnabled(false);
+		abortAction.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().getImageDescriptor(
+				ISharedImages.IMG_ELCL_STOP));
 		mgr.add(abortAction);
 		markResolvedAction = new Action(Messages.getString("MergeView.markResolved")) { //$NON-NLS-1$
 			@Override
@@ -165,11 +144,7 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 				try {
 					IFile file = getSelection();
 					if (file != null) {
-						if (HgResolveClient.checkAvailable()) {
-							HgResolveClient.markResolved(file);
-						} else {
-							HgIMergeClient.markResolved(file);
-						}
+						HgResolveClient.markResolved(file);
 						populateView(true);
 					}
 				} catch (Exception e) {
@@ -179,18 +154,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			}
 		};
 		markResolvedAction.setEnabled(false);
-		mgr.add(markResolvedAction);
 		markUnresolvedAction = new Action(Messages.getString("MergeView.markUnresolved")) { //$NON-NLS-1$
 			@Override
 			public void run() {
 				try {
 					IFile file = getSelection();
 					if (file != null) {
-						if (HgResolveClient.checkAvailable()) {
-							HgResolveClient.markUnresolved(file);
-						} else {
-							HgIMergeClient.markUnresolved(file);
-						}
+						HgResolveClient.markUnresolved(file);
 						populateView(true);
 					}
 				} catch (Exception e) {
@@ -200,24 +170,74 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 			}
 		};
 		markUnresolvedAction.setEnabled(false);
-		mgr.add(markUnresolvedAction);
+
+		final Action openMergeEditorAction = new Action("Open in Merge Editor") {
+			@Override
+			public void run() {
+				TableItem[] selection = table.getSelection();
+				if (selection != null && selection.length > 0) {
+					openMergeEditor(selection[0]);
+				}
+			}
+		};
+
+		final Action openEditorAction = new Action("Open in Default Editor") {
+			@Override
+			public void run() {
+				IFile file = getSelection();
+				if(file == null){
+					return;
+				}
+				try {
+					IDE.openEditor(getSite().getPage(), file);
+				} catch (PartInitException e) {
+					MercurialEclipsePlugin.logError(e);
+				}
+			}
+		};
+
+		final Action actionShowHistory = new Action("Show History") {
+			@Override
+			public void run() {
+				IFile file = getSelection();
+				if(file == null){
+					return;
+				}
+				TeamUI.getHistoryView().showHistoryFor(file);
+			}
+		};
+		actionShowHistory.setImageDescriptor(MercurialEclipsePlugin.getImageDescriptor("history.gif"));
+
+		// Contribute actions to popup menu
+		final MenuManager menuMgr = new MenuManager();
+		Menu menu = menuMgr.createContextMenu(table);
+		menuMgr.addMenuListener(new IMenuListener() {
+			public void menuAboutToShow(IMenuManager menuMgr1) {
+				menuMgr1.add(openMergeEditorAction);
+				menuMgr1.add(openEditorAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(actionShowHistory);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(markResolvedAction);
+				menuMgr1.add(markUnresolvedAction);
+				menuMgr1.add(new Separator());
+				menuMgr1.add(abortAction);
+			}
+		});
+		menuMgr.setRemoveAllWhenShown(true);
+		table.setMenu(menu);
 	}
 
 	private void populateView(boolean attemptToCommit) throws HgException {
-		try {
-			String mergeNodeId = currentProject.getPersistentProperty(ResourceProperties.MERGING);
-			statusLabel.setText("Merging " + currentProject.getName() + " with " + mergeNodeId);
-		} catch (CoreException e) {
-			MercurialEclipsePlugin.logError(e);
-			statusLabel.setText("Merging " + currentProject.getName());
+
+		String mergeNodeId = HgStatusClient.getMergeChangesetId(hgRoot);
+		if(mergeNodeId != null) {
+			statusLabel.setText("Merging " + hgRoot.getName() + " with " + mergeNodeId);
+		} else {
+			statusLabel.setText("Merging " + hgRoot.getName());
 		}
 		List<FlaggedAdaptable> status = null;
-		if (HgResolveClient.checkAvailable()) {
-			//HgResolveClient.resolveAll(currentProject.getLocation().toFile());
-			status = HgResolveClient.list(currentProject);
-		} else {
-			status = HgIMergeClient.getMergeStatus(currentProject);
-		}
+		status = HgResolveClient.list(hgRoot);
 		table.removeAll();
 		for (FlaggedAdaptable flagged : status) {
 			TableItem row = new TableItem(table, SWT.NONE);
@@ -240,25 +260,20 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 
 	private void attemptToCommitMerge() {
 		try {
-			String mergeNode = currentProject.getPersistentProperty(ResourceProperties.MERGING);
+			String mergeNode = HgStatusClient.getMergeChangesetId(hgRoot);
 
 			// offer commit of merge exactly once if no conflicts
 			// are found
 			boolean allResolved = areAllResolved();
 			if (allResolved) {
-				statusLabel.setText(currentProject.getName()
-								+ Messages.getString("MergeView.PleaseCommitMerge") //$NON-NLS-1$
-								+ " " + mergeNode);
-				if (currentProject
-						.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
-					new CommitMergeHandler()
-							.commitMergeWithCommitDialog(
-									currentProject, getSite()
-											.getShell());
-					currentProject
-							.setSessionProperty(
-									ResourceProperties.MERGE_COMMIT_OFFERED,
-									"true"); //$NON-NLS-1$
+				String message = hgRoot.getName()
+						+ Messages.getString("MergeView.PleaseCommitMerge") + " " + mergeNode;
+				statusLabel.setText(message);
+
+				IWorkspaceRoot wsRoot = ResourcesPlugin.getWorkspace().getRoot();
+				if (wsRoot.getSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED) == null) {
+					new CommitMergeHandler().commitMergeWithCommitDialog(hgRoot, getSite().getShell());
+					ResourcesPlugin.getWorkspace().getRoot().setSessionProperty(ResourceProperties.MERGE_COMMIT_OFFERED, "true");
 				}
 			}
 		} catch (Exception e) {
@@ -269,26 +284,33 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	public void clearView() {
 		statusLabel.setText(""); //$NON-NLS-1$
 		table.removeAll();
-		currentProject = null;
 		abortAction.setEnabled(false);
 		markResolvedAction.setEnabled(false);
 		markUnresolvedAction.setEnabled(false);
+		hgRoot = null;
 	}
 
-	public void setCurrentProject(IProject project) {
-		if (currentProject != project && project != null && project.isAccessible()) {
+	public void setCurrentRoot(HgRoot newRoot) {
+		if(newRoot == null) {
+			clearView();
+			return;
+		}
+		if ((hgRoot == null) || !newRoot.equals(hgRoot)) {
+			// TODO should schedule a job here...
 			try {
-				if (project.getPersistentProperty(ResourceProperties.MERGING) != null) {
-					currentProject = project;
+				if (HgStatusClient.isMergeInProgress(newRoot)) {
+					this.hgRoot = newRoot;
 					populateView(false);
 				} else {
 					clearView();
 				}
-			} catch (Exception e) {
+			} catch (HgException e) {
 				MercurialEclipsePlugin.logError(e);
 			}
 		}
 	}
+
+
 
 	private boolean areAllResolved() {
 		boolean allResolved = true;
@@ -302,23 +324,13 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	}
 
 	public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
+		// TODO do not react on any changes if the view is hidden...
+
+		if (selection instanceof IStructuredSelection && !selection.isEmpty()) {
 			IStructuredSelection structured = (IStructuredSelection) selection;
-			if (structured.getFirstElement() instanceof IAdaptable) {
-				IResource resource = (IResource) ((IAdaptable) structured
-						.getFirstElement()).getAdapter(IResource.class);
-				if (resource != null) {
-					setCurrentProject(resource.getProject());
-					return;
-				}
-			}
-		}
-		if (part instanceof IEditorPart) {
-			IEditorInput input = ((IEditorPart) part).getEditorInput();
-			IFile file = (IFile) input.getAdapter(IFile.class);
-			if (file != null) {
-				setCurrentProject(file.getProject());
-				return;
+			IResource resource = MercurialEclipsePlugin.getAdapter(structured.getFirstElement(), IResource.class);
+			if (resource != null) {
+				setCurrentRoot(MercurialTeamProvider.getHgRoot(resource.getProject()));
 			}
 		}
 	}
@@ -335,14 +347,10 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 		super.dispose();
 	}
 
-	/**
-	 * @return
-	 */
 	private IFile getSelection() {
 		TableItem[] selection = table.getSelection();
 		if (selection != null && selection.length > 0) {
-			FlaggedAdaptable fa = (FlaggedAdaptable) table.getSelection()[0]
-					.getData();
+			FlaggedAdaptable fa = (FlaggedAdaptable) selection[0].getData();
 			IFile iFile = ((IFile) fa.getAdapter(IFile.class));
 			return iFile;
 		}
@@ -350,21 +358,32 @@ public class MergeView extends ViewPart implements ISelectionListener, Observer 
 	}
 
 	public void update(Observable o, Object arg) {
-		if(currentProject == null || !(arg instanceof Set<?>)){
+		if(hgRoot == null || !(arg instanceof Set<?>)){
 			return;
 		}
 		Set<?> set = (Set<?>) arg;
-
-		if(set.contains(currentProject)){
+		Set<IProject> projects = ResourceUtils.getProjects(hgRoot);
+		// create intersection of the root projects with the updated set
+		projects.retainAll(set);
+		// if the intersection contains common projects, we need update the view
+		if(!projects.isEmpty()) {
 			Display.getDefault().asyncExec(new Runnable() {
 
 				public void run() {
-					IProject backup = currentProject;
+					HgRoot backup = hgRoot;
 					clearView();
-					setCurrentProject(backup);
+					setCurrentRoot(backup);
 				}
 			});
 		}
+	}
+
+	private void openMergeEditor(TableItem item) {
+		FlaggedAdaptable flagged = (FlaggedAdaptable) item.getData();
+		IFile file = (IFile) flagged.getAdapter(IFile.class);
+		CompareAction compareAction = new CompareAction(file);
+		compareAction.setEnableMerge(true);
+		compareAction.run(null);
 	}
 
 }

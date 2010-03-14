@@ -13,8 +13,6 @@ package com.vectrace.MercurialEclipse.views.console;
 
 import static com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants.*;
 
-import java.util.regex.Pattern;
-
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.OperationCanceledException;
@@ -43,15 +41,7 @@ public class HgConsole extends MessageConsole {
 	private Color commandColor;
 	private Color messageColor;
 	private Color errorColor;
-	private final static String HTTP_PATTERN_STRING = "[hH][tT][tT][pP]:.*[@]"; //$NON-NLS-1$
-	private final static String HTTPS_PATTERN_STRING = "[hH][tT][tT][pP][sS]:.*[@]"; //$NON-NLS-1$
-	private final static String SSH_PATTERN_STRING = "[sS][sS][hH]:.*[@]"; //$NON-NLS-1$
-	private final static String SVN_PATTERN_STRING = "[sS][vV][nN]:.*[@]"; //$NON-NLS-1$
 
-	private final static Pattern HTTP_PATTERN = Pattern.compile(HTTP_PATTERN_STRING);
-	private final static Pattern HTTPS_PATTERN = Pattern.compile(HTTPS_PATTERN_STRING);
-	private final static Pattern SSH_PATTERN = Pattern.compile(SSH_PATTERN_STRING);
-	private final static Pattern SVN_PATTERN = Pattern.compile(SVN_PATTERN_STRING);
 
 	/** streams for each command type - each stream has its own color */
 	private MessageConsoleStream commandStream;
@@ -154,16 +144,6 @@ public class HgConsole extends MessageConsole {
 	private void appendLine(int type, String line) {
 		HgConsoleHolder.getInstance().showConsole(false);
 		String myLine = line == null? "" : line;
-		myLine = HTTP_PATTERN.matcher(myLine).replaceAll("http://***@"); //$NON-NLS-1$
-		if (myLine.equals(line)) {
-			myLine = HTTPS_PATTERN.matcher(line).replaceAll("https://***@"); //$NON-NLS-1$
-		}
-		if (myLine.equals(line)) {
-			myLine = SSH_PATTERN.matcher(line).replaceAll("ssh://***@"); //$NON-NLS-1$
-		}
-		if (myLine.equals(line)) {
-			myLine = SVN_PATTERN.matcher(line).replaceAll("svn://***@"); //$NON-NLS-1$
-		}
 		synchronized (document) {
 			if (visible) {
 				switch (type) {
@@ -279,7 +259,7 @@ public class HgConsole extends MessageConsole {
 		}
 		String time;
 		try {
-			time = String.format("Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
+			time = String.format("  Done in %1$tM:%1$tS:%1$tL", Long.valueOf(timeInMillis));
 		} catch (RuntimeException e) {
 			MercurialEclipsePlugin.logError(e);
 			time = "";

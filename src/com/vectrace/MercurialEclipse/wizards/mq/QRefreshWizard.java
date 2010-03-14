@@ -1,12 +1,13 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  *
  * Contributors:
- * bastian	implementation
+ * bastian	     implementation
+ * Philip Graf   load current commit text
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards.mq;
 
@@ -15,9 +16,11 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.operation.IRunnableContext;
+import org.eclipse.jface.text.Document;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
+import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQHeaderClient;
 import com.vectrace.MercurialEclipse.commands.extensions.mq.HgQRefreshClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.team.cache.MercurialStatusCache;
@@ -26,39 +29,21 @@ import com.vectrace.MercurialEclipse.wizards.HgWizard;
 
 /**
  * @author bastian
- *
  */
 public class QRefreshWizard extends HgWizard {
 	private QNewWizardPage page = null;
 
 	private class RefreshOperation extends HgOperation {
 
-		/**
-		 * @param context
-		 */
 		public RefreshOperation(IRunnableContext context) {
 			super(context);
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see
-		 * com.vectrace.MercurialEclipse.actions.HgOperation#getActionDescription
-		 * ()
-		 */
 		@Override
 		protected String getActionDescription() {
 			return Messages.getString("QRefreshWizard.actionDescription"); //$NON-NLS-1$
 		}
 
-		/*
-		 * (non-Javadoc)
-		 *
-		 * @see
-		 * com.vectrace.MercurialEclipse.actions.HgOperation#run(org.eclipse
-		 * .core.runtime.IProgressMonitor)
-		 */
 		@Override
 		public void run(IProgressMonitor monitor)
 				throws InvocationTargetException, InterruptedException {
@@ -90,11 +75,8 @@ public class QRefreshWizard extends HgWizard {
 
 	}
 
-	private IResource resource;
+	private final IResource resource;
 
-	/**
-	 * @param windowTitle
-	 */
 	public QRefreshWizard(IResource resource) {
 		super(Messages.getString("QRefreshWizard.title")); //$NON-NLS-1$
 		this.resource = resource;
@@ -104,14 +86,14 @@ public class QRefreshWizard extends HgWizard {
 				null, null, resource, false);
 
 		initPage(Messages.getString("QRefreshWizard.pageDescription"), page); //$NON-NLS-1$
+		try {
+			page.setCommitTextDocument(new Document(HgQHeaderClient.getHeader(resource)));
+		} catch (HgException e) {
+			MercurialEclipsePlugin.logWarning("Cannot read header of current patch.", e);
+		}
 		addPage(page);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see com.vectrace.MercurialEclipse.wizards.HgWizard#performFinish()
-	 */
 	@Override
 	public boolean performFinish() {
 		RefreshOperation refreshOperation = new RefreshOperation(getContainer());

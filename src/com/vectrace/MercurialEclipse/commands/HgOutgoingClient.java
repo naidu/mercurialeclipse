@@ -13,29 +13,23 @@
 package com.vectrace.MercurialEclipse.commands;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IPath;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.Branch;
-import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.cache.RemoteData;
+import com.vectrace.MercurialEclipse.team.cache.RemoteKey;
 
 public class HgOutgoingClient extends AbstractParseChangesetClient {
 
 	/**
 	 * @return never return null
 	 */
-	public static Map<IPath, Set<ChangeSet>> getOutgoing(IResource res,
-			HgRepositoryLocation repository, String branch) throws HgException {
-		AbstractShellCommand command = getCommand(res, branch);
+	public static RemoteData getOutgoing(RemoteKey key) throws HgException {
+		AbstractShellCommand command = getCommand(key);
 		boolean computeFullStatus = MercurialEclipsePlugin.getDefault().getPreferenceStore().getBoolean(MercurialPreferenceConstants.SYNC_COMPUTE_FULL_REMOTE_FILE_STATUS);
 		int style = computeFullStatus? AbstractParseChangesetClient.STYLE_WITH_FILES : AbstractParseChangesetClient.STYLE_WITH_FILES_FAST;
 		try {
@@ -45,15 +39,14 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 			throw new HgException(e.getLocalizedMessage(), e);
 		}
 
-		addRepoToHgCommand(repository, command);
+		addRepoToHgCommand(key.getRepo(), command);
 
 		String result = getResult(command);
 		if (result == null) {
-			return new HashMap<IPath, Set<ChangeSet>>();
+			return new RemoteData(key, Direction.OUTGOING);
 		}
 
-		Map<IPath, Set<ChangeSet>> revisions = createMercurialRevisions(
-				res, result, true, Direction.OUTGOING, repository, null);
+		RemoteData revisions = createRemoteRevisions(key, result, Direction.OUTGOING, null);
 		return revisions;
 	}
 
@@ -72,13 +65,18 @@ public class HgOutgoingClient extends AbstractParseChangesetClient {
 		}
 	}
 
-	private static AbstractShellCommand getCommand(IResource res, String branch) {
-		AbstractShellCommand command = new HgCommand("outgoing", res.getProject(), //$NON-NLS-1$
+	private static AbstractShellCommand getCommand(RemoteKey key) {
+		HgRoot hgRoot = key.getRoot();
+		String branch = key.getBranch();
+		AbstractShellCommand command = new HgCommand("outgoing", hgRoot, //$NON-NLS-1$
 				false);
+		command.setExecutionRule(new AbstractShellCommand.ExclusiveExecutionRule(hgRoot));
 		command.setUsePreferenceTimeout(MercurialPreferenceConstants.PULL_TIMEOUT);
 		if (branch != null) {
 			if (!Branch.isDefault(branch)) {
-				command.addOptions("-r", branch);
+				if(HgBranchClient.isKnownRemote(key)) {
+					command.addOptions("-r", branch);
+				}
 			} else {
 				// see issue 10495: there can be many "default" heads, so show all of them
 				// otherwise if "-r default" is used, only unnamed at "tip" is shown, if any

@@ -26,6 +26,7 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
+import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 
 public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 		IWorkbenchPreferencePage {
@@ -46,6 +47,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 	private IntegerFieldEditor width;
 	private BooleanFieldEditor debug;
 	private BooleanFieldEditor debugTime;
+	private BooleanFieldEditor showOnStartup;
 
 	@Override
 	protected void createFieldEditors() {
@@ -82,6 +84,12 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 				Messages.getString("ConsolePreferencesPage.showConsoleOnMsg"), composite); //$NON-NLS-1$
 		addField(showOnMessage);
 
+		// ** show on startup
+		showOnStartup = new BooleanFieldEditor(
+				MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_STARTUP,
+				"Show console on start-up", composite); //$NON-NLS-1$
+		addField(showOnStartup);
+
 		// ** SHOW DEBUG
 		debug = new BooleanFieldEditor(
 				MercurialPreferenceConstants.PREF_CONSOLE_DEBUG,
@@ -97,19 +105,19 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 		createLabel(composite, Messages.getString("ConsolePreferencesPage.colorPrefs")); //$NON-NLS-1$
 
 		// ** COLORS AND FONTS
-		commandColorEditor = createColorFieldEditor(
+		commandColorEditor = SWTWidgetHelper.createColorFieldEditor(
 				MercurialPreferenceConstants.PREF_CONSOLE_COMMAND_COLOR,
-				Messages.getString("ConsolePreferencesPage.cmdColor"), composite); //$NON-NLS-1$
+				Messages.getString("ConsolePreferencesPage.cmdColor"), composite, this, getPreferenceStore()); //$NON-NLS-1$
 		addField(commandColorEditor);
 
-		messageColorEditor = createColorFieldEditor(
+		messageColorEditor = SWTWidgetHelper.createColorFieldEditor(
 				MercurialPreferenceConstants.PREF_CONSOLE_MESSAGE_COLOR,
-				Messages.getString("ConsolePreferencesPage.msgColor"), composite); //$NON-NLS-1$
+				Messages.getString("ConsolePreferencesPage.msgColor"), composite, this, getPreferenceStore()); //$NON-NLS-1$
 		addField(messageColorEditor);
 
-		errorColorEditor = createColorFieldEditor(
+		errorColorEditor = SWTWidgetHelper.createColorFieldEditor(
 				MercurialPreferenceConstants.PREF_CONSOLE_ERROR_COLOR,
-				Messages.getString("ConsolePreferencesPage.errorColor"), composite); //$NON-NLS-1$
+				Messages.getString("ConsolePreferencesPage.errorColor"), composite, this, getPreferenceStore()); //$NON-NLS-1$
 		addField(errorColorEditor);
 
 		//initIntegerFields();
@@ -137,7 +145,7 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 		int currWatermark = highWaterMark.getIntValue();
 		if (currWatermark < 1000) {
 			highWaterMark.setValidRange(1000, Integer.MAX_VALUE - 1);
-			highWaterMark.setStringValue("1000");             //$NON-NLS-1$
+			highWaterMark.setStringValue("100000");             //$NON-NLS-1$
 		}
 		int currWidth = width.getIntValue();
 		if (currWidth < 80) {
@@ -165,19 +173,6 @@ public class ConsolePreferencesPage extends FieldEditorPreferencePage implements
 		label.setLayoutData(data);
 		return label;
 	}
-
-	/**
-	 * Creates a new color field editor.
-	 */
-	private ColorFieldEditor createColorFieldEditor(String preferenceName,
-			String label, Composite parent) {
-		ColorFieldEditor editor = new ColorFieldEditor(preferenceName, label,
-				parent);
-		editor.setPage(this);
-		editor.setPreferenceStore(getPreferenceStore());
-		return editor;
-	}
-
 
 	public void init(IWorkbench workbench) {
 	}

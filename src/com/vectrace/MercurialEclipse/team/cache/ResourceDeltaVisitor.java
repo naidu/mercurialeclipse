@@ -24,7 +24,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.team.core.RepositoryProvider;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.SafeWorkspaceJob;
@@ -41,7 +40,6 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	private final Map<IProject, Set<IResource>> removed;
 	private final Map<IProject, Set<IResource>> changed;
 	private final Map<IProject, Set<IResource>> added;
-	private final boolean completeStatus;
 	private final boolean autoShare;
 	private final MercurialStatusCache cache;
 	private int resourcesCount;
@@ -52,10 +50,6 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		this.changed = changed;
 		this.added = added;
 		cache = MercurialStatusCache.getInstance();
-		completeStatus = Boolean
-			.valueOf(
-				HgClients.getPreference(MercurialPreferenceConstants.RESOURCE_DECORATOR_COMPLETE_STATUS,
-				"false")).booleanValue(); //$NON-NLS-1$
 		autoShare = Boolean.valueOf(
 				HgClients.getPreference(MercurialPreferenceConstants.PREF_AUTO_SHARE_PROJECTS, "false"))
 				.booleanValue();
@@ -143,7 +137,7 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 	}
 
 	private boolean isCompleteStatusRequested() {
-		return completeStatus || resourcesCount > MercurialStatusCache.NUM_CHANGED_FOR_COMPLETE_STATUS;
+		return resourcesCount > MercurialStatusCache.NUM_CHANGED_FOR_COMPLETE_STATUS;
 	}
 
 
@@ -168,14 +162,13 @@ final class ResourceDeltaVisitor implements IResourceDeltaVisitor {
 		}
 		MercurialEclipsePlugin.logInfo("Autosharing " + project.getName()
 				+ ". Detected repository location: " + hgRoot, null);
-		final IWorkbenchWindow activeWorkbenchWindow = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		final IWorkbenchWindow activeWorkbenchWindow = MercurialEclipsePlugin.getActiveWindow();
 
 		new SafeWorkspaceJob(NLS.bind(Messages.mercurialStatusCache_autoshare, project.getName())) {
 			@Override
 			protected IStatus runSafe(IProgressMonitor monitor) {
 				try {
-					new InitOperation(activeWorkbenchWindow, project, hgRoot, hgRoot.getAbsolutePath())
-					.run(monitor);
+					new InitOperation(activeWorkbenchWindow, project, hgRoot).run(monitor);
 				} catch (Exception e) {
 					throw new RuntimeException(e);
 				}

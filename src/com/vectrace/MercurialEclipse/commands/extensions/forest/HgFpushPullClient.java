@@ -16,25 +16,23 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Set;
 
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.CoreException;
-import org.eclipse.core.runtime.jobs.IJobChangeEvent;
-import org.eclipse.core.runtime.jobs.JobChangeAdapter;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.AbstractShellCommand;
 import com.vectrace.MercurialEclipse.commands.HgCommand;
 import com.vectrace.MercurialEclipse.commands.HgPushPullClient;
-import com.vectrace.MercurialEclipse.commands.RefreshWorkspaceStatusJob;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
-import com.vectrace.MercurialEclipse.team.cache.RefreshJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshRootJob;
+import com.vectrace.MercurialEclipse.team.cache.RefreshWorkspaceStatusJob;
 
 public class HgFpushPullClient extends HgPushPullClient {
 
-	public static String fpush(File forestRoot, HgRepositoryLocation repo,
+	public static String fpush(File forestRoot, IHgRepositoryLocation repo,
 			String revision, int timeout, File snapFile) throws CoreException {
 
 		AbstractShellCommand command = new HgCommand("fpush", forestRoot, true);
@@ -61,7 +59,7 @@ public class HgFpushPullClient extends HgPushPullClient {
 		return new String(command.executeToBytes(timeout));
 	}
 
-	public static String fpull(File forestRoot, HgRepositoryLocation repo,
+	public static String fpull(File forestRoot, IHgRepositoryLocation repo,
 			boolean update, boolean timeout, ChangeSet changeset,
 			boolean walkHg, File snapFile, boolean partial) throws HgException {
 
@@ -106,25 +104,18 @@ public class HgFpushPullClient extends HgPushPullClient {
 		} else {
 			result = new String(command.executeToBytes(Integer.MAX_VALUE));
 		}
-			Set<IProject> projects = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationProjects(repo);
-			// The reason to use "all" instead of only "local + incoming", is that we can pull
-			// from another repo as the sync clients for given project may use
-			// in this case, we also need to update "outgoing" changesets
-			final int flags = RefreshJob.ALL;
-			for (final IProject project : projects) {
-				if(update) {
-					RefreshWorkspaceStatusJob job = new RefreshWorkspaceStatusJob(project);
-					job.addJobChangeListener(new JobChangeAdapter(){
-					@Override
-						public void done(IJobChangeEvent event) {
-							new RefreshJob("Refreshing " + project.getName(), project, flags).schedule();
-						}
-					});
-					job.schedule();
-				} else {
-					new RefreshJob("Refreshing " + project.getName(), project, flags).schedule();
-				}
+		Set<HgRoot> roots = MercurialEclipsePlugin.getRepoManager().getAllRepoLocationRoots(repo);
+		// The reason to use "all" instead of only "local + incoming", is that we can pull
+		// from another repo as the sync clients for given project may use
+		// in this case, we also need to update "outgoing" changesets
+		final int flags = RefreshRootJob.ALL;
+		for (final HgRoot hgRoot : roots) {
+			if (update) {
+				new RefreshWorkspaceStatusJob(hgRoot, flags).schedule();
+			} else {
+				new RefreshRootJob(hgRoot, flags).schedule();
 			}
+		}
 		return result;
 	}
 }

@@ -26,6 +26,8 @@ import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
 
 public class HgIdentClient extends AbstractClient {
 
+	public static final String VERSION_ZERO = "0000000000000000000000000000000000000000";
+
 	public static String getCurrentRevision(IContainer root) throws HgException {
 		AbstractShellCommand command = new HgCommand("identify", root, true); //$NON-NLS-1$
 		command.addOptions("-n", "-i"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -91,12 +93,14 @@ public class HgIdentClient extends AbstractClient {
 	 * @throws HgException
 	 */
 	public static String getCurrentChangesetId(HgRoot repository) throws HgException {
-		StringBuilder pathStr = new StringBuilder(repository.getAbsolutePath());
-		pathStr.append(File.separator).append(".hg");
-		pathStr.append(File.separator).append("dirstate");
+		File file = new File(repository, ".hg" + File.separator + "dirstate");
+		if(!file.exists()){
+			// new repository with no files
+			return VERSION_ZERO;
+		}
 		FileInputStream reader = null;
 		try {
-			reader = new FileInputStream(pathStr.toString());
+			reader = new FileInputStream(file);
 		} catch (FileNotFoundException e) {
 			// sometimes hg is writing the file at same time we trying to read from it
 			// this happens especially if we run many add/remove operations
@@ -108,12 +112,12 @@ public class HgIdentClient extends AbstractClient {
 				}
 			}
 			try {
-				reader = new FileInputStream(pathStr.toString());
+				reader = new FileInputStream(file);
 			} catch (FileNotFoundException e1) {
 				MercurialEclipsePlugin.logError(e1);
 			}
 			if(reader == null) {
-				throw new HgException("Dirstate failed for the path: " + pathStr, e);
+				throw new HgException("Dirstate failed for the path: " + file, e);
 			}
 		}
 		try {

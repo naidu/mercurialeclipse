@@ -90,7 +90,7 @@ public class PatchTable extends Composite {
 
 	public Patch getSelection() {
 		List<Patch>list = getSelections();
-		if (list.size()==0) {
+		if (list == null || list.size()==0) {
 			return null;
 		}
 		return list.get(0);

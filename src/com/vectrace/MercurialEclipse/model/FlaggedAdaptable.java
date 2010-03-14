@@ -27,6 +27,9 @@ public class FlaggedAdaptable implements IAdaptable {
 
 	@SuppressWarnings("unchecked")
 	public Object getAdapter(Class adapter) {
+		if(adaptable == null){
+			return null;
+		}
 		return adaptable.getAdapter(adapter);
 	}
 

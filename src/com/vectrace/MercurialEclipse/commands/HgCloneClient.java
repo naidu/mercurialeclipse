@@ -15,12 +15,12 @@ package com.vectrace.MercurialEclipse.commands;
 import java.io.File;
 
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 
 public class HgCloneClient extends AbstractClient {
 
-	public static void clone(File parentDirectory, HgRepositoryLocation repo,
+	public static void clone(File parentDirectory, IHgRepositoryLocation repo,
 			boolean noUpdate, boolean pull, boolean uncompressed,
 			boolean timeout, String rev, String cloneName) throws HgException {
 		AbstractShellCommand command = new HgCommand("clone", parentDirectory, //$NON-NLS-1$

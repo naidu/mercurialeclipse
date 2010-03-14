@@ -20,6 +20,7 @@ import org.eclipse.ui.console.ConsolePlugin;
 import org.eclipse.ui.console.IConsole;
 import org.eclipse.ui.console.IConsoleListener;
 import org.eclipse.ui.console.IConsoleManager;
+import org.eclipse.ui.themes.ITheme;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.preferences.MercurialPreferenceConstants;
@@ -29,6 +30,7 @@ import com.vectrace.MercurialEclipse.team.MercurialUtilities;
  * This class should only be called from the UI thread as it is not thread-safe.
  */
 public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListener {
+	private static final String CONSOLE_FONT = "com.vectrace.mercurialeclipse.ui.colorsandfonts.ConsoleFont"; //$NON-NLS-1$
 
 	private static final HgConsoleHolder instance = new HgConsoleHolder();
 
@@ -53,10 +55,12 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 				return;
 			}
 			console = new HgConsole();
+
 			// install font
-			Font f = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme().getFontRegistry().get(
-					MercurialPreferenceConstants.PREF_CONSOLE_FONT);
-			console.setFont(f);
+			ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+			theme.addPropertyChangeListener(this);
+			setConsoleFont();
+
 			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
 					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
 			JFaceResources.getFontRegistry().addListener(this);
@@ -143,6 +147,8 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 		if(MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE.equals(event.getProperty())){
 			showOnMessage = Boolean.parseBoolean(MercurialUtilities.getPreference(
 					MercurialPreferenceConstants.PREF_CONSOLE_SHOW_ON_MESSAGE, "false"));
+		} else if (CONSOLE_FONT.equals(event.getProperty())) {
+			setConsoleFont();
 		} else {
 			console.propertyChange(event);
 		}
@@ -150,5 +156,11 @@ public class HgConsoleHolder implements IConsoleListener, IPropertyChangeListene
 
 	private IConsoleManager getConsoleManager() {
 		return ConsolePlugin.getDefault().getConsoleManager();
+	}
+
+	private void setConsoleFont() {
+		ITheme theme = PlatformUI.getWorkbench().getThemeManager().getCurrentTheme();
+		Font font = theme.getFontRegistry().get(CONSOLE_FONT);
+		console.setFont(font);
 	}
 }

@@ -20,8 +20,10 @@ import org.eclipse.core.resources.IResource;
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.Direction;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.team.MercurialTeamProvider;
 
 /**
  * Cache for all changesets existing locally, but not present on the server
@@ -48,10 +50,11 @@ public class IncomingChangesetCache extends AbstractRemoteCache {
 	 *            the resource to get the changeset for
 	 */
 	public ChangeSet getNewestChangeSet(IResource resource) throws HgException {
-		Set<HgRepositoryLocation> locs = MercurialEclipsePlugin
-		.getRepoManager().getAllProjectRepoLocations(resource.getProject());
+		HgRoot hgRoot = MercurialTeamProvider.getHgRoot(resource);
+		Set<IHgRepositoryLocation> locs = MercurialEclipsePlugin.getRepoManager()
+				.getAllRepoLocations(hgRoot);
 		SortedSet<ChangeSet> changeSets1 = new TreeSet<ChangeSet>();
-		for (HgRepositoryLocation repository : locs) {
+		for (IHgRepositoryLocation repository : locs) {
 			ChangeSet candidate = getNewestChangeSet(resource, repository, null);
 			if (candidate != null) {
 				changeSets1.add(candidate);

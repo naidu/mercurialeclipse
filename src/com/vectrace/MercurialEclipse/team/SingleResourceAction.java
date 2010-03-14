@@ -7,7 +7,6 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IActionDelegate;
-import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 
@@ -32,7 +31,7 @@ public abstract class SingleResourceAction implements IActionDelegate {
 	}
 
 	protected Shell getShell() {
-		return PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+		return MercurialEclipsePlugin.getActiveShell();
 	}
 
 	protected IResource getSelectedResource() {

@@ -12,8 +12,7 @@
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.wizards;
 
-import org.eclipse.core.resources.IProject;
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -31,6 +30,7 @@ import org.eclipse.swt.widgets.Listener;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.exception.HgException;
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.team.MercurialUtilities;
 import com.vectrace.MercurialEclipse.team.ResourceProperties;
 import com.vectrace.MercurialEclipse.ui.ChangesetTable;
@@ -42,29 +42,32 @@ import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
  */
 public class PushPullPage extends ConfigurationWizardMainPage {
 
-	protected IResource resource;
 	protected Button forceCheckBox;
-	protected boolean force;
-	protected ChangesetTable changesetTable;
-	protected String revision;
-	protected Button revCheckBox;
-	protected Button timeoutCheckBox;
-	protected boolean timeout;
 	protected Group optionGroup;
-	protected boolean showRevisionTable = true;
-	protected boolean showForce = true;
-	protected Button forestCheckBox;
-	protected boolean showForest = false;
-	protected Combo snapFileCombo;
-	protected Button snapFileButton;
-	protected boolean showSnapFile = true;
-	protected boolean showSvn = false;
-	protected Button svnCheckBox;
+	private boolean force;
+	private boolean timeout;
 
-	public PushPullPage(IResource resource, String pageName, String title,
+	private Button timeoutCheckBox;
+	private ChangesetTable changesetTable;
+	private Button revCheckBox;
+	private Button forestCheckBox;
+	private Combo snapFileCombo;
+	private Button snapFileButton;
+	private Button svnCheckBox;
+
+	private boolean showRevisionTable;
+	private boolean showForce;
+	private boolean showForest;
+	private boolean showSnapFile;
+	private boolean showSvn;
+
+	public PushPullPage(HgRoot hgRoot, String pageName, String title,
 			ImageDescriptor titleImage) {
 		super(pageName, title, titleImage);
-		this.resource = resource;
+		showSnapFile = true;
+		showRevisionTable = true;
+		showForce = true;
+		setHgRoot(hgRoot);
 		try {
 			setShowForest(true);
 			setShowSvn(true);
@@ -82,11 +85,11 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		// now the options
 		optionGroup = SWTWidgetHelper.createGroup(composite, Messages
 				.getString("PushRepoPage.optionGroup.title")); //$NON-NLS-1$
-		this.timeoutCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		timeoutCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				getTimeoutCheckBoxLabel());
 
 		if (showForce) {
-			this.forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+			forceCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					getForceCheckBoxLabel());
 		}
 		if (showRevisionTable) {
@@ -95,10 +98,10 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 		createExtensionControls();
 
-		setDefaultLocation();
+		initDefaultLocation();
 	}
 
-	private void createExtensionControls() {
+	protected void createExtensionControls() {
 		if (showForest) {
 			this.forestCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					Messages.getString("PushPullPage.option.forest")); //$NON-NLS-1$
@@ -143,13 +146,13 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		}
 
 		if (showSvn) {
-			this.svnCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+			svnCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 					Messages.getString("PushPullPage.option.svn"));             //$NON-NLS-1$
 		}
 	}
 
 	private void createRevisionTable(Composite composite) {
-		this.revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
+		revCheckBox = SWTWidgetHelper.createCheckBox(optionGroup,
 				getRevCheckBoxLabel());
 
 		Listener revCheckBoxListener = new Listener() {
@@ -159,7 +162,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 			}
 		};
 
-		this.revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
+		revCheckBox.addListener(SWT.Selection, revCheckBoxListener);
 
 		Group revGroup = SWTWidgetHelper.createGroup(composite,
 				getRevGroupLabel(), GridData.FILL_BOTH);
@@ -167,21 +170,9 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		GridData gridData = new GridData(GridData.FILL_BOTH);
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
-		this.changesetTable = new ChangesetTable(revGroup, resource);
-		this.changesetTable.setLayoutData(gridData);
-		this.changesetTable.setEnabled(false);
-
-		SelectionListener listener = new SelectionListener() {
-			public void widgetSelected(SelectionEvent e) {
-				setPageComplete(true);
-				revision = changesetTable.getSelection().toString();
-			}
-			public void widgetDefaultSelected(SelectionEvent e) {
-				widgetSelected(e);
-			}
-		};
-
-		this.changesetTable.addSelectionListener(listener);
+		changesetTable = new ChangesetTable(revGroup, getHgRoot());
+		changesetTable.setLayoutData(gridData);
+		changesetTable.setEnabled(false);
 	}
 
 	protected String getRevGroupLabel() {
@@ -204,48 +195,20 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		return force;
 	}
 
-	public String getRevision() {
-		return revision;
-	}
-
 	public boolean isTimeout() {
 		return timeout;
 	}
 
-	public IResource getResource() {
-		return resource;
+	public boolean isForceSelected() {
+		return forceCheckBox != null && forceCheckBox.getSelection();
 	}
 
-	public void setResource(IResource resource) {
-		this.resource = resource;
-	}
-
-	public Button getForceCheckBox() {
-		return forceCheckBox;
-	}
-
-	public ChangesetTable getChangesetTable() {
-		return changesetTable;
-	}
-
-	public Button getRevCheckBox() {
-		return revCheckBox;
-	}
-
-	public Button getTimeoutCheckBox() {
-		return timeoutCheckBox;
-	}
-
-	public boolean isShowRevisionTable() {
-		return showRevisionTable;
+	public boolean isTimeoutSelected() {
+		return timeoutCheckBox != null && timeoutCheckBox.getSelection();
 	}
 
 	public void setShowRevisionTable(boolean showRevisionTable) {
 		this.showRevisionTable = showRevisionTable;
-	}
-
-	public boolean isShowForce() {
-		return showForce;
 	}
 
 	public void setShowForce(boolean showForce) {
@@ -256,7 +219,7 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		return showForest;
 	}
 
-	public void setShowForest(boolean showForest) throws HgException {
+	protected void setShowForest(boolean showForest) throws HgException {
 		this.showForest = showForest
 				&& MercurialUtilities.isCommandAvailable("fpull", //$NON-NLS-1$
 						ResourceProperties.EXT_FOREST_AVAILABLE, null);
@@ -264,10 +227,6 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 
 	public String getSnapFileText() {
 		return snapFileCombo != null? snapFileCombo.getText() : null;
-	}
-
-	public void setSnapFileCombo(Combo snapFileCombo) {
-		this.snapFileCombo = snapFileCombo;
 	}
 
 	public boolean isShowSnapFile() {
@@ -278,35 +237,28 @@ public class PushPullPage extends ConfigurationWizardMainPage {
 		this.showSnapFile = showSnapFile;
 	}
 
-	public Button getForestCheckBox() {
-		return forestCheckBox;
-	}
-
-	public void setForestCheckBox(Button forestCheckBox) {
-		this.forestCheckBox = forestCheckBox;
+	public boolean isForestSelected() {
+		return forestCheckBox.getSelection();
 	}
 
 	public boolean isShowSvn() {
 		return showSvn;
 	}
 
-	public void setShowSvn(boolean showSvn) throws HgException {
+	protected void setShowSvn(boolean showSvn) throws HgException {
 		this.showSvn = showSvn
 				&& MercurialUtilities.isCommandAvailable("svn", //$NON-NLS-1$
 						ResourceProperties.EXT_HGSUBVERSION_AVAILABLE, null);
 	}
 
-	public Button getSvnCheckBox() {
-		return svnCheckBox;
-	}
-
-	public void setSvnCheckBox(Button svnCheckBox) {
-		this.svnCheckBox = svnCheckBox;
+	public boolean isSvnSelected() {
+		return isShowSvn() && svnCheckBox != null && svnCheckBox.getSelection();
 	}
 
 	@Override
-	protected IProject getProject() {
-		return resource != null ? resource.getProject() : null;
+	public boolean finish(IProgressMonitor monitor) {
+		this.force = isForceSelected();
+		this.timeout = isTimeoutSelected();
+		return super.finish(monitor);
 	}
-
 }

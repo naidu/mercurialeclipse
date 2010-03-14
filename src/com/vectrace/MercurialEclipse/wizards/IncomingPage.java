@@ -18,12 +18,11 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import org.eclipse.core.resources.IFile;
-import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.operation.IRunnableContext;
 import org.eclipse.jface.viewers.ArrayContentProvider;
+import org.eclipse.jface.viewers.DecoratingLabelProvider;
 import org.eclipse.jface.viewers.DoubleClickEvent;
 import org.eclipse.jface.viewers.IDoubleClickListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -40,44 +39,32 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.ui.ISharedImages;
+import org.eclipse.ui.PlatformUI;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.actions.HgOperation;
 import com.vectrace.MercurialEclipse.exception.HgException;
 import com.vectrace.MercurialEclipse.model.ChangeSet;
 import com.vectrace.MercurialEclipse.model.FileStatus;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
 import com.vectrace.MercurialEclipse.model.ChangeSet.ParentChangeSet;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 import com.vectrace.MercurialEclipse.team.MercurialRevisionStorage;
 import com.vectrace.MercurialEclipse.team.NullRevision;
 import com.vectrace.MercurialEclipse.team.cache.IncomingChangesetCache;
 import com.vectrace.MercurialEclipse.ui.ChangeSetLabelProvider;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
 import com.vectrace.MercurialEclipse.utils.CompareUtils;
+import com.vectrace.MercurialEclipse.utils.ResourceUtils;
 
 public class IncomingPage extends HgWizardPage {
 
-	public IProject getProject() {
-		return project;
-	}
-
-	public HgRepositoryLocation getLocation() {
-		return location;
-	}
-
-	public void setRevision(ChangeSet revision) {
-		this.revision = revision;
-	}
-
-	public void setChangesets(SortedSet<ChangeSet> changesets) {
-		this.changesets = changesets;
-	}
-
-	TableViewer changeSetViewer;
+	private TableViewer changeSetViewer;
 	private TableViewer fileStatusViewer;
-	private IProject project;
-	private HgRepositoryLocation location;
-	private Button revisionCheckBox;
+	private HgRoot hgRoot;
+	private IHgRepositoryLocation location;
+	protected Button revisionCheckBox;
 	private ChangeSet revision;
 	private SortedSet<ChangeSet> changesets;
 	private boolean svn;
@@ -109,8 +96,8 @@ public class IncomingPage extends HgWizardPage {
 			}
 			IncomingChangesetCache cache = IncomingChangesetCache.getInstance();
 			try {
-				cache.clear(location, project, false);
-				Set<ChangeSet> set = cache.getChangeSets(project, location, null);
+				cache.clear(hgRoot, false);
+				Set<ChangeSet> set = cache.getChangeSets(hgRoot, location, null);
 				SortedSet<ChangeSet> revertedSet = new TreeSet<ChangeSet>(Collections.reverseOrder());
 				revertedSet.addAll(set);
 				return revertedSet;
@@ -129,11 +116,9 @@ public class IncomingPage extends HgWizardPage {
 			FileStatus clickedFileStatus = (FileStatus) sel
 					.getFirstElement();
 			if (cs != null && clickedFileStatus != null) {
-				IPath hgRoot = new Path(cs.getHgRoot().getPath());
 				IPath fileRelPath = clickedFileStatus.getRootRelativePath();
-				IPath fileAbsPath = hgRoot.append(fileRelPath);
-				IFile file = getProject().getWorkspace().getRoot()
-						.getFileForLocation(fileAbsPath);
+				IPath fileAbsPath = hgRoot.toAbsolute(fileRelPath);
+				IFile file = ResourceUtils.getFileHandle(fileAbsPath);
 				if (file != null) {
 					MercurialRevisionStorage remoteRev = new MercurialRevisionStorage(
 							file, cs.getChangesetIndex(), cs.getChangeset(), cs);
@@ -174,6 +159,18 @@ public class IncomingPage extends HgWizardPage {
 		super(pageName);
 		setTitle(Messages.getString("IncomingPage.title")); //$NON-NLS-1$
 		setDescription(Messages.getString("IncomingPage.description")); //$NON-NLS-1$
+	}
+
+	public IHgRepositoryLocation getLocation() {
+		return location;
+	}
+
+	public void setRevision(ChangeSet revision) {
+		this.revision = revision;
+	}
+
+	public void setChangesets(SortedSet<ChangeSet> changesets) {
+		this.changesets = changesets;
 	}
 
 	@Override
@@ -222,9 +219,10 @@ public class IncomingPage extends HgWizardPage {
 				Messages.getString("IncomingPage.columnHeader.date"), //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.author"), //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.branch"), //$NON-NLS-1$
+				"Tags", //$NON-NLS-1$
 				Messages.getString("IncomingPage.columnHeader.summary") };  //$NON-NLS-1$
 		final int WIDTH = 11;
-		int[] widths = {6 * WIDTH, 7 * WIDTH, 15 * WIDTH, 14 * WIDTH, 10 * WIDTH, 30 * WIDTH};
+		int[] widths = {6 * WIDTH, 7 * WIDTH, 15 * WIDTH, 14 * WIDTH, 5 * WIDTH, 5 * WIDTH, 30 * WIDTH};
 		for (int i = 0; i < titles.length; i++) {
 			TableColumn column = new TableColumn(table, SWT.NONE);
 			column.setText(titles[i]);
@@ -241,17 +239,8 @@ public class IncomingPage extends HgWizardPage {
 		gridData.heightHint = 150;
 		gridData.minimumHeight = 50;
 		table.setLayoutData(gridData);
-		table.setHeaderVisible(true);
+		table.setHeaderVisible(false);
 		table.setLinesVisible(true);
-		titles = new String[] {
-				Messages.getString("IncomingPage.fileStatusTable.columnTitle.status"), //$NON-NLS-1$
-				Messages.getString("IncomingPage.fileStatusTable.columnTitle.path") }; //$NON-NLS-1$
-		widths = new int[] { 80, 400 };
-		for (int i = 0; i < titles.length; i++) {
-			TableColumn column = new TableColumn(table, SWT.NONE);
-			column.setText(titles[i]);
-			column.setWidth(widths[i]);
-		}
 
 		Group group = SWTWidgetHelper.createGroup(container, Messages
 				.getString("IncomingPage.group.title")); //$NON-NLS-1$
@@ -287,38 +276,64 @@ public class IncomingPage extends HgWizardPage {
 		fileStatusViewer.addDoubleClickListener(getDoubleClickListener());
 	}
 
-	static class FileStatusLabelProvider extends LabelProvider implements
-			ITableLabelProvider {
+	private static final class SimpleLabelImageProvider extends LabelProvider {
+
+		private final Image fileImg;
+
+		public SimpleLabelImageProvider() {
+			fileImg = PlatformUI.getWorkbench().getSharedImages().getImage(ISharedImages.IMG_OBJ_FILE);
+		}
+
+		@Override
+		public Image getImage(Object element) {
+			return fileImg;
+		}
+
+		@Override
+		public String getText(Object element) {
+			if (!(element instanceof FileStatus)) {
+				return null;
+			}
+			return " " + ((FileStatus) element).getRootRelativePath().toOSString();
+		}
+	}
+
+	private static final class FileStatusLabelProvider extends DecoratingLabelProvider implements
+		ITableLabelProvider  {
+
+		public FileStatusLabelProvider() {
+			super(new SimpleLabelImageProvider(), PlatformUI.getWorkbench().getDecoratorManager().getLabelDecorator());
+		}
 
 		public Image getColumnImage(Object element, int columnIndex) {
-			return null;
+			if (!(element instanceof FileStatus)) {
+				return null;
+			}
+			return getImage(element);
 		}
 
 		public String getColumnText(Object element, int columnIndex) {
 			if (!(element instanceof FileStatus)) {
-				return Messages.getString("IncomingPage.unknownElement") + element; //$NON-NLS-1$
+				return null;
 			}
-			FileStatus status = (FileStatus) element;
-			switch (columnIndex) {
-			case 0:
-				return status.getAction().name();
-			case 1:
-				return status.getRootRelativePath().toOSString();
-			}
-			return Messages.getString("IncomingPage.notApplicable"); //$NON-NLS-1$
+			return getText(element);
 		}
 	}
 
-	public void setProject(IProject project) {
-		this.project = project;
+	public void setHgRoot(HgRoot hgRoot) {
+		this.hgRoot = hgRoot;
 	}
 
-	public void setLocation(HgRepositoryLocation repo) {
+	public HgRoot getHgRoot() {
+		return hgRoot;
+	}
+
+	public void setLocation(IHgRepositoryLocation repo) {
 		this.location = repo;
 	}
 
-	public Button getRevisionCheckBox() {
-		return revisionCheckBox;
+	public boolean isRevisionSelected() {
+		return revisionCheckBox.getSelection();
 	}
 
 	public ChangeSet getRevision() {

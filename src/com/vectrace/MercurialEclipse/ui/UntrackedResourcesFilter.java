@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2006-2008 VecTrace (Zingo Andersen) and others.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     Andrei Loskutov (Intland) - bug fixes
+ *******************************************************************************/
 package com.vectrace.MercurialEclipse.ui;
 
 import java.util.Map;
@@ -6,6 +16,7 @@ import java.util.Set;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 
@@ -40,15 +51,10 @@ public class UntrackedResourcesFilter extends ViewerFilter {
 		}
 	}
 
-	/**
-	 * @param path
-	 * @param set
-	 * @return
-	 */
-	private boolean isSubPath(String path, Set<IPath> set) {
+	private boolean isSubPath(String pathStr, Set<IPath> set) {
+		IPath path = new Path(pathStr);
 		for (IPath setPath : set) {
-			String setPathString = setPath.toOSString();
-			if (setPathString.endsWith(path)) {
+			if (setPath.isPrefixOf(path)) {
 				return true;
 			}
 		}

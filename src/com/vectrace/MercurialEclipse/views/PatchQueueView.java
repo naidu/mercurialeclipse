@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005-2008 VecTrace (Zingo Andersen) and others.
+ * Copyright (c) 2005-2010 VecTrace (Zingo Andersen) and others.
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
  * which accompanies this distribution, and is available at
@@ -8,6 +8,7 @@
  * Contributors:
  * bastian	implementation
  *     Andrei Loskutov (Intland) - bug fixes
+ *     Philip Graf               - bug fix
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.views;
 
@@ -139,9 +140,13 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				try {
-					HgQPushClient.push(resource, false, table
-							.getSelection()
-							.getName());
+					Patch patch = table.getSelection();
+					if (patch != null) {
+						HgQPushClient.push(resource, false, patch.getName());
+					} else {
+						HgQPushClient.push(resource, false, "");
+					}
+
 					populateTable();
 					resource.refreshLocal(IResource.DEPTH_INFINITE,
 							new NullProgressMonitor());
@@ -157,9 +162,12 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 			@Override
 			public void run() {
 				try {
-					HgQPopClient.pop(resource, false, table
-							.getSelection()
-							.getName());
+					Patch patch = table.getSelection();
+					if (patch != null) {
+						HgQPopClient.pop(resource, false, patch.getName());
+					} else {
+						HgQPopClient.pop(resource, false, "");
+					}
 					populateTable();
 					resource.refreshLocal(IResource.DEPTH_INFINITE,
 							new NullProgressMonitor());
@@ -310,6 +318,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 					if (!newRoot.equals(currentHgRoot)) {
 						currentHgRoot = newRoot;
 						resource = file;
+						populateTable();
 						statusLabel.setText(Messages.getString("PatchQueueView.repository") + currentHgRoot); //$NON-NLS-1$
 					}
 				}
@@ -321,8 +330,7 @@ public class PatchQueueView extends ViewPart implements ISelectionListener {
 	}
 
 	public static PatchQueueView getView() {
-		PatchQueueView view = (PatchQueueView) PlatformUI.getWorkbench()
-				.getActiveWorkbenchWindow().getActivePage().findView(ID);
+		PatchQueueView view = (PatchQueueView)MercurialEclipsePlugin.getActivePage().findView(ID);
 		if (view == null) {
 			try {
 				view = (PatchQueueView) PlatformUI.getWorkbench()

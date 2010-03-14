@@ -15,13 +15,14 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 
-import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgServeClient;
 import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.ui.SWTWidgetHelper;
@@ -62,9 +63,22 @@ public class ServeWizardPage extends HgWizardPage {
 		final Label portLabel = SWTWidgetHelper.createLabel(settingsGroup,
 				Messages.getString("ServeWizardPage.portLabel.title")); //$NON-NLS-1$
 		portLabel.setEnabled(false);
-		this.portTextField = SWTWidgetHelper.createTextField(settingsGroup);
-		this.portTextField.setEnabled(false);
-		this.portTextField.setText(Messages.getString("ServeWizardPage.portTextField.defaultValue")); //$NON-NLS-1$
+		portTextField = SWTWidgetHelper.createTextField(settingsGroup);
+		portTextField.setEnabled(false);
+		portTextField.setText(Messages.getString("ServeWizardPage.portTextField.defaultValue")); //$NON-NLS-1$
+		portTextField.addVerifyListener(new VerifyListener() {
+			public void verifyText(VerifyEvent e) {
+				String string = e.text;
+				char[] chars = new char[string.length()];
+				string.getChars(0, chars.length, chars, 0);
+				for (int i = 0; i < chars.length; i++) {
+					if (!('0' <= chars[i] && chars[i] <= '9')) {
+						e.doit = false;
+						return;
+					}
+				}
+			}
+		});
 
 		final Label nameLabel = SWTWidgetHelper.createLabel(settingsGroup,
 				Messages.getString("ServeWizardPage.nameLabel.title")); //$NON-NLS-1$
@@ -122,15 +136,19 @@ public class ServeWizardPage extends HgWizardPage {
 		super.finish(monitor);
 		// call hg
 		try {
-			new HgServeClient().serve(hgroot, Integer.parseInt(portTextField
+			boolean serveStarted = HgServeClient.serve(hgroot, Integer.parseInt(portTextField
 					.getText()), prefixTextField.getText(), nameTextField
 					.getText(), webdirConfTextField.getText(), stdioCheckBox
 					.getSelection(), ipv6CheckBox.getSelection());
+			if(!serveStarted){
+				setErrorMessage("Hg server could not be started. Probably port "
+						+ portTextField.getText() + " is already in use");
+			}
+			return serveStarted;
 		} catch (NumberFormatException e) {
-			MercurialEclipsePlugin.logError(e);
-			MercurialEclipsePlugin.showError(e);
+			setErrorMessage("Invalid port text");
+			return false;
 		}
-		return true;
 	}
 
 }

@@ -7,19 +7,21 @@
  *
  * Contributors:
  *     Bastian Doetsch - initial implementation
+ *     Andrei Loskutov (Intland) - bug fixes
  *******************************************************************************/
 package com.vectrace.MercurialEclipse.menu;
 
-import org.eclipse.core.resources.IResource;
+import org.eclipse.core.runtime.CoreException;
 import org.eclipse.jface.wizard.WizardDialog;
 
+import com.vectrace.MercurialEclipse.model.HgRoot;
 import com.vectrace.MercurialEclipse.wizards.RebaseWizard;
 
-public class RebaseHandler extends SingleResourceHandler {
+public class RebaseHandler extends RootHandler {
 
 	@Override
-	protected void run(IResource resource) throws Exception {
-		RebaseWizard wizard = new RebaseWizard(resource);
+	protected void run(HgRoot hgRoot) throws CoreException {
+		RebaseWizard wizard = new RebaseWizard(hgRoot);
 		WizardDialog wizardDialog = new WizardDialog(getShell(), wizard);
 		wizardDialog.open();
 	}

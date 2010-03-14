@@ -14,15 +14,14 @@ package com.vectrace.MercurialEclipse.wizards;
 
 import java.util.Set;
 
-import org.eclipse.core.resources.IResource;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.resource.ImageDescriptor;
-import org.eclipse.swt.widgets.Composite;
 
 import com.vectrace.MercurialEclipse.MercurialEclipsePlugin;
 import com.vectrace.MercurialEclipse.commands.HgPathsClient;
 import com.vectrace.MercurialEclipse.exception.HgException;
-import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
+import com.vectrace.MercurialEclipse.model.HgRoot;
+import com.vectrace.MercurialEclipse.model.IHgRepositoryLocation;
+import com.vectrace.MercurialEclipse.storage.HgRepositoryLocationManager;
 
 /**
  * @author bastian
@@ -31,42 +30,26 @@ import com.vectrace.MercurialEclipse.storage.HgRepositoryLocation;
 public class PushRepoPage extends PushPullPage {
 
 	public PushRepoPage(String pageName, String title,
-			ImageDescriptor titleImage, IResource resource) {
-		super(resource, pageName, title, titleImage);
-		showRevisionTable = false;
-	}
-
-	@Override
-	public void createControl(Composite parent) {
-		super.createControl(parent);
-	}
-
-
-	@Override
-	public boolean finish(IProgressMonitor monitor) {
-		this.force = forceCheckBox.getSelection();
-		this.timeout = timeoutCheckBox.getSelection();
-		return super.finish(monitor);
+			ImageDescriptor titleImage, HgRoot hgRoot) {
+		super(hgRoot, pageName, title, titleImage);
+		setShowRevisionTable(false);
 	}
 
 	@Override
 	public boolean canFlipToNextPage() {
 		try {
-			if (getUrlCombo().getText() != null
-					&& getUrlCombo().getText() != null) {
+			String urlText = getUrlText();
+			if (urlText != null && urlText.length() > 0) {
 				OutgoingPage outgoingPage = (OutgoingPage) getNextPage();
-				outgoingPage.setProject(resource.getProject());
-				HgRepositoryLocation loc = MercurialEclipsePlugin
-						.getRepoManager().getRepoLocation(urlCombo.getText(),
-								getUserCombo().getText(),
-								getPasswordText()
-								.getText());
+				outgoingPage.setHgRoot(getHgRoot());
+				IHgRepositoryLocation loc = MercurialEclipsePlugin
+						.getRepoManager().getRepoLocation(urlText,
+								getUserText(),
+								getPasswordText());
 				outgoingPage.setLocation(loc);
-				outgoingPage.setSvn(getSvnCheckBox() != null
-						&& getSvnCheckBox().getSelection());
+				outgoingPage.setSvn(isSvnSelected());
 				setErrorMessage(null);
-				return isPageComplete()
-						&& (getWizard().getNextPage(this) != null);
+				return isPageComplete()	&& (getWizard().getNextPage(this) != null);
 			}
 		} catch (HgException e) {
 			setErrorMessage(e.getLocalizedMessage());
@@ -75,40 +58,19 @@ public class PushRepoPage extends PushPullPage {
 	}
 
 	@Override
-	protected Set<HgRepositoryLocation> setDefaultLocation() {
-		HgRepositoryLocation defaultLocation = null;
-		Set<HgRepositoryLocation> repos = super.setDefaultLocation();
-		if (repos == null) {
-			return null;
-		}
-		for (HgRepositoryLocation repo : repos)
-		{
-			if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName()) ||
-					HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
-				defaultLocation = repo;
-				break;
-			}
-		}
-
+	protected IHgRepositoryLocation getRepoFromRoot(){
+		HgRepositoryLocationManager mgr = MercurialEclipsePlugin.getRepoManager();
+		IHgRepositoryLocation defaultLocation = mgr.getDefaultRepoLocation(getHgRoot());
+		Set<IHgRepositoryLocation> repos = mgr.getAllRepoLocations(getHgRoot());
 		if (defaultLocation == null) {
-			defaultLocation = MercurialEclipsePlugin
-				.getRepoManager().getDefaultProjectRepoLocation(
-						resource.getProject());
-		}
-
-		if (defaultLocation != null) {
-			getUrlCombo().setText(defaultLocation.getLocation());
-
-			String user = defaultLocation.getUser();
-			if (user != null && user.length() != 0) {
-				getUserCombo().setText(user);
-			}
-			String password = defaultLocation.getPassword();
-			if (password != null && password.length() != 0) {
-				getPasswordText().setText(password);
+			for (IHgRepositoryLocation repo : repos) {
+				if (HgPathsClient.DEFAULT_PUSH.equals(repo.getLogicalName())
+						|| HgPathsClient.DEFAULT.equals(repo.getLogicalName())) {
+					defaultLocation = repo;
+					break;
+				}
 			}
 		}
-		return repos;
+		return defaultLocation;
 	}
-
 }
